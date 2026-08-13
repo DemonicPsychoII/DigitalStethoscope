@@ -1,0 +1,1666 @@
+{
+ "run": {
+  "id": "R10-esp32-plattform",
+  "topic": "ESP-IDF/C vs. Zephyr auf ESP32-S3 + Rechenbudget",
+  "preset": "medium",
+  "prompt": "Kontext: Bachelorarbeit, digitales Stethoskop auf ESP32-S3 (240 MHz Xtensa LX7 Dual Core, PSRAM optional). Gleichzeitig laufen sollen: 3 digitale Filter (Herz/Lunge/Wide), BPM-Erkennung, optional Time-Stretch der Wiedergabe und eine TLS-gesicherte Datenuebertragung (FHIR).\n\nHauptfrage: Reicht das Rechenbudget des ESP32-S3 fuer diese Kombination in Echtzeit, und ist ESP-IDF (C/FreeRTOS) oder Zephyr die tragfaehigere Basis?\n\nUnterfrage 1: Wie ist der Reifegrad der Zephyr-Unterstuetzung fuer ESP32-S3 im Vergleich zu ESP-IDF - konkret bei I2S/PDM-Audioeingang, DAC/I2S-Audioausgang, WiFi-Stack und TLS? Welche Einschraenkungen sind dokumentiert, und welche Entscheidungskriterien nennen Praxisberichte?\nUnterfrage 2: Welche CPU- und RAM-Kosten sind realistisch fuer (a) mehrere IIR/FIR-Filter bei 2-8 kHz Abtastrate unter Nutzung der esp-dsp-Bibliothek, (b) Huellkurven-/Autokorrelations-basierte BPM-Erkennung und (c) einen mbedTLS-Handshake inkl. Zertifikatspruefung - gibt es publizierte Benchmarks oder Groessenordnungen (Zyklen pro Sample, Heap fuer TLS)?\n\nAntwort auf Deutsch, mit Quellen. Bitte am Ende eine klare Einschaetzung: passt das Budget, und wo liegt der Engpass?"
+ },
+ "response": {
+  "id": "chatcmpl-cbe67ec437a6459293c0d437",
+  "object": "chat.completion",
+  "created": 1786463011,
+  "model": "preset/medium",
+  "choices": [
+   {
+    "index": 0,
+    "message": {
+     "role": "assistant",
+     "content": "## Kurzfazit\n\n**Ja – das Rechenbudget des ESP32-S3 reicht voraussichtlich aus**, wenn\n\n- die Filter blockweise per DMA verarbeitet werden,\n- `esp-dsp` mit der optimierten ESP32-S3-Implementierung eingesetzt wird,\n- die BPM-Erkennung auf einer heruntergesampelten Hüllkurve arbeitet,\n- TLS/FHIR nicht in einer hochpriorisierten Audio-Task synchron ausgeführt wird und\n- für die Wiedergabe ein **externer I²S-DAC oder I²S-Verstärker** verwendet wird.\n\nFür dieses Projekt ist **ESP-IDF die tragfähigere Basis**. Zephyr ist auf dem ESP32-S3 inzwischen grundsätzlich nutzbar und unterstützt Board, Kernel, Netzwerk, mbedTLS und einen generischen ESP32-I²S-Treiber. Bei der konkreten Kombination aus PDM-Audio, Audio-DMA, WiFi, TLS und Espressif-spezifischer DSP-Unterstützung ist ESP-IDF jedoch deutlich risikoärmer.\n\nDer wahrscheinliche Engpass ist **nicht die Filter- oder BPM-Rechenzeit**, sondern:\n\n1. **interner, zusammenhängender RAM während des TLS-Handshakes**,  \n2. **Task-/DMA-/Buffer-Planung bei gleichzeitigem WiFi-Verkehr**,  \n3. optional die Rechen- und Speicherlast eines hochwertigen Time-Stretching-Verfahrens.\n\nDer ESP32-S3 besitzt zwei LX7-Kerne mit bis zu 240 MHz und 512 KB On-Chip-SRAM; optionale PSRAM erweitert den Speicher, ersetzt aber nicht vollständig den schnellen beziehungsweise DMA-fähigen internen RAM. [web:106][web:107]\n\n---\n\n# 1. ESP-IDF oder Zephyr?\n\n## Gesamtvergleich\n\n| Kriterium | ESP-IDF | Zephyr |\n|---|---|---|\n| ESP32-S3-Unterstützung | Hersteller-Referenzframework, sehr vollständig | Offizielles Board- und SoC-Support vorhanden |\n| I²S-PCM-Eingang/-Ausgang | Ausgereifte native Treiber mit DMA | Generischer I²S-Treiber vorhanden |\n| PDM-Mikrofon | Explizite PDM-RX/TX-API und Hardware-Konvertierung, abhängig vom I²S-Port | PDM-Unterstützung im ESP32-I²S-Treiber nicht in vergleichbarer Detailtiefe dokumentiert |\n| Interner DAC | Beim ESP32-S3 nicht vorhanden | Ebenfalls nicht vorhanden |\n| Externer I²S-DAC | Direkt unterstützt | Grundsätzlich über I²S möglich, aber weniger Espressif-spezifische Beispiele |\n| WiFi | Vollständiger Espressif-Stack mit WPA/WPA2/WPA3, Enterprise, AP/STA, Power-Management usw. | Nutzbar, aber stärker von HAL, Binärblobs und Zephyr-Netzwerkintegration abhängig |\n| TLS | ESP-TLS/mbedTLS, Zertifikats-Bundle, Hardware-Beschleunigung, viele Beispiele | mbedTLS und TLS-Sockets vorhanden, Konfiguration deutlich manueller |\n| DSP | `esp-dsp`, inklusive optimierter ESP32-S3-Assemblerpfade | `esp-dsp` kann prinzipiell als externe Espressif-Komponente eingebunden werden, ist aber kein nativer Zephyr-Standardbaustein |\n| Debugging und Beispiele | Sehr umfangreich für genau diese Hardware | Gute RTOS-/Portabilitätsbasis, aber weniger End-to-End-Audio-WiFi-TLS-Beispiele |\n| Projektrisiko für diese Arbeit | Niedrig | Mittel bis hoch |\n\n## Empfehlung\n\nFür eine Bachelorarbeit mit funktionierendem Prototyp und reproduzierbaren Messungen:\n\n> **ESP-IDF + FreeRTOS als Primärbasis verwenden.**\n\nZephyr wäre besonders dann sinnvoll, wenn Portabilität auf mehrere MCU-Familien, standardisierte DeviceTree-Konfiguration, ein langfristig herstellerunabhängiges Produkt oder eine systematische Untersuchung von RTOS-Abstraktionen im Vordergrund steht.\n\nFür das konkrete digitale Stethoskop liefern die Espressif-spezifischen Komponenten jedoch einen wesentlichen Vorteil:\n\n- native I²S-/PDM-Konfiguration,\n- DMA-Puffer,\n- WiFi-Stack,\n- ESP-TLS,\n- Hardware-Krypto,\n- `esp-dsp`,\n- vorhandene Mess- und Beispielprojekte.\n\n---\n\n# 2. Reifegrad der Audio-Unterstützung\n\n## ESP-IDF: I²S/PDM-Eingang\n\nESP-IDF stellt für den ESP32-S3 einen eigenen I²S-Treiber mit Standard-, PDM- und TDM-Modi bereit. Der ESP32-S3 besitzt zwei I²S-Schnittstellen und einen dedizierten DMA-Pfad. Bei PDM ist allerdings zu beachten, dass nicht jeder I²S-Port beziehungsweise jede Richtung eine Hardware-Konvertierung zwischen PDM und PCM besitzt. Fehlt die Hardware-Konvertierung, muss ein Softwarefilter für PDM-zu-PCM eingesetzt werden. [web:1]\n\nFür ein PDM-Mikrofon sollte daher konkret geprüft werden:\n\n- welcher I²S-Port verwendet wird,\n- ob PDM-RX mit Hardware-Decimation verfügbar ist,\n- welche PDM-Taktfrequenz und PCM-Abtastrate benötigt werden,\n- ob die DMA-Puffer im internen DMA-fähigen RAM liegen.\n\nFür ein digitales Stethoskop ist die übliche Architektur:\n\n```text\nPDM-Mikrofon\n    -> I²S/PDM-RX + DMA\n    -> PCM\n    -> Filterbank\n    -> BPM-Erkennung\n    -> Time-Stretch bzw. Lautstärke/Gain\n    -> I²S-TX\n    -> externer DAC/Audioverstärker\n```\n\n## ESP-IDF: Audioausgang und DAC\n\nDer ESP32-S3 besitzt **keinen internen Audio-DAC**. Das ist ein relevanter Unterschied zum ursprünglichen ESP32. Der ESP-IDF-I²S-Überblick weist beim ESP32-S3 für ADC/DAC explizit keine interne I²S-DAC-Unterstützung aus. [web:91]\n\nFür die Wiedergabe ist deshalb erforderlich:\n\n- ein externer I²S-DAC, beispielsweise PCM5102A,\n- oder ein I²S-Class-D-Verstärker wie MAX98357A,\n- alternativ PDM-Ausgabe mit nachgeschalteter analoger Filterung, was für hochwertige Stethoskop-Wiedergabe weniger attraktiv ist.\n\nDamit ist „DAC/I²S-Ausgang“ auf dem ESP32-S3 nicht gleichbedeutend mit „interner DAC“. **Der I²S-TX-Ausgang ist gut verwendbar; der interne DAC entfällt.**\n\n## Zephyr: I²S\n\nZephyr besitzt einen `espressif,esp32-i2s`-Binding und einen zugehörigen Treiber. Die ESP32-S3-DeviceTree-Dateien enthalten I²S0 und I²S1. [web:76][web:83]\n\nDie Einschränkung ist die Abstraktionsebene: Die offizielle Zephyr-I²S-Dokumentation beschreibt den ESP32-Treiber im Wesentlichen als ESP32-I²S-Bus-Treiber, dokumentiert aber nicht in vergleichbarer Tiefe:\n\n- PDM-RX/PDM-TX-Modi,\n- Hardware-PDM-PCM-Konvertierung,\n- alle I²S-Port-spezifischen Fähigkeiten,\n- Espressif-spezifische DMA-Konfiguration,\n- Audio-DAC-Sonderfunktionen.\n\nDie Zephyr-Dokumentation nennt beim Binding zwar I²S-Einheit und DMA-Verknüpfung, aber keine vollständige Auflistung unterstützter Betriebsmodi oder deren ESP32-S3-spezifischer Einschränkungen. [web:76]\n\nPraktisch bedeutet das:\n\n- **Standard-I²S-PCM mit externem Codec:** realistisch.\n- **PDM-Mikrofon mit Hardware-Decimation:** vor Projektbeginn auf dem Zielboard testen.\n- **Interner DAC:** auf dem ESP32-S3 nicht möglich, unabhängig vom Framework.\n- **PDM- oder Spezialmodi:** bei Zephyr voraussichtlich Eigenarbeit an Treiber, HAL oder DeviceTree-Konfiguration.\n\n---\n\n# 3. WiFi und TLS\n\n## ESP-IDF\n\nDer ESP-IDF-WiFi-Stack unterstützt auf dem ESP32-S3 unter anderem:\n\n- 802.11 b/g/n,\n- STA, AP und kombinierte STA/AP-Modi,\n- WPA, WPA2 und WPA3,\n- WPA-Enterprise,\n- EAP-TLS,\n- Power-Management,\n- TCP- und UDP-Kommunikation.\n\nEspressif nennt für den ESP32-S3 bis zu ungefähr 20 Mbit/s TCP- und 30 Mbit/s UDP-Durchsatz unter geeigneten Bedingungen. [web:55]\n\nFür die Anwendung ist der Durchsatz allerdings nicht kritisch. Ein FHIR-JSON-Datensatz benötigt typischerweise nur wenige hundert Bytes bis wenige Kilobyte. Kritischer sind:\n\n- Verbindungsaufbau,\n- DNS,\n- TLS-Handshake,\n- Zertifikatsprüfung,\n- Heap-Fragmentierung,\n- Blockierung der Netzwerk-Tasks.\n\n## Zephyr\n\nZephyr kann WiFi auf ESP32-Plattformen verwenden, die Integration ist aber stärker von Espressif-HAL-Komponenten und proprietären RF-Binärblobs abhängig. In der aktuellen Zephyr-Dokumentation wird beispielsweise darauf hingewiesen, dass für die Espressif-HAL die RF-Binärdateien separat mit `west blobs fetch hal_espressif` geladen werden müssen. [web:46]\n\nDas erhöht im Vergleich zu ESP-IDF die Komplexität von:\n\n- reproduzierbaren Builds,\n- Versionskompatibilität,\n- OTA-/Produktionskonfiguration,\n- Debugging von WiFi-Problemen.\n\nESP-IDF verwendet dagegen direkt den von Espressif vorgesehenen WiFi- und TCP/IP-Stack.\n\n## TLS mit mbedTLS\n\nBeide Frameworks können mbedTLS verwenden. Bei ESP-IDF ist die Integration jedoch deutlich stärker vorkonfiguriert.\n\nFür ESP-IDF nennt Espressif für einen Test mit aktivierter Server-Zertifikatsprüfung folgende typische Heap-Nutzungen:\n\n| Konfiguration | Heap während/bei TLS-Nutzung |\n|---|---:|\n| Standard | ca. 42 196 Byte |\n| Dynamische SSL-Puffer | ca. 42 120 Byte |\n| Peer-Zertifikat nach Nutzung freigeben | ca. 38 533 Byte |\n| Dynamische TX/RX-Puffer | ca. 22 013 Byte |\n\nDie Werte sind konfigurations- und versionsabhängig. [web:17]\n\nZusätzlich nennt Espressif als Faustregel, dass ein stabiler TLS-Handshake typischerweise **40–50 KB freien Heap** für temporäre Allokationen benötigt. Fragmentierter Heap kann trotz nominell ausreichendem Gesamtspeicher zum Fehler führen. [web:16]\n\nEin Praxisbericht zu Zephyr auf dem ESP32-S3 verwendet unter anderem:\n\n- 16 KB Main-Stack,\n- 60 KB mbedTLS-Heap,\n- 16 KB maximale SSL-Content-Länge,\n- vergrößerte Netzwerkpuffer,\n- explizit aktivierte RSA-, ECDH-, ECDSA-, AES-GCM- und SHA-Funktionen.\n\nDer Bericht zeigt außerdem, dass Zertifikatsketten, RSA-Unterstützung, SNI und die richtige Root-CA manuell konfiguriert werden mussten. [web:18]\n\nDas ist ein gutes Beispiel für den praktischen Unterschied:\n\n> Zephyr kann TLS, aber bei einem realen HTTPS- beziehungsweise FHIR-Endpunkt muss deutlich mehr Kryptografie- und Zertifikatskonfiguration von Hand abgestimmt werden.\n\n---\n\n# 4. Realistische DSP-Kosten\n\n## 4.1 IIR-Filter\n\nEspressif misst für den ESP32-S3 bei der optimierten `dsps_biquad_f32`-Implementierung ungefähr:\n\n- 17 552 Zyklen für 1 024 Eingangswerte,\n- also etwa **17,1 Zyklen pro Sample und Biquad**.\n\nDas ist ein publizierter Library-Benchmark. [web:31]\n\nFür drei Filterpfade mit jeweils einem Biquad ergibt sich näherungsweise:\n\n| Abtastrate | 3 Biquads | CPU-Zeit bei 240 MHz | Anteil eines Kerns |\n|---:|---:|---:|---:|\n| 2 kHz | ca. 103 000 Zyklen/s | ca. 0,43 ms/s | ca. 0,04 % |\n| 8 kHz | ca. 410 000 Zyklen/s | ca. 1,71 ms/s | ca. 0,17 % |\n\nAuch zehn Biquad-Stufen pro Pfad wären für den ESP32-S3 noch relativ unkritisch, sofern die Implementierung blockweise erfolgt.\n\n## 4.2 FIR-Filter\n\nFür einen 256-Tap-FIR-Filter nennt der ESP-DSP-Benchmark auf dem ESP32-S3:\n\n- 443 671 Zyklen für 1 024 Samples,\n- entsprechend etwa **433 Zyklen pro Sample**.\n\nFür die decimierende Variante mit Faktor 4:\n\n- 115 499 Zyklen für 1 024 Samples,\n- entsprechend etwa **113 Zyklen pro Eingangssample**. [web:31]\n\nDaraus folgt für drei parallele 256-Tap-FIR-Filter:\n\n| Abtastrate | Kosten für 3 × 256-Tap-FIR | CPU-Anteil bei 240 MHz |\n|---:|---:|---:|\n| 2 kHz | ca. 2,6 Mio. Zyklen/s | ca. 1,1 % |\n| 8 kHz | ca. 10,4 Mio. Zyklen/s | ca. 4,3 % |\n\nDas sind günstige Größenordnungen. Selbst eine konservative Verdopplung wegen Bufferverwaltung, Skalierung, Kanaloperationen und Cache-Effekten liegt noch weit unter der verfügbaren Rechenleistung.\n\nBei 512 Taps kann grob mit etwa dem Doppelten gerechnet werden. Drei 512-Tap-FIR-Pfade bei 8 kHz lägen dann überschlägig bei etwa **8–10 % eines 240-MHz-Kerns**, nicht bei 100 %.\n\nWichtig ist, die ESP-DSP-Benchmarks korrekt zu interpretieren: Es handelt sich um die Zykluszahl für einen Block, nicht um eine Messung des gesamten Audio-Subsystems. DMA, PDM-Decimation, Kopieren, Formatkonvertierung, Cache-Misses und FreeRTOS-Synchronisation kommen hinzu.\n\n## 4.3 BPM-Erkennung\n\nFür eine Hüllkurven- und Autokorrelations-basierte BPM-Erkennung ist die Rechenlast normalerweise klein, wenn nicht auf dem vollständigen 8-kHz-Signal gearbeitet wird.\n\nSinnvolle Architektur:\n\n1. Filterung des Audiosignals,\n2. Betragsbildung oder quadrierte Energie,\n3. Tiefpass/Hüllkurve,\n4. Herunterabtastung auf beispielsweise 100–250 Hz,\n5. Autokorrelation über ein Fenster von 2–8 Sekunden,\n6. Suche nach einem Maximum im physiologisch sinnvollen BPM-Bereich.\n\nBei 200 Hz und 4 Sekunden Fenster sind es nur 800 Werte. Eine direkte Autokorrelation benötigt für alle relevanten Lags überschlägig einige hunderttausend bis etwa eine Million Multiply-Accumulate-Operationen pro Auswertung. Wird die BPM-Schätzung nur ein- bis mehrmals pro Sekunde aktualisiert, liegt das typischerweise im Bereich von **deutlich unter einem Prozent eines CPU-Kerns**.\n\nFür diese konkrete Kombination konnte kein belastbarer, ESP32-S3-spezifischer publizierter Benchmark für eine Hüllkurven-/Autokorrelations-BPM-Erkennung gefunden werden. Die Kosten sollten daher im Prototyp mit `esp_cpu_get_cycle_count()` oder dem ESP-IDF-Performance-Monitor gemessen werden.\n\nPraktisch ist BPM daher nicht der Rechenengpass. Schwieriger sind:\n\n- robuste S1/S2-Erkennung,\n- Bewegungsartefakte,\n- Doppelpeaks,\n- variable Herzgeräusche,\n- geeignete Glättung und Plausibilitätslogik.\n\n---\n\n# 5. Time-Stretching\n\n„Time-Stretch“ kann sehr unterschiedliche Kosten bedeuten:\n\n| Verfahren | Rechenlast | Einschätzung |\n|---|---:|---|\n| Lineare Interpolation / Resampling | niedrig | problemlos |\n| Cubic- oder Polyphase-Resampling | niedrig bis mittel | problemlos, aber Filterkosten beachten |\n| WSOLA/Granularverfahren | mittel | gut machbar, benötigt Audio-Puffer |\n| Phase Vocoder mit FFT | mittel bis hoch | machbar, aber sorgfältig optimieren |\n| Hochwertiger transientenerhaltender Time-Stretch | hoch | größtes DSP-Risiko |\n\nEin einfacher Zeit-/Tonhöhen-Shift über Resampling ist auf dem ESP32-S3 unkritisch. Ein qualitativ hochwertiger Phase Vocoder mit 512- oder 1024-Punkt-FFTs ist ebenfalls grundsätzlich möglich. Zum Vergleich benötigt eine optimierte ESP32-S3-1024-Punkt-Radix-2-FFT laut ESP-DSP-Benchmark etwa 97 847 Zyklen. [web:31]\n\nDer eigentliche Engpass entsteht eher durch:\n\n- mehrere FFTs pro Hop,\n- Overlap-Add,\n- zusätzliche Fenster und Zwischenpuffer,\n- Echtzeit-Anforderungen bei kleinen Audio-Blöcken,\n- gewünschte Audioqualität.\n\nFür eine Bachelorarbeit sollte Time-Stretch zunächst als **optionales Profil** implementiert und separat vermessen werden.\n\n---\n\n# 6. CPU- und Task-Architektur\n\nEine robuste ESP-IDF-Architektur wäre:\n\n```text\nCore 0:\n    WiFi\n    TCP/IP\n    TLS\n    FHIR/JSON\n    nicht zeitkritische Systemaufgaben\n\nCore 1:\n    I²S/PDM-DMA\n    PCM-Ringpuffer\n    Filterbank\n    Hüllkurve\n    BPM\n    Audioausgabe\n```\n\nDie Zuordnung muss nicht zwingend genau so aussehen, aber die Audioverarbeitung sollte eine höhere Priorität und deterministische Puffer haben. TLS darf nicht direkt in der Audio-Task ausgeführt werden.\n\nEmpfehlungen:\n\n- I²S-DMA-Blöcke von etwa 10–40 ms als Ausgangspunkt,\n- mindestens zwei bis vier DMA-Blöcke,\n- lockfreier oder blockarmer Ringpuffer zwischen Audio- und Netzwerk-Task,\n- keine dynamische Speicherallokation im Audio-Hotpath,\n- TLS-Handshake nur zwischen Audio-Blöcken oder auf dem anderen Kern,\n- JSON/FHIR-Erzeugung außerhalb der Audio-Task,\n- Stack-Watermarks und Heap-Low-Watermark messen,\n- `heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL)` überwachen,\n- PSRAM für große Historien-, FFT- oder FHIR-Puffer verwenden, aber DMA- und zeitkritische Daten im internen RAM halten.\n\nEin TLS-Handshake kann für kurze Zeit zehntausende Bytes zusätzlich beanspruchen. Deshalb sollte ein FHIR-Upload möglichst ereignis- oder blockorientiert erfolgen:\n\n```text\nAudio kontinuierlich:\n    Ringpuffer -> Filter -> Wiedergabe\n\nFHIR:\n    Messwerte sammeln\n    bei geeigneter Gelegenheit TLS-Verbindung aufbauen\n    Daten übertragen\n    Verbindung schließen oder Session wiederverwenden\n```\n\nEine dauerhaft offene TLS-Verbindung reduziert die Zahl der Handshakes, benötigt aber dauerhaft mehr RAM.\n\n---\n\n# 7. Klare Entscheidung\n\n## Reicht das Budget?\n\n**Ja, mit deutlicher Reserve für die beschriebenen Filter und die BPM-Erkennung.**\n\nEine überschlägige Worst-Case-Rechnung für drei 256-Tap-FIR-Filter bei 8 kHz ergibt nur etwa 10,4 Mio. Zyklen/s, also rund 4,3 % eines 240-MHz-Kerns. Drei Biquad-IIR-Pfade liegen dagegen nur bei ungefähr 0,2 %. [web:31]\n\nAuch eine zusätzliche BPM-Erkennung auf einer heruntergesampelten Hüllkurve ist voraussichtlich klein. Ein einfacher Time-Stretch ist ebenfalls unkritisch; ein hochwertiger Phase Vocoder sollte separat vermessen werden.\n\n## Wo liegt der Engpass?\n\nDer Hauptengpass liegt bei:\n\n1. **TLS-/Zertifikatsprüfung und zusammenhängendem internem Heap**, nicht bei den Filtern. ESP-IDF nennt ungefähr 42 KB typischen Heap-Verbrauch mit Zertifikatsprüfung und 40–50 KB freien Heap als typische Größenordnung für einen stabilen Handshake. [web:16][web:17]\n2. **Deterministischem Scheduling**, wenn WiFi, TLS und Audio dieselben Ressourcen beziehungsweise denselben Kern beanspruchen.\n3. **PDM-/I²S-Integration in Zephyr**, insbesondere wenn Hardware-PDM-PCM-Konvertierung und spezielle DMA-Modi erforderlich sind.\n4. **Optionalem hochwertigem Time-Stretching**, falls mehr als einfaches Resampling gefordert ist.\n\n## Endgültige Empfehlung\n\n> **ESP-IDF mit FreeRTOS, `esp-dsp`, ESP-IDF-I²S/PDM-Treiber, externem I²S-DAC und mbedTLS/ESP-TLS verwenden.**\n\nZephyr ist für den ESP32-S3 nicht mehr grundsätzlich unreif. Für ein Projekt mit Standard-I²S, einfacher Netzwerkkommunikation und sorgfältig konfiguriertem mbedTLS ist es verwendbar. Für genau diese Bachelorarbeit bietet ESP-IDF jedoch die bessere Kombination aus:\n\n- geringem Integrationsrisiko,\n- dokumentierter PDM-/I²S-Unterstützung,\n- vollständiger WiFi-Funktionalität,\n- besserer mbedTLS-Integration,\n- direktem Zugriff auf `esp-dsp`,\n- größerer Zahl praxisnaher Beispiele.\n\nDie Audio-DSP-Aufgaben passen klar in das Budget. **Die Implementierung sollte daher primär auf RAM- und Echtzeitplanung sowie auf der Verifikation der Audioqualität liegen, nicht auf der Sorge vor zu geringer CPU-Leistung.**"
+    },
+    "finish_reason": "stop"
+   }
+  ],
+  "usage": {
+   "prompt_tokens": 144305,
+   "completion_tokens": 6678,
+   "total_tokens": 150983,
+   "cost": {
+    "cache_creation_cost": 0.00856,
+    "cache_read_cost": 0.0022,
+    "currency": "USD",
+    "input_cost": 0,
+    "output_cost": 0.00801,
+    "tool_calls_cost": 0.03366,
+    "tool_calls_cost_details": {
+     "fetch_url": 0.01366,
+     "search_web": 0.02
+    },
+    "total_cost": 0.05243
+   },
+   "input_tokens_details": {
+    "cache_creation_input_tokens": 34252,
+    "cache_read_input_tokens": 110032,
+    "cached_tokens": 110032
+   },
+   "output_tokens_details": {
+    "reasoning_tokens": 617
+   },
+   "tool_calls_details": {
+    "fetch_url": {
+     "cost_usd": 0.01366,
+     "invocation": 6,
+     "token_usage": [
+      {
+       "input_tokens": 2404,
+       "input_tokens_details": {
+        "cache_creation_input_tokens": 2401,
+        "cached_tokens": 0
+       },
+       "model": "openai/gpt-5.6-luna",
+       "output_tokens": 1090,
+       "output_tokens_details": {
+        "reasoning_tokens": 159
+       }
+      },
+      {
+       "input_tokens": 1935,
+       "input_tokens_details": {
+        "cache_creation_input_tokens": 1932,
+        "cached_tokens": 0
+       },
+       "model": "openai/gpt-5.6-luna",
+       "output_tokens": 2137,
+       "output_tokens_details": {
+        "reasoning_tokens": 236
+       }
+      },
+      {
+       "input_tokens": 10154,
+       "input_tokens_details": {
+        "cache_creation_input_tokens": 10151,
+        "cached_tokens": 0
+       },
+       "model": "openai/gpt-5.6-luna",
+       "output_tokens": 3889,
+       "output_tokens_details": {
+        "reasoning_tokens": 77
+       }
+      }
+     ]
+    },
+    "search_web": {
+     "invocation": 8
+    }
+   }
+  },
+  "citations": [
+   {
+    "url": "https://docs.espressif.com/projects/esp-idf/en/stable/esp32s3/api-reference/peripherals/i2s.html",
+    "title": "Inter-IC Sound (I2S) - ESP32-S3",
+    "date": null
+   },
+   {
+    "url": "https://docs.espressif.com/projects/esp-idf/en/stable/esp32s3/api-reference/protocols/mbedtls.html",
+    "title": "Mbed TLS - ESP32-S3 - — ESP-IDF Programming Guide v6.0.2 ...",
+    "date": null
+   },
+   {
+    "url": "https://qiita.com/michimaru/items/920ba9ce26cc628bd522",
+    "title": "ESP32-S3で新しいi2s_pdmライブラリを使ってみる",
+    "date": "2025-06-03"
+   },
+   {
+    "url": "https://docs.espressif.com/projects/esp-idf/en/v4.4.3/esp32s3/api-guides/wifi.html",
+    "title": "Wi-Fi Driver - ESP32-S3 - — ESP-IDF Programming Guide v4.4.3 ...",
+    "date": null
+   },
+   {
+    "url": "https://docs.zephyrproject.org/latest/boards/waveshare/esp32s3_matrix/doc/index.html",
+    "title": "ESP32-S3-Matrix - Zephyr Documentation",
+    "date": "2026-08-07"
+   },
+   {
+    "url": "https://documentation.espressif.com/esp-idf/en/v5.5.5/esp32s3/index.html",
+    "title": "ESP-IDF User Guide for ESP32-S3, SDK v5.5.5",
+    "date": null
+   },
+   {
+    "url": "https://www.espressif.com/en/support/documents/technical-documents",
+    "title": "Technical Documents | Espressif Systems",
+    "date": "2026-08-08"
+   },
+   {
+    "url": "https://documentation.espressif.com/esp32-s3_datasheet_en.pdf",
+    "title": "ESP32-S3 Series",
+    "date": null
+   },
+   {
+    "url": "https://github.com/espressif/esp-idf/blob/master/components/mbedtls/Kconfig",
+    "title": "esp-idf/components/mbedtls/Kconfig at master · espressif/esp-idf",
+    "date": "2016-08-17"
+   },
+   {
+    "url": "https://docs.zephyrproject.org/latest/build/dts/api/bindings/i2s/espressif,esp32-i2s.html",
+    "title": "espressif,esp32-i2s - Zephyr Documentation",
+    "date": "2000-01-01"
+   },
+   {
+    "url": "https://github.com/zephyrproject-rtos/zephyr/discussions/68722",
+    "title": "Is there a plan to support ESP32S3 I2S driver #68722",
+    "date": "2024-02-01"
+   },
+   {
+    "url": "https://github.com/zephyrproject-rtos/zephyr/blob/main/drivers/i2s/i2s_esp32.c",
+    "title": "zephyr/drivers/i2s/i2s_esp32.c at main - GitHub",
+    "date": "2016-05-26"
+   },
+   {
+    "url": "https://docs.espressif.com/projects/esp-idf/en/v4.4.8/esp32s3/esp-idf-en-v4.4.8-esp32s3.pdf",
+    "title": "ESP32-S3",
+    "date": null
+   },
+   {
+    "url": "https://hub.mender.io/t/connectivity-with-zephyr-part-3-https-with-tls-on-esp32-s3/8132",
+    "title": "Part 3: HTTPS with TLS on ESP32-S3 - Zephyr",
+    "date": "2025-12-09"
+   },
+   {
+    "url": "https://docs.espressif.com/projects/esp-idf/en/v5.2/esp32s3/api-reference/network/esp_wifi.html",
+    "title": "Wi-Fi - ESP32-S3 - — ESP-IDF Programming Guide v5.2 ...",
+    "date": null
+   },
+   {
+    "url": "https://docs.espressif.com/projects/esp-dsp/en/latest/esp32/esp-dsp-benchmarks.html",
+    "title": "Espressif DSP Library Benchmarks - ESP32",
+    "date": "2004-01-01"
+   },
+   {
+    "url": "https://espressif-docs.readthedocs-hosted.com/_/downloads/esp-dsp/en/latest/pdf/",
+    "title": "Read the Docs Template Documentation",
+    "date": null
+   },
+   {
+    "url": "https://deepwiki.com/espressif/esp-dsp/5-performance-and-testing",
+    "title": "Performance and Testing | espressif/esp-dsp | DeepWiki",
+    "date": "2025-09-05"
+   },
+   {
+    "url": "https://github.com/espressif/esp-dsp",
+    "title": "espressif/esp-dsp: DSP library for ESP-IDF",
+    "date": "2019-01-15"
+   },
+   {
+    "url": "https://docs.espressif.com/projects/esp-dsp/en/latest/esp32/esp-dsp-examples.html",
+    "title": "Espressif DSP Library Examples - ESP32",
+    "date": null
+   },
+   {
+    "url": "https://deepwiki.com/espressif/esp-dsp/4.3-digital-filters",
+    "title": "Digital Filters | espressif/esp-dsp | DeepWiki",
+    "date": "2025-09-05"
+   },
+   {
+    "url": "https://docs.espressif.com/projects/esp-dsp/en/latest/esp32/esp-dsp-apis.html",
+    "title": "Espressif DSP Library API Reference - ESP32 - — Espressif DSP ...",
+    "date": null
+   },
+   {
+    "url": "https://docs.espressif.com/projects/esp-dsp/en/latest/esp32/index.html",
+    "title": "ESP-DSP Library - ESP32",
+    "date": null
+   },
+   {
+    "url": "https://forum.edgeimpulse.com/t/esp32-s3-simd-acceleration-esp-nn-esp-dsp-not-effective-for-run-classifier/14264",
+    "title": "ESP32-S3: SIMD Acceleration (ESP-NN/ESP-DSP) Not ...",
+    "date": "2025-06-06"
+   },
+   {
+    "url": "https://github.com/espressif/esp-dsp/issues",
+    "title": "Issues · espressif/esp-dsp",
+    "date": "2025-04-24"
+   },
+   {
+    "url": "https://tj-lab.org/2022/10/06/esp32-s3-af%E4%BF%A1%E5%8F%B7%E5%87%A6%E7%90%86%E3%83%9C%E3%83%BC%E3%83%89%EF%BC%88dsp%E3%83%A9%E3%82%A4%E3%83%96%E3%83%A9%E3%83%AA%EF%BC%89/",
+    "title": "ESP32-S3 AF信号処理ボード（DSPライブラリ）",
+    "date": "2022-10-06"
+   },
+   {
+    "url": "https://community.platformio.org/t/audio-processing-on-esp32-s3-using-esp-dsp-library/48166",
+    "title": "Audio processing on esp32-s3 using esp-dsp library",
+    "date": "2025-07-21"
+   },
+   {
+    "url": "https://www.reddit.com/r/esp32/comments/1r5xhkz/practical_fft_on_the_esp32s3_dsp_acceleration_and/",
+    "title": "Practical FFT on the ESP32-S3: DSP Acceleration and ...",
+    "date": "2026-03-14"
+   },
+   {
+    "url": "https://github.com/Kristian8606/esp32s3_audio_dsp",
+    "title": "GitHub - Kristian8606/esp32s3_audio_dsp",
+    "date": "2024-12-01"
+   },
+   {
+    "url": "https://github.com/espressif/esp-dsp/issues/97",
+    "title": "dsps_dotprod_s16_ae32 benchmark on ESP32 (DSP-153) · Issue #97 · espressif/esp-dsp",
+    "date": "2024-11-22"
+   },
+   {
+    "url": "https://docs.espressif.com/projects/esp-faq/en/latest/software-framework/protocols/esp-tls.html",
+    "title": "ESP-TLS - - — ESP-FAQ latest documentation",
+    "date": null
+   },
+   {
+    "url": "https://electricalflux.com/mcu-general/fix-arduino-wificlientsecure-esp32-https-handshake",
+    "title": "Arduino WiFiClientSecure: Master ESP32 HTTPS Requests",
+    "date": "2026-07-07"
+   },
+   {
+    "url": "https://productionesp32.com/posts/playing-with-certs/",
+    "title": "ProdESP32 #7: Playing with TLS Certs - Production ESP32",
+    "date": "2023-11-30"
+   },
+   {
+    "url": "https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/protocols/esp_tls.html",
+    "title": "ESP-TLS - — ESP-IDF Programming Guide v6.0.2 documentation",
+    "date": null
+   },
+   {
+    "url": "https://electricalflux.com/mcu-general/wificlientsecure-read-response-https-json-parsing",
+    "title": "Arduino WiFiClientSecure Read Response: Parse HTTPS JSON Data",
+    "date": "2026-07-07"
+   },
+   {
+    "url": "https://www.oryx-embedded.com/benchmark/espressif/crypto-esp32-s3.html",
+    "title": "ESP32-S3 Crypto Benchmark | SSL TLS SSH IPsec TCP",
+    "date": null
+   },
+   {
+    "url": "https://github.com/espressif/esp-idf/issues/4127",
+    "title": "MbedTLS often fails Client side certificate validation in handshake ...",
+    "date": "2019-09-27"
+   },
+   {
+    "url": "https://esp32.com/viewtopic.php?t=1013",
+    "title": "Heap space",
+    "date": "2017-01-20"
+   },
+   {
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12987191/table/sensors-26-01535-t006/",
+    "title": "Table 6.",
+    "date": null
+   },
+   {
+    "url": "https://www.reddit.com/r/esp32/comments/1vd07zz/mlkem1024_on_an_esp32_3440_ms_per_key_exchange/",
+    "title": "ML-KEM-1024 on an ESP32: 34-40 ms per key exchange, and the stack is what runs out first",
+    "date": "2026-08-01"
+   },
+   {
+    "url": "https://docs.espressif.com/projects/esp-faq/en/latest/software-framework/protocols/mbedtls.html",
+    "title": "Mbed TLS - - — ESP-FAQ latest documentation",
+    "date": null
+   },
+   {
+    "url": "https://blog.csdn.net/espressif/article/details/78663593",
+    "title": "ESP32 基础篇：mbedTLS 内存开销分析",
+    "date": "2017-11-29"
+   },
+   {
+    "url": "https://www.reddit.com/r/embedded/comments/1rqfjsb/esp32s3_rustespidf_8_hours_of_wifitls_churn/",
+    "title": "ESP32-S3 Rust/esp-idf: 8 hours of WiFi/TLS churn fragments SRAM down to 7KB — is there a way to reserve a contiguous region for mbedTLS at boot?",
+    "date": "2026-03-11"
+   },
+   {
+    "url": "https://docs.zephyrproject.org/latest/boards/m5stack/m5stack_atoms3_lite/doc/index.html",
+    "title": "AtomS3 Lite - Zephyr Documentation",
+    "date": "2026-07-06"
+   },
+   {
+    "url": "https://docs.zephyrproject.org/latest/boards/espressif/index.html",
+    "title": "Espressif - Zephyr Documentation",
+    "date": "2026-08-07"
+   },
+   {
+    "url": "https://docs.zephyrproject.org/latest/boards/espressif/esp_threadbr/doc/index.html",
+    "title": "ESP Thread Border Router / ZigBee Gateway",
+    "date": "2026-08-07"
+   },
+   {
+    "url": "https://docs.zephyrproject.org/latest/boards/m5stack/m5stack_fire/doc/index.html",
+    "title": "Fire - M5Stack - Zephyr Documentation",
+    "date": "2026-08-11"
+   },
+   {
+    "url": "https://docs.zephyrproject.org/latest/boards/index.html",
+    "title": "Supported Boards and Shields",
+    "date": "2026-08-07"
+   },
+   {
+    "url": "https://docs.zephyrproject.org/latest/releases/release-notes-3.7.html",
+    "title": "Zephyr 3.7.0",
+    "date": "2026-08-11"
+   },
+   {
+    "url": "https://docs.zephyrproject.org/latest/zephyr.pdf",
+    "title": "zephyr.pdf",
+    "date": "1999-04-04"
+   },
+   {
+    "url": "https://github.com/espressif/esp-hosted/blob/master/esp_hosted_ng/README.md",
+    "title": "esp-hosted/esp_hosted_ng/README.md at master · espressif/esp-hosted",
+    "date": "2020-06-11"
+   },
+   {
+    "url": "https://docs.espressif.com/projects/esp-idf/en/stable/esp32s3/api-guides/wifi.html",
+    "title": "Wi-Fi Driver - ESP32-S3 - — ESP-IDF Programming Guide ...",
+    "date": null
+   },
+   {
+    "url": "https://docs.espressif.com/projects/esp-idf/en/stable/esp32s3/api-reference/network/esp_wifi.html",
+    "title": "Wi-Fi - ESP32-S3 - — ESP-IDF Programming Guide v6.0.2 ...",
+    "date": null
+   },
+   {
+    "url": "https://docs.zephyrproject.org/latest/boards/seeed/xiao_esp32c6/doc/index.html",
+    "title": "XIAO ESP32C6 - Zephyr Documentation",
+    "date": "2026-08-11"
+   },
+   {
+    "url": "https://github.com/espressif/esp-hosted/issues/551",
+    "title": "Zephyr support · Issue #551 · espressif/esp-hosted",
+    "date": "2024-11-27"
+   },
+   {
+    "url": "https://components.espressif.com/components/espressif/esp_hosted/versions/0.0.14?language=en",
+    "title": "espressif/esp_hosted • v0.0.14 - ESP Component Registry",
+    "date": null
+   },
+   {
+    "url": "https://github.com/zephyrproject-rtos/zephyr/issues/3723",
+    "title": "WiFi support for ESP32 · Issue #3723 · zephyrproject-rtos/zephyr",
+    "date": "2017-06-16"
+   },
+   {
+    "url": "https://circuitlabs.net/i2s-audio-interface-of-esp32/",
+    "title": "I2S Audio Interface of ESP32 - circuitlabs.net",
+    "date": "2025-06-02"
+   },
+   {
+    "url": "https://github.com/zephyrproject-rtos/zephyr/pull/83710",
+    "title": "Add i2s support for esp32 and esp32s2 by wmrsouza · Pull Request #83710 · zephyrproject-rtos/zephyr",
+    "date": "2025-02-12"
+   },
+   {
+    "url": "https://docs.zephyrproject.org/latest/samples/index.html",
+    "title": "Samples and Demos - Zephyr Documentation",
+    "date": "2026-08-11"
+   },
+   {
+    "url": "https://github.com/zephyrproject-rtos/zephyr/discussions/52581",
+    "title": "I2S support for ESP32 · zephyrproject-rtos zephyr · Discussion #52581",
+    "date": "2022-11-27"
+   },
+   {
+    "url": "https://github.com/zephyrproject-rtos/zephyr/blob/main/dts/xtensa/espressif/esp32s3/esp32s3_common.dtsi?plain=1",
+    "title": "zephyr/dts/xtensa/espressif/esp32s3/esp32s3_common.dtsi at main",
+    "date": "2016-05-26"
+   },
+   {
+    "url": "https://github.com/zephyrproject-rtos/zephyr/blob/main/drivers/i2c/i2c_esp32.c",
+    "title": "zephyr/drivers/i2c/i2c_esp32.c at main · zephyrproject-rtos/zephyr",
+    "date": "2016-05-26"
+   },
+   {
+    "url": "https://github.com/zephyrproject-rtos/zephyr/blob/main/boards/dptechnics/walter/walter_esp32s3_procpu.dts?plain=1",
+    "title": "zephyr/boards/dptechnics/walter/walter_esp32s3_procpu.dts at main · zephyrproject-rtos/zephyr",
+    "date": "2016-05-26"
+   },
+   {
+    "url": "https://github.com/zephyrproject-rtos/zephyr/discussions/89433",
+    "title": "Support to config ESP32-S3 in I2C Slave Mode in Zephyr · zephyrproject-rtos zephyr · Discussion #89433",
+    "date": "2025-05-03"
+   },
+   {
+    "url": "https://github.com/kunsen-an/espidf_pdm_sph0641_mic_out",
+    "title": "GitHub - kunsen-an/espidf_pdm_sph0641_mic_out",
+    "date": null
+   },
+   {
+    "url": "https://github.com/zephyrproject-rtos/zephyr/discussions/63669",
+    "title": "ESP32-S3 Intermittent 30ms I2C Delay · zephyrproject-rtos zephyr · Discussion #63669",
+    "date": "2023-10-16"
+   },
+   {
+    "url": "https://github.com/zephyrproject-rtos/zephyr/blob/main/boards/espressif/esp32s3_devkitc/doc/index.rst",
+    "title": "zephyr/boards/espressif/esp32s3_devkitc/doc/index.rst at main · zephyrproject-rtos/zephyr",
+    "date": "2016-05-26"
+   },
+   {
+    "url": "https://github.com/zephyrproject-rtos/zephyr/discussions/86301",
+    "title": "How to make proper use of ESP32S3 PSRAM / SPIRAM? (Can't build wifi or camera samples for xiao-esp32s3-sense) · zephyrproject-rtos zephyr · Discussion #86301",
+    "date": "2025-02-25"
+   },
+   {
+    "url": "https://www.infor.seaninstitute.org/index.php/infokum/article/download/3006/2699",
+    "title": "IoT Heart Beat Monitoring Based on Nodemcu ESP32",
+    "date": null
+   },
+   {
+    "url": "https://deepwiki.com/bhawiyuga/PulseSensor_Playground_esp32/5.2.3-full-featured-bpm",
+    "title": "Full Featured BPM | bhawiyuga/PulseSensor_Playground_esp32 ...",
+    "date": "2026-01-29"
+   },
+   {
+    "url": "https://ijrti.org/papers/IJRTI2504311.pdf",
+    "title": "© 2025 IJRTI | Volume 10, Issue 4 April 2025 | ISSN: 2456-3315",
+    "date": null
+   },
+   {
+    "url": "https://rjwave.org/ijedr/papers/IJEDR2504709.pdf",
+    "title": "Real-Time Heart Rate Monitoring And Controlling System ...",
+    "date": null
+   },
+   {
+    "url": "https://esp32.com/viewtopic.php?t=2590",
+    "title": "Pulse Sensor Amped adapted for ESP32",
+    "date": "2017-07-30"
+   },
+   {
+    "url": "https://www.scribd.com/document/950628303/ECG-Project-Report",
+    "title": "ECG Project Report | PDF | Electrocardiography - Scribd",
+    "date": "2025-12-09"
+   },
+   {
+    "url": "https://components.espressif.com/components/esphome/esp-audio-libs/versions/3.2.1/examples/pcm_benchmark?language=",
+    "title": "esphome/esp-audio-libs - 3.2.1 - Example pcm_benchmark",
+    "date": null
+   },
+   {
+    "url": "https://microcontrollerslab.com/pulse-sensor-esp32-tutorial/",
+    "title": "Monitor Heart Rate using Pulse Sensor and ESP32",
+    "date": "2021-09-12"
+   },
+   {
+    "url": "https://www.scribd.com/document/789758893/ESP32-Heart-Rate-Monitor-Project",
+    "title": "ESP32 Heart Rate Monitor Setup Guide | PDF",
+    "date": "2025-06-07"
+   },
+   {
+    "url": "https://ijirt.org/publishedpaper/IJIRT203967_PAPER.pdf",
+    "title": "© June 2026 | IJIRT | Volume 13 Issue 1 | ISSN: 2349-6002",
+    "date": null
+   },
+   {
+    "url": "https://www.diva-portal.org/smash/get/diva2:1980582/FULLTEXT01.pdf",
+    "title": "Identifying Abnormalities in Heart Sound data using ...",
+    "date": null
+   },
+   {
+    "url": "https://forum.arduino.cc/t/solved-fft-beat-detection-esp32/660828",
+    "title": "[solved]FFT Beat Detection esp32 - Programming",
+    "date": "2020-06-15"
+   },
+   {
+    "url": "https://components.espressif.com/components/esphome/esp-audio-libs/versions/3.2.1/examples?language=en",
+    "title": "esphome/esp-audio-libs - 3.2.1 Examples - ESP Component Registry",
+    "date": null
+   },
+   {
+    "url": "https://www.reddit.com/r/esp32/comments/1c5qu38/am_i_understanding_the_s3_no_i2s_adc_support_tips/",
+    "title": "Am I understanding the S3 = no I2S ADC support? Tips for speed?",
+    "date": null
+   },
+   {
+    "url": "https://www.reddit.com/r/esp32/comments/124qwbn/espidf_501_i2s_dac_examples_that_dont_rely_on/",
+    "title": "ESP-IDF 5.01 i2s DAC examples that don't rely on ...",
+    "date": null
+   },
+   {
+    "url": "https://esp32.com/viewtopic.php?t=14309",
+    "title": "I2S to Internal DAC is Broken",
+    "date": "2020-02-18"
+   },
+   {
+    "url": "https://esp32.com/viewtopic.php?t=26134",
+    "title": "Cannot get I2S to internal DAC to work.",
+    "date": "2022-02-14"
+   },
+   {
+    "url": "https://esp32.com/viewtopic.php?t=23265",
+    "title": "I2S driver for ESP32 is not working [IDFGH-5854]",
+    "date": "2021-09-14"
+   },
+   {
+    "url": "https://betterdevices.io/esp32-s3-the-dac-removal-that-breaks-projects-ported-from-the-s2/",
+    "title": "ESP32-S3: The DAC Removal That Breaks Projects Ported ...",
+    "date": "2026-07-06"
+   },
+   {
+    "url": "https://community.home-assistant.io/t/wemos-s3-mini-esp-idf-i2s-audio/625865",
+    "title": "Wemos S3 mini esp-idf i2s_audio - Home Assistant Community",
+    "date": "2023-10-13"
+   },
+   {
+    "url": "https://my-esp-idf.readthedocs.io/en/latest/api-reference/peripherals/i2s.html",
+    "title": "I2S - ESP-IDF Programming Guide - Read the Docs",
+    "date": null
+   },
+   {
+    "url": "https://stackoverflow.com/questions/78126810/getting-i2s-mode-dac-built-in-was-not-declared-in-this-scope-error-when-compil",
+    "title": "getting 'I2S_MODE_DAC_BUILT_IN' was not declared in this scope error when compiling for ESP32S3",
+    "date": "2024-03-08"
+   },
+   {
+    "url": "https://www.atomic14.com/2024/01/05/esp32-s3-no-pins",
+    "title": "E32-S3 no DAC - No Problem! We'll Use PDM",
+    "date": "2024-01-05"
+   },
+   {
+    "url": "https://github.com/espressif/esp-idf/issues/10420",
+    "title": "Faulty clock output in I2S PDM TX DAC mode on ESP32- ...",
+    "date": "2022-12-21"
+   },
+   {
+    "url": "https://github.com/espressif/esp-idf/issues/10630",
+    "title": "I2S on ESP32-S3 setup with TDM PCM 16-bit single port generates 0s with every second sample (IDFGH-9244) · Issue #10630 · espressif/esp-idf",
+    "date": "2023-01-27"
+   },
+   {
+    "url": "https://cdn-learn.adafruit.com/assets/assets/000/110/710/original/esp32-s3_technical_reference_manual_en.pdf?1649790877",
+    "title": "PRELIMINARY",
+    "date": null
+   },
+   {
+    "url": "https://www.espressif.com/en/products/socs/esp32-s3",
+    "title": "ESP32-S3 Wi-Fi & BLE 5 SoC",
+    "date": "2026-08-03"
+   },
+   {
+    "url": "https://documentation.espressif.com/esp32-s3-wroom-2_datasheet_en.pdf",
+    "title": "ESP32-S3-WROOM-2 - Espressif Documentation",
+    "date": null
+   },
+   {
+    "url": "https://documentation.espressif.com/esp32-s3_datasheet_cn.pdf",
+    "title": "ESP32-S3 系列芯片",
+    "date": null
+   },
+   {
+    "url": "https://documentation.espressif.com/esp32-s3_datasheet_en.html",
+    "title": "ESP32-S3 Datasheet | Espressif Documentation",
+    "date": null
+   },
+   {
+    "url": "https://docs.espressif.com/projects/esp-idf/en/v5.0/esp32s3/hw-reference/chip-series-comparison.html",
+    "title": "Chip Series Comparison - ESP32-S3 - Technical Documents",
+    "date": null
+   },
+   {
+    "url": "https://www.espressif.com/en/products/socs/esp32-s3/documentation",
+    "title": "ESP SoCs | Espressif Systems",
+    "date": null
+   },
+   {
+    "url": "https://documentation.espressif.com/esp32_datasheet_en.pdf",
+    "title": "ESP32 Series - Espressif Documentation",
+    "date": null
+   },
+   {
+    "url": "https://documentation.espressif.com/esp32-s3-pico-1_datasheet_en.pdf",
+    "title": "ESP32-S3-PICO-1 Series - Espressif Documentation",
+    "date": "2023-07-21"
+   },
+   {
+    "url": "https://www.espboards.dev/esp32/microcontroller/esp32s3/",
+    "title": "ESP32S3 Development Boards: Specs & Pinouts - ESPboards",
+    "date": null
+   },
+   {
+    "url": "https://electropeak.com/esp32-s3-cam-development-board",
+    "title": "ESP32-S3 CAM Development Board - ElectroPeak",
+    "date": "2024-11-01"
+   },
+   {
+    "url": "https://xiaozhi.dev/en/docs/esp32/technical-specs/",
+    "title": "ESP32-S3 Technical Specifications & Development Board Guide",
+    "date": "2025-09-25"
+   },
+   {
+    "url": "https://documentation.espressif.com/esp32-s3-wroom-1_wroom-1u_datasheet_en.html",
+    "title": "ESP32-S3-WROOM-1 & ESP32-S3-WROOM-1U Datasheet",
+    "date": null
+   },
+   {
+    "url": "https://docs.waveshare.com/ESP32-S3-DEV-KIT-N8R8",
+    "title": "ESP32-S3-DEV-KIT-N8R8 Product Overview",
+    "date": null
+   }
+  ],
+  "search_results": [
+   {
+    "id": 1,
+    "last_updated": "2026-08-10",
+    "snippet": "|Target|Standard|PCM-to-PDM|PDM-to-PCM|PDM|TDM|ADC/DAC|LCD/Camera|\n...\nIf you are using PDM mode, note that not all I2S ports support conversion between raw PDM and PCM formats, because these ports do not have PCM-to-PDM data format converter in TX direction, or PDM-to-PCM data format converter in RX direction.\nPorts without the converter can only read/write raw PDM data.\nTo read/write PCM format data on these ports, you may need an extra software filter for PDM-to-PCM conversion.\n...\nIf the hardware does not have the converters above, then the PDM mode can only read/write raw PDM format data.\nYou need to realize a software filter to convert the raw PDM data into PCM format.",
+    "source": "web",
+    "title": "Inter-IC Sound (I2S) - ESP32-S3",
+    "url": "https://docs.espressif.com/projects/esp-idf/en/stable/esp32s3/api-reference/peripherals/i2s.html"
+   },
+   {
+    "id": 2,
+    "last_updated": "2026-03-24",
+    "snippet": "",
+    "source": "web",
+    "title": "Mbed TLS - ESP32-S3 - — ESP-IDF Programming Guide v6.0.2 ...",
+    "url": "https://docs.espressif.com/projects/esp-idf/en/stable/esp32s3/api-reference/protocols/mbedtls.html"
+   },
+   {
+    "date": "2025-06-03",
+    "id": 3,
+    "last_updated": "2026-03-24",
+    "snippet": "PDMマイクとESP-S3の接続はクロックとデータの2本だけとなります。またESP32-S3にはPDMとPCMの相互変換回路が内蔵されており、PDM-to-PCM RX modeの変換を行って入力されるPDMマイク出力をPCMデータとして取り込むことが可能です。\n(ESP32-S3 Technical Reference Manualより)\nPDMモードでは上図のI2SnI_WS_outがPDMクロックに、I2SnI_SD_INがPDMデータに相当するので、これらをI2SのWSとDINとしてピン設定します。",
+    "source": "web",
+    "title": "ESP32-S3で新しいi2s_pdmライブラリを使ってみる",
+    "url": "https://qiita.com/michimaru/items/920ba9ce26cc628bd522"
+   },
+   {
+    "id": 4,
+    "last_updated": "2026-08-11",
+    "snippet": "ESP32-S3 supports 802.1X/EAP (WPA) method of AKM and Advanced encryption standard with Counter Mode Cipher Block Chaining Message Authentication protocol (AES-CCM) cipher suite.\nIt also supports the cipher suites supported by mbedtls if USE_MBEDTLS_CRYPTO flag is set.\n- **ESP32-S3 currently supports the following EAP methods:**\n- EAP-TLS: This is certificate based method and only requires SSID and EAP-IDF.\n- PEAP: This is Protected EAP method.\nUsername and Password are mandatory.\n- - **EAP-TTLS: This is credentials based method.\nOnly server authentication is mandatory while user authentication is optional.\nUsername and Password are mandatory.\nIt supports different Phase2 methods like,** - PAP: Password Authentication Protocol.\n- CHAP: Challenge Handshake Authentication Protocol.\n- MSCHAP and MSCHAP-V2.\n...\n> - The TX antenna can be set to WIFI_ANT_MODE_AUTO only if the RX antenna mode is WIFI_ANT_MODE_AUTO because TX antenna selecting algorithm is based on RX antenna in WIFI_ANT_MODE_AUTO type.\n> - Currently Bluetooth® doesn’t support the multiple antennas feature, please don’t use multiple antennas related APIs.",
+    "source": "web",
+    "title": "Wi-Fi Driver - ESP32-S3 - — ESP-IDF Programming Guide v4.4.3 ...",
+    "url": "https://docs.espressif.com/projects/esp-idf/en/v4.4.3/esp32s3/api-guides/wifi.html"
+   },
+   {
+    "date": "2026-08-07",
+    "id": 5,
+    "last_updated": "2026-08-11",
+    "snippet": "Security:\n- Secure boot\n- Flash encryption\n- 4-Kbit OTP, up to 1792 bits for users\n- Cryptographic hardware acceleration: (AES-128/256, Hash, RSA, RNG, HMAC, Digital signature)\n...\n|Type|Location|Description|Compatible|\n...\n|I2S|on-chip|ESP32 I2S| |",
+    "source": "web",
+    "title": "ESP32-S3-Matrix - Zephyr Documentation",
+    "url": "https://docs.zephyrproject.org/latest/boards/waveshare/esp32s3_matrix/doc/index.html"
+   },
+   {
+    "id": 6,
+    "last_updated": "2026-08-01",
+    "snippet": "",
+    "source": "web",
+    "title": "ESP-IDF User Guide for ESP32-S3, SDK v5.5.5",
+    "url": "https://documentation.espressif.com/esp-idf/en/v5.5.5/esp32s3/index.html"
+   },
+   {
+    "date": "2026-08-08",
+    "id": 7,
+    "last_updated": "2026-08-11",
+    "snippet": "",
+    "source": "web",
+    "title": "Technical Documents | Espressif Systems",
+    "url": "https://www.espressif.com/en/support/documents/technical-documents"
+   },
+   {
+    "id": 8,
+    "last_updated": "2026-08-10",
+    "snippet": "The I2S interface has a dedicated DMA controller.\nIt supports TDM PCM, TDM MSB alignment, TDM LSB\nalignment, TDM Phillips, and PDM interface.",
+    "source": "web",
+    "title": "ESP32-S3 Series",
+    "url": "https://documentation.espressif.com/esp32-s3_datasheet_en.pdf"
+   },
+   {
+    "date": "2016-08-17",
+    "id": 9,
+    "last_updated": "2025-06-09",
+    "snippet": "",
+    "source": "web",
+    "title": "esp-idf/components/mbedtls/Kconfig at master · espressif/esp-idf",
+    "url": "https://github.com/espressif/esp-idf/blob/master/components/mbedtls/Kconfig"
+   },
+   {
+    "date": "2000-01-01",
+    "id": 10,
+    "last_updated": "2025-04-18",
+    "snippet": "",
+    "source": "web",
+    "title": "espressif,esp32-i2s - Zephyr Documentation",
+    "url": "https://docs.zephyrproject.org/latest/build/dts/api/bindings/i2s/espressif,esp32-i2s.html"
+   },
+   {
+    "date": "2024-02-01",
+    "id": 11,
+    "last_updated": "2026-04-17",
+    "snippet": "I2S driver support is available.",
+    "source": "web",
+    "title": "Is there a plan to support ESP32S3 I2S driver #68722",
+    "url": "https://github.com/zephyrproject-rtos/zephyr/discussions/68722"
+   },
+   {
+    "date": "2016-05-26",
+    "id": 12,
+    "last_updated": "2026-04-16",
+    "snippet": "",
+    "source": "web",
+    "title": "zephyr/drivers/i2s/i2s_esp32.c at main - GitHub",
+    "url": "https://github.com/zephyrproject-rtos/zephyr/blob/main/drivers/i2s/i2s_esp32.c"
+   },
+   {
+    "id": 13,
+    "last_updated": "2025-11-04",
+    "snippet": "4.36.4\nLimitations\n. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 2216\n...\nThis is the documentation for Espressif IoT Development Framework (esp-idf).",
+    "source": "web",
+    "title": "ESP32-S3",
+    "url": "https://docs.espressif.com/projects/esp-idf/en/v4.4.8/esp32s3/esp-idf-en-v4.4.8-esp32s3.pdf"
+   },
+   {
+    "date": "2025-12-09",
+    "id": 14,
+    "last_updated": "2025-12-15",
+    "snippet": "On an embedded device with mbedTLS, you must:\n- Embed the specific CA certificate(s) needed to verify your server\n- Enable exactly the cryptographic primitives required by the server\n- Configure TLS socket options correctly\n...\n# TLS/HTTPS overlay configuration for ESP32-S3\n# Build with: west build -b esp32s3_devkitc/esp32s3/procpu -- -DEXTRA_CONF_FILE=overlay-tls.conf\n# Increased stack for TLS handshake\nCONFIG_MAIN_STACK_SIZE=16384\n# Increased network buffers for TLS\nCONFIG_NET_BUF_RX_COUNT=80\nCONFIG_NET_BUF_TX_COUNT=80\n# mbedTLS core\nCONFIG_MBEDTLS=y\nCONFIG_MBEDTLS_BUILTIN=y\nCONFIG_MBEDTLS_ENABLE_HEAP=y\nCONFIG_MBEDTLS_HEAP_SIZE=60000\n# Server certificate chain requires larger buffer\nCONFIG_MBEDTLS_SSL_MAX_CONTENT_LEN=16384\n# SHA algorithms for certificate verification\n# SHA-1 for GlobalSign Root CA signature verification\nCONFIG_MBEDTLS_SHA1=y\n# SHA-256 for intermediate certificates and TLS handshake\nCONFIG_MBEDTLS_SHA256=y\n# SHA-384/512 for GTS Root R4 (ECDSA P-384)\nCONFIG_MBEDTLS_SHA384=y\nCONFIG_MBEDTLS_SHA512=y\n# RSA for GlobalSign Root CA verification (RSA-2048)\nCONFIG_MBEDTLS_RSA_C=y\nCONFIG_MBEDTLS_PKCS1_V15=y\n# ECDH and ECDSA for key exchange (server uses ECDHE-ECDSA)\nCONFIG_MBEDTLS_ECDH_C=y\nCONFIG_MBEDTLS_ECDSA_C=y\nCONFIG_MBEDTLS_ECP_C=y\nCONFIG_MBEDTLS_ECP_DP_SECP256R1_ENABLED=y\nCONFIG_MBEDTLS_ECP_DP_SECP384R1_ENABLED=y\n# AES-GCM cipher (server supports ECDHE-ECDSA-AES128-GCM-SHA256)\nCONFIG_MBEDTLS_CIPHER_AES_ENABLED=y\nCONFIG_MBEDTLS_CIPHER_GCM_ENABLED=y\n# Key exchange modes\nCONFIG_MBEDTLS_KEY_EXCHANGE_ECDHE_ECDSA_ENABLED=y\nCONFIG_MBEDTLS_KEY_EXCHANGE_ECDHE_RSA_ENABLED=y\n# Server Name Indication - REQUIRED for hostname verification against SAN wildcards\nCONFIG_MBEDTLS_SERVER_NAME_INDICATION=y\n# TLS socket support\nCONFIG_NET_SOCKETS_SOCKOPT_TLS=y\nCONFIG_NET_SOCKETS_TLS_MAX_CONTEXTS=2\n# Credential storage\nCONFIG_TLS_CREDENTIALS=y\nCONFIG_TLS_MAX_CREDENTIALS_NUMBER=2\n...\n`IPPROTO_TLS_1_2`instead of\n`IPPROTO_TCP`\n**Credential registration**:\n`tls_credential_add()`at startup links the CA certificate to a security tag\n**Socket options**:\n...\n**Transparent handshake**: The\n`connect()`call performs the TLS handshake automatically\n...\n- mbedTLS requires explicit configuration of every cryptographic primitive\n- SNI is essential not just for virtual hosting, but for wildcard certificate verification\n...\n**Fix:** Add RSA support:\n```\nCONFIG_MBEDTLS_RSA_C=y\nCONFIG_MBEDTLS_PKCS1_V15=y\n...\n**Fix:** Enable ECDH, ECDSA, and AES-GCM:\n...\n**Fix:** Increase the SSL buffer:\n```\nCONFIG_MBEDTLS_SSL_MAX_CONTENT_LEN=16384\n```\n...\n**Fix:** Switch to GlobalSign Root CA as the embedded certificate.\n...\nCONFIG_MBEDTLS_SERVER_NAME_INDICATION=y\n```\nWith this addition, the handshake succeeds.\n...\n|Error Code|Meaning|Likely Cause|\n...\n|`-0x262e`|X509_INVALID_FORMAT|Certificate parsing failed.\nEnable RSA ( `CONFIG_MBEDTLS_RSA_C`)|\n|`-0x7100`|SSL_BAD_CONFIG|No common ciphersuite.\nCheck server’s supported algorithms|\n|`-0x2700`|CERT_VERIFY_FAILED|Decode the verification flags (see below)|\n|`-0x6c00`|SSL_BUFFER_TOO_SMALL|Increase `CONFIG_MBEDTLS_SSL_MAX_CONTENT_LEN`|",
+    "source": "web",
+    "title": "Part 3: HTTPS with TLS on ESP32-S3 - Zephyr",
+    "url": "https://hub.mender.io/t/connectivity-with-zephyr-part-3-https-with-tls-on-esp32-s3/8132"
+   },
+   {
+    "id": 15,
+    "last_updated": "2026-08-11",
+    "snippet": "",
+    "source": "web",
+    "title": "Wi-Fi - ESP32-S3 - — ESP-IDF Programming Guide v5.2 ...",
+    "url": "https://docs.espressif.com/projects/esp-idf/en/v5.2/esp32s3/api-reference/network/esp_wifi.html"
+   },
+   {
+    "date": "2004-01-01",
+    "id": 31,
+    "last_updated": "2025-10-27",
+    "snippet": "The table bellow contains benchmarks of functions provided by ESP-DSP library.\nThe values are CPU cycle counts taken to execute each of the functions.\nThe Values in the column “O2” are made with compiler optimization for speed, and in the column “Os” column are made with compiler optimization for size.\nThe values in “ESP32”, “ESP32S3” and “ESP32P4” columns are for the optimized (assembly) implementation, values in “ANSI” column are for the non-optimized implementation.\n|Function Optimization|ESP32|ESP32S3|ESP32P4|ANSI Xtensa|ANSI Risc-V|ESP32|ESP32S3|ESP32P4|ANSI Xtensa|ANSI Risc-V|\n|--|--|--|--|--|--|--|--|--|--|--|\n...\n||\n|dsps_fir_f32 1024 input samples and 256 coefficients|1078691|443671|1606563|1353122|1606552|1078973|443680|3050985|4497990|3050972|\n|dsps_fird_f32 1024 samples 256 coeffs and decimation 4|276504|115499|339796|350726|415332|277204|115477|339780|1206798|814168|\n||\n...\n|dsps_biquad_f32 - biquad filter for 1024 input samples|17442|17552|15391|26651|21544|17441|17441|15403|36883|32789|",
+    "source": "web",
+    "title": "Espressif DSP Library Benchmarks - ESP32",
+    "url": "https://docs.espressif.com/projects/esp-dsp/en/latest/esp32/esp-dsp-benchmarks.html"
+   },
+   {
+    "id": 32,
+    "last_updated": "2026-03-17",
+    "snippet": "The table bellow contains benchmarks of functions provided by ESP-DSP library.\nThe values are CPU cycle counts\ntaken to execute each of the functions.\nThe Values in the column “O2” are made with compiler optimization for\nspeed, and in the column “Os” column are made with compiler optimization for size.\nThe values in “ESP32” and\n“ESP32S3” column are for the optimized (assembly) implementation, values in “ANSI” column are for the non-\noptimized implementation.\nFunction\nOptimization\nESP32\nO2\nESP32S3\nO2\nANSI\nO2\nESP32\nOs\nESP32S3\nOs\nANSI\nOs\nDot Product\n...\nFIR Filters\ndsps_fir_f32\n1024\ninput\nsamples\nand\n256\ncoefficients\n1079312\n1074223\n2150685\n1079599\n1074222\n5147785\nContinued on next page\n...\nOs\nANSI\nOs\ndsps_fird_f32\n1024\nsam-\nples\n256\ncoeffs\nand\ndecimation 4\n350915\n347436\n614234\n350520\n347607\n1317367\n...\nIIR Filters\ndsps_biquad_f32\n- biquad filter\nfor 1024 in-\nput samples\n17450\n17458\n24613\n17451\n17459\n36895\nMatrix Mul-",
+    "source": "web",
+    "title": "Read the Docs Template Documentation",
+    "url": "https://espressif-docs.readthedocs-hosted.com/_/downloads/esp-dsp/en/latest/pdf/"
+   },
+   {
+    "date": "2025-09-05",
+    "id": 33,
+    "last_updated": "2026-07-29",
+    "snippet": "The main benchmark test suite in `test_dsp.c` provides comprehensive performance measurement across all DSP function categories.\n...\nThe benchmark suite includes:\n- **Dot Product**: Various vector sizes and data types with step parameters\n- **FIR Filters**: Multiple coefficient lengths and decimation factors\n- **FFT Operations**: Radix-2 and Radix-4 transforms for different point sizes\n- **IIR Filters**: Biquad filter performance with different sample counts\n- **Matrix Operations**: Various matrix dimensions and data types\n- **Image Processing**: ESP32-S3 specific optimized image operations\n...\n1. **CSV Input**: Raw benchmark data with function names, cycle counts, and platform information",
+    "source": "web",
+    "title": "Performance and Testing | espressif/esp-dsp | DeepWiki",
+    "url": "https://deepwiki.com/espressif/esp-dsp/5-performance-and-testing"
+   },
+   {
+    "date": "2019-01-15",
+    "id": 34,
+    "last_updated": "2025-09-28",
+    "snippet": "",
+    "source": "web",
+    "title": "espressif/esp-dsp: DSP library for ESP-IDF",
+    "url": "https://github.com/espressif/esp-dsp"
+   },
+   {
+    "id": 35,
+    "last_updated": "2026-03-11",
+    "snippet": "This example demonstrates how to use IIR filters functionality from esp-dsp library.\nExample does the following steps:\n1. Initialize the library\n2. Initialize input signal\n3. - **Show LPF filter with Q factor 1**\n- Calculate iir filter coefficients - Filter the input test signal (delta function) - Shows impulse response on the plot - Shows frequency response on the plot - Calculate execution performance\n4.\n5. The same for LPF filter with Q factor 10\n...\nThis example demonstrates how to use FIR filter functionality from esp-dsp library.\nExample does the following steps:\n1. Initialize the FFT library\n2. Initialize input signal\n3. Show input signal\n4. Show filtered signal",
+    "source": "web",
+    "title": "Espressif DSP Library Examples - ESP32",
+    "url": "https://docs.espressif.com/projects/esp-dsp/en/latest/esp32/esp-dsp-examples.html"
+   },
+   {
+    "date": "2025-09-05",
+    "id": 36,
+    "last_updated": "2026-08-01",
+    "snippet": "Each ESP32 variant has specific optimizations with different capabilities:\n|Platform|Float FIR|Decimating Float|Decimating Fixed|Multi-rate|Key Features|\n|--|--|--|--|--|--|\n|ESP32|`ae32`|`ae32`|`ae32`|`ansi`|MAC16 acceleration, hardware loops|\n|ESP32-S3|`aes3`|`aes3`|`aes3`|`ansi`|Extended instruction set, 8-sample alignment|\n...\n**ESP32-S3 Specific Optimizations:**\n- Coefficient arrays padded to 8-sample boundaries\n- Coefficients reversed for `ee.ld.accx.ip` instruction\n- Rounding buffer allocation for accumulator operations",
+    "source": "web",
+    "title": "Digital Filters | espressif/esp-dsp | DeepWiki",
+    "url": "https://deepwiki.com/espressif/esp-dsp/4.3-digital-filters"
+   },
+   {
+    "id": 37,
+    "last_updated": "2026-08-02",
+    "snippet": "",
+    "source": "web",
+    "title": "Espressif DSP Library API Reference - ESP32 - — Espressif DSP ...",
+    "url": "https://docs.espressif.com/projects/esp-dsp/en/latest/esp32/esp-dsp-apis.html"
+   },
+   {
+    "id": 38,
+    "last_updated": "2026-07-21",
+    "snippet": "",
+    "source": "web",
+    "title": "ESP-DSP Library - ESP32",
+    "url": "https://docs.espressif.com/projects/esp-dsp/en/latest/esp32/index.html"
+   },
+   {
+    "date": "2025-06-06",
+    "id": 39,
+    "last_updated": "2026-08-11",
+    "snippet": "The total execution time remains ~9.2 ms / ~2.2 million cycles in both configurations.\n2. **However, the direct diagnostic test was a success.** The results were:\n- **Manual C Loop:** ~13,400 cycles\n- **ESP-DSP SIMD Function:** ~4,100 cycles\n- This shows a **~3.2x speedup** and **conclusively proves that my development environment is set up correctly and that SIMD acceleration is working at the library level.**\n...\nManual C Loop cycles: 13338 (result: 1786949.250000)\nESP-DSP SIMD cycles: 4118 (result: 1786949.250000)",
+    "source": "web",
+    "title": "ESP32-S3: SIMD Acceleration (ESP-NN/ESP-DSP) Not ...",
+    "url": "https://forum.edgeimpulse.com/t/esp32-s3-simd-acceleration-esp-nn-esp-dsp-not-effective-for-run-classifier/14264"
+   },
+   {
+    "date": "2025-04-24",
+    "id": 40,
+    "last_updated": "2026-04-16",
+    "snippet": "SOLVED: An ESP32(-S3) 3-cycle/tap fp32 FIR filter of arbitrary length and decimation (DSP-145) Status: Opened Type: Feature Request",
+    "source": "web",
+    "title": "Issues · espressif/esp-dsp",
+    "url": "https://github.com/espressif/esp-dsp/issues"
+   },
+   {
+    "date": "2022-10-06",
+    "id": 41,
+    "last_updated": "2024-12-09",
+    "snippet": "IIR Biquad フィルタがLch,Rch それぞれ1段なので，処理にかかる時間の割合は非常に小さい．ただHIGHのところが一定でないようなので，拡大すると下のようになっていた．\n...\nLch，Rch それぞれに 512Tap の FIR + 10段のIIR Biquad を設定した．\nIIRフィルタの係数はL,R同じ．",
+    "source": "web",
+    "title": "ESP32-S3 AF信号処理ボード（DSPライブラリ）",
+    "url": "https://tj-lab.org/2022/10/06/esp32-s3-af%E4%BF%A1%E5%8F%B7%E5%87%A6%E7%90%86%E3%83%9C%E3%83%BC%E3%83%89%EF%BC%88dsp%E3%83%A9%E3%82%A4%E3%83%96%E3%83%A9%E3%83%AA%EF%BC%89/"
+   },
+   {
+    "date": "2025-07-21",
+    "id": 42,
+    "last_updated": "2026-05-03",
+    "snippet": "Per the doc at GitHub - espressif/esp-dsp: DSP library for ESP-IDF you’re likely to get a better audience for this kind of help at esp32.com.",
+    "source": "web",
+    "title": "Audio processing on esp32-s3 using esp-dsp library",
+    "url": "https://community.platformio.org/t/audio-processing-on-esp32-s3-using-esp-dsp-library/48166"
+   },
+   {
+    "date": "2026-03-14",
+    "id": 43,
+    "last_updated": "2026-03-16",
+    "snippet": "The processing of 1024 raw samples incurs an overhead of about 2 milliseconds.\nThis performance is roughly 5 to 10 times quicker than conventional floating-point calculations.",
+    "source": "web",
+    "title": "Practical FFT on the ESP32-S3: DSP Acceleration and ...",
+    "url": "https://www.reddit.com/r/esp32/comments/1r5xhkz/practical_fft_on_the_esp32s3_dsp_acceleration_and/"
+   },
+   {
+    "date": "2024-12-01",
+    "id": 44,
+    "last_updated": "2025-07-24",
+    "snippet": "- Configure DSP options (FIR/IIR/Passthrough Mode)",
+    "source": "web",
+    "title": "GitHub - Kristian8606/esp32s3_audio_dsp",
+    "url": "https://github.com/Kristian8606/esp32s3_audio_dsp"
+   },
+   {
+    "date": "2024-11-22",
+    "id": 45,
+    "last_updated": "2026-04-17",
+    "snippet": "According to this page https://docs.espressif.com/projects/esp-dsp/en/latest/esp32/esp-dsp-benchmarks.html, dsps_dotprod_s16_ae32() for len=256 completes in 447 cpu cycles.\nThat is - I guess - 1 cycle/mac + overhead.",
+    "source": "web",
+    "title": "dsps_dotprod_s16_ae32 benchmark on ESP32 (DSP-153) · Issue #97 · espressif/esp-dsp",
+    "url": "https://github.com/espressif/esp-dsp/issues/97"
+   },
+   {
+    "id": 16,
+    "last_updated": "2026-07-12",
+    "snippet": "## How much memory is required for a stable TLS handshake on ESP32?\n...\n> A TLS handshake typically requires 40-50 KB of free heap memory for temporary allocation during the handshake process.\nIf memory fragmentation is excessive or available memory is insufficient, the handshake may fail.\nWhen memory is insufficient, it needs to be optimized.\nPlease refer to . Additionally, if the module includes external PSRAM, ensure it is properly configured and utilized.\n...\n> By default, when acting as a TLS server, the ESP does not validate the legitimacy of the client certificate.\nEven if client certificate verification fails, the ESP may still consider the handshake successful.\nTo enable client certificate verification, you must provide a valid CA certificate via the `cacert_pem` configuration.",
+    "source": "web",
+    "title": "ESP-TLS - - — ESP-FAQ latest documentation",
+    "url": "https://docs.espressif.com/projects/esp-faq/en/latest/software-framework/protocols/esp-tls.html"
+   },
+   {
+    "id": 17,
+    "last_updated": "2026-03-24",
+    "snippet": "The following table shows typical memory usage with different configs when the example (with Server Validation enabled) is run with Mbed TLS as the SSL/TLS library.\n|Mbed TLS Test|Related Configs|Heap Usage (approx.)|\n|--|--|--|\n|Default|NA|42196 B|\n|Enable SSL Dynamic Buffer Length| |42120 B|\n|Disable Keep Peer Certificate| |38533 B|\n|Enable Dynamic TX/RX Buffer| |22013 B|",
+    "source": "web",
+    "title": "Mbed TLS - ESP32-S3 - — ESP-IDF Programming Guide v6.0.2 ...",
+    "url": "https://docs.espressif.com/projects/esp-idf/en/stable/esp32s3/api-reference/protocols/mbedtls.html"
+   },
+   {
+    "date": "2025-12-12",
+    "id": 18,
+    "last_updated": "2025-12-15",
+    "snippet": "**Fix:** Switch to GlobalSign Root CA as the embedded certificate.\n...\n|Error Code|Meaning|Likely Cause|\n|--|--|--|",
+    "source": "web",
+    "title": "Connectivity with Zephyr - Part 3: HTTPS with TLS on ESP32-S3",
+    "url": "https://hub.mender.io/t/connectivity-with-zephyr-part-3-https-with-tls-on-esp32-s3/8132"
+   },
+   {
+    "date": "2026-07-07",
+    "id": 19,
+    "last_updated": "2026-07-19",
+    "snippet": "A standard TLS 1.2 handshake requires between 35KB and 55KB of contiguous internal SRAM.\nIf your ESP32 has fragmented heap memory—often caused by dynamic string allocations or improper PSRAM configuration—the TLS handshake will fail silently, returning `0` from the `connect()` method without throwing an exception.\n...\nBefore initializing your secure client, you must verify contiguous internal heap availability.\nStandard `ESP.getFreeHeap()` is insufficient because it includes fragmented blocks and external PSRAM.\nUse the ESP-IDF heap capabilities API instead:\n```\n#include <esp_heap_caps.h>\nvoid checkTlsMemory() {\nsize_t largest_block = heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL);\nSerial.printf(\"Largest internal free block: %u bytes\\n\", largest_block);\nif (largest_block < 60000) {\nSerial.println(\"WARNING: Insufficient contiguous SRAM for TLS handshake.\");\n}\n}\n```\n...\n|Method|Security Level|RAM Overhead|Maintenance Burden|Use Case|\n...\n|**Root CA Store** (`setCACert()`)|High (Full Chain Validation)|~45KB|Low (Decade-long expiry)|Production IoT, AWS/Azure/GCP endpoints|\n...\nYou can extract the root CA using OpenSSL from your terminal:\n```\nopenssl s_client -showcerts -connect api.yourserver.com:443 </dev/null\n```\nLook for the final certificate in the chain (usually ISRG Root X1 or ISRG Root X2 for Let's Encrypt).\nCopy the entire PEM block, including the `-----BEGIN CERTIFICATE-----` headers.\n...\nUse C++11 raw string literals `R\"(...)\"` to embed the multi-line certificate cleanly without escape character nightmares.\n...\nIf you attempt a `WiFiClientSecure` connection before synchronizing with an NTP server, the handshake will instantly fail with an `SSL_PEER_CERT_VERIFY_FAILED` error, regardless of how perfectly your Root CA is formatted.\nAlways implement a blocking or non-blocking NTP sync routine using `configTime()` prior to initializing your secure HTTP clients.\n...\n*Fix: Implement exponential backoff delays between retries.*\n...\n- **Error `-0x4E` (MBEDTLS_ERR_X509_CERT_VERIFY_FAILED):** The certificate chain could not be validated.\n*Fix: Verify you are using the Root CA, not the intermediate or leaf certificate.\nCheck that your NTP time sync completed successfully.*\n- **Silent Failure (Returns 0, no serial output):** Heap fragmentation.\n*Fix: Call `heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL)`.\nIf it is below 45KB, you must optimize your code to free large buffers before initiating the TLS handshake, or utilize an ESP32-S3 with Octal SPIRAM configured for internal heap fallback.*\n...\nBy profiling internal heap caps, embedding long-lived Root CAs via raw string literals, and guaranteeing NTP synchronization prior to the handshake, you can build resilient, secure ESP32 firmware capable of surviving the rigorous demands of modern cloud IoT infrastructure.",
+    "source": "web",
+    "title": "Arduino WiFiClientSecure: Master ESP32 HTTPS Requests",
+    "url": "https://electricalflux.com/mcu-general/fix-arduino-wificlientsecure-esp32-https-handshake"
+   },
+   {
+    "date": "2023-11-30",
+    "id": 20,
+    "last_updated": "2025-10-22",
+    "snippet": "|Config|Flash Impact From Baseline|Domain Coverage|",
+    "source": "web",
+    "title": "ProdESP32 #7: Playing with TLS Certs - Production ESP32",
+    "url": "https://productionesp32.com/posts/playing-with-certs/"
+   },
+   {
+    "id": 21,
+    "last_updated": "2026-07-09",
+    "snippet": "",
+    "source": "web",
+    "title": "ESP-TLS - — ESP-IDF Programming Guide v6.0.2 documentation",
+    "url": "https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/protocols/esp_tls.html"
+   },
+   {
+    "date": "2026-07-07",
+    "id": 22,
+    "last_updated": "2026-07-18",
+    "snippet": "> Expert Note:The ESP32’s mbedTLS implementation requires roughly 35KB to 45KB of contiguous SRAM to complete a TLS handshake.\nAlways check your free heap before initiating a secure connection using\n>\n```\n> ESP.getFreeHeap()\n> ```\n...\nInstead, embed the Root CA certificate directly in your sketch.\n...\n|Symptom|Root Cause|Solution|",
+    "source": "web",
+    "title": "Arduino WiFiClientSecure Read Response: Parse HTTPS JSON Data",
+    "url": "https://electricalflux.com/mcu-general/wificlientsecure-read-response-https-json-parsing"
+   },
+   {
+    "id": 23,
+    "last_updated": "2026-04-03",
+    "snippet": "",
+    "source": "web",
+    "title": "ESP32-S3 Crypto Benchmark | SSL TLS SSH IPsec TCP",
+    "url": "https://www.oryx-embedded.com/benchmark/espressif/crypto-esp32-s3.html"
+   },
+   {
+    "date": "2019-09-27",
+    "id": 24,
+    "last_updated": "2026-04-17",
+    "snippet": "",
+    "source": "web",
+    "title": "MbedTLS often fails Client side certificate validation in handshake ...",
+    "url": "https://github.com/espressif/esp-idf/issues/4127"
+   },
+   {
+    "date": "2017-01-20",
+    "id": 25,
+    "last_updated": "2026-08-05",
+    "snippet": "I figure from calling a few esp_get_free_heap_size() that my program + the ssl connection uses about 55kb.\n...\nconfig MBEDTLS_SSL_MAX_CONTENT_LEN\n```\n>\nis the easiest way to reduce memory usage.",
+    "source": "web",
+    "title": "Heap space",
+    "url": "https://esp32.com/viewtopic.php?t=1013"
+   },
+   {
+    "id": 26,
+    "last_updated": "2026-03-16",
+    "snippet": "Average verification time and free heap across different MCU platforms.\n|Device|Framework|Algorithm|Time (ms)|Free Heap (Bytes)|\n...\n|ESP32-S3|ESP-IDF|ED25519|67.0|141,036|\n| | |ECDSA-256|325.0|142,020|",
+    "source": "web",
+    "title": "Table 6.",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12987191/table/sensors-26-01535-t006/"
+   },
+   {
+    "date": "2026-08-01",
+    "id": 27,
+    "last_updated": "2026-08-09",
+    "snippet": "| Operation | ESP32-S3 | ESP32-C6 |\n...\n| ML-KEM-1024, encapsulate | 18.4 ms | 16.0 ms |\n| ML-KEM-1024, decapsulate | 21.1 ms | 17.8 ms |\n| ML-KEM-1024, full exchange | 39.6 ms | 33.8 ms |\n...\n| Free heap after handshake | 252 KB | 295 KB |\nOne key takeaway is that the stack runs out of space before the heap does.\nThe free heap space is satisfactory — around 250 KB after completing a handshake.\n...\n| Operation | ESP32-S3 | ESP32-C6 | Speedup |\n...\n| ECDSA, sign | 170.2 ms | 22.2 ms | 7.7x |",
+    "source": "web",
+    "title": "ML-KEM-1024 on an ESP32: 34-40 ms per key exchange, and the stack is what runs out first",
+    "url": "https://www.reddit.com/r/esp32/comments/1vd07zz/mlkem1024_on_an_esp32_3440_ms_per_key_exchange/"
+   },
+   {
+    "id": 28,
+    "last_updated": "2026-05-05",
+    "snippet": "> - At the same time, you can enable the sub-options `Free SSL peer certificate after its usage` and `Free certificate, key and DHM data after its usage` in the `Using dynamic TX/RX buffer` in the previous step.\n...\nIf you want to save memory, you can close it by `menuconfig` > `Component config` > `mbedTLS` > `mbedTLS v3.x related` > `Keep peer certificate after handshake completion (key \"N\" to disable）`.\n...\n> > free heap size: 181784 bytes\n...\n> > free heap size: 178636 bytes\n> > ```\n> - The error is caused by low memory.\n...\n> This error is usually caused by insufficient memory.\nIt is recommended to check the available RAM on the device.\n...\n> Check whether the field length of the SAN (Subject Alternative Name) IP address in the certificate meets the definition of the x.509 standard.\n...\n> This is usually caused by incomplete reception of data, making parsing impossible.\nVerify whether `CONFIG_MBEDTLS_SSL_IN_CONTENT_LEN` is set to 16 K.\nIf it is already configured to the maximum 16 K, enable Mbedtls debug logs to investigate the issue.",
+    "source": "web",
+    "title": "Mbed TLS - - — ESP-FAQ latest documentation",
+    "url": "https://docs.espressif.com/projects/esp-faq/en/latest/software-framework/protocols/mbedtls.html"
+   },
+   {
+    "date": "2017-11-29",
+    "id": 29,
+    "last_updated": "2026-03-22",
+    "snippet": "本文主要列举实际测试的 mbedTLS 在各种配置参数下，SSL 握手的内存开销和相应的测试方法。\n...\n的测试内存的开销，也就是说\n```\n每次只要\n```\n有内存分配就统计剩余的内存。代码修改方法如下：1.\n找到\n...\n1. 添加复位 API 和 获取 API：\n...\n1. 找到 example/protocol/openssl_client/openssl_client_example_main.c，添加全局API 声明：\nextern size_t get_mem_mark(void);\nextern void reset_mem_mark(void);\nextern size_t esp_get_free_heap_size(void);\n```\n1. 在\n...\n之前添加：\nreset_mem_mark();\nprintf(“start heap %d\\n”, esp_get_free_heap_size());\n```\n3. 在以下代码\n```\n```\nret = SSL_connect(ssl);\nif (!ret) {\nESP_LOGI(TAG, \"failed \" );\ngoto failed4;\nESP_LOGI(TAG, \"OK\");\n...\n```\nprintf(\"min heap %d\\n\", get_mem_mark());\nprintf(\"end heap %d\\n\", esp_get_free_heap_size());\nwhile (1);\n...\nSSL server 代码部分也做类似的修改。\n通过以上的修改，可以统计出 SSL 握手之前的内存，握手中系统剩余的最小内存和握手结束以后的内存。为了测试方便可以用2个 ESP32 模组进行测试，1个做 server，1个做 client，通过 menuconfig 配置 WIFI 和连接参数进行测试。\n...\n本节具体列举了 `client` 模式下非认证，本地认证，双向认证模式下，配置各种大小的 `fragment` 和证书所消耗的内存。",
+    "source": "web",
+    "title": "ESP32 基础篇：mbedTLS 内存开销分析",
+    "url": "https://blog.csdn.net/espressif/article/details/78663593"
+   },
+   {
+    "date": "2026-03-11",
+    "id": 30,
+    "last_updated": "2026-06-18",
+    "snippet": "",
+    "source": "web",
+    "title": "ESP32-S3 Rust/esp-idf: 8 hours of WiFi/TLS churn fragments SRAM down to 7KB — is there a way to reserve a contiguous region for mbedTLS at boot?",
+    "url": "https://www.reddit.com/r/embedded/comments/1rqfjsb/esp32s3_rustespidf_8_hours_of_wifitls_churn/"
+   },
+   {
+    "date": "2026-07-06",
+    "id": 46,
+    "last_updated": "2026-07-06",
+    "snippet": "Espressif HAL requires RF binary blobs in order work.\nRun the command\nbelow to retrieve those files.\n```\nwest blobs fetch hal_espressif\n```\n...\nIt is recommended running the command above after `west update`.",
+    "source": "web",
+    "title": "AtomS3 Lite - Zephyr Documentation",
+    "url": "https://docs.zephyrproject.org/latest/boards/m5stack/m5stack_atoms3_lite/doc/index.html"
+   },
+   {
+    "date": "2026-08-07",
+    "id": 47,
+    "last_updated": "2026-08-11",
+    "snippet": "",
+    "source": "web",
+    "title": "Espressif - Zephyr Documentation",
+    "url": "https://docs.zephyrproject.org/latest/boards/espressif/index.html"
+   },
+   {
+    "date": "2026-08-07",
+    "id": 48,
+    "last_updated": "2026-08-11",
+    "snippet": "Espressif HAL requires RF binary blobs in order work.\nRun the command\nbelow to retrieve those files.\n```\nwest blobs fetch hal_espressif\n```",
+    "source": "web",
+    "title": "ESP Thread Border Router / ZigBee Gateway",
+    "url": "https://docs.zephyrproject.org/latest/boards/espressif/esp_threadbr/doc/index.html"
+   },
+   {
+    "date": "2026-08-11",
+    "id": 49,
+    "last_updated": "2026-08-11",
+    "snippet": "Espressif HAL requires RF binary blobs in order work.\nRun the command\nbelow to retrieve those files.\n```\nwest blobs fetch hal_espressif\n```\n...\n# From the root of the zephyr repository\nwest build -b <board> samples/hello_world\n```",
+    "source": "web",
+    "title": "Fire - M5Stack - Zephyr Documentation",
+    "url": "https://docs.zephyrproject.org/latest/boards/m5stack/m5stack_fire/doc/index.html"
+   },
+   {
+    "date": "2026-08-07",
+    "id": 50,
+    "last_updated": "2026-08-11",
+    "snippet": "",
+    "source": "web",
+    "title": "Supported Boards and Shields",
+    "url": "https://docs.zephyrproject.org/latest/boards/index.html"
+   },
+   {
+    "date": "2026-08-11",
+    "id": 51,
+    "last_updated": "2026-08-11",
+    "snippet": "",
+    "source": "web",
+    "title": "Zephyr 3.7.0",
+    "url": "https://docs.zephyrproject.org/latest/releases/release-notes-3.7.html"
+   },
+   {
+    "id": 52,
+    "last_updated": "2026-08-10",
+    "snippet": "• Complies with IEEE 802.11b/g/n\n• Supports 20 MHz and 40 MHz bandwidth in 2.4 GHz band\n• 1T1R mode with data rate up to 150 Mbps",
+    "source": "web",
+    "title": "ESP32-S3Series - Espressif Systems",
+    "url": "https://documentation.espressif.com/esp32-s3_datasheet_en.pdf"
+   },
+   {
+    "date": "1999-04-04",
+    "id": 53,
+    "last_updated": "2025-03-23",
+    "snippet": "Binary blobs are fetched using west blobs.\nIf west is not used, they must be downloaded and\nverified manually.",
+    "source": "web",
+    "title": "zephyr.pdf",
+    "url": "https://docs.zephyrproject.org/latest/zephyr.pdf"
+   },
+   {
+    "date": "2020-06-11",
+    "id": 54,
+    "last_updated": "2026-04-16",
+    "snippet": "- WLAN Features:\n- 802.11b/g/n\n- WLAN Station\n- Security Modes: Open, WPA, WPA2, WPA3\n...\nESP-Hosted-NG solution is supported on following ESP boards:\n|Supported Targets|ESP32|ESP32-S2|ESP32-S3|ESP32-C2|ESP32-C3|ESP32-C6|\n...\n|ESP device|Transport Interface|Wi-Fi support|Bluetooth support|\n...\n|ESP32-S2| | | |\n|ESP32-S2|SPI|✓|✕|\n|ESP32-S2|ESP32-S3|SPI|✓|\n|UART|ESP32-S3|✕|✓|\n|SPI(WiFi) + UART(BT)|ESP32-S3|✓|✓|\n...\n> wlan0 can't function as both an AP (Access Point) and a Station at the same time, and there are no current plans to add that capability\n…",
+    "source": "web",
+    "title": "esp-hosted/esp_hosted_ng/README.md at master · espressif/esp-hosted",
+    "url": "https://github.com/espressif/esp-hosted/blob/master/esp_hosted_ng/README.md"
+   },
+   {
+    "id": 55,
+    "last_updated": "2026-03-19",
+    "snippet": "The following features are supported:\n- 4 virtual Wi-Fi interfaces, which are STA, AP, Sniffer and reserved.\n- Station-only mode, AP-only mode, station/AP-coexistence mode\n- IEEE 802.11b, IEEE 802.11g, IEEE 802.11n, and APIs to configure the protocol mode\n- WPA/WPA2/WPA3/WPA2-Enterprise/WPA3-Enterprise/WAPI/WPS and DPP\n- AMSDU, AMPDU, HT40, QoS, and other key features\n- Modem-sleep\n- The Espressif-specific ESP-NOW protocol and Long Range mode, which supports up to **1 km** of data traffic\n- Up to 20 MBit/s TCP throughput and 30 MBit/s UDP throughput over the air\n- Sniffer\n...\nESP32-S3 currently supports 20 MHz and 40 MHz bandwidth modes, which are used in combination with protocol modes.\n...\nSince LR is an Espressif-unique Wi-Fi mode operating on the 2.4 GHz band, only ESP32-series chips (excluding the ESP32-C2) support LR data transmission and reception.",
+    "source": "web",
+    "title": "Wi-Fi Driver - ESP32-S3 - — ESP-IDF Programming Guide ...",
+    "url": "https://docs.espressif.com/projects/esp-idf/en/stable/esp32s3/api-guides/wifi.html"
+   },
+   {
+    "id": 56,
+    "last_updated": "2026-07-16",
+    "snippet": "ESP devices are limited to only one channel, so when in the soft-AP+station mode, the soft-AP will adjust its channel automatically to be the same as the channel of the station.",
+    "source": "web",
+    "title": "Wi-Fi - ESP32-S3 - — ESP-IDF Programming Guide v6.0.2 ...",
+    "url": "https://docs.espressif.com/projects/esp-idf/en/stable/esp32s3/api-reference/network/esp_wifi.html"
+   },
+   {
+    "date": "2026-08-11",
+    "id": 57,
+    "last_updated": "2026-08-11",
+    "snippet": "Espressif HAL requires RF binary blobs in order work.\nRun the command\nbelow to retrieve those files.\n```\nwest blobs fetch hal_espressif\n```\n...\nIt is recommended running the command above after `west update`.",
+    "source": "web",
+    "title": "XIAO ESP32C6 - Zephyr Documentation",
+    "url": "https://docs.zephyrproject.org/latest/boards/seeed/xiao_esp32c6/doc/index.html"
+   },
+   {
+    "date": "2024-11-27",
+    "id": 58,
+    "last_updated": "2025-03-10",
+    "snippet": "",
+    "source": "web",
+    "title": "Zephyr support · Issue #551 · espressif/esp-hosted",
+    "url": "https://github.com/espressif/esp-hosted/issues/551"
+   },
+   {
+    "id": 59,
+    "last_updated": "2026-07-05",
+    "snippet": "ESP-Hosted provides driver such that any host can re-use ESP chipset as Wi-Fi or Bluetooth co-processor.\n...\nESP-Hosted is an open source solution that provides a way to use\nEspressif SoCs and modules as a communication (slave)\nco-processor.\nThis solution provides wireless connectivity (Wi-Fi and\nBluetooth) to the host microprocessor or microcontroller, allowing it\nto communicate with other devices.\n...\nFor ESP Chipsets with native Wi-Fi support (the ESP32 series, for\nexample), you also have to disable native Wi-Fi before ESP-Hosted can used.\nTo do this, edit the ESP-IDF\n`components/soc/<soc>/include/soc/Kconfig.soc_caps.in` file and change\nall `WIFI` related configs to `n`.\nFor example:\n```\nconfig SOC_WIFI_SUPPORTED\nbool\n# default y # original configuration\ndefault n\n```\nThis should be done for all `SOC_WIFI_xxx` configs found in the file.",
+    "source": "web",
+    "title": "espressif/esp_hosted • v0.0.14 - ESP Component Registry",
+    "url": "https://components.espressif.com/components/espressif/esp_hosted/versions/0.0.14?language=en"
+   },
+   {
+    "date": "2017-06-16",
+    "id": 60,
+    "last_updated": "2025-03-30",
+    "snippet": "You have to link with the blobs provided in https://github.com/espressif/esp32-wifi-lib (the \"lib\" directory is a git submodule pointing to this repo).|\n...\nTechnical details: - This is still based on 2nd stage bootloader from ESP-IDF which does required flash cache setup for XIP enabled application - This feature branch has appropriate west manifest file to pick up correct base ESP-IDF repository (based on v4.2 version) - Toolchain should be based on\nrevision xtensa-esp32-elf-gcc (crosstool-NG esp-2020r2) 8.2.0 - All networking application should be functional, just that prj.conf should be added with credentials for WiFi network using CONFIG_WIFI_SSID=\"myssid\" and CONFIG_WIFI_PASSWORD=\"mypassword\" Official PR (from Espressif) will still take some time but interim please feel free to give this a try and report any issues or feedback.\n...\nWiFi support requires binary blobs that currently assumes it's running on FreeRTOS.\nFigure out a way to use them on Zephyr.",
+    "source": "web",
+    "title": "WiFi support for ESP32 · Issue #3723 · zephyrproject-rtos/zephyr",
+    "url": "https://github.com/zephyrproject-rtos/zephyr/issues/3723"
+   },
+   {
+    "date": "2000-01-01",
+    "id": 76,
+    "last_updated": "2025-04-18",
+    "snippet": "",
+    "source": "web",
+    "title": "espressif,esp32-i2s",
+    "url": "https://docs.zephyrproject.org/latest/build/dts/api/bindings/i2s/espressif,esp32-i2s.html"
+   },
+   {
+    "date": "2024-02-01",
+    "id": 77,
+    "last_updated": "2026-04-17",
+    "snippet": "In fact, zephyr already supports LC3, but lacks I2S driver support.\n...\nI2S driver support is available.",
+    "source": "web",
+    "title": "Is there a plan to support ESP32S3 I2S driver · zephyrproject-rtos/zephyr · Discussion #68722",
+    "url": "https://github.com/zephyrproject-rtos/zephyr/discussions/68722"
+   },
+   {
+    "date": "2026-08-07",
+    "id": 78,
+    "last_updated": "2026-08-11",
+    "snippet": "",
+    "source": "web",
+    "title": "Espressif - Zephyr Documentation",
+    "url": "https://docs.zephyrproject.org/latest/boards/espressif/index.html"
+   },
+   {
+    "date": "2025-06-02",
+    "id": 79,
+    "last_updated": "2025-08-12",
+    "snippet": "While this chapter focuses on\n**Standard I2S mode** (including Philips, MSB-justified, LSB-justified), the ESP32 I2S peripheral and its driver also support: **PDM (Pulse Density Modulation) Mode:**Used with PDM digital microphones.\nTypically involves higher clock rates and decimation filters.\n(See\n`driver/i2s_pdm.h`)\n**TDM (Time Division Multiplexing) Mode:**Allows multiple audio channels over a single data line by dividing the frame into more time slots.\n(See\n`driver/i2s_tdm.h`)\n...\n|I2S Mode|Description|Typical Use Case / Components|Key ESP-IDF Header(s)|Initialization Function Example|\n...\n|PDM (Pulse Density Modulation) Mode|Interface for PDM digital signals, typically from PDM microphones.\nInvolves higher clock rates and requires decimation for PCM conversion.|Digital PDM microphones (e.g., MP34DT01-M, SPH0645LM4H).\nDriver can handle PDM to PCM conversion.|`driver/i2s_common.h` `driver/i2s_pdm.h`|`i2s_channel_init_pdm_rx_mode()` (for RX) `i2s_channel_init_pdm_tx_mode()` (for TX, less common)|\n|TDM (Time Division Multiplexing) Mode|Allows multiple audio channels (more than stereo) over a single data line by dividing each frame into multiple time slots.|Multi-channel audio systems, audio arrays, interfacing with codecs that support TDM.|`driver/i2s_common.h` `driver/i2s_tdm.h`|`i2s_channel_init_tdm_mode()`|\n|Built-in DAC Mode (ESP32 original)|Routes I2S0 output directly to the internal 8-bit DACs of the original ESP32.|Simple, low-fidelity audio output without external components on ESP32.|`driver/i2s_std.h` (configuration) `hal/i2s_ll.h` (low-level DAC connection)|`i2s_channel_init_std_mode()` with specific slot/GPIO config, then `i2s_channel_set_dac_mode()` or similar internal routing.|\n...\n- Connect your ESP32 board to your computer.\n- Connect the I2S DAC to the specified GPIO pins.\n...\n- All listed variants (ESP32, S2, S3, C3, C6, H2) generally support Standard I2S, PDM input (for digital microphones), and TDM modes through their I2S controllers and the ESP-IDF driver.\nThe new driver architecture with\n`i2s_std.h`,\n`i2s_pdm.h`, and\n`i2s_tdm.h`caters to these modes.\n- All listed variants (ESP32, S2, S3, C3, C6, H2) generally support Standard I2S, PDM input (for digital microphones), and TDM modes through their I2S controllers and the ESP-IDF driver.\n...\n**Internal DAC/ADC Connection:** **ESP32 (original):**The I2S peripheral (specifically I2S0) can be internally routed to the built-in 8-bit DACs for direct audio output without an external I2S DAC.\nIt can also be connected to the ADC.",
+    "source": "web",
+    "title": "I2S Audio Interface of ESP32 - circuitlabs.net",
+    "url": "https://circuitlabs.net/i2s-audio-interface-of-esp32/"
+   },
+   {
+    "date": "2025-02-12",
+    "id": 80,
+    "last_updated": "2026-04-16",
+    "snippet": "This PR adds i2s support for those SoCs lacking GDMA:\n- ESP32\n- ESP32-S2",
+    "source": "web",
+    "title": "Add i2s support for esp32 and esp32s2 by wmrsouza · Pull Request #83710 · zephyrproject-rtos/zephyr",
+    "url": "https://github.com/zephyrproject-rtos/zephyr/pull/83710"
+   },
+   {
+    "date": "2026-08-11",
+    "id": 81,
+    "last_updated": "2026-08-11",
+    "snippet": "",
+    "source": "web",
+    "title": "Samples and Demos - Zephyr Documentation",
+    "url": "https://docs.zephyrproject.org/latest/samples/index.html"
+   },
+   {
+    "date": "2022-11-27",
+    "id": 82,
+    "last_updated": "2026-04-17",
+    "snippet": "Indeed, no support yet.\nA list of supported peripheral is here.\n...\nBut if you are not such hurry, implement the i2s driver based on Device Driver Model is a good choice.\n...\n- Get hands on and write the driver.\nIn this case, we are favoring using hal_espressif instead direct register access.",
+    "source": "web",
+    "title": "I2S support for ESP32 · zephyrproject-rtos zephyr · Discussion #52581",
+    "url": "https://github.com/zephyrproject-rtos/zephyr/discussions/52581"
+   },
+   {
+    "date": "2016-05-26",
+    "id": 83,
+    "last_updated": "2026-05-29",
+    "snippet": "i2s0: i2s@6000f000 {\ncompatible = \"espressif,esp32-i2s\";\n#address-cells = <1>;\n#size-cells = <0>;\nreg = <0x6000f000 0x1000>;\ninterrupts = <I2S0_INTR_SOURCE IRQ_DEFAULT_PRIORITY 0>;\ninterrupt-parent = <&intc>;\nclocks = <&clock ESP32_I2S0_MODULE>;\ndmas = <&dma 2>, <&dma 3>;\n...\nunit = <0>;\n...\n};\ni2s1: i2s@6002d000 {\ncompatible = \"espressif,esp32-i2s\";\n#address-cells = <1>;\n#size-cells = <0>;\nreg = <0x6002d000 0x1000>;\ninterrupts = <I2S1_INTR_SOURCE IRQ_DEFAULT_PRIORITY 0>;\ninterrupt-parent = <&intc>;\nclocks = <&clock ESP32_I2S1_MODULE>;\ndmas = <&dma 4>, <&dma 5>;",
+    "source": "web",
+    "title": "zephyr/dts/xtensa/espressif/esp32s3/esp32s3_common.dtsi at main",
+    "url": "https://github.com/zephyrproject-rtos/zephyr/blob/main/dts/xtensa/espressif/esp32s3/esp32s3_common.dtsi?plain=1"
+   },
+   {
+    "date": "2016-05-26",
+    "id": 84,
+    "last_updated": "2025-08-20",
+    "snippet": "",
+    "source": "web",
+    "title": "zephyr/drivers/i2c/i2c_esp32.c at main · zephyrproject-rtos/zephyr",
+    "url": "https://github.com/zephyrproject-rtos/zephyr/blob/main/drivers/i2c/i2c_esp32.c"
+   },
+   {
+    "date": "2016-05-26",
+    "id": 85,
+    "last_updated": "2025-06-09",
+    "snippet": "",
+    "source": "web",
+    "title": "zephyr/boards/dptechnics/walter/walter_esp32s3_procpu.dts at main · zephyrproject-rtos/zephyr",
+    "url": "https://github.com/zephyrproject-rtos/zephyr/blob/main/boards/dptechnics/walter/walter_esp32s3_procpu.dts?plain=1"
+   },
+   {
+    "date": "2025-05-03",
+    "id": 86,
+    "last_updated": "2025-05-21",
+    "snippet": "I’ve been trying to configure the ESP32-S3 as an I2C slave (target) device, but it seems that Zephyr’s current i2c_esp32.c driver does not support slave mode or the i2c_target_register() API.\n...\nFWIW, the LL functions are present in hal_espressif, but there is no roadmap for this by the Espressif team (as of today).\nThe required work to do is to glue this LL layer to the Zephyr driver layer.",
+    "source": "web",
+    "title": "Support to config ESP32-S3 in I2C Slave Mode in Zephyr · zephyrproject-rtos zephyr · Discussion #89433",
+    "url": "https://github.com/zephyrproject-rtos/zephyr/discussions/89433"
+   },
+   {
+    "id": 87,
+    "last_updated": "2025-11-03",
+    "snippet": "- Note:\n- DAC can only play 8-bit data, so the wav file data are scaled to 8-bit data.\n- I2S DMA can only output 16-bit/32-bit data to DAC, DAC will only take the highest 8-bit data and output accordingly.\n- Before I2S DMA can output data stream to DAC, the data format should be converted to 16-bit or 32-bit by padding zeros.",
+    "source": "web",
+    "title": "GitHub - kunsen-an/espidf_pdm_sph0641_mic_out",
+    "url": "https://github.com/kunsen-an/espidf_pdm_sph0641_mic_out"
+   },
+   {
+    "date": "2023-10-16",
+    "id": 88,
+    "last_updated": "2026-04-17",
+    "snippet": "I setup a semi-automated test to bisect the issue and finally narrowed it down to the tracing framework.\nThe root cause is the RAM backend for the trace framework where `tracing_backend_ram_output()` is setup to stop logging when the trace buffer is full (see https://github.com/zephyrproject-rtos/zephyr/blob/main/subsys/tracing/tracing_backend_ram.c#L26-L29).\nI had some local modifications to clear the buffer and restart logging which took 30ms with a 1MB trace buffer.\nWith `CONFIG_TRACING_SYNC=y`, it does the clearing after calling `irq_lock()`, so that explains the delay.",
+    "source": "web",
+    "title": "ESP32-S3 Intermittent 30ms I2C Delay · zephyrproject-rtos zephyr · Discussion #63669",
+    "url": "https://github.com/zephyrproject-rtos/zephyr/discussions/63669"
+   },
+   {
+    "date": "2016-05-26",
+    "id": 89,
+    "last_updated": "2026-04-17",
+    "snippet": "",
+    "source": "web",
+    "title": "zephyr/boards/espressif/esp32s3_devkitc/doc/index.rst at main · zephyrproject-rtos/zephyr",
+    "url": "https://github.com/zephyrproject-rtos/zephyr/blob/main/boards/espressif/esp32s3_devkitc/doc/index.rst"
+   },
+   {
+    "date": "2025-02-25",
+    "id": 90,
+    "last_updated": "2025-06-02",
+    "snippet": "",
+    "source": "web",
+    "title": "How to make proper use of ESP32S3 PSRAM / SPIRAM? (Can't build wifi or camera samples for xiao-esp32s3-sense) · zephyrproject-rtos zephyr · Discussion #86301",
+    "url": "https://github.com/zephyrproject-rtos/zephyr/discussions/86301"
+   },
+   {
+    "date": "2004-01-01",
+    "id": 61,
+    "last_updated": "2025-10-27",
+    "snippet": "The table bellow contains benchmarks of functions provided by ESP-DSP library.\nThe values are CPU cycle counts taken to execute each of the functions.\nThe Values in the column “O2” are made with compiler optimization for speed, and in the column “Os” column are made with compiler optimization for size.\nThe values in “ESP32”, “ESP32S3” and “ESP32P4” columns are for the optimized (assembly) implementation, values in “ANSI” column are for the non-optimized implementation.\n|Function Optimization|ESP32|ESP32S3|ESP32P4|ANSI Xtensa|ANSI Risc-V|ESP32|ESP32S3|ESP32P4|ANSI Xtensa|ANSI Risc-V|",
+    "source": "web",
+    "title": "Espressif DSP Library Benchmarks - ESP32",
+    "url": "https://docs.espressif.com/projects/esp-dsp/en/latest/esp32/esp-dsp-benchmarks.html"
+   },
+   {
+    "id": 62,
+    "last_updated": "2025-09-13",
+    "snippet": "",
+    "source": "web",
+    "title": "IoT Heart Beat Monitoring Based on Nodemcu ESP32",
+    "url": "https://www.infor.seaninstitute.org/index.php/infokum/article/download/3006/2699"
+   },
+   {
+    "date": "2026-01-29",
+    "id": 63,
+    "last_updated": "2026-07-17",
+    "snippet": "1. Upload sketch to ESP32\n2. Open `Tools > Serial Plotter`\n3. Set baud rate to 115200\n4. Observe real-time waveform display\n...\n2. Download Processing application from Processing Visualizer project page",
+    "source": "web",
+    "title": "Full Featured BPM | bhawiyuga/PulseSensor_Playground_esp32 ...",
+    "url": "https://deepwiki.com/bhawiyuga/PulseSensor_Playground_esp32/5.2.3-full-featured-bpm"
+   },
+   {
+    "id": 64,
+    "last_updated": "2026-03-17",
+    "snippet": "The table bellow contains benchmarks of functions provided by ESP-DSP library.\nThe values are CPU cycle counts\ntaken to execute each of the functions.\nThe Values in the column “O2” are made with compiler optimization for\nspeed, and in the column “Os” column are made with compiler optimization for size.\nThe values in “ESP32” and\n“ESP32S3” column are for the optimized (assembly) implementation, values in “ANSI” column are for the non-\noptimized implementation.\nFunction\nOptimization\nESP32\nO2\nESP32S3\nO2\nANSI\nO2\nESP32\nOs\nESP32S3\nOs\nANSI\nOs\nDot Product",
+    "source": "web",
+    "title": "Read the Docs Template Documentation",
+    "url": "https://espressif-docs.readthedocs-hosted.com/_/downloads/esp-dsp/en/latest/pdf/"
+   },
+   {
+    "id": 65,
+    "last_updated": "2025-08-05",
+    "snippet": "Simultaneously, the system filters the audio using a bandpass filter to isolate \nheartbeat frequencies and detects peaks in the signal to calculate the average time between beats, resulting in an estimated BPM.",
+    "source": "web",
+    "title": "© 2025 IJRTI | Volume 10, Issue 4 April 2025 | ISSN: 2456-3315",
+    "url": "https://ijrti.org/papers/IJRTI2504311.pdf"
+   },
+   {
+    "id": 66,
+    "last_updated": "2026-01-30",
+    "snippet": "The time interval between consecutive peaks is calculated, and the heart rate is computed in beats ",
+    "source": "web",
+    "title": "Real-Time Heart Rate Monitoring And Controlling System ...",
+    "url": "https://rjwave.org/ijedr/papers/IJEDR2504709.pdf"
+   },
+   {
+    "date": "2017-07-30",
+    "id": 67,
+    "last_updated": "2026-05-05",
+    "snippet": "Pulse Sensor sample aquisition and processing happens in the background via Timer 2 interrupt.\n2mS sample rate.\n...\nBPM : int that holds the heart rate value, derived every beat, from averaging previous 10 IBI values.\n...\nBPM = 60000/runningTotal; // how many beats can fit into a minute? that's BPM!",
+    "source": "web",
+    "title": "Pulse Sensor Amped adapted for ESP32",
+    "url": "https://esp32.com/viewtopic.php?t=2590"
+   },
+   {
+    "date": "2025-12-09",
+    "id": 68,
+    "last_updated": "2025-12-10",
+    "snippet": "The system captures ECG signals through electrodes, processes the data using ESP32, andcomputes real-time heart rate using R-peak (QRS complex) detection.\n...\nESP32 samples the signal at ~250 Hz and applies peak-detection logic to identify the QRScomplex.\nFrom the time difference between consecutive R-peaks, the heart rate is calculated using:\nThe processed data is displayed in Arduino Serial Plotter for live ECG visualization.\n...\n• Peak detection\n...\nThe heart rate calculation was stable for normal resting conditions (60–100 BPM).",
+    "source": "web",
+    "title": "ECG Project Report | PDF | Electrocardiography - Scribd",
+    "url": "https://www.scribd.com/document/950628303/ECG-Project-Report"
+   },
+   {
+    "id": 69,
+    "last_updated": "2026-06-30",
+    "snippet": "Benchmarks `pcm_convert::copy_frames`, `mixer::mix_frames`, and `gain::apply` across a matrix of formats: different input and output bit depths (1, 2, 3, 4 bytes per sample) and, for convert and mix, different channel counts (mono and stereo, including up-mix and down-mix).\n...\nThe input is synthetic PCM generated at runtime, so this is a pure CPU throughput test of the kernels with no embedded audio asset.\n...\n```bash\ncd examples/pcm_benchmark\n# Build, upload, and monitor (ESP32-S3)\npio run -e esp32s3 -t upload -t monitor\n# Or target a plain ESP32\npio run -e esp32 -t upload -t monitor\n```\n...\n```bash\ncd examples/pcm_benchmark\nidf.py set-target esp32s3\nidf.py build\nidf.py flash monitor\n```",
+    "source": "web",
+    "title": "esphome/esp-audio-libs - 3.2.1 - Example pcm_benchmark",
+    "url": "https://components.espressif.com/components/esphome/esp-audio-libs/versions/3.2.1/examples/pcm_benchmark?language="
+   },
+   {
+    "date": "2021-09-12",
+    "id": 70,
+    "last_updated": "2025-08-12",
+    "snippet": "|GND|GND|\n|VP (GPIO36)|A0|\n...\nAs the pulse sensor requires an operating voltage in the range of 3.3-5V hence we will connect the VCC terminal of the sensor with 3.3V pin of the ESP32 board.\nBoth the grounds will be in common.\nAdditionally, the analog signal pin of the sensor will be connected with ADC_CH0 pin i.e. GPIO36 of the ESP32.\n...\nOpen Arduino IDE and click on\n**Sketch > Library > Manage Libraries**\nThe following window will open up.\nType ‘pulsesensor’ in the search bar and press enter.\nInstall the latest version of the library.\nAfter installation of the library, restart your IDE.\n...\nNow open Processing.\nGo to\n** File > Sketchbook > PulseSensorAmped_Processing_Visualizer**.\nThe sketch will open up.\n...\nNow you will be able to view the pulse, the heart rate, and the inter-beat interval (IBI) in real-time.",
+    "source": "web",
+    "title": "Monitor Heart Rate using Pulse Sensor and ESP32",
+    "url": "https://microcontrollerslab.com/pulse-sensor-esp32-tutorial/"
+   },
+   {
+    "date": "2025-06-07",
+    "id": 71,
+    "last_updated": "2026-01-20",
+    "snippet": "This project uses the ESP32 microcontroller to create a real-time heart rate monitor.\nApulse sensor is used to capture heartbeats, and basic digital signal processing (DSP)techniques like filtering and peak detection are employed to provide accurate heart ratereadings.\nThe heart rate is then displayed on an OLED screen or transmitted to a mobile appvia Wi-Fi or Bluetooth.\n...\nObjectiveTo measure heart rate in real-time, process the signal using simple filtering techniques toremove noise, and display the heart rate on an OLED or mobile app using Wi-Fi/Bluetooth.\nSteps to Implement1.\nPulse Sensor SetupConnect the pulse sensor to the ESP32.\nThese sensors typically output an analog signal thatcorresponds to the heartbeat.\n## Pulse Sensor Pinout:\n● VCC: Connect to ESP32 3.3V.● GND: Connect to ESP32 GND.● Signal: Connect to an analog input pin of the ESP32 (e.g., GPIO 34 or 35).\n## 2.\nSignal Processing (DSP)\nThe raw signal from the pulse sensor can be noisy, so we’ll use a simple low-pass filter toremove high-frequency noise, and a moving average or peak detection algorithm to detectheartbeats.\nLow-pass filter:Smooth out the noise in the signal.\nPeak detection:Detect the peaks in the signal, corresponding to heartbeats.3.\nCalculating Heart RateThe time difference between successive peaks in the signal gives the beat-to-beat interval.The heart rate (in beats per minute) is calculated as:\n## Heart Rate (BPM) = 60 / Time Between Peaks (in seconds)\n4. Display or OutputYou can display the heart rate on an OLED screen or send the data to a mobile app usingBluetooth or Wi-Fi.\n...\nif (pulseValue > threshold && beatDetected == 0) { beatDetected = 1; long currentTime = millis(); interval = currentTime - lastBeatTime; lastBeatTime = currentTime; bpm = 60000 / interval; // Calculate BPM Serial.print(\"BPM: \"); Serial.println(bpm);",
+    "source": "web",
+    "title": "ESP32 Heart Rate Monitor Setup Guide | PDF",
+    "url": "https://www.scribd.com/document/789758893/ESP32-Heart-Rate-Monitor-Project"
+   },
+   {
+    "id": 72,
+    "last_updated": "2026-05-29",
+    "snippet": "",
+    "source": "web",
+    "title": "© June 2026 | IJIRT | Volume 13 Issue 1 | ISSN: 2349-6002",
+    "url": "https://ijirt.org/publishedpaper/IJIRT203967_PAPER.pdf"
+   },
+   {
+    "id": 73,
+    "last_updated": "2026-07-14",
+    "snippet": "The heart rate (in beats per minute) was estimated by calculating the mean interval\nbetween consecutive S1 peaks.\n...\nThe interval between\n...\nCycle Duration (sec) = µ(∆autocorr peaks)",
+    "source": "web",
+    "title": "Identifying Abnormalities in Heart Sound data using ...",
+    "url": "https://www.diva-portal.org/smash/get/diva2:1980582/FULLTEXT01.pdf"
+   },
+   {
+    "date": "2020-06-15",
+    "id": 74,
+    "last_updated": "2026-05-16",
+    "snippet": "",
+    "source": "web",
+    "title": "[solved]FFT Beat Detection esp32 - Programming",
+    "url": "https://forum.arduino.cc/t/solved-fft-beat-detection-esp32/660828"
+   },
+   {
+    "id": 75,
+    "last_updated": "2026-06-12",
+    "snippet": "",
+    "source": "web",
+    "title": "esphome/esp-audio-libs - 3.2.1 Examples - ESP Component Registry",
+    "url": "https://components.espressif.com/components/esphome/esp-audio-libs/versions/3.2.1/examples?language=en"
+   },
+   {
+    "id": 91,
+    "last_updated": "2026-08-10",
+    "snippet": "|ESP32-S3|I2S 0/1|I2S 0|I2S 0|I2S 0/1|I2S 0/1|none|none|",
+    "source": "web",
+    "title": "Inter-IC Sound (I2S) - ESP32-S3",
+    "url": "https://docs.espressif.com/projects/esp-idf/en/stable/esp32s3/api-reference/peripherals/i2s.html"
+   },
+   {
+    "id": 92,
+    "last_updated": "2025-11-03",
+    "snippet": "However, I found that in https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/peripherals/i2s.html\nthe table shows no ADC/DAC for I2S for the S3....Actually, I found a comment by one of the Espressif devs saying that the S3 does not support reading from the ADC with I2S, unfortunately...It’s supported.\nJust a typo on the ESP32 page.\nHead to the ESP32-S3 page instead at https://docs.espressif.com/projects/esp-idf/en/stable/esp32s3/api-reference/peripherals/i2s.html",
+    "source": "web",
+    "title": "Am I understanding the S3 = no I2S ADC support? Tips for speed?",
+    "url": "https://www.reddit.com/r/esp32/comments/1c5qu38/am_i_understanding_the_s3_no_i2s_adc_support_tips/"
+   },
+   {
+    "id": 93,
+    "last_updated": "2025-11-03",
+    "snippet": "/* ADC/DAC are not supported in the new I2S driver, but still available in the legacy I2S driver for backward compatibility * Please turn to the dedicated ADC/DAC driver instead */#pragma message(\"ADC/DAC on ESP32 will no longer supported via I2S driver\")\n...\nYes, the internal DAC connected to pin 25, which in this case (in the m5stack fire) is connected to a speaker.",
+    "source": "web",
+    "title": "ESP-IDF 5.01 i2s DAC examples that don't rely on ...",
+    "url": "https://www.reddit.com/r/esp32/comments/124qwbn/espidf_501_i2s_dac_examples_that_dont_rely_on/"
+   },
+   {
+    "id": 94,
+    "last_updated": "2026-08-10",
+    "snippet": "",
+    "source": "web",
+    "title": "ESP32-S3 Series",
+    "url": "https://documentation.espressif.com/esp32-s3_datasheet_en.pdf"
+   },
+   {
+    "date": "2020-02-18",
+    "id": 95,
+    "last_updated": "2026-05-05",
+    "snippet": "// configure i2s for internal dac\nstatic const i2s_config_t i2s_config =\n{\n.mode = I2S_MODE_MASTER | I2S_MODE_TX | I2S_MODE_DAC_BUILT_IN,\n.sample_rate = 48000,\n.bits_per_sample = 16,\n.channel_format = I2S_CHANNEL_FMT_RIGHT_LEFT,\n.communication_format = I2S_COMM_FORMAT_I2S_MSB,\n.intr_alloc_flags = ESP_INTR_FLAG_LEVEL1,\n.dma_buf_count = 8,\n.dma_buf_len = 64,",
+    "source": "web",
+    "title": "I2S to Internal DAC is Broken",
+    "url": "https://esp32.com/viewtopic.php?t=14309"
+   },
+   {
+    "date": "2022-02-14",
+    "id": 96,
+    "last_updated": "2026-03-29",
+    "snippet": "i2s_config_t i2s_config = {\n.mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_TX | I2S_MODE_DAC_BUILT_IN), //Mode",
+    "source": "web",
+    "title": "Cannot get I2S to internal DAC to work.",
+    "url": "https://esp32.com/viewtopic.php?t=26134"
+   },
+   {
+    "date": "2021-09-14",
+    "id": 97,
+    "last_updated": "2026-03-16",
+    "snippet": "",
+    "source": "web",
+    "title": "I2S driver for ESP32 is not working [IDFGH-5854]",
+    "url": "https://esp32.com/viewtopic.php?t=23265"
+   },
+   {
+    "date": "2026-07-06",
+    "id": 98,
+    "last_updated": "2026-07-15",
+    "snippet": "The original ESP32 has two 8-bit DAC channels on GPIO25 and GPIO26.\nThe ESP32-S2 kept two 8-bit channels on GPIO17 and GPIO18.\nThe ESP32-S3 has none.\nEspressif removed the DAC from the S3 entirely; the silicon does not have one, the ESP-IDF DAC driver does not exist for the S3 target, and the Arduino `dacWrite()` call has nothing to talk to.\n...\nThe right answer on the S3 is I2S into an external DAC or amplifier: a **PCM5102A** for line-level output, or a **MAX98357A** for direct speaker drive.\n...\n### Does the ESP32-S3 have a DAC?\nNo. The original ESP32 has two 8-bit DAC channels (GPIO25/26) and the ESP32-S2 has two (GPIO17/18), but the ESP32-S3 has no DAC peripheral at all.\nThe ESP-IDF DAC driver is not available for the S3 target, and Arduino’s `dacWrite()` does not work on it.\n...\nFor DC or slow control voltages, use the LEDC PWM peripheral with an RC low-pass filter.\nFor audio, use I2S into an external DAC (PCM5102A) or amplifier (MAX98357A).\nFor mid-rate waveforms, use an external SPI DAC such as the MCP4921.",
+    "source": "web",
+    "title": "ESP32-S3: The DAC Removal That Breaks Projects Ported ...",
+    "url": "https://betterdevices.io/esp32-s3-the-dac-removal-that-breaks-projects-ported-from-the-s2/"
+   },
+   {
+    "date": "2023-10-13",
+    "id": 99,
+    "last_updated": "2026-03-25",
+    "snippet": "",
+    "source": "web",
+    "title": "Wemos S3 mini esp-idf i2s_audio - Home Assistant Community",
+    "url": "https://community.home-assistant.io/t/wemos-s3-mini-esp-idf-i2s-audio/625865"
+   },
+   {
+    "id": 100,
+    "last_updated": "2026-05-30",
+    "snippet": "I2S output can also be routed directly to the Digital/Analog Converter output channels (GPIO 25 & GPIO 26) to produce analog output directly, rather than via an external I2S codec.\n...\nShort example configuring I2S to use internal DAC for analog output:\n...\nstatic const i2s_config_t i2s_config = {\n.mode = I2S_MODE_MASTER | I2S_MODE_TX | I2S_MODE_DAC_BUILT_IN,\n.sample_rate = 44100,\n.bits_per_sample = 16, /* the DAC module will only take the 8bits from MSB */\n...\n//You can call i2s_set_dac_mode to set built-in DAC output mode.\n//i2s_set_dac_mode(I2S_DAC_CHANNEL_BOTH_EN);\n...\npin configuration (GPIO25 & GPIO26) - ****Note**** if *pin is set as NULL, this function will initialize both of the built-in DAC channels by default.\nif you don’t want this to happen and you want to initialize only one of the DAC channels, you can call i2s_set_dac_mode instead.\n...\n- **esp_err_t `i2s_set_dac_mode`( *dac_mode*)¶**\nSet I2S dac mode, I2S built-in DAC is disabled by default.\n- ****Note**** Built-in DAC functions are only supported on I2S0 for current ESP32 chip.\nIf either of the built-in DAC channel are enabled, the other one can not be used as RTC DAC function at the same time.\n- ****Return**** - ESP_OK Success - ESP_ERR_INVALID_ARG Parameter error - ****Parameters**** - `dac_mode`: DAC mode configurations - see i2s_dac_mode_t\n...\nI2S DAC mode for i2s_set_dac_mode.\n- ****Note**** PDM and built-in DAC functions are only supported on I2S0 for current ESP32 chip.",
+    "source": "web",
+    "title": "I2S - ESP-IDF Programming Guide - Read the Docs",
+    "url": "https://my-esp-idf.readthedocs.io/en/latest/api-reference/peripherals/i2s.html"
+   },
+   {
+    "date": "2024-03-08",
+    "id": 101,
+    "last_updated": "2025-05-29",
+    "snippet": "```\nI2S_MODE_DAC_BUILT_IN\n```\nis not defined for the ESP32-S3 because the ESP32-S3 does not have a DAC.\nThe original ESP32 does.\nYou can verify this by reading the ESP32-S3 datasheet - while data sheets don't call out what hardware devices *don't* have you'll see that there's no mention of a DAC.\nYou'll need to use a different CPU that does have a DAC or rework how you're doing your I2S output.",
+    "source": "web",
+    "title": "getting 'I2S_MODE_DAC_BUILT_IN' was not declared in this scope error when compiling for ESP32S3",
+    "url": "https://stackoverflow.com/questions/78126810/getting-i2s-mode-dac-built-in-was-not-declared-in-this-scope-error-when-compil"
+   },
+   {
+    "date": "2024-01-05",
+    "id": 102,
+    "last_updated": "2026-08-11",
+    "snippet": "So, there’s no DAC on the ESP32-S3.\n...\nBut it’s actually surprisingly easy to output **P** ulse **D** ensity **M** odulated audio using Sigma Delta Modulation on the ESP32 and you can recover the audio signal by low pass filtering it - an RC filter can be sufficient for this.\n...\nA much better way is to use the I2S peripheral which can also output PDM data.",
+    "source": "web",
+    "title": "E32-S3 no DAC - No Problem! We'll Use PDM",
+    "url": "https://www.atomic14.com/2024/01/05/esp32-s3-no-pins"
+   },
+   {
+    "date": "2022-12-21",
+    "id": 103,
+    "last_updated": "2025-05-27",
+    "snippet": "To sum up, PDM TX can only support up to\n...\n48K\n```\nsample rate.",
+    "source": "web",
+    "title": "Faulty clock output in I2S PDM TX DAC mode on ESP32- ...",
+    "url": "https://github.com/espressif/esp-idf/issues/10420"
+   },
+   {
+    "date": "2023-01-27",
+    "id": 104,
+    "last_updated": "2025-08-26",
+    "snippet": "",
+    "source": "web",
+    "title": "I2S on ESP32-S3 setup with TDM PCM 16-bit single port generates 0s with every second sample (IDFGH-9244) · Issue #10630 · espressif/esp-idf",
+    "url": "https://github.com/espressif/esp-idf/issues/10630"
+   },
+   {
+    "id": 105,
+    "last_updated": "2025-02-05",
+    "snippet": "",
+    "source": "web",
+    "title": "PRELIMINARY",
+    "url": "https://cdn-learn.adafruit.com/assets/assets/000/110/710/original/esp32-s3_technical_reference_manual_en.pdf?1649790877"
+   },
+   {
+    "id": 106,
+    "last_updated": "2026-08-10",
+    "snippet": "Check the link or the QR code to make sure that you use the latest version of this document:\nhttps://www.espressif.com/documentation/esp32-s3_datasheet_en.pdf\nContents\n...\n• 512 KB on-chip SRAM: for data and instructions, running at a configurable frequency of up to 240 MHz",
+    "source": "web",
+    "title": "ESP32-S3 Series - Espressif Documentation",
+    "url": "https://documentation.espressif.com/esp32-s3_datasheet_en.pdf"
+   },
+   {
+    "date": "2026-08-03",
+    "id": 107,
+    "last_updated": "2026-08-08",
+    "snippet": "**ESP32-S3** is a dual-core XTensa LX7 MCU, capable of running at 240 MHz.\nApart from its 512 KB of internal SRAM, it also comes with integrated 2.4 GHz, 802.11 b/g/n Wi-Fi and Bluetooth 5 (LE) connectivity that provides long-range support.\nIt has 45 programmable GPIOs and supports a rich set of peripherals.\nESP32-S3 supports larger, high-speed octal SPI flash, and PSRAM with configurable data and instruction cache.",
+    "source": "web",
+    "title": "ESP32-S3 Wi-Fi & BLE 5 SoC",
+    "url": "https://www.espressif.com/en/products/socs/esp32-s3"
+   },
+   {
+    "id": 108,
+    "last_updated": "2026-08-10",
+    "snippet": "Check the link or the QR code to make sure that you use the latest version of this document:\nhttps://www.espressif.com/documentation/esp32-s3-wroom-2_datasheet_en.pdf\n...\n• ESP32-S3 SoC embedded, Xtensa® dual-core\n32-bit LX7 microprocessor (with single precision\nFPU), up to 240 MHz\n• 384 KB ROM\n• 512 KB SRAM\n• 16 KB SRAM in RTC\n• Up to 16 MB PSRAM",
+    "source": "web",
+    "title": "ESP32-S3-WROOM-2 - Espressif Documentation",
+    "url": "https://documentation.espressif.com/esp32-s3-wroom-2_datasheet_en.pdf"
+   },
+   {
+    "id": 109,
+    "last_updated": "2026-08-10",
+    "snippet": "2.4 GHz Wi-Fi (IEEE 802.11b/g/n) 和Bluetooth® 5 (LE)\n芯片封装内可叠封1.8 V 或3.3 V flash 和PSRAM\n45 个GPIO 管脚\n...\nESP32-S3 是一款低功耗的MCU 系统级芯片(SoC)，支持2.4 GHz Wi-Fi 和低功耗蓝牙(Bluetooth® LE) 无线通\n...\n• SRAM：512 KB\n• RTC SRAM：16 KB\n...\n点击链接或扫描二维码确保您使用的是最新版本的文档：\nhttps://www.espressif.com/documentation/esp32-s3_datasheet_cn.pdf\n目录\n...\n• 512 KB 片上SRAM：用于数据和指令存储，时钟频率可配置，最大240 MHz",
+    "source": "web",
+    "title": "ESP32-S3 系列芯片",
+    "url": "https://documentation.espressif.com/esp32-s3_datasheet_cn.pdf"
+   },
+   {
+    "id": 110,
+    "last_updated": "2026-08-10",
+    "snippet": "(MB)Flash temperature H: High temperatureN: Normal temperatureFlashChip seriesRRxxVV1.8 V external SPI flash onlyPSRAM size (MB)PSRAMHHPSRAM temperature H: High temperature ",
+    "source": "web",
+    "title": "ESP32-S3 Datasheet | Espressif Documentation",
+    "url": "https://documentation.espressif.com/esp32-s3_datasheet_en.html"
+   },
+   {
+    "id": 111,
+    "last_updated": "2026-08-08",
+    "snippet": "|Feature|ESP32 Series|ESP32-S2 Series|ESP32-C3 Series|ESP32-S3 Series|\n...\n|Core|Xtensa® dual-/single core 32-bit LX6|Xtensa® single-core 32-bit LX7|32-bit single-core RISC-V|Xtensa® dual-core 32-bit LX7|\n...\n|Typical frequency|240 MHz (160 MHz for ESP32-S0WD)|240 MHz|160 MHz|240 MHz|\n|SRAM|520 KB|320 KB|400 KB|512 KB|",
+    "source": "web",
+    "title": "Chip Series Comparison - ESP32-S3 - Technical Documents",
+    "url": "https://docs.espressif.com/projects/esp-idf/en/v5.0/esp32s3/hw-reference/chip-series-comparison.html"
+   },
+   {
+    "id": 112,
+    "last_updated": "2026-08-01",
+    "snippet": "## ESP32-S3 | Dual-core 32-bit Xtensa ® LX7 240 MHz Modules DevKits\n|Name|PN|Datasheet|Buy|GPIO Select all Clear|RAM (KB)|Flash (MB)|PSRAM (MB)|Size (mm)|Certification|Environmental Compliance|Erratas|PCN|Advisory|Footprint|\n|--|--|--|--|--|--|--|--|--|--|--|--|--|--|--|\n| |ESP32-S3| |### ESP32-S3 - AliExpress Sample Price for Reference: $1.85 - Digi-Key - Mouser - Amazon US - Robu India|45|512|N/A|N/A|QFN 7×7| | | | | |Please open the DXF and ASC files by importing them.Download|\n| |ESP32-S3R8| |### ESP32-S3R8 - AliExpress Sample Price for Reference: $2.28 - Digi-Key - Mouser - Amazon US - Robu India|45|512|N/A|8|QFN 7×7| | | | | |Please open the DXF and ASC files by importing them.Download|\n...\n| |ESP32-S3R16V| |### ESP32-S3R16V - AliExpress Sample Price for Reference: $2.49|45|512|N/A|16|QFN 7×7| | | | | |Please open the DXF and ASC files by importing them.Download|\n| |ESP32-S3RH2| | |45|512|N/A|2|QFN 7×7| | | | | |Please open the DXF and ASC files by importing them.Download|\n| |ESP32-S3-PICO-1-N8R2| |### ESP32-S3-PICO-1-N8R2 - AliExpress Sample Price for Reference: $3.47 - Digi-Key - Mouser - Amazon US|39|512|8|2|LGA 7×7| | | | | |Please open the DXF and ASC files by importing them.Download|\n| |ESP32-S3-PICO-1-N8R8| |### ESP32-S3-PICO-1-N8R8 - AliExpress Sample Price for Reference: $3.89 - Amazon US - Robu India|39|512|8|8|LGA 7×7| | | | | |Please open the DXF and ASC files by importing them.Download|\n...\n## ESP32 | Dual-core 32-bit Xtensa ® 240 MHz Modules DevKits\n|Name|PN|Datasheet|Buy|GPIO Select all Clear|RAM (KB)|Flash (MB)|PSRAM (MB)|Size (mm)|Certification|Environmental Compliance|Erratas|PCN|Advisory|Footprint|",
+    "source": "web",
+    "title": "ESP SoCs | Espressif Systems",
+    "url": "https://www.espressif.com/en/products/socs/esp32-s3/documentation"
+   },
+   {
+    "id": 113,
+    "last_updated": "2026-08-10",
+    "snippet": "– 2 cores at 240 MHz: 1079.96 CoreMark; 4.50 CoreMark/MHz",
+    "source": "web",
+    "title": "ESP32 Series - Espressif Documentation",
+    "url": "https://documentation.espressif.com/esp32_datasheet_en.pdf"
+   },
+   {
+    "date": "2023-07-21",
+    "id": 114,
+    "last_updated": "2026-08-10",
+    "snippet": "ESP32-S3-PICO-1 is a System-in-Package (SiP) device that is based on ESP32-S3 with integrated 2.4 GHz\nWi-Fi and Bluetooth® Low Energy (Bluetooth LE).\nIt integrates an 8 MB SPI flash and an up to 8 MB SPI\nPSRAM.\n...\n• ESP32-S3 SoC embedded, Xtensa® dual-core\n32-bit LX7 microprocessor (with single precision\nFPU), up to 240 MHz\n• 384 KB ROM\n• 512 KB SRAM\n• 16 KB SRAM in RTC\n...\n• 8 MB Quad SPI flash\n• Up to 8 MB PSRAM\n...\nhttps://www.espressif.com/documentation/esp32-s3-pico-1_datasheet_en.pdf\nContents",
+    "source": "web",
+    "title": "ESP32-S3-PICO-1 Series - Espressif Documentation",
+    "url": "https://documentation.espressif.com/esp32-s3-pico-1_datasheet_en.pdf"
+   },
+   {
+    "id": 115,
+    "last_updated": "2026-08-11",
+    "snippet": "It features a dual-core processor, USB OTG, and enhanced GPIOs supporting **8-bit parallel LCDs** and **camera interfaces**.\n...\nCPUXtensa dual-core 32-bit LX7Clock240 MHzSRAM512 KBOperating temp-40 to 85 °C\nConnectivity\nWi-Fi802.11 b/g/n (2.4 GHz)Bluetooth5.0BLE5.0\n...\n|Pin|Label|Why avoid|Category|",
+    "source": "web",
+    "title": "ESP32S3 Development Boards: Specs & Pinouts - ESPboards",
+    "url": "https://www.espboards.dev/esp32/microcontroller/esp32s3/"
+   },
+   {
+    "date": "2024-11-01",
+    "id": 116,
+    "last_updated": "2026-01-02",
+    "snippet": "## Specifications of ESP32-S3 CAM Development Board\n- Core: Xtensa Dual-Core 32-bit LX7 CPU, Frequency up to 240MHz\n- Memories:\n- 384kB of ROM\n- 512kB of SRAM\n- 16kB of RTCSRAM\n- 8MB of PSRAM\n- Working Voltage: 3V to 3.6V\n- Up to 45 GPIOs\n- 2x12-bit ADC (Up to 20 channels)\n- Communication Interfaces: 2 x I2C, 2 x I2S, 4 x SPI, 3 x UART, 1 x USB OTG\n- Operating Temperature Range: -40~65C\n- Optional Camera Sensors: OV2640 (2MB) , OV5640 (5MB)\n## Datasheet of ESP32-S3 CAM Development Board\nhttps://www.espressif.com/sites/default/files/documentation/esp32-s3_datasheet_en.pdf\n...\nhttps://www.espressif.com/sites/default/files/documentation/esp32-s3_datasheet_en.pdf",
+    "source": "web",
+    "title": "ESP32-S3 CAM Development Board - ElectroPeak",
+    "url": "https://electropeak.com/esp32-s3-cam-development-board"
+   },
+   {
+    "date": "2025-09-25",
+    "id": 117,
+    "last_updated": "2026-08-11",
+    "snippet": "|Chip Model|Positioning|Clock|RAM|AI Acceleration|Display|Price Range|\n...\n|ESP32-S3|AI Voice Main|240MHz|512KB+8MB|Vector Instructions|-|$2-3|\n...\n- **Processor**: Dual-core 32-bit Tensilica Xtensa LX7\n- **Operating Frequency**: 240 MHz (adjustable to 80MHz/160MHz for low power)\n...\n- **SRAM**: 512KB built-in high-speed SRAM\n- **ROM**: 384KB mask ROM + 16KB RTC dedicated SRAM",
+    "source": "web",
+    "title": "ESP32-S3 Technical Specifications & Development Board Guide",
+    "url": "https://xiaozhi.dev/en/docs/esp32/technical-specs/"
+   },
+   {
+    "id": 118,
+    "last_updated": "2026-03-03",
+    "snippet": "",
+    "source": "web",
+    "title": "ESP32-S3-WROOM-1 & ESP32-S3-WROOM-1U Datasheet",
+    "url": "https://documentation.espressif.com/esp32-s3-wroom-1_wroom-1u_datasheet_en.html"
+   },
+   {
+    "id": 119,
+    "last_updated": "2026-07-30",
+    "snippet": "|PSRAM|8MB|8MB|16MB|8MB|\n...\nThe ESP32-S3-DEV-KIT-NXRX is a compact microcontroller development board equipped with multiple digital interfaces.\nHardware-wise, it uses the ESP32-S3-WROOM-1-NXRX module, which integrates an Xtensa 32-bit LX7 dual-core processor running at up to 240 MHz, with built-in 512KB SRAM (TCM) and 8MB PSRAM.",
+    "source": "web",
+    "title": "ESP32-S3-DEV-KIT-N8R8 Product Overview",
+    "url": "https://docs.waveshare.com/ESP32-S3-DEV-KIT-N8R8"
+   }
+  ]
+ }
+}

@@ -1,0 +1,1609 @@
+{
+ "run": {
+  "id": "R01-murmur-metrik",
+  "topic": "Objektive Murmur-Metrik + Erfolgskriterium Q2",
+  "preset": "medium",
+  "prompt": "Kontext: Bachelorarbeit, digitales Stethoskop (ESP32-S3, MEMS-Mikrofon). Es soll objektiv nachgewiesen werden, dass eine digitale Filterung die 'Murmur-Detektierbarkeit' in Herzschall-Aufnahmen verbessert, und dass sich zwei Filtercharakteristiken (z. B. Bell- vs. Diaphragm-Nachbildung) zweckabhaengig unterscheiden.\n\nHauptfrage: Welche objektiven, in der Literatur etablierten Metriken quantifizieren die Detektierbarkeit von Herzgeraeuschen (murmurs) in Phonokardiogramm-Signalen, und welche davon sind fuer einen Filtervergleich auf identischem Eingangsmaterial geeignet?\n\nUnterfrage 1: Wie werden SNR im Murmur-Band, Spektralkontrast bzw. Envelope-basierte Kennwerte in der PCG-Literatur konkret berechnet (Bandgrenzen, Referenzfenster, Normierung)?\nUnterfrage 2: Welche Schwellen oder Effektgroessen gelten in vergleichbaren Arbeiten als belegter Unterschied zwischen zwei Verarbeitungsketten (z. B. dB-Differenz, Cohen's d, statistische Tests bei gepaarten Signalen)?\n\nBitte praezise, mit Quellenangaben (Paper, Standards), Antwort auf Deutsch. Nenne konkrete Zahlenwerte und Bandgrenzen wo verfuegbar."
+ },
+ "response": {
+  "id": "chatcmpl-12c5cb0163294314a52226bc",
+  "object": "chat.completion",
+  "created": 1786462880,
+  "model": "preset/medium",
+  "choices": [
+   {
+    "index": 0,
+    "message": {
+     "role": "assistant",
+     "content": "## Kurzantwort\n\nFür die **Murmur-Detektierbarkeit** in Phonokardiogrammen existiert derzeit **keine einzelne, allgemein normierte Kennzahl**. In der Literatur werden vielmehr vier Klassen objektiver Größen verwendet:\n\n1. **SNR bzw. Murmur-to-Noise-Ratio** im interessierenden Frequenzband,\n2. **relative Energie- oder Pegelgrößen** des Murmurs gegenüber S1/S2 oder gegenüber diastolischen Referenzfenstern,\n3. **spektrale Merkmale** wie Bandenergieverhältnisse, spektraler Schwerpunkt, Roll-off, Entropie oder spektrale Flachheit,\n4. **zeitliche/envelope-basierte Größen** wie Hüllkurvenenergie, systolisch-diastolisches Energieverhältnis und Murmur-Dauer.\n\nFür einen Vergleich zweier Filter auf **identischem Eingangsmaterial** sind besonders geeignet:\n\n- gepaarte Differenz der bandbegrenzten Murmur-SNR,\n- gepaarte Differenz des Murmur-zu-S1/S2-Energieverhältnisses,\n- gepaarte Differenz des spektralen Kontrasts zwischen Murmur- und Referenzband,\n- gepaarte Differenz von Hüllkurvenenergie und Hüllkurvenkontrast,\n- zusätzlich eine aufgabennähere Kennzahl wie AUC, Sensitivität oder F1 eines festgelegten Murmur-Detektors.\n\nEine bloße Verbesserung des breitbandigen SNR oder der RMS-Amplitude beweist dagegen **nicht**, dass ein Murmur besser detektierbar ist.\n\n---\n\n# 1. Geeignete objektive Metriken\n\n| Metrik | Typische Berechnung | Eignung für Filtervergleich auf identischem Eingang |\n|---|---|---|\n| Murmur-Band-SNR | \\(10\\log_{10}(P_\\mathrm{Murmur}/P_\\mathrm{Noise})\\) oder \\(20\\log_{10}(A_\\mathrm{Signal}/A_\\mathrm{Noise})\\) | Sehr gut, wenn Murmur- und Referenzfenster eindeutig definiert sind |\n| Murmur-to-S1/S2-Ratio | \\(E_M/(E_{S1}+E_{S2})\\), meist in Prozent | Gut zur Quantifizierung der relativen Hervorhebung; nicht identisch mit SNR |\n| Bandenergieverhältnis | Energie im hohen bzw. murmurrelevanten Band geteilt durch Gesamtenergie | Gut, sofern die Bandgrenzen vorab festgelegt werden |\n| Spektraler Kontrast | Pegel- oder Energieunterschied zwischen Murmurband und Referenzband bzw. zwischen systolischem und diastolischem Fenster | Sehr gut für Bell-/Diaphragm-Vergleiche |\n| Spektraler Schwerpunkt/Roll-off | Frequenz, unterhalb der z. B. 95 % der Spektralenergie liegen | Gut als ergänzende Formmetrik, aber kein direkter Detektierbarkeitsnachweis |\n| Spektrale Entropie/Flachheit | Verteilung der normalisierten Spektralenergie | Ergänzend geeignet; geringe Interpretierbarkeit als alleinige Murmur-Metrik |\n| Envelope-Energie | RMS-, Hilbert- oder Shannon-Energie der Hüllkurve im Murmurfenster | Gut, insbesondere für systolische Murmurs |\n| Envelope-Kontrast | Verhältnis oder Differenz von Hüllkurvenenergie im Murmurfenster zur diastolischen Referenz | Sehr gut für identische Eingangssignale |\n| Murmur-Dauer bzw. Flächenanteil | Anteil der systolischen/diastolischen Zeit oberhalb eines definierten Hüllkurvenschwellwerts | Gut, aber stark schwellenabhängig |\n| Detektorleistung | AUC, Sensitivität, Spezifität, F1, balanced accuracy | Am direktesten; benötigt jedoch Labels oder einen definierten Referenzdetektor |\n\nDie PCG-Literatur verwendet beispielsweise 25–400 Hz für viele Murmur-Analysen, 20–500 Hz bzw. 20–800 Hz für breitere Herzschallanalysen und 0–800 Hz in einer neueren Murmur-Grading-Arbeit. In dieser Arbeit wurde ein 3-s-Fenster mit 25-ms-Hamming-Fenstern, 512-Punkt-FFT und 0–800 Hz verwendet; höhere Frequenzen wurden ausgeschlossen, weil Murmurs dort selten manifest seien. [web:63][web:91]\n\n---\n\n# 2. SNR im Murmur-Band\n\n## 2.1 Allgemeine Definition\n\nBei bekanntem Referenzsignal \\(x(t)\\) und Rauschsignal \\(n(t)\\) lautet die übliche Definition:\n\n\\[\n\\mathrm{SNR}_{\\mathrm{dB}}\n =\n10\\log_{10}\n\\left(\n\\frac{\\sum_{n\\in W}x^2[n]}\n{\\sum_{n\\in W}n^2[n]}\n\\right)\n\\]\n\noder äquivalent über RMS-Werte:\n\n\\[\n\\mathrm{SNR}_{\\mathrm{dB}}\n =\n20\\log_{10}\n\\left(\n\\frac{x_\\mathrm{RMS}}{n_\\mathrm{RMS}}\n\\right).\n\\]\n\nFür synthetisch verrauschte PCG-Signale wird häufig ein bekanntes sauberes Signal verwendet. Dann ist beispielsweise\n\n\\[\nx_\\mathrm{in}=x+n\n\\]\n\nund für die Verarbeitungskette\n\n\\[\n\\Delta \\mathrm{SNR}\n =\n\\mathrm{SNR}_{\\mathrm{out}}\n -\n\\mathrm{SNR}_{\\mathrm{in}}.\n\\]\n\nDiese Definition ist methodisch sauber, weil das Nutzsignal bekannt ist. Sie ist bei klinischen Aufnahmen jedoch nur möglich, wenn ein Referenzsignal, eine parallele Messung oder ein experimentell erzeugtes Rauschsignal vorliegt. [web:62]\n\n## 2.2 SNR mit einem rauscharmen Referenzfenster\n\nFür reale PCG-Aufnahmen wurde auch folgende Definition verwendet:\n\n\\[\n\\mathrm{SNR}\n =\n20\\log_{10}\n\\left(\n\\frac{A_S}{4\\sigma_N}\n\\right).\n\\]\n\nDabei ist:\n\n- \\(A_S\\): Peak-to-Peak-Amplitude des untersuchten Herzschalls,\n- \\(\\sigma_N\\): Standardabweichung des Rauschens,\n- \\(4\\sigma_N\\): angenommene 95-%-Rauschamplitude bei normalverteiltem Rauschen.\n\nDas Rauschen wurde dort in einem Abschnitt zwischen **70 % und 85 % des Herzzyklus** bestimmt, in dem kein Herzschall erwartet wurde. Für die Schätzung der Schallverschlusslatenz wurde ein SNR von **mindestens 14 dB** als ausreichend für eine Unsicherheit unter 1 ms angegeben. Diese Schwelle ist aber **keine Murmur-Detektierbarkeitsschwelle**; sie betrifft die zeitliche Bestimmung von Herzschallkomponenten. [web:61]\n\n## 2.3 Empfohlene Definition für die Bachelorarbeit\n\nFür einen Filtervergleich würde ich drei SNR-Varianten parallel auswerten:\n\n### A. Murmur-gegen-diastolisches Rauschen\n\nFür einen systolischen Murmur:\n\n\\[\n\\mathrm{SNR}_{M}\n =\n10\\log_{10}\n\\left(\n\\frac{\n\\sum_{n\\in W_S} x_B^2[n]\n}{\n\\frac{|W_S|}{|W_D|}\n\\sum_{n\\in W_D} x_B^2[n]\n}\n\\right)\n\\]\n\nmit:\n\n- \\(x_B[n]\\): bandpassgefiltertes Signal im Murmurband,\n- \\(W_S\\): systolisches Murmurfenster zwischen S1 und S2,\n- \\(W_D\\): diastolisches Referenzfenster, vorzugsweise ein Abschnitt ohne S1, S2 und bekannte diastolische Geräusche.\n\nDie Zeitfenster müssen für beide Filter **identisch** sein. Zur Vermeidung von Randartefakten sollten die gleichen S1-/S2-Grenzen aus einer Referenzsegmentierung verwendet werden.\n\n### B. Murmur-gegen-S1/S2\n\n\\[\n\\mathrm{MR}_{E}\n =\n10\\log_{10}\n\\left(\n\\frac{E_M}{E_{S1}+E_{S2}}\n\\right)\n\\]\n\nmit\n\n\\[\nE_W=\\sum_{n\\in W}x_B^2[n].\n\\]\n\nDiese Größe zeigt, ob ein Filter den Murmur relativ zu den dominanten Herzschallkomponenten hervorhebt oder abschwächt.\n\n### C. Murmur-to-background ratio\n\nWenn separate Rauschaufnahmen verfügbar sind:\n\n\\[\n\\mathrm{MBR}\n =\n10\\log_{10}\n\\left(\n\\frac{E_{M,\\;B}}\n{E_{N,\\;B}}\n\\right),\n\\]\n\nwobei \\(B\\) beispielsweise 25–400 Hz oder 20–500 Hz ist.\n\nDiese Kennzahl ist der eigentlichen Detektierbarkeit am nächsten. Ohne separates Rauschsignal ist das diastolische Referenzfenster ein praktikabler Ersatz, aber kein reines Rauschsignal.\n\n---\n\n# 3. Bandgrenzen aus der PCG-Literatur\n\nEs gibt keine einheitliche Murmur-Bandgrenze. Die Auswahl hängt von Murmurtyp, Sensor, Abtastrate und Zielsetzung ab.\n\n| Frequenzbereich | Verwendung in der Literatur |\n|---|---|\n| 10–140 Hz | Typischer Schwerpunkt von S1 |\n| 10–200 Hz | Typischer Bereich von S2 und tieferen Herzschallkomponenten |\n| 20–200 Hz | Tieffrequente Herzschallkomponenten und tiefe Murmurs |\n| 20–500 Hz | Häufig verwendeter breiter Herzschallbereich; auch als Gesamtenergieband für Murmur-Ratios |\n| 25–400 Hz | Häufige Vorverarbeitung für PCG-Murmurklassifikation |\n| 30–800 Hz | Spektrale Merkmale und mögliche höherfrequente Murmurs |\n| 0–800 Hz | Murmur-Grading in einer modernen PCG-Arbeit |\n| <300 Hz | In einer Stethoskop-Frequenzübersicht angegebener Bereich für viele Murmurs |\n| 50–1200 Hz | Breiter Bereich der kardiopulmonalen Auskultation |\n\nHerzgeräusche werden in Übersichtsarbeiten häufig ungefähr mit **20–650 Hz** angegeben; die für die Diagnose besonders relevanten Herzschallbereiche liegen teilweise bei **70–120 Hz**. Murmurs können jedoch deutlich oberhalb des dominanten S1-/S2-Bereichs liegen. [web:17]\n\nEine PCG-Klassifikationsarbeit verwendete Spektralmagnituden von **30 bis 790 Hz** und teilte den Bereich in 27 Bänder mit jeweils etwa **30 Hz** Breite auf, beispielsweise 10–40, 40–70 und 70–100 Hz. Als Merkmal wurde der Anteil der Spektralmagnitudensumme eines Bandes an der Gesamt-Spektralmagnitudensumme verwendet. [web:94]\n\nFür die praktische Auswertung des ESP32-S3-Systems wäre folgende Aufteilung gut begründbar:\n\n\\[\nB_1=20\\text{–}80\\ \\mathrm{Hz}\n\\]\n\n\\[\nB_2=80\\text{–}150\\ \\mathrm{Hz}\n\\]\n\n\\[\nB_3=150\\text{–}300\\ \\mathrm{Hz}\n\\]\n\n\\[\nB_4=300\\text{–}500\\ \\mathrm{Hz}\n\\]\n\nund optional\n\n\\[\nB_5=500\\text{–}800\\ \\mathrm{Hz}.\n\\]\n\nDamit können Bell- und Diaphragm-Filter nicht nur über eine einzige Gesamtzahl, sondern über ihre frequenzabhängige Wirkung verglichen werden.\n\n---\n\n# 4. Spektralkontrast und spektrale Kennwerte\n\n## 4.1 Bandenergie-Kontrast\n\nEine robuste, einfach interpretierbare Definition ist:\n\n\\[\nC_B\n =\n10\\log_{10}\n\\left(\n\\frac{E_{B,M}}{E_{B,R}}\n\\right),\n\\]\n\nwobei:\n\n- \\(E_{B,M}\\): Energie im Band \\(B\\) während des Murmurfensters,\n- \\(E_{B,R}\\): Energie im gleichen Band während des Referenzfensters.\n\nAlternativ kann der Kontrast zwischen einem Murmurband und einem Herzschallband berechnet werden:\n\n\\[\nC_{M/H}\n =\n10\\log_{10}\n\\left(\n\\frac{E_{150\\text{–}400,\\;S}}\n{E_{20\\text{–}150,\\;S}}\n\\right).\n\\]\n\nWichtig ist, die Normierung nicht pro Filter unabhängig vorzunehmen. Eine Normierung jedes Ausgangssignals auf seinen eigenen Maximalwert kann einen tatsächlichen Pegelunterschied zwischen den Filtern entfernen. Für einen Filtervergleich sollten daher bevorzugt verwendet werden:\n\n- dieselbe absolute ADC-Skalierung,\n- dieselbe Eingangsamplitude,\n- dieselbe Messkette,\n- oder eine gemeinsame Normierung anhand des ungefilterten Eingangssignals.\n\n## 4.2 Spektraler Schwerpunkt\n\nDer spektrale Schwerpunkt lautet:\n\n\\[\nf_c\n =\n\\frac{\\sum_k f_k P[k]}\n{\\sum_k P[k]}.\n\\]\n\nEr beschreibt die Schwerpunktfrequenz des Leistungsspektrums. Ein Filter, das höherfrequente Murmuranteile stärker passieren lässt, kann \\(f_c\\) erhöhen. Der Schwerpunkt ist aber kein direktes SNR-Maß, weil eine Pegelsteigerung und eine Rauschsteigerung sich teilweise aufheben können.\n\n## 4.3 Spectral roll-off\n\nDer 95-%-Roll-off ist die Frequenz \\(f_{95}\\), unterhalb derer 95 % der Spektralenergie liegen:\n\n\\[\n\\sum_{f\\le f_{95}}P(f)\n =\n0{,}95\\sum_fP(f).\n\\]\n\nDieses Merkmal wurde in PCG-Arbeiten zusammen mit spektralem Schwerpunkt, spektraler Flussgröße und spektraler Energie als Standardmerkmal des Spektrums verwendet. [web:105]\n\n## 4.4 Spektrale Entropie und Flachheit\n\nMit der normierten Spektralverteilung\n\n\\[\np_k=\\frac{P[k]}{\\sum_jP[j]}\n\\]\n\nlautet die normalisierte Spektralentropie:\n\n\\[\nH\n =\n-\\frac{\\sum_k p_k\\log p_k}{\\log K}.\n\\]\n\nDie spektrale Flachheit ist beispielsweise:\n\n\\[\nSF\n =\n\\frac{\n\\exp\\left(\\frac1K\\sum_k\\log P[k]\\right)\n}{\n\\frac1K\\sum_kP[k]\n}.\n\\]\n\nDiese Werte können unterscheiden, ob Energie konzentriert oder breit verteilt ist. Ein Murmur ist jedoch nicht immer spektral „rauschähnlich“. Entropie und Flachheit sollten deshalb nur ergänzend und nicht als alleiniger Nachweis einer verbesserten Detektierbarkeit eingesetzt werden.\n\n---\n\n# 5. Envelope-basierte Kennwerte\n\n## 5.1 Shannon-Energie\n\nEine häufig verwendete Hüllkurve ist die Average-Shannon-Energy:\n\n\\[\nE_{\\mathrm{Sh}}(m)\n =\n-\\frac1N\n\\sum_{n=1}^{N}\nx_\\mathrm{norm}^2[n]\\,\n\\log\\left(x_\\mathrm{norm}^2[n]\\right).\n\\]\n\nIn einer neueren Segmentierungsarbeit wurde die Shannon-Energie über **20-ms-Fenster** mit **50 % Überlappung** berechnet. Die normalisierte Hüllkurve wurde anschließend über eine Schwelle von 0 nach Mittelwertsubtraktion segmentiert. [web:55]\n\nEine andere Arbeit verwendete eine Schwelle von **70 % des Maximums der normalisierten Energiehüllkurve**, um Herzschallkomponenten und Murmurabschnitte zu separieren. [web:46]\n\nDiese festen Schwellen sind jedoch stark datenabhängig. Für einen Filtervergleich sollten S1-/S2-Zeitgrenzen nicht für jeden Filter neu geschätzt werden, weil der Filter sonst gleichzeitig die Segmentierung und die Messgröße beeinflusst.\n\n## 5.2 Hilbert-Hüllkurve\n\nFür das bandbegrenzte Signal \\(x_B(t)\\) ist die analytische Signalhüllkurve:\n\n\\[\ne_H(t)\n =\n\\left|\nx_B(t)+j\\,\\mathcal H\\{x_B(t)\\}\n\\right|,\n\\]\n\nwobei \\(\\mathcal H\\{\\cdot\\}\\) die Hilbert-Transformation ist.\n\nEine PCG-Arbeit zur Analyse verrauschter Aufnahmen verwendete eine Vorverarbeitung von **25–400 Hz** mit kaskadierten Butterworth-Filtern und normierte die resultierenden Signale. [web:63]\n\nGeeignete Kennwerte sind:\n\n\\[\nE_{\\mathrm{env},M}\n =\n\\frac1{|W_M|}\n\\sum_{n\\in W_M}e_H^2[n]\n\\]\n\nund\n\n\\[\nC_{\\mathrm{env}}\n =\n10\\log_{10}\n\\left(\n\\frac{E_{\\mathrm{env},M}}\n{E_{\\mathrm{env},R}}\n\\right).\n\\]\n\nZusätzlich kann der Zeitanteil oberhalb einer Schwelle \\(T\\) bestimmt werden:\n\n\\[\nD_T\n =\n\\frac{\n\\#\\{n\\in W_S:e_H[n]>T\\}\n}{\n|W_S|\n}.\n\\]\n\nDie Schwelle sollte beispielsweise als\n\n\\[\nT=\\operatorname{Median}(e_H)+\nk\\cdot \\operatorname{MAD}(e_H)\n\\]\n\naus einem Referenzabschnitt geschätzt werden. Das ist für einen Filtervergleich besser als eine filterspezifische Schwelle relativ zum jeweiligen Maximum.\n\n## 5.3 Energetic Ratio\n\nEine in PCG-Arbeiten verwendete relative Murmurenergie ist:\n\n\\[\nER\n =\n\\frac{E_M}\n{E_M+E_{S1}+E_{S2}}\n\\cdot100\\%.\n\\]\n\nDabei ist \\(E_M\\) die Murmurenergie und \\(E_{S1},E_{S2}\\) die Energie der beiden Haupt-Herzschallkomponenten. In vergleichbaren Arbeiten wurden folgende grobe Schweregrade verwendet:\n\n- **1–30 %:** leichter Murmur,\n- **30–70 %:** mittlerer Murmur,\n- **70–100 %:** schwerer Murmur.\n\nDiese Grenzen stammen aus Arbeiten zur Murmur-Schweregradklassifikation und sind **keine validierten Schwellen für eine Filterverbesserung**. [web:76][web:83]\n\nEine alternative Definition verwendet die Energie im Bereich **100–500 Hz** dividiert durch die Gesamtenergie **20–500 Hz**; eine weitere Variante verwendet **50–500 Hz** dividiert durch **20–500 Hz**. [web:84]\n\nFür die Arbeit sollte daher exakt eine Definition gewählt werden, beispielsweise:\n\n\\[\nER_{20\\text{–}500}\n =\n\\frac{\nE_{150\\text{–}500,\\;S}\n}{\nE_{20\\text{–}500,\\;S}\n}.\n\\]\n\nDas verhindert, dass die dominante Tieffrequenzenergie von S1/S2 den relativen Murmuranteil vollständig verdeckt.\n\n---\n\n# 6. Bell- versus Diaphragm-Vergleich\n\nDie klassische qualitative Zuordnung lautet:\n\n- **Bell:** bevorzugt tiefe Frequenzen,\n- **Diaphragm:** bevorzugt höhere Frequenzen.\n\nFür elektronische bzw. digitale Stethoskope ist diese Zuordnung allerdings nicht automatisch gültig; sie muss über die tatsächliche Übertragungsfunktion des Systems nachgewiesen werden.\n\nEine Vergleichsstudie mit identischem akustischem Eingang verwendete simulierte normale Herzschläge sowie Aorten- und Pulmonalstenose-Signale. Gemessen wurde die RMS-Amplitude bei **85, 250, 400, 550 und 1050 Hz**. Die beiden elektronischen Stethoskope zeigten gegenüber dem nicht verstärkten Stethoskop insbesondere im Bereich **550–1050 Hz** eine Verstärkung von **19–32 dB**; bei etwa 85 Hz lagen die Gewinne bei **4–10 dB**. Die Studie verwendete jedoch nur die Diaphragmaseite und enthielt keinen statistischen Bell-versus-Diaphragm-Test. [web:17]\n\nFür die Bachelorarbeit sollte der Vergleich daher nicht nur über einen breitbandigen RMS-Wert erfolgen, sondern als frequenzabhängige Tabelle:\n\n| Kennwert | Bell-Nachbildung | Diaphragm-Nachbildung | Vergleich |\n|---|---:|---:|---:|\n| Gain bei 20–80 Hz |  |  |  |\n| Gain bei 80–150 Hz |  |  |  |\n| Gain bei 150–300 Hz |  |  |  |\n| Gain bei 300–500 Hz |  |  |  |\n| Murmur-SNR |  |  |  |\n| Murmur-to-S1/S2-Ratio |  |  |  |\n| Envelope-Kontrast |  |  |  |\n| AUC des Murmur-Detektors |  |  |  |\n\nDabei muss der Filtervergleich mit **demselben Eingangssignal und derselben Zeitreferenz** durchgeführt werden.\n\n---\n\n# 7. Welche Schwellen und Effektgrößen sind belegt?\n\n## 7.1 SNR-Schwellen\n\nEine allgemeingültige Murmur-SNR-Schwelle ist nicht etabliert.\n\nBelegt sind unter anderem:\n\n- **14 dB SNR:** ausreichend für eine Unsicherheit unter 1 ms bei der Bestimmung von Herzschallverschlusslatenzen; nicht als Murmur-Detektierbarkeitsschwelle interpretieren. [web:61]\n- Bei synthetischer PCG-Verrauschung wurden SNR-Bereiche von **0–15 dB** untersucht. Bei **0 dB** zeigte eine Hilbert-Envelope-Methode gegenüber einer Baseline eine absolute Sensitivitätsverbesserung von **9,2 Prozentpunkten**. Das ist ein Methodenvergleich und keine universelle klinische Schwelle. [web:63]\n- In einer Arbeit zur nichtlinearen PCG-Verarbeitung wurde eine AUC von **0,96 bei 0 dB SNR** berichtet; der Ansatz stabilisierte sich ungefähr bei **−5 dB**. Auch das bezieht sich auf ein bestimmtes künstliches Rauschmodell. [web:35]\n- In einer Arbeit zur fötalen PCG stieg das SNR nach Wavelet-Filterung von ungefähr **0,15 dB** auf **15,86 dB**; der Unterschied war mit **\\(p<10^{-14}\\)** signifikant. Diese Zahlen sind wegen des fötalen Signals und der verwendeten Referenz nicht direkt auf adulte Murmurs übertragbar. [web:14]\n\nDaraus folgt: Für zwei Filter sollte nicht behauptet werden, ein Unterschied von beispielsweise 1 dB sei grundsätzlich klinisch relevant. Stattdessen sollte die Arbeit den beobachteten Unterschied mit Konfidenzintervall und Effektgröße berichten.\n\n## 7.2 Cohen’s \\(d\\) bei gepaarten Daten\n\nFür jedes identische Signal bzw. jeden Herzzyklus wird zunächst die Differenz gebildet:\n\n\\[\nd_i=M_{i,A}-M_{i,B}.\n\\]\n\nDann:\n\n\\[\nd_z\n =\n\\frac{\\bar d}{s_d}.\n\\]\n\nDabei sind \\(\\bar d\\) der mittlere gepaarte Unterschied und \\(s_d\\) seine Standardabweichung.\n\nDie üblichen groben Interpretationsgrenzen sind:\n\n- \\(d\\approx0{,}2\\): kleiner Effekt,\n- \\(d\\approx0{,}5\\): mittlerer Effekt,\n- \\(d\\approx0{,}8\\): großer Effekt. [web:19][web:25]\n\nDiese Grenzen sind allgemeine Konventionen, keine PCG-spezifischen klinischen Grenzwerte. Für die Arbeit wäre beispielsweise folgende Interpretation vertretbar:\n\n- \\(|d|<0{,}2\\): praktisch kleiner Unterschied,\n- \\(0{,}2\\le |d|<0{,}5\\): kleiner bis moderater Unterschied,\n- \\(0{,}5\\le |d|<0{,}8\\): moderater Unterschied,\n- \\(|d|\\ge0{,}8\\): großer Unterschied.\n\n## 7.3 Statistische Tests\n\nFür zwei Filter A und B auf identischem Material:\n\n### Bei annähernd normalverteilten Differenzen\n\n- gepaarter t-Test,\n- Mittelwertdifferenz,\n- 95-%-Konfidenzintervall,\n- Cohen’s \\(d_z\\),\n- zusätzlich Bland-Altman-Darstellung.\n\n### Bei nicht normalverteilten Differenzen\n\n- Wilcoxon-Vorzeichen-Rang-Test,\n- Median der Differenzen,\n- Hodges-Lehmann-Schätzer,\n- Bootstrap-Konfidenzintervall.\n\nDas Signifikanzniveau kann auf\n\n\\[\n\\alpha=0{,}05\n\\]\n\ngesetzt werden. Bei mehreren Frequenzbändern oder mehreren Metriken sollte eine Korrektur, beispielsweise Holm-Bonferroni oder eine vorab definierte primäre Metrik, verwendet werden.\n\nWichtig: Viele Herzzyklen desselben Patienten sind **keine unabhängigen Stichproben**. Für eine belastbare Aussage sollten die Kennwerte zunächst pro Herzzyklus und anschließend pro Aufnahme oder Patient aggregiert werden. Der statistische Test sollte dann auf Aufnahme- oder Patientenebene erfolgen, nicht auf allen Samples der Aufnahme.\n\n---\n\n# 8. Empfohlenes Auswertungsschema\n\nFür die Bachelorarbeit würde ich folgende primäre Hypothese definieren:\n\n> Filter A und Filter B unterscheiden sich hinsichtlich der Murmur-Detektierbarkeit, gemessen als bandbegrenzter Murmur-zu-Referenz-Kontrast im identischen systolischen Zeitfenster.\n\n## Primäre Metrik\n\n\\[\nC_M\n =\n10\\log_{10}\n\\left(\n\\frac{\nE_{150\\text{–}400,\\;S}\n}{\nE_{150\\text{–}400,\\;D}\n}\n\\right)\n\\]\n\nmit:\n\n- \\(S\\): systolisches Murmurfenster,\n- \\(D\\): diastolisches Referenzfenster,\n- gemeinsamer Frequenzbereich 150–400 Hz.\n\n## Sekundäre Metriken\n\n1. \\(\\mathrm{SNR}_{20\\text{–}500}\\),\n2. \\(ER=E_M/(E_M+E_{S1}+E_{S2})\\),\n3. Envelope-Kontrast,\n4. spektraler Schwerpunkt,\n5. 95-%-Roll-off,\n6. AUC eines einfachen, vorab eingefrorenen Murmur-Detektors.\n\n## Berichtete Ergebnisgrößen\n\nFür jede Metrik:\n\n\\[\n\\Delta M\n =\nM_A-M_B\n\\]\n\nsowie:\n\n- Mittelwert oder Median,\n- 95-%-Konfidenzintervall,\n- \\(p\\)-Wert,\n- Cohen’s \\(d_z\\) oder rank-biseriale Effektgröße,\n- Anzahl der Aufnahmen/Patienten,\n- verwendetes Frequenzband,\n- verwendete Zeitfenster,\n- Normierungsverfahren.\n\n## Wesentliche methodische Warnung\n\nEin Filter kann das Signal subjektiv oder quantitativ „lauter“ machen, ohne die Murmur-Detektierbarkeit zu verbessern. Deshalb sollten **RMS/Gain** nur als Übertragungskennwerte verwendet werden. Der eigentliche Nachweis sollte mindestens eine relative Murmur-Metrik enthalten, beispielsweise Murmur-SNR, Murmur-to-S1/S2-Ratio oder Envelope-Kontrast. Für die stärkste Aussage ist zusätzlich ein reproduzierbarer Detektor mit AUC- oder F1-Vergleich sinnvoll.\n\nFür elektronische Stethoskope existiert zudem nach der einschlägigen Literatur weiterhin kein allgemein akzeptiertes akustisches Standardverfahren zur Charakterisierung der Übertragungsfunktion. Deshalb sollten die Bandgrenzen und Auswertefenster in der Arbeit explizit begründet und vor der Auswertung festgelegt werden. [web:106][web:107]"
+    },
+    "finish_reason": "stop"
+   }
+  ],
+  "usage": {
+   "prompt_tokens": 79701,
+   "completion_tokens": 7486,
+   "total_tokens": 87187,
+   "cost": {
+    "cache_creation_cost": 0.00721,
+    "cache_read_cost": 0.00102,
+    "currency": "USD",
+    "input_cost": 0,
+    "output_cost": 0.00898,
+    "tool_calls_cost": 0.03378,
+    "tool_calls_cost_details": {
+     "fetch_url": 0.01378,
+     "search_web": 0.02
+    },
+    "total_cost": 0.05099
+   },
+   "input_tokens_details": {
+    "cache_creation_input_tokens": 28851,
+    "cache_read_input_tokens": 50835,
+    "cached_tokens": 50835
+   },
+   "output_tokens_details": {
+    "reasoning_tokens": 484
+   },
+   "tool_calls_details": {
+    "fetch_url": {
+     "cost_usd": 0.01378,
+     "invocation": 3,
+     "token_usage": [
+      {
+       "input_tokens": 6806,
+       "input_tokens_details": {
+        "cache_creation_input_tokens": 6803,
+        "cached_tokens": 0
+       },
+       "model": "openai/gpt-5.6-luna",
+       "output_tokens": 2150,
+       "output_tokens_details": {
+        "reasoning_tokens": 165
+       }
+      },
+      {
+       "input_tokens": 15489,
+       "input_tokens_details": {
+        "cache_creation_input_tokens": 15486,
+        "cached_tokens": 0
+       },
+       "model": "openai/gpt-5.6-luna",
+       "output_tokens": 4065,
+       "output_tokens_details": {
+        "reasoning_tokens": 212
+       }
+      }
+     ]
+    },
+    "search_web": {
+     "invocation": 8
+    }
+   }
+  },
+  "citations": [
+   {
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10482086/",
+    "title": "Beyond Heart Murmur Detection: Automatic ... - PMC - NIH",
+    "date": "2023-08-08"
+   },
+   {
+    "url": "https://jestec.taylors.edu.my/Vol%2012%20issue%209%20September%202017/12_9_7.pdf",
+    "title": "[PDF] Phonocardiogram signal analysis for murmur diagnosing using ...",
+    "date": null
+   },
+   {
+    "url": "https://ijeecs.iaescore.com/index.php/IJEECS/article/view/20924",
+    "title": "Detection of cardiac sounds components: a pilot study",
+    "date": "2020-03-01"
+   },
+   {
+    "url": "https://www.mdpi.com/1424-8220/24/20/6646",
+    "title": "Phonocardiogram (PCG) Murmur Detection Based on the ...",
+    "date": null
+   },
+   {
+    "url": "https://www.diva-portal.org/smash/get/diva2:17719/FULLTEXT01.pdf",
+    "title": "Nonlinear Phonocardiographic Signal Processing",
+    "date": null
+   },
+   {
+    "url": "https://cinc.org/2022/Program/accepted/280_Preprint.pdf",
+    "title": "[PDF] Heart Murmur Detection in Phonocardiographic Signals Using ...",
+    "date": null
+   },
+   {
+    "url": "http://article.aascit.org/file/pdf/9060749.pdf",
+    "title": "9060749",
+    "date": null
+   },
+   {
+    "url": "https://arxiv.org/abs/2209.13385",
+    "title": "Automatic Murmur Grading from Phonocardiogram",
+    "date": "2022-09-27"
+   },
+   {
+    "url": "https://www.tandfonline.com/doi/full/10.1080/03091902.2025.2570159",
+    "title": "Heart rate study using the cardiac sounds",
+    "date": "2026-01-02"
+   },
+   {
+    "url": "https://www.cinc.org/archives/2022/pdf/CinC2022-020.pdf",
+    "title": "Detection of Heart Murmurs in Phonocardiograms with ...",
+    "date": null
+   },
+   {
+    "url": "http://www.jatit.org/volumes/Vol101No10/29Vol101No10.pdf",
+    "title": "[PDF] PATHOLOGY CARDIAC MONITORING STUDY OF THE ...",
+    "date": null
+   },
+   {
+    "url": "https://www.medrxiv.org/content/10.1101/2020.11.17.20233064v1.full.pdf",
+    "title": "Hilbert-Envelope Features for Cardiac Disease Classification from Noisy Phonocardiograms",
+    "date": null
+   },
+   {
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11511235/",
+    "title": "Phonocardiogram (PCG) Murmur Detection Based on the ...",
+    "date": "2024-10-15"
+   },
+   {
+    "url": "https://beei.org/index.php/EEI/article/download/8674/4697",
+    "title": "[PDF] a study of Kalman and Butterworth filters",
+    "date": null
+   },
+   {
+    "url": "https://lirias.kuleuven.be/retrieve/657793",
+    "title": "Can Heart Sound Denoising Be Beneficial in Phonocardiogram Classification Tasks?",
+    "date": null
+   },
+   {
+    "url": "https://srcpublishers.com/index.php/cardiology-research-reviews/article/download/5650/5862/20617",
+    "title": "[PDF] Digital Stethoscope within the Field of Cardiology: Current State ...",
+    "date": null
+   },
+   {
+    "url": "https://repo.poltekkes-surabaya.ac.id/8422/4/4.%20Abstrak.pdf",
+    "title": "[PDF] ABSTRAK",
+    "date": null
+   },
+   {
+    "url": "https://www.scribd.com/document/963361682/79-a-Robust-Low-cost-Adaptive-Filtering-Technique-for-Phonocardiogram",
+    "title": "A Robust Low-Cost Adaptive Filtering Technique For ...",
+    "date": "2026-01-27"
+   },
+   {
+    "url": "https://www.mdpi.com/2079-9292/13/16/3222",
+    "title": "Review of Phonocardiogram Signal Analysis: Insights from ...",
+    "date": null
+   },
+   {
+    "url": "https://link.springer.com/article/10.1007/BF02474500",
+    "title": "Filters for phono-cardiography - Medical & Biological Engineering & Computing",
+    "date": null
+   },
+   {
+    "url": "https://www.mkscienceset.com/articles_file/724-_article1772099188.pdf",
+    "title": "Journal of Material Sciences & Applied Engineering",
+    "date": null
+   },
+   {
+    "url": "https://www.academia.edu/103880008/A_robust_sliding_window_adaptive_filtering_technique_for_phonocardiogram_signal_denoising",
+    "title": "(PDF) A robust sliding window adaptive filtering technique ...",
+    "date": "2023-06-26"
+   },
+   {
+    "url": "https://www.dicardiology.com/article/improving-heart-valve-disease-detection",
+    "title": "Improving Heart Valve Disease Detection",
+    "date": "2026-01-07"
+   },
+   {
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10474097/",
+    "title": "Novel phonocardiography system for heartbeat detection from ...",
+    "date": "2023-09-01"
+   },
+   {
+    "url": "https://www.medrxiv.org/content/10.1101/2020.04.01.20050518v2.full.pdf",
+    "title": "A Deep Learning Algorithm for Automated Cardiac Murmur Detection Via a Digital Stethoscope Platform",
+    "date": null
+   },
+   {
+    "url": "https://journals.plos.org/plosone/article/figures?id=10.1371/journal.pone.0269884",
+    "title": "A comparative study of single-channel signal processing methods in fetal phonocardiography",
+    "date": "2022-08-19"
+   },
+   {
+    "url": "https://academic.oup.com/ehjdh/article/7/2/ztag003/8425125",
+    "title": "Artificial-intelligence-enabled digital stethoscope improves ...",
+    "date": "2026-01-27"
+   },
+   {
+    "url": "https://www.cinc.org/archives/2017/pdf/331-075.pdf",
+    "title": "Fetal Phonocardiogram Denoising by Wavelet Transformation:",
+    "date": null
+   },
+   {
+    "url": "https://onlinelibrary.wiley.com/doi/10.1155/2022/3039624",
+    "title": "A Low-Cost Multistage Cascaded Adaptive Filter Configuration for Noise Reduction in Phonocardiogram Signal",
+    "date": null
+   },
+   {
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12810817/table/pone.0340806.t003/",
+    "title": "Table 3. Analysis of a sample of 78 students in project units with paired sample t-test. N represents the sample size, M denotes the mean, SD indicates the standard deviation, Cohen’s d signifies the effect size, and the 95% confidence interval for d is provided.",
+    "date": "2026-01-01"
+   },
+   {
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7305673/",
+    "title": "Frequency Responses of Conventional and Amplified ... - PMC",
+    "date": "2020-04-17"
+   },
+   {
+    "url": "https://www.semanticscholar.org/paper/Commentary-on-%22A-review-of-effect-sizes-and-their-d-Fitts/99e1c44a7dc8c2eb2190ebf1aa031b9bb2041fdd",
+    "title": "[PDF] Commentary on \"A review of effect sizes and their confidence intervals, Part I: The Cohen's d family\": The degrees of freedom for paired samples designs. | Semantic Scholar",
+    "date": null
+   },
+   {
+    "url": "https://www.ncss.com/wp-content/themes/ncss/pdf/Procedures/PASS/Paired_T-Tests_using_Effect_Size.pdf",
+    "title": "Paired T-Tests using Effect Size",
+    "date": null
+   },
+   {
+    "url": "https://real-statistics.com/students-t-distribution/paired-sample-t-test/cohens-d-paired-samples/",
+    "title": "Cohen's d for Paired Samples",
+    "date": "2018-03-07"
+   },
+   {
+    "url": "https://easystats.github.io/effectsize/reference/cohens_d.html",
+    "title": "Cohen's d and Other Standardized Differences — cohens_d",
+    "date": null
+   },
+   {
+    "url": "https://fr.slideshare.net/slideshow/phonocardiographypcg/71507625",
+    "title": "Phonocardiography(PCG)",
+    "date": "2017-01-29"
+   },
+   {
+    "url": "https://thenewstatistics.com/itns/2021/04/08/cohens-d-for-the-paired-design-a-better-way-to-find-the-confidence-interval/",
+    "title": "Cohen's d for the Paired Design: A Better Way to Find ...",
+    "date": "2021-04-08"
+   },
+   {
+    "url": "https://stats.libretexts.org/Bookshelves/Applied_Statistics/Learning_Statistics_with_R_-_A_tutorial_for_Psychology_Students_and_other_Beginners_(Navarro)/13:_Comparing_Two_Means/13.08:_Effect_Size",
+    "title": "13.8: Effect Size",
+    "date": "2020-01-02"
+   },
+   {
+    "url": "https://rcompanion.org/handbook/I_04.html",
+    "title": "Paired t-test",
+    "date": null
+   },
+   {
+    "url": "https://cran.r-project.org/web/packages/effectsize/vignettes/standardized_differences.html",
+    "title": "Standardized Differences - CRAN",
+    "date": null
+   },
+   {
+    "url": "https://matthewbjane.quarto.pub/Guide-to-Effect-Sizes-and-Confidence-Intervals.pdf",
+    "title": "Guide to Effect Sizes and Confidence Intervals",
+    "date": null
+   },
+   {
+    "url": "https://array.aami.org/doi/full/10.2345/i0899-8205-40-5-367.1",
+    "title": "Acoustic Stethoscopes | Biomedical Instrumentation & Technology",
+    "date": "2006-01-01"
+   },
+   {
+    "url": "https://en.wikipedia.org/wiki/Effect_size",
+    "title": "Effect size - Wikipedia",
+    "date": "2004-01-21"
+   },
+   {
+    "url": "https://stats.stackexchange.com/questions/87068/conflict-in-confidence-intervals-for-mean-difference-and-confidence-interval-for",
+    "title": "Conflict in confidence intervals for mean difference and confidence interval for Cohen'd effect size",
+    "date": null
+   },
+   {
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC1899182/",
+    "title": "Heart energy signature spectrogram for cardiovascular diagnosis",
+    "date": "2007-05-04"
+   },
+   {
+    "url": "https://clinicsearchonline.org/article/heartbeat-cardiac-sounds-analysis",
+    "title": "Heartbeat Cardiac Sounds Analysis | ClinicSearch",
+    "date": null
+   },
+   {
+    "url": "https://www.scielo.org.mx/scielo.php?script=sci_arttext&pid=S0188-95322023000400006",
+    "title": "Comparison of Spectral and Sparse Feature Extraction ...",
+    "date": null
+   },
+   {
+    "url": "https://www.mecs-press.org/ijigsp/ijigsp-v10-n7/IJIGSP-V10-N7-4.pdf",
+    "title": "Graphic Representations and Frequency Parameters of ...",
+    "date": null
+   },
+   {
+    "url": "https://bmes16.wordpress.com/wp-content/uploads/2017/03/spectra-lecture.pdf",
+    "title": "Analog Signals",
+    "date": null
+   },
+   {
+    "url": "https://respubjournals.com/medical-research-surgery/pdf/2020/v1i8/The-Impact-of-Murmur-s-Severity-on-the-Cardiac-Variability.pdf",
+    "title": "J Med Res Surg,",
+    "date": null
+   },
+   {
+    "url": "https://www2.cs.arizona.edu/~pachecoj/courses/csc696h_fall22/lectures/projstatus_mary.pdf",
+    "title": "Heart Sound Classification Using Gaussian Mixture Models",
+    "date": null
+   },
+   {
+    "url": "https://ejournal.atmajaya.ac.id/index.php/JTE/article/download/6195/2874",
+    "title": "Microsoft Word - 5. Karel - Frequency ..",
+    "date": null
+   },
+   {
+    "url": "https://reference-global.com/download/article/10.2478/pjmpe-2024-0011.pdf",
+    "title": "[PDF] The study of the impact of murmurs on heart sounds by using ...",
+    "date": null
+   },
+   {
+    "url": "https://www.cinc.org/archives/2016/pdf/160-401.pdf",
+    "title": "Using Spectral Acoustic Features to Identify Abnormal ...",
+    "date": null
+   },
+   {
+    "url": "https://www.sciencedirect.com/science/article/abs/pii/S0957417414006897",
+    "title": "A novel hybrid energy fraction and entropy-based approach for systolic heart murmurs identification",
+    "date": null
+   },
+   {
+    "url": "https://citeseerx.ist.psu.edu/document?repid=rep1&type=pdf&doi=67c7bd444fc926cdb201b451e6e72845078ecba4",
+    "title": "INSTITUTE OF PHYSICS PUBLISHING",
+    "date": null
+   },
+   {
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8588421/",
+    "title": "Automated Assessment of the Quality of Phonocardographic ... - PMC",
+    "date": "2021-10-30"
+   },
+   {
+    "url": "https://sharif.edu/~mbshams/files/25.pdf",
+    "title": "Bayesian denoising framework of phonocardiogram based on a new dynamical model",
+    "date": null
+   },
+   {
+    "url": "https://bioinfopublication.org/files/articles/4_1_5_ACR.pdf",
+    "title": "DENOISING OF PCG SIGNAL BY USING WAVELET ...",
+    "date": "2012-03-06"
+   },
+   {
+    "url": "https://sci-hub.se/downloads/2019-12-20/74/rouis2019.pdf",
+    "title": "Biomed. Eng.-Biomed. Tech. 2019; aop",
+    "date": null
+   },
+   {
+    "url": "https://www.sciencedirect.com/science/article/pii/S221201731200415X/pdf?md5=b8a7e02f6ba72c58abbb3dd8da52ac1c&pid=1-s2.0-S221201731200415X-main.pdf",
+    "title": "Determination of Signal to Noise Ratio of Electrocardiograms Filtered by Band Pass and Savitzky-Golay Filters",
+    "date": null
+   },
+   {
+    "url": "https://www.sciencedirect.com/science/article/abs/pii/S1746809417300848",
+    "title": "An innovative multi-level singular value decomposition and ...",
+    "date": null
+   },
+   {
+    "url": "https://ieeexplore.ieee.org/iel7/6287639/10005208/10136709.pdf",
+    "title": "Robust Denoising of Phonocardiogram Signals Using Time ...",
+    "date": "2023-06-02"
+   },
+   {
+    "url": "https://www.studocu.com/my/document/multimedia-university/health-promotion-and-wellness/ali-et-al-2023-deep-learning-framework-for-denoising-heart-sounds-in/163606970",
+    "title": "Ali et al. - 2023 - Deep Learning Framework for Denoising Heart ...",
+    "date": "2026-05-26"
+   },
+   {
+    "url": "https://ijret.org/volumes/2013v02/i04/IJRET20130204056.pdf",
+    "title": "[PDF] DENOISING OF HEART SOUND SIGNAL USING WAVELET ... - IJRET",
+    "date": null
+   },
+   {
+    "url": "https://ojs.acad-pub.com/index.php/SV/article/view/1705",
+    "title": "Real-time heart sound denoising for cardiac disease detection using ...",
+    "date": "2026-06-24"
+   },
+   {
+    "url": "https://hal.science/hal-00879037/file/Text-hal.pdf",
+    "title": "HAL Id: hal-00879037",
+    "date": null
+   },
+   {
+    "url": "https://www.sciencedirect.com/science/article/abs/pii/S0167739X18318132",
+    "title": "Spectral and SNR improvement analysis of normal and abnormal ...",
+    "date": null
+   },
+   {
+    "url": "https://crss.utdallas.edu/CILab/IPCV2009.pdf",
+    "title": "Microsoft Word - worldcomp09_word_template V.4",
+    "date": null
+   },
+   {
+    "url": "https://auctoresonline.org/article/heartbeat-cardiac-sounds-signals-analysis-by-using-the-energy-envelogram",
+    "title": "Heartbeat Cardiac Sounds Signals Analysis by Using the Energy ...",
+    "date": null
+   },
+   {
+    "url": "https://www.semanticscholar.org/paper/Proposed-Algorithm-for-Implementation-of-Shannon-Saini/4b125c3952379107f55410c71ca3f178f7e4abac",
+    "title": "[PDF] Proposed Algorithm for Implementation of Shannon Energy ...",
+    "date": "2009-02-19"
+   },
+   {
+    "url": "https://www.medrxiv.org/content/10.1101/2020.11.17.20233064v2.full.pdf",
+    "title": "Hilbert-Envelope Features for Cardiac Disease Classification from Noisy Phonocardiograms",
+    "date": null
+   },
+   {
+    "url": "http://www.iject.org/vol71acsect/2-mehak-saini.pdf",
+    "title": "IJECT Vol. 7, Issue 1, Jan - March 2016",
+    "date": null
+   },
+   {
+    "url": "https://crss.utdallas.edu/CILab/AsiaLinkConference_Jakarta_2007.pdf",
+    "title": "[PDF] Heart Sound Signal Modeling and Segmentation based on ...",
+    "date": null
+   },
+   {
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11469632/",
+    "title": "A Noise-Robust Heart Sound Segmentation Algorithm Based on ...",
+    "date": "2024-01-08"
+   },
+   {
+    "url": "https://accedacris.ulpgc.es/bitstream/10553/48815/1/MurilloRendon.pdf",
+    "title": "[PDF] Phonocardiography Signal Segmentation for Telemedicine ...",
+    "date": null
+   },
+   {
+    "url": "https://liu.diva-portal.org/smash/get/diva2:22548/FULLTEXT01.pdf",
+    "title": "[PDF] Processing of the Phonocardiographic Signal − Methods for the ...",
+    "date": null
+   },
+   {
+    "url": "https://link.springer.com/article/10.1007/s10439-008-9611-z",
+    "title": "Digital Auscultation Analysis for Heart Murmur Detection",
+    "date": null
+   },
+   {
+    "url": "https://bit.kuas.edu.tw/2025/vol16/N2/16.JIHMSP-250207.pdf",
+    "title": "[PDF] Comparative study on PCG envelope Extraction",
+    "date": null
+   },
+   {
+    "url": "https://pubmed.ncbi.nlm.nih.gov/26713160/",
+    "title": "Multistage decision-based heart sound delineation method for automated analysis of heart sounds and murmurs - PubMed",
+    "date": null
+   },
+   {
+    "url": "https://cinc.org/archives/2002/pdf/653.pdf",
+    "title": "Methods and Results in Characterizing Electronic ...",
+    "date": null
+   },
+   {
+    "url": "https://www.scribd.com/document/146423201/BIOEN-481-Stethoscope-Testing-Report",
+    "title": "BIOEN 481 Stethoscope Testing Report",
+    "date": "2025-08-07"
+   },
+   {
+    "url": "https://www.comsol.jp/paper/download/153149/thiagarajan_paper.pdf",
+    "title": "[PDF] Acoustical Design of Digital Stethoscope for Improved Performance",
+    "date": null
+   },
+   {
+    "url": "https://fda.innolitics.com/device/K233609",
+    "title": "CORE 500 Digital Stethoscope (K233609) — FDA 510(k)",
+    "date": null
+   },
+   {
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf23/K233313.pdf",
+    "title": "Orly Maor Consultant 25 Sirkin Street Kfar Saba, 4442157 Re ...",
+    "date": null
+   },
+   {
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10753976/",
+    "title": "Technical Characterization of Digital Stethoscopes",
+    "date": "2023-02-15"
+   },
+   {
+    "url": "https://multimedia.3m.com/mws/media/369448O/3mtm-littmannr-stethoscopes.pdf",
+    "title": "Electronic Stethoscope - mu ltime dia",
+    "date": null
+   },
+   {
+    "url": "http://hydromech.org.ua/content/pdf/av/av-16-3(46-57).pdf",
+    "title": "AV-16(3).dvi",
+    "date": null
+   },
+   {
+    "url": "https://www.jstage.jst.go.jp/article/ihj1960/23/5/23_5_711/_pdf",
+    "title": "Phonometric",
+    "date": null
+   },
+   {
+    "url": "https://fcc.report/FCC-ID/2A65V-SMARTHO-D2/5917950.pdf",
+    "title": "Wherever you are",
+    "date": null
+   },
+   {
+    "url": "https://pubmed.ncbi.nlm.nih.gov/7239106/",
+    "title": "Phonometric approach to the analysis of cardiac acoustic phenomena - PubMed",
+    "date": null
+   },
+   {
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6863143/",
+    "title": "Stethoscope with digital frequency translation for improved ...",
+    "date": "2019-07-31"
+   },
+   {
+    "url": "https://en.wikipedia.org/wiki/Phonocardiogram",
+    "title": "Phonocardiogram - Wikipedia",
+    "date": "2009-10-17"
+   },
+   {
+    "url": "https://www.scribd.com/document/838058240/10-1515-cdbme-2019-0066",
+    "title": "10.1515 - Cdbme 2019 0066 | PDF | Resonance | Decibel",
+    "date": "2026-02-20"
+   },
+   {
+    "url": "https://biomedpharmajournal.org/vol13no2/significance-of-frequency-domain-features-of-pcg-records-for-murmur-detection-an-investigation/",
+    "title": "Significance of Frequency Domain Features of PCG ...",
+    "date": "2020-06-09"
+   },
+   {
+    "url": "https://pubmed.ncbi.nlm.nih.gov/19921435/",
+    "title": "Selection of dynamic features based on time-frequency representations for heart murmur detection from phonocardiographic signals - PubMed",
+    "date": "2010-01-25"
+   },
+   {
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6077676/",
+    "title": "PCG Classification Using Multidomain Features and SVM ...",
+    "date": "2018-07-09"
+   },
+   {
+    "url": "https://cinc.org/2022/Program/accepted/65_Preprint.pdf",
+    "title": "Classification of Murmurs in PCG Using Combined ...",
+    "date": null
+   },
+   {
+    "url": "https://eprints.soton.ac.uk/425886/1/00349389.pdf",
+    "title": "UNIVERSITY OF SOUTHAMPTON",
+    "date": null
+   },
+   {
+    "url": "https://www.diva-portal.org/smash/get/diva2:1980582/FULLTEXT01.pdf",
+    "title": "Identifying Abnormalities in Heart Sound data using ...",
+    "date": null
+   },
+   {
+    "url": "http://arxiv.org/pdf/2407.18424.pdf",
+    "title": "2024 IEEE INTERNATIONAL WORKSHOP ON MACHINE LEARNING FOR SIGNAL PROCESSING, SEPT. 22–25, 2024, LONDON, UK",
+    "date": null
+   },
+   {
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11937596/",
+    "title": "Multiscale analysis of heart sound signals in the wavelet ...",
+    "date": "2025-03-25"
+   },
+   {
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10981708/",
+    "title": "Murmur identification and outcome prediction in ...",
+    "date": "2024-03-31"
+   },
+   {
+    "url": "https://cinc.org/archives/2012/pdf/0217.pdf",
+    "title": "Heart Sound Clustering using a Combination of Temporal, ...",
+    "date": null
+   }
+  ],
+  "search_results": [
+   {
+    "date": "2023-08-08",
+    "id": 31,
+    "last_updated": "2026-02-17",
+    "snippet": "IEEE J Biomed Health Inform.\nAuthor manuscript; available in PMC: 2024 Aug 8.\n...\n2023 Aug 8;27(8):3856–3866.\ndoi: 10.1109/JBHI.2023.3275039",
+    "source": "web",
+    "title": "Beyond Heart Murmur Detection: Automatic ... - PMC - NIH",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10482086/"
+   },
+   {
+    "id": 32,
+    "last_updated": "2026-07-07",
+    "snippet": "PHONOCARDIOGRAM SIGNAL ANALYSIS  \nFOR MURMUR DIAGNOSING USING SHANNON ENERGY \nENVELOP AND SEQUENCED DWT DECOMPOSITION\n...\nThis paper presents a proposed procedure to analyze the PCG (Phono-Cardio-\n...\nThe procedure concludes \nheart sound cycle segmentation followed by a detecting step to categorize the \nnormal cases from that which are characterized as an abnormal one (mainly \nMitral Regurgitation MR and Mitral Stenosis MS).\nThis is achieving using\nShannon energy envelop.\nFurthermore, a diagnosing step is added to recognize \nthe MR and MS cases from other abnormal cases using FFT (Fast Fourier \nTransform) applied to the segmented murmur period.\n...\nIn order to detect, isolate and analyze the PCG murmur, the main steps are:\ni. Data acquisition and preprocessing of heart signal. \nii. Signal segmentation. \niii. Feature extraction. \n...\nIn order to categorize the heart sound, signal as normal or abnormal and then\ndiagnose the abnormal one as an MR or MS cases, the following steps are proposed: \ni. Averaging energy envelop. \nii.\nDetecting averaged envelop peaks. \niii.\nFixing threshold (S1 and S2 duration calculation). \niv. Murmurs detection and analysis.\n...\nextracted from the location of each heart sound in cardiac cycle. This location is \n...\n(FFT) is now applied on the detailed coefficients resultant from the fifth level. It \nis found that if the centre frequency of this spectral analysis is located between\n(200 and 250) Hz. one can conclude that this murmur is Mitral Regurgitation \n(MR) case. Consequently, if the centre frequency is located between (100 and \n150) Hz, the conclusion is most probably Mitral Stenosis (MS) case. Steps (1-4)",
+    "source": "web",
+    "title": "[PDF] Phonocardiogram signal analysis for murmur diagnosing using ...",
+    "url": "https://jestec.taylors.edu.my/Vol%2012%20issue%209%20September%202017/12_9_7.pdf"
+   },
+   {
+    "date": "2020-03-01",
+    "id": 33,
+    "last_updated": "2025-11-28",
+    "snippet": "In time-based analysis, envelope of signal energy was used to do the peak detection of S1, S2 and murmur and also analysis of cardiac cycle, systole and diastole duration.\nWhile time-frequency based analysis was used to determine the S1, S2 and murmur frequency range.\nThe findings yield the overall accuracy of envelope-based detection for normal cardiac sound signal at 60.85% while for abnormal cardiac sound signal at 57.24%.\n...\nDOI: http://doi.org/10.11591/ijeecs.v17.i3.pp1330-1337",
+    "source": "web",
+    "title": "Detection of cardiac sounds components: a pilot study",
+    "url": "https://ijeecs.iaescore.com/index.php/IJEECS/article/view/20924"
+   },
+   {
+    "id": 34,
+    "last_updated": "2025-03-21",
+    "snippet": "",
+    "source": "web",
+    "title": "Phonocardiogram (PCG) Murmur Detection Based on the ...",
+    "url": "https://www.mdpi.com/1424-8220/24/20/6646"
+   },
+   {
+    "id": 35,
+    "last_updated": "2026-07-15",
+    "snippet": "The method stabilized at an SNR of −5 dB and\nthe area under the ROC curve (at SNR = 0 dB) was found to be 0.96.",
+    "source": "web",
+    "title": "Nonlinear Phonocardiographic Signal Processing",
+    "url": "https://www.diva-portal.org/smash/get/diva2:17719/FULLTEXT01.pdf"
+   },
+   {
+    "id": 36,
+    "last_updated": "2025-12-05",
+    "snippet": "",
+    "source": "web",
+    "title": "[PDF] Heart Murmur Detection in Phonocardiographic Signals Using ...",
+    "url": "https://cinc.org/2022/Program/accepted/280_Preprint.pdf"
+   },
+   {
+    "id": 37,
+    "last_updated": "2025-07-10",
+    "snippet": "",
+    "source": "web",
+    "title": "9060749",
+    "url": "http://article.aascit.org/file/pdf/9060749.pdf"
+   },
+   {
+    "date": "2022-09-27",
+    "id": 38,
+    "last_updated": "2026-01-31",
+    "snippet": "# Title: Beyond Heart Murmur Detection: Automatic Murmur Grading from Phonocardiogram\n...\nResults: The overall cross-validation performances for patient-level murmur gradings are 86.3% and 81.6% in terms of the unweighted average of sensitivities and F1-scores, respectively.\nThe sensitivities (and F1-scores) for absent, soft, and loud murmurs are 90.7% (93.6%), 75.8% (66.8%), and 92.3% (84.2%), respectively.\nOn the test set, the algorithm achieves an unweighted average of sensitivities of 80.4% and an F1-score of 75.8%.\n...\n| |(or arXiv:2209.13385v2 [q-bio.QM] for this version)|",
+    "source": "web",
+    "title": "Automatic Murmur Grading from Phonocardiogram",
+    "url": "https://arxiv.org/abs/2209.13385"
+   },
+   {
+    "date": "2026-01-02",
+    "id": 39,
+    "last_updated": "2026-02-20",
+    "snippet": "The purpose of this paper is to present a straightforward framework for Heart Rate (HR) estimation from a Phonocardiogram (PCG) record and study the association between murmur severity levels and HR.\nThe system focuses primarily on data processing procedure, which is based on signal preprocessing using Maximal Overlap Discrete Wavelet Transform (MODWT) to delineate murmurs from heart sounds.\nWe exploit the characteristics of Logistic function to derive an enhanced PCG envelope that serves as prerequisite for HR algorithm detection.\nIn fact, the PCG envelope presents a cyclostationarity that can be easily detected throughout a cross-covariance autocorrelation function to calculate the Heart Rate (HR).\nIn addition, the effect of minor and pronounced murmurs is gauged by the Energetic Ratio (ER) that provides a comprehensive idea about the superimposed murmur energy on first and second Heart sounds.\nThe study was conducted on PASCAL dataset with 335 real clinical records.\nResults shows that mild murmurs with low ER are not associated with HR (p-value = 0.846).\nHowever, moderate-severe murmurs indicate a significant association with HR (p-value = 0.0002).\nFurthermore, HR decreases as Energetic Ratio increases.",
+    "source": "web",
+    "title": "Heart rate study using the cardiac sounds",
+    "url": "https://www.tandfonline.com/doi/full/10.1080/03091902.2025.2570159"
+   },
+   {
+    "id": 40,
+    "last_updated": "2026-02-08",
+    "snippet": "We describe a recurrent neural network and hidden semi\nMarkov model (HSMM) approach to detect heart murmurs\nin phonocardiogram recordings.\n...\nEvaluated on the hidden test set, our algorithm achieved\na weighted accuracy score of 0.776 on the murmur detec-\ntion task (ranked 2nd of 40 teams, and just 0.004 below\nthe top score).\n...\nHann window, with length 50 ms and step 20 ms.",
+    "source": "web",
+    "title": "Detection of Heart Murmurs in Phonocardiograms with ...",
+    "url": "https://www.cinc.org/archives/2022/pdf/CinC2022-020.pdf"
+   },
+   {
+    "id": 41,
+    "last_updated": "2026-06-01",
+    "snippet": " 2.3.1Frequency Band \nIt is the frequency range occupied by one cycle of a\nPCG signal (Figure 5) \n...\ndefined as in the equation below [19]  \n𝐸𝑅=\n𝐸�\n𝐸�+ 𝐸�\n× 100 \n(7) \n...\nenergy.",
+    "source": "web",
+    "title": "[PDF] PATHOLOGY CARDIAC MONITORING STUDY OF THE ...",
+    "url": "http://www.jatit.org/volumes/Vol101No10/29Vol101No10.pdf"
+   },
+   {
+    "id": 42,
+    "last_updated": "2025-05-31",
+    "snippet": "In this study, we propose a\ntime-domain Hilbert envelope feature (HEF) extraction scheme\nthat can effectively distinguish among different cardiac anomalies\nfrom heart sounds even in highly noisy recordings.\n...\nThe proposed feature is invariant to the\nheart rate, the position of the first and second heart sounds,\nand robust in extracting the murmur configuration pattern in\nthe presence of respiratory noise.\nExperimental evaluations are\nperformed compared to two different state-of-the-art methods\nin the presence of respiratory noise with signal-to-noise ratio\n(SNR) values ranging from 0-15dB.\nThe proposed HEF, fused\nwith standard acoustic and Resnet features, yields an average\naccuracy, sensitivity, specificity, and F1-score of, 94.78%(±2.63),\n...\nIn the case of 0dB SNR, the proposed feature alone provides\na 9.2% absolute improvement in sensitivity compared to the\ntop baseline system demonstrating the robustness of the HEF.\n...\nhighest level of noise at 0dB SNR, the HEF-RF system\nprovides the best sensitivity of 79.2%(±6.26) showing an\nabsolute improvement of 9.2% compared to baseline-2 system.",
+    "source": "web",
+    "title": "Hilbert-Envelope Features for Cardiac Disease Classification from Noisy Phonocardiograms",
+    "url": "https://www.medrxiv.org/content/10.1101/2020.11.17.20233064v1.full.pdf"
+   },
+   {
+    "date": "2024-10-15",
+    "id": 43,
+    "last_updated": "2025-09-23",
+    "snippet": "In our research, we proposed a mean teacher method tailored for murmur detection, making full use of the Phyionet2022 and Phyionet2016 PCG datasets, achieving the SOTA (State of Art) performance with a murmur score of 0.82 and an AUC score of 0.90, providing an accessible and high accuracy non-invasive early stage CVD assessment tool, especially for low and middle-income countries (LMICs).\n...\nOur study showcases the mean teacher model in PCG signal murmur detection, achieving SOTA performance.\nBy integrating both labeled and unlabeled data from the Physionet 2022 and 2016 challenges, we significantly enhanced detection accuracy, culminating in an impressive murmur score of 0.8180 and an AUC of 0.9004.",
+    "source": "web",
+    "title": "Phonocardiogram (PCG) Murmur Detection Based on the ...",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11511235/"
+   },
+   {
+    "id": 44,
+    "last_updated": "2026-04-21",
+    "snippet": "Since heart sound \n...\nOverall, the lowest frequency \nrange of heart sounds starts from 20 Hz to 500 Hz, which can serve as the basis for determining the cutoff\n...\nThe acquired signals were transmitted from the ESP32 to the PC, where FFT \nanalysis was used to verify the dominant frequency range (20–150 Hz).\n...\nThe collected data are transmitted to a PC for preprocessing, \nincluding normalization, trimming, and FFT analysis to determine the dominant frequency range  \n(20–150 Hz).\nThe signal is then processed using two filtering techniques: the Butterworth band-pass filter\nand the Kalman filter.\nAfter filtering, the SNR is calculated, and the results from both methods are compared \nin the time and frequency domains to evaluate filtering performance.\n...\nSNR is a measure used in signal analysis that compares the desired signal level to the background \nnoise level.\nIt is defined as the ratio of signal power to noise power and is often expressed in decibels (dB).\nThe higher the SNR value, the better the signal quality.\n...\n𝑆𝑁𝑅 (𝑑𝐵) = 10𝑙𝑜𝑔10",
+    "source": "web",
+    "title": "[PDF] a study of Kalman and Butterworth filters",
+    "url": "https://beei.org/index.php/EEI/article/download/8674/4697"
+   },
+   {
+    "id": 45,
+    "last_updated": "2026-01-18",
+    "snippet": "These are sound intensity, frequency content, timing,\nduration, shape, systolic and diastolic intervals, ratio of the \nfirst heart sound amplitude to second heart sound amplitude \n(S1/S2), and ratio of diastolic to systolic duration (D/S).",
+    "source": "web",
+    "title": "Can Heart Sound Denoising Be Beneficial in Phonocardiogram Classification Tasks?",
+    "url": "https://lirias.kuleuven.be/retrieve/657793"
+   },
+   {
+    "id": 1,
+    "last_updated": "2026-02-27",
+    "snippet": "",
+    "source": "web",
+    "title": "[PDF] Digital Stethoscope within the Field of Cardiology: Current State ...",
+    "url": "https://srcpublishers.com/index.php/cardiology-research-reviews/article/download/5650/5862/20617"
+   },
+   {
+    "id": 2,
+    "last_updated": "2026-04-05",
+    "snippet": "Hasil dari penelitian ini menunjukkan bahwa filter IIR\nButterworth Bandpass Filter menghasilkan peningkatan yang\nlebih\nsignifikan\ndalam\nSNR\ndibandingkan\ndengan\nFIR\nBandpass Filter.\nFilter IIR Butterworth mampu lebih efektif\nmempertahankan\nsinyal\njantung\nyang\npenting\nsambil\nmengurangi noise lingkungan dengan lebih baik.\nKesimpulan\ndari\npenelitian\nini\nadalah\nbahwa\npenerapan\nfilter\nIIR\nButterworth Bandpass Filter secara efektif dapat mengurangi\nnoise lingkungan pada sinyal Phonocardiogram, sehingga\nmeningkatkan\nakurasi\ndan\ninterpretasi\nhasil\ndiagnostik.\n...\nThe Butterworth Bandpass Filter results in a more significant\nincrease in SNR compared to the FIR Bandpass Filter.",
+    "source": "web",
+    "title": "[PDF] ABSTRAK",
+    "url": "https://repo.poltekkes-surabaya.ac.id/8422/4/4.%20Abstrak.pdf"
+   },
+   {
+    "date": "2026-01-27",
+    "id": 3,
+    "last_updated": "2026-01-27",
+    "snippet": "Discussion: Compared with various ﬁlter conﬁgurations, the proposed ﬁlter structure achieves an 8-50% reduction in MAE values and the 45–87% reduction in MSE values.\nFurther, there is an improved SNR of 15–60%, ANR of 15–65%, and PSNR improvement by 7–25% comparatively.",
+    "source": "web",
+    "title": "A Robust Low-Cost Adaptive Filtering Technique For ...",
+    "url": "https://www.scribd.com/document/963361682/79-a-Robust-Low-cost-Adaptive-Filtering-Technique-for-Phonocardiogram"
+   },
+   {
+    "id": 4,
+    "last_updated": "2025-03-21",
+    "snippet": "",
+    "source": "web",
+    "title": "Review of Phonocardiogram Signal Analysis: Insights from ...",
+    "url": "https://www.mdpi.com/2079-9292/13/16/3222"
+   },
+   {
+    "id": 5,
+    "last_updated": "2026-01-19",
+    "snippet": "",
+    "source": "web",
+    "title": "Filters for phono-cardiography - Medical & Biological Engineering & Computing",
+    "url": "https://link.springer.com/article/10.1007/BF02474500"
+   },
+   {
+    "id": 6,
+    "last_updated": "2025-07-10",
+    "snippet": "",
+    "source": "web",
+    "title": "9060749",
+    "url": "http://article.aascit.org/file/pdf/9060749.pdf"
+   },
+   {
+    "id": 7,
+    "last_updated": "2026-03-25",
+    "snippet": "Comparative trials demonstrated that modern digital \nstethoscopes outperform acoustic models in noisy environments \nand facilitate improved detection of low-intensity murmurs or\nfine crackles [13, 14, 38, 40].",
+    "source": "web",
+    "title": "Journal of Material Sciences & Applied Engineering",
+    "url": "https://www.mkscienceset.com/articles_file/724-_article1772099188.pdf"
+   },
+   {
+    "date": "2023-06-26",
+    "id": 8,
+    "last_updated": "2025-11-07",
+    "snippet": "Discussion: A 2-10 times decrease in MSE values was attained by the proposed filter structure when analogized with conventional LMS filter configuration.\nFurther, the SNR is improved by 3 times and comparatively, the PSNR enhancement was 4%-25%.\n...\n- The proposed SWAF model achieves 2-10 times lower MSE compared to conventional LMS filters.\n- SNR improves by 3 times and PSNR by 4%-25% with the robust SWAF model.\n...\nThe study compared the proposed Robust Sliding Window Adaptive Filter (SWAF) with the conventional LMS filter, showing the SWAF achieved 10 times lower MSE and 3 times higher SNR.\n...\nSNR improved by at least 3 times compared to the traditional LMS filter, demonstrating superior performance in noisy environments.",
+    "source": "web",
+    "title": "(PDF) A robust sliding window adaptive filtering technique ...",
+    "url": "https://www.academia.edu/103880008/A_robust_sliding_window_adaptive_filtering_technique_for_phonocardiogram_signal_denoising"
+   },
+   {
+    "date": "2026-01-07",
+    "id": 9,
+    "last_updated": "2026-07-01",
+    "snippet": "Yet the primary in-office tool clinicians use to diagnose heart valve disease, the traditional stethoscope, shows only 44% sensitivity in detecting murmurs, an early clinical indicator of VHD, leaving many patients with VHD undiagnosed.^1^",
+    "source": "web",
+    "title": "Improving Heart Valve Disease Detection",
+    "url": "https://www.dicardiology.com/article/improving-heart-valve-disease-detection"
+   },
+   {
+    "date": "2023-09-01",
+    "id": 10,
+    "last_updated": "2026-05-05",
+    "snippet": "Cut-off frequency of about 20 Hz is usually used for high-pass filter, while cut-off frequencies for low-pass filtration are set depending of the purpose of analysis; 100 Hz for S1/S2 detection and up to 800 Hz for evaluation of heart murmurs^18^.\n...\n|Study|Preprocessing|Dataset|Sensor placement|Evaluation metrics|",
+    "source": "web",
+    "title": "Novel phonocardiography system for heartbeat detection from ...",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10474097/"
+   },
+   {
+    "id": 11,
+    "last_updated": "2025-02-19",
+    "snippet": "",
+    "source": "web",
+    "title": "A Deep Learning Algorithm for Automated Cardiac Murmur Detection Via a Digital Stethoscope Platform",
+    "url": "https://www.medrxiv.org/content/10.1101/2020.04.01.20050518v2.full.pdf"
+   },
+   {
+    "date": "2022-08-19",
+    "id": 12,
+    "last_updated": "2026-05-18",
+    "snippet": "",
+    "source": "web",
+    "title": "A comparative study of single-channel signal processing methods in fetal phonocardiography",
+    "url": "https://journals.plos.org/plosone/article/figures?id=10.1371/journal.pone.0269884"
+   },
+   {
+    "date": "2026-01-27",
+    "id": 13,
+    "last_updated": "2026-08-08",
+    "snippet": "With AI augmentation, sensitivity for detecting audible VHD more than doubled (46.2–92.3%, *P* = 0.01).\nFor echocardiographically confirmed VHD, it nearly tripled (13.8–39.7%, *P* = 0.01), with only modest reductions in specificity (95.6–86.9 and 94.7–88.6%, respectively, *P* < 0.001).\nFurther, AI-augmented auscultation identified 12 patients with previously undiagnosed clinically significant VHD compared with 6 identified by the SOC.\nOur study demonstrates that an AI-enabled digital stethoscope significantly outperforms SOC auscultation in the overall detection of VHD.",
+    "source": "web",
+    "title": "Artificial-intelligence-enabled digital stethoscope improves ...",
+    "url": "https://academic.oup.com/ehjdh/article/7/2/ztag003/8425125"
+   },
+   {
+    "id": 14,
+    "last_updated": "2025-04-28",
+    "snippet": "Original SNR values \nranged from -1.38 dB to 4.54 dB; after application of \nWT-filtering \nprocedure \nto \nfPCG, \nSNR \nincreased\nsignificantly, ranging from 12.95 dB to 17.94 dB (P<10-\n14).\nMoreover, SNR values before and after filtering were \nassociated by a low correlation (ρ=0.4; P=0.01).\n...\nThus, WT filtering is a \nsuitable and robust technique to denoise fPCG signals.\n...\nSNRbefore values ranged from -1.38 dB to 4.54 dB \nand its distribution (0.15 dB [-0.60; 1.91]) was found to \nbe characterized by a significantly lower value than \nSNRafter (15.86 dB [15.21; 16.27]; P<10-14), which\nranged from 12.95 dB to 17.94 dB.\n...\nEventually, SNRbefore and SNRafter were \nassociated by a low correlation (ρ=0.4) but significant\n(P=0.01) \ncorrelation.\nRegression \nline \nwas \nSNRafter=0.55∙SNRbefore+14.95 (Figure 3).\n4. \n...\nEventually, WT \nfiltering significantly increased SNR values (P<10-14).",
+    "source": "web",
+    "title": "Fetal Phonocardiogram Denoising by Wavelet Transformation:",
+    "url": "https://www.cinc.org/archives/2017/pdf/331-075.pdf"
+   },
+   {
+    "id": 15,
+    "last_updated": "2024-10-17",
+    "snippet": "The simulation results prove that the proposed filter model performs remarkably well and provides 8–10 dB higher SNR values in a Gaussian noise environment and 2-3 dB higher SNR values in the presence of colored noise than the existing cascaded LMS filter models.\n...\nThe PSNR values are improved by 7 dB in a Gaussian noise environment and 1-2 dB in the presence of pink noise.",
+    "source": "web",
+    "title": "A Low-Cost Multistage Cascaded Adaptive Filter Configuration for Noise Reduction in Phonocardiogram Signal",
+    "url": "https://onlinelibrary.wiley.com/doi/10.1155/2022/3039624"
+   },
+   {
+    "date": "2026-01-01",
+    "id": 16,
+    "last_updated": "2026-02-24",
+    "snippet": "N represents the sample size, M denotes the mean, SD indicates the standard deviation, Cohen’s d signifies the effect size, and the 95% confidence interval for d is provided.\n...\n|Project unit|*N*|M|SD|M|SD|Paired difference|*Paired* *t-test*|Cohen’s d|d|\n|1: Sound effect processing|78|45.00|22.12|81.72|16.64|36.72|−62.45***|7.12|[6.85, 7.39]|",
+    "source": "web",
+    "title": "Table 3. Analysis of a sample of 78 students in project units with paired sample t-test. N represents the sample size, M denotes the mean, SD indicates the standard deviation, Cohen’s d signifies the effect size, and the 95% confidence interval for d is provided.",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12810817/table/pone.0340806.t003/"
+   },
+   {
+    "date": "2020-04-17",
+    "id": 17,
+    "last_updated": "2026-07-20",
+    "snippet": "",
+    "source": "web",
+    "title": "Frequency Responses of Conventional and Amplified ... - PMC",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7305673/"
+   },
+   {
+    "id": 18,
+    "last_updated": "2026-01-18",
+    "snippet": "",
+    "source": "web",
+    "title": "[PDF] Commentary on \"A review of effect sizes and their confidence intervals, Part I: The Cohen's d family\": The degrees of freedom for paired samples designs. | Semantic Scholar",
+    "url": "https://www.semanticscholar.org/paper/Commentary-on-%22A-review-of-effect-sizes-and-their-d-Fitts/99e1c44a7dc8c2eb2190ebf1aa031b9bb2041fdd"
+   },
+   {
+    "id": 19,
+    "last_updated": "2026-08-09",
+    "snippet": "If we assume that 𝜇𝜇1 −𝜇𝜇2 represents the difference between paired means in the population and the \n(unknown) standard deviation of paired differences is σ, then the effect size is represented by d where\n...\nIf the standard deviation of the paired differences is σ, the effect size is represented by d, where \n...\nCohen (1988) proposed the following interpretation of the d values.\nA d near 0.2 is a small effect, a d near 0.5 \nis a medium effect, and a d near 0.8 is a large effect.",
+    "source": "web",
+    "title": "Paired T-Tests using Effect Size",
+    "url": "https://www.ncss.com/wp-content/themes/ncss/pdf/Procedures/PASS/Paired_T-Tests_using_Effect_Size.pdf"
+   },
+   {
+    "date": "2018-03-07",
+    "id": 20,
+    "last_updated": "2026-08-09",
+    "snippet": "where *z* = *x* ~1~ – *x* ~2~.\n...\nIn the literature, you will find the calculation of a confidence interval for Cohen’s *d~rm~* as *d~rm~ ± se · z~crit~ * using the following estimate of the standard error of *d~rm~*.",
+    "source": "web",
+    "title": "Cohen's d for Paired Samples",
+    "url": "https://real-statistics.com/students-t-distribution/paired-sample-t-test/cohens-d-paired-samples/"
+   },
+   {
+    "id": 21,
+    "last_updated": "2026-07-13",
+    "snippet": "#> Cohen's d | 95% CI\n#> --------------------------\n#> -1.28 | [-2.12, -0.41]",
+    "source": "web",
+    "title": "Cohen's d and Other Standardized Differences — cohens_d",
+    "url": "https://easystats.github.io/effectsize/reference/cohens_d.html"
+   },
+   {
+    "date": "2017-01-29",
+    "id": 22,
+    "last_updated": "2026-08-06",
+    "snippet": "Origin of sound Valve closure  Movement of heart wall  Valve opening  Extra cardiac sounds 1.\nFrequency – 10 to 1000 Hz.\nLOW RANGE – 10 – 60 Hz(3rd and 4th) MEDIUM RANGE – 60 – 150 Hz(1st and 2nd) HIGH RANGE – 150 – 1000 Hz 2.Amplitude 3.Quality MEDICAL ELECTRONICS - MV/AP/ECE 3\n...\n 1st sound: Closureof mitral and tricuspid valves.\nFreq – 30 to 100 Hz and duration 50 to 100 ms  2nd sound: Closure of aortic and pulmonary valves(slight back flow of blood).\nFreq – 30 to 100 Hz and duration 25 to 50 ms .  3rd and 4th low intensity and inaudible.(heard among children).\n...\n 3rd sound: Bloodrapid movement into relaxed ventricular chambers Freq – 10 to 100 Hz and duration 0.04 to 0.08 s.\n 4th sound: atrial contraction.\nFreq – 10 to 50 Hz and duration 0.03 to 0.06 s.\nMEDICAL ELECTRONICS - MV/AP/ECE 5",
+    "source": "web",
+    "title": "Phonocardiography(PCG)",
+    "url": "https://fr.slideshare.net/slideshow/phonocardiographypcg/71507625"
+   },
+   {
+    "date": "2021-04-08",
+    "id": 23,
+    "last_updated": "2026-06-07",
+    "snippet": "",
+    "source": "web",
+    "title": "Cohen's d for the Paired Design: A Better Way to Find ...",
+    "url": "https://thenewstatistics.com/itns/2021/04/08/cohens-d-for-the-paired-design-a-better-way-to-find-the-confidence-interval/"
+   },
+   {
+    "date": "2020-01-02",
+    "id": 24,
+    "last_updated": "2026-06-25",
+    "snippet": "*If* you want to measure your effect sizes relative to the distribution of difference scores, the measure of d that you calculate is just (`method = \"paired\"`)\n\\(d=\\dfrac{\\bar{D}}{\\hat{\\sigma}_{D}}\\)\nwhere \\(\\ \\hat{\\sigma_D}\\) is the estimate of the standard deviation of the differences.",
+    "source": "web",
+    "title": "13.8: Effect Size",
+    "url": "https://stats.libretexts.org/Bookshelves/Applied_Statistics/Learning_Statistics_with_R_-_A_tutorial_for_Psychology_Students_and_other_Beginners_(Navarro)/13:_Comparing_Two_Means/13.08:_Effect_Size"
+   },
+   {
+    "id": 25,
+    "last_updated": "2026-08-10",
+    "snippet": "Cohen’s *d* can be used as an effect size statistic for a paired *t*-test.\nIt is calculated as the mean difference between the groups divided by the standard deviation of the differences.\nThe standard deviation used could be calculated from the differences between observations, or, for observations across two times, the observations in the “before” group.\nIt ranges from 0 to infinity, with 0 indicating no effect\nwhere the means are equal.\nIn some versions, Cohen’s *d* can be positive or negative depending on whether the mean of the paired differences are greater than or less than zero.\nA Cohen’s *d* of 0.5 suggests that the mean of the differences is one-half the standard deviation of the differences.\nA Cohen’s *d* of 1.0 suggests that the mean of the differences is one standard deviation of the differences.\n...\n| |Small|Medium|Large|\n...\n|**Cohen’s *d* **|0.2 – < 0.5 −0.2 – > −0.5|0.5 – < 0.8 −0.5 – > −0.8|≥ 0.8 ≤ −0.8|\n...\nBy convention, the statistic follows the formula\nCohen’s d = mean(Before - After) / sd(Before - After)",
+    "source": "web",
+    "title": "Paired t-test",
+    "url": "https://rcompanion.org/handbook/I_04.html"
+   },
+   {
+    "id": 26,
+    "last_updated": "2026-04-02",
+    "snippet": "The most basic option is compute from the paired samples difference\nscores and compute a one-sample effect size.\nThis effect size, known as\nCohen’s \\(d_z\\), represents the difference in terms of its homogeneity (a small but stable difference will have a large \\(d_z\\)).\n...\n> d (z) | 95% CI\n> ----------------------\n> -1.17 | [-1.94, -0.41]",
+    "source": "web",
+    "title": "Standardized Differences - CRAN",
+    "url": "https://cran.r-project.org/web/packages/effectsize/vignettes/standardized_differences.html"
+   },
+   {
+    "id": 27,
+    "last_updated": "2026-07-21",
+    "snippet": "Confidence intervals should be reported immediately after an effect size, e.g., Cohen’s d =\n0.40, 95% CI [0.20, 0.60]. After the first time reporting them in a manuscript, every subsequent",
+    "source": "web",
+    "title": "Guide to Effect Sizes and Confidence Intervals",
+    "url": "https://matthewbjane.quarto.pub/Guide-to-Effect-Sizes-and-Confidence-Intervals.pdf"
+   },
+   {
+    "date": "2006-01-01",
+    "id": 28,
+    "last_updated": "2025-04-05",
+    "snippet": "Heart sounds are associated with the closing of valves.\nIn adults, they are called S1 and S2 where S1 has peak power characteristics between 10 and 140 Hz and S2 has peak power characteristics between 10 and 400 Hz.",
+    "source": "web",
+    "title": "Acoustic Stethoscopes | Biomedical Instrumentation & Technology",
+    "url": "https://array.aami.org/doi/full/10.2345/i0899-8205-40-5-367.1"
+   },
+   {
+    "date": "2004-01-21",
+    "id": 29,
+    "last_updated": "2026-07-02",
+    "snippet": "This creates the following relationship between the t-statistic to test for a difference in the means of the two paired groups and Cohen's *d'* (computed with difference scores): \\( t={\\frac {{\\bar {X}}_{1}-{\\bar {X}}_{2}}{{\\text{SE}}_{diff\n}}}={\\frac {{\\bar {X}}_{1}-{\\bar {X}}_{2}}{\\frac {{\\text{SD}}_{diff}}{\\sqrt {N}}}}={\\frac {{\\sqrt {N}}({\\bar {X}}_{1}-{\\bar {X}}_{2\n})}{SD_{diff}}} \\) and \\( d'={\\frac {{\\bar {X}}_{1}-{\\bar {X}}_{2}}{{\\text{SD}}_{diff}}}={\\frac {t}{\\sqrt {N}}} \\)However, for paired samples, Cohen states\nthat d' does not provide the correct estimate to obtain the power of the test for d, and that before looking the values up in the tables provided for d, it should be corrected for r as in the following formula: \\( {\\frac {d'}{\\sqrt {1-r}}}.\n\\)where r is the correlation between paired measurements.\n...\nConfidence intervals of standardized effect sizes, especially Cohen's \\( {d} \\) and \\( f^{2} \\), rely on the calculation of confidence intervals of noncentrality parameters (*ncp*).",
+    "source": "web",
+    "title": "Effect size - Wikipedia",
+    "url": "https://en.wikipedia.org/wiki/Effect_size"
+   },
+   {
+    "id": 30,
+    "last_updated": "2025-11-04",
+    "snippet": "The performance was higher in algorithm A (M = 0.3876, SD = 0.3138) than in algorithm B (M = 0.2241, SD = 0.3476), a statically significant mean increase of 0.1635, 95% CI [0.0393, 0.2877], t(27) = 2.7007, p = 0.0118, d = 0.4938, 95% CI for d [-0.0501, 1.0378].\n...\nThere are analogous effect size measures to Cohen's for paired data, sometimes called the \"standardized mean change\" or \"standardized mean gain\".\nThis is computed with $$d = \\frac{\\bar{x}_1 - \\bar{x}_2}{SD_D} = \\frac{\\bar{x}_D}{SD_D},$$\nwhere $\\bar{x}_1$ is the mean at time 1 (or under condition 1), $\\bar{x}_2$ is the mean at time 2 (or under condition 2), $\\bar{x}_D$ is the mean of the change/differences scores, and $SD_D$ is the standard deviation of the change/differences scores.\n...\nWith a bit of trial and error (and starting with the CI bounds obtained earlier), we find the exact 95% CI for d is $(-0.003, -0.772)$.",
+    "source": "web",
+    "title": "Conflict in confidence intervals for mean difference and confidence interval for Cohen'd effect size",
+    "url": "https://stats.stackexchange.com/questions/87068/conflict-in-confidence-intervals-for-mean-difference-and-confidence-interval-for"
+   },
+   {
+    "date": "2023-05-31",
+    "id": 76,
+    "last_updated": "2026-06-01",
+    "snippet": "The ER provides an idea of the relative energy of \ncardiac murmurs relative to other heart sounds S1 \nand S2 [24], which make him important indicators \non estimating the degree of heart severity.\nIt is \ndefined as in the equation below [19]  \n𝐸𝑅=\n𝐸�\n𝐸�+ 𝐸�\n× 100 \n(7) \nFre\nJournal of Theoretical and Applied Information Technology \n...\nWhere E2 is the heart murmur energy, E1\nis the energy of S1 + S2 and (E1 + E2) is the total \nenergy.\nIn case ER equals to 100%, we have a \ncomplete dominance of the clicks or murmur over \nthe two heart sounds (S1 and S2).\n...\nenergetic ratio, as mentioned before, refer to the \nintensity of heart sounds S1, S2 and added sounds \n(click and murmur) to highlight the dominance of \nadded sounds over heart sounds and to classify the \nPCG signals according to this dominance. Where \n[36] \n \nRE <30% , refers to Light severity level.",
+    "source": "web",
+    "title": "PATHOLOGY CARDIAC MONITORING STUDY OF THE ...",
+    "url": "http://www.jatit.org/volumes/Vol101No10/29Vol101No10.pdf"
+   },
+   {
+    "date": "2007-05-04",
+    "id": 77,
+    "last_updated": "2026-05-05",
+    "snippet": "Thus, the instantaneous energy of the heart sound signal, or the heart sound signal power, is computed for the HES format (part C1 of the format, outlined in Sect. 2.4) as\nP(t)=∫f1f2|PWVDxx(t,f)|df, t∈[τ,τ+T]",
+    "source": "web",
+    "title": "Heart energy signature spectrogram for cardiovascular diagnosis",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC1899182/"
+   },
+   {
+    "id": 78,
+    "last_updated": "2026-04-18",
+    "snippet": "The severity calculation process relies on the calculation of energy as an important factor in defining the total presence of the murmur over the cardiac cycle by comparing it to the energy of the other main sounds S1 and S2.\nBased on previous studies [30-34] which have shown that the energy ratio is a fair index and a useful argument for severity classification, the ER energy ratio is given by the following equation:\nShortness of murmur is the energy of the murmur, ES1: the energy of the first heart sound S1, ES2: the energy of the heart sound S2.\nBlasts are graded by multiplying RE by 100 to get a percentage so that is between:\n- 1%\n- 30%\n- 70%",
+    "source": "web",
+    "title": "Heartbeat Cardiac Sounds Analysis | ClinicSearch",
+    "url": "https://clinicsearchonline.org/article/heartbeat-cardiac-sounds-analysis"
+   },
+   {
+    "id": 79,
+    "last_updated": "2026-07-18",
+    "snippet": "The energy distribution of murmurs in frequency varies widely and, depending on their nature, can go above 800 Hz.\n...\nrn=-∑i=1phirn-1+en, (6)",
+    "source": "web",
+    "title": "Comparison of Spectral and Sparse Feature Extraction ...",
+    "url": "https://www.scielo.org.mx/scielo.php?script=sci_arttext&pid=S0188-95322023000400006"
+   },
+   {
+    "id": 80,
+    "last_updated": "2025-09-25",
+    "snippet": "systole and a time period between S2 and S1 is called a \ndiastole.\nIf there is a sound (noise) which is heard through\nthe systole or diastole, that phenomenon is respectively \ncalled systolic heart murmur and diastolic heart murmur.\n...\nAnalysed frequency \nparameters of heart murmurs (in this article) are:  \n- Frequency of spectral extremes i.e. frequency on \nwhich murmur spectrum has the highest energy (peaks);\n- Frequency bandwidth; \n- Intensity of spectral energy on resonant frequency \n(spectral energy of peaks).",
+    "source": "web",
+    "title": "Graphic Representations and Frequency Parameters of ...",
+    "url": "https://www.mecs-press.org/ijigsp/ijigsp-v10-n7/IJIGSP-V10-N7-4.pdf"
+   },
+   {
+    "id": 81,
+    "last_updated": "2026-01-26",
+    "snippet": "frequency energy in the range 300 − 1, 000 Hz.\n...\nSpectral power ratios computed with the bands\n25 − 75 Hz : constant area (CA) related to normal sounds,\n75 − 150 Hz : predictive area (P A) related to murmurs.",
+    "source": "web",
+    "title": "Analog Signals",
+    "url": "https://bmes16.wordpress.com/wp-content/uploads/2017/03/spectra-lecture.pdf"
+   },
+   {
+    "id": 82,
+    "last_updated": "2026-07-07",
+    "snippet": "However, the second\nheart sound, marking the end of ventricular systole and signifying the beginning of \nthe diastole, and corresponding to closure of aortic (A2) and pulmonary (P2) valves.\n...\nShannon Energy:\n2\n2 log X\nX\nE \n. \n...\nIn order to categorize the heart sound, signal as normal or abnormal and then\ndiagnose the abnormal one as an MR or MS cases, the following steps are proposed: \ni. Averaging energy envelop. \nii. Detecting averaged envelop peaks. \niii. Fixing threshold (S1 and S2 duration calculation). \niv. Murmurs detection and analysis. \n...\nThe duration between first sound and second sound containing the murmur is \nextracted from the location of each heart sound in cardiac cycle.",
+    "source": "web",
+    "title": "[PDF] Phonocardiogram signal analysis for murmur diagnosing using ...",
+    "url": "https://jestec.taylors.edu.my/Vol%2012%20issue%209%20September%202017/12_9_7.pdf"
+   },
+   {
+    "id": 83,
+    "last_updated": "2025-06-13",
+    "snippet": "Diastolic murmur: occurs during heart \nmuscle relaxation between beats.\n...\ncalculation as an important factor to define the total presence \nof murmur on the cardiac cycle by compare it to the energy of \nthe other major sounds S1 and S2.\nBased on previous studies \n[10-12] that have been shown that energy ratio is a fair clue and \nuseful argument for severity classification (Table 1), energy ratio\nER is given by the following equation:\nWhere:\nEmurmur: is the energy of murmur, ES1: energy of the first heart \nsound S1, ES2: energy of the second heart sound S2.\nMurmurs are classified by multiplying RE by 100 to get a \npercentage in order that what is between:\n• \n1% <RE<30% is considered Mild murmur\n• \n30% <RE<70% is considered Medium murmur\n• \n70% <RE<100% is considered Severe murmur\nDatabase of cardiac abnormalities of heart sounds was taken \nfrom [B-C].",
+    "source": "web",
+    "title": "J Med Res Surg,",
+    "url": "https://respubjournals.com/medical-research-surgery/pdf/2020/v1i8/The-Impact-of-Murmur-s-Severity-on-the-Cardiac-Variability.pdf"
+   },
+   {
+    "id": 84,
+    "last_updated": "2026-07-15",
+    "snippet": "A third measure is the murmur energy ratio [51] which is defined as the energy\nbetween 100 −500 Hz (E2) divided by the energy between 20 −500 Hz (E1+E2),\nsee figure 5.4 for further details.\n...\nThe murmur energy ratio was defined as the energy between\n50-500 Hz divided by the energy between 20-500 Hz.",
+    "source": "web",
+    "title": "Nonlinear Phonocardiographic Signal Processing",
+    "url": "https://www.diva-portal.org/smash/get/diva2:17719/FULLTEXT01.pdf"
+   },
+   {
+    "id": 85,
+    "last_updated": "2025-06-17",
+    "snippet": "Time-domain Features\nMean and standard deviation (SD) of the \nfollowing parameters were used as time-\ndomain features (36 features):\n• PCG intervals: \n• RR intervals, \n• S1 intervals, \n• S2 intervals, \n• systolic intervals, \n• diastolic intervals, \n• ratio of systolic interval to RR \ninterval of each heart beat, \n• ratio of diastolic interval to RR \ninterval of each heart beat, \n• ratio of systolic to diastolic interval \nof each heart beat.\n...\n• The power spectrum was estimated using a Hamming window and \nthe discrete-time Fourier transform.\n• The median power across 4 frequency bands was calculated.\n• Then, the mean of the median power of the 4 frequency bands were \nused as frequency-domain features.\n• Additionally, mel-frequency cepstral coefficient (MFCC) were \nextracted",
+    "source": "web",
+    "title": "Heart Sound Classification Using Gaussian Mixture Models",
+    "url": "https://www2.cs.arizona.edu/~pachecoj/courses/csc696h_fall22/lectures/projstatus_mary.pdf"
+   },
+   {
+    "id": 86,
+    "last_updated": "2025-03-08",
+    "snippet": "Experiments show the PCG of normal hearts has a \ndominant frequency of 50Hz to 150Hz, with the subdominant frequencies of 450 \nHz to 650 Hz.\n...\nHasil eksperimen menunjukkan \nbahwa PCG jantung normal memiliki frekuensi dominan di kisaran 50Hz hingga \n150Hz, serta frekuensi subdominan di kisaran 450Hz hingga 650Hz.",
+    "source": "web",
+    "title": "Microsoft Word - 5. Karel - Frequency ..",
+    "url": "https://ejournal.atmajaya.ac.id/index.php/JTE/article/download/6195/2874"
+   },
+   {
+    "id": 87,
+    "last_updated": "2026-03-12",
+    "snippet": "Results show increased energy of fundamental heart sounds in systolic and diastolic murmurs similarly, whilst frequency\nis decreased inversely.\n...\nto Equation 4:27 \nPMUSIC = 1\n...\n|eH(fi)ʋ(k)|2\nM\nk=m+1\n...\nThe spectral parameters that have been studied in this work are:\nEnergy: Calculated at frequencies 25-250 Hz and expressed in \ndecibels (dB).\nFrequency: Heart sound and murmur frequency presented in the \npseudospectrum are measured in Hertz (Hz).\nFrequency distribution: represents the width of each frequency \ndensity expressed in Hertz (Hz).",
+    "source": "web",
+    "title": "[PDF] The study of the impact of murmurs on heart sounds by using ...",
+    "url": "https://reference-global.com/download/article/10.2478/pjmpe-2024-0011.pdf"
+   },
+   {
+    "id": 88,
+    "last_updated": "2025-10-22",
+    "snippet": "tude band is seen occupying the entire frequency range be-\ntween S1 and S2 for every beat (likely a holosystolic mur-\nmur).",
+    "source": "web",
+    "title": "Using Spectral Acoustic Features to Identify Abnormal ...",
+    "url": "https://www.cinc.org/archives/2016/pdf/160-401.pdf"
+   },
+   {
+    "id": 89,
+    "last_updated": "2026-01-19",
+    "snippet": "",
+    "source": "web",
+    "title": "A novel hybrid energy fraction and entropy-based approach for systolic heart murmurs identification",
+    "url": "https://www.sciencedirect.com/science/article/abs/pii/S0957417414006897"
+   },
+   {
+    "id": 90,
+    "last_updated": "2025-04-07",
+    "snippet": "Es = (−1/W)\nW\n�\ni=1\nx2\nnorm(iT ) log x2\nnorm(iT )\n(11)\nwhere W is the window length over which the energy is calculated and xnorm is the normalized\nPCG signal (Liang et al 1997).",
+    "source": "web",
+    "title": "INSTITUTE OF PHYSICS PUBLISHING",
+    "url": "https://citeseerx.ist.psu.edu/document?repid=rep1&type=pdf&doi=67c7bd444fc926cdb201b451e6e72845078ecba4"
+   },
+   {
+    "date": "2021-10-30",
+    "id": 61,
+    "last_updated": "2025-10-24",
+    "snippet": "We found that a signal-to-noise ratio equal to or higher than 14 dB warrants an uncertainty of the estimate of the valve closure latencies below 1 ms.\n...\nWe assume PCG signals as quasi-periodic and the additive noise as a stochastic process.\nTherefore, we defined SNR as in Equation (3):\n|SNR=20 log10AS4 σN,|(3)|\n|--|--|\nwhere\n- AS is a measure of the signal amplitude, defined as the peak-to-peak amplitude of the heart sound of interest;\n- 4 σN is a measure of the noise amplitude, corresponding to the amplitude of the 95% band of noise.\nThis is assumed as having a normal probability density function of its amplitude.\nThe latter is computed within 70% and 85% of the heart cycle when no heart sound is expected to occur [4].\n...\nObserving the results, we can conclude that raw recorded signals with an original SNR value higher or equal than 14 dB for both heart sounds may be considered as adequate for estimating the latency of heart sound components with an uncertainty of 1 ms.\n...\nWe found that, in the worst case, recordings with an SNR as low as 14 dB are sufficient for obtaining a measurement uncertainty lower than 1 ms.",
+    "source": "web",
+    "title": "Automated Assessment of the Quality of Phonocardographic ... - PMC",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8588421/"
+   },
+   {
+    "id": 62,
+    "last_updated": "2025-05-26",
+    "snippet": "Hence,\nthe\nR-peak\nin\nthe\nsimultaneously\nrecorded\nECG\nsignal\ncan\nbe  considered\nas  an  external\nreference\npoint.\n...\nto  be\nan  external\nreference\npoint\nfor\nthe  heart\nsounds\nand\nhence\nis  located\nat  θ  =  0.\n...\nmethods\nis  provided\nby  comparing\nthe\namount\nof  the\nsignal-to-noise\nratio\n(SNR)\nimprovement\nachieved\nfor the\ninput\nsignal\nwhich\nis  defined\nas\nSNRimprovement\n=  SNRout\n− SNRin\n(20)\n…\n...\nwhere\nSNRout\nand\nSNRin\nare\nthe\nSNR\nof  the\noutput\nsig-\nnal\n(in  decibels)\nand\nthe\nSNR\nof  the  input\nsignal\n(in\n decibels),\nrespectively,\nwhich\nare  defined\nas  follows:\nSNRin\n=\n10\nlog ∥x[n]∥\n∥N[n]∥=\n10\nlog\n∥x[n]∥\n∥xn[n]\n− x[n]∥\nSNRout\n=\n10  log\n∥x[n]∥\n∥ˆx[n]\n− x[n]∥\n(21)\nwhere\nx[n]\nis  a  test\nsignal\nand\nxn[n]\n=  x[n]\n+ N[n]\nis  the\nnoisy\nsig-\nnal\nobtained\nby\nadding\na noise\nN[n]\nwith\nan  appropriate\nvariance\nto\nthe\ntest\nsignal.\nThe\nxn[n]  is  the\ninput\nsignal\nto  the\ndenoising\nalgorithm, and  ˆx [n] is\nits  output.",
+    "source": "web",
+    "title": "Bayesian denoising framework of phonocardiogram based on a new dynamical model",
+    "url": "https://sharif.edu/~mbshams/files/25.pdf"
+   },
+   {
+    "id": 63,
+    "last_updated": "2025-05-31",
+    "snippet": "Each PCG signal is first down-sampled to 1000 Hz.\nNext,\nit is band-pass filtered in the frequency range 25–400 Hz\nusing two cascaded second-order Butterworth filters (low-\npass and high-pass).\n...\nAmplitude of noisy signals is adjusted according to the desired\nSNR defined by\nSNRdb = 20 log10\n�Asignal\nAnoise\n�\n.\n(4)\nThe resulting noisy signal is amplitude normalized.",
+    "source": "web",
+    "title": "Hilbert-Envelope Features for Cardiac Disease Classification from Noisy Phonocardiograms",
+    "url": "https://www.medrxiv.org/content/10.1101/2020.11.17.20233064v1.full.pdf"
+   },
+   {
+    "date": "2012-03-06",
+    "id": 64,
+    "last_updated": "2025-10-14",
+    "snippet": "PSNR is defined as the ratio \nbetween the maximum possible power of a signal and the power\nof corrupting noise that affects the fidelity of its representation.",
+    "source": "web",
+    "title": "DENOISING OF PCG SIGNAL BY USING WAVELET ...",
+    "url": "https://bioinfopublication.org/files/articles/4_1_5_ACR.pdf"
+   },
+   {
+    "id": 65,
+    "last_updated": "2025-01-13",
+    "snippet": "Output SNR – input SNR (dB)",
+    "source": "web",
+    "title": "Biomed. Eng.-Biomed. Tech. 2019; aop",
+    "url": "https://sci-hub.se/downloads/2019-12-20/74/rouis2019.pdf"
+   },
+   {
+    "id": 66,
+    "last_updated": "2025-11-03",
+    "snippet": "Determination of Signal to Noise Ratio of Electrocardiograms Filtered by Band Pass and Savitzky-Golay Filters",
+    "source": "web",
+    "title": "Determination of Signal to Noise Ratio of Electrocardiograms Filtered by Band Pass and Savitzky-Golay Filters",
+    "url": "https://www.sciencedirect.com/science/article/pii/S221201731200415X/pdf?md5=b8a7e02f6ba72c58abbb3dd8da52ac1c&pid=1-s2.0-S221201731200415X-main.pdf"
+   },
+   {
+    "id": 67,
+    "last_updated": "2025-09-19",
+    "snippet": "A fourth-order adaptive finite impulse response notch filter and a high-pass Butterworth filter with a cut-off frequency of 10 Hz were employed to remove 50 Hz power line interference, low-frequency noise and drift, respectively.\nThen, multi-level singular value decomposition and compressed sensing were applied for further denoising [39].",
+    "source": "web",
+    "title": "An innovative multi-level singular value decomposition and ...",
+    "url": "https://www.sciencedirect.com/science/article/abs/pii/S1746809417300848"
+   },
+   {
+    "date": "2023-06-02",
+    "id": 68,
+    "last_updated": "2025-11-03",
+    "snippet": "",
+    "source": "web",
+    "title": "Robust Denoising of Phonocardiogram Signals Using Time ...",
+    "url": "https://ieeexplore.ieee.org/iel7/6287639/10005208/10136709.pdf"
+   },
+   {
+    "date": "2026-05-26",
+    "id": 69,
+    "last_updated": "2026-06-29",
+    "snippet": "- Signal-to-Noise Ratio (SNR): A key metric indicating the improvement in sound quality post-denoising, crucial for accurate diagnosis.\n...\nWhen the pure, noise-free PCG signal is corrupted with\nseveral irrelevant components coming from the environment\nor system, a noisy signal is formed as follows:\n...\nx ∈ R 1 ×N denotes a noise-free PCG signal (theoretical) and\nn ∈ R 1 ×N denotes the noisy signal components that are\nadditively integrated with the noise-free PCG signal and\ndegrade their quality.\n...\n1. TRUE SNR METRIC\nSNR is the primary metric for assessing the noise reduction\nperformance.\nIt is defined as follows:\nSNR(dB) = 10 log 10\n…\n...\nwhere, Ps and Pn represent signal and noise power, respec-\ntively.\nAlso, x[t] and n[t] indicate the tth sample of the signal\nand noise, respectively, while N denotes the total number of\nsamples in the signal and noise.",
+    "source": "web",
+    "title": "Ali et al. - 2023 - Deep Learning Framework for Denoising Heart ...",
+    "url": "https://www.studocu.com/my/document/multimedia-university/health-promotion-and-wellness/ali-et-al-2023-deep-learning-framework-for-denoising-heart-sounds-in/163606970"
+   },
+   {
+    "id": 70,
+    "last_updated": "2026-03-03",
+    "snippet": "The noisy signal is obtained by generating and adding a white \nGaussian noise to the original signal, mathematically given by \nVs n =  V n + S n … … … … …  2  \nWhere S (n) is the white Gaussian noise, V (n) noiseless PCG\nsignal without noise and Vs (n) is the noisy PCG signal.\n...\nThe de-noising objective is to suppress the noise part of the\nsignal S (n) and to recover V (n).\nFrom a statistical viewpoint, \n...\nThe de-noising procedures are \nfollowed in three steps:\n1. Decompose:  \nChoose a wavelet; choose a level L.\nCompute the wavelet \ndecomposition of the signal s at level L.\n2. Threshold detail coefficients:  \nThen this transforms (decomposed wavelet coefficients) are \npassed through a threshold, which removes the coefficients \nbelow a certain value For each level from 1 to L, select a\nthreshold and apply the adaptive thresholding to the detail \ncoefficients, given by  \nT =  |M n + σ n |   … … … … … … (3) \nWhere M (n): mean of the n wavelet coefficients and σ (n): \nstandard deviation of the n wavelet coefficient.\n3. Choosing and applying threshold value:  \n...\nTwo parameters are used to ensure the qualitative studies of \nPCG denoising are:  \n1. Signal to Noise Ratio (SNR):\nSignal-to-noise-ratio is a traditional method of measuring the \namount of noise present in a signal.\nThe standard definition of \nthe SNR is the following, considering both signals V (n) and \nnoise S (n) individually, during respective time periods L and \nN: \nThe SNR is given by:\n(SNR = 10 ∗log (Powersignal\nPowernoise\n) \n= \n1\nL  \nxi\n2\nL\ni=1\n1\nN  \nni\n2\nN\ni=1\n(in dB)     … . . (4.4) \n2. Percentage of Signal Reconstruction:\nThe reconstruction level is analysed by the factor percentage of \nreconstruction given by    \n...\nWhere S (n): original PCG signal and SR (n): reconstructed \nPCG signal.",
+    "source": "web",
+    "title": "[PDF] DENOISING OF HEART SOUND SIGNAL USING WAVELET ... - IJRET",
+    "url": "https://ijret.org/volumes/2013v02/i04/IJRET20130204056.pdf"
+   },
+   {
+    "date": "2026-06-24",
+    "id": 71,
+    "last_updated": "2026-07-08",
+    "snippet": "",
+    "source": "web",
+    "title": "Real-time heart sound denoising for cardiac disease detection using ...",
+    "url": "https://ojs.acad-pub.com/index.php/SV/article/view/1705"
+   },
+   {
+    "id": 72,
+    "last_updated": "2024-04-25",
+    "snippet": "",
+    "source": "web",
+    "title": "HAL Id: hal-00879037",
+    "url": "https://hal.science/hal-00879037/file/Text-hal.pdf"
+   },
+   {
+    "id": 73,
+    "last_updated": "2026-01-18",
+    "snippet": "Sp = \nwn1∗Nn1\nNa2+Nq2+Nn2+\n...\nNa2+Nq2+Nn2                         (14) ",
+    "source": "web",
+    "title": "Can Heart Sound Denoising Be Beneficial in Phonocardiogram Classification Tasks?",
+    "url": "https://lirias.kuleuven.be/retrieve/657793"
+   },
+   {
+    "date": "2026-01-27",
+    "id": 74,
+    "last_updated": "2026-01-27",
+    "snippet": "A noisy signal is processed through mul-Least mean squareSignal to noise ratio tiple adaptive ﬁlter stages connected in series in the proposed work.\n...\n(25) i=1 Signal to Noise Ratio (SNR)(in dB)The de-noised signal adaptive ﬁlter, based on the above analysis, is Ncloser to s(n ).\ns ( n )2 SNR = 10 log10 i=1 (30) N i=1 s ( n ) − y ( n ) 23.2.1.",
+    "source": "web",
+    "title": "A Robust Low-Cost Adaptive Filtering Technique For ...",
+    "url": "https://www.scribd.com/document/963361682/79-a-Robust-Low-cost-Adaptive-Filtering-Technique-for-Phonocardiogram"
+   },
+   {
+    "id": 75,
+    "last_updated": "2024-10-13",
+    "snippet": "",
+    "source": "web",
+    "title": "Spectral and SNR improvement analysis of normal and abnormal ...",
+    "url": "https://www.sciencedirect.com/science/article/abs/pii/S0167739X18318132"
+   },
+   {
+    "id": 46,
+    "last_updated": "2026-07-07",
+    "snippet": "detection method. The normalized envelope of Shannon energy is calculated to \ndetect the beginning and end of each of heart sounds using a fixed threshold from\n...\nIn order to categorize the heart sound, signal as normal or abnormal and then\ndiagnose the abnormal one as an MR or MS cases, the following steps are proposed: \ni. Averaging energy envelop. \nii. Detecting averaged envelop peaks. \niii. Fixing threshold (S1 and S2 duration calculation). \niv. Murmurs detection and analysis. \n...\nthreshold is not taken into account [4]. In this paper we choose the threshold set to \nbe 70% from the maximum value of the energy envelope in order to isolate heart \nsounds from murmurs in PCG signal.  ",
+    "source": "web",
+    "title": "[PDF] Phonocardiogram signal analysis for murmur diagnosing using ...",
+    "url": "https://jestec.taylors.edu.my/Vol%2012%20issue%209%20September%202017/12_9_7.pdf"
+   },
+   {
+    "id": 47,
+    "last_updated": "2026-01-18",
+    "snippet": "Average Shannon Energy of the signal is computed as\n2\n2\n1\n1\n[\n( )*log(\n( ))]\nN\navg\nt\nE\nsignal\nt\nsignal\nt\nN\n=\n= −\n∑\nwhere N is window size and is taken to be duration between \ntwo zero crossings of the signal.\n...\nenergy of envelopes and ratio of energy of envelopes to the  \nduration of envelopes, murmur thresholds are set as 0.25\n(with an overlap region of 0.25—0.30) and 0.1 (with an \noverlapping region of 0.1—0.15) respectively, on a scale of \n0—1, with original PCG and its features normalized to their \nabsolute maximum.\n...\nEnergy of murmurs\nRelative Energy = \nTotal Energy of S1s, S2s, S3s \nOutput would range from 0—1.\nValues closer to zero\nwould imply low risk but values from 0.20 onwards may be \npathological.",
+    "source": "web",
+    "title": "Microsoft Word - worldcomp09_word_template V.4",
+    "url": "https://crss.utdallas.edu/CILab/IPCV2009.pdf"
+   },
+   {
+    "id": 48,
+    "last_updated": "2026-04-12",
+    "snippet": "The normalized average Shannon Energy envelogram is detected in order to delimit the beginning and end of each heart sound with a threshold set from the maximum value of the envelope, the location of the heart sounds S1 and S2 will enable us thereafter to extract the heart murmurs using a threshold selection of them.\n...\nThe average Shannon energy is standardized by the following relationship:\n**En =   ** ***E-M/std** * **             (5)**\nWhere *E * is the Shannon energy, *m * is the average value of energy *E * of the signal, *std * is the standard deviation of energy *E * of the signal, and *En * is the average Shannon* * energy standardized or normalized.\n...\nBased on the envelogram calculated by the normalized average Shannon* * energy, a threshold (T1) is set starting from maximum value according to the operator choice to eliminate the effect of noise and very low- intensity signal.\n...\nFrom the beginnings and ends of the heart sounds detected previously, we will introduce a selection threshold (T2) on the originalPCG signal such as:\nThreshold = 0;            if  beginning (i) ≤ t ≤ end (i)\nThreshold = 1;            outside      **i** is the heart sound S1 or S2\n...\nCalculating of energy envelope of the signal resulting allow us thereafter to localize the heart murmurs by means of a new fixed threshold (T3) from the maximum value of the envelope of the result signal.",
+    "source": "web",
+    "title": "Heartbeat Cardiac Sounds Signals Analysis by Using the Energy ...",
+    "url": "https://auctoresonline.org/article/heartbeat-cardiac-sounds-signals-analysis-by-using-the-energy-envelogram"
+   },
+   {
+    "date": "2009-02-19",
+    "id": 49,
+    "last_updated": "2025-02-19",
+    "snippet": "",
+    "source": "web",
+    "title": "[PDF] Proposed Algorithm for Implementation of Shannon Energy ...",
+    "url": "https://www.semanticscholar.org/paper/Proposed-Algorithm-for-Implementation-of-Shannon-Saini/4b125c3952379107f55410c71ca3f178f7e4abac"
+   },
+   {
+    "id": 50,
+    "last_updated": "2025-05-31",
+    "snippet": "Diastolic murmurs can be",
+    "source": "web",
+    "title": "Hilbert-Envelope Features for Cardiac Disease Classification from Noisy Phonocardiograms",
+    "url": "https://www.medrxiv.org/content/10.1101/2020.11.17.20233064v2.full.pdf"
+   },
+   {
+    "id": 51,
+    "last_updated": "2025-03-02",
+    "snippet": "The average three-order Shannon energy is calculated in continuous\n32-samples segment throughout the normalized signal with 16-\nsamples segment overlapping, according to following formula,\n...\nNow, according to the amplitude of envelope, a soft-threshold “Th” has to obtain.\nThen, time gate of S1 and S2 is constructed by \nThreshold “Th”.\n...\nThe S1 and S2 are identified on the basis of following facts: \nThe longest time interval between two consecutive peaks is the Diastolic period (i.e. from the end of S\n1. \n2 to beginning of S1)\n[5].",
+    "source": "web",
+    "title": "IJECT Vol. 7, Issue 1, Jan - March 2016",
+    "url": "http://www.iject.org/vol71acsect/2-mehak-saini.pdf"
+   },
+   {
+    "id": 52,
+    "last_updated": "2025-12-08",
+    "snippet": "Instantaneous Shannon Energy is calculated as: \nShannon Energy (t) ����������t��lo g������������\nHowever, in order to evaluate envelopes average Shannon \nEnergy is calculated in some time duration.\nE�����1\n...\nIn order to limit noise a threshold may be\nset below which energy is set to zero.\nPCG we used, had a \nvery good SNR therefore we selected a threshold value of \nonly 0.032 on a scale of 0—1.",
+    "source": "web",
+    "title": "[PDF] Heart Sound Signal Modeling and Segmentation based on ...",
+    "url": "https://crss.utdallas.edu/CILab/AsiaLinkConference_Jakarta_2007.pdf"
+   },
+   {
+    "id": 53,
+    "last_updated": "2025-06-13",
+    "snippet": "Similar to the separation of the cardiac sounds S1 and S2, the \nseparation of heart clicks or heart murmurs requires detection \nof the side minima of each peak of the energy envelope of\nfiltering of 20 Hz seems the most appropriate comparing to \ndifferent cutoff frequencies [5].\n...\nPCG signals with heart clicks or murmurs by applying a fixed \nthreshold starting from the maximum value, and then detection \n...\nWhere:\nEmurmur: is the energy of murmur, ES1: energy of the first heart \nsound S1, ES2: energy of the second heart sound S2.\nMurmurs are classified by multiplying RE by 100 to get a \npercentage in order that what is between:\n• \n1% <RE<30% is considered Mild murmur\n• \n30% <RE<70% is considered Medium murmur\n• \n70% <RE<100% is considered Severe murmur",
+    "source": "web",
+    "title": "J Med Res Surg,",
+    "url": "https://respubjournals.com/medical-research-surgery/pdf/2020/v1i8/The-Impact-of-Murmur-s-Severity-on-the-Cardiac-Variability.pdf"
+   },
+   {
+    "id": 54,
+    "last_updated": "2025-04-07",
+    "snippet": "Once an estimate of the average simplicity of\nthe background noise has been obtained, the threshold can be fixed at a certain value above it.\nWe have observed that this method gives a threshold value in the range of 0.2–0.3.",
+    "source": "web",
+    "title": "INSTITUTE OF PHYSICS PUBLISHING",
+    "url": "https://citeseerx.ist.psu.edu/document?repid=rep1&type=pdf&doi=67c7bd444fc926cdb201b451e6e72845078ecba4"
+   },
+   {
+    "date": "2024-01-08",
+    "id": 55,
+    "last_updated": "2026-05-05",
+    "snippet": "The envelope signal\n*E* ~*s* ~ of the normalized band pass-filtered heart sound signal is computed as the average Shannon energy (ASE), taken at fixed intervals.\n...\nThe ASE is computed over 20-ms sliding windows with 50% overlap between two successive windows.\nLet xnorm(t) denote the normalized bandpass filtered heart sound signal.\nThe ASE is computed as,\n|Es=−1N∑j=1Nxnormjlogxnorm(j)2,|(1)|\n|--|--|\nwhere N denotes the total number of samples in a 20-ms window.\n...\nThe normalized ASE (NASE) is given as,\n|NASE(t)=ES(t)-ES-(t),|(2)|\n...\nwhere Es-(t) denotes the mean of Es(t).\nThe sound lobe boundaries are localized by applying the threshold value of 0 on the NASE.",
+    "source": "web",
+    "title": "A Noise-Robust Heart Sound Segmentation Algorithm Based on ...",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11469632/"
+   },
+   {
+    "id": 56,
+    "last_updated": "2025-11-03",
+    "snippet": "The basic idea behind this stage is to estimate the energy variation along the PSG signal,\nx(t), t ∈Ta.\nTo this end, the Shannon energy is calculated, as follows [8]:\nη(t) = −x(t)2 log x(t)2\n(1)\nSo, if the signal is corrupted by noise within a given estimation segment, Ta, its energy\nshould increase, being noticeably higher that the average energy value, and thus allow-\ning to infer the presence of noise.\nSignals with strong noise indicators should be either\nrejected or recorded again.\nWith this in mind, the average Shanon energy is calculated\nas:\nˆη = E {η(t) : ∀t ∈Ta}\n(2)\nwhere E {·} stands for expectation operator.",
+    "source": "web",
+    "title": "[PDF] Phonocardiography Signal Segmentation for Telemedicine ...",
+    "url": "https://accedacris.ulpgc.es/bitstream/10553/48815/1/MurilloRendon.pdf"
+   },
+   {
+    "id": 57,
+    "last_updated": "2026-03-25",
+    "snippet": "",
+    "source": "web",
+    "title": "[PDF] Processing of the Phonocardiographic Signal − Methods for the ...",
+    "url": "https://liu.diva-portal.org/smash/get/diva2:22548/FULLTEXT01.pdf"
+   },
+   {
+    "id": 58,
+    "last_updated": "2025-11-03",
+    "snippet": "So the initial and ending instants of S1 segment are assumed to be the first and second values over a fixed energy threshold (the threshold is chosen at 0.1 level of the maximum normalized value).",
+    "source": "web",
+    "title": "Digital Auscultation Analysis for Heart Murmur Detection",
+    "url": "https://link.springer.com/article/10.1007/s10439-008-9611-z"
+   },
+   {
+    "id": 59,
+    "last_updated": "2026-07-02",
+    "snippet": "The main steps for obtaining the Shannon envelope of a heart sound signal are as\nfollows:\na) Compute the Instantaneous Energy E[n] of the Normalized Signal by Squaring Its\nAmplitude [21]:\nE[t] = x[t]2\nnorm\n(2)\nwith x[t]norm being the amplitude of the signal at time t.\nb) Transform the instantaneous energy using the Shannon formula to obtain the nor-\nmalized energy:\nEshannon = −E[t] · log (E[t])\n(3)\nc) Calculate the Mean Shannon Energy of the digital signal:\nEi = −1\nN\nN\n�\ni=1\nE[i] · log (E[i])\n(4)\n...\nlating Shannon entropy on a PCG signal are as follows:\n(i) Divide the signal into segments of 50 samples with a 50% overlap.\n(ii) For each segment, compute Shannon entropy.\n(iii) Determine the adaptive threshold: threshold = (σ + µ).\n(iv) Compare the entropy of each segment to the threshold to locate heart sounds.",
+    "source": "web",
+    "title": "[PDF] Comparative study on PCG envelope Extraction",
+    "url": "https://bit.kuas.edu.tw/2025/vol16/N2/16.JIHMSP-250207.pdf"
+   },
+   {
+    "id": 60,
+    "last_updated": "2026-01-28",
+    "snippet": "The MDBD algorithm consists of absolute envelope extraction, adaptive thresholding, and fiducial point determination.",
+    "source": "web",
+    "title": "Multistage decision-based heart sound delineation method for automated analysis of heart sounds and murmurs - PubMed",
+    "url": "https://pubmed.ncbi.nlm.nih.gov/26713160/"
+   },
+   {
+    "id": 106,
+    "last_updated": "2026-03-22",
+    "snippet": "first method measures the frequency response of the\nstethoscope using a fluid-filled rubber ball that is excited \nby a mechanical shaker driven by broadband noise.\nThe \n...\nThere are, however, no existing \nacoustical \nstandards \nfor \ncharacterizing \nelectronic \nstethoscopes.\nA lack of standard measurement procedure puts into \n...\nThere are no existing standards for characterizing \nelectronic stethoscopes.\nTwo competing methods have ",
+    "source": "web",
+    "title": "Methods and Results in Characterizing Electronic ...",
+    "url": "https://cinc.org/archives/2002/pdf/653.pdf"
+   },
+   {
+    "date": "2020-04-17",
+    "id": 107,
+    "last_updated": "2026-07-20",
+    "snippet": "Amplified stethoscopes were designed to overcome the auditory limitations of nonamplified stethoscopes in terms of amplifying sounds, eradicating background noise and filtering sound frequencies.[4] Currently, no standards (or parameters) exist for measuring the acoustical characteristics of stethoscopes.[5] Pasterkamp *et al*.[6] stated >20 years ago that “stethoscopes are rarely tested, rated, or compared and are often chosen for their appearance, reputation, and inadequately supported claims of performance” (p. 974), and this currently remains the case.",
+    "source": "web",
+    "title": "Frequency Responses of Conventional and Amplified ... - PMC",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7305673/"
+   },
+   {
+    "date": "2025-08-07",
+    "id": 108,
+    "last_updated": "2026-01-20",
+    "snippet": "Frequency response tests show the microphones can accurately detect heart sounds from 10-1000 Hz.\n...\nThe frequency ranges fed to the microphone were 10 to 200Hz in 10Hz increments and 200 to 1000Hz in 50Hz increments.",
+    "source": "web",
+    "title": "BIOEN 481 Stethoscope Testing Report",
+    "url": "https://www.scribd.com/document/146423201/BIOEN-481-Stethoscope-Testing-Report"
+   },
+   {
+    "id": 109,
+    "last_updated": "2025-11-26",
+    "snippet": "",
+    "source": "web",
+    "title": "[PDF] Acoustical Design of Digital Stethoscope for Improved Performance",
+    "url": "https://www.comsol.jp/paper/download/153149/thiagarajan_paper.pdf"
+   },
+   {
+    "id": 110,
+    "last_updated": "2026-06-17",
+    "snippet": "Electronic stethoscope with 3 dry ECG electrodes.\nAudio bandwidth 20-2000 Hz; ECG frequency response 0.1-250 Hz.\n...\nStandards: ISO 10993-1 (biocompatibility), IEC 60601-1-11, IEC 60601-2-4\n7, IEC 60601-1-2 (safety/EMC), IEC 62366-1 (usability).\n...\n| Audio<br>Frequency<br>Response<br>Range | Bandwidth of 20 Hz<br>- 2000 Hz | Bandwidth of 20 Hz<br>- 2000 Hz | Bandwidth of 20 Hz - 2000 Hz | Same |\n| ECG<br>Performance<br>(ECG<br>Frequency<br>Response<br>Range) | 0.1 - 250 Hz | 0.1 - 250 Hz | N/A | Same as the<br>predicate<br>device |",
+    "source": "web",
+    "title": "CORE 500 Digital Stethoscope (K233609) — FDA 510(k)",
+    "url": "https://fda.innolitics.com/device/K233609"
+   },
+   {
+    "id": 111,
+    "last_updated": "2026-08-03",
+    "snippet": "core \nFrequency \nResponse \nExtended: 50-800Hz \nBell: 20 - 200Hz.\nDiaphragm: 100 - \n500Hz \nExtended: 50 - \n500Hz  \nBell: 20-200Hz \nDiaphragm: 100-\n500Hz Extended \nrange: 50-500 Hz.\nSimilar ",
+    "source": "web",
+    "title": "Orly Maor Consultant 25 Sirkin Street Kfar Saba, 4442157 Re ...",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf23/K233313.pdf"
+   },
+   {
+    "date": "2023-02-15",
+    "id": 112,
+    "last_updated": "2026-02-08",
+    "snippet": "",
+    "source": "web",
+    "title": "Technical Characterization of Digital Stethoscopes",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10753976/"
+   },
+   {
+    "id": 113,
+    "last_updated": "2026-07-02",
+    "snippet": "Compliance level\n...\npower of transmitter, P [W]\n...\nd = 1.2  √ P\nd = 2.3  √ P\n...\n23\n...\nrecommended separation distance calculated from the equation\napplicable to the frequency of the transmitter.\nRecommended separation distance\nConducted RF \n...\nNot applicable\nd = 1.2  √ P \n...\n150 kHz to 80 MHz\nRadiated RF\n3 V/m\n3 V/m\nd = 1.2  √ P 80 MHz to 800 MHz\nIEC 61000-4-3\n80 MHz to 2.5 GHz\n80 MHz to 2.5 GHz\nd = 2.3  √ P 800 MHz to 2,5 GHz\nwhere P is the maximum output power rating of the transmitter in\nwatts (W) according to the transmitter manufacturer and d is the",
+    "source": "web",
+    "title": "Electronic Stethoscope - mu ltime dia",
+    "url": "https://multimedia.3m.com/mws/media/369448O/3mtm-littmannr-stethoscopes.pdf"
+   },
+   {
+    "id": 114,
+    "last_updated": "2024-12-13",
+    "snippet": "",
+    "source": "web",
+    "title": "AV-16(3).dvi",
+    "url": "http://hydromech.org.ua/content/pdf/av/av-16-3(46-57).pdf"
+   },
+   {
+    "id": 115,
+    "last_updated": "2025-03-04",
+    "snippet": "The \nphonocardiogram (PCG) was recorded from apical and mid-pre-\ncordial areas using microphone with a flat response curve from 0.2 \nto 8,000Hz.\nIt was stored, together with a simultaneous electro-\ncardiogram, on an FM analog tape recorder (linear frequency re-\nsponse from 0 to 4,000Hz), fitted with a filter with weighting curve\nB according to the American National Standard Institute.\n...\nThe SPL spectra from both apex and mid-pre-\ncordium showed a maximum intensity of about 80dB between 12-\n20Hz, decreasing progressively to a constant level of 35dB be-\ntween 110-120Hz.\nThe spectra obtained from both areas using \nfilter B showed a maximum intensity of 40-50dB \nbetween 20-\n60Hz, decreasing to 30dB at 112Hz and remaining constant \nthereafter.\n...\nAccording to the specifi-\ncations of the American National Standard Institute (ANSI) this filter has an \nattenuation of 38dB at 10Hz, 24dB at 20Hz, 18dB at 30Hz, 14dB at\n40Hz, 11.5dB at 50Hz, 6dB at 100Hz, 0dB at 200Hz.",
+    "source": "web",
+    "title": "Phonometric",
+    "url": "https://www.jstage.jst.go.jp/article/ihj1960/23/5/23_5_711/_pdf"
+   },
+   {
+    "id": 116,
+    "last_updated": "2025-04-22",
+    "snippet": "The device complies with electromagnetic compatibility requirements of the international standard IEC60601-1-2.\n...\nAmplifies up to 4X \nSignal Sampling Rate \n8 kHz \nFrequency Response \nHeart Sound Mode:20-500Hz\nLung Sound Mode: 200-2000Hz \nTotal harmonic distortion \n＜3% \n*Sound Attenuation \n100-500 Hz: ≦12dB  \n500-1000 Hz: ≦20dB  ",
+    "source": "web",
+    "title": "Wherever you are",
+    "url": "https://fcc.report/FCC-ID/2A65V-SMARTHO-D2/5917950.pdf"
+   },
+   {
+    "id": 117,
+    "last_updated": "2025-06-06",
+    "snippet": "Heart sounds of twenty for normal subjects were recorded by an air-coupled microphone with the standard 6 ml cavity.\nThe response curve of the microphone is flat from .2 to 8000 Hz.\n...\nNormal heart sounds reached a high frequency limit of 170 Hz. with a maximum amplitude of 67 dB SPL, 24 dB A, 42 dB B and 59 dB C.\nEach spectral pattern can provide a useful reference to compare with pathological acoustical findings.",
+    "source": "web",
+    "title": "Phonometric approach to the analysis of cardiac acoustic phenomena - PubMed",
+    "url": "https://pubmed.ncbi.nlm.nih.gov/7239106/"
+   },
+   {
+    "date": "2019-07-31",
+    "id": 118,
+    "last_updated": "2025-09-13",
+    "snippet": "The performance of an acoustic stethoscope is improved by translating, without loss of fidelity, heart sounds, chest sounds, and intestinal sounds below 50 Hz into a frequency range of 200 Hz, which is easily detectable by the human ear.",
+    "source": "web",
+    "title": "Stethoscope with digital frequency translation for improved ...",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6863143/"
+   },
+   {
+    "date": "2009-10-17",
+    "id": 119,
+    "last_updated": "2026-06-26",
+    "snippet": "A **phonocardiogram** (or **PCG**) is a plot of high-fidelity recording of the sounds and murmurs made by the heart with the help of the machine called the **phonocardiograph**; thus, **phonocardiography** is the recording of all the sounds made by the heart during a cardiac cycle.",
+    "source": "web",
+    "title": "Phonocardiogram - Wikipedia",
+    "url": "https://en.wikipedia.org/wiki/Phonocardiogram"
+   },
+   {
+    "date": "2026-02-20",
+    "id": 120,
+    "last_updated": "2026-02-20",
+    "snippet": "The document presents a validation system for digital stethoscopes, addressing the lack of standardized methods for assessing their acoustical properties.\n...\nUntil\ntoday, however, no standard to assess the acoustical properties\nof stethoscopes is available.",
+    "source": "web",
+    "title": "10.1515 - Cdbme 2019 0066 | PDF | Resonance | Decibel",
+    "url": "https://www.scribd.com/document/838058240/10-1515-cdbme-2019-0066"
+   },
+   {
+    "id": 91,
+    "last_updated": "2025-10-22",
+    "snippet": "We find that much of the in-",
+    "source": "web",
+    "title": "Using Spectral Acoustic Features to Identify Abnormal ...",
+    "url": "https://www.cinc.org/archives/2016/pdf/160-401.pdf"
+   },
+   {
+    "date": "2020-06-09",
+    "id": 92,
+    "last_updated": "2025-09-12",
+    "snippet": "It has been noticed that, among the features, MF and SR are superior to detect the presence of murmur than others.\n...\nThe MF and SR can identify the murmur with an accuracy of 87.35% (dataset1), 76.67% (dataset2) and 80.59% (dataset1), 78.33% (dataset2), respectively without using any classifiers.\n...\nThe heart sound/murmur detection was done by Shannon entropy and instantaneous phase after discriminating them using mode boundary frequency and maximum absolute amplitude (accuracy of 91.92%).",
+    "source": "web",
+    "title": "Significance of Frequency Domain Features of PCG ...",
+    "url": "https://biomedpharmajournal.org/vol13no2/significance-of-frequency-domain-features-of-pcg-records-for-murmur-detection-an-investigation/"
+   },
+   {
+    "date": "2010-01-25",
+    "id": 93,
+    "last_updated": "2025-02-25",
+    "snippet": "Moreover, it is shown that the power dynamic features which give the best overall classification performance are the MFCC contours.",
+    "source": "web",
+    "title": "Selection of dynamic features based on time-frequency representations for heart murmur detection from phonocardiographic signals - PubMed",
+    "url": "https://pubmed.ncbi.nlm.nih.gov/19921435/"
+   },
+   {
+    "date": "2018-07-09",
+    "id": 94,
+    "last_updated": "2026-05-05",
+    "snippet": "The spectrum magnitudes from 30 Hz to 790 Hz with 10 Hz interval are taken as features.\nThe maximum frequency 790 Hz is considered to adapt possible murmurs.\n...\nFor the first part, various frequency bands are considered with initial value of 10 Hz and increment bandwidth of 30 Hz; i.e., the 27 frequency bands are [10  40] Hz, [40  70] Hz, [70  100] Hz,…, and [790  820] Hz, respectively.\n...\nHowever, the frequency band may extend to 800 Hz if it contains murmurs.\n...\nAs is mentioned in Section 2.5.4, the frequency band is divided into 27 bands with start from 10 Hz to 30 Hz increment.\nFast Fourier transform is performed for every record.\nThe ratio of spectrum magnitude sum in a band to spectrum magnitude sum in whole band is taken as a feature.\nSo, 27 features can be produced for a record.\nThese features can discriminate murmurs because murmurs generally have higher frequency than those of normal heart sounds.",
+    "source": "web",
+    "title": "PCG Classification Using Multidomain Features and SVM ...",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6077676/"
+   },
+   {
+    "id": 95,
+    "last_updated": "2025-10-10",
+    "snippet": "For each patient, each of the PCG recordings at four\nclassic auscultation locations are downsampled to 1000 Hz\nand preprocessed with a 25-400Hz 2nd order Butterworth\nband pass filter in order to remove noise.\n...\nRecordings were segmented into key components of the\ncardiac cycle (S1, systolic, S2, and diastolic intervals) us-\ning a pre-trained logistic regression, hidden semi-Markov\nmodel with a modified Viterbi decoding algorithm [7].\nThe mean, median, and standard deviation of these car-\ndiac cycle intervals as well as between these intervals were\ncalculated.\nThen, we used discrete Fourier transform to\ncalculate frequency domain features post segmentation.\nFor 10 Hz frequency bands between 30 and 800, the spec-\ntra of S1, systole, S2, and diastole were calculated [8].",
+    "source": "web",
+    "title": "Classification of Murmurs in PCG Using Combined ...",
+    "url": "https://cinc.org/2022/Program/accepted/65_Preprint.pdf"
+   },
+   {
+    "id": 96,
+    "last_updated": "2024-12-15",
+    "snippet": "They found significant peaks in the 80-400 Hz range in the aortic and \npulmonary areas and concluded that those peaks are related to the elastic \nproperties of the heart muscles and the dynamic events causing SI and S2.\n...\ndetection. A group of sixty nine subjects was analysed to establish statistically the \npeak frequencies of the first and second heart sound, and consequently two \ntracking frequencies were chosen: 100 Hz for detection of SI and 150 Hz for S2.\nPeaks in the spectral level in these frequency bands represents the occurrence of ",
+    "source": "web",
+    "title": "UNIVERSITY OF SOUTHAMPTON",
+    "url": "https://eprints.soton.ac.uk/425886/1/00349389.pdf"
+   },
+   {
+    "id": 97,
+    "last_updated": "2025-03-21",
+    "snippet": "",
+    "source": "web",
+    "title": "Phonocardiogram (PCG) Murmur Detection Based on the ...",
+    "url": "https://www.mdpi.com/1424-8220/24/20/6646"
+   },
+   {
+    "id": 98,
+    "last_updated": "2026-07-14",
+    "snippet": "• Frequency-domain features: Extracted using Fourier and wavelet transforms,\nthese features include energy in specific bands (e.g., 20–150 Hz and 150–400 Hz),\ndominant frequency, spectral centroid, spectral roll-off, and sub-band energies (e.g.,\nL0, D1–D4 wavelet coefficients).\nThese features help in detecting murmurs or high-\nfrequency noise typically associated with turbulent blood flow [8].\n• Acoustic and textural features: These include MFCCs along with their first\nand second-order deltas (totaling 13 MFCCs × 3 orders), entropy, signal envelope\nstatistics, amplitude-based metrics (RMS, zero-crossing rate, peak-to-peak), fractal\ndimensions (Katz and Higuchi), and Teager energy operator (TEO) features.\nThese\n...\nnoised signal, including MFCCs, spectral centroid, rolloff, bandwidth, and dominant\n...\nThe spectral centroid C,\nrepresenting the center of gravity of the spectrum, was computed as:\nC =\n�fk · X(fk)\n�X(fk)\n(3.8)",
+    "source": "web",
+    "title": "Identifying Abnormalities in Heart Sound data using ...",
+    "url": "https://www.diva-portal.org/smash/get/diva2:1980582/FULLTEXT01.pdf"
+   },
+   {
+    "id": 99,
+    "last_updated": "2025-04-28",
+    "snippet": "In this study, we have employed a selection of prominent\nacoustic features to characterize audio signals.\nThese fea-\ntures contain Mel spectrogram (Mel), Mel-frequency cepstral\ncoefficients (MFCC), power spectral density (PSD), and the\nroot mean square energy (RMS) of the audio signal, which are\nwell-established and widely employed in the field of audio\nsignal processing [13, 14].",
+    "source": "web",
+    "title": "2024 IEEE INTERNATIONAL WORKSHOP ON MACHINE LEARNING FOR SIGNAL PROCESSING, SEPT. 22–25, 2024, LONDON, UK",
+    "url": "http://arxiv.org/pdf/2407.18424.pdf"
+   },
+   {
+    "id": 100,
+    "last_updated": "2025-03-08",
+    "snippet": "Experiments show the PCG of normal hearts has a \ndominant frequency of 50Hz to 150Hz, with the subdominant frequencies of 450 \nHz to 650 Hz.\n...\nHasil eksperimen menunjukkan \nbahwa PCG jantung normal memiliki frekuensi dominan di kisaran 50Hz hingga \n150Hz, serta frekuensi subdominan di kisaran 450Hz hingga 650Hz.\n...\nFrequency-domain features, such \nas spectral energy, dominant frequency, and bandwidth, help in identifying murmur characteristics, often \nassociated with turbulent blood flow caused by structural abnormalities in the heart.\n...\nA PCG signal consists of five main frequency features, spectral roll off, median frequency, spectral \ncentroid, dominant frequency, and spectral flux [14].\n...\nNo. \nFeatures \nMaximum Percentage of (%) \nAccuracy \nSensitivity \nSpecificity \nPPV\nNPV \n1 \nSpectral roll-off \n80.6 \n80.6 \n80.6 \n80.6 \n80.6 \n2 \n...\nSpectral Centroid \n...\nFrequency \n...\nSpectral Flux \n...\n77.7 \n74.7",
+    "source": "web",
+    "title": "Microsoft Word - 5. Karel - Frequency ..",
+    "url": "https://ejournal.atmajaya.ac.id/index.php/JTE/article/download/6195/2874"
+   },
+   {
+    "date": "2025-03-25",
+    "id": 101,
+    "last_updated": "2026-05-05",
+    "snippet": "- **Wavelet Entropy:** As with the slope computing procedure, the wavelet entropy for each sub-signal was computed using wavelet energies at the scales which were not involved in computing slope ( that is scales from 1 to 5).\nTo calculate Shannon’s entropy, normalized wavelet energies were computed for each sub-signal, and then the coefficient of variation of the wavelet entropy was computed as the final feature for each signal.",
+    "source": "web",
+    "title": "Multiscale analysis of heart sound signals in the wavelet ...",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11937596/"
+   },
+   {
+    "id": 102,
+    "last_updated": "2026-07-18",
+    "snippet": "For instance, the s~1~ components dominate the region from 10 Hz to 140 Hz, while the s~2~ components usually concentrate their energy around the 10 Hz to 200 Hz band ^[2]^.\n...\nThe energy distribution of murmurs in frequency varies widely and, depending on their nature, can go above 800 Hz.\n...\nAmong other frequency domain features utilized for PCGs classification, the Mel-Frequency Cepstral Coefficients (MFCCs) have been widely used as classification input features ^[15]^ ^[16]^ ^[17]^ ^[18]^ ^[19]^ ^[20]^ ^[21]^ since these parameters are the most popular to characterize the envelope information for audio signals successfully.\n...\nPublished works in the literature review have used the LPC coefficients as features for the automated detection of heart murmurs in PCG signals ^[22]^.",
+    "source": "web",
+    "title": "Comparison of Spectral and Sparse Feature Extraction ...",
+    "url": "https://www.scielo.org.mx/scielo.php?script=sci_arttext&pid=S0188-95322023000400006"
+   },
+   {
+    "date": "2024-03-31",
+    "id": 103,
+    "last_updated": "2026-05-05",
+    "snippet": "Our focus was specifically on the Stockwell transform output within the frequency band of 20–350 Hz.\nThis was a choice made after experimenting with various frequency ranges.\nThis meticulous selection aimed to optimize the model’s sensitivity while mitigating unnecessary computational costs associated with less informative frequency bands, especially given the infrequent occurrence of murmurs at higher frequencies ^42^.",
+    "source": "web",
+    "title": "Murmur identification and outcome prediction in ...",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10981708/"
+   },
+   {
+    "id": 104,
+    "last_updated": "2025-11-03",
+    "snippet": "",
+    "source": "web",
+    "title": "Digital Auscultation Analysis for Heart Murmur Detection",
+    "url": "https://link.springer.com/article/10.1007/s10439-008-9611-z"
+   },
+   {
+    "id": 105,
+    "last_updated": "2025-11-03",
+    "snippet": "Spectral \nflux, spectral roll-off, spectral centroid and spectral\nenergy are some examples of spectral features were used \nbefore for segmentation and classification of heart sounds \n(4, 5).\n...\n• Spectral flux (SF): SF is a measure which\ncharacterizes the change in the shape of the signal’s \nspectrum.\nSF can be calculated as the Euclidean norm of \nthe delta spectrum magnitude as follows:  \n...\n• Spectral roll-off (SR): SR measures the skewness of\nthe signal’s frequency spectrum.\nIt is the value of the \nfrequency under which usually 95% (c=0.95) of the \nsignal’s power resides.\nSR can be obtained as: \n𝑆𝑅= 𝑐 ∑\n...\n𝑀\n𝑘=1\n(2) \n• Spectral centroid (SC): SC defines the centre of a \nsignal’s spectrum power distribution.\nLike spectral roll-\noff, spectral centroid is also a measure of spectral shape.\nSC can be computed as follows: \n𝑠𝑐=",
+    "source": "web",
+    "title": "Heart Sound Clustering using a Combination of Temporal, ...",
+    "url": "https://cinc.org/archives/2012/pdf/0217.pdf"
+   }
+  ]
+ }
+}

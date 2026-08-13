@@ -1,0 +1,192 @@
+{
+ "run": {
+  "id": "R09-latenz",
+  "topic": "Latenz-Ziel fuer Echtzeit-Audiopfad",
+  "preset": "fast",
+  "prompt": "Kontext: Bachelorarbeit, digitales Stethoskop mit Echtzeit-Audiopfad (Mikrofon -> DSP -> DAC -> Kopfhoerer). 'Echtzeit' soll quantifiziert werden.\n\nHauptfrage: Welche End-to-End-Latenz ist fuer ein digitales Stethoskop als Zielwert begruendbar, und ab welcher Latenz wird die Verzoegerung bei Live-Auskultation stoerend?\n\nUnterfrage 1: Welche Latenzschwellen nennt die Literatur fuer Live-Monitoring von Audio bzw. fuer taktil-auditive Kopplung (Anwender beruehrt das Bruststueck und hoert gleichzeitig) - typische Werte fuer 'nicht wahrnehmbar' vs. 'stoerend'?\nUnterfrage 2: Welche Latenz geben kommerzielle elektronische Stethoskope (z. B. 3M Littmann Core/3200, Eko) an bzw. was ist aus Teardowns/Reviews bekannt?\n\nAntwort auf Deutsch, kurz und mit Quellen. Nenne einen konkreten empfohlenen Zielwert in Millisekunden."
+ },
+ "response": {
+  "id": "chatcmpl-ba0f81ea487645999405cbe5",
+  "object": "chat.completion",
+  "created": 1786462889,
+  "model": "preset/fast",
+  "choices": [
+   {
+    "index": 0,
+    "message": {
+     "role": "assistant",
+     "content": "Für ein digitales Stethoskop ist ein **End-to-End-Zielwert von ≤10 ms** gut begründbar; **ideal sind eher 5 ms oder weniger**. Ab **ca. 10–15 ms** wird die Verzögerung in Live-Monitoring- und Performer-Szenarien meist bemerkbar, und **ab etwa 15–30 ms** wird sie oft als störend beschrieben.[5][3][6]\n\n## Kurz eingeordnet\n- **„Nicht wahrnehmbar / sehr gut“:** < 10 ms, in manchen Monitoring-Kontexten sogar < 6 ms als „immediate“ bzw. „excellent“ beschrieben.[6][7]\n- **„Gerade noch akzeptabel“:** etwa 10–15 ms; hier beginnt bei vielen Nutzern bereits ein spürbarer Effekt.[5][6]\n- **„Störend“:** ab etwa 15–30 ms, abhängig von Aufgabe, Instrument und Person.[5][3]\n\n## Für die taktil-auditive Kopplung beim Abhören\nWenn der Anwender das Bruststück berührt und gleichzeitig hört, sollte die Latenz möglichst deutlich unter der Wahrnehmungsschwelle bleiben. Für audio-haptische Asynchronie liegen Detektionsschwellen in der Literatur zwar teils deutlich höher, aber für eine **direkte, präzise Live-Auskultation** ist ein Bereich **unter 10 ms** sinnvoller als ein bloß „eben noch nicht wahrnehmbarer“ Bereich.[8]\n\n## Kommerzielle Geräte\nIn den hier vorliegenden Quellen finden sich **keine belastbaren, offiziell publizierten Latenzwerte** für konkrete Produkte wie **3M Littmann CORE/3200** oder **Eko**. Allgemein gilt aber: Jede A/D- und D/A-Wandlung addiert typischerweise etwa **1 bis 1,5 ms**; Bluetooth-/Funkpfade können die Latenz dagegen stark erhöhen.[5][4]\n\n**Empfehlung für die Bachelorarbeit:** Als Zielwert **≤10 ms End-to-End**, mit **präferiertem Entwicklungsziel ≤5 ms**. Ab **~15 ms** würde ich die Verzögerung bei Live-Auskultation als potenziell störend bewerten.[5][6]"
+    },
+    "finish_reason": "stop"
+   }
+  ],
+  "usage": {
+   "prompt_tokens": 7878,
+   "completion_tokens": 883,
+   "total_tokens": 8761,
+   "cost": {
+    "cache_read_cost": 0.00022,
+    "currency": "USD",
+    "input_cost": 0.0037,
+    "output_cost": 0.00397,
+    "tool_calls_cost": 0.0025,
+    "tool_calls_cost_details": {
+     "search_web": 0.0025
+    },
+    "total_cost": 0.01039
+   },
+   "input_tokens_details": {
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 2944,
+    "cached_tokens": 2944
+   },
+   "output_tokens_details": {
+    "reasoning_tokens": 310
+   },
+   "tool_calls_details": {
+    "search_web": {
+     "invocation": 1
+    }
+   }
+  },
+  "citations": [
+   {
+    "url": "https://www.reddit.com/r/livesound/comments/1mug4ab/monitor_engingeers_what_is_your_latency_threshold/",
+    "title": "Monitor Engingeers what is your latency threshold when it ...",
+    "date": "2025-09-15"
+   },
+   {
+    "url": "https://boseperformer.com/images/7/7b/AES_Latency.pdf",
+    "title": "The Effects of Latency on Live Sound Monitoring",
+    "date": null
+   },
+   {
+    "url": "https://qmro.qmul.ac.uk/xmlui/bitstream/handle/123456789/44697/WANG_Yonghao_Final_PhD_070918.pdf?sequence=1",
+    "title": "Low Latency Audio Processing",
+    "date": null
+   },
+   {
+    "url": "https://ultimatepctools.com/blog/sound-latency-test-guide/",
+    "title": "What Is Sound Latency? How to Test & Fix Audio Lag",
+    "date": "2026-04-28"
+   },
+   {
+    "url": "https://www.churchproduction.com/education/latency-and-its-affect-on-performers/",
+    "title": "Latency and Its Effect on Performers",
+    "date": "2022-10-05"
+   },
+   {
+    "url": "https://www.cmuse.org/audio-latency-calculator/",
+    "title": "Audio Latency Calculator for Recording and Live Sound - CMUSE",
+    "date": "2026-06-01"
+   },
+   {
+    "url": "https://audiolatencytest.org/",
+    "title": "Audio Latency Test Online — Free Browser Tool to Measure ...",
+    "date": null
+   },
+   {
+    "url": "https://arxiv.org/pdf/2307.05451v1.pdf",
+    "title": "Detection Threshold of Audio Haptic Asynchrony in a Driving Context",
+    "date": null
+   },
+   {
+    "url": "https://arxiv.org/pdf/2509.02626v1.pdf",
+    "title": "1",
+    "date": null
+   },
+   {
+    "url": "https://www.provideocoalition.com/how-to-measure-audio-latency-how-much-delay-is-tolerable-by-human-beings-when-monitoring-their-own-voice-live/",
+    "title": "How to measure audio latency? How much delay is tolerable by ...",
+    "date": "2022-01-30"
+   }
+  ],
+  "search_results": [
+   {
+    "date": "2025-09-15",
+    "id": 1,
+    "last_updated": "2026-01-18",
+    "snippet": "Traditionally, I've aimed to keep latency as low as possible, sticking to a threshold of 5 milliseconds or less—though for some artists, even that can be too much.\n...\nMy experience with the dLive system shows it introduces an immediate 0.9 ms of delay.\n...\nFor instance, I have a drummer who can easily detect a 5 ms delay, so while there may be a general guideline to follow, the artists' perception will ultimately determine what's acceptable.\n...\ndLive is 0,7ms, right?\n5ms is the upper limit imho.\n...\nYeah, .7ms in to main out with no inserts.\n...\nAiming for around 3ms for the complete signal path from microphone to headphones seems quite reasonable.\n...\nIdeally, you wouldn't want latency exceeding 8 to 9 milliseconds, as that's when it becomes noticeable, although drummers may perceive it differently.",
+    "source": "web",
+    "title": "Monitor Engingeers what is your latency threshold when it ...",
+    "url": "https://www.reddit.com/r/livesound/comments/1mug4ab/monitor_engingeers_what_is_your_latency_threshold/"
+   },
+   {
+    "id": 2,
+    "last_updated": "2026-07-12",
+    "snippet": "performers in live monitoring scenarios.\nSeveral popular instruments were used and the results of tests with wedge \nmonitors are compared to those with in-ear monitors.\nIt is shown that the audibility of latency is dependent on both \nthe type of instrument and monitoring environment.\nThis experiment shows that the acceptable amount of latency\ncan range from 42ms to possibly less than 1.4ms under certain conditions.\nThe differences in latency perception for \neach instrument are discussed.\nIt is also shown that more latency is generally acceptable for wedge monitoring \nsetups than for in-ear monitors.\n1.  INTRODUCTION ",
+    "source": "web",
+    "title": "The Effects of Latency on Live Sound Monitoring",
+    "url": "https://boseperformer.com/images/7/7b/AES_Latency.pdf"
+   },
+   {
+    "id": 3,
+    "last_updated": "2025-03-25",
+    "snippet": "munication delay must be less than 250ms both ways to avoid deteriorating the conver-\nsation significantly [6], whereas high-quality music ensemble over network shall have\nend-to-end delay less than 25ms [7]. The human auditory system is also incredibly adap-\n...\neffects. In most cases, people prefer the lowest latency possible. Table 2.1 summarised\nthe typical latency thresholds for different applications [6, 35, 36, 37, 7, 38].\nFor musical ensembles, the performance can be naturally synchronised when the latency\nis between 8ms to 25ms [37, 7], where the latency is equivalent to the time sound travels\nin common distances of players. If the latency is greater than the upper threshold, the\nperformance can be seriously deteriorated due to the difficulty to synchronise. If the\nlatency is shorter than the lower limit, the performance could result in ‘racing’ effect. In\n33\nTable 2.1: Perceptual Latency Thresholds\nApplication\nThreshold\n(up limit)\nThreshold\n(lower limit)\nTelecommunication\n250ms\nUnknown\nInteractive VR\n50ms\nZero\nAction to Sound\n10-30ms\nZero\nMusic Ensemble\n25ms\n8ms\nLive monitoring\n10-30ms\nZero\nIn-ear monitoring\n3-10ms\nZero\nthis case, each individual performer constantly feels falling behind and tries to accelerate\n...\nFrequency\nThreshold\n...\n1kHz\n...\n2kHz\n...\n8kHz\n...\n[46]. In live performance and record monitoring environments, the maximum tolerable\ndelay is around 10ms to 30ms depending on the different environments of performers\nand instruments [47][37]. For some performers, such as saxophone players, the thresh-\n...\ncould have low latency within 8-10 ms monitoring requirements.",
+    "source": "web",
+    "title": "Low Latency Audio Processing",
+    "url": "https://qmro.qmul.ac.uk/xmlui/bitstream/handle/123456789/44697/WANG_Yonghao_Final_PhD_070918.pdf?sequence=1"
+   },
+   {
+    "date": "2026-04-28",
+    "id": 4,
+    "last_updated": "2026-05-16",
+    "snippet": "The table below maps latency ranges to real-world sound quality ratings and typical hardware.\nThe \"perceptibility threshold\" — where most listeners begin to notice audio-visual desync — is around 30–45 ms (Source: AES Journal of the Audio Engineering Society, 2003).\nFor competitive gaming, the target is under 20 ms.\n|Latency|Rating|\n|--|--|\n|< 10 ms|⭐ Pro / Studio|\n|10 – 20 ms|✅ Excellent|\n|20 – 40 ms|✅ Good|\n|40 – 80 ms|⚠️ Marginal|\n|80 – 150 ms|❌ Noticeable lag|\n|> 150 ms|❌ Unusable for gaming|\n...\nFor recording with live monitoring, 128–256 samples with ASIO is the target.\n...\nConnect your headphone output to your microphone input with a 3.5mm cable.\nUse Audacity to record: play a click sound and record simultaneously.\nMeasure the distance between the generated click and the recorded click.\n...\nDisable all audio enhancements\nSettings → System → Sound → your device → More sound settings → right-click your device → Properties → Enhancements → check 'Disable all sound effects'.\nClick Apply.\nThis removes all software DSP processing.\n...\nEnable exclusive mode for WASAPI\nIn the same Properties dialog → Advanced → check both 'Allow applications to take exclusive control of this device' and 'Give exclusive mode applications priority'.\nSet format to '24 bit, 48000 Hz (Studio Quality)'.\n3. 3\nDisable Spatial Sound\nRight-click the speaker icon in your taskbar → Spatial sound → Off.\n...\n4. 4\nRun LatencyMon and update guilty drivers\nIf LatencyMon shows high DPC latency from a specific driver (often nvlddmkm.sys for NVIDIA GPUs, or network drivers), update or roll back that driver.\nUSB and chipset drivers from your motherboard manufacturer are also common culprits.\n5. 5\nSwitch to ASIO drivers (for production or serious gaming)\nInstall ASIO4ALL if you use onboard audio, or install your audio interface's native ASIO driver.\nIn your software, switch the audio device to the ASIO option.\nSet the buffer to 256 samples and test for stability.\n6. 6\nSwitch from Bluetooth to wired or 2.4 GHz\nIf you are using a Bluetooth headset, this single step typically cuts your latency from 150–300 ms to under 20 ms.\nSwitch to a 3.5 mm wired connection or a 2.4 GHz gaming headset (Logitech LIGHTSPEED, HyperX USB-C wireless, SteelSeries Nova series).\n...\nSound latency (also called audio latency) is the delay between when an audio signal is triggered — for example, a gunshot in a game or a clap in real life — and when you actually hear it through your headphones or speakers.\nIt is measured in milliseconds (ms).\nAt under 20 ms the delay is imperceptible to most people.\nAbove 40 ms many users notice a disconnect between visual events and sounds.\nAbove 100 ms the lag is obvious and disruptive.\n...\nThe easiest method is a loopback test: connect your audio output to an input, play a click sound, record it, and measure the gap between the trigger and the recorded click.\n...\nFive steps in order of impact: (1) Disable all audio enhancements — Settings → System → Sound → your device → More sound settings → Properties → Enhancements → 'Disable all sound effects'.\n(2) Enable WASAPI exclusive mode — same properties dialog → Advanced → check 'Allow applications to take exclusive control'.\n(3) Set your sample rate to 48000 Hz, 24-bit.\n(4) If using a USB or Bluetooth device, try switching to a wired 3.5 mm connection.\n(5) Run LatencyMon to identify if a specific driver (often DPC interrupt handlers) is causing spikes — update or roll back that driver.",
+    "source": "web",
+    "title": "What Is Sound Latency? How to Test & Fix Audio Lag",
+    "url": "https://ultimatepctools.com/blog/sound-latency-test-guide/"
+   },
+   {
+    "date": "2022-10-05",
+    "id": 5,
+    "last_updated": "2025-02-22",
+    "snippet": "Latency is, in the most simple terms, the time it takes from a sound go from the source to the output.\n...\nWhile we can’t generally hear the effects of latency until they are around 15-30 milliseconds (ms), performers can begin to feel them at around 5-10ms.\nAt 7ms, latency starts to mess with our ability to play or sing on top of or behind the beat.\nSound starts to feel sluggish at 10ms.\nThese are generalities, of course.\n...\nAnalog sound travels through components at or near the speed of light with an effective latency of 0.\n...\nEvery time your signal gets converted from analog to digital you can expect 1 to 1.5ms of latency.\nThat’s the processing time of the Analog to Digital Converters (ADC) and the Digital to Analog Converters (DAC).\nBelow is a chart of some common system elements that add latency.\nDigital Mixer: 1.5 to 3ms\nWireless Microphone: 2.5 to 5ms\nWireless In-Ear Monitors: 2.5 to 5ms\nDigital Effect Pedal: 2 to 3ms\nAmp Modeler: 2 to 3ms\n...\nIf a singer is using a wireless microphone and a wireless in-ear monitor system, you can have latency of up to 13ms when it all adds up.\n...\nWith 3ms-5ms on the wireless system and 3-5ms on the console, they might feel the effects.",
+    "source": "web",
+    "title": "Latency and Its Effect on Performers",
+    "url": "https://www.churchproduction.com/education/latency-and-its-affect-on-performers/"
+   },
+   {
+    "date": "2026-06-01",
+    "id": 6,
+    "last_updated": "2026-07-16",
+    "snippet": "Buffer milliseconds equal samples divided by sample rate.\n...\nAir travel is about 0.889 ms per foot at room temperature.\nFormula used: buffer ms = samples / sample rate × 1000.\nTotal monitor latency adds buffer passes, safety buffers, converter delay, interface overhead, plugin delay, and sound travel distance.\nMonitor Latency\n0.00\nms to performer\nRound Trip Latency\n0.00\nms input to output\nBuffer Component\n0.00\nms per buffer pass\nDistance Latency\n0.00\nms through air\n### 📊 Latency Target Grid\n<6 ms\nExcellent Tracking\n6-10 ms\nComfortable Play\n10-15 ms\nNoticeable Edge\n20+ ms\nMixing Only\n**Formula notes:** Round trip uses input buffer + output buffer + safety buffer time + A/D + D/A + interface overhead + plugin delay.\n...\n|Path|Buffer Passes|Converter Use|Typical Use|Latency Risk|\n...\n|Direct hardware monitor|0 performer|A/D + D/A|Vocal tracking|Very low|\n...\n|Scenario|Sample / Buffer|Extra Delay|Target Latency|Best Fit|\n...\n|Lead vocal overdub|48 kHz / 64|0 samples|Under 8 ms|Direct or light FX|\n|Guitar amp simulator|48 kHz / 128|0 samples|Under 12 ms|Software monitor|\n...\n**Audio latency** is the delay between the time that sound enters a microphone and the time that that sound returns to a person through **headphones or speakers**.\n...\nFor example, audio latency for monitoring that is **under six milliseconds** is usually felt as immediate by the listener and the performer.\nAudio latency under six milliseconds is also beneficial for creating tight tracks with accurate vocal or instrumental performances.\nAudio latency **between six and ten milliseconds** is usually comfortable for most performers.\nHowever, if audio latency is established at **over fifteen milliseconds**, the listener will begin to note the delay in relation to the audio playback device, and struggle with their performances with such audio latency.",
+    "source": "web",
+    "title": "Audio Latency Calculator for Recording and Live Sound - CMUSE",
+    "url": "https://www.cmuse.org/audio-latency-calculator/"
+   },
+   {
+    "id": 7,
+    "last_updated": "2026-07-27",
+    "snippet": "The tool calculates the real-world delay between audio playback and your perception — giving you your device's true audio latency in milliseconds.\n...\n1. Tap **Tap here to start**.\nYou'll get a short ready period, then a 3-2-1 countdown.\n2. When the beat starts, tap (or press Space) every time you hear it through your headphones or speakers.\n3. After a few taps, the average stabilizes.\nThe number shown in milliseconds is your audio latency.\n...\n**Audio latency** is the measurable time delay, expressed in milliseconds (ms), between when a digital audio signal is generated by your device and when the sound waves reach your ears.\n...\n### How Much Audio Latency Is Noticeable?\n|Latency|Rating|Best For|\n|--|--|--|\n|< 10ms|Excellent|Studio recording, live performance monitoring, professional audio interfaces|\n|10–20ms|Very Good|Rhythm games (osu!, Beat Saber), professional gaming headsets, wired USB audio|\n|20–40ms|Good|Casual gaming, video conferencing, general music listening|\n|40–100ms|Acceptable|Passive listening, video streaming; perceptible but tolerable for non-critical tasks|\n|100–200ms|High|Clearly noticeable echo during calls; video sync issues; typical of Bluetooth SBC codec|\n|> 200ms|Very High|Unusable for real-time tasks; some standard Bluetooth SBC implementations|\n...\n|Codec|Latency (typical)|Availability|Use Case|\n...\n1. Use apps that explicitly request low-latency audio (requires Android 8.0+) rather than older audio paths.\n2. Use a wired connection (USB-C to 3.5mm adapter with a DAC chip) for minimum latency.\n3. Close background apps consuming CPU — Android's audio stack is sensitive to CPU scheduling delays.\n...\nAudio latency is the time delay (ms) between when audio is triggered by your device and when you hear it.\nIt is caused by driver buffers, DAC processing, Bluetooth codec encoding/decoding, and physical transducer response time.\nUnder 10ms is excellent; over 100ms is very high.\n...\nMusicians performing live notice latency above 10–15ms.\n...\nUnder 10ms for studio-quality monitoring.",
+    "source": "web",
+    "title": "Audio Latency Test Online — Free Browser Tool to Measure ...",
+    "url": "https://audiolatencytest.org/"
+   },
+   {
+    "id": 8,
+    "last_updated": "2026-06-01",
+    "snippet": "The results indicate that, for 50% of the participants,\nasynchrony was detectable outside the range of -75 ms and 110 ms, where the former is related\nto perceiving audio before haptic and vice versa for the latter.\nWe were also able to concur with\nprevious studies, which state that latency is perceivable at a lower threshold when audio precedes\nhaptic stimuli.\n...\nBeyond the reported DT numbers, these studies also demonstrated that latency is perceived at\n...\nWhen haptic feedback\npreceded audio, the average DT was reported at 123.41 ± 4.61 ms and 87.73 ± 4.61 ms when audio preceded haptic.\n...\nThis shows that in 50% of\ncases, the detection threshold lies between -75 ms and 100 ms.\nSimilarly, extrapolating from the same figure, we can\nalso see that 20% of the participants/drivers would notice a latency of 50 ms when audio is played before haptic and 65\nms when audio is played after haptic feedback.",
+    "source": "web",
+    "title": "Detection Threshold of Audio Haptic Asynchrony in a Driving Context",
+    "url": "https://arxiv.org/pdf/2307.05451v1.pdf"
+   },
+   {
+    "id": 9,
+    "last_updated": "2026-02-23",
+    "snippet": "This paper introduces a low cost wrist-worn \ninstrumentation platform designed to capture human reaction times (RT) across auditory, visual, \nand haptic modalities with millisecond  latency in real-world conditions.\n...\nNotably, the standard deviations (SDs) \nfor auditory RTs were consistently small (e.g., SD < 50 ms for Participants 1 and 4), indicating \nhigh temporal precision and minimal system latency [48].\n...\nStimulus delivery latency is almost negligible for auditory and visual modalities as active buzzers \nand LEDs actuate within sub-millisecond ranges, well below human perceptual thresholds (<1 \nms).\nContrastingly, haptic feedback has a non-negligible hardware latency as a typical 3V, 12000\nRPM coin vibration motor has a maximum rise time of 90 ms [44].\nThis is however a maximum, \nand the motor may reach a perceptible intensity before max speed is reached.\n...\nCombining stimulus delivery and reaction detection delays, the estimated maximum total latencies \nare: \n- \nAuditory: ~10 ms (device) vs. ~24 ms (computer) \n- \nVisual: ~10 ms (device) vs. ~25 ms (computer)\n- \n Haptic: up to ~100 ms (device) \nIt is important to note that these figures represent worst-case bounds, and real latencies depend on ",
+    "source": "web",
+    "title": "1",
+    "url": "https://arxiv.org/pdf/2509.02626v1.pdf"
+   },
+   {
+    "date": "2022-01-30",
+    "id": 10,
+    "last_updated": "2026-03-22",
+    "snippet": "So one (1) millisecond is one thousandth of a second, which may also be expressed as 0.001 of a second.\nTwo milliseconds means two thousandth of a second and so on.\n...\n3. I expanded the timeline to see the maximum and observed that the difference has almost 18 ms (18 milliseconds) as you’ll see below:\n...\nAl Keltz and his team at Whirlwind discovered in their test that listeners hear the latency (echo) after 10 or 15 milliseconds.\nThe almost 18 milliseconds I measured is quite beyond that point.",
+    "source": "web",
+    "title": "How to measure audio latency? How much delay is tolerable by ...",
+    "url": "https://www.provideocoalition.com/how-to-measure-audio-latency-how-much-delay-is-tolerable-by-human-beings-when-monitoring-their-own-voice-live/"
+   }
+  ]
+ }
+}

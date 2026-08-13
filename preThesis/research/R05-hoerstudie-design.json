@@ -1,0 +1,873 @@
+{
+ "run": {
+  "id": "R05-hoerstudie-design",
+  "topic": "Pilot-Hoerstudie: Teilnehmer und Studiendesign",
+  "preset": "low",
+  "prompt": "Kontext: Bachelorarbeit, digitales Stethoskop. Geplant ist eine kleine explorative Pilot-Hoerstudie (n ca. 5-10), die den objektiven Filternachweis unterstuetzen soll.\n\nHauptfrage: Wie wird eine Hoerstudie zur Beurteilung von Herzgeraeusch-Hoerbarkeit methodisch sauber aufgesetzt, wenn nur n = 5-10 Teilnehmende moeglich sind?\n\nUnterfrage 1: Laien vs. medizinisch geschulte Hoerende - was zeigt die Auskultations-Literatur zur Aussagekraft, und gibt es Aufgabenformate (z. B. 2AFC/ABX Detektionsaufgabe statt Diagnosestellung), mit denen auch Laien valide Ergebnisse liefern?\nUnterfrage 2: Welche Designelemente sind bei kleinem n Pflicht (Blindung, Randomisierung der Filterkonditionen, Anzahl Stimuli pro Kondition, Within-Subject-Design) und welche Auswertung ist bei n = 5-10 noch vertretbar (deskriptiv, nichtparametrisch, Effektgroessen statt p-Werten)?\n\nAntwort auf Deutsch, mit Quellen aus Psychoakustik/Auskultationsforschung."
+ },
+ "response": {
+  "id": "chatcmpl-bd3da464cc424769b4a4a1ff",
+  "object": "chat.completion",
+  "created": 1786462878,
+  "model": "preset/low",
+  "choices": [
+   {
+    "index": 0,
+    "message": {
+     "role": "assistant",
+     "content": "## Kurzantwort\n\nMit **n = 5–10** sollte die Untersuchung ausdrücklich als **explorative Hör- und Machbarkeitspilotstudie** angelegt werden – nicht als Studie zum Nachweis einer klinischen Überlegenheit oder zur belastbaren Generalisierung auf die Bevölkerung. Das primäre Ziel sollte daher lauten:\n\n> **Können Hörerinnen und Hörer unter kontrollierten, verblindeten Bedingungen zuverlässig erkennen, ob ein Herzgeräuschsignal mit Filter A oder Filter B wiedergegeben wurde bzw. ob ein bestimmtes Geräuschmerkmal vorhanden ist?**\n\nFür diesen Zweck ist eine **einfache Detektions- oder Diskriminationsaufgabe** methodisch deutlich geeigneter als eine offene Diagnoseaufgabe.\n\nDie Auskultationsliteratur zeigt, dass die klinische Diagnoseleistung stark von Erfahrung und Training abhängt, während die bloße Unterscheidung „Herzgeräusch vorhanden vs. nicht vorhanden“ weniger erfahrungsabhängig sein kann. In einer Studie korrelierte die diagnostische Fähigkeit mit der klinischen Erfahrung, die Fähigkeit zur Unterscheidung von Herzgeräuschen und normalen Herztönen dagegen nicht mit der Erfahrung. [web:40]\n\n---\n\n## 1. Geeignete Zielsetzung der Pilotstudie\n\nDie Studie sollte drei Ebenen klar trennen:\n\n| Ebene | Geeignete Frage | Für n = 5–10 geeignet? |\n|---|---|---|\n| **Technischer Filternachweis** | Verändert der Filter das Signal objektiv, z. B. Spektrum, Amplitude, SNR oder Zeitverlauf? | Ja, primär technisch |\n| **Hörbarkeit/Diskriminierbarkeit** | Können Menschen die Filterbedingungen auditiv unterscheiden? | Ja, explorativ |\n| **Klinische Interpretation** | Können Hörer ein Geräusch diagnostisch als Aortenstenose, Mitralinsuffizienz usw. klassifizieren? | Nein, mit n = 5–10 nicht belastbar |\n\nDie Humanstudie sollte somit den objektiven Filternachweis **unterstützen**, aber nicht ersetzen. Sie kann zeigen, dass ein technisch nachgewiesener Filtereffekt **wahrnehmbar**, **nicht wahrnehmbar** oder nur unter bestimmten Signalbedingungen wahrnehmbar ist.\n\nDie Pilot- und Feasibility-Literatur empfiehlt, die Stichprobengröße aus den konkreten Machbarkeitszielen abzuleiten und die Auswertung überwiegend deskriptiv sowie mit Unsicherheitsangaben vorzunehmen. [web:1][web:3]\n\n---\n\n## 2. Laien versus medizinisch geschulte Hörer\n\n### 2.1 Was zeigt die Auskultationsliteratur?\n\nDie klinische Auskultation ist anspruchsvoll und die Leistung variiert stark:\n\n- In einer Untersuchung erkannten erfahrene Kardiologen 69 % der relevanten Herztöne und Geräusche und stellten in 62 % der Fälle die korrekte Diagnose. Auszubildende erkannten dagegen nur etwa 40 % der zusätzlichen Herztöne und diagnostizierten 24 % der Fälle korrekt. [web:33]\n- Eine andere Untersuchung fand für die Auskultation bei Herzklappenerkrankungen Sensitivitäten von 30–100 % und Spezifitäten von 28–100 %. [web:44]\n- Training kann die Erkennungsleistung verbessern; bei Assistenzärzten stieg beispielsweise die Erkennung eines vorhandenen Herzgeräuschs nach einer Lehrintervention von 66 % auf 76 %. [web:34]\n\nWichtig ist aber die Unterscheidung zwischen:\n\n1. **Detektion:** „Ist ein zusätzliches Geräusch vorhanden?“  \n2. **Merkmalserkennung:** „Ist es systolisch oder diastolisch?“, „Ist es rau oder musikalisch?“  \n3. **Diagnose:** „Handelt es sich um eine Aortenstenose?“\n\nDie erste Aufgabe ist wesentlich weniger abhängig von medizinischem Vorwissen. Die Literatur zu einem entwickelten Auskultationstest berichtet, dass die diagnostische Fähigkeit mit der Erfahrung zusammenhing, die Fähigkeit zur Unterscheidung von Herzgeräuschen gegenüber normalen Herztönen jedoch nicht. Gleichzeitig bestand bei allen Gruppen eine Tendenz, normale Herztöne als pathologisch zu interpretieren. [web:40]\n\n### 2.2 Konsequenz für die Teilnehmerauswahl\n\nFür eine kleine Bachelorarbeits-Pilotstudie sind Laien daher vertretbar, wenn die Aufgabe als **auditive Diskriminations- oder Detektionsaufgabe** formuliert wird. Sie sollten nicht aufgefordert werden, eine medizinische Diagnose zu stellen.\n\nSinnvoll wäre entweder:\n\n- eine **homogene Stichprobe** aus 5–10 Laien, wenn ausschließlich die allgemeine Hörbarkeit interessiert;\n- oder eine **explorative Mischstichprobe**, zum Beispiel 3–5 Laien und 3–5 medizinisch geschulte Personen, wenn zusätzlich geprüft werden soll, ob Vorwissen die Leistung beeinflusst.\n\nBei n = 5–10 sollte „Laien versus medizinisch geschult“ allerdings nur als **qualitativer bzw. deskriptiver Vergleich** behandelt werden. Ein belastbarer Gruppenvergleich ist damit nicht möglich.\n\nDie Gruppen sollten außerdem nicht mit unterschiedlichen Aufgaben getestet werden. Beide Gruppen müssen dieselben Stimuli, dieselbe Instruktion, dieselbe Wiedergabekette und dieselben Antwortoptionen erhalten.\n\n---\n\n## 3. Empfohlenes Aufgabenformat\n\n### 3.1 Primäre Empfehlung: 2AFC- oder ABX-Diskriminationsaufgabe\n\nFür den Filternachweis ist ein **ABX-Design** besonders geeignet:\n\n1. **A:** Referenzsignal mit Filterbedingung A  \n2. **B:** Dasselbe oder ein möglichst vergleichbares Signal mit Filterbedingung B  \n3. **X:** zufällig entweder A oder B  \n4. Antwort: „Ist X gleich A oder gleich B?“\n\nABX ist eine klassische psychoakustische Blindaufgabe mit einer Zufallsrate von 50 %. Ein korrektes Ergebnis deutlich oberhalb von 50 % spricht für eine wahrnehmbare Differenz zwischen den Bedingungen. [web:18][web:21]\n\nAlternativ kann eine **2AFC-Aufgabe** verwendet werden:\n\n- Zwei kurze Intervalle werden präsentiert.\n- In einem Intervall befindet sich das relevante Merkmal oder die weniger gefilterte Version.\n- Die Versuchsperson entscheidet, in welchem Intervall es liegt.\n\nBeispiele:\n\n- „In welchem Intervall ist ein Herzgeräusch vorhanden?“\n- „Welche Version klingt stärker verrauscht?“\n- „Welche Wiedergabe enthält mehr von dem zuvor definierten Geräuschmerkmal?“\n- „Ist X eher A oder B?“\n\n### 3.2 Warum keine Diagnosestellung?\n\nEine Diagnoseaufgabe würde mehrere Faktoren vermischen:\n\n- medizinisches Wissen,\n- Erfahrung mit Auskultation,\n- Kenntnis typischer Geräuschmuster,\n- Entscheidungskriterien,\n- Erwartungseffekte,\n- individuelle Risikobereitschaft.\n\nFür die Frage, ob ein Filter die Hörbarkeit verändert, ist das unnötig. Eine Laienperson kann möglicherweise zuverlässig erkennen, dass zwei Versionen unterschiedlich klingen, ohne die Ursache des Herzgeräuschs benennen zu können.\n\n### 3.3 Mögliches zweistufiges Format\n\nEin besonders sauberes Design wäre:\n\n**Stufe 1: Filterdiskrimination**\n\n> ABX: „Welche der beiden Referenzen entspricht X?“\n\n**Stufe 2: einfache Detektion**\n\n> 2AFC oder Ja/Nein: „Ist in diesem Ausschnitt ein zusätzliches Geräusch hörbar?“\n\nDie zweite Stufe sollte nur dann eingesetzt werden, wenn für die verwendeten Aufnahmen eine nachvollziehbare Referenzklassifikation vorhanden ist. Diagnostische Kategorien wie „Aortenstenose“ oder „Mitralinsuffizienz“ sollten höchstens sekundär und ausdrücklich explorativ erhoben werden.\n\n---\n\n## 4. Konkreter Vorschlag für das Studiendesign\n\n### 4.1 Within-Subject-Design\n\nBei n = 5–10 ist ein **Within-Subject-Design Pflicht bzw. dringend zu empfehlen**:\n\n- Jede Person hört jede relevante Filterbedingung.\n- Jede Person dient als eigene Kontrolle.\n- Interindividuelle Unterschiede in Hörvermögen, Aufmerksamkeit und Auskultationserfahrung werden reduziert.\n- Die statistische Information pro Person wird durch mehrere Trials erhöht.\n\nEin Between-Subject-Design mit beispielsweise 3 Personen pro Filtergruppe wäre für diese Fragestellung kaum sinnvoll.\n\n### 4.2 Stimulusauswahl\n\nDie Stimuli sollten möglichst kontrolliert sein:\n\n- mehrere unabhängige Herzgeräuschaufnahmen;\n- normaler Herzton ohne relevantes Geräusch;\n- mindestens ein oder mehrere Herzgeräusche mit unterschiedlicher Intensität oder Charakteristik;\n- identische Ausschnittlänge;\n- identische oder kontrollierte Lautheit;\n- gleiche Wiedergabekette für alle Bedingungen;\n- keine sichtbaren Spektrogramme oder Signalformen während der Hörentscheidung.\n\nHerztonaufnahmen wurden in der Forschung bereits mit digitalen Stethoskopen aufgezeichnet, annotiert und als WAV-Dateien für Hör- und Trainingsaufgaben verwendet. [web:46] Auch unabhängige, verblindete Beurteilungen von Herztonaufnahmen sind in der Forschung üblich. [web:47]\n\n### 4.3 Anzahl der Stimuli und Trials\n\nEine praktikable Pilotkonfiguration wäre:\n\n| Element | Empfehlung |\n|---|---:|\n| Unabhängige Herzgeräuschaufnahmen | 5–10 |\n| Filterbedingungen | mindestens 2 |\n| Trials pro Filtervergleich und Person | etwa 10–20 |\n| Gesamte Entscheidungen pro Person | ungefähr 40–100, abhängig von der Anzahl der Stimuli |\n| Dauer einer Sitzung | möglichst 20–40 Minuten |\n| Pausen | kurze Pausen nach etwa 10–15 Minuten |\n\nEntscheidend ist die Unterscheidung zwischen **Teilnehmendenzahl** und **Anzahl der Trials**:\n\n- Mehrere Trials erhöhen die Präzision der individuellen Hörleistungsmessung.\n- Sie ersetzen aber keine unabhängigen Versuchspersonen.\n- Viele Wiederholungen desselben Stimulus können zu Lernen, Ermüdung und Erinnerungsstrategien führen.\n\nDaher sollten die Trials über mehrere Aufnahmen, zufällige X-Zuordnungen und gegebenenfalls unterschiedliche Ausschnittsegmente verteilt werden. Die Reihenfolge darf nicht für alle Personen identisch sein.\n\n### 4.4 Randomisierung\n\nMindestens folgende Elemente sollten randomisiert werden:\n\n1. Reihenfolge der Herzgeräuschaufnahmen;\n2. Reihenfolge der Filterbedingungen;\n3. Zuordnung von Filter A und B zu den sichtbaren Labels;\n4. ABX-Zuordnung von X zu A oder B;\n5. Reihenfolge der Wiederholungen.\n\nDie Randomisierung sollte vorab erzeugt und dokumentiert werden. Für jede Person kann eine eigene pseudorandomisierte Sequenz verwendet werden. Dabei sollte verhindert werden, dass zufällig sehr viele gleiche Bedingungen hintereinander auftreten.\n\n### 4.5 Blindung\n\nEine echte Verblindung ist besonders wichtig, weil die Filterkondition sonst über Erwartungen, Dateinamen, Reihenfolge oder Versuchsleiterhinweise erraten werden könnte.\n\nEmpfohlen:\n\n- neutrale Dateinamen oder automatisch generierte Stimuluscodes;\n- Versuchsleitung kennt während der Antwortphase die Zuordnung nicht;\n- keine Hinweise wie „gefiltert“, „ungefiltert“, „verbessert“ oder „Artefakt“;\n- automatisierte Präsentation;\n- Auswertung erst nach Entschlüsselung der Codes;\n- gleiche Lautheit und gleiche Dauer, sofern Lautheit nicht selbst die Untersuchungsvariable ist.\n\nDie auditive Beurteilung von Herztonaufnahmen wurde auch in anderen Arbeiten unabhängig und verblindet durchgeführt, was die Eignung dieses Prinzips für die vorliegende Studie unterstützt. [web:47]\n\n### 4.6 Training und Übungsdurchgänge\n\nVor den Testtrials sollte es kurze Übungsdurchgänge geben:\n\n- Erklärung der Aufgabe ohne medizinische Diagnosen;\n- 3–5 Trainingsbeispiele;\n- korrektes Feedback nur während des Trainings;\n- keine Rückmeldung in den eigentlichen Testtrials;\n- Abbruch- oder Ausschlusskriterium für Personen, die die Bedienung nicht verstehen.\n\nDas Training darf nicht bereits die spezifischen Teststimuli oder ihre korrekten Antworten verraten.\n\n---\n\n## 5. Abhängige Variablen\n\nDie primäre abhängige Variable sollte einfach und robust sein:\n\n\\[\n\\text{Trefferquote} = \\frac{\\text{korrekte Antworten}}{\\text{Anzahl gültiger Trials}}\n\\]\n\nZusätzlich sollten berichtet werden:\n\n- Trefferquote pro Person;\n- Trefferquote pro Filterbedingung;\n- Trefferquote pro Stimulus;\n- Fehlerrate;\n- fehlende oder abgebrochene Trials;\n- Antwortdauer, falls technisch zuverlässig gemessen;\n- subjektive Verständlichkeit oder Höranstrengung auf einer kurzen Ratingskala.\n\nFür die Filterbeurteilung sind besonders aussagekräftig:\n\n1. **ABX-Trefferquote gegenüber dem Zufallsniveau von 50 %**;\n2. Differenz der Trefferquoten zwischen Filterbedingungen;\n3. Unterschiede zwischen starken und schwachen bzw. klaren und schwierigen Herzgeräuschen;\n4. Konsistenz der Leistung über mehrere Aufnahmen.\n\n---\n\n## 6. Vertretbare Auswertung bei n = 5–10\n\n### 6.1 Primär deskriptiv\n\nDie Hauptauswertung sollte deskriptiv erfolgen:\n\n- Einzelwerte aller Teilnehmenden;\n- Median und Wertebereich;\n- Mittelwert und Standardabweichung höchstens ergänzend;\n- Trefferquoten pro Stimulus und Bedingung;\n- Spaghetti-Plot oder Punktdiagramm der Within-Subject-Differenzen;\n- Anzahl und Anteil der Personen mit konsistenter Leistung über dem Zufallsniveau.\n\nPilotstudien sollten nach gängigen Empfehlungen vor allem Machbarkeit und Unsicherheit beschreiben; formale Wirksamkeitstests sollten nicht das primäre Ziel sein. [web:4][web:7]\n\n### 6.2 Binomialbetrachtung der ABX-Aufgabe\n\nBei ABX beträgt die Zufallswahrscheinlichkeit 0,5. Für jede Person kann daher ergänzend ein **exakter Binomialtest** oder ein exaktes Konfidenzintervall angegeben werden.\n\nBeispiel bei 20 Trials:\n\n- 10/20 richtige Antworten: genau Zufallsniveau;\n- 15/20: deskriptiv auffällig oberhalb von 50 %;\n- 17/20 oder mehr: deutlich stärkere Evidenz gegen reines Raten.\n\nDiese Tests sollten jedoch als **explorative Einzelfallinformation** und nicht als endgültiger Signifikanznachweis interpretiert werden. Besonders problematisch wäre es, nur diejenigen Personen oder Stimuli zu testen, die nachträglich gut aussehen.\n\n### 6.3 Effektgrößen\n\nSinnvoll sind:\n\n- absolute Trefferquotendifferenz zwischen Filterbedingungen;\n- relative Trefferquotendifferenz;\n- Median der individuellen Differenzen;\n- Rang-biseriale Korrelation;\n- **Cliff’s Delta** für gepaarte oder rangbasierte Vergleiche;\n- bei kontinuierlichen Ratings: standardisierte Within-Subject-Effektgröße, beispielsweise gepaarte standardisierte Differenz.\n\nFür den eigentlichen Filtervergleich ist oft die unmittelbar verständliche Darstellung am besten:\n\n> „Die Trefferquote lag unter Filter A median bei 80 % und unter Filter B bei 60 %; die mediane individuelle Differenz betrug 20 Prozentpunkte.“\n\nDabei sollten immer die Rohdaten oder zumindest die Werte jeder Person sichtbar gemacht werden.\n\n### 6.4 Nichtparametrische Tests\n\nWenn überhaupt ein inferenzstatistischer Test eingesetzt wird:\n\n- **Wilcoxon-Vorzeichen-Rang-Test** für gepaarte Bedingungsunterschiede;\n- **exakter Permutationstest** für die Within-Subject-Differenzen;\n- **exakter Binomialtest** bei 2AFC/ABX;\n- kein klassischer t-Test als Hauptanalyse, sofern die Verteilungsannahmen bei n = 5–10 nicht plausibel sind.\n\nBei sehr kleinen Stichproben sind p-Werte instabil und wenig informativ. Die Auswertung sollte daher primär auf individuellen Daten, Effektgrößen und Unsicherheitsintervallen beruhen.\n\n### 6.5 Hierarchie der unabhängigen Einheiten\n\nDie Daten haben zwei Ebenen:\n\n- Trials innerhalb von Personen;\n- Stimuli innerhalb der Aufgabe.\n\nDie Trials dürfen nicht einfach so behandelt werden, als wären alle Entscheidungen von unabhängigen Personen. Ein Modell, das die Verschachtelung berücksichtigt, wäre theoretisch möglich, etwa ein logistisches Mixed-Effects-Modell mit zufälligen Effekten für Person und Stimulus. Bei nur 5–10 Personen ist ein solches Modell jedoch eher explorativ und potenziell instabil.\n\nFür eine Bachelorarbeit ist daher meist besser:\n\n1. zunächst pro Person und Bedingung zusammenfassen;\n2. individuelle Trefferquoten vergleichen;\n3. Stimulus-spezifische Ergebnisse getrennt zeigen;\n4. ein Mixed-Effects-Modell höchstens als sekundäre Sensitivitätsanalyse verwenden.\n\n---\n\n## 7. Empfohlener Minimalaufbau\n\n### Primäre Hypothese\n\n> Die beiden Filterbedingungen sind für Hörerinnen und Hörer unter ABX-Bedingungen unterscheidbar, wenn der Filtereffekt oberhalb des Zufallsniveaus von 50 % liegt.\n\n### Studienschema\n\n1. Rekrutierung von 5–10 Personen.\n2. Erfassung von Alter, Geschlecht, Hörproblemen und medizinischer Erfahrung.\n3. Kurzer Hörscreening-Test oder Ausschluss selbstberichteter relevanter Hörstörungen.\n4. Standardisierte Instruktion.\n5. 3–5 Übungstrials mit Feedback.\n6. 5–10 Herzgeräuschstimuli.\n7. ABX- oder 2AFC-Trials mit randomisierter Reihenfolge.\n8. 10–20 Trials je relevantem Vergleich.\n9. kurze Pausen zur Vermeidung von Ermüdung.\n10. anschließendes subjektives Rating von Verständlichkeit und Höranstrengung.\n11. deskriptive Auswertung auf Personen- und Stimulusniveau.\n12. transparente Diskussion von Lern-, Ermüdungs- und Übertragungseffekten.\n\n---\n\n## 8. Was bei n = 5–10 nicht behauptet werden sollte\n\nMit dieser Stichprobe kann man nicht überzeugend behaupten, dass:\n\n- der Filter allgemein für die Bevölkerung hörbar oder unhörbar ist;\n- Laien und Fachpersonen statistisch sicher gleich gut oder unterschiedlich gut sind;\n- der Filter klinische Diagnosen verbessert;\n- ein digitales Stethoskop diagnostisch gleichwertig zu einem konventionellen Stethoskop ist;\n- eine beobachtete Nichtsignifikanz die Gleichheit der Filterbedingungen beweist.\n\nEine unauffällige ABX-Leistung wäre lediglich ein Hinweis darauf, dass **unter den konkreten Wiedergabebedingungen, mit diesen Stimuli und dieser Stichprobe** keine deutliche auditive Diskrimination beobachtet wurde.\n\n## Fazit\n\nDas methodisch sauberste Design ist ein **verblindetes, randomisiertes, innerhalb der Personen wiederholtes ABX- oder 2AFC-Hörexperiment** mit mehreren unabhängigen Herzgeräuschaufnahmen, kontrollierter Lautheit, neutralen Stimuluscodes, kurzen Übungsdurchgängen und Pausen. Laien sind für die Frage der **auditiven Filterdiskrimination** grundsätzlich vertretbar; medizinische Erfahrung wird erst für die **diagnostische Interpretation** zentral. Die Auswertung sollte bei n = 5–10 auf **Rohdaten, individuelle Trefferquoten, Medianwerte, Effektgrößen und exakte Unsicherheitsintervalle** fokussieren. Formale p-Werte dürfen höchstens ergänzend und ausdrücklich explorativ berichtet werden."
+    },
+    "finish_reason": "stop"
+   }
+  ],
+  "usage": {
+   "prompt_tokens": 21933,
+   "completion_tokens": 4564,
+   "total_tokens": 26497,
+   "cost": {
+    "cache_creation_cost": 0.00285,
+    "cache_read_cost": 0.00021,
+    "currency": "USD",
+    "input_cost": 0,
+    "output_cost": 0.00548,
+    "tool_calls_cost": 0.01,
+    "tool_calls_cost_details": {
+     "search_web": 0.01
+    },
+    "total_cost": 0.01854
+   },
+   "input_tokens_details": {
+    "cache_creation_input_tokens": 11419,
+    "cache_read_input_tokens": 10505,
+    "cached_tokens": 10505
+   },
+   "output_tokens_details": {
+    "reasoning_tokens": 34
+   },
+   "tool_calls_details": {
+    "search_web": {
+     "invocation": 4
+    }
+   }
+  },
+  "citations": [
+   {
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11362506/",
+    "title": "PSYCHOACOUSTICS-WEB: A free online tool for the ... - PMC",
+    "date": "2024-05-06"
+   },
+   {
+    "url": "https://theaudiostuff.com/tools/abx-test/",
+    "title": "ABX Blind Test: Can You Hear the Difference? - The Audio Stuff",
+    "date": null
+   },
+   {
+    "url": "https://lirias.kuleuven.be/retrieve/630680",
+    "title": "PROCEEDINGS of the",
+    "date": null
+   },
+   {
+    "url": "https://research.aalto.fi/files/78067828/Nordic_SMC_2021_paper_25.pdf",
+    "title": "Assessing Room Acoustic Memory using a Yes/No and a 2 ...",
+    "date": null
+   },
+   {
+    "url": "https://www.academia.edu/19294456/Statistical_Analysis_of_ABX_Results_Using_Signal_Detection_Theory",
+    "title": "Statistical Analysis of ABX Results Using Signal Detection ...",
+    "date": "2015-12-01"
+   },
+   {
+    "url": "https://wiki.hydrogenaudio.org/index.php?title=ABX",
+    "title": "ABX - Hydrogenaudio Knowledgebase",
+    "date": "2022-05-27"
+   },
+   {
+    "url": "https://jov.arvojournals.org/article.aspx?articleid=2121819",
+    "title": "A new two-alternative forced choice method for the unbiased ...",
+    "date": "2014-03-01"
+   },
+   {
+    "url": "https://en.audiofanzine.com/homestudio/editorial/articles/the-real-blind-test.html",
+    "title": "The Real Blind-Test: Everything About the ABX Test - Audiofanzine",
+    "date": "2014-10-09"
+   },
+   {
+    "url": "https://www.math.ucdavis.edu/~saito/data/auditory/moore_psychoacoustics.pdf",
+    "title": "13. Psychoacoustics",
+    "date": null
+   },
+   {
+    "url": "https://pubmed.ncbi.nlm.nih.gov/21533962/",
+    "title": "The single interval adjustment matrix (SIAM) yes-no task: an empirical assessment using auditory and gustatory stimuli - PubMed",
+    "date": "2011-08-12"
+   },
+   {
+    "url": "https://apno.pythonanywhere.com/",
+    "title": "ABX CONDUCTOR TEST — ABX Blind Listening Experiment",
+    "date": null
+   },
+   {
+    "url": "https://link.springer.com/content/pdf/10.3758/BF03194898.pdf",
+    "title": "Perception & Psychophysics",
+    "date": null
+   },
+   {
+    "url": "http://djcarlst.provide.net/abx_p9.htm",
+    "title": "ABX Statistics",
+    "date": null
+   },
+   {
+    "url": "https://de.wikipedia.org/wiki/ABX-Test",
+    "title": "ABX-Test – Wikipedia",
+    "date": "2006-02-20"
+   },
+   {
+    "url": "https://forum.gamer.com.tw/C.php?bsn=60535&snA=16761",
+    "title": "【討論】ABX test - 盲測的簡單介紹 @影音視聽討論區 哈啦板 - 巴哈姆特",
+    "date": null
+   },
+   {
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10895079/",
+    "title": "The Effectiveness of Different Teaching Modalities for ... - PMC",
+    "date": "2024-01-26"
+   },
+   {
+    "url": "https://nva.sikt.no/registration/019c47e9731d-3affac56-a75b-4a0c-89f4-df2c950b55c5",
+    "title": "Heart auscultation and valvular heart disease: The diagnostic ...",
+    "date": "2026-02-27"
+   },
+   {
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC400745/",
+    "title": "Teaching cardiac auscultation to trainees in internal medicine and ...",
+    "date": "2004-03-31"
+   },
+   {
+    "url": "https://pubmed.ncbi.nlm.nih.gov/18648718/",
+    "title": "Effectiveness of teaching cardiac auscultation to residents during an elective pediatric cardiology rotation - PubMed",
+    "date": "2008-11-20"
+   },
+   {
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC5028074/",
+    "title": "Small Steps in Impacting Clinical Auscultation of Medical Students",
+    "date": "2016-09-15"
+   },
+   {
+    "url": "https://teachingheartauscultation.com/mastering-cardiac-auscultation-via-the-internet-by-michael-barrett-and-janice-pieretti-temple",
+    "title": "The Power of Repetition in Mastering Cardiac Auscultation",
+    "date": "2020-10-09"
+   },
+   {
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8200722/",
+    "title": "Deep Learning Algorithm for Automated Cardiac Murmur Detection ...",
+    "date": "2021-04-26"
+   },
+   {
+    "url": "https://dalspace.library.dal.ca/bitstreams/0bf9f3a1-bb60-49f1-b287-243e09f64924/download",
+    "title": "Teaching Heart Auscultation to Health Professionals - DalSpace",
+    "date": null
+   },
+   {
+    "url": "https://oamjms.eu/index.php/mjms/article/download/7247/6276/58030",
+    "title": "The Effectiveness of Training on Auscultation of Heart ...",
+    "date": "2021-11-07"
+   },
+   {
+    "url": "https://pubmed.ncbi.nlm.nih.gov/19241211/",
+    "title": "The development of a new cardiac auscultation test: How do screening and diagnostic skills differ? - PubMed",
+    "date": "2010-01-09"
+   },
+   {
+    "url": "https://depts.washington.edu/physdx/heart/evid2.html",
+    "title": "Evidence Base 2 - Heart Sounds & Murmurs Exam - Physical Diagnosis Skills",
+    "date": null
+   },
+   {
+    "url": "https://www.sciencedirect.com/science/article/pii/S0914508716302787",
+    "title": "Variation in effectiveness of a cardiac auscultation training ...",
+    "date": null
+   },
+   {
+    "url": "https://journals.sagepub.com/doi/10.1177/2333794X16669013?icid=int.sj-abstract.citing-articles.30",
+    "title": "Small Steps in Impacting Clinical Auscultation of Medical Students - Edem K. Binka, Linda O. Lewin, Peter R. Gaskin, 2016",
+    "date": "2016-09-14"
+   },
+   {
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10040065/",
+    "title": "Diagnostic accuracy of heart auscultation for detecting valve disease",
+    "date": "2023-03-23"
+   },
+   {
+    "url": "https://www.nature.com/articles/s41569-021-00567-8",
+    "title": "AI used to detect cardiac murmurs",
+    "date": "2021-05-11"
+   },
+   {
+    "url": "https://pilotandfeasibilitystudies.qmul.ac.uk/resources/",
+    "title": "Resources - Pilot and feasibility studies",
+    "date": "2018-05-23"
+   },
+   {
+    "url": "https://www.bmj.com/content/355/bmj.i5239",
+    "title": "CONSORT 2010 statement: extension to randomised pilot ...",
+    "date": null
+   },
+   {
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8849521/",
+    "title": "Guidelines for Designing and Evaluating Feasibility Pilot Studies",
+    "date": "2022-01-01"
+   },
+   {
+    "url": "https://pilotandfeasibilitystudies.qmul.ac.uk/wp-content/uploads/2019/10/ICTMC_workshop-slides-FINAL_Oct-2019-TO-SHARE.pdf",
+    "title": "[PDF] Beyond the CONSORT extension for pilot trials: guideline, planning ...",
+    "date": null
+   },
+   {
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7856754/",
+    "title": "Determining sample size for progression criteria for pragmatic ...",
+    "date": "2021-02-03"
+   },
+   {
+    "url": "https://www.sciencedirect.com/science/article/abs/pii/S0895435612002740",
+    "title": "Sample size calculations for pilot randomized trials",
+    "date": null
+   },
+   {
+    "url": "https://sites.globalhealth.duke.edu/rdac/wp-content/uploads/sites/27/2022/06/Core_Guide_Pilot_and_Feasibility-Studies_06_17_22.pdf",
+    "title": "Research Design & Analysis Core",
+    "date": null
+   },
+   {
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6778655/",
+    "title": "Guidelines for reporting non-randomised pilot and feasibility ...",
+    "date": "2019-10-06"
+   },
+   {
+    "url": "https://www.equator-network.org/reporting-guidelines/consort-2010-statement-extension-to-randomised-pilot-and-feasibility-trials/",
+    "title": "CONSORT 2010 statement - Reporting guideline",
+    "date": "2025-05-30"
+   },
+   {
+    "url": "https://www.statsols.com/guides/sample-size-for-pilot-studies",
+    "title": "A Guide to Sample Size for Pilot Studies",
+    "date": "2024-09-01"
+   },
+   {
+    "url": "https://eprints.whiterose.ac.uk/id/eprint/112905/1/Methods%20and%20processes%20for%20development%20of%20a%20CONSORT%20extension%20for%20reporting%20pilot%20randomized%20controlled%20trials.pdf",
+    "title": "Methods and processes for development of a CONSORT ...",
+    "date": null
+   },
+   {
+    "url": "https://impactcollaboratory.org/wp-content/uploads/2021/05/IMPACT-Presentation-Pilot-and-feasibility-studies-for-pragmatic-cluster-randomized-trials-v2.0_NotesRemoved.pdf",
+    "title": "[PDF] Pilot and feasibility studies for pragmatic cluster randomised trials",
+    "date": null
+   },
+   {
+    "url": "https://pilotandfeasibilitystudies.qmul.ac.uk/wp-content/uploads/2018/05/CONSORT_extension_for_Pilot_and_Feasibility_Trials_Checklist.docx",
+    "title": "CONSORT_extension_for_Pilot_...",
+    "date": null
+   },
+   {
+    "url": "https://bmjopen.bmj.com/content/7/11/e016970",
+    "title": "Quality of reporting of pilot and feasibility cluster randomised trials: a systematic review",
+    "date": "2017-11-01"
+   },
+   {
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6393983/",
+    "title": "A guide to the reporting of protocols of pilot and feasibility trials - PMC",
+    "date": "2019-02-28"
+   },
+   {
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11112912/",
+    "title": "Evaluation of a digitally enhanced cardiac auscultation learning ...",
+    "date": "2024-05-23"
+   },
+   {
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12088729/",
+    "title": "Smartphone for heart sound measurement in hospital - PMC",
+    "date": "2025-02-10"
+   },
+   {
+    "url": "https://www.medrxiv.org/content/10.1101/2023.09.16.23295653v1.full-text",
+    "title": "Deep Learning for Heart Sound Analysis: A Literature Review",
+    "date": "2023-09-17"
+   },
+   {
+    "url": "https://www.cinc.org/archives/2016/pdf/159-485.pdf",
+    "title": "Machine Learning Based Identification of Pathological ...",
+    "date": null
+   },
+   {
+    "url": "https://moody-challenge.physionet.org/2016/papers/challenge2016.pdf",
+    "title": "Classification of Normal/Abnormal Heart Sound Recordings",
+    "date": null
+   },
+   {
+    "url": "https://pubmed.ncbi.nlm.nih.gov/31947375/",
+    "title": "An Approach for Automatic Identification of Fundamental ... - PubMed",
+    "date": "2019-07-11"
+   },
+   {
+    "url": "https://www.diva-portal.org/smash/get/diva2:1980582/FULLTEXT01.pdf",
+    "title": "Identifying Abnormalities in Heart Sound data using ...",
+    "date": null
+   },
+   {
+    "url": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6653361/pdf/CLC-33-E36.pdf",
+    "title": "Clinical Investigations",
+    "date": null
+   },
+   {
+    "url": "https://www.scribd.com/document/981456406/Zhao-Et-Al-2022-Robust-and-Efficient-Online-Auditory-Psychophysics",
+    "title": "Zhao Et Al 2022 Robust and Efficient Online Auditory ...",
+    "date": "2026-03-17"
+   },
+   {
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11455879/",
+    "title": "A cardiac audio classification method based on image ...",
+    "date": "2024-10-05"
+   },
+   {
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6629402/",
+    "title": "Heart sounds: a pilot randomised trial to determine the feasibility and acceptability of audio recordings to improve discharge communication for cardiology inpatients protocol",
+    "date": "2019-07-11"
+   },
+   {
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7199391/",
+    "title": "An Open Access Database for the Evaluation of Heart Sound ...",
+    "date": "2016-11-21"
+   },
+   {
+    "url": "https://eprints.whiterose.ac.uk/id/eprint/196527/7/aacus210098.pdf",
+    "title": "[PDF] Assessment of Soundscapes Using Self-Report and Physiological ...",
+    "date": null
+   },
+   {
+    "url": "https://arxiv.org/html/2502.16914v1",
+    "title": "Vi Results",
+    "date": null
+   },
+   {
+    "url": "http://arxiv.org/pdf/1612.01943.pdf",
+    "title": "1",
+    "date": null
+   }
+  ],
+  "search_results": [
+   {
+    "date": "2024-05-06",
+    "id": 16,
+    "last_updated": "2026-05-05",
+    "snippet": "",
+    "source": "web",
+    "title": "PSYCHOACOUSTICS-WEB: A free online tool for the ... - PMC",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11362506/"
+   },
+   {
+    "id": 17,
+    "last_updated": "2026-08-05",
+    "snippet": "You get two known references (A and B) and an unknown X, randomly assigned to be A or B each round.\nAudition each as many times as you like, then commit an answer.\n...\nAn ABX test is a statistical method for proving you can hear the difference between two audio sources.\nYou hear sample A, sample B, then a randomized sample X (either A or B) and decide which one X matches.",
+    "source": "web",
+    "title": "ABX Blind Test: Can You Hear the Difference? - The Audio Stuff",
+    "url": "https://theaudiostuff.com/tools/abx-test/"
+   },
+   {
+    "id": 18,
+    "last_updated": "2024-11-05",
+    "snippet": "The listening test was of ABX-type, i.e. a psychoacoustic method 2AFC [3] experiment presenting \n3 signals respectively named A, B and X, with A and B being 2 different signals and X randomly equal \nto one of the others.\nA and B were set either to the reference signal or to one of the filtered pink noise\nsignals.\nThe listener was asked to answer whether X was equal to stimulus A or stimulus B.\nThis type \nof psychoacoustic test has a guessing limit of 50 %.\nThe more the correct answering performance is \nabove 50%, the higher is the detectability of the tested filter feature.\n...\nHowever, they were advised to not spend more than 2 minutes on a single comparison.\nThe experiment \nwas split into 4 tests: dips and peaks were presented in separate tests, with a further division for the \npresentation level: 35 dB (A-weighed) and 50 dB (A-weighed).\n...\nAnalysis of results was performed using statistical method ANOVA - repeated measures, with the \ngoal of assessing the degree of audibility of spectral dips and peaks with different filter contrast levels \nand widths, for the two central frequencies 125 Hz and 2 kHz, and for different presentation levels, 35",
+    "source": "web",
+    "title": "PROCEEDINGS of the",
+    "url": "https://lirias.kuleuven.be/retrieve/630680"
+   },
+   {
+    "id": 19,
+    "last_updated": "2025-07-16",
+    "snippet": "training session (Figure 2a).\n...\nIn\nthe 2AFC test, subjects went through five trials in which\ntwo sound sources were presented; their task was to decide\nwhich of the two was familiar to them.",
+    "source": "web",
+    "title": "Assessing Room Acoustic Memory using a Yes/No and a 2 ...",
+    "url": "https://research.aalto.fi/files/78067828/Nordic_SMC_2021_paper_25.pdf"
+   },
+   {
+    "date": "2015-12-01",
+    "id": 20,
+    "last_updated": "2025-08-29",
+    "snippet": "The paper specifies that a 95% confidence level is standard, requiring substantial correct responses depending on the number of trials to confirm perceptual differences.",
+    "source": "web",
+    "title": "Statistical Analysis of ABX Results Using Signal Detection ...",
+    "url": "https://www.academia.edu/19294456/Statistical_Analysis_of_ABX_Results_Using_Signal_Detection_Theory"
+   },
+   {
+    "date": "2022-05-27",
+    "id": 21,
+    "last_updated": "2026-06-13",
+    "snippet": "A key feature of this method is that the tests are performed \"blind\", or without the listener's knowledge of what the file-under-test is.\n...\nThe tester assigns one file to the \"a\" button, the other file to the \"b\" button, and then the abx program randomly assigns either the first or the second file to the \"x\" button.\nThe listener can listen to a, b, or x, in any order, as many times as they wish, then decides whether x is the same as a or the same as b.\nThat's one trial.\n...\n*\"Present to each subject an identified reference sample, followed by two coded samples, one of which matches the reference sample.\nAsk subjects to indicate which coded sample matches the reference.\nCount the number of correct replies and refer to table t10 for interpretation.\"*\n...\n*\"As a general rule, the minimum is 16 subjects, but for less than 28, the beta error is high.\nDiscrimination is much improved if 32, 40, or a larger number can be employed.\"*",
+    "source": "web",
+    "title": "ABX - Hydrogenaudio Knowledgebase",
+    "url": "https://wiki.hydrogenaudio.org/index.php?title=ABX"
+   },
+   {
+    "date": "2014-03-01",
+    "id": 22,
+    "last_updated": "2024-10-29",
+    "snippet": "",
+    "source": "web",
+    "title": "A new two-alternative forced choice method for the unbiased ...",
+    "url": "https://jov.arvojournals.org/article.aspx?articleid=2121819"
+   },
+   {
+    "date": "2014-10-09",
+    "id": 23,
+    "last_updated": "2026-03-10",
+    "snippet": "**1.\nFirst of all, you need two audio files (A and B)**, for example two recordings or two different encodings, that are identical except for one single factor.\nThe difference can be the microphone, the converter or the preamp used for tracking, but also the bit rate or the codec used to encode it.\nTo compare two mic preamps, for instance, use exactly the same audio path except at the preamp stage.\nTo get a reliable test, both files must have the same level, otherwise the loudest one will always sound “better”.\n**2.\nTo start the test, have the person being tested listen to both A and B files.** Every time you play a file to him, tell him which one is A and which one is B, in order for him to have a reference point.\nThe person is allowed to go back to this part at any time during the test.\nOnce you’ve done this you can start the blind test.\n**3.\nTo do this, let the person listen to one of the two files chosen randomly (this is the X factor) and ask him whether it’s A or B.**\n**4.\nRepeat step three 10–25 times (but not more, to avoid ear fatigue).\nEvery time, the file you play back must be chosen randomly.**",
+    "source": "web",
+    "title": "The Real Blind-Test: Everything About the ABX Test - Audiofanzine",
+    "url": "https://en.audiofanzine.com/homestudio/editorial/articles/the-real-blind-test.html"
+   },
+   {
+    "id": 24,
+    "last_updated": "2026-07-24",
+    "snippet": "two successive bursts of noise and either the first or\nthe second burst (at random) is interrupted to produce\nthe gap.",
+    "source": "web",
+    "title": "13. Psychoacoustics",
+    "url": "https://www.math.ucdavis.edu/~saito/data/auditory/moore_psychoacoustics.pdf"
+   },
+   {
+    "date": "2011-08-12",
+    "id": 25,
+    "last_updated": "2026-02-12",
+    "snippet": "",
+    "source": "web",
+    "title": "The single interval adjustment matrix (SIAM) yes-no task: an empirical assessment using auditory and gustatory stimuli - PubMed",
+    "url": "https://pubmed.ncbi.nlm.nih.gov/21533962/"
+   },
+   {
+    "id": 26,
+    "last_updated": "2026-03-22",
+    "snippet": "1\n**Choose your track & conductor** — Pick any of the 12 music excerpts.\nChoose which conductor to test against the Original — Wire, Banana, or Mud.\n2\n**Listen to A and B** — A and B are the two recordings — the Original and your chosen conductor — randomly assigned at the start of each round.\nWhich is which is not revealed.\nListen to A, B, and X as many times as you like, in any order.\n3\n**Identify X** — X is secretly the same recording as either A or B, randomly set once at the start of the round — and stays the same for all 10 trials.\nYour only task: does X match A, or does X match B?\n4\n**4–10 trials, then see your score** — Complete at least 4 trials to record your result — more trials give a stronger result.\nKeep going for more rounds.",
+    "source": "web",
+    "title": "ABX CONDUCTOR TEST — ABX Blind Listening Experiment",
+    "url": "https://apno.pythonanywhere.com/"
+   },
+   {
+    "id": 27,
+    "last_updated": "2025-11-03",
+    "snippet": "",
+    "source": "web",
+    "title": "Perception & Psychophysics",
+    "url": "https://link.springer.com/content/pdf/10.3758/BF03194898.pdf"
+   },
+   {
+    "id": 28,
+    "last_updated": "2025-11-03",
+    "snippet": "|Since the randomization of the ABX Comparator is internal, the EXPERIMENTER and the LISTENER may be the same person.\nWith the ABX Comparator Double Blind tests may be done by a single person working alone.|",
+    "source": "web",
+    "title": "ABX Statistics",
+    "url": "http://djcarlst.provide.net/abx_p9.htm"
+   },
+   {
+    "date": "2006-02-20",
+    "id": 29,
+    "last_updated": "2026-04-16",
+    "snippet": "Der Testperson werden zunächst A und B präsentiert, wobei sie nicht weiß, welche Quelle jeweils dahinter steht.\nDann wird ihr eine dritte Quelle X präsentiert, die zufallsbedingt entweder mit A oder B identisch ist.\nDie Testperson muss nun entscheiden, ob X der Quelle A oder der Quelle B entspricht.\nDieser Vorgang wird mehrmals wiederholt, wobei A, B und X gewechselt werden.\nEmpfohlen werden 10 bis 15 Durchgänge.",
+    "source": "web",
+    "title": "ABX-Test – Wikipedia",
+    "url": "https://de.wikipedia.org/wiki/ABX-Test"
+   },
+   {
+    "id": 30,
+    "last_updated": "2025-11-03",
+    "snippet": "ABX test是最常被用來實施盲測的方法，由測試者、受測者和被測試的儀器（或者音檔）來進行。測試者先播放A和B兩種音頻讓受測者熟悉，然後由A和B中隨機播放一未知的X音頻，讓受測者分辨X屬於A或是B。\n連續進行10~25次的測試，根據受測者答對的題數，可以判定受測者是否聽得出A和B之間的差異。",
+    "source": "web",
+    "title": "【討論】ABX test - 盲測的簡單介紹 @影音視聽討論區 哈啦板 - 巴哈姆特",
+    "url": "https://forum.gamer.com.tw/C.php?bsn=60535&snA=16761"
+   },
+   {
+    "date": "2024-01-26",
+    "id": 31,
+    "last_updated": "2026-07-29",
+    "snippet": "",
+    "source": "web",
+    "title": "The Effectiveness of Different Teaching Modalities for ... - PMC",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10895079/"
+   },
+   {
+    "date": "2026-02-27",
+    "id": 32,
+    "last_updated": "2026-06-11",
+    "snippet": "Systolic murmurs identified all cases of aortic stenosis (AS) (sensitivity 100%, specificity 78%), while sensitivity was lower for aortic regurgitation (43%) and mitral regurgitation (29%).\n...\nAmong 34 raters of heart sound recordings (GPs, cardiologists, and medical students), agreement with reference classifications averaged 81% (κ=0.67), with cardiologists showing slightly higher agreement.\n...\nHeart auscultation in primary care showed high specificity but limited sensitivity for VHD, except for AS.\n...\nSensitivity of auscultation ranged from 30% to 100%, and specificity ranged from 28% to 100%.",
+    "source": "web",
+    "title": "Heart auscultation and valvular heart disease: The diagnostic ...",
+    "url": "https://nva.sikt.no/registration/019c47e9731d-3affac56-a75b-4a0c-89f4-df2c950b55c5"
+   },
+   {
+    "date": "2004-03-31",
+    "id": 33,
+    "last_updated": "2025-10-05",
+    "snippet": "Our objectives were 1) To compare the cardiac auscultatory skills of physicians in training with those of experienced cardiologists by using real patients to test bedside diagnostic skills.\n...\n1) In an academic primary care center, 20 physicians (trainees in internal medicine and family practice) and two skilled academic cardiologists listened to 33 cardiac events in 13 patients directly at bedside and identified the cardiac events by completing an open questionnaire.\n...\n1) The experts were the most skillful, achieving 69% recognition of heart sounds and murmurs and correct diagnoses in 62% of cases.\nThey also heard all of the diastolic murmurs.\nThe residents heard only 40% of the extra heart sounds and made a correct diagnosis in 24% of cases.\n2) After the weekly training sessions, their mean percentage for correct diagnosis was 35% [an increase of 66% (p < 0.05)].\n...\nThe two experts recognized 69% of the key signs vs. 40% ± 10 for the whole group of twenty residents and correctly identified 62% of the diagnoses confirmed by echocardiography vs. 24% ± 14 (range 8% to 46%) for the twenty residents.\nThe experts heard 100% of the diastolic murmurs vs. 62% for the residents.\n...\nThey recognized 42% ± 10 of the heart sounds and murmurs both before and after training, but gave the correct diagnosis in only 21% ± 15 of cases before training, compared to 35% ± 17 after training, a relative increase of 66% (p = 0.03) (fig.\n...\nWe found that an improvement in diagnostic skills could be achieved by means of a training program consisting of bedside auscultation 45 minutes once a week over a 5-month period.\nNo significant improvement was noted in this study in the identification of sounds and murmurs by auscultation alone, which suggests that a bedside teaching course could lead mainly to a better interpretation of the sounds and murmurs being heard.",
+    "source": "web",
+    "title": "Teaching cardiac auscultation to trainees in internal medicine and ...",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC400745/"
+   },
+   {
+    "date": "2008-11-20",
+    "id": 34,
+    "last_updated": "2025-03-20",
+    "snippet": "This study aimed to assess the effectiveness of randomized tracks of prerecorded cardiac sounds as a teaching tool for cardiac auscultation.\nThe study focused on recognizing murmurs when present, distinguishing functional from organic murmurs, and detecting heart disease by auscultation.\nAt both pre- and posttesting, 26 residents listened to 15 randomized tracks of live-recorded cardiac sounds and identified key features.\nThe results indicate that the residents improved at detecting any murmur (66% vs 76%, p = 0.007) and functional murmur (37% vs 54%, p = 0.048), and marginally improved at detecting organic murmur (75% vs 84%, p = 0.129).",
+    "source": "web",
+    "title": "Effectiveness of teaching cardiac auscultation to residents during an elective pediatric cardiology rotation - PubMed",
+    "url": "https://pubmed.ncbi.nlm.nih.gov/18648718/"
+   },
+   {
+    "date": "2016-09-15",
+    "id": 35,
+    "last_updated": "2025-10-06",
+    "snippet": "The accuracy of second-year medical students in identifying heart sounds improved after a brief training module.",
+    "source": "web",
+    "title": "Small Steps in Impacting Clinical Auscultation of Medical Students",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC5028074/"
+   },
+   {
+    "date": "2020-10-09",
+    "id": 36,
+    "last_updated": "2025-10-16",
+    "snippet": "over the last two decades have documented that medical students, residents, and even academic internists in many countries recognize less than 40% of abnormal heart sounds.\n...\nThe results demonstrated that the medical students recognized only 18% of these murmurs at the pretest but improved to 73% after 250 repetitions and improved further to 84% after 500 repetitions of each murmur",
+    "source": "web",
+    "title": "The Power of Repetition in Mastering Cardiac Auscultation",
+    "url": "https://teachingheartauscultation.com/mastering-cardiac-auscultation-via-the-internet-by-michael-barrett-and-janice-pieretti-temple"
+   },
+   {
+    "date": "2021-04-26",
+    "id": 37,
+    "last_updated": "2026-03-11",
+    "snippet": "Algorithm performance for detecting murmurs has sensitivity and specificity of 76.3% and 91.4%, respectively.\nBy omitting softer murmurs, those with grade 1 intensity, sensitivity increased to 90.0%.\nApplication of the algorithm at the appropriate anatomic auscultation location detected moderate‐to‐severe or greater aortic stenosis, with sensitivity of 93.2% and specificity of 86.0%, and moderate‐to‐severe or greater mitral regurgitation, with sensitivity of 66.2% and specificity of 94.6%.\n...\nThe deep learning algorithm’s ability to detect murmurs and clinically significant aortic stenosis and mitral regurgitation is comparable to expert cardiologists based on the annotated subset of our database.\n...\nAlgorithm performance had a sensitivity and specificity for detecting murmurs of 76.3% (95% CI, 72.9%–79.3%) and 91.4% (95% CI, 89.6%–93.1%), respectively, and a positive predictive value of 86.6% (95% CI, 84.0%–89.3%) using the murmur prevalence (42.2%) from this test subset.",
+    "source": "web",
+    "title": "Deep Learning Algorithm for Automated Cardiac Murmur Detection ...",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8200722/"
+   },
+   {
+    "id": 38,
+    "last_updated": "2025-10-20",
+    "snippet": "",
+    "source": "web",
+    "title": "Teaching Heart Auscultation to Health Professionals - DalSpace",
+    "url": "https://dalspace.library.dal.ca/bitstreams/0bf9f3a1-bb60-49f1-b287-243e09f64924/download"
+   },
+   {
+    "date": "2021-11-07",
+    "id": 39,
+    "last_updated": "2025-11-03",
+    "snippet": "",
+    "source": "web",
+    "title": "The Effectiveness of Training on Auscultation of Heart ...",
+    "url": "https://oamjms.eu/index.php/mjms/article/download/7247/6276/58030"
+   },
+   {
+    "date": "2010-01-09",
+    "id": 40,
+    "last_updated": "2025-03-09",
+    "snippet": "A significant correlation was found between level of experience and the ability to diagnose the conditions from which the murmurs originated (r = 0.45, P < 0.0001).\nNo correlation was found between level of experience and the ability to identify persons with cardiac murmurs from healthy controls.\nAll groups showed a tendency to interpret healthy heart sounds as cardiac murmurs.\n...\nDiagnostic ability was found to correlate positively with clinical experience, whereas the ability to distinguish cardiac murmurs from normal heart sounds seems independent of clinical experience.",
+    "source": "web",
+    "title": "The development of a new cardiac auscultation test: How do screening and diagnostic skills differ? - PubMed",
+    "url": "https://pubmed.ncbi.nlm.nih.gov/19241211/"
+   },
+   {
+    "id": 41,
+    "last_updated": "2025-04-28",
+    "snippet": "They found that cardiologists' precision (measuring interobserver variability) for detecting diastolic murmurs was moderate when they were using audiotapes (kappa=0.51) and was good in the clinical setting (simple agreement, 94%).\nNot surprisingly, the precision of non-cardiologist was less for all diastolic murmurs.\nMost findings for aortic insufficiency were found to be neither sensitive nor specific.",
+    "source": "web",
+    "title": "Evidence Base 2 - Heart Sounds & Murmurs Exam - Physical Diagnosis Skills",
+    "url": "https://depts.washington.edu/physdx/heart/evid2.html"
+   },
+   {
+    "id": 42,
+    "last_updated": "2025-09-29",
+    "snippet": "Using two different auscultation tests (the second test being closer to clinical setting than the first test), we found that medical students were less likely to correctly identify second, third, and fourth sounds as compared with heart murmurs in a situation close to clinical setting even immediately after training [14].",
+    "source": "web",
+    "title": "Variation in effectiveness of a cardiac auscultation training ...",
+    "url": "https://www.sciencedirect.com/science/article/pii/S0914508716302787"
+   },
+   {
+    "date": "2016-09-14",
+    "id": 43,
+    "last_updated": "2025-03-16",
+    "snippet": "The intervention group was superior to the control group at identifying the tested heart sounds (49% vs 43%,\n...\nThe accuracy of second-year medical students in identifying heart sounds improved after a brief training module.\n...\n11The purpose of this study was to investigate (1) whether an educational module delivered via infrared stethoscope would lead to an improvement in clinical auscultation skills in second-year medical students; (2) whether any demonstrated improvement would remain 1 year later; and (3) whether trained students differed, 1 year after the intervention, from untrained third-year students.",
+    "source": "web",
+    "title": "Small Steps in Impacting Clinical Auscultation of Medical Students - Edem K. Binka, Linda O. Lewin, Peter R. Gaskin, 2016",
+    "url": "https://journals.sagepub.com/doi/10.1177/2333794X16669013?icid=int.sj-abstract.citing-articles.30"
+   },
+   {
+    "date": "2023-03-23",
+    "id": 44,
+    "last_updated": "2026-03-01",
+    "snippet": "Sensitivity of auscultation ranged from 30% to 100%, and specificity ranged from 28% to 100%.",
+    "source": "web",
+    "title": "Diagnostic accuracy of heart auscultation for detecting valve disease",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10040065/"
+   },
+   {
+    "date": "2021-05-11",
+    "id": 45,
+    "last_updated": "2026-01-16",
+    "snippet": "A deep learning artificial intelligence (AI) algorithm applied to recordings from a digital stethoscope can be used to detect cardiac murmurs, aortic stenosis and mitral regurgitation with an accuracy that is similar to that of expert cardiologists.\n'The most direct implication of the work for patient care is that it is possible to give anyone who carries a stethoscope the ability to detect the presence of a cardiac finding without the need for years of specialized training,' comments first author John Chorba.\n...\nThe AI algorithm had a sensitivity and specificity for detecting murmurs of 76.3% and 91.4%, respectively.",
+    "source": "web",
+    "title": "AI used to detect cardiac murmurs",
+    "url": "https://www.nature.com/articles/s41569-021-00567-8"
+   },
+   {
+    "date": "2018-05-23",
+    "id": 1,
+    "last_updated": "2026-06-04",
+    "snippet": "Justification should be given for the number of participants, or clusters and cluster size, included in the pilot or feasibility study.\nThe sample size rationale should be based on the primary objective(s) of the pilot or feasibility study.\nThe sample size should be large enough to address all the feasibility questions we want to answer.\n...\nFor each objective, results including expressions of uncertainty (such as 95% confidence interval) for any estimates.\nIf relevant, these results should be by randomised group.",
+    "source": "web",
+    "title": "Resources - Pilot and feasibility studies",
+    "url": "https://pilotandfeasibilitystudies.qmul.ac.uk/resources/"
+   },
+   {
+    "id": 2,
+    "last_updated": "2025-11-03",
+    "snippet": "",
+    "source": "web",
+    "title": "CONSORT 2010 statement: extension to randomised pilot ...",
+    "url": "https://www.bmj.com/content/355/bmj.i5239"
+   },
+   {
+    "date": "2022-01-01",
+    "id": 3,
+    "last_updated": "2026-04-19",
+    "snippet": "NCCIH notes that sample size should be based on “practical considerations including participant flow, budgetary constraints, and the number of participants needed to reasonably evaluate feasibility goals.”\nFor qualitative work, to reach saturation, sample sizes may be 30 or less.\nFor quantitative studies, a sample of 30 per group (intervention and control) may be adequate to establish feasibility (29).\n...\nIf estimates of parameters such as proportion within treatment groups adhering to a regimen or correlations among variables are to be estimated, CIs may be very large with sample sizes less than 70–100 per group.\nIf the goal is to examine the CI around feasibility process outcomes such as acceptance rates, adherence rates, proportion of eligible participants who are consented or who agree to be randomized, then sample sizes of at least 70 may be needed, depending on the point estimate and CI width (see Appendix Table 1).",
+    "source": "web",
+    "title": "Guidelines for Designing and Evaluating Feasibility Pilot Studies",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8849521/"
+   },
+   {
+    "id": 4,
+    "last_updated": "2026-08-08",
+    "snippet": "For each primary and secondary outcome, results for each \ngroup, and the estimated effect size and its precision (such \nas 95% confidence interval)  \nFor each objective, results including expressions of \nuncertainty (such as 95% confidence interval) for any \nestimates.\n...\nJulious (2005)  recommends a minimum sample size of 12 per group as a \nrule of thumb and justifies this based on rationale about feasibility and\nprecision about the mean and variance;\n•\nStallard (2012) proposed that the sample size should be approximately \n0.03 times that the sample size planned for the definitive study\n•\nSim and Lewis (2012) suggest a sample size of at least 50 per group based \non upper CI of variance estimate \n•\nCocks and Torgerson (2013) suggest 9% of the sample size of the main \nplanned study \n•\nTeare et al (2014) suggest 35 per group to estimate SD or 60-100 per group  \nfor event rate \n...\nThe analysis of a pilot study should be mainly \ndescriptive and should focus on confidence \nintervals",
+    "source": "web",
+    "title": "[PDF] Beyond the CONSORT extension for pilot trials: guideline, planning ...",
+    "url": "https://pilotandfeasibilitystudies.qmul.ac.uk/wp-content/uploads/2019/10/ICTMC_workshop-slides-FINAL_Oct-2019-TO-SHARE.pdf"
+   },
+   {
+    "date": "2021-02-03",
+    "id": 5,
+    "last_updated": "2026-08-06",
+    "snippet": "The CONSORT extension [2] reports that “Pilot size should be based on feasibility objectives and some rationale given” and states that a “confidence interval approach may be used to calculate and justify the sample size based on key feasibility objective(s)”.",
+    "source": "web",
+    "title": "Determining sample size for progression criteria for pragmatic ...",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7856754/"
+   },
+   {
+    "id": 6,
+    "last_updated": "2025-10-06",
+    "snippet": "- •In this study, we suggest a novel approach of using the anticipated main study to inform the pilot trial's sample size using a confidence interval approach.\n- •We argue that using a sample size such that it gives a one-sided 80% confidence interval which excludes the minimum important clinical effect size for the main study",
+    "source": "web",
+    "title": "Sample size calculations for pilot randomized trials",
+    "url": "https://www.sciencedirect.com/science/article/abs/pii/S0895435612002740"
+   },
+   {
+    "id": 7,
+    "last_updated": "2026-08-11",
+    "snippet": "The size of the sample needed for a pilot/feasibility study is determined by the precision by \nwhich investigators wish to estimate various end targets, which may range from participant \nadherence to study protocol (which may require few participants) to having estimates for the\n...\nfind the true effect size as this is the goal of the larger study).\nSome authors have advocated \nsimple rules of thumb, such as having N=30 per parameter estimated (e.g. mean or  \nproportion) for the pilot study, then to use at least an 80% upper one-sided confidence limit of\n…\n...\nAnalysis of pilot/feasibility studies should be mainly descriptive.\nAny estimation or description \nof treatment outcomes should focus on confidence interval estimation.\nInferential statistical \ntests should NOT be proposed as part of the pilot proposal/protocol.\nAny hypothesis testing \nundertaken should be done with extreme caution as covariates are likely to be imbalanced \ndue to low sample size and confidence intervals are likely to be imprecise even when ",
+    "source": "web",
+    "title": "Research Design & Analysis Core",
+    "url": "https://sites.globalhealth.duke.edu/rdac/wp-content/uploads/sites/27/2022/06/Core_Guide_Pilot_and_Feasibility-Studies_06_17_22.pdf"
+   },
+   {
+    "date": "2019-10-06",
+    "id": 8,
+    "last_updated": "2026-08-10",
+    "snippet": "|Feasibility studies in preparation for a cohort or other large scale study|STROBE (ignoring items not applicable) http://www.equator-network.org/reporting-guidelines/strobe/ CONSORT extension to pilot trials (ignoring items not applicable) http://www.equator-network.org/reporting-guidelines/consort-2010-statement-extension-to-randomised-pilot-and-feasibility-trials/ • Ensure there is adequate explanation as to why the study is a feasibility study, and state clear feasibility objectives• Ensure a formal sample size calculation is reported if hypothesis testing is carried out|Community-based paediatric respiratory infection surveillance cohort study [31]: https://pilotfeasibilitystudies.biomedcentral.com/articles/10.1186/s40814-018-0371-8 Prognosis of patients with apparent treatment-resistant hypertension [32]: https://pilotfeasibilitystudies.biomedcentral.com/articles/10.1186/s40814-018-0232-5|",
+    "source": "web",
+    "title": "Guidelines for reporting non-randomised pilot and feasibility ...",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6778655/"
+   },
+   {
+    "date": "2025-05-30",
+    "id": 9,
+    "last_updated": "2026-08-06",
+    "snippet": "",
+    "source": "web",
+    "title": "CONSORT 2010 statement - Reporting guideline",
+    "url": "https://www.equator-network.org/reporting-guidelines/consort-2010-statement-extension-to-randomised-pilot-and-feasibility-trials/"
+   },
+   {
+    "date": "2024-09-01",
+    "id": 10,
+    "last_updated": "2026-08-11",
+    "snippet": "To maximize the value of pilot studies, biostatisticians should:\n- Clearly define the study’s objectives, ensuring it aligns with the needs of the main trial.\n- Use evidence-based methods rather than arbitrary rules to determine sample size.\n- Consider internal pilot designs to allow for adaptive sample size modifications.\n- Ensure transparent reporting of pilot study results, including limitations and data variability assessments.",
+    "source": "web",
+    "title": "A Guide to Sample Size for Pilot Studies",
+    "url": "https://www.statsols.com/guides/sample-size-for-pilot-studies"
+   },
+   {
+    "id": 11,
+    "last_updated": "2025-10-08",
+    "snippet": "",
+    "source": "web",
+    "title": "Methods and processes for development of a CONSORT ...",
+    "url": "https://eprints.whiterose.ac.uk/id/eprint/112905/1/Methods%20and%20processes%20for%20development%20of%20a%20CONSORT%20extension%20for%20reporting%20pilot%20randomized%20controlled%20trials.pdf"
+   },
+   {
+    "id": 12,
+    "last_updated": "2026-03-11",
+    "snippet": "• Sample size should be appropriate to answer the primary feasibility \nobjective\n• E.g. Primary objective to estimate recruitment rate > Calculate \n...\n• Sometimes no calculation is needed and the sample size rationale \nmay be based on logistics, resources, and/or time.\n• Should never perform a formal sample size calculation to determine \neffectiveness as this is not the aim of a pilot\n...\n• Browne  (1995) - a minimum of 30 patients to estimate a parameter\n• Julious (2005)  - 12 per group as a rule of thumb\n• Stallard (2012) - approx. 3% of sample size planned for main study\n• Sim and Lewis (2012) - 50+ per group based on upper CI of variance \nestimate \n• Cocks and Torgerson (2013) - 9% of sample size of main planned study \n• Teare et al (2014) - 35 /group to estimate SD or 60-100 /group for event \nrate \n• Whitehead et al (2015) - rules of thumb depending on standardised effect \nsize",
+    "source": "web",
+    "title": "[PDF] Pilot and feasibility studies for pragmatic cluster randomised trials",
+    "url": "https://impactcollaboratory.org/wp-content/uploads/2021/05/IMPACT-Presentation-Pilot-and-feasibility-studies-for-pragmatic-cluster-randomized-trials-v2.0_NotesRemoved.pdf"
+   },
+   {
+    "id": 13,
+    "last_updated": "2026-08-08",
+    "snippet": "| Sample size                                          | 7a                    | Rationale for numbers in the pilot trial                                                                                                                                                    |                     |\n...\n| Numbers analysed                                     | 16                    | For each objective, number of participants (denominator) included in each analysis.\nIf relevant, these numbers                                                                              |                     |\n...\n| Outcomes and estimation                              | 17                    | For each objective, results including expressions of uncertainty (such as 95% confidence interval) for any                                                                                  |                     |",
+    "source": "web",
+    "title": "CONSORT_extension_for_Pilot_...",
+    "url": "https://pilotandfeasibilitystudies.qmul.ac.uk/wp-content/uploads/2018/05/CONSORT_extension_for_Pilot_and_Feasibility_Trials_Checklist.docx"
+   },
+   {
+    "date": "2017-11-01",
+    "id": 14,
+    "last_updated": "2024-10-17",
+    "snippet": "Pilot CRTs should primarily be assessing feasibility, avoiding formal hypothesis testing for effectiveness/efficacy and reporting reasons for the pilot, sample size rationale and progression criteria, as well as enrolment of clusters, and how the cluster design affects design aspects.\n...\nPilot trials should always report a rationale for their sample size; this can be qualitative or quantitative, but should not be based on a formal sample size calculation for effectiveness/efficacy.",
+    "source": "web",
+    "title": "Quality of reporting of pilot and feasibility cluster randomised trials: a systematic review",
+    "url": "https://bmjopen.bmj.com/content/7/11/e016970"
+   },
+   {
+    "date": "2019-02-28",
+    "id": 15,
+    "last_updated": "2026-03-03",
+    "snippet": "Similar adaptations should be made for SPIRIT item 14 (CONSORT item 7a) on sample size and SPIRIT item 20a (CONSORT item 12a) on data analysis.",
+    "source": "web",
+    "title": "A guide to the reporting of protocols of pilot and feasibility trials - PMC",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6393983/"
+   },
+   {
+    "date": "2024-05-23",
+    "id": 46,
+    "last_updated": "2026-01-06",
+    "snippet": "We conducted a double-arm parallel controlled trial, including newly admitted 4th -year medical students enrolled in two medical schools in Yaoundé, Cameroon and allocated into two groups: the intervention group (benefiting from theoretical lessons, clinical internship and the listening sessions of audio recordings of heart sounds) and the control group (benefiting from theoretical lessons and clinical internship).\n...\nFive audios from actual patients recorded and stored in a database in 2017 in Cameroon were used [27].\nThese recordings were made using a Littmann© 3200 electronic stethoscope, annotated using Audacity© software and saved on a computer in WAV format.\nEach of the five recordings was one minute long and corresponded to a specific cardiac sound: B1 and B2 heart sounds, aortic stenosis murmur; B3 third heart sound; heart failure crackles and atrial fibrillation arrhythmia.\nTwo one-hour listening sessions for each of the audio files were carried out within the FMBS.\nEach session was organised in 3 parts: an introduction lasting 10 min, the actual listening of the five audio files lasting 40 min (04 series of 10 min) and feedback from the participants of a duration of 10 min.\nThe audios were broadcast in a loop (series of 5 broadcasts) by speakers connected to a computer.\nAudacity software was used to read the audio files.\nDuring each series, each audio file was played for two minutes.\nThe supervisor commented on the first series of each session to help participants to identify the different heart sounds.\nThe broadcast recordings were given to the participants via a USB medium at the end of the second listening session for independent listening for 02 weeks.\nText messages were sent to them to encourage to listen to these heart sounds (audio files).\n...\nThe participants were recruited and allocated directly from their training schools (those from the FMBS allocated to the intervention group and those from the HIMT allocated to the control group).\nThe trial was non-randomised as the intervention group and the control group were defined according to the training schools of the participants.\nThe participants’ group was unknown to the internship supervisors.\nThe research team carried out all the interventions.\n...\nThis study demonstrates that learning cardiac auscultation by a classic method reinforced by audio listening sessions significantly improves participants (students)’ knowledge and global (knowledge + skills) progression score.",
+    "source": "web",
+    "title": "Evaluation of a digitally enhanced cardiac auscultation learning ...",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11112912/"
+   },
+   {
+    "date": "2025-02-10",
+    "id": 47,
+    "last_updated": "2026-03-05",
+    "snippet": "All heart sound data were sent to researchers (H.L. and A.A.) who were blinded to the patients’ clinical data for quality assessments including the visual assessment and auscultatory assessment.\nThe visual assessment involved examining the heart sound signals to identify the first and second heart sounds, while the auscultatory assessment required listening to the heart sound recordings to recognize heartbeats.\nBoth types of assessments were independently and blindly assessed by two assessors (H.L. and A.A.) according to the same criteria mentioned below (*Figure 1A*).",
+    "source": "web",
+    "title": "Smartphone for heart sound measurement in hospital - PMC",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12088729/"
+   },
+   {
+    "date": "2023-09-17",
+    "id": 48,
+    "last_updated": "2025-06-03",
+    "snippet": "",
+    "source": "web",
+    "title": "Deep Learning for Heart Sound Analysis: A Literature Review",
+    "url": "https://www.medrxiv.org/content/10.1101/2023.09.16.23295653v1.full-text"
+   },
+   {
+    "id": 49,
+    "last_updated": "2025-09-22",
+    "snippet": "We perform a two-step classification of heart \nsounds into poor quality, normal or abnormal with \nsensitivity of 0.7958 and specificity of 0.7459.\n...\nThe classification problem was divided into two sub-\nclassification tasks.\nFirst, PCG recordings were classified \nas noisy or adequate for further evaluation.\nSecond, \nrecordings determined to be of adequate quality were \nclassified as normal or pathological.",
+    "source": "web",
+    "title": "Machine Learning Based Identification of Pathological ...",
+    "url": "https://www.cinc.org/archives/2016/pdf/159-485.pdf"
+   },
+   {
+    "id": 50,
+    "last_updated": "2026-03-18",
+    "snippet": "Participants were asked\nto classify recordings as normal, abnormal, or not possi-\n...\ntors: normal and abnormal.\nThe normal recordings were\nfrom healthy subjects and the abnormal ones were from\npatients typically with heart valve defects and coronary\nartery disease (CAD).",
+    "source": "web",
+    "title": "Classification of Normal/Abnormal Heart Sound Recordings",
+    "url": "https://moody-challenge.physionet.org/2016/papers/challenge2016.pdf"
+   },
+   {
+    "date": "2019-07-11",
+    "id": 51,
+    "last_updated": "2026-02-11",
+    "snippet": "This paper presents an approach for automatic segmentation of cardiac events from non-invasive sounds recordings, without the need of having an auxiliary signal reference.\nIn addition, methods are proposed to subsequently differentiate cardiac events which correspond to normal cardiac cycles, from those which are due to abnormal activity of the heart.\nThe detection of abnormal sounds is based on a model built with parameters which are obtained following feature extraction from those segments that were previously identified as normal fundamental heart sounds.\nThe proposed algorithm achieved a sensitivity of 91.79% and 89.23% for the identification of normal fundamental, S~1~ and S~2~ sounds, and a true positive (TP) rate of 81.48% for abnormal additional sounds.",
+    "source": "web",
+    "title": "An Approach for Automatic Identification of Fundamental ... - PubMed",
+    "url": "https://pubmed.ncbi.nlm.nih.gov/31947375/"
+   },
+   {
+    "id": 52,
+    "last_updated": "2026-07-14",
+    "snippet": "This study adopts a two-phase methodology to develop an explainable heart sound classi-\nfication system using PCG recordings.",
+    "source": "web",
+    "title": "Identifying Abnormalities in Heart Sound data using ...",
+    "url": "https://www.diva-portal.org/smash/get/diva2:1980582/FULLTEXT01.pdf"
+   },
+   {
+    "id": 53,
+    "last_updated": "2025-11-03",
+    "snippet": "Methods: A total of 90 adults referred for left heart catheterization underwent digital precordial heart sound\nrecordings by computerized acoustic cardiography.\nTwo blinded, experienced readers using a consensus\nmethod determined the presence of the S3/S4 on each file.\n...\nUsing a computer module, each subject listened to the heart sounds alone and documented\nwhether an S3/S4 was present.\nNext, subjects listened to each recording in random order while viewing\nphonocardiographic tracings, and recorded S3/S4 presence.",
+    "source": "web",
+    "title": "Clinical Investigations",
+    "url": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6653361/pdf/CLC-33-E36.pdf"
+   },
+   {
+    "date": "2026-03-17",
+    "id": 54,
+    "last_updated": "2026-03-17",
+    "snippet": "Using Praat 6.0.17 (Boersma & were played with exactly the same procedure and Macbook\nWeenink, 2021) a 1 s Gaussian white noise was generated, Pro as used for participant testing.",
+    "source": "web",
+    "title": "Zhao Et Al 2022 Robust and Efficient Online Auditory ...",
+    "url": "https://www.scribd.com/document/981456406/Zhao-Et-Al-2022-Robust-and-Efficient-Online-Auditory-Psychophysics"
+   },
+   {
+    "date": "2024-10-05",
+    "id": 55,
+    "last_updated": "2025-09-04",
+    "snippet": "",
+    "source": "web",
+    "title": "A cardiac audio classification method based on image ...",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11455879/"
+   },
+   {
+    "date": "2019-07-11",
+    "id": 56,
+    "last_updated": "2025-07-23",
+    "snippet": "We will conduct a parallel-group, randomised controlled trial in adult cardiology inpatients with balanced blocking by a physician.\nPatients (n=50) will be randomised to usual care (verbal discussion and written summary) or intervention (usual care, plus audio-recorded discharge discussion provided to patients on a portable electronic recording device).\n...\nUsual care: On the day of their hospital discharge, enrolled patients randomised to the usual care arm received a verbal discharge discussion with an AP and written discharge instructions.\nIntervention: On the day of their hospital discharge, enrolled patients randomised to the audio recording arm (intervention) received usual care, plus a portable electronic device that contains a re-playable audio recording of the discharge discussion.\nIn addition, participants will have the option to record the discharge discussion on a personally owned smartphone or receive access to the recording online using the Health Insurance Portability and Accountability Act (HIPAA)-compliant Open Recording and Logging Systems (ORALS).\n...\nAll patients in the intervention arm will receive their recorded discharge instructions on a simple, reusable, portable MP3 playback device that requires no internet or computer access and will be introduced to two additional options for recording.\n...\nA member of the study team not involved in recruitment and data collection, primary investigator (PI) (PJB) will generate a study arm allocation list for each provider using a block randomisation at the provider level (blocks of four that are balanced in the number of allocations to each arm but randomised in terms of order, eg, ABAB and AABB).\nThis method was chosen because of the small sample size and to ensure an equal number of patients were assigned to each study arm.\nThe PI (SS) RAs, providers and patients will be blind to this allocation process, including the size of each block.\nAfter baseline data are collected (T~0~), the RA will open a sealed randomisation envelope to reveal the patient’s allocation assignment immediately prior to the discharge discussion.",
+    "source": "web",
+    "title": "Heart sounds: a pilot randomised trial to determine the feasibility and acceptability of audio recordings to improve discharge communication for cardiology inpatients protocol",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6629402/"
+   },
+   {
+    "date": "2016-11-21",
+    "id": 57,
+    "last_updated": "2026-03-15",
+    "snippet": "",
+    "source": "web",
+    "title": "An Open Access Database for the Evaluation of Heart Sound ...",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7199391/"
+   },
+   {
+    "id": 58,
+    "last_updated": "2026-07-05",
+    "snippet": "Participants blindly listened to the randomly ordered stim-\nuli, after which they reported their affect and performed the\nclassification task.\n...\nsure level (SPL) at full scale.",
+    "source": "web",
+    "title": "[PDF] Assessment of Soundscapes Using Self-Report and Physiological ...",
+    "url": "https://eprints.whiterose.ac.uk/id/eprint/196527/7/aacus210098.pdf"
+   },
+   {
+    "id": 59,
+    "last_updated": "2026-05-19",
+    "snippet": "TABLE I: Types of anomalies in heart sound [1].\n|Category|Description|\n|--|--|\n|Normal|• Healthy heart sounds with a clear ”lub dub” pattern.\n• May contain background noises and occasional random noise.|\n|Murmur|• Abnormal heart sounds with a ”whooshing, roaring, rumbling, or turbulent fluid” noise between ”lub” and ”dub”, or between ”dub” and ”lub”.",
+    "source": "web",
+    "title": "Vi Results",
+    "url": "https://arxiv.org/html/2502.16914v1"
+   },
+   {
+    "id": 60,
+    "last_updated": "2025-01-20",
+    "snippet": "The heard sound recordings used in our experiments were obtained from a publicly hosted\ndataset26 for the 2016 PhysioNet/Computing in Cardiology Challengeb.\n...\nAs the dataset is intended to support the development\nof classification systems for initial screening of heart diseases, recordings were only labeled as\nnormal or abnormal, depending on whether follow-up for further diagnosis was recommended\n...\nAs a first step, we preprocess the recordings to handle noise and segment individual heart-\nbeats.",
+    "source": "web",
+    "title": "1",
+    "url": "http://arxiv.org/pdf/1612.01943.pdf"
+   }
+  ]
+ }
+}

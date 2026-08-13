@@ -1,0 +1,15 @@
+Starting 12 runs (max 4 parallel)
+OK   R01-murmur-metrik      preset=medium tokens=87187   cost=$0.0510
+OK   R02-ground-truth       preset=low    tokens=24657   cost=$0.0249
+OK   R03-bpm-referenz       preset=low    tokens=55323   cost=$0.0656
+OK   R04-time-stretch       preset=medium tokens=34076   cost=$0.0243
+OK   R05-hoerstudie-design  preset=low    tokens=26497   cost=$0.0185
+OK   R06-ethik-datenschutz  preset=low    tokens=24579   cost=$0.0186
+OK   R07-bruststueck-mems   preset=medium tokens=81692   cost=$0.0432
+OK   R08-messmethode-akustik preset=low    tokens=15596   cost=$0.0156
+OK   R09-latenz             preset=fast   tokens=8761    cost=$0.0104
+OK   R10-esp32-plattform    preset=medium tokens=150983  cost=$0.0524
+OK   R11-fhir-tls           preset=low    tokens=31407   cost=$0.0234
+OK   R12-tha-formales       preset=fast   tokens=7893    cost=$0.0110
+---
+TOTAL COST $0.3590  |  failed: none
