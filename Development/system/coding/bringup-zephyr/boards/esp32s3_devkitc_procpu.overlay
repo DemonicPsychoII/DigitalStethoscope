@@ -1,0 +1,199 @@
+/*
+ * Board overlay for ESP32-S3-DevKitC-1 (N16R8) — hardware bring-up test.
+ *
+ * NOTE (N16R8 = octal PSRAM): GPIO33..37 are reserved for the octal PSRAM and
+ * MUST NOT be used. GPIO43/44 are the UART console. GPIO19/20 are USB.
+ * GPIO0/3/45/46 are strapping pins. None of those are used below.
+ *
+ * All pin numbers are proposals — adjust to your wiring, then rebuild.
+ */
+
+#include <zephyr/dt-bindings/gpio/gpio.h>
+#include <zephyr/dt-bindings/adc/adc.h>
+#include <zephyr/dt-bindings/pwm/pwm.h>
+#include <zephyr/dt-bindings/display/panel.h>
+
+/ {
+	aliases {
+		i2s-mic = &i2s0;
+		i2s-dac = &i2s1;
+	};
+
+	/*
+	 * Ad-hoc peripherals live under /zephyr,user: that node needs no binding,
+	 * yet still resolves gpio/pwm/adc specifier cells.
+	 */
+	zephyr,user {
+		/* Potentiometer wiper on GPIO1 = ADC1 channel 0 */
+		io-channels = <&adc0 0>;
+
+		/* Display backlight (LEDC ch0) so the poti can dim it */
+		pwms = <&ledc0 0 PWM_MSEC(1) PWM_POLARITY_NORMAL>;
+
+		led-gpios = <&gpio0 17 GPIO_ACTIVE_HIGH>;                 /* LED inside the pushbutton */
+		btn-gpios = <&gpio0 16 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>; /* pushbutton -> GND */
+
+		/* SP3T switch: common -> GND, each throw -> one GPIO with pull-up */
+		sw1-gpios = <&gpio0 18 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>,   /* Raw */
+			    <&gpio0 21 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>,   /* Murmur */
+			    <&gpio1 6  (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;   /* BPM   (GPIO38) */
+	};
+
+	chosen {
+		zephyr,display = &ili9341;
+	};
+};
+
+/* ------------------------------------------------------------------ ADC */
+&adc0 {
+	status = "okay";
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	channel@0 {
+		reg = <0>;
+		/* GAIN_1_4 = 12 dB attenuation on ESP32 -> full 0..3.3 V poti swing */
+		zephyr,gain = "ADC_GAIN_1_4";
+		zephyr,reference = "ADC_REF_INTERNAL";
+		zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
+		zephyr,resolution = <12>;
+	};
+};
+
+/* ------------------------------------------------------------------ pinctrl */
+&pinctrl {
+	/* I2S0 = microphone input (INMP441). Verify macro names against
+	 * dt-bindings/pinctrl/esp32s3-pinctrl.h. */
+	i2s0_default: i2s0_default {
+		group1 {
+			pinmux = <I2S0_I_BCK_GPIO4>,   /* BCLK */
+				 <I2S0_I_WS_GPIO5>;    /* LRCLK / WS */
+			output-enable;
+		};
+		group2 {
+			pinmux = <I2S0_I_SD_GPIO6>;    /* mic data (SD) */
+			input-enable;
+		};
+	};
+
+	/* I2S1 = DAC output (PCM5102A). ESP32 is clock master. */
+	i2s1_default: i2s1_default {
+		group1 {
+			pinmux = <I2S1_O_BCK_GPIO40>,  /* BCK */
+				 <I2S1_O_WS_GPIO41>,   /* LRCK */
+				 <I2S1_O_SD_GPIO42>;   /* DIN */
+			output-enable;
+		};
+	};
+
+	spim2_default: spim2_default {
+		group1 {
+			pinmux = <SPIM2_MISO_GPIO13>,
+				 <SPIM2_SCLK_GPIO12>;
+			input-enable;
+		};
+		group2 {
+			pinmux = <SPIM2_MOSI_GPIO11>;
+			output-low;
+		};
+	};
+
+	/* LEDC channel 0 -> backlight on GPIO8 */
+	ledc0_default: ledc0_default {
+		group1 {
+			pinmux = <LEDC_CH0_GPIO8>;
+			output-enable;
+		};
+	};
+};
+
+/* ------------------------------------------------------------------ DMA */
+/* The ESP32 I2S driver hard-requires GDMA; CONFIG_DMA=y alone is not enough. */
+&dma {
+	status = "okay";
+};
+
+/* ------------------------------------------------------------------ I2S mic (INMP441) */
+&i2s0 {
+	status = "okay";
+	pinctrl-0 = <&i2s0_default>;
+	pinctrl-names = "default";
+};
+
+/* ------------------------------------------------------------------ I2S DAC (PCM5102A) */
+&i2s1 {
+	status = "okay";
+	pinctrl-0 = <&i2s1_default>;
+	pinctrl-names = "default";
+};
+
+/* ------------------------------------------------------------------ PWM backlight */
+&ledc0 {
+	status = "okay";
+	#address-cells = <1>;
+	#size-cells = <0>;
+	pinctrl-0 = <&ledc0_default>;
+	pinctrl-names = "default";
+
+	channel0@0 {
+		reg = <0>;
+		timer = <0>;
+	};
+};
+
+/* ------------------------------------------------------------------ SPI bus */
+&spi2 {
+	status = "okay";
+	#address-cells = <1>;
+	#size-cells = <0>;
+	pinctrl-0 = <&spim2_default>;
+	pinctrl-names = "default";
+	/* CS: index 0 = display (GPIO10), index 1 = touch (GPIO7) */
+	cs-gpios = <&gpio0 10 GPIO_ACTIVE_LOW>,
+		   <&gpio0 7 GPIO_ACTIVE_LOW>;
+
+	/* Resistive touch (XPT2046) stays a plain SPI device. Label must not be
+	 * 'touch' - that collides with the ESP32-S3 built-in touch sensor node. */
+	touchscreen: xpt2046@1 {
+		compatible = "xptek,xpt2046";
+		status = "okay";
+		reg = <1>;
+		spi-max-frequency = <2000000>;
+		/* Pull-up matters: a floating PENIRQ triggers a non-stop interrupt storm. */
+		int-gpios = <&gpio0 15 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
+		touchscreen-size-x = <240>;
+		touchscreen-size-y = <320>;
+		/* min/max raw values are panel-specific — calibrate. */
+		min-x = <200>;
+		min-y = <200>;
+		max-x = <3900>;
+		max-y = <3900>;
+	};
+};
+
+/* ------------------------------------------------------------------ display */
+/ {
+	/*
+	 * ILI9341 is an on-bus "mipi-dbi" device, so it cannot hang off &spi2
+	 * directly - it needs this SPI-backed MIPI-DBI controller in between.
+	 */
+	mipi_dbi: mipi-dbi {
+		compatible = "zephyr,mipi-dbi-spi";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		spi-dev = <&spi2>;
+		dc-gpios = <&gpio0 14 GPIO_ACTIVE_HIGH>;        /* DC */
+		reset-gpios = <&gpio0 9 GPIO_ACTIVE_LOW>;       /* RST */
+
+		ili9341: ili9341@0 {
+			compatible = "ilitek,ili9341";
+			reg = <0>;                              /* -> cs-gpios index 0 */
+			mipi-max-frequency = <10000000>;
+			mipi-mode = "MIPI_DBI_MODE_SPI_4WIRE";
+			width = <240>;
+			height = <320>;
+			rotation = <0>;
+			pixel-format = <PANEL_PIXEL_FORMAT_RGB_565>;
+		};
+	};
+};

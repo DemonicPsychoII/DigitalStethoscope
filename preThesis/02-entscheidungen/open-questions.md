@@ -2,9 +2,11 @@
 
 > Zum Annotieren: pro Punkt eigene Entscheidung/Notiz unter **→** ergänzen. Status: [ ] offen · [x] geklärt
 
+> Zum Annotieren von human-only, nutze ein '>' ohne pfeil unter dem eignentlichen **→** Notiz-Feld
+
 > **Recherche-Stand 2026-08-11:** Zu den faktischen Punkten wurden 12 Recherchen gefahren. Die
 > Ergebnisse stehen unter **→ R##** in Kurzform; die vollständigen Berichte mit allen Quellen liegen
-> in `research/R##-*.md`. Die Recherche liefert Entscheidungsgrundlagen — die Häkchen bleiben offen,
+> in `../03-recherche/R##-*.md`. Die Recherche liefert Entscheidungsgrundlagen — die Häkchen bleiben offen,
 > bis du bzw. der Betreuer entschieden habt. Punkte ohne Recherche sind als *Entscheidungspunkt*
 > markiert: dort gibt es nichts nachzuschlagen.
 
@@ -14,7 +16,7 @@
 
 - [ ] **Objektive Murmur-Metrik definieren:** Was genau ist „Murmur-Detektierbarkeit"? SNR im Murmur-Band, Spektralkontrast, Envelope-Kennwert? Vorab festlegen, sonst ist der Nachweis angreifbar.
 
-  → **R01** (`research/R01-murmur-metrik.md`): Es gibt **keine einzelne normierte Kennzahl**. Für einen
+  → **R01** (`../03-recherche/R01-murmur-metrik.md`): Es gibt **keine einzelne normierte Kennzahl**. Für einen
   Filtervergleich auf *identischem* Eingangsmaterial sind drei Größen am besten geeignet und sollten
   gemeinsam berichtet werden:
   1. **Bandbegrenzte Murmur-SNR** (gepaarte Differenz):
@@ -32,9 +34,11 @@
   breitere PCG-Analysen. Eine bloße Verbesserung des **breitbandigen** SNR oder der RMS-Amplitude
   beweist ausdrücklich **nicht**, dass ein Murmur besser detektierbar ist.
 
+> Für die Thesis abgespeckt bedeutet das Murmor-Detektieren ein 'Ist es da / nicht da?' auf Basis von ~n=5-10 Test-Hörern, darunter normale Software-Entwickler sowie medizinisch geschulte Personen. Dazu wichtig ist das Auswählen von Test-Audiodateien bei denen die Lage nicht eindeutig ist, also die Murmurs nicht offensichtlich sind.
+
 - [ ] **Referenz / Ground Truth:** Woher kommen Signale mit *bekanntem* Murmur (Simulator/Trainingsherz, annotierte Datenbank z. B. PhysioNet, echte Patienten)?
 
-  → **R02** (`research/R02-ground-truth.md`): **CirCor DigiScope v1.0.3** (PhysioNet) ist die klar beste
+  → **R02** (`../03-recherche/R02-ground-truth.md`): **CirCor DigiScope v1.0.3** (PhysioNet) ist die klar beste
   öffentliche Quelle — 1.568 Personen, 5.272 Aufnahmen, **4 kHz**, Lizenz **ODC-By 1.0**, kein
   Credentialing. Annotiert sind Murmur present/absent/unknown, Lokalisation (PV/TV/AV/MV/Phc),
   systolisch/diastolisch, Timing, Form, Tonhöhe, Qualität **und Grad**, dazu S1/S2-Segmentierung als TSV.
@@ -48,9 +52,11 @@
   für ~£227. Empfehlung: CirCor als Hauptdatensatz, Simulator nur optional für reproduzierbare
   Kopplungstests am realen Bruststück.
 
+> Daten aus einer solchen Datenbank oder aus einer Studie sind für die Thesis ausreichend, minimieren Aufwand und bei Playback Funktionalität auch zeitlich realistisch.
+
 - [ ] **BPM-Referenz:** Vergleichsbasis für BPM-Genauigkeit (EKG, Referenz-Stethoskop, annotierter Datensatz)? Zielgenauigkeit (± x BPM) festlegen.
 
-  → **R03** (`research/R03-bpm-referenz.md`): Referenz ist das **synchron aufgezeichnete EKG** (R-Zacken,
+  → **R03** (`../03-recherche/R03-bpm-referenz.md`): Referenz ist das **synchron aufgezeichnete EKG** (R-Zacken,
   R-R-Intervalle) — Goldstandard. Auswertung über **Bland-Altman** plus MAE/MAPE.
   - **Mindestziel:** ±10 % oder ±5 bpm, je nachdem was größer ist (Toleranz aus ANSI/AAMI EC13 und
     IEC 60601-2-27).
@@ -61,9 +67,11 @@
   für PCG-Geräte. Die Toleranz darf als begründete Zielgröße verwendet, aber nicht als
   Konformitätsaussage formuliert werden.
 
+> BPM-Referenz ist noch nicht festgelegt, aber ein Vergleich mit einem Pulsoxy oder Smartwatch ist realistisch und möglich. EKG wäre die beste Referenz, ist aber aufwendig und sehe ich nicht zwingend als nötig (genauigkeit-wise).
+
 - [ ] **Erfolgskriterium für Q2:** Ab welchem Unterschied gilt „die zwei Filter unterscheiden sich zweckabhängig" als belegt? Schwelle/Effektgröße vorab definieren.
 
-  → **R01, Abschnitt 7** (`research/R01-murmur-metrik.md`): Es existiert **keine belegte dB-Schwelle**
+  → **R01, Abschnitt 7** (`../03-recherche/R01-murmur-metrik.md`): Es existiert **keine belegte dB-Schwelle**
   dafür, ab wann ein Filter „besser" ist. Die Literatur gibt nur Kontextwerte (z. B. 14 dB SNR für
   Zeitbestimmung — ausdrücklich *keine* Detektierbarkeitsschwelle). Ein Satz wie „1 dB Unterschied ist
   klinisch relevant" wäre nicht haltbar.
@@ -77,9 +85,12 @@
   Für „zweckabhängig unterschiedlich" ist die saubere Formulierung eine **Interaktion**: Filter A gewinnt
   im tieffrequenten Band, Filter B im höherfrequenten — nicht „A ist besser als B".
 
+> Ein Filter ist 'besser', wenn der Hörende die Murmurs mit mehr Sicherheit erkennt und hört, also die Detektierbarkeit und die Konfidence höher ist.
+> Beim BPM Filter heißt besser, dass die Genauigkeit der Messung höher sowie Störgeräusche und Ausreißer geringer sind.
+
 - [ ] **Q3 Wiedergabegeschwindigkeit:** Welche Faktoren (0,5× / 0,75×)? Pitch-Shift-Problem — langsameres Abspielen verschiebt Frequenzen aus dem diagnostischen Band. Time-Stretch ohne Tonhöhenänderung nötig? Rechenaufwand on-device?
 
-  → **R04** (`research/R04-time-stretch.md`): Time-Stretch ohne Tonhöhenänderung ist **sinnvoll, aber als
+  → **R04** (`../03-recherche/R04-time-stretch.md`): Time-Stretch ohne Tonhöhenänderung ist **sinnvoll, aber als
   Hörhilfe zu deklarieren**, nicht als diagnostisch validiertes Verfahren. Originalgeschwindigkeit muss
   parallel verfügbar bleiben, weil die zeitlichen Verhältnisse (S1–S2-Abstand, Systolen-/Diastolendauer)
   auseinandergezogen werden.
@@ -91,6 +102,7 @@
   240-MHz-Kerns**. Phase-Vocoder (512-pt Float-FFT, 8 kHz, 25 % Hop) ~10–30 Mio. Zyklen/s, aber mehr RAM
   und höhere Latenz. Der kritische Punkt ist die Qualität und die Echtzeitpufferung, nicht die Rechenleistung.
 
+> Die Wiedergabegeschwindigkeit ist ein Feature, welches vor allem bei hohen Frequenzen (BPM) und bei Murmurs die Erkennung erleichtert. Es ist keine Anforderung zu beweisen, dass es tatsächlich Medizinisch relevant ist, sondern dass es die Erkennung erleichtert.
  
 
 ## 2. Pilot-Hörstudie (Machbarkeit)
@@ -99,7 +111,7 @@
 
 - [ ] **Teilnehmer:** Laien oder medizinisch Geschulte? Bei Laien fraglich, ob Murmur-Erkennung aussagekräftig ist.
 
-  → **R05** (`research/R05-hoerstudie-design.md`): **Laien sind vertretbar**, wenn die Aufgabe als
+  → **R05** (`../03-recherche/R05-hoerstudie-design.md`): **Laien sind vertretbar**, wenn die Aufgabe als
   **Diskrimination** und nicht als Diagnose gestellt wird — also ABX/2AFC („klingt A oder B anders?" /
   „in welchem Signal ist das Geräusch hörbar?") statt „welche Klappenerkrankung liegt vor?".
 
@@ -107,9 +119,11 @@
   die reine **Unterscheidung** Herzgeräusch vs. normaler Herzton dagegen nicht. Genau diese Unterscheidung
   ist die für Q2 relevante Größe.
 
+> Beide, ein mal Entwickler aus meiner Abteilung und Medizinstudenten und Ärzte mit Erfahrung. Davor kurze Einführung in wie sich ein Murmur anhört sodass alle die gleiche Basis haben. Fragen werden rein vorhanden / nicht vorhanden und Sicherheitsskala sein. Keine Diagnose, keine Klassifikation.
+
 - [ ] **Ethik / Datenschutz:** Braucht die THA ein Ethikvotum / Einwilligung? Patientendaten oder nur synthetische/aufgezeichnete Signale?
 
-  → **R06** (`research/R06-ethik-datenschutz.md`): **Wahrscheinlich kein förmliches Ethikvotum nötig**,
+  → **R06** (`../03-recherche/R06-ethik-datenschutz.md`): **Wahrscheinlich kein förmliches Ethikvotum nötig**,
   sofern ausschließlich gesunde, einwilligungsfähige Erwachsene teilnehmen, das Risiko minimal ist und
   keine eigenen Patientendaten erhoben werden. Trotzdem: **dokumentierte ethische Selbsteinschätzung durch
   den Betreuer + Anfrage bei der zuständigen THA-Stelle bzw. der GEHBa vor Studienbeginn.**
@@ -123,9 +137,11 @@
   Der Weg „nur öffentliche Datenbank + synthetische Signale, keine eigenen Aufnahmen" reduziert den
   Aufwand erheblich und ist die empfohlene Variante.
 
+> Aktuelle Einschätzung: nein, zu aufwändig und unnötig wenn man auf die richtigen Lizenzen achtet kann man die Kopfschmerzen direkt umgehen.
+
 - [ ] **Studiendesign:** Blindung, Randomisierung der Filterkonditionen, Anzahl Stimuli, Auswertung (bei n ≈ 5–10 nur explorativ). Reicht „unterstützend" dem Betreuer?
 
-  → **R05** (`research/R05-hoerstudie-design.md`): Sauberstes Design ist ein **verblindetes, randomisiertes,
+  → **R05** (`../03-recherche/R05-hoerstudie-design.md`): Sauberstes Design ist ein **verblindetes, randomisiertes,
   within-subject ABX- oder 2AFC-Hörexperiment** mit mehreren unabhängigen Aufnahmen, kontrollierter
   Lautheit, neutralen Stimuluscodes, kurzen Übungsdurchgängen und Pausen.
 
@@ -138,11 +154,15 @@
   ja, aber nur wenn der Anspruch entsprechend formuliert ist. *(Ob dem Betreuer das genügt, bleibt
   abzustimmen.)*
 
+> Die Studie ist nur unterstützend, um die Filter zu validieren. Es ist keine klinische Studie und soll auch nicht als solche verstanden werden. Es geht nur darum, dass die Filter die Murmurs besser hörbar machen und die BPM Messung genauer ist. Und ob man bei der BPM verstärkung die Murmurs überhaupt noch hört oder ob der gleiche Filter für beides hergenommen werden kann. Die Studie ist nur ein kleiner Teil der Arbeit und soll die Filter validieren, nicht klinisch bewerten.
+
 - [ ] **Fallback:** Was, wenn die Studie ausfällt? Ist der objektive Teil allein tragfähig?
 
   → *Entscheidungspunkt — keine Recherche.* Hängt an der Abstimmung mit Betreuer/Firma. Randnotiz aus
   R01/R05: Der objektive Teil (Q1/Q2 über Metriken auf CirCor-Daten) ist methodisch eigenständig und
   benötigt die Hörstudie nicht, solange die Arbeit keine Aussage zur *wahrgenommenen* Hörbarkeit trifft.
+
+> Ein funktionierendes Gerät ist das zentrale Thema, danach die Filter-Validierung sowie die BPM via FHIR Kommunikation. Zur not wird die Studie gestrichen um die Funktionalität zu gewährleisten.
 
  
 
@@ -152,7 +172,7 @@
 
 - [ ] **Bruststück-Kopplung:** Wie wird das analoge Bruststück akustisch/mechanisch an das MEMS-Mikrofon gekoppelt? Bestimmt Q1 maßgeblich, Baurisiko.
 
-  → **R07** (`research/R07-bruststueck-mems.md`): Empfohlener Aufbau — **Membran des Bruststücks behalten**,
+  → **R07** (`../03-recherche/R07-bruststueck-mems.md`): Empfohlener Aufbau — **Membran des Bruststücks behalten**,
   auf der hautabgewandten Seite eine **sehr kleine, abgedichtete Mikrofonkammer**, MEMS-Mikrofon
   **direkt hinter der Membran**, akustischer Weg kurz und mit großem Querschnitt. **Kein langer Schlauch.**
 
@@ -165,9 +185,11 @@
   deutlich. Die in der Literatur dokumentierte Einfachvariante (5 cm Schlauch, 6 mm Innendurchmesser,
   Kondensatormikrofon) ist unterhalb 60 Hz nicht optimal.
 
+> Das Mikrofon wird an die Öffnung von Membran -> Hohlraum -> Schlauchöffnung = Mikrofon gekoppelt. Dadurch dass das Physische Bruststück erhalten bleibt und man zwischen 2 Bauformen durch Drehen wechseln kann, kann man dadurch die gesamte Origial-Funktionalität des Stethoskopes beibehalten und bei Zeit vergleichen.
+
 - [ ] **MEMS-Auswahl:** Genügt die untere Grenzfrequenz für die S3/S4-Bande (~20–60 Hz)? Konkretes Bauteil fixieren oder als offen kennzeichnen.
 
-  → **R07** (`research/R07-bruststueck-mems.md`): **Achtung — die naheliegenden Standardteile fallen durch.**
+  → **R07** (`../03-recherche/R07-bruststueck-mems.md`): **Achtung — die naheliegenden Standardteile fallen durch.**
   `LFRO` = unterer −3-dB-Punkt relativ zu 1 kHz.
 
   | Bauteil | Ausgang | LFRO | SNR | Eignung 20 Hz |
@@ -186,9 +208,11 @@
   akustisch besser, kommen aber nur als Flexboard/Muskie-Evalsystem — Lieferzeit und Lötbarkeit vorab prüfen.
   Der SPH0645 (verbreitetstes I²S-Hobbymodul) scheidet mit 45 Hz aus.
 
+> Bereits vorhanden ist INMP441 auf einem Breakout Board. Mit den Limitationen umzugehen und diese zu evaluieren kann hier ein Teil der Arbeit sein.
+
 - [ ] **Messmethode Q1:** Charakterisierung der akustischen Kette (Kalibrierlautsprecher, Sweep, Referenzmikrofon)? Equipment-Verfügbarkeit?
 
-  → **R08** (`research/R08-messmethode-akustik.md`): **Es existiert keine verbindliche akustische Produktnorm
+  → **R08** (`../03-recherche/R08-messmethode-akustik.md`): **Es existiert keine verbindliche akustische Produktnorm
   für elektronische Stethoskope** — das ist in der Literatur ausdrücklich festgestellt und sollte in der
   Arbeit so zitiert werden, statt eine Norm zu suggerieren.
 
@@ -201,9 +225,11 @@
   Kein Freifeldaufbau (Stethoskop einfach vor einen Lautsprecher halten) — nicht reproduzierbar.
   Shaker + Kunstbrustkorb wäre bezüglich mechanischer Ankopplung realistischer, aber deutlich aufwendiger.
 
+> Keine spezifische Messmethode festgelegt und wird auch nicht festgelegt werden, da die Messung der akustischen Kette nicht zwingend notwendig ist, um die Filter zu validieren. So lange der Ton hörbar ist und man die Herz-sounds hört ist es ausreichend. Die Studie nimmt eh voraufgenommene und wieder abgespielte Sounds um Komplexität zu reduzieren, sodass eine kompletten Ketten-Eval den Rahmen noch weiter sprengen würde.
+
 - [ ] **DAC / Kopfhörer-Pfad:** Latenz-Ziel für „Echtzeit" quantifizieren (z. B. < 30 ms end-to-end).
 
-  → **R09** (`research/R09-latenz.md`): **Zielwert ≤10 ms end-to-end, Entwicklungsziel ≤5 ms.**
+  → **R09** (`../03-recherche/R09-latenz.md`): **Zielwert ≤10 ms end-to-end, Entwicklungsziel ≤5 ms.**
   Ab ca. 10–15 ms wird die Verzögerung bemerkbar, ab ~15–30 ms als störend beschrieben. Die in der
   Aufgabenstellung angedachten 30 ms wären also **zu großzügig**.
 
@@ -211,6 +237,7 @@
   praktisch aus. Offizielle Latenzangaben von 3M Littmann CORE/3200 oder Eko sind **nicht öffentlich
   auffindbar** — kein Vergleichswert zitierbar.
 
+> Latenz festlegung ist wichtig, bei 0.5x Wiedergabegeschwindigkeit ist die Latenz nicht mehr relevant, da man die Zeit hat, um die Wiedergabe zu hören. Bei 1x Wiedergabegeschwindigkeit wäre die Idee nach den bekannten Werten <30ms, besser <10ms zu gehen (erneute Recherche dazu wäre sinnvoll).
  
 
 ## 4. Software / Plattform
@@ -219,15 +246,17 @@
 
 - [ ] **C vs. Zephyr:** Entscheidung auf AP 1.2 vertagt — Entscheidungskriterien vorab notieren; spätes Umschwenken verschiebt AP 2.x.
 
-  → **R10** (`research/R10-esp32-plattform.md`): Klare Empfehlung **ESP-IDF (C/FreeRTOS)**. Zephyr ist auf
+  → **R10** (`../03-recherche/R10-esp32-plattform.md`): Klare Empfehlung **ESP-IDF (C/FreeRTOS)**. Zephyr ist auf
   dem ESP32-S3 grundsätzlich nutzbar (Board, Kernel, Netzwerk, mbedTLS, generischer I²S-Treiber), aber
   genau bei der hier nötigen Kombination — **PDM-Audio + Audio-DMA + WiFi + TLS + esp-dsp** — deutlich
   risikoreicher. Da ein spätes Umschwenken AP 2.x verschiebt, spricht das für eine frühe Festlegung auf
   ESP-IDF statt für eine Vertagung auf AP 1.2.
 
+> Probeweise vor Thesis-Start mit Zephyr Tests durchführen. Finale Entscheidung zu Thesis Beginn
+
 - [ ] **Rechenbudget:** Passen 3 Filter + BPM + Time-Stretch + TLS gleichzeitig in Echtzeit auf den ESP32-S3? Frühe CPU/RAM-Abschätzung.
 
-  → **R10** (`research/R10-esp32-plattform.md`): **Ja, voraussichtlich** — unter fünf Bedingungen:
+  → **R10** (`../03-recherche/R10-esp32-plattform.md`): **Ja, voraussichtlich** — unter fünf Bedingungen:
   blockweise Filterverarbeitung per DMA, `esp-dsp` mit ESP32-S3-optimierter Implementierung, BPM-Erkennung
   auf **heruntergesampelter Hüllkurve**, TLS/FHIR **nicht** synchron in einer hochpriorisierten Audio-Task,
   und ein **externer I²S-DAC/Verstärker** für die Wiedergabe.
@@ -239,9 +268,11 @@
 
   Randbedingung: 512 KB On-Chip-SRAM; **PSRAM ersetzt den DMA-fähigen internen RAM nicht.**
 
+> Bedingungen einhaltbar, Test sollte das auch mal investigieren vom Rechenaufwand + RAM. PCM5102A DAC ist eine eingeplante Komponente (I2S) und übernimmt die Wiedergabe. WIFI Verkehr außerhalb der live-Wiedergabe oder als Low Prio thread falls die Daten länger zum übertragen brauchen dürfen, ansonsten bei Problemen Evaluatino von Prios und Task-Management.
+
 - [ ] **FHIR / TLS:** Zertifikatshandling auf dem ESP32 (Speicher, Uhrzeit für Zertifikatsprüfung), FHIR-Ressourcenprofil (Observation, LOINC-Code Heart rate)?
 
-  → **R11** (`research/R11-fhir-tls.md`): **FHIR** — `Observation` nach Core-Profil **Vital Signs** (R4 und R5
+  → **R11** (`../03-recherche/R11-fhir-tls.md`): **FHIR** — `Observation` nach Core-Profil **Vital Signs** (R4 und R5
   gleiches Muster), Pflichtfelder: `status`, `category` = `vital-signs`, `code` = LOINC **8867-4**
   (Heart rate), `subject` → `Patient/…`, `effectiveDateTime`, `valueQuantity` mit
   `system = http://unitsofmeasure.org` und UCUM-Code **`/min`**. Vollständiges minimales JSON-Beispiel im Bericht.
@@ -256,6 +287,7 @@
      der freie **interne** Heap **während** des Handshakes (also bei laufender Audioverarbeitung), nicht
      der Wert nach dem Boot. → deckt sich mit dem in R10 identifizierten Engpass.
 
+> Die FHIR-Kommunikation ist von der Firma verlangt, kann aber durch e.g. hardcoded Secret strings zur Authentifizierung abgekürzt werden. Json-Generierung und Parsing mit gemessenem BPM und anschließendem Verschicken sollte dennoch möglich sein.
  
 
 ## 5. Scope-Abgrenzung
@@ -266,12 +298,17 @@
 
   → *Entscheidungspunkt — keine Recherche.* Reine Scope-Festlegung mit Betreuer/Firma.
 
+> Lungenmodus heißt keine BPM-Messung, nur Symbole und Interface, keine anderen Filter, keine Time-Stretch Funktionalität, kein FHIR. Nur die live-wiedergabe.
+
 - [ ] **Dreiwegeschalter vs. Potentiometer:** Was steuert das Poti (Lautstärke? Wiedergabegeschwindigkeit?) — im Bedienkonzept noch nicht eindeutig.
 
   → *Entscheidungspunkt — keine Recherche.* Randnotiz aus R04: Falls das Poti die Wiedergabegeschwindigkeit
   stellen soll, wäre eine **stufenlose** Verstellung beim Time-Stretch ungünstig (Neuberechnung der
   WSOLA-Parameter im laufenden Betrieb). Feste Stufen 1,0× / 0,75× / 0,5× passen besser zu einem Schalter
   als zu einem Poti.
+
+> Poti die Lautstärke, Schalter die Wiedergabegeschwindigkeit, 2. Schalter Filter. Falls Touch bei Display einfach zu implementieren ist, kann man Konfiguration auch dorhin auslagern, sodass man das physische Bedieninterface minimiert.
+> Dennoch sind genug Bautiele (potis, 3-posi-Schalter, LED-Knöpfe) vorhanden.
 
  
 
@@ -285,14 +322,21 @@
   Zusätzlich sollte Puffer für die **MEMS-Beschaffung** eingeplant werden (Knowles-Flexboards sind kein
   Lagerartikel) und für die **TLS-/RAM-Integration**, die als eigentlicher Engpass identifiziert wurde.
 
+> aktuell Hardware zum testen bereits vorhanden, Beschaffung sollte demnach zwar eingeplant werden, intern für mich ist es aber nur einen Puffer für Mehr Zeit.
+
 - [ ] **Das „…" aus der Annotation:** Weitere separate Posten? (Meetings/Reviews mit Betreuer, Beschaffungs-/Lieferzeiten Hardware, Urlaub/Feiertage)
 
   → *Entscheidungspunkt — keine Recherche.*
+
+> Wöchentliche Meetings, biweekly mit Prof, ... an sich alles was sonst noch anfallen kann.
 
 - [ ] **Kalenderplan:** Onboarding + Zeitplan-Erstellung + Puffer als Termine verorten — Wochen-/Gantt-Plan ergänzen?
 
   → *Entscheidungspunkt — keine Recherche.* Harte Randbedingung aus R12: Bearbeitungszeit **4 Monate ab dem
   nächsten 20. des Anmeldemonats**, keine Anmeldung im August.
+
+> Anmeldung in jedem Monat möglich, meine Anmeldung würde ich ende September anstreben, sodass die Bearbeitungszeit von 4 Monaten ab 20. Oktober läuft. Somit wäre die Abgabe Ende Januar. Puffer für Beschaffung und Testen einplanen, sodass die Abgabe nicht gefährdet ist.
+> Planung folgt
 
  
 
@@ -302,7 +346,7 @@
 
 - [ ] **Titel-Länge / Format:** Entspricht der Titel den THA-Vorgaben (max. Länge, deutsch/englisch)?
 
-  → **R12** (`research/R12-tha-formales.md`): **Keine öffentlich auffindbare THA-Regel** zu Titellänge,
+  → **R12** (`../03-recherche/R12-tha-formales.md`): **Keine öffentlich auffindbare THA-Regel** zu Titellänge,
   Titelsprache oder Übersetzungspflicht. Das lässt sich nicht recherchieren — **beim Prüfungsamt bzw.
   Betreuer direkt erfragen.**
 
@@ -317,10 +361,10 @@
   abweichend **max. 5 Monate** APO-Bearbeitungszeit. Die Werte sind also **fakultätsabhängig** — für
   Elektrotechnik/Informatik unbedingt die eigene SPO und die Fakultätsseite prüfen.
 
+> Bestätigung bereits eingegangen, nächster Schritt sind Prüfer und Titel plus Firmendokumente für die Anmeldung.
+
 - [ ] **Betreuer-Freigabe:** Sind Q1–Q3 und die Hybrid-Bewertung mit Betreuer *und* Firma abgestimmt?
 
   → *Entscheidungspunkt — keine Recherche.*
 
- 
-
- 
+> Beide wissen von der initial erarbeiteten Aufgabenbeschreibung, von beiden kam ein 'ist eigentlich so ok'

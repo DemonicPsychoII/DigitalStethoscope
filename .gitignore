@@ -1,1 +1,18 @@
 .vscode/*
+
+# Zephyr toolchain workspace (west modules, SDK, venv, binary blobs).
+# Several GB of third-party content - recreate it with:
+#   Development/system/coding/tools/setup-toolchain.ps1
+Development/system/coding/tools/zephyrproject/
+
+# Zephyr / CMake build output
+build/
+*.elf
+*.map
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
