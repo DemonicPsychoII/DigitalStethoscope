@@ -349,7 +349,7 @@ no operational peripherals - check wiring and power, then reset
 | PCM5102A | PARTIAL — TX transfer only; no electrical/acoustic result |
 | Audio loopback and simultaneous assembly | BLOCKED — never physically run |
 
-The refactored working tree has build and native_sim evidence only. None of the
+The recorded refactoring session has build and historical native_sim evidence only. None of the
 legacy physical verdicts is promoted to the new firmware; its T00–T10 entries
 remain `BLOCKED` until it is committed, flashed and rerun.
 
@@ -441,7 +441,7 @@ bringup-zephyr/
 ├── qc.conf
 ├── include/                 public module contracts
 ├── evidence/                JSON hardware/build records and schema
-├── tests/logic/             native_sim ztests for platform-independent logic
+├── tests/logic/             optional native_sim policy regression suite
 ├── boards/
 │   └── esp32s3_devkitc_procpu.overlay
 └── src/
@@ -455,20 +455,15 @@ bringup-zephyr/
     └── status_reporting.c   snapshots and structured status output
 ```
 
-## Automated and build evidence
+## Build evidence
 
-`tests/logic` covers probe retry/state transitions, degraded feature decisions,
-switch decoding, brightness boundaries, touch/color transitions, bounded status
-formatting and driver-error policies. Run it with:
-
-```powershell
-west build --pristine -b native_sim/native/64 tests/logic
-west build -d tests/logic/build -t run
-```
-
-On 2026-08-19 all 7 ztests passed under WSL host GCC 15.2.0. Two pristine
-ESP32-S3 builds (default and `qc.conf`) produced firmware with zero application
+Two pristine ESP32-S3 builds (default and `qc.conf`) produced firmware with zero application
 compiler warnings. Exact commands, tool versions, non-fatal tool hints and sizes
 are in `evidence/build-results.json`. Physical results are only in
 `evidence/hardware-results.json`; the Markdown protocol links each test ID to
-that record.
+that record. Compilation does not prove runtime behavior, real peripheral
+operation, electrical timing, or acoustic performance.
+
+The existing `tests/logic` ztests are retained as an optional local regression
+suite for the portable policy functions. They are not a required CI check; the
+mandatory pipeline consists of the quality gate and pristine ESP32-S3 build.
