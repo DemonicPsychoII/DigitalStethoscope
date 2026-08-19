@@ -441,6 +441,7 @@ bringup-zephyr/
 ├── qc.conf
 ├── include/                 public module contracts
 ├── evidence/                JSON hardware/build records and schema
+├── tests/logic/             optional native_sim policy regression suite
 ├── boards/
 │   └── esp32s3_devkitc_procpu.overlay
 └── src/
@@ -462,3 +463,7 @@ are in `evidence/build-results.json`. Physical results are only in
 `evidence/hardware-results.json`; the Markdown protocol links each test ID to
 that record. Compilation does not prove runtime behavior, real peripheral
 operation, electrical timing, or acoustic performance.
+
+The existing `tests/logic` ztests are retained as an optional local regression
+suite for the portable policy functions. They are not a required CI check; the
+mandatory pipeline consists of the quality gate and pristine ESP32-S3 build.

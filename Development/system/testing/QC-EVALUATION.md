@@ -14,7 +14,7 @@
 |---|---:|---|---:|---|
 | Zephyr application structure and build inputs | 10 | PASS | 10 | CMakeLists.txt, prj.conf, board overlay and src/main.c are present. |
 | Devicetree-first hardware description | 10 | PASS | 10 | GPIO, ADC, PWM, SPI, display, touch and I2S routing are represented in the board overlay. |
-| Module separation and ownership | 10 | PASS | 10 | Target has 11 C source file(s); main.c has 266 lines. THA reference splits ADC, sensor, servo, stepper, display and shell modules. |
+| Module separation and ownership | 10 | PASS | 10 | Target has 12 C source file(s); main.c has 266 lines. THA reference splits ADC, sensor, servo, stepper, display and shell modules. |
 | Concurrency and shared-state synchronization | 10 | PASS | 10 | A synchronization primitive is declared. |
 | Real-time response and bounded work | 10 | PASS | 10 | The button and SP3T are polled in a 20 ms loop; touch is interrupt/callback driven. THA latency study identifies ISR + deferred processing as the deterministic pattern. |
 | API return-code discipline | 10 | PASS | 10 | Heuristic found 0 driver/API calls used as statements or explicitly discarded; several runtime output paths cannot report failure. |
