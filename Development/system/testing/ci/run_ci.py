@@ -28,7 +28,13 @@ def summary(line: str) -> None:
             stream.write(line + "\n")
 
 
-def run(argv: list[str], *, cwd: Path = ROOT, log: Path | None = None) -> None:
+def run(
+    argv: list[str],
+    *,
+    cwd: Path = ROOT,
+    log: Path | None = None,
+    env_overrides: dict[str, str] | None = None,
+) -> None:
     print("+", subprocess.list2cmdline(argv), flush=True)
     env = os.environ.copy()
     pinned_zephyr = ROOT / ".ci-workspace/zephyr"
@@ -36,6 +42,14 @@ def run(argv: list[str], *, cwd: Path = ROOT, log: Path | None = None) -> None:
         # CI commands run from the application repository, outside the nested
         # West workspace. Point West at the pinned Zephyr checkout explicitly.
         env.setdefault("ZEPHYR_BASE", str(pinned_zephyr))
+        venv_bin = ROOT / (
+            ".ci-workspace/.venv/Scripts"
+            if os.name == "nt"
+            else ".ci-workspace/.venv/bin"
+        )
+        env["PATH"] = os.pathsep.join((str(venv_bin), env.get("PATH", "")))
+    if env_overrides:
+        env.update(env_overrides)
     if log:
         log.parent.mkdir(parents=True, exist_ok=True)
         with log.open("w", encoding="utf-8") as stream:
@@ -194,6 +208,7 @@ def tests() -> None:
             str(out),
         ],
         log=evidence / "twister.log",
+        env_overrides={"ZEPHYR_TOOLCHAIN_VARIANT": "host"},
     )
     report = out / "twister.json"
     if not report.is_file():
