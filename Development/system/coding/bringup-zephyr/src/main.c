@@ -32,6 +32,7 @@ struct app_context {
 	unsigned int adc_errors;
 	unsigned int pwm_errors;
 	unsigned int gpio_errors;
+	unsigned int latency_violations;
 	uint32_t max_input_latency_ms;
 };
 
@@ -102,8 +103,11 @@ static void record_input_latency(struct app_context *context, uint32_t event_tim
 	if (latency > context->max_input_latency_ms) {
 		context->max_input_latency_ms = latency;
 	}
+	if (latency > INPUT_RESPONSE_REQUIREMENT_MS) {
+		context->latency_violations++;
+	}
 	if (latency > INPUT_RESPONSE_REQUIREMENT_MS &&
-	    app_should_log_failure(latency - INPUT_RESPONSE_REQUIREMENT_MS)) {
+	    app_should_log_failure(context->latency_violations)) {
 		LOG_WRN("input response requirement exceeded: %u ms > %u ms", latency,
 		        INPUT_RESPONSE_REQUIREMENT_MS);
 	}
@@ -173,12 +177,17 @@ static void start_available_features(struct app_context *context)
 
 	gpio_inputs_get_initial(&context->runtime.button_pressed,
 	                        &context->runtime.switch_position);
-	rc = gpio_inputs_start(peripherals_operational(&context->peripherals, COMP_BUTTON_LED),
-	                       peripherals_operational(&context->peripherals, COMP_SWITCH),
-	                       GPIO_INT_EDGE_BOTH);
-	if (rc != 0) {
-		peripherals_disable(&context->peripherals, COMP_BUTTON_LED, rc);
-		peripherals_disable(&context->peripherals, COMP_SWITCH, rc);
+	if (peripherals_operational(&context->peripherals, COMP_BUTTON_LED)) {
+		rc = gpio_inputs_start_button(GPIO_INT_EDGE_BOTH);
+		if (rc != 0) {
+			peripherals_disable(&context->peripherals, COMP_BUTTON_LED, rc);
+		}
+	}
+	if (peripherals_operational(&context->peripherals, COMP_SWITCH)) {
+		rc = gpio_inputs_start_switch(GPIO_INT_EDGE_BOTH);
+		if (rc != 0) {
+			peripherals_disable(&context->peripherals, COMP_SWITCH, rc);
+		}
 	}
 
 	if (peripherals_operational(&context->peripherals, COMP_POTENTIOMETER)) {

@@ -35,6 +35,7 @@ static const struct {
 static uint16_t draw_buffer[SCREEN_WIDTH * DRAW_ROWS];
 static atomic_t touch_x;
 static atomic_t touch_y;
+static atomic_t touch_pressed;
 static atomic_t dropped_touch_events;
 
 #if DT_NODE_HAS_STATUS_OKAY(DT_NODELABEL(touchscreen))
@@ -54,6 +55,10 @@ static void touch_callback(struct input_event *event, void *user_data)
 		break;
 	case INPUT_BTN_TOUCH:
 		if (event->value == 0) {
+			atomic_clear(&touch_pressed);
+			break;
+		}
+		if (!atomic_cas(&touch_pressed, 0, 1)) {
 			break;
 		}
 		app_event.timestamp_ms = k_uptime_get_32();

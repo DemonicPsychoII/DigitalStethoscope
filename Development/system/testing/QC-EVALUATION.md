@@ -14,14 +14,14 @@
 |---|---:|---|---:|---|
 | Zephyr application structure and build inputs | 10 | PASS | 10 | CMakeLists.txt, prj.conf, board overlay and src/main.c are present. |
 | Devicetree-first hardware description | 10 | PASS | 10 | GPIO, ADC, PWM, SPI, display, touch and I2S routing are represented in the board overlay. |
-| Module separation and ownership | 10 | PASS | 10 | Target has 12 C source file(s); main.c has 257 lines. THA reference splits ADC, sensor, servo, stepper, display and shell modules. |
+| Module separation and ownership | 10 | PASS | 10 | Target has 9 C source file(s); main.c has 266 lines. THA reference splits ADC, sensor, servo, stepper, display and shell modules. |
 | Concurrency and shared-state synchronization | 10 | PASS | 10 | A synchronization primitive is declared. |
 | Real-time response and bounded work | 10 | PASS | 10 | The button and SP3T are polled in a 20 ms loop; touch is interrupt/callback driven. THA latency study identifies ISR + deferred processing as the deterministic pattern. |
 | API return-code discipline | 10 | PASS | 10 | Heuristic found 0 driver/API calls used as statements or explicitly discarded; several runtime output paths cannot report failure. |
 | Fault isolation and degraded operation | 10 | PASS | 10 | Per-component retry/probe table isolates missing peripherals; audio starts only when both endpoints pass. |
 | Logging and runtime diagnostics | 10 | PASS | 10 | Structured Zephyr logging and periodic counters exist, but stack/thread analyzer protection is not enabled. |
 | Repeatable verification and recorded verdicts | 10 | PASS | 10 | Detailed manual release protocol exists; automated Zephyr tests=True; recorded hardware verdicts=11. Hardware verdicts are not inferred from simulation. |
-| Institutional baseline traceability | 10 | PASS | 10 | Pinned traceability manifest and all locally available baseline hashes match. |
+| Institutional baseline traceability | 10 | PASS | 10 | Pinned THA revision and three source hashes validated without copying institutional files into CI. |
 
 ## Required actions
 
