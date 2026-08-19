@@ -47,11 +47,18 @@ def run(argv: list[str], *, cwd: Path = ROOT, log: Path | None = None) -> None:
 
 def west() -> str:
     found = shutil.which("west")
-    if not found:
-        raise SystemExit(
-            "west is not on PATH; activate the pinned Zephyr virtual environment first"
-        )
-    return found
+    if found:
+        return found
+    workspace_candidates = (
+        ROOT / ".ci-workspace/.venv/bin/west",
+        ROOT / ".ci-workspace/.venv/Scripts/west.exe",
+    )
+    for candidate in workspace_candidates:
+        if candidate.is_file():
+            return str(candidate)
+    raise SystemExit(
+        "west was not found on PATH or in the pinned .ci-workspace virtual environment"
+    )
 
 
 def static() -> None:
