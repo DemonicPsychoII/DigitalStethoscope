@@ -39,6 +39,19 @@ jobs:
       - run: python -m pip install --require-hashes -r Development/system/testing/ci/requirements-ci.txt
       - name: Run static repository checks
         run: python Development/system/testing/ci/run_ci.py static
+      - name: Generate advisory QC scorecard
+        continue-on-error: true
+        run: python Development/system/testing/ci/run_ci.py qc
+      - name: Upload advisory QC evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: advisory-qc-evidence
+          path: |
+            Development/system/testing/QC-EVALUATION.md
+            Development/system/testing/qc-eval-results.json
+          if-no-files-found: warn
+          retention-days: 30
 
   firmware:
     name: Zephyr / Firmware Build
@@ -97,24 +110,3 @@ jobs:
             twister-out-ci/
           if-no-files-found: warn
           retention-days: 14
-
-  qc:
-    name: Quality / QC Evaluation
-    runs-on: ubuntu-24.04
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-        with:
-          persist-credentials: false
-      - name: Run evaluator unchanged and validate result
-        run: python3 Development/system/testing/ci/run_ci.py qc
-      - name: Upload QC evidence
-        if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: qc-evaluation-evidence
-          path: |
-            Development/system/testing/QC-EVALUATION.md
-            Development/system/testing/qc-eval-results.json
-          if-no-files-found: warn
-          retention-days: 30

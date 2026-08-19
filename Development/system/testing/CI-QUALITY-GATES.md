@@ -2,11 +2,10 @@
 
 GitHub Actions is used because `origin` is GitHub and the repository had no
 other CI configuration. Pull requests and pushes to `main` and `integration`
-run four stable checks:
+run three stable checks:
 
 - `Zephyr / Firmware Build`
 - `Zephyr / Automated Tests`
-- `Quality / QC Evaluation`
 - `Quality / Static Checks`
 
 The workflow pins Zephyr commit `357467a011cd2557a1a3f0b4be83d817c4addc9b`,
@@ -43,8 +42,9 @@ merge and may be promoted selectively as the code is modularized.
 
 Firmware evidence (14 days): build log, `.config`, generated devicetree header,
 ELF, BIN, map, RAM report, and ROM report. Twister evidence (14 days): complete
-Twister output including JUnit XML/JSON and logs. QC evidence (30 days): the
-Markdown scorecard and JSON result. No serial captures, credentials, private
+Twister output including JUnit XML/JSON and logs. The static job also generates
+a non-blocking QC scorecard (30 days); its heuristic score is review guidance,
+not a merge condition. No serial captures, credentials, private
 hardware evidence, or developer paths are collected.
 
 ## Branch protection (administrative step)
@@ -55,7 +55,7 @@ In GitHub **Settings → Branches → Add branch protection rule**, create a rul
 `integration`, and create the same rule for `main` if/when that branch is created.
 Enable “Require a pull request before merging”,
 “Require status checks to pass”, “Require branches to be up to date”, select all
-four checks above, enable “Do not allow bypassing”, and apply the rule to
+three checks above, enable “Do not allow bypassing”, and apply the rule to
 administrators if that matches project governance. Do not enable auto-merge.
 The checks must complete at least once before GitHub offers them in the picker.
 

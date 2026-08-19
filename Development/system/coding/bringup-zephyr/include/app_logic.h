@@ -78,12 +78,11 @@ uint32_t app_degraded_features(const struct component_status status[COMP_COUNT])
 int app_switch_decode(int position_1, int position_2, int position_3);
 uint32_t app_brightness_pulse(uint32_t period, int millivolts);
 unsigned int app_brightness_percent(int millivolts);
-bool app_touch_transition(struct app_touch_state *state, uint32_t timestamp_ms,
-			  int16_t x, int16_t y, uint8_t color_count);
+bool app_touch_transition(struct app_touch_state *state, uint32_t timestamp_ms, int16_t x,
+                          int16_t y, uint8_t color_count);
 enum driver_error_action app_driver_error_action(enum driver_operation operation,
-						  unsigned int consecutive_errors);
+                                                 unsigned int consecutive_errors);
 bool app_should_log_failure(uint32_t failure_count);
-size_t app_format_status(char *buffer, size_t capacity,
-			 const struct app_status_snapshot *status);
+size_t app_format_status(char *buffer, size_t capacity, const struct app_status_snapshot *status);
 
 #endif

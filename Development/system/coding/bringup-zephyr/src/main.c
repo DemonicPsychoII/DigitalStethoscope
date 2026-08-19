@@ -35,17 +35,14 @@ struct app_context {
 	uint32_t max_input_latency_ms;
 };
 
-static void disable_after_policy(struct app_context *context,
-				 enum component_id component,
-				 enum driver_operation operation,
-				 unsigned int failures, int error)
+static void disable_after_policy(struct app_context *context, enum component_id component,
+                                 enum driver_operation operation, unsigned int failures, int error)
 {
 	enum driver_error_action action = app_driver_error_action(operation, failures);
 
 	if (action == DRIVER_ERROR_DISABLE_COMPONENT) {
 		peripherals_disable(&context->peripherals, component, error);
-		context->runtime.features =
-			app_degraded_features(context->peripherals.components);
+		context->runtime.features = app_degraded_features(context->peripherals.components);
 	}
 }
 
@@ -60,8 +57,7 @@ static int draw_color(struct app_context *context)
 			return 0;
 		}
 		failures++;
-	} while (app_driver_error_action(DRIVER_OP_DISPLAY_WRITE, failures) ==
-		 DRIVER_ERROR_RETRY);
+	} while (app_driver_error_action(DRIVER_OP_DISPLAY_WRITE, failures) == DRIVER_ERROR_RETRY);
 
 	peripherals_disable(&context->peripherals, COMP_DISPLAY, rc);
 	context->runtime.features = app_degraded_features(context->peripherals.components);
@@ -80,7 +76,7 @@ static void sample_potentiometer(struct app_context *context)
 	if (rc != 0) {
 		context->adc_errors++;
 		disable_after_policy(context, COMP_POTENTIOMETER, DRIVER_OP_ADC_SAMPLE,
-				     context->adc_errors, rc);
+		                     context->adc_errors, rc);
 		return;
 	}
 	context->adc_errors = 0U;
@@ -93,7 +89,7 @@ static void sample_potentiometer(struct app_context *context)
 	if (rc != 0) {
 		context->pwm_errors++;
 		disable_after_policy(context, COMP_BACKLIGHT, DRIVER_OP_BACKLIGHT_PWM,
-				     context->pwm_errors, rc);
+		                     context->pwm_errors, rc);
 	} else {
 		context->pwm_errors = 0U;
 	}
@@ -108,8 +104,8 @@ static void record_input_latency(struct app_context *context, uint32_t event_tim
 	}
 	if (latency > INPUT_RESPONSE_REQUIREMENT_MS &&
 	    app_should_log_failure(latency - INPUT_RESPONSE_REQUIREMENT_MS)) {
-		LOG_WRN("input response requirement exceeded: %u ms > %u ms",
-			latency, INPUT_RESPONSE_REQUIREMENT_MS);
+		LOG_WRN("input response requirement exceeded: %u ms > %u ms", latency,
+		        INPUT_RESPONSE_REQUIREMENT_MS);
 	}
 }
 
@@ -127,7 +123,7 @@ static void handle_button(struct app_context *context, const struct app_event *e
 	if (rc != 0) {
 		context->gpio_errors++;
 		disable_after_policy(context, COMP_BUTTON_LED, DRIVER_OP_GPIO_OUTPUT,
-				     context->gpio_errors, rc);
+		                     context->gpio_errors, rc);
 	} else {
 		context->gpio_errors = 0U;
 	}
@@ -153,16 +149,16 @@ static void handle_event(struct app_context *context, const struct app_event *ev
 			break;
 		}
 		if (!app_touch_transition(&context->runtime.touch, event->timestamp_ms,
-					  event->data.touch.x, event->data.touch.y,
-					  (uint8_t)display_touch_color_count())) {
+		                          event->data.touch.x, event->data.touch.y,
+		                          (uint8_t)display_touch_color_count())) {
 			break;
 		}
 		peripherals_note_physical(&context->peripherals, COMP_TOUCH);
 		if (peripherals_operational(&context->peripherals, COMP_DISPLAY)) {
 			draw_color(context);
 		} else {
-			LOG_INF("touch at x=%d y=%d (display unavailable)",
-				event->data.touch.x, event->data.touch.y);
+			LOG_INF("touch at x=%d y=%d (display unavailable)", event->data.touch.x,
+			        event->data.touch.y);
 		}
 		break;
 	default:
@@ -176,11 +172,10 @@ static void start_available_features(struct app_context *context)
 	int rc;
 
 	gpio_inputs_get_initial(&context->runtime.button_pressed,
-				&context->runtime.switch_position);
-	rc = gpio_inputs_start(
-		peripherals_operational(&context->peripherals, COMP_BUTTON_LED),
-		peripherals_operational(&context->peripherals, COMP_SWITCH),
-		GPIO_INT_EDGE_BOTH);
+	                        &context->runtime.switch_position);
+	rc = gpio_inputs_start(peripherals_operational(&context->peripherals, COMP_BUTTON_LED),
+	                       peripherals_operational(&context->peripherals, COMP_SWITCH),
+	                       GPIO_INT_EDGE_BOTH);
 	if (rc != 0) {
 		peripherals_disable(&context->peripherals, COMP_BUTTON_LED, rc);
 		peripherals_disable(&context->peripherals, COMP_SWITCH, rc);
@@ -203,20 +198,21 @@ static void start_available_features(struct app_context *context)
 	if ((context->runtime.features & APP_FEATURE_AUDIO_LOOPBACK) != 0U) {
 		rc = audio_loopback_start();
 		if (rc != 0) {
-			LOG_ERR("audio loopback start failed; endpoints remain independently usable: %d",
-				rc);
+			LOG_ERR("audio loopback start failed; endpoints remain independently "
+			        "usable: %d",
+			        rc);
 		}
 	} else if (peripherals_operational(&context->peripherals, COMP_MICROPHONE) !=
-		   peripherals_operational(&context->peripherals, COMP_DAC)) {
+	           peripherals_operational(&context->peripherals, COMP_DAC)) {
 		LOG_WRN("audio loopback disabled: %s endpoint unavailable",
-			peripherals_operational(&context->peripherals, COMP_MICROPHONE) ?
-			"output" : "input");
+		        peripherals_operational(&context->peripherals, COMP_MICROPHONE) ? "output"
+		                                                                        : "input");
 	}
 }
 
 int main(void)
 {
-	struct app_context context = { 0 };
+	struct app_context context = {0};
 	struct app_event event;
 	uint32_t next_analog;
 	uint32_t next_status;
@@ -245,13 +241,14 @@ int main(void)
 		}
 		if ((int32_t)(now - next_status) >= 0) {
 			if (operational == 0U) {
-				LOG_INF("no operational peripherals - check wiring and power, then reset");
+				LOG_INF("no operational peripherals - check wiring and power, then "
+				        "reset");
 				next_status = now + IDLE_PERIOD_MS;
 			} else {
 				status_reporting_log(&context.peripherals, &context.runtime);
 				LOG_INF("input-latency-max=%ums requirement<=%ums",
-					context.max_input_latency_ms,
-					INPUT_RESPONSE_REQUIREMENT_MS);
+				        context.max_input_latency_ms,
+				        INPUT_RESPONSE_REQUIREMENT_MS);
 				next_status = now + STATUS_PERIOD_MS;
 			}
 		}

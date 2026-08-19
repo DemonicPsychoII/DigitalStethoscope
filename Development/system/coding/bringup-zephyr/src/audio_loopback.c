@@ -32,17 +32,17 @@ static atomic_t peak_sample;
 static atomic_t running;
 
 static int configure_stream(const struct device *device, enum i2s_dir direction,
-			    struct k_mem_slab *slab)
+                            struct k_mem_slab *slab)
 {
 	struct i2s_config config = {
-		.word_size = 32,
-		.channels = I2S_CHANNELS,
-		.format = I2S_FMT_DATA_FORMAT_I2S,
-		.options = I2S_OPT_FRAME_CLK_CONTROLLER | I2S_OPT_BIT_CLK_CONTROLLER,
-		.frame_clk_freq = I2S_SAMPLE_RATE,
-		.mem_slab = slab,
-		.block_size = I2S_BLOCK_SIZE,
-		.timeout = 1000,
+	        .word_size = 32,
+	        .channels = I2S_CHANNELS,
+	        .format = I2S_FMT_DATA_FORMAT_I2S,
+	        .options = I2S_OPT_FRAME_CLK_CONTROLLER | I2S_OPT_BIT_CLK_CONTROLLER,
+	        .frame_clk_freq = I2S_SAMPLE_RATE,
+	        .mem_slab = slab,
+	        .block_size = I2S_BLOCK_SIZE,
+	        .timeout = 1000,
 	};
 	int rc;
 
@@ -57,13 +57,13 @@ static int configure_stream(const struct device *device, enum i2s_dir direction,
 }
 
 static int trigger_checked(const struct device *device, enum i2s_dir direction,
-			   enum i2s_trigger_cmd command, const char *context)
+                           enum i2s_trigger_cmd command, const char *context)
 {
 	int rc = i2s_trigger(device, direction, command);
 
 	if (rc != 0) {
-		LOG_ERR("I2S %s failed (%s dir=%d cmd=%d): %d",
-			context, device->name, direction, command, rc);
+		LOG_ERR("I2S %s failed (%s dir=%d cmd=%d): %d", context, device->name, direction,
+		        command, rc);
 	}
 	return rc;
 }
@@ -100,8 +100,7 @@ int audio_loopback_probe_microphone(void)
 			}
 		}
 	}
-	cleanup_rc = trigger_checked(microphone, I2S_DIR_RX, I2S_TRIGGER_DROP,
-				     "probe cleanup");
+	cleanup_rc = trigger_checked(microphone, I2S_DIR_RX, I2S_TRIGGER_DROP, "probe cleanup");
 	return rc != 0 ? rc : cleanup_rc;
 }
 
@@ -184,11 +183,10 @@ static void audio_thread(void *arg_1, void *arg_2, void *arg_3)
 
 			consecutive_errors++;
 			if (app_should_log_failure(count)) {
-				LOG_ERR("audio RX read failed (total=%u consecutive=%u): %d",
-					count, consecutive_errors, rc);
+				LOG_ERR("audio RX read failed (total=%u consecutive=%u): %d", count,
+				        consecutive_errors, rc);
 			}
-			if (app_driver_error_action(DRIVER_OP_I2S_TRANSFER,
-						    consecutive_errors) ==
+			if (app_driver_error_action(DRIVER_OP_I2S_TRANSFER, consecutive_errors) ==
 			    DRIVER_ERROR_DISABLE_COMPONENT) {
 				stop_streams();
 				LOG_ERR("audio loopback disabled after repeated RX failures");
@@ -204,9 +202,8 @@ static void audio_thread(void *arg_1, void *arg_2, void *arg_3)
 			atomic_inc(&transfer_errors);
 			consecutive_errors++;
 			LOG_ERR("audio TX buffer unavailable (consecutive=%u): %d",
-				consecutive_errors, rc);
-			if (app_driver_error_action(DRIVER_OP_I2S_TRANSFER,
-						    consecutive_errors) ==
+			        consecutive_errors, rc);
+			if (app_driver_error_action(DRIVER_OP_I2S_TRANSFER, consecutive_errors) ==
 			    DRIVER_ERROR_DISABLE_COMPONENT) {
 				stop_streams();
 				return;
@@ -238,10 +235,9 @@ static void audio_thread(void *arg_1, void *arg_2, void *arg_3)
 			consecutive_errors++;
 			if (app_should_log_failure(count)) {
 				LOG_ERR("audio TX write failed (total=%u consecutive=%u): %d",
-					count, consecutive_errors, rc);
+				        count, consecutive_errors, rc);
 			}
-			if (app_driver_error_action(DRIVER_OP_I2S_TRANSFER,
-						    consecutive_errors) ==
+			if (app_driver_error_action(DRIVER_OP_I2S_TRANSFER, consecutive_errors) ==
 			    DRIVER_ERROR_DISABLE_COMPONENT) {
 				stop_streams();
 				return;
@@ -253,8 +249,7 @@ static void audio_thread(void *arg_1, void *arg_2, void *arg_3)
 	}
 }
 
-K_THREAD_DEFINE(audio_thread_id, 4096, audio_thread, NULL, NULL, NULL,
-		5, 0, K_TICKS_FOREVER);
+K_THREAD_DEFINE(audio_thread_id, 4096, audio_thread, NULL, NULL, NULL, 5, 0, K_TICKS_FOREVER);
 
 int audio_loopback_start(void)
 {
@@ -267,12 +262,10 @@ int audio_loopback_start(void)
 		rc = prime_dac();
 	}
 	if (rc == 0) {
-		rc = trigger_checked(microphone, I2S_DIR_RX, I2S_TRIGGER_START,
-				     "loopback start");
+		rc = trigger_checked(microphone, I2S_DIR_RX, I2S_TRIGGER_START, "loopback start");
 	}
 	if (rc == 0) {
-		rc = trigger_checked(dac, I2S_DIR_TX, I2S_TRIGGER_START,
-				     "loopback start");
+		rc = trigger_checked(dac, I2S_DIR_TX, I2S_TRIGGER_START, "loopback start");
 		if (rc != 0) {
 			int cleanup_rc = i2s_trigger(microphone, I2S_DIR_RX, I2S_TRIGGER_DROP);
 

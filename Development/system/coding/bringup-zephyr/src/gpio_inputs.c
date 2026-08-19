@@ -17,12 +17,9 @@ LOG_MODULE_REGISTER(gpio_inputs, LOG_LEVEL_INF);
 
 static const struct gpio_dt_spec status_led = GPIO_DT_SPEC_GET(ZUSER, led_gpios);
 static const struct gpio_dt_spec user_button = GPIO_DT_SPEC_GET(ZUSER, btn_gpios);
-static const struct gpio_dt_spec switch_1 =
-	GPIO_DT_SPEC_GET_BY_IDX(ZUSER, sw1_gpios, 0);
-static const struct gpio_dt_spec switch_2 =
-	GPIO_DT_SPEC_GET_BY_IDX(ZUSER, sw1_gpios, 1);
-static const struct gpio_dt_spec switch_3 =
-	GPIO_DT_SPEC_GET_BY_IDX(ZUSER, sw1_gpios, 2);
+static const struct gpio_dt_spec switch_1 = GPIO_DT_SPEC_GET_BY_IDX(ZUSER, sw1_gpios, 0);
+static const struct gpio_dt_spec switch_2 = GPIO_DT_SPEC_GET_BY_IDX(ZUSER, sw1_gpios, 1);
+static const struct gpio_dt_spec switch_3 = GPIO_DT_SPEC_GET_BY_IDX(ZUSER, sw1_gpios, 2);
 
 static struct gpio_callback button_callback;
 static struct gpio_callback switch_gpio0_callback;
@@ -73,7 +70,7 @@ int gpio_inputs_probe_button_led(void)
 
 int gpio_inputs_probe_switch(void)
 {
-	const struct gpio_dt_spec *specs[] = { &switch_1, &switch_2, &switch_3 };
+	const struct gpio_dt_spec *specs[] = {&switch_1, &switch_2, &switch_3};
 	int rc;
 
 	for (size_t i = 0; i < ARRAY_SIZE(specs); i++) {
@@ -112,7 +109,7 @@ static void schedule_debounce(struct k_work_delayable *work)
 }
 
 static void button_isr(const struct device *port, struct gpio_callback *callback,
-		       gpio_port_pins_t pins)
+                       gpio_port_pins_t pins)
 {
 	ARG_UNUSED(port);
 	ARG_UNUSED(callback);
@@ -122,7 +119,7 @@ static void button_isr(const struct device *port, struct gpio_callback *callback
 }
 
 static void switch_isr(const struct device *port, struct gpio_callback *callback,
-		       gpio_port_pins_t pins)
+                       gpio_port_pins_t pins)
 {
 	ARG_UNUSED(port);
 	ARG_UNUSED(callback);
@@ -148,8 +145,8 @@ static void button_debounce_handler(struct k_work *work)
 {
 	int pressed;
 	struct app_event event = {
-		.type = APP_EVENT_BUTTON,
-		.timestamp_ms = (uint32_t)atomic_get(&button_edge_timestamp),
+	        .type = APP_EVENT_BUTTON,
+	        .timestamp_ms = (uint32_t)atomic_get(&button_edge_timestamp),
 	};
 
 	ARG_UNUSED(work);
@@ -170,8 +167,8 @@ static void switch_debounce_handler(struct k_work *work)
 {
 	int position;
 	struct app_event event = {
-		.type = APP_EVENT_SWITCH,
-		.timestamp_ms = (uint32_t)atomic_get(&switch_edge_timestamp),
+	        .type = APP_EVENT_SWITCH,
+	        .timestamp_ms = (uint32_t)atomic_get(&switch_edge_timestamp),
 	};
 
 	ARG_UNUSED(work);
@@ -213,7 +210,7 @@ static int add_switch_interrupts(gpio_flags_t interrupt_mode)
 	int rc;
 
 	gpio_init_callback(&switch_gpio0_callback, switch_isr,
-			   BIT(switch_1.pin) | BIT(switch_2.pin));
+	                   BIT(switch_1.pin) | BIT(switch_2.pin));
 	rc = gpio_add_callback(switch_1.port, &switch_gpio0_callback);
 	if (rc != 0) {
 		return rc;
@@ -233,8 +230,7 @@ static int add_switch_interrupts(gpio_flags_t interrupt_mode)
 	return rc;
 }
 
-int gpio_inputs_start(bool button_enabled, bool switch_enabled,
-		      gpio_flags_t interrupt_mode)
+int gpio_inputs_start(bool button_enabled, bool switch_enabled, gpio_flags_t interrupt_mode)
 {
 	int rc;
 

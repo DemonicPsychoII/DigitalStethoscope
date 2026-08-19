@@ -19,6 +19,6 @@ struct runtime_state {
 };
 
 void status_reporting_log(const struct peripheral_registry *registry,
-			  const struct runtime_state *runtime);
+                          const struct runtime_state *runtime);
 
 #endif

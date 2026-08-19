@@ -10,33 +10,70 @@ Board target: **`esp32s3_devkitc/esp32s3/procpu`** (ESP32-S3-DevKitC-1, N16R8).
 ## Behavior
 
 At boot every peripheral of the pin map is probed, **one try plus 3 retries**
-each. Only the peripherals that answer are enabled afterwards — a missing part
-never blocks the rest of the test.
+each. Only operational endpoints are enabled afterwards; one failed endpoint
+never blocks the rest. The report intentionally does not call every ready
+driver a physically connected part.
 
-| Peripheral | Presence check | Enabled behavior |
+| Peripheral | Firmware evidence at boot | Enabled behavior |
 |---|---|---|
-| Pushbutton + LED | GPIO controller ready, pins configurable | each press **toggles** the button LED |
+| Pushbutton + LED | GPIO controller ready, pins configurable; physical response unverified | each debounced press **toggles** the button LED |
 | SP3T switch | one throw is pulled low (common pole on GND) | position reported in the status line |
 | Potentiometer | ADC ready + one successful conversion | dims the display backlight |
-| Backlight (LEDC) | PWM ready + duty accepted | driven by the poti, otherwise 100 % |
-| Display ILI9341 | driver ready, capabilities sane, blanking off | shows a solid colour |
-| Touch XPT2046 | driver ready (SPI transfer at init) | each touch **rotates** to the next colour |
+| Backlight (LEDC) | on-chip PWM ready + duty accepted; no optical proof | driven by the poti, otherwise 100 % |
+| Display ILI9341 | write path accepted init/blanking commands; no readback or visual proof | shows a solid colour |
+| Touch XPT2046 | controller/driver ready; physical proof begins only with an event | each accepted touch **rotates** to the next colour |
 | Mic INMP441 | an I2S RX block is read and its samples are not constant | audio source |
-| DAC PCM5102A | I2S TX configured, block queued, stream started | mic audio is looped through to it |
+| DAC PCM5102A | I2S TX transfer accepted; this cannot prove a module or sound | mic audio is looped through to it |
 
 Mic and DAC are only started together: the loopback thread stays unstarted if
-either of them is missing.
+either endpoint fails its independent probe.
+
+The probe labels have strict meanings: `controller-ready` means Zephyr and the
+on-chip controller can be configured; `transfer-accepted` means the driver
+accepted a transaction but received no identity/acknowledgement; and
+`physical-response` means an input or signal was actually observed. A visual or
+acoustic result exists only in a signed hardware record.
+
+## Architecture, ownership, and timing
+
+`main.c` is the sole owner of application state and orchestration. GPIO ISRs
+only timestamp an edge and reschedule 25 ms debounce work. Deferred GPIO work
+and the touch input callback enqueue `app_event` messages without waiting;
+`main` is the sole queue consumer. Touch coordinates and audio telemetry use
+Zephyr atomics. The audio thread exclusively owns I2S runtime buffers and only
+publishes an atomic snapshot. No callback or ISR draws, logs, sleeps, or performs
+a blocking bus transaction.
+
+The button and all three switch throws use `GPIO_INT_EDGE_BOTH`; there is no
+button/SP3T polling. The response requirement is **stable GPIO edge to event
+handling within 35 ms**, including the 25 ms software debounce. Firmware logs
+the maximum timestamp-to-handler latency and warns on a violation. The bound is
+statically enforced by the debounce interval and wake-up queue, but its
+oscilloscope verification on the target is still `BLOCKED` in
+`evidence/hardware-results.json`.
+
+The main loop samples only the analog potentiometer, at a bounded 100 ms period.
+That signal has no threshold/edge semantics and its ADC driver does not expose a
+safe application interrupt in this configuration.
+
+Driver failures follow tested policy: ADC/PWM/GPIO retry up to three consecutive
+errors; display redraw retries once; repeated failures disable only that
+component. I2S transfer/control errors degrade audio first and stop both streams
+after three consecutive errors. Power-of-two error logging and component
+disablement prevent console floods. Every `display_write`, PWM/GPIO output,
+I2S write/trigger, and ADC sequence initialization result is checked with
+operation context.
 
 ### Console output (PuTTY, 115200 8N1)
 
-1. A one-shot probe report listing the connected peripherals and, for the
-   missing ones, the errno plus a wiring hint.
-2. Then a status line **every 500 ms** containing only the connected
-   peripherals, e.g.
+1. A one-shot probe report listing operational endpoints with an evidence level
+   and, for failed ones, the errno plus a wiring hint.
+2. Then a status line **every 500 ms** containing only operational endpoints,
+   e.g.
    `btn=0 led=1 | sw=2 | poti=1780mV | backlight=53% | colour=blue | touch=4@118,203 | audio blocks=812 errs=0 peak=91 |`
 3. If **no** peripheral answered at all, no status line is produced — a single
    static message is repeated every 5 s instead:
-   `no peripherals connected - check wiring and power, then reset`
+   `no operational peripherals - check wiring and power, then reset`
 
 > The mic check rejects a block whose 32-bit samples are all identical (an
 > unwired SD line). A powered INMP441 always dithers, so this only misfires if
@@ -140,6 +177,11 @@ Installed under `Development/system/coding/tools/zephyrproject`:
 | CMake / Ninja / 7-Zip | 4.4.2 / 1.13.2 / 26.02 |
 | esptool | 5.3.1 |
 
+Zephyr revision: `357467a011cd2557a1a3f0b4be83d817c4addc9b`
+(`v4.4.0-11807-g357467a011cd`). The setup script checks out this exact commit
+before `west update`; the evaluated Espressif HAL revision is
+`3d4d922a4d2994f844790ec031a584ec71240485`.
+
 > Keep this folder out of version control — it is ~50k files. It is git-ignored
 > and recreated by `Development/system/coding/tools/setup-toolchain.ps1`:
 >
@@ -193,7 +235,7 @@ Everything in one paste — environment, build, flash, monitor:
 $zp  = "C:\SVN\DigitalStethoscope-B.Thesis-\Development\system\coding\tools\zephyrproject"
 $app = "C:\SVN\DigitalStethoscope-B.Thesis-\Development\system\coding\bringup-zephyr"
 & "$zp\.venv\Scripts\Activate.ps1"; $env:ZEPHYR_BASE = "$zp\zephyr"; Set-Location $app
-west build -b esp32s3_devkitc/esp32s3/procpu . ; west flash --esp-device COM6 ; west espressif monitor -p COM6
+west build --pristine -b esp32s3_devkitc/esp32s3/procpu . ; west flash --esp-device COM6 ; west espressif monitor -p COM6
 ```
 
 Or step by step. Every new terminal session:
@@ -209,13 +251,27 @@ Set-Location $app
 Then:
 
 ```powershell
-west build -b esp32s3_devkitc/esp32s3/procpu .
+west build --pristine -b esp32s3_devkitc/esp32s3/procpu .
 west flash --esp-device COM6
 west espressif monitor -p COM6      # quit with Ctrl+]
 ```
 
-Add `--pristine` to the build **only** after changing the overlay or `prj.conf`.
-For plain `main.c` edits the incremental build is much faster.
+Use `--pristine` for release/QC evidence. Incremental builds remain useful while
+editing, but are not recorded as reproducible evidence. For the diagnostic
+image with periodic stack high-water output:
+
+```powershell
+west build --pristine -b esp32s3_devkitc/esp32s3/procpu . -- -DEXTRA_CONF_FILE=qc.conf
+```
+
+The thread analyzer prints every 10 seconds. Exercise audio, full-screen redraw,
+touch, GPIO inputs, ADC/PWM and logging together for at least 10 minutes; capture
+every thread's used/total stack and ISR stack. Any sentinel fault, analyzer
+safety warning, reset, audio stop, or less than 25% headroom fails T10. ESP32-S3
+Xtensa reports `ARCH_HAS_STACK_PROTECTION=n` at this pinned revision, so
+`CONFIG_HW_STACK_PROTECTION` cannot be enabled; `STACK_SENTINEL`, `INIT_STACKS`,
+`THREAD_STACK_INFO`, and analyzer stack-safety checks provide the supported
+protection/measurement path.
 
 Find the port if it moves — the ESP32 is the one with `CH343` in its name:
 
@@ -256,16 +312,16 @@ COM port vanishing mid-session.
 ## 4. Bring-up status and test order
 
 The firmware probes every peripheral at boot (one try plus 3 retries) and prints
-an explicit report:
+an evidence-qualified report:
 
 ```
----- peripheral probe: 5 of 8 connected (max 3 retries each) ----
-[ OK ] pushbutton + LED (GPIO16/17)  (attempt 1)
-[ -- ] mic INMP441      (I2S0)  not connected (err -61) - check BCLK/WS/SD and L/R to GND
+---- peripheral probe: 5 of 8 operational (max 4 attempts each) ----
+[ OK ] pushbutton + LED (GPIO16/17) (controller-ready, attempt 1)
+[ -- ] mic INMP441 (I2S0) (transfer-accepted, err -61 after 4 attempts) - check BCLK/WS/SD, power and L/R
 ```
 
-Only the peripherals listed as `[ OK ]` are enabled. Afterwards their live state
-is logged every 500 ms, again only for what is connected:
+Only endpoints listed as `[ OK ]` are enabled. Afterwards their live state is
+logged every 500 ms, again only for operational endpoints:
 
 ```
 btn=0 led=1 | sw=2 | poti=2942mV | backlight=89% | colour=blue | touch=4@118,203 |
@@ -275,25 +331,27 @@ If the probe finds nothing at all, the status line is suppressed and this static
 message repeats every 5 s instead:
 
 ```
-no peripherals connected - check wiring and power, then reset
+no operational peripherals - check wiring and power, then reset
 ```
 
 > A `[ OK ]` for the display proves only that the driver could send its init
 > sequence. ILI9341 over MIPI-DBI is write-only, so it reports success even with
 > no panel attached. Trust the colour on the panel instead.
 
-### Status as of the first hardware session
+### Recorded hardware status
 
 | Component | State |
 |---|---|
-| Console, ADC, boot | ✅ |
-| Pushbutton + LED | ✅ |
-| Potentiometer | ✅ full swing over the whole travel |
-| SP3T positions 1 + 2 | ✅ |
-| Display + backlight | ✅ (only when adequately powered) |
-| SP3T position 3 (GPIO38) | ❌ open — devicetree verified correct, so wiring or pin |
-| INMP441 microphone | ❌ open — `i2s_read` returns `-EIO` |
-| PCM5102A DAC, touch | not yet verified |
+| Boot/console, button/LED, potentiometer, INMP441 | PASS in the 2026-08-14 legacy session |
+| Fitted switch | PARTIAL — it is a two-position 3PDT, not a three-position SP3T |
+| Display/backlight | PARTIAL in the legacy firmware; visual output worked, redraw killed old I2S RX |
+| Touch | PARTIAL — detected physically, but debounce/calibration failed acceptance |
+| PCM5102A | PARTIAL — TX transfer only; no electrical/acoustic result |
+| Audio loopback and simultaneous assembly | BLOCKED — never physically run |
+
+The refactored working tree has build and native_sim evidence only. None of the
+legacy physical verdicts is promoted to the new firmware; its T00–T10 entries
+remain `BLOCKED` until it is committed, flashed and rerun.
 
 ### Test order
 
@@ -328,10 +386,11 @@ Zephyr upgrade:
 - **ADC attenuation is expressed as gain**: `ADC_GAIN_1_4` = 12 dB = 0–3.1 V.
   `ADC_GAIN_1` would clip the poti at ~1.1 V.
 
-Still unverified against real hardware:
+Still unverified against the refactored firmware on real hardware:
 
-- I2S pinmux macros (`I2S0_I_BCK_GPIO4`, `I2S1_O_BCK_GPIO40`, …) and
-  `LEDC_CH0_GPIO8` — they compile, but the routing is untested.
+- PCM5102A output and end-to-end loopback; I2S TX is write-only.
+- The 35 ms debounced GPIO response requirement under simultaneous load.
+- Stack high-water marks under the complete QC workload.
 - XPT2046 calibration: `min-x/max-x/min-y/max-y` are placeholders.
 - SPI runs at 10 MHz for bring-up; raise it once the image is stable.
 - INMP441 sends 24-bit data in a 32-bit slot; the loopback passes the left
@@ -339,8 +398,8 @@ Still unverified against real hardware:
 
 ## 6. Runtime pitfalls
 
-Two independent bugs made the console look completely dead. Both are fixed, but
-the failure mode is worth remembering:
+Earlier firmware exposed two independent bugs that made the console look dead;
+the mitigations remain relevant:
 
 - **Never busy-loop in a driver thread.** The audio thread runs at priority 5;
   the deferred logging thread at 14. A `continue` without `k_msleep()` in the
@@ -355,6 +414,11 @@ the failure mode is worth remembering:
 Both looked identical from the outside: a silent board. When the console goes
 quiet, capture **raw bytes** rather than decoded lines — the byte count alone
 tells you whether the chip is mute or drowning.
+
+The legacy session also showed I2S RX entering a permanent error on a 150 kB
+single redraw. The refactor writes eight display rows per transaction (about
+3.1 ms at 10 MHz) and yields between chunks so the audio thread can service RX.
+This is compiled but not yet a physical closure of T05/T09/T10.
 
 ### Known configuration gaps
 
@@ -374,8 +438,37 @@ need both.
 bringup-zephyr/
 ├── CMakeLists.txt
 ├── prj.conf
+├── qc.conf
+├── include/                 public module contracts
+├── evidence/                JSON hardware/build records and schema
+├── tests/logic/             native_sim ztests for platform-independent logic
 ├── boards/
 │   └── esp32s3_devkitc_procpu.overlay
 └── src/
-    └── main.c
+    ├── main.c               application orchestration and event queue
+    ├── app_logic.c          pure decisions, transitions and formatting
+    ├── peripherals.c        independent probes and evidence state
+    ├── gpio_inputs.c        GPIO IRQs, deferred debounce and LED
+    ├── analog_backlight.c   ADC and PWM
+    ├── display_touch.c      chunked display and touch event producer
+    ├── audio_loopback.c     I2S pipeline and atomic telemetry
+    └── status_reporting.c   snapshots and structured status output
 ```
+
+## Automated and build evidence
+
+`tests/logic` covers probe retry/state transitions, degraded feature decisions,
+switch decoding, brightness boundaries, touch/color transitions, bounded status
+formatting and driver-error policies. Run it with:
+
+```powershell
+west build --pristine -b native_sim/native/64 tests/logic
+west build -d tests/logic/build -t run
+```
+
+On 2026-08-19 all 7 ztests passed under WSL host GCC 15.2.0. Two pristine
+ESP32-S3 builds (default and `qc.conf`) produced firmware with zero application
+compiler warnings. Exact commands, tool versions, non-fatal tool hints and sizes
+are in `evidence/build-results.json`. Physical results are only in
+`evidence/hardware-results.json`; the Markdown protocol links each test ID to
+that record.

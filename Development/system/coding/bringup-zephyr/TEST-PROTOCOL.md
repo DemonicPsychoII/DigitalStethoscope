@@ -9,11 +9,26 @@ case in the given order. Every test case is self-contained: wiring → build/fla
 - Date: 14.08.2026
 - Board / revision: ESP32-S3-DevKitC-1 N16R8, rev v1.___
 - COM port: COM6
-- Firmware commit / SVN rev: eval software, not committed
+- Firmware commit: `2cd6d4c818be92f0bf1e1181ef0b4cd7de7ceb14` (retrospective mapping; commit created 15.08.2026, no flashed-binary hash was captured)
+- Zephyr revision: `357467a011cd2557a1a3f0b4be83d817c4addc9b`
 - Zephyr SDK: 1.0.1
 
 **Legend for the verdict field:** `PASS` = works as specified · `PARTIAL` = works
 with a caveat (document it) · `FAIL` = does not work · `BLOCKED` = could not test.
+
+## Machine-readable traceability
+
+The authoritative normalized record is `evidence/hardware-results.json`,
+validated by `evidence/hardware-results.schema.json`. Its first record imports
+this 14.08.2026 session under firmware commit `2cd6d4c...` with an explicit
+retrospective-traceability warning. The record keyed
+`39a94db...+working-tree` contains the 19.08.2026 refactor evaluation; every
+physical T00–T10 verdict is `BLOCKED` because that working tree was not flashed.
+
+`PASS` in native_sim or a cross-build never upgrades a physical verdict. A new
+hardware run must use a committed firmware image and add a record containing
+the commit, date, tester, exact board revision, Zephyr revision, SDK version,
+test ID, verdict and captured log/measurement evidence.
 
 ---
 
@@ -33,7 +48,7 @@ Build and flash (repeat after every wiring change — the firmware probes only a
 boot, so **a reset is mandatory after re-wiring**):
 
 ```powershell
-west build -b esp32s3_devkitc/esp32s3/procpu .   # add --pristine only after overlay/prj.conf edits
+west build --pristine -b esp32s3_devkitc/esp32s3/procpu .
 west flash --esp-device COM6
 ```
 
@@ -163,8 +178,9 @@ W (spi_flash): Detected size(16384k) larger than the size in the binary image he
 
 ## T01 — Pushbutton + LED (GPIO16 / GPIO17)
 
-**Goal:** GPIO input with pull-up and GPIO output both work; the press edge is
-detected exactly once per press.
+**Goal:** GPIO input with pull-up and GPIO output both work; the interrupt-driven
+press edge is detected exactly once and reaches deferred handling within 35 ms,
+including the configured 25 ms debounce.
 
 **Wiring**
 
@@ -178,11 +194,15 @@ detected exactly once per press.
 1. Power off, wire, power on, flash, reset.
 2. Read the probe report.
 3. Press the button ~5 times slowly, watch the status line.
+4. Under simultaneous audio, display redraw and logging load, drive GPIO16 with
+   a signal generator and measure GPIO16's stable edge to GPIO17's LED-output
+   transition on a two-channel oscilloscope. Capture at least 100 presses; the
+   maximum must be <=35 ms. Confirm `input-latency-max` also stays <=35 ms.
 
 **Expected log**
 
 ```
-[ OK ] pushbutton + LED (GPIO16/17)  (attempt 1)
+[ OK ] pushbutton + LED (GPIO16/17) (controller-ready, attempt 1)
 ...
 btn=0 led=0 |
 btn=1 led=1 |      <- while pressed, LED toggled on this edge
@@ -1345,30 +1365,37 @@ clearly tracks the input level, and the signal is audible without dropouts.
 
 ## T10 — Full assembly, all components at once
 
-**Goal:** no cross-interference — SPI, I2S, ADC, PWM and GPIO coexist, and the
-power budget holds.
+**Goal:** no cross-interference — SPI, I2S, ADC, PWM and GPIO coexist, the power
+budget holds, input response stays <=35 ms, and all thread/ISR stacks retain at
+least 25% headroom.
 
 **Wiring:** everything from T01–T09 connected simultaneously.
 
 **Steps**
 
-1. Reset, read the probe report: it must say **8 of 8 connected**.
+1. Build with `--pristine` and `-DEXTRA_CONF_FILE=qc.conf`, flash, reset, and
+   read the evidence-qualified probe report. Do not interpret
+   `controller-ready` or `transfer-accepted` as physical proof.
 2. Exercise every input once (button, switch through all 3 positions, poti sweep,
    touch, tap the mic).
-3. Let it run ≥ 5 min, then check for brownouts / resets in the log.
+3. Let it run >=10 min while repeatedly redrawing and generating audio; capture
+   the 10-second thread-analyzer reports, ISR stack, `input-latency-max`, audio
+   counters and any brownout/reset.
+4. Fail if a sentinel/analyzer warning occurs, any stack has <25% headroom,
+   input latency exceeds 35 ms, audio stops, or the boot banner repeats.
 
 **Expected log**
 
 ```
----- peripheral probe: 8 of 8 connected (max 3 retries each) ----
-[ OK ] pushbutton + LED (GPIO16/17)  (attempt 1)
-[ OK ] SP3T switch      (GPIO18/21/38)  (attempt 1)
-[ OK ] potentiometer    (GPIO1, ADC1_CH0)  (attempt 1)
-[ OK ] backlight PWM    (GPIO8, LEDC ch0)  (attempt 1)
-[ OK ] display ILI9341  (SPI2, CS GPIO10)  (attempt 1)
-[ OK ] touch XPT2046    (SPI2, CS GPIO7)  (attempt 1)
-[ OK ] mic INMP441      (I2S0)  (attempt 1)
-[ OK ] DAC PCM5102A     (I2S1)  (attempt 1)
+---- peripheral probe: 8 of 8 operational (max 4 attempts each) ----
+[ OK ] pushbutton + LED (GPIO16/17) (controller-ready, attempt 1)
+[ OK ] SP3T switch (GPIO18/21/38) (physical-response, attempt 1)
+[ OK ] potentiometer (GPIO1, ADC1_CH0) (transfer-accepted, attempt 1)
+[ OK ] backlight PWM (GPIO8, LEDC ch0) (controller-ready, attempt 1)
+[ OK ] display ILI9341 (SPI2, CS GPIO10) (transfer-accepted, attempt 1)
+[ OK ] touch XPT2046 (SPI2, CS GPIO7) (controller-ready, attempt 1)
+[ OK ] mic INMP441 (I2S0) (physical-response, attempt 1)
+[ OK ] DAC PCM5102A (I2S1) (transfer-accepted, attempt 1)
 ...
 btn=0 led=1 | sw=2 | poti=1780mV | backlight=53% | colour=blue | touch=4@118,203 | audio blocks=812 errs=0 peak=91 |
 ```
@@ -1413,10 +1440,10 @@ One line per test, format `verdict — note`:
 
 **Overall conclusion / follow-up actions**
 
-> **The hardware is fundamentally sound.** Board, GPIO, ADC, PWM, SPI/display and
-> the I2S microphone all work with the documented pin map. Two genuine hardware
-> items and two firmware items are open; the firmware items must not be mistaken
-> for broken parts.
+> The session physically verified board boot, button/LED, ADC/potentiometer,
+> visible display/backlight behavior and the I2S microphone with the documented
+> pin map. It did not verify a third switch position, accurate touch coordinates,
+> PCM5102A output, end-to-end audio, or simultaneous operation.
 >
 > Hardware:
 >
@@ -1457,3 +1484,31 @@ change, format `component: old pin → new pin (reason)`:
 >
 > Still open: SP3T throw 3 may have to move GPIO38 → GPIO48 (onboard WS2812 on
 > DevKitC-1 v1.1) — cannot be decided until a real 1P3T switch is fitted.
+
+---
+
+## 19.08.2026 refactored-firmware evaluation
+
+Source: Git commit `39a94db58d42147667e936b4d71734fce47274d0`
+plus the uncommitted QC refactor. Zephyr revision
+`357467a011cd2557a1a3f0b4be83d817c4addc9b`; SDK 1.0.1. The source compiled
+pristinely for ESP32-S3 with both normal and QC configurations, and all seven
+native_sim ztests passed. No board was attached, flashed or monitored during
+this evaluation. These are the physical verdicts, mirrored exactly in the
+`39a94db...+working-tree` JSON record:
+
+- T00 — Verdict: BLOCKED — no flash or console capture.
+- T01 — Verdict: BLOCKED — IRQ/debounce compiled; no button, LED or <=35 ms scope measurement.
+- T02 — Verdict: BLOCKED — decoder simulated; no fitted switch exercised.
+- T03 — Verdict: BLOCKED — no genuine 1P3T/SP3T part available.
+- T04 — Verdict: BLOCKED — conversion boundaries simulated; no ADC/PWM hardware run.
+- T05 — Verdict: BLOCKED — chunked redraw compiled; no panel/audio concurrency observation.
+- T06 — Verdict: BLOCKED — event/color transitions simulated; calibration not measured.
+- T07 — Verdict: BLOCKED — microphone input not captured.
+- T08 — Verdict: BLOCKED — DAC output not measured electrically or acoustically.
+- T09 — Verdict: BLOCKED — end-to-end loopback not run.
+- T10 — Verdict: BLOCKED — simultaneous load, high-water marks and power stability not captured.
+
+Do not replace these with the 14.08.2026 verdicts. Commit the final firmware,
+flash that exact commit, execute T00–T10, retain logs/scope traces/analyzer
+output, and add a new commit-keyed JSON session.

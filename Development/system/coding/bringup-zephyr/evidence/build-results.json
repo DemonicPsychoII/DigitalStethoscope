@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "evaluation_date": "2026-08-19",
+  "source": {
+    "firmware_git_commit": "39a94db58d42147667e936b4d71734fce47274d0",
+    "working_tree_modified": true,
+    "main_c_lines": 260
+  },
+  "toolchain": {
+    "zephyr_revision": "357467a011cd2557a1a3f0b4be83d817c4addc9b",
+    "zephyr_describe": "v4.4.0-11807-g357467a011cd",
+    "hal_espressif_revision": "3d4d922a4d2994f844790ec031a584ec71240485",
+    "zephyr_sdk": "1.0.1",
+    "compiler": "xtensa-espressif_esp32s3_zephyr-elf-gcc 14.3.0",
+    "cmake": "4.4.2",
+    "ninja": "1.13.2",
+    "west": "1.5.0"
+  },
+  "builds": [
+    {
+      "id": "esp32s3-pristine-default",
+      "target": "esp32s3_devkitc/esp32s3/procpu",
+      "configuration": ["prj.conf"],
+      "command": "Pristine staged CMake/Ninja build equivalent to west build --pristine; safe 8.3 tool paths and a temporary local Zephyr clone were required because cmd.exe/CMake mishandled parentheses in the repository path.",
+      "result": "PASS",
+      "application_compiler_warnings": 0,
+      "non_fatal_tool_hints": ["DTC executable not found; Python devicetree generation succeeded", "ccache not installed"],
+      "firmware_size_bytes": {
+        "text": 112656,
+        "data": 11876,
+        "bss": 223900,
+        "total_dec": 348432,
+        "zephyr_bin": 210980
+      }
+    },
+    {
+      "id": "esp32s3-pristine-qc",
+      "target": "esp32s3_devkitc/esp32s3/procpu",
+      "configuration": ["prj.conf", "qc.conf"],
+      "command": "Same pristine staged build with -DEXTRA_CONF_FILE=qc.conf",
+      "result": "PASS",
+      "application_compiler_warnings": 0,
+      "verified_options": [
+        "CONFIG_STACK_SENTINEL=y",
+        "CONFIG_INIT_STACKS=y",
+        "CONFIG_THREAD_STACK_INFO=y",
+        "CONFIG_THREAD_ANALYZER=y",
+        "CONFIG_THREAD_ANALYZER_AUTO=y",
+        "CONFIG_THREAD_ANALYZER_AUTO_INTERVAL=10",
+        "CONFIG_THREAD_ANALYZER_ISR_STACK_USAGE=y",
+        "CONFIG_THREAD_ANALYZER_STACK_SAFETY=y"
+      ],
+      "zephyr_bin_bytes": 211348
+    }
+  ],
+  "tests": [
+    {
+      "id": "bringup.logic",
+      "platform": "native_sim/native/64",
+      "host": "WSL Ubuntu; GCC 15.2.0",
+      "result": "PASS",
+      "passed": 7,
+      "failed": 0,
+      "skipped": 0
+    }
+  ]
+}

@@ -21,8 +21,8 @@ int analog_backlight_read_mv(int *millivolts)
 	int32_t converted;
 	int rc;
 	struct adc_sequence sequence = {
-		.buffer = &sample,
-		.buffer_size = sizeof(sample),
+	        .buffer = &sample,
+	        .buffer_size = sizeof(sample),
 	};
 
 	if (millivolts == NULL) {
@@ -70,8 +70,8 @@ int analog_backlight_set_mv(int millivolts)
 	int rc = pwm_set_pulse_dt(&backlight, pulse);
 
 	if (rc != 0) {
-		LOG_ERR("backlight PWM write failed (mv=%d pulse=%u period=%u): %d",
-			millivolts, pulse, backlight.period, rc);
+		LOG_ERR("backlight PWM write failed (mv=%d pulse=%u period=%u): %d", millivolts,
+		        pulse, backlight.period, rc);
 	}
 	return rc;
 }
