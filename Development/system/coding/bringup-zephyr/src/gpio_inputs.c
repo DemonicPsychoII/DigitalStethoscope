@@ -269,14 +269,13 @@ rollback:
 			LOG_WRN("switch callback 1 rollback failed: %d", cleanup_rc);
 		}
 	}
-remove_first_callback:
-	{
-		int cleanup_rc = gpio_remove_callback(switch_1.port, &switch_gpio0_callback);
+remove_first_callback: {
+	int cleanup_rc = gpio_remove_callback(switch_1.port, &switch_gpio0_callback);
 
-		if (cleanup_rc != 0) {
-			LOG_WRN("switch callback 0 rollback failed: %d", cleanup_rc);
-		}
+	if (cleanup_rc != 0) {
+		LOG_WRN("switch callback 0 rollback failed: %d", cleanup_rc);
 	}
+}
 	return rc;
 }
 
