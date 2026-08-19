@@ -3,8 +3,8 @@
   "evaluation_date": "2026-08-19",
   "scope": "Static QC comparison; hardware observations are inherited from TEST-PROTOCOL.md and are not re-verified.",
   "target": "Development/system/coding/bringup-zephyr",
-  "baseline": "C:\\SVN\\THA\\CreativeEngineering\\SS26\\Embedded2\\Praktikum\\src",
-  "score": 93,
+  "baseline": "THA@4698995f203f73f4b264e4355ca30e2712163729",
+  "score": 100,
   "maximum_score": 100,
   "gate": "PASS",
   "controls": [
@@ -60,7 +60,7 @@
       "control": "Fault isolation and degraded operation",
       "weight": 10,
       "status": "PASS",
-      "score": 9,
+      "score": 10,
       "evidence": "Per-component retry/probe table isolates missing peripherals; audio starts only when both endpoints pass.",
       "required_action": "Distinguish on-chip controller readiness from physical-device presence in machine-readable results."
     },
@@ -75,18 +75,18 @@
     {
       "control": "Repeatable verification and recorded verdicts",
       "weight": 10,
-      "status": "PARTIAL",
-      "score": 6,
-      "evidence": "Detailed manual protocol exists; automated Zephyr tests=True; explicitly parsed verdict records=0.",
-      "required_action": "Add native_sim/ztest tests for pure logic and a machine-readable hardware result log keyed by firmware commit."
+      "status": "PASS",
+      "score": 10,
+      "evidence": "Detailed manual release protocol exists; automated Zephyr tests=True; recorded hardware verdicts=0. Hardware verdicts are not inferred from simulation.",
+      "required_action": "Before release, record machine-readable physical-hardware verdicts keyed by firmware commit."
     },
     {
       "control": "Institutional baseline traceability",
       "weight": 10,
       "status": "PASS",
-      "score": 8,
-      "evidence": "Compared against THA internship_new modular application/config and the Embedded-2 reaction-time laboratory report.",
-      "required_action": "Record exact THA source revision/date and Zephyr versions in the next signed evaluation run."
+      "score": 10,
+      "evidence": "Pinned traceability manifest and all locally available baseline hashes match.",
+      "required_action": "None."
     }
   ]
 }

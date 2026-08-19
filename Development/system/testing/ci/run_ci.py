@@ -18,6 +18,7 @@ ROOT = Path(__file__).resolve().parents[4]
 APP = ROOT / "Development/system/coding/bringup-zephyr"
 ARTIFACTS = ROOT / "artifacts"
 BOARD = "esp32s3_devkitc/esp32s3/procpu"
+TEST_PLATFORM = "native_sim/native/64"
 
 
 def summary(line: str) -> None:
@@ -87,14 +88,14 @@ def static() -> None:
     )
     clang_format = shutil.which("clang-format")
     if clang_format:
-        run(
-            [
-                clang_format,
-                "--dry-run",
-                "--Werror",
-                str(APP / "tests/ci_contract/src/main.c"),
-            ]
+        test_sources = sorted(
+            str(path)
+            for path in (APP / "tests").rglob("*")
+            if path.suffix in {".c", ".h"}
         )
+        if not test_sources:
+            raise SystemExit("no C test sources were discovered for formatting")
+        run([clang_format, "--dry-run", "--Werror", *test_sources])
     elif os.environ.get("CI"):
         raise SystemExit("clang-format is required in CI")
     summary("### Static checks: PASS")
@@ -167,7 +168,7 @@ def tests() -> None:
             "--clobber-output",
             *root_args,
             "-p",
-            "native_sim",
+            TEST_PLATFORM,
             "--inline-logs",
             "--report-summary",
             "--report-all-options",
@@ -182,6 +183,15 @@ def tests() -> None:
     suites = json.loads(report.read_text(encoding="utf-8")).get("testsuites", [])
     if not suites:
         raise SystemExit("zero required Twister tests were discovered")
+    executed_roots = {
+        Path(suite.get("path", "")).resolve() for suite in suites if suite.get("path")
+    }
+    missing_roots = [root for root in roots if root.resolve() not in executed_roots]
+    if missing_roots:
+        raise SystemExit(
+            "required Twister suite roots did not execute: "
+            + ", ".join(str(root) for root in missing_roots)
+        )
     shutil.copytree(out, evidence / "twister-out", dirs_exist_ok=True)
     summary(
         f"### Automated tests: PASS\n\n{len(suites)} suite instance(s) passed. "

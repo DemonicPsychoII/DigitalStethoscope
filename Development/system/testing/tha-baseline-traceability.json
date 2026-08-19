@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "source": "THA Embedded Systems 2 institutional course material",
+  "revision": "4698995f203f73f4b264e4355ca30e2712163729",
+  "files": {
+    "projects/internship_new/src/main.c": "b1bba33d942b91ea488dbf42ef5887561a83213517e4a3bb50f0eaa2dbad11b1",
+    "projects/internship_new/prj.conf": "600a60edc9a04d26233ff34d18d338c73b33f56acdcab34d95eee90ec14f3f2c",
+    "projects/blinky_pwm/documentation/LaborberichtNF.md": "48e30dc7fc6981f2c5e76f6d2e3e7dcae574d5c926a2305cb4a600d0d51af483"
+  }
+}

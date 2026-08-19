@@ -16,7 +16,12 @@ Outputs:
 - `QC-EVALUATION.md`: reviewable scorecard and actions
 - `qc-eval-results.json`: machine-readable CI/audit result
 
-Exit code `0` means the gate passed. Exit code `1` means one or more mandatory
-controls are on hold. Static checks are heuristics; the hardware test protocol,
+Institutional source files are not copied into CI. The evaluator validates the
+committed `tha-baseline-traceability.json` revision and SHA-256 records. When a
+local THA checkout is present, its three referenced files must match those
+hashes; CI uses the immutable metadata without exposing the source material.
+
+Exit code `0` requires 100/100 and every control at `PASS`. Exit code `1` means
+one or more mandatory controls are on hold. Static checks are heuristics; the hardware test protocol,
 clean build, on-target timing, and electrical/audio measurements remain separate
 release evidence.

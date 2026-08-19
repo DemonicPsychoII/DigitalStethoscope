@@ -9,7 +9,7 @@ ZTEST_SUITE(app_logic, NULL, NULL, NULL, NULL, NULL);
 
 ZTEST(app_logic, test_probe_retry_and_state_transitions)
 {
-	struct app_probe_state state = { 0 };
+	struct app_probe_state state = {0};
 
 	zassert_true(app_probe_record(&state, -EIO, 4));
 	zassert_equal(state.attempts, 1);
@@ -30,7 +30,7 @@ ZTEST(app_logic, test_probe_retry_and_state_transitions)
 
 ZTEST(app_logic, test_degraded_mode_decisions)
 {
-	struct component_status status[COMP_COUNT] = { 0 };
+	struct component_status status[COMP_COUNT] = {0};
 	uint32_t features;
 
 	status[COMP_BUTTON_LED].operational = true;
@@ -70,7 +70,7 @@ ZTEST(app_logic, test_brightness_conversion_boundaries)
 
 ZTEST(app_logic, test_touch_event_color_transitions)
 {
-	struct app_touch_state state = { 0 };
+	struct app_touch_state state = {0};
 
 	zassert_true(app_touch_transition(&state, 1000, 12, 34, 7));
 	zassert_equal(state.color_index, 1);
@@ -89,15 +89,15 @@ ZTEST(app_logic, test_touch_event_color_transitions)
 ZTEST(app_logic, test_status_formatting_and_boundaries)
 {
 	struct app_status_snapshot status = {
-		.show_button = true,
-		.button_pressed = true,
-		.led_on = false,
-		.show_display = true,
-		.color_name = "magenta",
-		.show_audio = true,
-		.audio_blocks = 123,
-		.audio_errors = 4,
-		.audio_peak = 55,
+	        .show_button = true,
+	        .button_pressed = true,
+	        .led_on = false,
+	        .show_display = true,
+	        .color_name = "magenta",
+	        .show_audio = true,
+	        .audio_blocks = 123,
+	        .audio_errors = 4,
+	        .audio_peak = 55,
 	};
 	char full[192];
 	char guarded[9];
@@ -118,16 +118,14 @@ ZTEST(app_logic, test_status_formatting_and_boundaries)
 
 ZTEST(app_logic, test_driver_error_handling_decisions)
 {
-	zassert_equal(app_driver_error_action(DRIVER_OP_ADC_SAMPLE, 1),
-		      DRIVER_ERROR_RETRY);
+	zassert_equal(app_driver_error_action(DRIVER_OP_ADC_SAMPLE, 1), DRIVER_ERROR_RETRY);
 	zassert_equal(app_driver_error_action(DRIVER_OP_ADC_SAMPLE, 3),
-		      DRIVER_ERROR_DISABLE_COMPONENT);
+	              DRIVER_ERROR_DISABLE_COMPONENT);
 	zassert_equal(app_driver_error_action(DRIVER_OP_DISPLAY_WRITE, 2),
-		      DRIVER_ERROR_DISABLE_COMPONENT);
-	zassert_equal(app_driver_error_action(DRIVER_OP_I2S_TRANSFER, 1),
-		      DRIVER_ERROR_DEGRADE);
+	              DRIVER_ERROR_DISABLE_COMPONENT);
+	zassert_equal(app_driver_error_action(DRIVER_OP_I2S_TRANSFER, 1), DRIVER_ERROR_DEGRADE);
 	zassert_equal(app_driver_error_action(DRIVER_OP_I2S_CONTROL, 3),
-		      DRIVER_ERROR_DISABLE_COMPONENT);
+	              DRIVER_ERROR_DISABLE_COMPONENT);
 	zassert_true(app_should_log_failure(1));
 	zassert_true(app_should_log_failure(8));
 	zassert_false(app_should_log_failure(3));

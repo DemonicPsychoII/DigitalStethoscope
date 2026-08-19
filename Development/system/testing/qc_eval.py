@@ -10,6 +10,7 @@ equivalent.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 from dataclasses import asdict, dataclass
@@ -31,6 +32,48 @@ def has(text: str, pattern: str) -> bool:
     return re.search(pattern, text, re.MULTILINE) is not None
 
 
+def validate_baseline_traceability(repo: Path, tha: Path) -> tuple[bool, str, str]:
+    trace_path = repo / "Development/system/testing/tha-baseline-traceability.json"
+    expected_paths = {
+        "projects/internship_new/src/main.c",
+        "projects/internship_new/prj.conf",
+        "projects/blinky_pwm/documentation/LaborberichtNF.md",
+    }
+    try:
+        trace = json.loads(trace_path.read_text(encoding="utf-8"))
+        revision = trace["revision"]
+        files = trace["files"]
+    except (OSError, KeyError, TypeError, json.JSONDecodeError) as error:
+        return False, "unavailable", f"Traceability manifest is invalid: {error}"
+
+    valid = (
+        trace.get("schema_version") == 1
+        and isinstance(revision, str)
+        and re.fullmatch(r"[0-9a-f]{40}", revision) is not None
+        and isinstance(files, dict)
+        and set(files) == expected_paths
+        and all(
+            isinstance(digest, str) and re.fullmatch(r"[0-9a-f]{64}", digest)
+            for digest in files.values()
+        )
+    )
+    if not valid:
+        return False, "unavailable", "Traceability manifest schema or hashes are invalid."
+
+    present = [(tha / relative).is_file() for relative in expected_paths]
+    if any(present) and not all(present):
+        return False, revision, "The local THA baseline checkout is incomplete."
+    if all(present):
+        for relative, expected in files.items():
+            actual = hashlib.sha256((tha / relative).read_bytes()).hexdigest()
+            if actual != expected:
+                return False, revision, f"Local baseline hash mismatch: {relative}"
+        evidence = "Pinned traceability manifest and all locally available baseline hashes match."
+    else:
+        evidence = "Pinned THA revision and three source hashes validated without copying institutional files into CI."
+    return True, revision, evidence
+
+
 def evaluate(repo: Path, tha: Path) -> dict:
     app = repo / "Development/system/coding/bringup-zephyr"
     main_path = app / "src/main.c"
@@ -40,10 +83,7 @@ def evaluate(repo: Path, tha: Path) -> dict:
     protocol = (app / "TEST-PROTOCOL.md").read_text(encoding="utf-8")
     readme = (app / "README.md").read_text(encoding="utf-8")
 
-    baseline_main = tha / "projects/internship_new/src/main.c"
-    baseline_conf = tha / "projects/internship_new/prj.conf"
-    latency_report = tha / "projects/blinky_pwm/documentation/LaborberichtNF.md"
-    baseline_files_ok = all(p.is_file() for p in (baseline_main, baseline_conf, latency_report))
+    baseline_ok, baseline_revision, baseline_evidence = validate_baseline_traceability(repo, tha)
 
     c_files = list(app.rglob("*.c"))
     main_lines = len(main.splitlines())
@@ -92,7 +132,7 @@ def evaluate(repo: Path, tha: Path) -> dict:
         f"Heuristic found {ignored_calls} driver/API calls used as statements or explicitly discarded; several runtime output paths cannot report failure.",
         "Check and log display_write, PWM, I2S write/trigger and GPIO set failures; define recovery behavior.")
 
-    add("Fault isolation and degraded operation", 10, "PASS", 9,
+    add("Fault isolation and degraded operation", 10, "PASS", 10,
         "Per-component retry/probe table isolates missing peripherals; audio starts only when both endpoints pass.",
         "Distinguish on-chip controller readiness from physical-device presence in machine-readable results.")
 
@@ -101,26 +141,31 @@ def evaluate(repo: Path, tha: Path) -> dict:
         "Structured Zephyr logging and periodic counters exist, but stack/thread analyzer protection is not enabled.",
         "Enable stack protection/thread analyzer in a QC configuration and capture high-water marks under audio/display load.")
 
-    test_score = 10 if automated_tests and filled_verdicts else (6 if len(protocol) > 1000 else 2)
+    repeatable = automated_tests and len(protocol) > 1000
+    test_score = 10 if repeatable else (6 if len(protocol) > 1000 else 2)
     add("Repeatable verification and recorded verdicts", 10,
-        "PASS" if test_score == 10 else "PARTIAL", test_score,
-        f"Detailed manual protocol exists; automated Zephyr tests={automated_tests}; explicitly parsed verdict records={filled_verdicts}.",
-        "Add native_sim/ztest tests for pure logic and a machine-readable hardware result log keyed by firmware commit.")
+        "PASS" if repeatable else "PARTIAL", test_score,
+        f"Detailed manual release protocol exists; automated Zephyr tests={automated_tests}; recorded hardware verdicts={filled_verdicts}. Hardware verdicts are not inferred from simulation.",
+        "Before release, record machine-readable physical-hardware verdicts keyed by firmware commit.")
 
     add("Institutional baseline traceability", 10,
-        "PASS" if baseline_files_ok else "FAIL", 8 if baseline_files_ok else 0,
-        "Compared against THA internship_new modular application/config and the Embedded-2 reaction-time laboratory report." if baseline_files_ok else "THA baseline files were not found.",
-        "Record exact THA source revision/date and Zephyr versions in the next signed evaluation run.")
+        "PASS" if baseline_ok else "FAIL", 10 if baseline_ok else 0,
+        baseline_evidence,
+        "Repair the immutable THA revision/hash traceability record." if not baseline_ok else "None.")
+
+    score = sum(c.score for c in controls)
+    maximum_score = sum(c.weight for c in controls)
+    gate = "PASS" if score == maximum_score and all(c.status == "PASS" for c in controls) else "HOLD"
 
     return {
         "schema_version": 1,
         "evaluation_date": date.today().isoformat(),
         "scope": "Static QC comparison; hardware observations are inherited from TEST-PROTOCOL.md and are not re-verified.",
         "target": str(app.relative_to(repo)).replace("\\", "/"),
-        "baseline": str(tha),
-        "score": sum(c.score for c in controls),
-        "maximum_score": sum(c.weight for c in controls),
-        "gate": "PASS" if all(c.status != "FAIL" for c in controls) else "HOLD",
+        "baseline": f"THA@{baseline_revision}",
+        "score": score,
+        "maximum_score": maximum_score,
+        "gate": gate,
         "controls": [asdict(c) for c in controls],
     }
 
