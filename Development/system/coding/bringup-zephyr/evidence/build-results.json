@@ -2,9 +2,9 @@
   "schema_version": 1,
   "evaluation_date": "2026-08-19",
   "source": {
-    "firmware_git_commit": "39a94db58d42147667e936b4d71734fce47274d0",
-    "working_tree_modified": true,
-    "main_c_lines": 260
+    "firmware_git_commit": "a76ebd58413a2c18d301d3014179720babada1a1",
+    "working_tree_modified": false,
+    "main_c_lines": 266
   },
   "toolchain": {
     "zephyr_revision": "357467a011cd2557a1a3f0b4be83d817c4addc9b",
@@ -16,30 +16,45 @@
     "ninja": "1.13.2",
     "west": "1.5.0"
   },
+  "preflight_failures": [
+    {
+      "command": "west build --pristine -b esp32s3_devkitc/esp32s3/procpu Development/system/coding/bringup-zephyr -d Development/system/coding/bringup-zephyr/build-esp32s3",
+      "result": "FAIL",
+      "reason": "Zephyr 4.4/CMake generated unquoted module targets and cmd.exe link commands from the repository path DigitalStethoscope(B.Thesis); configuration failed before application compilation. A drive alias was insufficient because CMake canonicalized the path."
+    },
+    {
+      "command": "west build --pristine -b native_sim/native/64 Development/system/coding/bringup-zephyr/tests/logic",
+      "result": "BLOCKED",
+      "reason": "Native Windows host gcc was absent; the same ztest was subsequently built and run successfully in WSL."
+    }
+  ],
   "builds": [
     {
       "id": "esp32s3-pristine-default",
       "target": "esp32s3_devkitc/esp32s3/procpu",
       "configuration": ["prj.conf"],
-      "command": "Pristine staged CMake/Ninja build equivalent to west build --pristine; safe 8.3 tool paths and a temporary local Zephyr clone were required because cmd.exe/CMake mishandled parentheses in the repository path.",
+      "environment": "ZEPHYR_BASE=C:/SVN/.stetho-qc-build/zephyr; ZEPHYR_TOOLCHAIN_VARIANT=cross-compile; CROSS_COMPILE=<Zephyr-SDK-1.0.1 8.3 short path>/xtensa-espressif_esp32s3_zephyr-elf-",
+      "command": "<venv 8.3 short path>/Lib/site-packages/cmake/data/bin/cmake.exe -S C:/SVN/.stetho-qc-build/app -B C:/SVN/.stetho-qc-build/build-esp32s3-audit-default4 -GNinja -DBOARD=esp32s3_devkitc/esp32s3/procpu -DZEPHYR_MODULES=C:/SVN/.stetho-qc-build/hal_espressif -DCMAKE_MAKE_PROGRAM=<venv 8.3 short path>/ninja.exe -DPython3_EXECUTABLE=<venv 8.3 short path>/python.exe && cmake --build C:/SVN/.stetho-qc-build/build-esp32s3-audit-default4",
       "result": "PASS",
       "application_compiler_warnings": 0,
       "non_fatal_tool_hints": ["DTC executable not found; Python devicetree generation succeeded", "ccache not installed"],
       "firmware_size_bytes": {
-        "text": 112656,
+        "text": 113052,
         "data": 11876,
         "bss": 223900,
-        "total_dec": 348432,
-        "zephyr_bin": 210980
+        "total_dec": 348828,
+        "zephyr_bin": 211124
       }
     },
     {
       "id": "esp32s3-pristine-qc",
       "target": "esp32s3_devkitc/esp32s3/procpu",
       "configuration": ["prj.conf", "qc.conf"],
-      "command": "Same pristine staged build with -DEXTRA_CONF_FILE=qc.conf",
+      "environment": "Same clean staging and cross-compile environment as esp32s3-pristine-default",
+      "command": "<venv 8.3 short path>/Lib/site-packages/cmake/data/bin/cmake.exe -S C:/SVN/.stetho-qc-build/app -B C:/SVN/.stetho-qc-build/build-esp32s3-audit-qc3 -GNinja -DBOARD=esp32s3_devkitc/esp32s3/procpu -DEXTRA_CONF_FILE=qc.conf -DZEPHYR_MODULES=C:/SVN/.stetho-qc-build/hal_espressif -DCMAKE_MAKE_PROGRAM=<venv 8.3 short path>/ninja.exe -DPython3_EXECUTABLE=<venv 8.3 short path>/python.exe && cmake --build C:/SVN/.stetho-qc-build/build-esp32s3-audit-qc3",
       "result": "PASS",
       "application_compiler_warnings": 0,
+      "non_fatal_tool_hints": ["DTC executable not found; Python devicetree generation succeeded", "ccache not installed"],
       "verified_options": [
         "CONFIG_STACK_SENTINEL=y",
         "CONFIG_INIT_STACKS=y",
@@ -50,7 +65,13 @@
         "CONFIG_THREAD_ANALYZER_ISR_STACK_USAGE=y",
         "CONFIG_THREAD_ANALYZER_STACK_SAFETY=y"
       ],
-      "zephyr_bin_bytes": 211348
+      "firmware_size_bytes": {
+        "text": 114836,
+        "data": 11880,
+        "bss": 225100,
+        "total_dec": 351816,
+        "zephyr_bin": 211508
+      }
     }
   ],
   "tests": [
@@ -58,7 +79,9 @@
       "id": "bringup.logic",
       "platform": "native_sim/native/64",
       "host": "WSL Ubuntu; GCC 15.2.0",
+      "command": "PATH=/tmp/stetho-python-tools/bin:<system-path> PYTHONPATH=/tmp/stetho-python-tools ZEPHYR_TOOLCHAIN_VARIANT=host cmake -S /mnt/c/SVN/.stetho-qc-build/app/tests/logic -B /tmp/stetho-build-logic-audit4-20260819 -GNinja -DBOARD=native_sim/native/64 -DZEPHYR_MODULES= -DPython3_EXECUTABLE=/usr/bin/python3 && cmake --build /tmp/stetho-build-logic-audit4-20260819 && /tmp/stetho-build-logic-audit4-20260819/zephyr/zephyr.exe",
       "result": "PASS",
+      "non_fatal_tool_hints": ["The staged Zephyr clone's Windows Git alternates path was unavailable under WSL, so version generation used the configured 4.4.99 fallback; source revision was verified separately on Windows."],
       "passed": 7,
       "failed": 0,
       "skipped": 0
