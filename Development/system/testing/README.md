@@ -22,6 +22,8 @@ local THA checkout is present, its three referenced files must match those
 hashes; CI uses the immutable metadata without exposing the source material.
 
 The standalone evaluator exits `0` only at 100/100 with every control at
-`PASS`; otherwise it exits `1`. CI publishes that outcome as advisory evidence,
-not as a protected merge check. These source heuristics cannot replace executed
-tests, a clean firmware build, on-target timing, or electrical/audio evidence.
+`PASS`; otherwise it exits `1`. CI enforces that outcome as part of the required
+quality check. The repeatability control requires a detailed
+manual protocol, recorded verdicts, and successful pristine ESP32-S3 build
+evidence. These source heuristics and compilation evidence cannot replace
+on-target timing or electrical/audio evidence.

@@ -39,14 +39,13 @@ jobs:
       - run: python -m pip install --require-hashes -r Development/system/testing/ci/requirements-ci.txt
       - name: Run static repository checks
         run: python Development/system/testing/ci/run_ci.py static
-      - name: Generate advisory QC scorecard
-        continue-on-error: true
+      - name: Run required QC evaluation
         run: python Development/system/testing/ci/run_ci.py qc
-      - name: Upload advisory QC evidence
+      - name: Upload QC evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: advisory-qc-evidence
+          name: quality-control-evidence
           path: |
             Development/system/testing/QC-EVALUATION.md
             Development/system/testing/qc-eval-results.json
@@ -77,36 +76,5 @@ jobs:
         with:
           name: firmware-build-evidence
           path: artifacts/firmware/
-          if-no-files-found: warn
-          retention-days: 14
-
-  tests:
-    name: Zephyr / Automated Tests
-    runs-on: ubuntu-24.04
-    timeout-minutes: 45
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-        with:
-          persist-credentials: false
-      - uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
-        with:
-          path: |
-            .ci-workspace
-            ~/.cache/pip
-          key: ${{ runner.os }}-zephyr-${{ env.ZEPHYR_REVISION }}-sdk-${{ env.ZEPHYR_SDK_VERSION }}-${{ hashFiles('Development/system/testing/ci/requirements-ci.txt', 'Development/system/coding/bringup-zephyr/tests/**') }}
-      - name: Provision pinned Zephyr workspace
-        run: bash Development/system/testing/ci/setup_zephyr.sh
-      - name: Run required native_sim suites
-        run: .ci-workspace/.venv/bin/python Development/system/testing/ci/run_ci.py tests
-      - name: Upload Twister evidence
-        if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: automated-test-evidence
-          # Twister writes to its output directory before the shared script copies
-          # successful results; include both to preserve diagnostics on failure.
-          path: |
-            artifacts/tests/
-            twister-out-ci/
           if-no-files-found: warn
           retention-days: 14

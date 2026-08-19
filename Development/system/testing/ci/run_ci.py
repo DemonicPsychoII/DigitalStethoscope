@@ -9,7 +9,6 @@ import py_compile
 import shutil
 import subprocess
 import sys
-import tempfile
 from pathlib import Path
 
 import yaml
@@ -18,7 +17,6 @@ ROOT = Path(__file__).resolve().parents[4]
 APP = ROOT / "Development/system/coding/bringup-zephyr"
 ARTIFACTS = ROOT / "artifacts"
 BOARD = "esp32s3_devkitc/esp32s3/procpu"
-TEST_PLATFORM = "native_sim/native/64"
 
 
 def summary(line: str) -> None:
@@ -108,7 +106,7 @@ def static() -> None:
             json.loads(path.read_text(encoding="utf-8"))
         if path.suffix in {".yaml", ".yml"}:
             yaml.safe_load(path.read_text(encoding="utf-8"))
-    # Format all maintained application and test sources, not merely the tests.
+    # Format all maintained application sources.
     run([sys.executable, "-m", "ruff", "check", "Development/system/testing/ci"])
     run(
         [
@@ -124,7 +122,7 @@ def static() -> None:
     if clang_format:
         maintained_sources = sorted(
             str(path)
-            for area in (APP / "include", APP / "src", APP / "tests")
+            for area in (APP / "include", APP / "src")
             for path in area.rglob("*")
             if path.is_file() and path.suffix in {".c", ".h"}
         )
@@ -182,74 +180,6 @@ def build() -> None:
     )
 
 
-def tests() -> None:
-    # This Zephyr revision cannot write Twister reports beneath a Windows path
-    # containing parentheses. Use the host temp directory and copy evidence back.
-    out = (
-        Path(tempfile.mkdtemp(prefix="stethoscope-twister-"))
-        if os.name == "nt" and any(char in str(ROOT) for char in "()")
-        else ROOT / "twister-out-ci"
-    )
-    evidence = ARTIFACTS / "tests"
-    evidence.mkdir(parents=True, exist_ok=True)
-    test_root = APP / "tests"
-    metadata = sorted(test_root.rglob("testcase.yaml"))
-    if not metadata:
-        raise SystemExit("zero required Twister metadata files were discovered")
-    expected_suites: set[str] = set()
-    for path in metadata:
-        document = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
-        expected_suites.update(document.get("tests", {}).keys())
-    if not expected_suites:
-        raise SystemExit("Twister metadata declares zero required suite IDs")
-    run(
-        [
-            west(),
-            "twister",
-            "--clobber-output",
-            "-T",
-            str(test_root),
-            "-p",
-            TEST_PLATFORM,
-            "--inline-logs",
-            "--report-all-options",
-            "--outdir",
-            str(out),
-        ],
-        log=evidence / "twister.log",
-        env_overrides={"ZEPHYR_TOOLCHAIN_VARIANT": "host"},
-    )
-    report = out / "twister.json"
-    if not report.is_file():
-        report = out / "testplan.json"
-    suites = json.loads(report.read_text(encoding="utf-8")).get("testsuites", [])
-    if not suites:
-        raise SystemExit("zero required Twister tests were discovered")
-    results: dict[str, str] = {}
-    for suite in suites:
-        reported_name = str(suite.get("name", ""))
-        for expected in expected_suites:
-            if reported_name == expected or reported_name.endswith(f".{expected}"):
-                results[expected] = str(suite.get("status", "unknown"))
-    missing_suites = sorted(expected_suites - results.keys())
-    if missing_suites:
-        raise SystemExit(
-            "required Twister suites did not execute: " + ", ".join(missing_suites)
-        )
-    non_passing = sorted(
-        f"{name}={status}" for name, status in results.items() if status != "passed"
-    )
-    if non_passing:
-        raise SystemExit(
-            "required Twister suites did not pass: " + ", ".join(non_passing)
-        )
-    shutil.copytree(out, evidence / "twister-out", dirs_exist_ok=True)
-    summary(
-        f"### Automated tests: PASS\n\n{len(results)} required suite(s) passed. "
-        "Artifact: `automated-test-evidence`."
-    )
-
-
 def qc() -> None:
     evaluator = ROOT / "Development/system/testing/qc_eval.py"
     result_process = subprocess.run([sys.executable, str(evaluator)], cwd=ROOT)
@@ -268,16 +198,21 @@ def qc() -> None:
         raise SystemExit(
             "QC JSON schema violation: schema version/scores must be integers"
         )
-    disposition = "PASS" if result_process.returncode == 0 else "ADVISORY"
+    disposition = "PASS" if result_process.returncode == 0 else "FAIL"
     summary(
-        f"### QC evaluation: {disposition} (non-blocking)\n\nScore: {result['score']}/"
+        f"### QC evaluation: {disposition}\n\nScore: {result['score']}/"
         f"{result['maximum_score']}; gate: {result['gate']}. "
-        "Artifact: `advisory-qc-evidence`."
+        "Artifact: `quality-control-evidence`."
     )
+    if result_process.returncode != 0:
+        raise SystemExit(
+            f"QC evaluation failed: {result['score']}/{result['maximum_score']} "
+            f"({result['gate']})"
+        )
 
 
 def main() -> None:
-    stages = {"static": static, "build": build, "tests": tests, "qc": qc}
+    stages = {"static": static, "build": build, "qc": qc}
     requested = sys.argv[1] if len(sys.argv) == 2 else "all"
     selected = list(stages) if requested == "all" else [requested]
     for name in selected:

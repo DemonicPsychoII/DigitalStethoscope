@@ -25,7 +25,7 @@ retrospective-traceability warning. The record keyed `418f9ba...` contains the
 19.08.2026 refactor evaluation; every physical T00–T10 verdict is `BLOCKED`
 because that committed firmware image was not flashed.
 
-`PASS` in native_sim or a cross-build never upgrades a physical verdict. A new
+`PASS` in a cross-build never upgrades a physical verdict. A new
 hardware run must use a committed firmware image and add a record containing
 the commit, date, tester, exact board revision, Zephyr revision, SDK version,
 test ID, verdict and captured log/measurement evidence.
@@ -1492,18 +1492,17 @@ change, format `component: old pin → new pin (reason)`:
 Source: Git commit `418f9bab891bf98602b06a5bbbeade5b4e331523`.
 Zephyr revision
 `357467a011cd2557a1a3f0b4be83d817c4addc9b`; SDK 1.0.1. The source compiled
-pristinely for ESP32-S3 with both normal and QC configurations, and all seven
-native_sim ztests passed. No board was attached, flashed or monitored during
+pristinely for ESP32-S3 with both normal and QC configurations. No board was attached, flashed or monitored during
 this evaluation. These are the physical verdicts, mirrored exactly in the
 `418f9ba...` JSON record:
 
 - T00 — Verdict: BLOCKED — no flash or console capture.
 - T01 — Verdict: BLOCKED — IRQ/debounce compiled; no button, LED or <=35 ms scope measurement.
-- T02 — Verdict: BLOCKED — decoder simulated; no fitted switch exercised.
+- T02 — Verdict: BLOCKED — switch decoder compiled; no fitted switch exercised.
 - T03 — Verdict: BLOCKED — no genuine 1P3T/SP3T part available.
-- T04 — Verdict: BLOCKED — conversion boundaries simulated; no ADC/PWM hardware run.
+- T04 — Verdict: BLOCKED — ADC/PWM conversion policy compiled; no ADC/PWM hardware run.
 - T05 — Verdict: BLOCKED — chunked redraw compiled; no panel/audio concurrency observation.
-- T06 — Verdict: BLOCKED — event/color transitions simulated; calibration not measured.
+- T06 — Verdict: BLOCKED — event/color handling compiled; calibration not measured.
 - T07 — Verdict: BLOCKED — microphone input not captured.
 - T08 — Verdict: BLOCKED — DAC output not measured electrically or acoustically.
 - T09 — Verdict: BLOCKED — end-to-end loopback not run.

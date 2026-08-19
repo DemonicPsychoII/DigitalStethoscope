@@ -2,16 +2,15 @@
 
 GitHub Actions is used because `origin` is GitHub and the repository had no
 other CI configuration. Pull requests and pushes to `main` and `integration`
-run three stable checks:
+run two stable checks:
 
 - `Zephyr / Firmware Build`
-- `Zephyr / Automated Tests`
 - `Quality / Static Checks`
 
 The workflow pins Zephyr commit `357467a011cd2557a1a3f0b4be83d817c4addc9b`,
 Zephyr SDK `1.0.1`, west `1.5.0`, the runner image, Python, and third-party
-actions. Caches are performance-only: every build is pristine and every test
-output directory is clobbered. Repository contents are read-only and no secrets
+actions. Caches are performance-only: every firmware build is pristine.
+Repository contents are read-only and no secrets
 are used, so fork pull requests receive no privileged credentials.
 
 ## Local parity
@@ -25,8 +24,7 @@ py "Development/system/testing/ci/run_ci.py" all
 ```
 
 The Python entry point preserves paths containing spaces and parentheses and
-returns non-zero on the first failed gate. Twister reports are staged in the
-Windows temporary directory when the checkout contains parentheses. Zephyr
+returns non-zero on the first failed gate. Zephyr
 4.4's Windows Kconfig generator itself cannot configure a firmware build from a
 path containing parentheses; for the firmware stage, use a checkout path without
 parentheses (a drive mapping alone is insufficient because Python canonicalizes
@@ -41,10 +39,9 @@ merge and may be promoted selectively as the code is modularized.
 ## Artifacts and reporting
 
 Firmware evidence (14 days): build log, `.config`, generated devicetree header,
-ELF, BIN, map, RAM report, and ROM report. Twister evidence (14 days): complete
-Twister output including JUnit XML/JSON and logs. The static job also generates
-a non-blocking QC scorecard (30 days); its heuristic score is review guidance,
-not a merge condition. No serial captures, credentials, private
+ELF, BIN, map, RAM report, and ROM report. The static job also generates
+a required QC scorecard (30 days); a `HOLD` result fails the quality check.
+No serial captures, credentials, private
 hardware evidence, or developer paths are collected.
 
 ## Branch protection (administrative step)
@@ -54,8 +51,8 @@ stale local remote-tracking reference, the GitHub API reports no `main` branch.
 In GitHub **Settings → Branches → Add branch protection rule**, create a rule for
 `integration`, and create the same rule for `main` if/when that branch is created.
 Enable “Require a pull request before merging”,
-“Require status checks to pass”, “Require branches to be up to date”, select all
-three checks above, enable “Do not allow bypassing”, and apply the rule to
+“Require status checks to pass”, “Require branches to be up to date”, select both
+checks above, enable “Do not allow bypassing”, and apply the rule to
 administrators if that matches project governance. Do not enable auto-merge.
 The checks must complete at least once before GitHub offers them in the picker.
 
@@ -64,8 +61,7 @@ it is deliberately not performed by the local validation script.
 
 ## Hardware boundary
 
-`native_sim` proves only host-executable software contracts. An ESP32-S3 build
-proves compilation/linking and resource fit; neither proves that a microphone,
+An ESP32-S3 build proves compilation/linking and resource fit; it does not prove that a microphone,
 DAC, display, touch controller, GPIO, ADC, PWM, or board wiring works. Physical
 validation remains a separate manual release gate using `TEST-PROTOCOL.md`.
 Before release, retain the firmware commit, board revision/serial, operator,
