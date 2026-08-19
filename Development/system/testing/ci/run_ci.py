@@ -202,7 +202,6 @@ def tests() -> None:
             "-p",
             TEST_PLATFORM,
             "--inline-logs",
-            "--report-summary",
             "--report-all-options",
             "--outdir",
             str(out),
