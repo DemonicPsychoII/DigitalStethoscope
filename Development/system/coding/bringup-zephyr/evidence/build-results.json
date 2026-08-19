@@ -2,7 +2,7 @@
   "schema_version": 1,
   "evaluation_date": "2026-08-19",
   "source": {
-    "firmware_git_commit": "a76ebd58413a2c18d301d3014179720babada1a1",
+    "firmware_git_commit": "418f9bab891bf98602b06a5bbbeade5b4e331523",
     "working_tree_modified": false,
     "main_c_lines": 266
   },
@@ -34,7 +34,7 @@
       "target": "esp32s3_devkitc/esp32s3/procpu",
       "configuration": ["prj.conf"],
       "environment": "ZEPHYR_BASE=C:/SVN/.stetho-qc-build/zephyr; ZEPHYR_TOOLCHAIN_VARIANT=cross-compile; CROSS_COMPILE=<Zephyr-SDK-1.0.1 8.3 short path>/xtensa-espressif_esp32s3_zephyr-elf-",
-      "command": "<venv 8.3 short path>/Lib/site-packages/cmake/data/bin/cmake.exe -S C:/SVN/.stetho-qc-build/app -B C:/SVN/.stetho-qc-build/build-esp32s3-audit-default4 -GNinja -DBOARD=esp32s3_devkitc/esp32s3/procpu -DZEPHYR_MODULES=C:/SVN/.stetho-qc-build/hal_espressif -DCMAKE_MAKE_PROGRAM=<venv 8.3 short path>/ninja.exe -DPython3_EXECUTABLE=<venv 8.3 short path>/python.exe && cmake --build C:/SVN/.stetho-qc-build/build-esp32s3-audit-default4",
+      "command": "<venv 8.3 short path>/Lib/site-packages/cmake/data/bin/cmake.exe -S C:/SVN/.stetho-qc-build/app -B C:/SVN/.stetho-qc-build/build-esp32s3-final-default5 -GNinja -DBOARD=esp32s3_devkitc/esp32s3/procpu -DZEPHYR_MODULES=C:/SVN/.stetho-qc-build/hal_espressif -DCMAKE_MAKE_PROGRAM=<venv 8.3 short path>/ninja.exe -DPython3_EXECUTABLE=<venv 8.3 short path>/python.exe && cmake --build C:/SVN/.stetho-qc-build/build-esp32s3-final-default5",
       "result": "PASS",
       "application_compiler_warnings": 0,
       "non_fatal_tool_hints": ["DTC executable not found; Python devicetree generation succeeded", "ccache not installed"],
@@ -51,7 +51,7 @@
       "target": "esp32s3_devkitc/esp32s3/procpu",
       "configuration": ["prj.conf", "qc.conf"],
       "environment": "Same clean staging and cross-compile environment as esp32s3-pristine-default",
-      "command": "<venv 8.3 short path>/Lib/site-packages/cmake/data/bin/cmake.exe -S C:/SVN/.stetho-qc-build/app -B C:/SVN/.stetho-qc-build/build-esp32s3-audit-qc3 -GNinja -DBOARD=esp32s3_devkitc/esp32s3/procpu -DEXTRA_CONF_FILE=qc.conf -DZEPHYR_MODULES=C:/SVN/.stetho-qc-build/hal_espressif -DCMAKE_MAKE_PROGRAM=<venv 8.3 short path>/ninja.exe -DPython3_EXECUTABLE=<venv 8.3 short path>/python.exe && cmake --build C:/SVN/.stetho-qc-build/build-esp32s3-audit-qc3",
+      "command": "<venv 8.3 short path>/Lib/site-packages/cmake/data/bin/cmake.exe -S C:/SVN/.stetho-qc-build/app -B C:/SVN/.stetho-qc-build/build-esp32s3-final-qc4 -GNinja -DBOARD=esp32s3_devkitc/esp32s3/procpu -DEXTRA_CONF_FILE=qc.conf -DZEPHYR_MODULES=C:/SVN/.stetho-qc-build/hal_espressif -DCMAKE_MAKE_PROGRAM=<venv 8.3 short path>/ninja.exe -DPython3_EXECUTABLE=<venv 8.3 short path>/python.exe && cmake --build C:/SVN/.stetho-qc-build/build-esp32s3-final-qc4",
       "result": "PASS",
       "application_compiler_warnings": 0,
       "non_fatal_tool_hints": ["DTC executable not found; Python devicetree generation succeeded", "ccache not installed"],

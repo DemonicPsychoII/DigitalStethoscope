@@ -69,8 +69,8 @@
         }
       ]
     },
-    "a76ebd58413a2c18d301d3014179720babada1a1": {
-      "firmware_git_commit": "a76ebd58413a2c18d301d3014179720babada1a1",
+    "418f9bab891bf98602b06a5bbbeade5b4e331523": {
+      "firmware_git_commit": "418f9bab891bf98602b06a5bbbeade5b4e331523",
       "working_tree_modified": false,
       "traceability_note": "QC-refactored firmware, including the final deferred-input audit fixes, was built and simulated at this commit. No board was attached or flashed in this evaluation, so every physical case remains BLOCKED until this exact firmware image is tested.",
       "evaluation_date": "2026-08-19",

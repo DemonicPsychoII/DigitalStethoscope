@@ -21,7 +21,7 @@ with a caveat (document it) · `FAIL` = does not work · `BLOCKED` = could not t
 The authoritative normalized record is `evidence/hardware-results.json`,
 validated by `evidence/hardware-results.schema.json`. Its first record imports
 this 14.08.2026 session under firmware commit `2cd6d4c...` with an explicit
-retrospective-traceability warning. The record keyed `a76ebd5...` contains the
+retrospective-traceability warning. The record keyed `418f9ba...` contains the
 19.08.2026 refactor evaluation; every physical T00–T10 verdict is `BLOCKED`
 because that committed firmware image was not flashed.
 
@@ -1489,13 +1489,13 @@ change, format `component: old pin → new pin (reason)`:
 
 ## 19.08.2026 refactored-firmware evaluation
 
-Source: Git commit `a76ebd58413a2c18d301d3014179720babada1a1`.
+Source: Git commit `418f9bab891bf98602b06a5bbbeade5b4e331523`.
 Zephyr revision
 `357467a011cd2557a1a3f0b4be83d817c4addc9b`; SDK 1.0.1. The source compiled
 pristinely for ESP32-S3 with both normal and QC configurations, and all seven
 native_sim ztests passed. No board was attached, flashed or monitored during
 this evaluation. These are the physical verdicts, mirrored exactly in the
-`a76ebd5...` JSON record:
+`418f9ba...` JSON record:
 
 - T00 — Verdict: BLOCKED — no flash or console capture.
 - T01 — Verdict: BLOCKED — IRQ/debounce compiled; no button, LED or <=35 ms scope measurement.
