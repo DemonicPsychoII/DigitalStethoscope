@@ -69,8 +69,8 @@
       "weight": 10,
       "status": "PASS",
       "score": 10,
-      "evidence": "Structured Zephyr logging and periodic counters exist, but stack/thread analyzer protection is not enabled.",
-      "required_action": "Enable stack protection/thread analyzer in a QC configuration and capture high-water marks under audio/display load."
+      "evidence": "Structured logging, stack sentinel, initialized stack inspection, thread analyzer, and periodic QC stack-safety reporting are enabled; ESP32-S3 Xtensa hardware stack protection is unavailable in this Zephyr revision.",
+      "required_action": "None."
     },
     {
       "control": "Repeatable verification and recorded verdicts",

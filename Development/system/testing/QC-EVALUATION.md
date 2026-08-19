@@ -19,7 +19,7 @@
 | Real-time response and bounded work | 10 | PASS | 10 | The button and SP3T are polled in a 20 ms loop; touch is interrupt/callback driven. THA latency study identifies ISR + deferred processing as the deterministic pattern. |
 | API return-code discipline | 10 | PASS | 10 | Heuristic found 0 driver/API calls used as statements or explicitly discarded; several runtime output paths cannot report failure. |
 | Fault isolation and degraded operation | 10 | PASS | 10 | Per-component retry/probe table isolates missing peripherals; audio starts only when both endpoints pass. |
-| Logging and runtime diagnostics | 10 | PASS | 10 | Structured Zephyr logging and periodic counters exist, but stack/thread analyzer protection is not enabled. |
+| Logging and runtime diagnostics | 10 | PASS | 10 | Structured logging, stack sentinel, initialized stack inspection, thread analyzer, and periodic QC stack-safety reporting are enabled; ESP32-S3 Xtensa hardware stack protection is unavailable in this Zephyr revision. |
 | Repeatable verification and recorded verdicts | 10 | PASS | 10 | Detailed manual release protocol exists; successful recorded pristine ESP32-S3 builds=2; recorded hardware verdicts=11. Compilation does not prove runtime or physical behavior. |
 | Institutional baseline traceability | 10 | PASS | 10 | Pinned traceability manifest and all locally available baseline hashes match. |
 
@@ -32,7 +32,6 @@
 5. **Real-time response and bounded work:** Use GPIO interrupts for user inputs when a response-time requirement is introduced; document the current <=20 ms polling bound.
 6. **API return-code discipline:** Check and log display_write, PWM, I2S write/trigger and GPIO set failures; define recovery behavior.
 7. **Fault isolation and degraded operation:** Distinguish on-chip controller readiness from physical-device presence in machine-readable results.
-8. **Logging and runtime diagnostics:** Enable stack protection/thread analyzer in a QC configuration and capture high-water marks under audio/display load.
 9. **Repeatable verification and recorded verdicts:** Retain a successful pristine ESP32-S3 build and machine-readable physical-hardware verdicts keyed by firmware commit.
 
 ## Release interpretation

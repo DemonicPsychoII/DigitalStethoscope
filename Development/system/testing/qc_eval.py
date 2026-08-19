@@ -83,6 +83,7 @@ def evaluate(repo: Path, tha: Path) -> dict:
     main_path = app / "src/main.c"
     main = main_path.read_text(encoding="utf-8")
     conf = (app / "prj.conf").read_text(encoding="utf-8")
+    qc_conf = (app / "qc.conf").read_text(encoding="utf-8")
     overlay = (app / "boards/esp32s3_devkitc_procpu.overlay").read_text(
         encoding="utf-8"
     )
@@ -117,9 +118,19 @@ def evaluate(repo: Path, tha: Path) -> dict:
         ]
     except (OSError, TypeError, json.JSONDecodeError):
         successful_esp32_builds = []
-    runtime_analysis = has(
-        conf, r"CONFIG_(?:THREAD_ANALYZER|STACK_SENTINEL|HW_STACK_PROTECTION)=y"
+    required_runtime_options = (
+        "CONFIG_STACK_SENTINEL=y",
+        "CONFIG_THREAD_ANALYZER=y",
+        "CONFIG_THREAD_STACK_INFO=y",
+        "CONFIG_INIT_STACKS=y",
     )
+    required_qc_options = (
+        "CONFIG_THREAD_ANALYZER_AUTO=y",
+        "CONFIG_THREAD_ANALYZER_STACK_SAFETY=y",
+    )
+    runtime_analysis = all(
+        option in conf for option in required_runtime_options
+    ) and all(option in qc_conf for option in required_qc_options)
     pinned_zephyr = has(
         readme, r"Zephyr[^\n]*(?:commit|revision|tag)\s*[:=]\s*[0-9a-fv]"
     )
@@ -219,8 +230,12 @@ def evaluate(repo: Path, tha: Path) -> dict:
         10,
         "PASS" if runtime_analysis else "PARTIAL",
         10 if runtime_analysis else 6,
-        "Structured Zephyr logging and periodic counters exist, but stack/thread analyzer protection is not enabled.",
-        "Enable stack protection/thread analyzer in a QC configuration and capture high-water marks under audio/display load.",
+        "Structured logging, stack sentinel, initialized stack inspection, thread analyzer, and periodic QC stack-safety reporting are enabled; ESP32-S3 Xtensa hardware stack protection is unavailable in this Zephyr revision."
+        if runtime_analysis
+        else "Runtime diagnostics are incomplete: the required stack sentinel, stack inspection, thread analyzer, or periodic QC stack-safety options are missing.",
+        "None."
+        if runtime_analysis
+        else "Enable CONFIG_STACK_SENTINEL, CONFIG_THREAD_ANALYZER, CONFIG_THREAD_STACK_INFO and CONFIG_INIT_STACKS in prj.conf plus CONFIG_THREAD_ANALYZER_AUTO and CONFIG_THREAD_ANALYZER_STACK_SAFETY in qc.conf.",
     )
 
     repeatable = (
