@@ -30,15 +30,26 @@ def summary(line: str) -> None:
 
 def run(argv: list[str], *, cwd: Path = ROOT, log: Path | None = None) -> None:
     print("+", subprocess.list2cmdline(argv), flush=True)
+    env = os.environ.copy()
+    pinned_zephyr = ROOT / ".ci-workspace/zephyr"
+    if pinned_zephyr.is_dir():
+        # CI commands run from the application repository, outside the nested
+        # West workspace. Point West at the pinned Zephyr checkout explicitly.
+        env.setdefault("ZEPHYR_BASE", str(pinned_zephyr))
     if log:
         log.parent.mkdir(parents=True, exist_ok=True)
         with log.open("w", encoding="utf-8") as stream:
             result = subprocess.run(
-                argv, cwd=cwd, text=True, stdout=stream, stderr=subprocess.STDOUT
+                argv,
+                cwd=cwd,
+                env=env,
+                text=True,
+                stdout=stream,
+                stderr=subprocess.STDOUT,
             )
         print(log.read_text(encoding="utf-8", errors="replace"))
     else:
-        result = subprocess.run(argv, cwd=cwd)
+        result = subprocess.run(argv, cwd=cwd, env=env)
     if result.returncode:
         raise SystemExit(
             f"stage command failed ({result.returncode}): {subprocess.list2cmdline(argv)}"
