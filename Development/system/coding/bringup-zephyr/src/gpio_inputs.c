@@ -207,6 +207,9 @@ static int add_button_interrupt(gpio_flags_t interrupt_mode)
 
 static int add_switch_interrupts(gpio_flags_t interrupt_mode)
 {
+	bool first_enabled = false;
+	bool second_enabled = false;
+	bool third_enabled = false;
 	int rc;
 
 	gpio_init_callback(&switch_gpio0_callback, switch_isr,
@@ -218,37 +221,82 @@ static int add_switch_interrupts(gpio_flags_t interrupt_mode)
 	gpio_init_callback(&switch_gpio1_callback, switch_isr, BIT(switch_3.pin));
 	rc = gpio_add_callback(switch_3.port, &switch_gpio1_callback);
 	if (rc != 0) {
-		return rc;
+		goto remove_first_callback;
 	}
 	rc = gpio_pin_interrupt_configure_dt(&switch_1, interrupt_mode);
-	if (rc == 0) {
-		rc = gpio_pin_interrupt_configure_dt(&switch_2, interrupt_mode);
+	if (rc != 0) {
+		goto rollback;
 	}
-	if (rc == 0) {
-		rc = gpio_pin_interrupt_configure_dt(&switch_3, interrupt_mode);
+	first_enabled = true;
+	rc = gpio_pin_interrupt_configure_dt(&switch_2, interrupt_mode);
+	if (rc != 0) {
+		goto rollback;
+	}
+	second_enabled = true;
+	rc = gpio_pin_interrupt_configure_dt(&switch_3, interrupt_mode);
+	if (rc != 0) {
+		goto rollback;
+	}
+	third_enabled = true;
+	return 0;
+
+rollback:
+	if (third_enabled) {
+		int cleanup_rc = gpio_pin_interrupt_configure_dt(&switch_3, GPIO_INT_DISABLE);
+
+		if (cleanup_rc != 0) {
+			LOG_WRN("switch 3 interrupt rollback failed: %d", cleanup_rc);
+		}
+	}
+	if (second_enabled) {
+		int cleanup_rc = gpio_pin_interrupt_configure_dt(&switch_2, GPIO_INT_DISABLE);
+
+		if (cleanup_rc != 0) {
+			LOG_WRN("switch 2 interrupt rollback failed: %d", cleanup_rc);
+		}
+	}
+	if (first_enabled) {
+		int cleanup_rc = gpio_pin_interrupt_configure_dt(&switch_1, GPIO_INT_DISABLE);
+
+		if (cleanup_rc != 0) {
+			LOG_WRN("switch 1 interrupt rollback failed: %d", cleanup_rc);
+		}
+	}
+	{
+		int cleanup_rc = gpio_remove_callback(switch_3.port, &switch_gpio1_callback);
+
+		if (cleanup_rc != 0) {
+			LOG_WRN("switch callback 1 rollback failed: %d", cleanup_rc);
+		}
+	}
+remove_first_callback: {
+	int cleanup_rc = gpio_remove_callback(switch_1.port, &switch_gpio0_callback);
+
+	if (cleanup_rc != 0) {
+		LOG_WRN("switch callback 0 rollback failed: %d", cleanup_rc);
+	}
+}
+	return rc;
+}
+
+int gpio_inputs_start_button(gpio_flags_t interrupt_mode)
+{
+	int rc = add_button_interrupt(interrupt_mode);
+
+	if (rc != 0) {
+		LOG_ERR("button interrupt setup failed: %d", rc);
 	}
 	return rc;
 }
 
-int gpio_inputs_start(bool button_enabled, bool switch_enabled, gpio_flags_t interrupt_mode)
+int gpio_inputs_start_switch(gpio_flags_t interrupt_mode)
 {
-	int rc;
+	int rc = add_switch_interrupts(interrupt_mode);
 
-	if (button_enabled) {
-		rc = add_button_interrupt(interrupt_mode);
-		if (rc != 0) {
-			LOG_ERR("button interrupt setup failed: %d", rc);
-			return rc;
-		}
+	if (rc != 0) {
+		LOG_ERR("switch interrupt setup failed: %d", rc);
 	}
-	if (switch_enabled) {
-		rc = add_switch_interrupts(interrupt_mode);
-		if (rc != 0) {
-			LOG_ERR("switch interrupt setup failed: %d", rc);
-			return rc;
-		}
-	}
-	return 0;
+	return rc;
 }
 
 int gpio_inputs_set_led(bool enabled)

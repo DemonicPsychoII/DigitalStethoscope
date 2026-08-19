@@ -69,10 +69,10 @@
         }
       ]
     },
-    "39a94db58d42147667e936b4d71734fce47274d0+working-tree": {
-      "firmware_git_commit": "39a94db58d42147667e936b4d71734fce47274d0",
-      "working_tree_modified": true,
-      "traceability_note": "QC-refactored firmware was built and simulated from an uncommitted working tree. No board was attached or flashed in this evaluation, so every physical case remains BLOCKED until rerun against a committed firmware image.",
+    "418f9bab891bf98602b06a5bbbeade5b4e331523": {
+      "firmware_git_commit": "418f9bab891bf98602b06a5bbbeade5b4e331523",
+      "working_tree_modified": false,
+      "traceability_note": "QC-refactored firmware, including the final deferred-input audit fixes, was built and simulated at this commit. No board was attached or flashed in this evaluation, so every physical case remains BLOCKED until this exact firmware image is tested.",
       "evaluation_date": "2026-08-19",
       "tester": "Codex software evaluation; no physical-hardware operator",
       "board_and_revision": "Target: ESP32-S3-DevKitC-1 N16R8; physical revision not inspected",
@@ -82,7 +82,7 @@
         {
           "test_case_id": "T00",
           "verdict": "BLOCKED",
-          "captured_evidence": ["Pristine cross-build passed; firmware was not flashed and no console was captured"]
+          "captured_evidence": ["Both pristine default and QC cross-builds passed; firmware was not flashed and no console was captured"]
         },
         {
           "test_case_id": "T01",
