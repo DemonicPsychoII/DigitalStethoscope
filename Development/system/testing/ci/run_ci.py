@@ -215,9 +215,7 @@ def tests() -> None:
     suites = json.loads(report.read_text(encoding="utf-8")).get("testsuites", [])
     if not suites:
         raise SystemExit("zero required Twister tests were discovered")
-    zephyr_base = Path(
-        os.environ.get("ZEPHYR_BASE", ROOT / ".ci-workspace/zephyr")
-    )
+    zephyr_base = Path(os.environ.get("ZEPHYR_BASE", ROOT / ".ci-workspace/zephyr"))
     executed_roots = {
         (path if path.is_absolute() else zephyr_base / path).resolve()
         for suite in suites
