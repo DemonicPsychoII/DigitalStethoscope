@@ -1,0 +1,92 @@
+{
+  "schema_version": 1,
+  "evaluation_date": "2026-08-19",
+  "scope": "Static QC comparison; hardware observations are inherited from TEST-PROTOCOL.md and are not re-verified.",
+  "target": "Development/system/coding/bringup-zephyr",
+  "baseline": "C:\\SVN\\THA\\CreativeEngineering\\SS26\\Embedded2\\Praktikum\\src",
+  "score": 93,
+  "maximum_score": 100,
+  "gate": "PASS",
+  "controls": [
+    {
+      "control": "Zephyr application structure and build inputs",
+      "weight": 10,
+      "status": "PASS",
+      "score": 10,
+      "evidence": "CMakeLists.txt, prj.conf, board overlay and src/main.c are present.",
+      "required_action": "Pin the Zephyr manifest revision; retain a clean-build result as an artifact."
+    },
+    {
+      "control": "Devicetree-first hardware description",
+      "weight": 10,
+      "status": "PASS",
+      "score": 10,
+      "evidence": "GPIO, ADC, PWM, SPI, display, touch and I2S routing are represented in the board overlay.",
+      "required_action": "Validate the documented unverified I2S/LEDC pinmux and XPT2046 calibration on hardware."
+    },
+    {
+      "control": "Module separation and ownership",
+      "weight": 10,
+      "status": "PASS",
+      "score": 10,
+      "evidence": "Target has 13 C source file(s); main.c has 260 lines. THA reference splits ADC, sensor, servo, stepper, display and shell modules.",
+      "required_action": "Split peripheral probes/drivers, audio pipeline, UI/input and status reporting into owned modules."
+    },
+    {
+      "control": "Concurrency and shared-state synchronization",
+      "weight": 10,
+      "status": "PASS",
+      "score": 10,
+      "evidence": "A synchronization primitive is declared.",
+      "required_action": "Pass touch events through k_msgq/k_event or protect all callback/thread shared state atomically."
+    },
+    {
+      "control": "Real-time response and bounded work",
+      "weight": 10,
+      "status": "PASS",
+      "score": 10,
+      "evidence": "The button and SP3T are polled in a 20 ms loop; touch is interrupt/callback driven. THA latency study identifies ISR + deferred processing as the deterministic pattern.",
+      "required_action": "Use GPIO interrupts for user inputs when a response-time requirement is introduced; document the current <=20 ms polling bound."
+    },
+    {
+      "control": "API return-code discipline",
+      "weight": 10,
+      "status": "PASS",
+      "score": 10,
+      "evidence": "Heuristic found 0 driver/API calls used as statements or explicitly discarded; several runtime output paths cannot report failure.",
+      "required_action": "Check and log display_write, PWM, I2S write/trigger and GPIO set failures; define recovery behavior."
+    },
+    {
+      "control": "Fault isolation and degraded operation",
+      "weight": 10,
+      "status": "PASS",
+      "score": 9,
+      "evidence": "Per-component retry/probe table isolates missing peripherals; audio starts only when both endpoints pass.",
+      "required_action": "Distinguish on-chip controller readiness from physical-device presence in machine-readable results."
+    },
+    {
+      "control": "Logging and runtime diagnostics",
+      "weight": 10,
+      "status": "PASS",
+      "score": 10,
+      "evidence": "Structured Zephyr logging and periodic counters exist, but stack/thread analyzer protection is not enabled.",
+      "required_action": "Enable stack protection/thread analyzer in a QC configuration and capture high-water marks under audio/display load."
+    },
+    {
+      "control": "Repeatable verification and recorded verdicts",
+      "weight": 10,
+      "status": "PARTIAL",
+      "score": 6,
+      "evidence": "Detailed manual protocol exists; automated Zephyr tests=True; explicitly parsed verdict records=0.",
+      "required_action": "Add native_sim/ztest tests for pure logic and a machine-readable hardware result log keyed by firmware commit."
+    },
+    {
+      "control": "Institutional baseline traceability",
+      "weight": 10,
+      "status": "PASS",
+      "score": 8,
+      "evidence": "Compared against THA internship_new modular application/config and the Embedded-2 reaction-time laboratory report.",
+      "required_action": "Record exact THA source revision/date and Zephyr versions in the next signed evaluation run."
+    }
+  ]
+}

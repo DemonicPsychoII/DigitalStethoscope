@@ -1,0 +1,10 @@
+tests:
+  stethoscope.ci_contract:
+    tags:
+      - stethoscope
+      - ci
+    platform_allow:
+      - native_sim
+    integration_platforms:
+      - native_sim
+    timeout: 10
