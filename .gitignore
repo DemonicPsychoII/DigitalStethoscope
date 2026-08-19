@@ -4,11 +4,18 @@
 # Several GB of third-party content - recreate it with:
 #   Development/system/coding/tools/setup-toolchain.ps1
 Development/system/coding/tools/zephyrproject/
+Development/Toolchain/zephyrproject/
 
 # Zephyr / CMake build output
 build/
+build-*/
+twister-out*/
+.ci-workspace/
+.ci-hash-tmp/
+artifacts/
 *.elf
 *.map
+*.bin
 
 # Python
 __pycache__/

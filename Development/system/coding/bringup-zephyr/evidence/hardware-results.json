@@ -1,0 +1,140 @@
+{
+  "$schema": "hardware-results.schema.json",
+  "schema_version": 1,
+  "records_by_firmware_commit": {
+    "2cd6d4c818be92f0bf1e1181ef0b4cd7de7ceb14": {
+      "firmware_git_commit": "2cd6d4c818be92f0bf1e1181ef0b4cd7de7ceb14",
+      "working_tree_modified": false,
+      "traceability_note": "Retrospective import of the 2026-08-14 session. Commit 2cd6d4c was created the following day and contains the recorded firmware and protocol; no flashed-binary hash was captured, so this is not release-grade traceability.",
+      "evaluation_date": "2026-08-14",
+      "tester": "Nico F.",
+      "board_and_revision": "ESP32-S3-DevKitC-1 N16R8; PCB revision not recorded",
+      "zephyr_revision": "357467a011cd2557a1a3f0b4be83d817c4addc9b",
+      "sdk_version": "Zephyr SDK 1.0.1",
+      "test_cases": [
+        {
+          "test_case_id": "T00",
+          "verdict": "PASS",
+          "captured_evidence": ["TEST-PROTOCOL.md T00 console log and assessment"]
+        },
+        {
+          "test_case_id": "T01",
+          "verdict": "PASS",
+          "captured_evidence": ["TEST-PROTOCOL.md T01: physical LED toggled once per press"]
+        },
+        {
+          "test_case_id": "T02",
+          "verdict": "PARTIAL",
+          "captured_evidence": ["TEST-PROTOCOL.md T02: positions 1 and 2 observed; fitted 3PDT has only two positions"]
+        },
+        {
+          "test_case_id": "T03",
+          "verdict": "BLOCKED",
+          "captured_evidence": ["A genuine 1P3T/SP3T part was not fitted; GPIO38 position 3 could not be exercised"]
+        },
+        {
+          "test_case_id": "T04",
+          "verdict": "PASS",
+          "captured_evidence": ["TEST-PROTOCOL.md T04: monotonic physical sweep from 0 mV to 3083 mV"]
+        },
+        {
+          "test_case_id": "T05",
+          "verdict": "PARTIAL",
+          "captured_evidence": ["Panel and backlight worked physically; old firmware lost I2S RX during full-screen redraw"]
+        },
+        {
+          "test_case_id": "T06",
+          "verdict": "PARTIAL",
+          "captured_evidence": ["Touch was physically detected during T05, but coordinates and multi-event behavior failed acceptance"]
+        },
+        {
+          "test_case_id": "T07",
+          "verdict": "PASS",
+          "captured_evidence": ["TEST-PROTOCOL.md T07: microphone peak tracked real sound, errs=0 over 30 seconds"]
+        },
+        {
+          "test_case_id": "T08",
+          "verdict": "PARTIAL",
+          "captured_evidence": ["I2S TX accepted a block; PCM5102A acoustic output was not measured and unplugged hardware cannot be distinguished"]
+        },
+        {
+          "test_case_id": "T09",
+          "verdict": "BLOCKED",
+          "captured_evidence": ["End-to-end audio loopback was not physically run"]
+        },
+        {
+          "test_case_id": "T10",
+          "verdict": "BLOCKED",
+          "captured_evidence": ["Simultaneous full-assembly test was not run"]
+        }
+      ]
+    },
+    "39a94db58d42147667e936b4d71734fce47274d0+working-tree": {
+      "firmware_git_commit": "39a94db58d42147667e936b4d71734fce47274d0",
+      "working_tree_modified": true,
+      "traceability_note": "QC-refactored firmware was built and simulated from an uncommitted working tree. No board was attached or flashed in this evaluation, so every physical case remains BLOCKED until rerun against a committed firmware image.",
+      "evaluation_date": "2026-08-19",
+      "tester": "Codex software evaluation; no physical-hardware operator",
+      "board_and_revision": "Target: ESP32-S3-DevKitC-1 N16R8; physical revision not inspected",
+      "zephyr_revision": "357467a011cd2557a1a3f0b4be83d817c4addc9b",
+      "sdk_version": "Zephyr SDK 1.0.1",
+      "test_cases": [
+        {
+          "test_case_id": "T00",
+          "verdict": "BLOCKED",
+          "captured_evidence": ["Pristine cross-build passed; firmware was not flashed and no console was captured"]
+        },
+        {
+          "test_case_id": "T01",
+          "verdict": "BLOCKED",
+          "captured_evidence": ["Interrupt/debounce logic compiled; no physical button or LED test performed"]
+        },
+        {
+          "test_case_id": "T02",
+          "verdict": "BLOCKED",
+          "captured_evidence": ["Switch decoder ztests passed; no physical switch measurement performed"]
+        },
+        {
+          "test_case_id": "T03",
+          "verdict": "BLOCKED",
+          "captured_evidence": ["No genuine three-position switch was available"]
+        },
+        {
+          "test_case_id": "T04",
+          "verdict": "BLOCKED",
+          "captured_evidence": ["Brightness boundary ztests passed; ADC/PWM hardware was not exercised"]
+        },
+        {
+          "test_case_id": "T05",
+          "verdict": "BLOCKED",
+          "captured_evidence": ["Chunked display implementation compiled; panel and concurrent I2S behavior were not observed"]
+        },
+        {
+          "test_case_id": "T06",
+          "verdict": "BLOCKED",
+          "captured_evidence": ["Touch transition/debounce ztests passed; panel calibration remains a physical task"]
+        },
+        {
+          "test_case_id": "T07",
+          "verdict": "BLOCKED",
+          "captured_evidence": ["I2S RX code compiled; no microphone signal was captured"]
+        },
+        {
+          "test_case_id": "T08",
+          "verdict": "BLOCKED",
+          "captured_evidence": ["I2S TX code compiled; no PCM5102A electrical or acoustic output was measured"]
+        },
+        {
+          "test_case_id": "T09",
+          "verdict": "BLOCKED",
+          "captured_evidence": ["Audio loopback was not run on physical hardware"]
+        },
+        {
+          "test_case_id": "T10",
+          "verdict": "BLOCKED",
+          "captured_evidence": ["Simultaneous audio/display/touch/logging/input and stack high-water test was not run"]
+        }
+      ]
+    }
+  }
+}
