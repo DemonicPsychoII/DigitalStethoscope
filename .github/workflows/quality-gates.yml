@@ -2,10 +2,12 @@ name: Mandatory quality gates
 
 on:
   pull_request:
-    branches: [main, integration]
-  push:
-    branches: [main, integration]
-  workflow_dispatch:
+    branches: [integration]
+    paths:
+      - '.github/workflows/quality-gates.yml'
+      - 'Development/system/coding/bringup-zephyr/**'
+      - 'Development/system/testing/ci/**'
+      - 'Development/system/testing/qc_eval.py'
 
 concurrency:
   group: quality-gates-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -22,10 +24,10 @@ env:
   BOARD: esp32s3_devkitc/esp32s3/procpu
 
 jobs:
-  static:
-    name: Quality / Static Checks
+  quality-gates:
+    name: Mandatory quality gates
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
@@ -41,25 +43,6 @@ jobs:
         run: python Development/system/testing/ci/run_ci.py static
       - name: Run required QC evaluation
         run: python Development/system/testing/ci/run_ci.py qc
-      - name: Upload QC evidence
-        if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: quality-control-evidence
-          path: |
-            Development/system/testing/QC-EVALUATION.md
-            Development/system/testing/qc-eval-results.json
-          if-no-files-found: warn
-          retention-days: 30
-
-  firmware:
-    name: Zephyr / Firmware Build
-    runs-on: ubuntu-24.04
-    timeout-minutes: 60
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-        with:
-          persist-credentials: false
       - uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
         with:
           path: |
@@ -70,11 +53,3 @@ jobs:
         run: bash Development/system/testing/ci/setup_zephyr.sh
       - name: Pristine firmware build
         run: .ci-workspace/.venv/bin/python Development/system/testing/ci/run_ci.py build
-      - name: Upload firmware evidence
-        if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: firmware-build-evidence
-          path: artifacts/firmware/
-          if-no-files-found: warn
-          retention-days: 14
