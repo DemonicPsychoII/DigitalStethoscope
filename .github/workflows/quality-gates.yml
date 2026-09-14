@@ -43,12 +43,6 @@ jobs:
         run: python Development/system/testing/ci/run_ci.py static
       - name: Run required QC evaluation
         run: python Development/system/testing/ci/run_ci.py qc
-      - uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
-        with:
-          path: |
-            .ci-workspace
-            ~/.cache/pip
-          key: ${{ runner.os }}-zephyr-${{ env.ZEPHYR_REVISION }}-sdk-${{ env.ZEPHYR_SDK_VERSION }}-${{ hashFiles('Development/system/testing/ci/requirements-ci.txt', 'Development/system/coding/bringup-zephyr/**') }}
       - name: Provision pinned Zephyr workspace
         run: bash Development/system/testing/ci/setup_zephyr.sh
       - name: Pristine firmware build
