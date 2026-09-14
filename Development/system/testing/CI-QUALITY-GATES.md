@@ -1,15 +1,21 @@
 # Mandatory CI quality gates
 
 GitHub Actions is used because `origin` is GitHub and the repository had no
-other CI configuration. Pull requests and pushes to `main` and `integration`
-run two stable checks:
+other CI configuration. Pull requests into `integration` report two stable checks:
 
 - `Zephyr / Firmware Build`
 - `Quality / Static Checks`
 
 The workflow pins Zephyr commit `357467a011cd2557a1a3f0b4be83d817c4addc9b`,
 Zephyr SDK `1.0.1`, west `1.5.0`, the runner image, Python, and third-party
-actions. Caches are performance-only: every firmware build is pristine.
+actions. Static checks and QC run on every PR, including documentation-only
+changes, so changes to `.clang-format` and the QC traceability manifest are
+always validated. The firmware job runs only when the workflow, bring-up tree,
+or CI scripts change; otherwise GitHub reports it as skipped, which satisfies
+its required-check rule. Change detection compares the current base and head
+trees, includes deletions and both sides of renames, and fails on Git errors.
+There are no push, main-branch, or manual duplicate runs. Only Python package
+caching remains; firmware builds are pristine with a 30-minute timeout.
 Repository contents are read-only and no secrets
 are used, so fork pull requests receive no privileged credentials.
 
@@ -38,23 +44,20 @@ merge and may be promoted selectively as the code is modularized.
 
 ## Artifacts and reporting
 
-Firmware evidence (14 days): build log, `.config`, generated devicetree header,
-ELF, BIN, map, RAM report, and ROM report. The static job also generates
-a required QC scorecard (30 days); a `HOLD` result fails the quality check.
+No artifacts are uploaded. Build output and RAM/ROM reports appear in the job
+log; firmware evidence files remain available when running locally. The static
+job generates a QC scorecard and records its score in the run summary; a `HOLD`
+result fails the quality check.
 No serial captures, credentials, private
 hardware evidence, or developer paths are collected.
 
 ## Branch protection (administrative step)
 
-The remote currently exposes only `integration` (the default branch); despite a
-stale local remote-tracking reference, the GitHub API reports no `main` branch.
-In GitHub **Settings → Branches → Add branch protection rule**, create a rule for
-`integration`, and create the same rule for `main` if/when that branch is created.
-Enable “Require a pull request before merging”,
-“Require status checks to pass”, “Require branches to be up to date”, select both
-checks above, enable “Do not allow bypassing”, and apply the rule to
-administrators if that matches project governance. Do not enable auto-merge.
-The checks must complete at least once before GitHub offers them in the picker.
+The existing `integration` protection requires both check names above and an
+up-to-date branch. Keep those names stable. Do not use workflow-level path
+filters: a filtered-out workflow cannot report a required check for docs-only
+PRs. If CI is later required for another protected branch, add that branch to
+the workflow trigger before requiring these checks there.
 
 Equivalent GitHub CLI/API setup requires repository-administration authority;
 it is deliberately not performed by the local validation script.

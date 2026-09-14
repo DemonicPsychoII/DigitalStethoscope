@@ -176,7 +176,7 @@ def build() -> None:
         shutil.copy2(source, evidence / name)
     summary(
         "### Firmware build: PASS\n\nSee RAM/ROM reports in "
-        "`firmware-build-evidence` (Actions run artifacts)."
+        "the firmware job log. Evidence files are generated locally; no artifacts are uploaded."
     )
 
 
@@ -202,7 +202,7 @@ def qc() -> None:
     summary(
         f"### QC evaluation: {disposition}\n\nScore: {result['score']}/"
         f"{result['maximum_score']}; gate: {result['gate']}. "
-        "Artifact: `quality-control-evidence`."
+        "The scorecard is generated locally; no artifacts are uploaded."
     )
     if result_process.returncode != 0:
         raise SystemExit(

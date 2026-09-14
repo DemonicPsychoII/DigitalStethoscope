@@ -2,10 +2,7 @@ name: Mandatory quality gates
 
 on:
   pull_request:
-    branches: [main, integration]
-  push:
-    branches: [main, integration]
-  workflow_dispatch:
+    branches: [integration]
 
 concurrency:
   group: quality-gates-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -25,12 +22,20 @@ jobs:
   static:
     name: Quality / Static Checks
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 10
+    outputs:
+      firmware: ${{ steps.changes.outputs.firmware }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           fetch-depth: 0
           persist-credentials: false
+      - name: Detect firmware changes
+        id: changes
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: python3 Development/system/testing/ci/firmware_changes.py
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: '3.12.10'
@@ -41,40 +46,17 @@ jobs:
         run: python Development/system/testing/ci/run_ci.py static
       - name: Run required QC evaluation
         run: python Development/system/testing/ci/run_ci.py qc
-      - name: Upload QC evidence
-        if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: quality-control-evidence
-          path: |
-            Development/system/testing/QC-EVALUATION.md
-            Development/system/testing/qc-eval-results.json
-          if-no-files-found: warn
-          retention-days: 30
-
   firmware:
     name: Zephyr / Firmware Build
+    needs: static
+    if: needs.static.outputs.firmware == 'true'
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           persist-credentials: false
-      - uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
-        with:
-          path: |
-            .ci-workspace
-            ~/.cache/pip
-          key: ${{ runner.os }}-zephyr-${{ env.ZEPHYR_REVISION }}-sdk-${{ env.ZEPHYR_SDK_VERSION }}-${{ hashFiles('Development/system/testing/ci/requirements-ci.txt', 'Development/system/coding/bringup-zephyr/**') }}
       - name: Provision pinned Zephyr workspace
         run: bash Development/system/testing/ci/setup_zephyr.sh
       - name: Pristine firmware build
         run: .ci-workspace/.venv/bin/python Development/system/testing/ci/run_ci.py build
-      - name: Upload firmware evidence
-        if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: firmware-build-evidence
-          path: artifacts/firmware/
-          if-no-files-found: warn
-          retention-days: 14
