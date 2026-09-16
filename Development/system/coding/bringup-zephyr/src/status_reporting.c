@@ -4,12 +4,26 @@
 
 #include "audio_loopback.h"
 #include "display_touch.h"
+#include "stetho_control.h"
 
 LOG_MODULE_REGISTER(status_reporting, LOG_LEVEL_INF);
 
 void status_reporting_log(const struct peripheral_registry *registry,
                           const struct runtime_state *runtime)
 {
+	struct stetho_settings settings;
+	stetho_settings_get(&settings);
+	if (!settings.diagnostics) {
+		struct audio_snapshot audio;
+		audio_loopback_snapshot(&audio);
+		LOG_INF("audio=%u source=%u filter=%u analysis=%u volume=%u speed=%u "
+		        "bpm-valid=%u bpm=%u.%u quality=%u clips=%u errors=%u touch=%u@%d,%d",
+		        audio.running, audio.source, settings.filter, settings.analysis,
+		        settings.volume, settings.speed, audio.bpm_valid, audio.bpm_tenths / 10,
+		        audio.bpm_tenths % 10, audio.quality_percent, audio.output_clips,
+		        audio.errors, runtime->touch.count, runtime->touch.x, runtime->touch.y);
+		return;
+	}
 	char buffer[192];
 	struct audio_snapshot audio;
 	struct app_status_snapshot status = {

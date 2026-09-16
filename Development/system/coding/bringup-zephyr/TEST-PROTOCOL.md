@@ -1,3 +1,5 @@
+> Historical component protocol. Existing wiring was subsequently confirmed working by the user on 2026-09-16. For the upgraded firmware use [EVAL-GUIDE.md](EVAL-GUIDE.md); historical verdicts below are not new-firmware acceptance.
+
 # Hardware Test Protocol — ESP32-S3 Bring-up
 
 Test record for the digital stethoscope bring-up firmware. Start from a **bare

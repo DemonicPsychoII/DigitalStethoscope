@@ -71,3 +71,13 @@ Before release, retain the firmware commit, board revision/serial, operator,
 date, filled PASS/FAIL/BLOCKED verdicts, electrical checks, audio observations,
 and instrument evidence. Hardware-in-the-loop may become a separate protected
 scheduled/manual gate only after a controlled runner and real board are available.
+
+## Integrated evaluation coverage (2026-09-16)
+
+The static job additionally installs `bringup-zephyr/tools/requirements.txt` and
+runs `tests/host` against the portable DSP/FHIR implementation and a local HTTPS
+readback fixture. The firmware job now also performs pristine QC and combined
+network/QC/second-switch builds. These builds do not connect to Wi-Fi or send
+FHIR data. CA/server credentials are absent from CI; the local upgrade evidence
+also includes a build with an ephemeral public test CA to exercise certificate
+embedding. Physical acceptance remains in `bringup-zephyr/EVAL-GUIDE.md`.

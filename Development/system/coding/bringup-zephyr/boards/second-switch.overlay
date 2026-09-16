@@ -1,0 +1,10 @@
+/* Optional second SP3T: common GND, throws GPIO2/39/47.
+ * This is an extension, not part of the user-confirmed existing wiring.
+ * GPIO39 is unavailable to an external JTAG probe when used here. */
+/ {
+ zephyr,user {
+  speed-gpios = <&gpio0 2 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>,
+                <&gpio1 7 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>,
+                <&gpio1 15 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+ };
+};

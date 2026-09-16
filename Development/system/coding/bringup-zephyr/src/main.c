@@ -1,11 +1,4 @@
-/* Application orchestration for the ESP32-S3 digital-stethoscope bring-up. */
-
-#include <errno.h>
-
-#include <zephyr/drivers/gpio.h>
-#include <zephyr/kernel.h>
-#include <zephyr/logging/log.h>
-
+/* Main owns peripheral orchestration; audio, display and network have workers. */
 #include "analog_backlight.h"
 #include "app_logic.h"
 #include "app_types.h"
@@ -14,252 +7,199 @@
 #include "gpio_inputs.h"
 #include "peripherals.h"
 #include "status_reporting.h"
-
+#include "stetho_control.h"
+#include <errno.h>
+#include <stdlib.h>
+#include <zephyr/drivers/gpio.h>
+#include <zephyr/kernel.h>
+#include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(bringup, LOG_LEVEL_INF);
-
-#define EVENT_QUEUE_DEPTH 16
-#define ANALOG_PERIOD_MS 100U
-#define STATUS_PERIOD_MS 500U
-#define IDLE_PERIOD_MS 5000U
 #define INPUT_RESPONSE_REQUIREMENT_MS 35U
-
-/* Producers are GPIO deferred work and the input callback; main is sole consumer. */
-K_MSGQ_DEFINE(app_event_queue, sizeof(struct app_event), EVENT_QUEUE_DEPTH, 4);
-
+K_MSGQ_DEFINE(app_event_queue, sizeof(struct app_event), 16, 4);
 struct app_context {
 	struct peripheral_registry peripherals;
 	struct runtime_state runtime;
-	unsigned int adc_errors;
-	unsigned int pwm_errors;
-	unsigned int gpio_errors;
-	unsigned int latency_violations;
+	unsigned int adc_errors, pwm_errors, gpio_errors, latency_violations;
 	uint32_t max_input_latency_ms;
 };
-
-static void disable_after_policy(struct app_context *context, enum component_id component,
+static void disable_after_policy(struct app_context *c, enum component_id component,
                                  enum driver_operation operation, unsigned int failures, int error)
 {
-	enum driver_error_action action = app_driver_error_action(operation, failures);
-
-	if (action == DRIVER_ERROR_DISABLE_COMPONENT) {
-		peripherals_disable(&context->peripherals, component, error);
-		context->runtime.features = app_degraded_features(context->peripherals.components);
+	if (app_driver_error_action(operation, failures) == DRIVER_ERROR_DISABLE_COMPONENT) {
+		peripherals_disable(&c->peripherals, component, error);
+		c->runtime.features = app_degraded_features(c->peripherals.components);
 	}
 }
-
-static int draw_color(struct app_context *context)
+static void sample_analog(struct app_context *c)
 {
-	int rc;
-	unsigned int failures = 0U;
-
-	do {
-		rc = display_touch_show_color(context->runtime.touch.color_index);
-		if (rc == 0) {
-			return 0;
+	struct stetho_settings settings;
+	stetho_settings_get(&settings);
+	if (peripherals_operational(&c->peripherals, COMP_POTENTIOMETER)) {
+		int mv;
+		int rc = analog_backlight_read_mv(&mv);
+		if (rc)
+			disable_after_policy(c, COMP_POTENTIOMETER, DRIVER_OP_ADC_SAMPLE,
+			                     ++c->adc_errors, rc);
+		else {
+			c->adc_errors = 0;
+			c->runtime.potentiometer_mv = mv;
+			if (settings.pot && !settings.diagnostics) {
+				unsigned int volume = (unsigned int)CLAMP(
+				        mv * 100 / CONFIG_STETHO_POT_MAX_MV, 0, 100);
+				/* Suppress ADC jitter; the audio worker ramps the accepted gain. */
+				if (volume == 0 || volume == 100 ||
+				    abs((int)volume - (int)settings.volume) >= 2)
+					stetho_setting_set("volume", volume);
+			}
 		}
-		failures++;
-	} while (app_driver_error_action(DRIVER_OP_DISPLAY_WRITE, failures) == DRIVER_ERROR_RETRY);
-
-	peripherals_disable(&context->peripherals, COMP_DISPLAY, rc);
-	context->runtime.features = app_degraded_features(context->peripherals.components);
-	return rc;
-}
-
-static void sample_potentiometer(struct app_context *context)
-{
-	int millivolts;
-	int rc;
-
-	if (!peripherals_operational(&context->peripherals, COMP_POTENTIOMETER)) {
-		return;
 	}
-	rc = analog_backlight_read_mv(&millivolts);
-	if (rc != 0) {
-		context->adc_errors++;
-		disable_after_policy(context, COMP_POTENTIOMETER, DRIVER_OP_ADC_SAMPLE,
-		                     context->adc_errors, rc);
-		return;
-	}
-	context->adc_errors = 0U;
-	context->runtime.potentiometer_mv = millivolts;
-	context->runtime.brightness_percent = app_brightness_percent(millivolts);
-	if (!peripherals_operational(&context->peripherals, COMP_BACKLIGHT)) {
-		return;
-	}
-	rc = analog_backlight_set_mv(millivolts);
-	if (rc != 0) {
-		context->pwm_errors++;
-		disable_after_policy(context, COMP_BACKLIGHT, DRIVER_OP_BACKLIGHT_PWM,
-		                     context->pwm_errors, rc);
-	} else {
-		context->pwm_errors = 0U;
+	if (peripherals_operational(&c->peripherals, COMP_BACKLIGHT)) {
+		int mv = settings.diagnostics && peripherals_operational(&c->peripherals,
+		                                                         COMP_POTENTIOMETER)
+		                 ? c->runtime.potentiometer_mv
+		                 : (int)settings.brightness * APP_MAX_MILLIVOLTS / 100;
+		int rc = analog_backlight_set_mv(mv);
+		if (rc)
+			disable_after_policy(c, COMP_BACKLIGHT, DRIVER_OP_BACKLIGHT_PWM,
+			                     ++c->pwm_errors, rc);
+		else
+			c->pwm_errors = 0;
+		c->runtime.brightness_percent = app_brightness_percent(mv);
 	}
 }
-
-static void record_input_latency(struct app_context *context, uint32_t event_time)
+static void handle_event(struct app_context *c, const struct app_event *event)
 {
-	uint32_t latency = k_uptime_get_32() - event_time;
-
-	if (latency > context->max_input_latency_ms) {
-		context->max_input_latency_ms = latency;
-	}
-	if (latency > INPUT_RESPONSE_REQUIREMENT_MS) {
-		context->latency_violations++;
-	}
+	uint32_t latency = k_uptime_get_32() - event->timestamp_ms;
+	c->max_input_latency_ms = MAX(c->max_input_latency_ms, latency);
 	if (latency > INPUT_RESPONSE_REQUIREMENT_MS &&
-	    app_should_log_failure(context->latency_violations)) {
-		LOG_WRN("input response requirement exceeded: %u ms > %u ms", latency,
-		        INPUT_RESPONSE_REQUIREMENT_MS);
-	}
-}
-
-static void handle_button(struct app_context *context, const struct app_event *event)
-{
-	bool was_pressed = context->runtime.button_pressed;
-	int rc;
-
-	context->runtime.button_pressed = event->data.button_pressed;
-	if (!event->data.button_pressed || was_pressed) {
-		return;
-	}
-	context->runtime.led_on = !context->runtime.led_on;
-	rc = gpio_inputs_set_led(context->runtime.led_on);
-	if (rc != 0) {
-		context->gpio_errors++;
-		disable_after_policy(context, COMP_BUTTON_LED, DRIVER_OP_GPIO_OUTPUT,
-		                     context->gpio_errors, rc);
-	} else {
-		context->gpio_errors = 0U;
-	}
-}
-
-static void handle_event(struct app_context *context, const struct app_event *event)
-{
-	record_input_latency(context, event->timestamp_ms);
+	    app_should_log_failure(++c->latency_violations))
+		LOG_WRN("Input handler latency %u ms", latency);
+	struct stetho_settings settings;
+	stetho_settings_get(&settings);
 	switch (event->type) {
 	case APP_EVENT_BUTTON:
-		if (peripherals_operational(&context->peripherals, COMP_BUTTON_LED)) {
-			handle_button(context, event);
+		if (peripherals_operational(&c->peripherals, COMP_BUTTON_LED)) {
+			bool previous = c->runtime.button_pressed;
+			c->runtime.button_pressed = event->data.button_pressed;
+			if (event->data.button_pressed && !previous) {
+				if (settings.diagnostics)
+					c->runtime.led_on = !c->runtime.led_on;
+				else {
+					struct audio_snapshot audio;
+					audio_loopback_snapshot(&audio);
+					stetho_action_request(audio.capturing || audio.replaying
+					                              ? ACTION_LIVE
+					                              : ACTION_CAPTURE);
+					c->runtime.led_on = !(audio.capturing || audio.replaying);
+				}
+				int rc = gpio_inputs_set_led(c->runtime.led_on);
+				if (rc)
+					disable_after_policy(c, COMP_BUTTON_LED,
+					                     DRIVER_OP_GPIO_OUTPUT,
+					                     ++c->gpio_errors, rc);
+				else
+					c->gpio_errors = 0;
+			}
 		}
 		break;
 	case APP_EVENT_SWITCH:
-		if (peripherals_operational(&context->peripherals, COMP_SWITCH)) {
-			context->runtime.switch_position = event->data.switch_position;
-			peripherals_note_physical(&context->peripherals, COMP_SWITCH);
+		if (peripherals_operational(&c->peripherals, COMP_SWITCH)) {
+			c->runtime.switch_position = event->data.switch_position;
+			if (event->data.switch_position >= 1 && event->data.switch_position <= 3)
+				stetho_setting_set("filter", event->data.switch_position - 1);
+			peripherals_note_physical(&c->peripherals, COMP_SWITCH);
 		}
 		break;
+	case APP_EVENT_SPEED:
+		if (event->data.switch_position >= 1 && event->data.switch_position <= 3)
+			stetho_setting_set("speed", event->data.switch_position == 1   ? 100
+			                            : event->data.switch_position == 2 ? 75
+			                                                               : 50);
+		break;
 	case APP_EVENT_TOUCH:
-		if (!peripherals_operational(&context->peripherals, COMP_TOUCH)) {
-			break;
-		}
-		if (!app_touch_transition(&context->runtime.touch, event->timestamp_ms,
-		                          event->data.touch.x, event->data.touch.y,
-		                          (uint8_t)display_touch_color_count())) {
-			break;
-		}
-		peripherals_note_physical(&context->peripherals, COMP_TOUCH);
-		if (peripherals_operational(&context->peripherals, COMP_DISPLAY)) {
-			draw_color(context);
-		} else {
-			LOG_INF("touch at x=%d y=%d (display unavailable)", event->data.touch.x,
-			        event->data.touch.y);
+		if (peripherals_operational(&c->peripherals, COMP_TOUCH) &&
+		    app_touch_transition(&c->runtime.touch, event->timestamp_ms,
+		                         event->data.touch.x, event->data.touch.y,
+		                         (uint8_t)display_touch_color_count())) {
+			peripherals_note_physical(&c->peripherals, COMP_TOUCH);
+			if (settings.diagnostics) {
+				int rc = display_touch_show_color(c->runtime.touch.color_index);
+				if (rc)
+					LOG_WRN("Color request failed: %d", rc);
+			} else
+				stetho_control_touch(event->data.touch.x, event->data.touch.y);
 		}
 		break;
 	default:
-		LOG_WRN("unknown application event: %d", event->type);
 		break;
 	}
 }
-
-static void start_available_features(struct app_context *context)
+static void start_available_features(struct app_context *c)
 {
-	int rc;
-
-	gpio_inputs_get_initial(&context->runtime.button_pressed,
-	                        &context->runtime.switch_position);
-	if (peripherals_operational(&context->peripherals, COMP_BUTTON_LED)) {
-		rc = gpio_inputs_start_button(GPIO_INT_EDGE_BOTH);
-		if (rc != 0) {
-			peripherals_disable(&context->peripherals, COMP_BUTTON_LED, rc);
-		}
+	gpio_inputs_get_initial(&c->runtime.button_pressed, &c->runtime.switch_position);
+	if (c->runtime.switch_position >= 1 && c->runtime.switch_position <= 3)
+		stetho_setting_set("filter", c->runtime.switch_position - 1);
+	if (peripherals_operational(&c->peripherals, COMP_BUTTON_LED)) {
+		int rc = gpio_inputs_start_button(GPIO_INT_EDGE_BOTH);
+		if (rc)
+			peripherals_disable(&c->peripherals, COMP_BUTTON_LED, rc);
 	}
-	if (peripherals_operational(&context->peripherals, COMP_SWITCH)) {
-		rc = gpio_inputs_start_switch(GPIO_INT_EDGE_BOTH);
-		if (rc != 0) {
-			peripherals_disable(&context->peripherals, COMP_SWITCH, rc);
-		}
+	if (peripherals_operational(&c->peripherals, COMP_SWITCH)) {
+		int rc = gpio_inputs_start_switch(GPIO_INT_EDGE_BOTH);
+		if (rc)
+			peripherals_disable(&c->peripherals, COMP_SWITCH, rc);
 	}
-
-	if (peripherals_operational(&context->peripherals, COMP_POTENTIOMETER)) {
-		sample_potentiometer(context);
-	} else if (peripherals_operational(&context->peripherals, COMP_BACKLIGHT)) {
-		rc = analog_backlight_set_mv(APP_MAX_MILLIVOLTS);
-		if (rc != 0) {
-			peripherals_disable(&context->peripherals, COMP_BACKLIGHT, rc);
-		}
-		context->runtime.brightness_percent = 100U;
-	}
-	if (peripherals_operational(&context->peripherals, COMP_DISPLAY)) {
-		draw_color(context);
-	}
-
-	context->runtime.features = app_degraded_features(context->peripherals.components);
-	if ((context->runtime.features & APP_FEATURE_AUDIO_LOOPBACK) != 0U) {
+	int rc = gpio_inputs_start_speed();
+	if (rc)
+		LOG_WRN("Optional speed switch disabled: %d", rc);
+	c->runtime.features = app_degraded_features(c->peripherals.components);
+	/* DAC test sources remain usable even if the microphone probe fails. */
+	if (peripherals_operational(&c->peripherals, COMP_DAC)) {
 		rc = audio_loopback_start();
-		if (rc != 0) {
-			LOG_ERR("audio loopback start failed; endpoints remain independently "
-			        "usable: %d",
-			        rc);
-		}
-	} else if (peripherals_operational(&context->peripherals, COMP_MICROPHONE) !=
-	           peripherals_operational(&context->peripherals, COMP_DAC)) {
-		LOG_WRN("audio loopback disabled: %s endpoint unavailable",
-		        peripherals_operational(&context->peripherals, COMP_MICROPHONE) ? "output"
-		                                                                        : "input");
+		if (rc)
+			LOG_ERR("Audio start failed: %d", rc);
 	}
 }
-
 int main(void)
 {
-	struct app_context context = {0};
+	struct app_context c = {0};
 	struct app_event event;
-	uint32_t next_analog;
-	uint32_t next_status;
-	size_t operational;
-
-	LOG_INF("=== Stethoscope hardware bring-up ===");
-	operational = peripherals_probe_all(&context.peripherals);
-	peripherals_report(&context.peripherals);
-	start_available_features(&context);
-
-	next_analog = k_uptime_get_32() + ANALOG_PERIOD_MS;
-	next_status = k_uptime_get_32();
+	LOG_INF("=== Stethoscope integrated evaluation ===");
+	peripherals_probe_all(&c.peripherals);
+	peripherals_report(&c.peripherals);
+	start_available_features(&c);
+	uint32_t next_analog = 0, next_status = 0;
 	while (true) {
-		uint32_t now;
-		int rc = k_msgq_get(&app_event_queue, &event, K_MSEC(20));
-
-		if (rc == 0) {
-			handle_event(&context, &event);
-		} else if (rc != -EAGAIN) {
-			LOG_ERR("application event receive failed: %d", rc);
-		}
-		now = k_uptime_get_32();
+		int rc = k_msgq_get(&app_event_queue, &event, K_MSEC(5));
+		if (!rc)
+			handle_event(&c, &event);
+		else if (rc != -EAGAIN)
+			LOG_ERR("Event receive: %d", rc);
+		uint32_t now = k_uptime_get_32();
 		if ((int32_t)(now - next_analog) >= 0) {
-			sample_potentiometer(&context);
-			next_analog = now + ANALOG_PERIOD_MS;
+			sample_analog(&c);
+			next_analog = now + 100;
 		}
 		if ((int32_t)(now - next_status) >= 0) {
-			if (operational == 0U) {
-				LOG_INF("no operational peripherals - check wiring and power, then "
-				        "reset");
-				next_status = now + IDLE_PERIOD_MS;
-			} else {
-				status_reporting_log(&context.peripherals, &context.runtime);
-				LOG_INF("input-latency-max=%ums requirement<=%ums",
-				        context.max_input_latency_ms,
-				        INPUT_RESPONSE_REQUIREMENT_MS);
-				next_status = now + STATUS_PERIOD_MS;
+			status_reporting_log(&c.peripherals, &c.runtime);
+			LOG_INF("input-latency-max=%ums requirement<=%ums", c.max_input_latency_ms,
+			        INPUT_RESPONSE_REQUIREMENT_MS);
+			struct stetho_settings settings;
+			stetho_settings_get(&settings);
+			if (!settings.diagnostics &&
+			    peripherals_operational(&c.peripherals, COMP_BUTTON_LED)) {
+				struct audio_snapshot audio;
+				audio_loopback_snapshot(&audio);
+				c.runtime.led_on = audio.capturing || audio.replaying;
+				rc = gpio_inputs_set_led(c.runtime.led_on);
+				if (rc)
+					disable_after_policy(&c, COMP_BUTTON_LED,
+					                     DRIVER_OP_GPIO_OUTPUT, ++c.gpio_errors,
+					                     rc);
+				else
+					c.gpio_errors = 0;
 			}
+			next_status = now + 2000;
 		}
 	}
 	return 0;

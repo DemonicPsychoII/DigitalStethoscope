@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "evaluation_date": "2026-08-19",
+  "evaluation_date": "2026-09-16",
   "scope": "Static QC comparison; hardware observations are inherited from TEST-PROTOCOL.md and are not re-verified.",
   "target": "Development/system/coding/bringup-zephyr",
   "baseline": "THA@4698995f203f73f4b264e4355ca30e2712163729",
@@ -14,7 +14,7 @@
       "status": "PASS",
       "score": 10,
       "evidence": "CMakeLists.txt, prj.conf, board overlay and src/main.c are present.",
-      "required_action": "Pin the Zephyr manifest revision; retain a clean-build result as an artifact."
+      "required_action": "None."
     },
     {
       "control": "Devicetree-first hardware description",
@@ -29,7 +29,7 @@
       "weight": 10,
       "status": "PASS",
       "score": 10,
-      "evidence": "Target has 12 C source file(s); main.c has 266 lines. THA reference splits ADC, sensor, servo, stepper, display and shell modules.",
+      "evidence": "Target has 15 C source file(s); main.c has 206 lines. THA reference splits ADC, sensor, servo, stepper, display and shell modules.",
       "required_action": "Split peripheral probes/drivers, audio pipeline, UI/input and status reporting into owned modules."
     },
     {
@@ -85,7 +85,7 @@
       "weight": 10,
       "status": "PASS",
       "score": 10,
-      "evidence": "Pinned traceability manifest and all locally available baseline hashes match.",
+      "evidence": "Pinned THA revision and three source hashes validated without copying institutional files into CI.",
       "required_action": "None."
     }
   ]

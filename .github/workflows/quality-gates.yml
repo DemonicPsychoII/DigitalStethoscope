@@ -44,6 +44,10 @@ jobs:
       - run: python -m pip install --require-hashes -r Development/system/testing/ci/requirements-ci.txt
       - name: Run static repository checks
         run: python Development/system/testing/ci/run_ci.py static
+      - name: Install host evaluation dependencies
+        run: python -m pip install -r Development/system/coding/bringup-zephyr/tools/requirements.txt
+      - name: Test DSP and FHIR readback
+        run: python -m pytest -q Development/system/coding/bringup-zephyr/tests/host
       - name: Run required QC evaluation
         run: python Development/system/testing/ci/run_ci.py qc
   firmware:

@@ -1,3 +1,5 @@
+> Update 2026-09-16: the user confirmed the existing Eval wiring working. The maintained signal map and integrated test instructions are in [the Eval README](../../Development/system/coding/bringup-zephyr/README.md). The inventory below is historical; only one physical switch is mapped by default, and playback speed is available through touch/serial. A second-switch overlay is optional and separately unverified.
+
 # Hardware — aktueller Stand
 
 > Stand: 2026-08-13. Vorhandene Komponenten für Aufbau und Tests. Rollen gemäß Bedien- und
