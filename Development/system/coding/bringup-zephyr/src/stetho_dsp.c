@@ -140,6 +140,7 @@ void stetho_dsp_process(struct stetho_dsp *d, const float *in, float *out, float
 				d->envelope_sum = 0;
 				if (++d->since_estimate == STETHO_ENVELOPE_RATE) {
 					estimate(d);
+					l->bpm_updated = d->bpm_valid;
 					d->since_estimate = 0;
 				}
 			}
@@ -155,6 +156,7 @@ void stetho_dsp_process(struct stetho_dsp *d, const float *in, float *out, float
 	}
 	if (l->input_clips) {
 		stetho_dsp_reset_bpm(d);
+		l->bpm_updated = false;
 	}
 }
 void stetho_replay_init(struct stetho_replay *r, const int16_t *clip, size_t length,

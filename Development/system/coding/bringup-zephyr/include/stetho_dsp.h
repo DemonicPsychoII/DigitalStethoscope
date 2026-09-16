@@ -24,6 +24,7 @@ struct stetho_dsp {
 struct stetho_levels {
 	float input_rms, output_rms, input_peak, output_peak;
 	uint32_t input_clips, output_clips;
+	bool bpm_updated;
 };
 struct stetho_replay {
 	const int16_t *clip;

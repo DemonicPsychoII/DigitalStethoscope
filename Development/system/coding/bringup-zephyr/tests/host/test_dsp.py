@@ -130,6 +130,10 @@ def test_clipping_nan_and_lung_boundaries(runner):
     subprocess.run([str(runner), "boundaries"], check=True)
 
 
+def test_estimate_updates_follow_acquisition_reset(runner):
+    subprocess.run([str(runner), "estimate-timing"], check=True)
+
+
 @pytest.mark.parametrize("frames", [0, 1, 159, 160, 161, 499])
 @pytest.mark.parametrize("speed", [50, 75, 100])
 def test_replay_short_and_empty_clips(runner, tmp_path, frames, speed):

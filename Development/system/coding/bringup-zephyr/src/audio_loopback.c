@@ -323,7 +323,6 @@ static void audio_thread(void *a, void *b, void *c)
 			float volume = settings.volume / 100.0f;
 			float gain = 8.0f * volume * volume;
 			struct stetho_levels levels;
-			uint64_t before = dsp.samples;
 			stetho_dsp_process(&dsp, in, out, filtered, I2S_BLOCK_SAMPLES,
 			                   settings.filter, settings.analysis, gain, settings.heart,
 			                   &levels);
@@ -380,7 +379,7 @@ static void audio_thread(void *a, void *b, void *c)
 			s.bpm_valid = dsp.bpm_valid;
 			s.bpm_tenths = (uint32_t)(dsp.bpm * 10 + 0.5f);
 			s.quality_percent = (uint32_t)(dsp.quality * 100);
-			if (dsp.bpm_valid && before / STETHO_RATE != dsp.samples / STETHO_RATE)
+			if (dsp.bpm_valid && levels.bpm_updated)
 				s.measured_ms = k_uptime_get_32();
 			s.clip_frames = clip_count;
 			s.replay_frames = s.replaying ? replay.emitted : 0;
@@ -402,6 +401,14 @@ static void audio_thread(void *a, void *b, void *c)
 			s.capturing = s.replaying = false;
 			publish(&s);
 			stetho_dsp_reset_bpm(&dsp);
+			/* Explicit recovery also retries a mic absent at startup. Stop both
+			 * streams first so probing cannot disrupt an active transfer. */
+			if (intentional_restart && !mic_verified) {
+				int probe_rc = audio_loopback_probe_microphone();
+				if (probe_rc)
+					LOG_WRN("Mic unavailable (%d); test sources still usable",
+					        probe_rc);
+			}
 			if (++restart_budget <= 3) {
 				k_msleep(100);
 				s.restarts++;

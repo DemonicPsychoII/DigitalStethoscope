@@ -9,6 +9,39 @@
 static struct stetho_dsp dsp;
 int main(int argc, char **argv)
 {
+	if (argc == 2 && !strcmp(argv[1], "estimate-timing")) {
+		float in[128], out[128], filtered[128];
+		struct stetho_levels levels;
+		unsigned int updates = 0;
+		const uint64_t reset_sample = 63 * 128;
+		stetho_dsp_init(&dsp);
+		for (unsigned int block = 0; block < 1400; block++) {
+			if (dsp.samples == reset_sample)
+				stetho_dsp_reset_bpm(&dsp);
+			for (size_t i = 0; i < 128; i++)
+				in[i] = stetho_test_signal(dsp.samples + i, 72, false);
+			stetho_dsp_process(&dsp, in, out, filtered, 128, FILTER_RAW,
+			                   FILTER_BPM, 1, true, &levels);
+			/* Reset half a second into the stream: updates must follow the
+			 * new acquisition window, including between global seconds. */
+			bool expected = dsp.samples >= reset_sample + 8 * STETHO_RATE &&
+			                (dsp.samples - reset_sample) % STETHO_RATE == 0;
+			assert(levels.bpm_updated == expected);
+			if (levels.bpm_updated) {
+				assert(dsp.bpm_valid);
+				updates++;
+			}
+		}
+		assert(updates == 3);
+		/* Clipping must invalidate an estimate completed in this block. */
+		dsp.since_estimate = STETHO_ENVELOPE_RATE - 1;
+		dsp.envelope_samples = STETHO_RATE / STETHO_ENVELOPE_RATE - 1;
+		in[0] = 1;
+		stetho_dsp_process(&dsp, in, out, filtered, 128, FILTER_RAW, FILTER_BPM,
+		                   1, true, &levels);
+		assert(!levels.bpm_updated && !dsp.bpm_valid);
+		return 0;
+	}
 	if (argc == 2 && !strcmp(argv[1], "boundaries")) {
 		float in[128], out[128], filtered[128];
 		struct stetho_levels levels;
