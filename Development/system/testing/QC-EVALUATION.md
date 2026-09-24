@@ -2,7 +2,7 @@
 
 **Target:** `Development/system/coding/bringup-zephyr`
 **Reference:** THA Embedded Systems 2 institutional course material
-**Date:** 2026-09-16
+**Date:** 2026-09-24
 **Result:** **100/100 — PASS**
 
 > This is a source-level quality gate. It does not replace compilation, instrumented timing,
@@ -26,7 +26,6 @@
 ## Required actions
 
 2. **Devicetree-first hardware description:** Validate the documented unverified I2S/LEDC pinmux and XPT2046 calibration on hardware.
-3. **Module separation and ownership:** Split peripheral probes/drivers, audio pipeline, UI/input and status reporting into owned modules.
 4. **Concurrency and shared-state synchronization:** Pass touch events through k_msgq/k_event or protect all callback/thread shared state atomically.
 5. **Real-time response and bounded work:** Use GPIO interrupts for user inputs when a response-time requirement is introduced; document the current <=20 ms polling bound.
 6. **API return-code discipline:** Check and log display_write, PWM, I2S write/trigger and GPIO set failures; define recovery behavior.

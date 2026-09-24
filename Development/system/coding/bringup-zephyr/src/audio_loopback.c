@@ -221,6 +221,31 @@ static int start_streams(void)
 		stop_streams();
 	return rc;
 }
+static int attempt_start(void *context)
+{
+	struct audio_snapshot *s = context;
+	int rc = start_streams();
+	if (rc) {
+		s->errors++;
+		publish(s);
+	}
+	return rc;
+}
+static void retry_backoff(void *context)
+{
+	struct audio_snapshot *s = context;
+	k_msleep(100);
+	s->restarts++;
+}
+static bool start_bounded(struct audio_snapshot *s, unsigned int *retries, bool initial)
+{
+	s->running =
+	        app_audio_start_bounded(initial, retries, attempt_start, retry_backoff, s) == 0;
+	if (!s->running)
+		LOG_ERR("Audio stopped; stetho restart retries explicitly");
+	publish(s);
+	return s->running;
+}
 static void audio_thread(void *a, void *b, void *c)
 {
 	struct audio_snapshot s = {0};
@@ -242,13 +267,9 @@ static void audio_thread(void *a, void *b, void *c)
 				        probe_rc);
 		}
 		stetho_dsp_reset_bpm(&dsp);
-		if (start_streams() != 0) {
-			s.errors++;
-			publish(&s);
-			continue;
-		}
-		s.running = true;
 		restart_budget = 0;
+		if (!start_bounded(&s, &restart_budget, true))
+			continue;
 		successful_blocks = 0;
 		while (s.running) {
 			void *rx = NULL, *tx = NULL;
@@ -409,27 +430,8 @@ static void audio_thread(void *a, void *b, void *c)
 					LOG_WRN("Mic unavailable (%d); test sources still usable",
 					        probe_rc);
 			}
-			if (++restart_budget <= 3) {
-				k_msleep(100);
-				s.restarts++;
-				if (start_streams() == 0) {
-					s.running = true;
-					successful_blocks = 0;
-				} else { /* A failed restart consumes the remaining bounded attempts
-					    here. */
-					while (restart_budget++ < 3) {
-						k_msleep(100);
-						s.restarts++;
-						if (start_streams() == 0) {
-							s.running = true;
-							break;
-						}
-					}
-				}
-			}
-			if (!s.running)
-				LOG_ERR("Audio stopped; stetho restart retries explicitly");
-			publish(&s);
+			start_bounded(&s, &restart_budget, false);
+			successful_blocks = 0;
 		}
 	}
 }

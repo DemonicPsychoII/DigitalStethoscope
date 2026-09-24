@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "evaluation_date": "2026-09-16T19:15:26.092617+00:00",
+  "evaluation_date": "2026-09-24T16:08:48.338168+00:00",
   "source": {
-    "base_git_commit": "f70bc32907d1fb37a323c5cd0ed9ab3a7f0e2a88",
+    "base_git_commit": "452c8e6c67a3018fb7ff237180640bede5dd0251",
     "working_tree_modified": true,
     "build_input_sha256": {
       "Development/system/coding/bringup-zephyr/CMakeLists.txt": "396fbfa5a3e8e8910f1f2014c0776752ed031cec89ee88b06caf76f203be79cb",
@@ -11,7 +11,7 @@
       "Development/system/coding/bringup-zephyr/boards/second-switch.overlay": "170613ce5aa7faf4773c4026144f742d46fd5efb7ab6d275d9cfe88e5147e0ef",
       "Development/system/coding/bringup-zephyr/include/analog_backlight.h": "d5edd0bcd3bb659278bb55114da43b5b1a002acfe9fec18e95ddb2f5220d90fd",
       "Development/system/coding/bringup-zephyr/include/app_events.h": "00597be262d7b246959654db08300096ded6ce6ac443107a124ff7a4b6360703",
-      "Development/system/coding/bringup-zephyr/include/app_logic.h": "9124cbd4491db4173fa9e39857a4ddbc010de9ca5f91f59f47a336161940c5e8",
+      "Development/system/coding/bringup-zephyr/include/app_logic.h": "914d0674618b13f3806734c36e58c1b03e19df90beab02ecbfb0275b0f12f66f",
       "Development/system/coding/bringup-zephyr/include/app_types.h": "99b2da12f326a2a26c840d5595d1fa163467073423fc0a22184d9e06ebcf4942",
       "Development/system/coding/bringup-zephyr/include/audio_loopback.h": "851dd11d661246dc375438c4fccc081309de30d66ea6ccb2ff101ed96d0bebc1",
       "Development/system/coding/bringup-zephyr/include/display_touch.h": "c2dde34be57d65de73d608373304270225d46a8b55235ae630a1fd6267e4b05e",
@@ -19,24 +19,36 @@
       "Development/system/coding/bringup-zephyr/include/peripherals.h": "d9641b0ddd87143cfe7fbd5b5d5210152043e525eb38f7527363e060440454e0",
       "Development/system/coding/bringup-zephyr/include/status_reporting.h": "c3d4a554aa6a8870231d1b0532ac9b95edca5a435b073d0e4041b9685e70db4d",
       "Development/system/coding/bringup-zephyr/include/stetho_control.h": "7d7806a5a3a07212a47dd3f81df30a098c5f6315d1edf4afc43a4c2d3f5cd375",
-      "Development/system/coding/bringup-zephyr/include/stetho_dsp.h": "2559a0bb413a123f9ae0595fe200e5341ab5de6bbda21272f1e7b95f12a1b88e",
+      "Development/system/coding/bringup-zephyr/include/stetho_dsp.h": "d4fbf46bc6564a07b47519b17695f0d70ea21e812b0a553040f21b459ae2bcbd",
       "Development/system/coding/bringup-zephyr/include/stetho_fhir.h": "2d9fa5fb3fd1e2d9a98f7486c02fa3782c6b7f14769b5110acaa00592fb96e5f",
       "Development/system/coding/bringup-zephyr/network.conf": "454df2de22611079c1b6ff09ad75402a114783c0cd0fe0dcbfde712fd8523bb3",
       "Development/system/coding/bringup-zephyr/prj.conf": "509fca31cec0edbf0239bf579103bae8596950bb2fe879b5178c495e5c443def",
       "Development/system/coding/bringup-zephyr/qc.conf": "9852efa826778de0621ff7fbc4151af737c93c52a73a356d432c4f631985a93d",
       "Development/system/coding/bringup-zephyr/src/analog_backlight.c": "7bf08271420d7810ac41206b230c701edecbd5b53bf100435c0cbf5ddf57908f",
-      "Development/system/coding/bringup-zephyr/src/app_logic.c": "d371f124cfc32a5f0fe4767c3308b36aa1fc87431e1a817daa758c28a4e00b48",
-      "Development/system/coding/bringup-zephyr/src/audio_loopback.c": "ce2ed9c05d4508e83ac8dae932cbf5fae8fa6518dbf137f094ffe5d534c69af3",
+      "Development/system/coding/bringup-zephyr/src/app_logic.c": "21a39235c7a097fb5a8b83121483c45cbec0819f28ff11cc147af20a4b8dc037",
+      "Development/system/coding/bringup-zephyr/src/audio_loopback.c": "e4e35c054ad4387fabf721cd434630becac857890d4bc4b5f3bc6e0fd2d06ddf",
       "Development/system/coding/bringup-zephyr/src/display_touch.c": "55f954efd597c9c173c0b2550f86e5a874f4366b3721c6306a4ab93170fc5f78",
       "Development/system/coding/bringup-zephyr/src/gpio_inputs.c": "ac717d48febdc8351a69547b845fcb469680858d4a69f5a927132330b7221028",
       "Development/system/coding/bringup-zephyr/src/main.c": "f365c66500e98ab281c11072da523f328376081ab1b465e59ce76baed5d133ce",
       "Development/system/coding/bringup-zephyr/src/peripherals.c": "a2e225ce7c192c1d80a556bb47a902ab117ec7f6e7a9dd5e2753e101d76ec2eb",
       "Development/system/coding/bringup-zephyr/src/status_reporting.c": "ccb4ff40904f44ef5244d7d60172b837aa423d636019b6370961e4165d3469e0",
       "Development/system/coding/bringup-zephyr/src/stetho_control.c": "f57c99396fd08c13141a8b604cabaa2800eccfce0be3d0a6da661fe09b46c3a4",
-      "Development/system/coding/bringup-zephyr/src/stetho_dsp.c": "af19eb02010efa5855ad5a3a9b8e43908519cd21d46ef63e0827af6840aaa3a6",
+      "Development/system/coding/bringup-zephyr/src/stetho_dsp.c": "73938320590004073bb4b00c5c8e3c1a2e57a6c59b96f173ff4f41a3350b0836",
       "Development/system/coding/bringup-zephyr/src/stetho_fhir.c": "8388d997139c9ebdc94ab92de933d78f422268b08157e8a8f64934da869dd2a7",
       "Development/system/coding/bringup-zephyr/src/stetho_network.c": "24d2620194b7ead5f0d3a69a4363dcc7377aaf477f8220f6e231f6d40781a0b6",
       "Development/system/coding/bringup-zephyr/src/stetho_shell.c": "63d9f7e8cb2cddbf918c236b0d0014ca2ebee3b2475f7e9f3a14b529ba60ceac"
+    },
+    "test_input_sha256": {
+      "Development/system/coding/bringup-zephyr/tests/host/dsp_runner.c": "665a74318931a3732842627ce82835655f898b8589b1d0cadbcbc0449aa4813d",
+      "Development/system/coding/bringup-zephyr/tests/host/test_dsp.py": "acf1b11c455ee5f4383cc5808762b15ca338179e04edea39065bc9c073cec798",
+      "Development/system/coding/bringup-zephyr/tests/host/test_evaluate.py": "8b91fed3e8ef0ccb47c0896ce7bd8b605c60f5ed6d2ce70d95615d66b8731fbf",
+      "Development/system/coding/bringup-zephyr/tests/host/test_readback.py": "9d88aeec30195f124d3737e13fd56c5d9f82eae56dcdcf16178ef5d83864f354",
+      "Development/system/coding/bringup-zephyr/tests/logic/CMakeLists.txt": "25f8982148a06cae176c2d15ddf3ca6372b6fc91442868f70c80c9c189bd6ac9",
+      "Development/system/coding/bringup-zephyr/tests/logic/prj.conf": "20b2df5aac2246ce223496fb22e16ef3b4b9a864593aa19b71225c4643dc37fa",
+      "Development/system/coding/bringup-zephyr/tests/logic/src/test_app_logic.c": "94d06c4cbfbfd29f6d732f53c8637c74b7140d78ae7a0e8e925a0cd956cff88f",
+      "Development/system/coding/bringup-zephyr/tests/logic/testcase.yaml": "ea9ee0cc5fb72fded231358e2fc07fa6530a61a75b7155b2d80e0b62c4b2be6f",
+      "Development/system/coding/bringup-zephyr/tools/evaluate.py": "dffbb171ba7acfca67a0e9e3f9635cc68de5a6f3aed7062153e2aa6c2737a65b",
+      "Development/system/coding/bringup-zephyr/tools/requirements.txt": "232d1103e839c42e305e425cc3d9850a8d6b8bdd9f5ca1aecef2d1b413fad8b8"
     }
   },
   "toolchain": {
@@ -64,9 +76,11 @@
         "--pristine=always",
         "-b",
         "esp32s3_devkitc/esp32s3/procpu",
-        "Development/system/coding/bringup-zephyr",
+        "/tmp/stetho-pr6-review/Development/system/coding/bringup-zephyr",
         "-d",
-        "build-eval"
+        "/tmp/stetho-pr6-review/build-ci",
+        "--",
+        "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
       ],
       "result": "PASS",
       "application_compiler_warnings": 0,
@@ -79,13 +93,13 @@
       "artifacts": {
         "zephyr.bin": {
           "path": "artifacts/firmware/offline/zephyr.bin",
-          "sha256": "01f0995c7a4fc00e1fb59e4565367b252fd262512c12e0e40f566d5da8a75b6d",
+          "sha256": "404d42a70dedaa4ce24a0c5910d33a4ddc26c9eac405723bab02ef990e707fe6",
           "bytes": 287860
         },
         "zephyr.elf": {
           "path": "artifacts/firmware/offline/zephyr.elf",
-          "sha256": "91c05444a793ff9051cb620a5eb9fbb13e73097125b603224044a0eb3affe867",
-          "bytes": 5139204
+          "sha256": "f4a6578827e1c65b782c4096db72f796253e6882ad8e9ecf7ba4f4e58208037c",
+          "bytes": 5137948
         },
         ".config": {
           "path": "artifacts/firmware/offline/.config",
@@ -94,11 +108,11 @@
         },
         "zephyr.dts": {
           "path": "artifacts/firmware/offline/zephyr.dts",
-          "sha256": "4701fc70bb1756594362284154a29247ace0427e5400e2f46046c2e7f261cee7",
-          "bytes": 84101
+          "sha256": "439dc94684bb89ddbb132df7295cba2a98717d46056dce5fc364dc9dd48d0741",
+          "bytes": 86984
         }
       },
-      "log_sha256": "356c74d83792a828d12f8cc24a726e80723e7d3032fe14c25659c6cbd01a6abe"
+      "log_sha256": "ab27238711af0f061565270d98b70dff74b04087c5a10f6bce855262170d76c0"
     },
     {
       "id": "qc",
@@ -113,9 +127,9 @@
         "--pristine=always",
         "-b",
         "esp32s3_devkitc/esp32s3/procpu",
-        "Development/system/coding/bringup-zephyr",
+        "/tmp/stetho-pr6-review/Development/system/coding/bringup-zephyr",
         "-d",
-        "build-eval-qc",
+        "/tmp/stetho-pr6-review/build-ci-qc",
         "--",
         "-DEXTRA_CONF_FILE=qc.conf"
       ],
@@ -130,13 +144,13 @@
       "artifacts": {
         "zephyr.bin": {
           "path": "artifacts/firmware/qc/zephyr.bin",
-          "sha256": "505cd15e52555ad750e8e5598362d5200f9546dab70e1574ffef0da6d7cccb3e",
+          "sha256": "1b815ce435d13071d01268812b7bc235c36675b9084904ac460839b826514922",
           "bytes": 288228
         },
         "zephyr.elf": {
           "path": "artifacts/firmware/qc/zephyr.elf",
-          "sha256": "a1701deddd5337d7dc4527c1d2fd0e347bf9150216391c50ba2d0a521cf9ee0b",
-          "bytes": 5167312
+          "sha256": "91912dcc23ef93c6418bfbc870c631f1bf1acf4d16460e829e681ec8e6665568",
+          "bytes": 5166048
         },
         ".config": {
           "path": "artifacts/firmware/qc/.config",
@@ -145,20 +159,19 @@
         },
         "zephyr.dts": {
           "path": "artifacts/firmware/qc/zephyr.dts",
-          "sha256": "4701fc70bb1756594362284154a29247ace0427e5400e2f46046c2e7f261cee7",
-          "bytes": 84101
+          "sha256": "439dc94684bb89ddbb132df7295cba2a98717d46056dce5fc364dc9dd48d0741",
+          "bytes": 86984
         }
       },
-      "log_sha256": "c19e5194d9229386ed8163961c6a1626f31a9f07d5771adc6dd90163249fd57b"
+      "log_sha256": "32a54496595760e3ef330d63ee574d160ea8d1e00529f68511ef60fe1eda4112"
     },
     {
-      "id": "network-qc-second-switch-test-ca",
+      "id": "network-qc-second-switch",
       "target": "esp32s3_devkitc/esp32s3/procpu",
       "configuration": [
         "prj.conf",
         "network.conf",
-        "qc.conf",
-        "ephemeral local test-CA configuration"
+        "qc.conf"
       ],
       "command_argv": [
         "west",
@@ -166,63 +179,67 @@
         "--pristine=always",
         "-b",
         "esp32s3_devkitc/esp32s3/procpu",
-        "Development/system/coding/bringup-zephyr",
+        "/tmp/stetho-pr6-review/Development/system/coding/bringup-zephyr",
         "-d",
-        "build-eval-network-qc",
+        "/tmp/stetho-pr6-review/build-ci-network-qc-switch",
         "--",
-        "-DEXTRA_CONF_FILE=network.conf;qc.conf;<local-test-ca.conf>",
+        "-DEXTRA_CONF_FILE=network.conf;qc.conf",
         "-DEXTRA_DTC_OVERLAY_FILE=boards/second-switch.overlay"
       ],
       "result": "PASS",
       "application_compiler_warnings": 0,
       "memory_region_used_bytes": {
-        "FLASH": 828772,
+        "FLASH": 825684,
         "iram0_0_seg": 70660,
-        "dram0_0_seg": 334472,
+        "dram0_0_seg": 334320,
         "ext_dram_seg": 2089472
       },
       "artifacts": {
         "zephyr.bin": {
-          "path": "artifacts/firmware/network-qc-second-switch-test-ca/zephyr.bin",
-          "sha256": "0fd1d3f5fdab4ace2edc42e15dab9d3b36b98b5e34cf1b41ebcbcc61df6fbcf3",
-          "bytes": 828772
+          "path": "artifacts/firmware/network-qc-second-switch/zephyr.bin",
+          "sha256": "bb8ca25839e83e81b809eb717509cc615dcec8aec6f21105479ca693df174492",
+          "bytes": 825684
         },
         "zephyr.elf": {
-          "path": "artifacts/firmware/network-qc-second-switch-test-ca/zephyr.elf",
-          "sha256": "0fea752e5f844559689b52cd57d8228cd4d766958d2437dcf21b4bd04529e8b2",
-          "bytes": 12072776
+          "path": "artifacts/firmware/network-qc-second-switch/zephyr.elf",
+          "sha256": "c971fcfa3033ca2af08e28c6032f8a969d1810ae48d6ca720d24759fe352bed3",
+          "bytes": 12038320
         },
         ".config": {
-          "path": "artifacts/firmware/network-qc-second-switch-test-ca/.config",
-          "sha256": "5d8a36445aa88c7474ae73fae8e0082dead032363574fd37c812ecb838b781e1",
-          "bytes": 84229
+          "path": "artifacts/firmware/network-qc-second-switch/.config",
+          "sha256": "2a0bb1dd14d2ff9677ffacdde10d8f53dc3beeab1c0d709adc20b1e6275a79b2",
+          "bytes": 84158
         },
         "zephyr.dts": {
-          "path": "artifacts/firmware/network-qc-second-switch-test-ca/zephyr.dts",
-          "sha256": "cf9322fd0d4a29a6affcb11c95cee192520d19f73176325fd71014f9ab173802",
-          "bytes": 84284
+          "path": "artifacts/firmware/network-qc-second-switch/zephyr.dts",
+          "sha256": "6eb88bcd29c727817d51c7bfc499233e86368452dc915ec63e31abacdf9bc582",
+          "bytes": 87203
         }
       },
-      "log_sha256": "5290f0479f223266cfb95ad92e9f3f12330b93008db3104cf98331dc1bf730a8"
+      "log_sha256": "b388bdcd69aabba8d86529087a374ddc4389033ff846723d5757471ba080a58d"
     }
   ],
   "tests": [
     {
-      "id": "host-dsp-and-https-readback",
-      "command": "python -m pytest -q Development/system/coding/bringup-zephyr/tests/host",
+      "id": "host-dsp-cli-and-https-readback",
+      "command": "python -m pytest -q Development/system/coding/bringup-zephyr/tests/host --junitxml=/tmp/stetho-pr6-host.xml",
       "result": "PASS",
-      "passed": 68,
+      "passed": 73,
       "failed": 0,
-      "log_sha256": "ab681e903593245cce01940c30b3fab09d9c327d8c2ae9777916c857394d73f9",
-      "scope": "Portable C DSP/FHIR functions and Python HTTPS readback client; not the on-device TLS stack"
+      "log_sha256": "77a0057068753d0c98962dca56cd4a9f62a98f72cf94e6be4265e578517cd77b",
+      "scope": "Portable C DSP/FHIR functions, evaluation CLI and Python HTTPS readback client; not the on-device TLS stack",
+      "log_path": "Development/system/coding/bringup-zephyr/evidence/host-tests.txt",
+      "skipped": 0
     },
     {
       "id": "zephyr-native-sim-logic",
       "command": "west build -p always -b native_sim/native/64 Development/system/coding/bringup-zephyr/tests/logic -d build-eval-logic; build-eval-logic/zephyr/zephyr.exe",
       "result": "PASS",
-      "passed": 7,
+      "passed": 10,
       "failed": 0,
-      "log_sha256": "d2123a05f93b8ab983babea81bd018a7a495651a2c698e3f0a0adc40e3975fef"
+      "log_sha256": "0f33096387ba4c3741ac8d585f2b4be6e9fea2ffea2cdd6e7140ae4a358b417a",
+      "log_path": "Development/system/coding/bringup-zephyr/evidence/logic-tests.txt",
+      "skipped": 0
     },
     {
       "id": "static-format-and-qc",
@@ -232,38 +249,45 @@
     }
   ],
   "synthetic_example": {
-    "created_utc": "2026-09-16T19:08:55.390588+00:00",
-    "git_commit": "f70bc32907d1fb37a323c5cd0ed9ab3a7f0e2a88",
+    "created_utc": "2026-09-24T16:05:25.211435+00:00",
+    "git_commit": "452c8e6c67a3018fb7ff237180640bede5dd0251",
     "working_tree_modified": true,
-    "dsp_sha256": "af19eb02010efa5855ad5a3a9b8e43908519cd21d46ef63e0827af6840aaa3a6",
+    "dsp_sha256": "73938320590004073bb4b00c5c8e3c1a2e57a6c59b96f173ff4f41a3350b0836",
     "kind": "host-dsp",
-    "signal": "/tmp/stetho-reference.wav",
+    "signal": "/tmp/stetho-pr6-reference.wav",
     "signal_sha256": "2f89589520cf54f1bc6ef885db520f4a4fb1c5930571bbd884536db3b86ca379",
     "reference_bpm": 72.0,
     "reference_description": "Deterministic two-sound synthetic waveform, 72 bpm",
+    "analysis_mode": "bpm",
     "filters": [
       {
         "name": "raw",
+        "listening_filter": "raw",
+        "analysis_filter": "bpm",
         "valid_windows": 5,
         "eligible_windows": 5,
         "coverage": 1.0,
-        "mae_bpm": 0.054599999999999226,
-        "bias_bpm": 0.054599999999999226,
-        "rmse_bpm": 0.05577992470414322,
-        "max_absolute_error_bpm": 0.06999999999999318
+        "mae_bpm": 0.04300000000000352,
+        "bias_bpm": 0.04300000000000352,
+        "rmse_bpm": 0.04325043352384247,
+        "max_absolute_error_bpm": 0.04800000000000182
       },
       {
         "name": "murmur",
+        "listening_filter": "murmur",
+        "analysis_filter": "bpm",
         "valid_windows": 5,
         "eligible_windows": 5,
         "coverage": 1.0,
-        "mae_bpm": 0.041800000000000635,
-        "bias_bpm": 0.041800000000000635,
-        "rmse_bpm": 0.04316248370981545,
-        "max_absolute_error_bpm": 0.05700000000000216
+        "mae_bpm": 0.04300000000000352,
+        "bias_bpm": 0.04300000000000352,
+        "rmse_bpm": 0.04325043352384247,
+        "max_absolute_error_bpm": 0.04800000000000182
       },
       {
         "name": "bpm",
+        "listening_filter": "bpm",
+        "analysis_filter": "bpm",
         "valid_windows": 5,
         "eligible_windows": 5,
         "coverage": 1.0,
@@ -282,9 +306,15 @@
     "wifi_credentials": "UNCONFIGURED"
   },
   "limitations": [
-    "The network image was built with a temporary test CA, not a configured deployment trust anchor.",
+    "The network image was built without a CA or network settings; verified TLS connection testing awaits local configuration.",
     "Linker external region size is an address window; fitted PSRAM capacity is 8 MB.",
     "Measure actual stack/heap headroom, latency, headphone output and BPM accuracy on the board.",
     "No clinical/physiological validation follows from synthetic fixtures or successful builds."
-  ]
+  ],
+  "host_dependencies": {
+    "python": "3.14.4",
+    "installation": "Clean virtual environment; pip install --require-hashes",
+    "lockfile_sha256": "232d1103e839c42e305e425cc3d9850a8d6b8bdd9f5ca1aecef2d1b413fad8b8",
+    "python_3_12_linux_wheel_hashes_verified": true
+  }
 }

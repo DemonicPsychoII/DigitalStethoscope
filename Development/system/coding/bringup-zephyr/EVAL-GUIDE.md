@@ -19,14 +19,20 @@ by the software implementation session.
 
 ## Host tests and repeatable input
 
-From the application directory:
+Use Python 3.12 or newer. From the application directory:
 
 ```sh
-python -m pip install -r tools/requirements.txt
+python -m pip install --require-hashes -r tools/requirements.txt
 python -m pytest -q tests/host
 python tools/evaluate.py generate reference.wav --kind heart --bpm 72 --seconds 12
 python tools/evaluate.py evaluate reference.wav --reference-bpm 72 --reference "synthetic 72 BPM" --output results/reference72
 ```
+
+Host comparisons hold the analysis filter at `bpm` while changing the listening
+filter. Use `--analysis-filter raw` or `murmur` for another fixed analysis path,
+or `--analysis-filter matched` to compare the paired listening/analysis variants.
+Each report records both filters and the selected analysis mode; matched results
+change two variables and must be interpreted accordingly.
 
 The tool compiles **the same C DSP** used on the ESP32 with GCC, then exports
 filtered WAVs, per-second estimator CSVs and a JSON comparison (MAE, RMSE, bias,

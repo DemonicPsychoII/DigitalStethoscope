@@ -20,6 +20,7 @@ import numpy as np
 APP = Path(__file__).resolve().parents[1]
 ROOT = APP.parents[3]
 RATE = 16000
+FILTERS = ("raw", "murmur", "bpm")
 
 
 def digest(path):
@@ -94,12 +95,25 @@ def evaluate(args):
         "signal_sha256": digest(args.wav),
         "reference_bpm": args.reference_bpm,
         "reference_description": args.reference,
+        "analysis_mode": args.analysis_filter,
         "filters": [],
     }
-    for index, name in enumerate(("raw", "murmur", "bpm")):
+    for index, name in enumerate(FILTERS):
+        analysis = (
+            index
+            if args.analysis_filter == "matched"
+            else FILTERS.index(args.analysis_filter)
+        )
         target = args.output / f"{name}.f32"
         result = subprocess.run(
-            [str(runner), "process", str(index), str(index), str(source), str(target)],
+            [
+                str(runner),
+                "process",
+                str(index),
+                str(analysis),
+                str(source),
+                str(target),
+            ],
             check=True,
             text=True,
             capture_output=True,
@@ -115,6 +129,8 @@ def evaluate(args):
         report["filters"].append(
             {
                 "name": name,
+                "listening_filter": name,
+                "analysis_filter": FILTERS[analysis],
                 "valid_windows": len(errors),
                 "eligible_windows": len(eligible),
                 "coverage": len(errors) / len(eligible) if eligible else 0,
@@ -305,6 +321,13 @@ def main():
         "--reference", required=True, help="Reference source and synchronization method"
     )
     p.add_argument("--output", type=Path, required=True)
+    p.add_argument(
+        "--analysis-filter",
+        choices=[*FILTERS, "matched"],
+        default="bpm",
+        help="Keep BPM analysis fixed while comparing listening filters (default: bpm); "
+        "matched compares paired listening/analysis variants",
+    )
     p.set_defaults(run=evaluate)
     p = commands.add_parser("upload")
     p.add_argument("wav", type=Path)

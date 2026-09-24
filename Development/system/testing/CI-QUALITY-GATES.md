@@ -72,12 +72,14 @@ date, filled PASS/FAIL/BLOCKED verdicts, electrical checks, audio observations,
 and instrument evidence. Hardware-in-the-loop may become a separate protected
 scheduled/manual gate only after a controlled runner and real board are available.
 
-## Integrated evaluation coverage (2026-09-16)
+## Integrated evaluation coverage (2026-09-24)
 
-The static job additionally installs `bringup-zephyr/tools/requirements.txt` and
-runs `tests/host` against the portable DSP/FHIR implementation and a local HTTPS
-readback fixture. The firmware job now also performs pristine QC and combined
-network/QC/second-switch builds. These builds do not connect to Wi-Fi or send
-FHIR data. CA/server credentials are absent from CI; the local upgrade evidence
-also includes a build with an ephemeral public test CA to exercise certificate
-embedding. Physical acceptance remains in `bringup-zephyr/EVAL-GUIDE.md`.
+The static job additionally installs the fully pinned
+`bringup-zephyr/tools/requirements.txt` with `--require-hashes` and runs
+`tests/host` against the portable DSP/FHIR implementation, evaluation CLI and a
+local HTTPS readback fixture. The firmware job also performs pristine QC and
+combined network/QC/second-switch builds, then builds and runs `tests/logic` on
+`native_sim/native/64`, including bounded audio-start recovery regressions.
+These builds do not connect to Wi-Fi or send FHIR data. CA/server credentials
+are absent from CI and the latest local build evidence. Physical acceptance
+remains in `bringup-zephyr/EVAL-GUIDE.md`.

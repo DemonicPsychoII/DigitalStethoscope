@@ -5,6 +5,25 @@
 #include <stdio.h>
 #include <string.h>
 
+int app_audio_start_bounded(bool initial, unsigned int *retries_used, int (*attempt)(void *),
+                            void (*backoff)(void *), void *context)
+{
+	int rc = -EIO;
+	if (initial) {
+		rc = attempt(context);
+		if (!rc)
+			return 0;
+	}
+	while (*retries_used < 3) {
+		(*retries_used)++;
+		backoff(context);
+		rc = attempt(context);
+		if (!rc)
+			return 0;
+	}
+	return rc;
+}
+
 bool app_probe_record(struct app_probe_state *state, int result, uint8_t max_attempts)
 {
 	if (state == NULL || state->done || max_attempts == 0U) {
