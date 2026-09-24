@@ -35,6 +35,7 @@ enum app_event_type {
 	APP_EVENT_BUTTON,
 	APP_EVENT_SWITCH,
 	APP_EVENT_TOUCH,
+	APP_EVENT_SPEED,
 };
 
 struct app_event {

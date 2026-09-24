@@ -1,0 +1,11 @@
+{
+  "date": "2026-09-16",
+  "source": "User statement in the implementation session",
+  "statement": "wiring with eval has been confirmed working",
+  "scope": "Existing evaluation assembly and existing signal pin map",
+  "limitations": [
+    "No board revision, waveform captures or flashed binary hash supplied with this statement",
+    "Does not cover the optional second-switch extension",
+    "Does not constitute runtime acceptance of the new integrated firmware"
+  ]
+}

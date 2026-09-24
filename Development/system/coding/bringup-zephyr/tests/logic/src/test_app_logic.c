@@ -130,3 +130,57 @@ ZTEST(app_logic, test_driver_error_handling_decisions)
 	zassert_true(app_should_log_failure(8));
 	zassert_false(app_should_log_failure(3));
 }
+
+struct start_fixture {
+	unsigned int calls, delays, fail_count;
+};
+static int fake_start(void *context)
+{
+	struct start_fixture *f = context;
+	return ++f->calls <= f->fail_count ? -EIO : 0;
+}
+static void fake_backoff(void *context)
+{
+	struct start_fixture *f = context;
+	f->delays++;
+}
+ZTEST(app_logic, test_audio_initial_failure_recovers_without_manual_wake)
+{
+	struct start_fixture f = {.fail_count = 1};
+	unsigned int retries = 0;
+	zassert_ok(app_audio_start_bounded(true, &retries, fake_start, fake_backoff, &f));
+	zassert_equal(f.calls, 2);
+	zassert_equal(f.delays, 1);
+	zassert_equal(retries, 1);
+}
+ZTEST(app_logic, test_audio_retry_limit_and_explicit_restart)
+{
+	struct start_fixture f = {.fail_count = 99};
+	unsigned int retries = 0;
+	zassert_equal(app_audio_start_bounded(true, &retries, fake_start, fake_backoff, &f), -EIO);
+	zassert_equal(f.calls, 4);
+	zassert_equal(f.delays, 3);
+	zassert_equal(retries, 3);
+	/* Exhaustion must not perform another transfer or delay. */
+	zassert_equal(app_audio_start_bounded(false, &retries, fake_start, fake_backoff, &f), -EIO);
+	zassert_equal(f.calls, 4);
+	zassert_equal(f.delays, 3);
+	/* A new explicit wake resets the budget and can recover. */
+	retries = 0;
+	f.fail_count = 4;
+	zassert_ok(app_audio_start_bounded(true, &retries, fake_start, fake_backoff, &f));
+	zassert_equal(f.calls, 5);
+	zassert_equal(retries, 0);
+}
+ZTEST(app_logic, test_audio_runtime_recovery_preserves_budget)
+{
+	struct start_fixture f = {.fail_count = 1};
+	unsigned int retries = 0;
+	zassert_ok(app_audio_start_bounded(true, &retries, fake_start, fake_backoff, &f));
+	/* A short-lived success does not grant another three retries. */
+	f.fail_count = 99;
+	zassert_equal(app_audio_start_bounded(false, &retries, fake_start, fake_backoff, &f), -EIO);
+	zassert_equal(f.calls, 4);
+	zassert_equal(f.delays, 3);
+	zassert_equal(retries, 3);
+}

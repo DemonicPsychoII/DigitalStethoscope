@@ -128,7 +128,7 @@ static void switch_isr(const struct device *port, struct gpio_callback *callback
 	schedule_debounce(&switch_debounce_work);
 }
 
-static void enqueue_event(const struct app_event *event)
+static bool enqueue_event(const struct app_event *event)
 {
 	int rc = k_msgq_put(&app_event_queue, event, K_NO_WAIT);
 
@@ -139,6 +139,7 @@ static void enqueue_event(const struct app_event *event)
 			LOG_WRN("input event queue full (drops=%u, err=%d)", count, rc);
 		}
 	}
+	return rc == 0;
 }
 
 static void button_debounce_handler(struct k_work *work)
@@ -158,9 +159,11 @@ static void button_debounce_handler(struct k_work *work)
 	if ((pressed != 0) == stable_button) {
 		return;
 	}
-	stable_button = pressed != 0;
-	event.data.button_pressed = stable_button;
-	enqueue_event(&event);
+	event.data.button_pressed = pressed != 0;
+	if (enqueue_event(&event))
+		stable_button = pressed != 0;
+	else
+		schedule_debounce(&button_debounce_work);
 }
 
 static void switch_debounce_handler(struct k_work *work)
@@ -180,9 +183,11 @@ static void switch_debounce_handler(struct k_work *work)
 	if (position == stable_switch) {
 		return;
 	}
-	stable_switch = position;
 	event.data.switch_position = position;
-	enqueue_event(&event);
+	if (enqueue_event(&event))
+		stable_switch = position;
+	else
+		schedule_debounce(&switch_debounce_work);
 }
 
 static int add_button_interrupt(gpio_flags_t interrupt_mode)
@@ -307,4 +312,78 @@ int gpio_inputs_set_led(bool enabled)
 		LOG_ERR("LED write failed (enabled=%d): %d", enabled, rc);
 	}
 	return rc;
+}
+
+#if DT_NODE_HAS_PROP(ZUSER, speed_gpios)
+static const struct gpio_dt_spec speed_pins[] = {
+        GPIO_DT_SPEC_GET_BY_IDX(ZUSER, speed_gpios, 0),
+        GPIO_DT_SPEC_GET_BY_IDX(ZUSER, speed_gpios, 1),
+        GPIO_DT_SPEC_GET_BY_IDX(ZUSER, speed_gpios, 2),
+};
+static struct gpio_callback speed_callbacks[3];
+static atomic_t speed_timestamp;
+static int stable_speed;
+static void speed_handler(struct k_work *work);
+K_WORK_DELAYABLE_DEFINE(speed_work, speed_handler);
+static void speed_isr(const struct device *dev, struct gpio_callback *cb, gpio_port_pins_t pins)
+{
+	ARG_UNUSED(dev);
+	ARG_UNUSED(cb);
+	ARG_UNUSED(pins);
+	atomic_set(&speed_timestamp, k_uptime_get_32());
+	schedule_debounce(&speed_work);
+}
+static void speed_handler(struct k_work *work)
+{
+	ARG_UNUSED(work);
+	int position =
+	        app_switch_decode(gpio_pin_get_dt(&speed_pins[0]), gpio_pin_get_dt(&speed_pins[1]),
+	                          gpio_pin_get_dt(&speed_pins[2]));
+	if (position <= 0 || position == stable_speed)
+		return;
+	struct app_event e = {.type = APP_EVENT_SPEED,
+	                      .timestamp_ms = (uint32_t)atomic_get(&speed_timestamp)};
+	e.data.switch_position = position;
+	if (enqueue_event(&e))
+		stable_speed = position;
+	else
+		schedule_debounce(&speed_work);
+}
+#endif
+int gpio_inputs_start_speed(void)
+{
+#if DT_NODE_HAS_PROP(ZUSER, speed_gpios)
+	size_t configured = 0;
+	int rc = 0;
+	for (size_t i = 0; i < ARRAY_SIZE(speed_pins); i++) {
+		if (!gpio_is_ready_dt(&speed_pins[i])) {
+			rc = -ENODEV;
+			goto fail;
+		}
+		rc = gpio_pin_configure_dt(&speed_pins[i], GPIO_INPUT);
+		if (rc)
+			goto fail;
+		gpio_init_callback(&speed_callbacks[i], speed_isr, BIT(speed_pins[i].pin));
+		rc = gpio_add_callback(speed_pins[i].port, &speed_callbacks[i]);
+		if (rc)
+			goto fail;
+		configured++;
+		rc = gpio_pin_interrupt_configure_dt(&speed_pins[i], GPIO_INT_EDGE_BOTH);
+		if (rc)
+			goto fail;
+	}
+	atomic_set(&speed_timestamp, k_uptime_get_32());
+	schedule_debounce(&speed_work);
+	return 0;
+fail:
+	for (size_t i = 0; i < configured; i++) {
+		int disable_rc = gpio_pin_interrupt_configure_dt(&speed_pins[i], GPIO_INT_DISABLE);
+		int remove_rc = gpio_remove_callback(speed_pins[i].port, &speed_callbacks[i]);
+		if (disable_rc || remove_rc)
+			LOG_WRN("Speed switch cleanup: %d/%d", disable_rc, remove_rc);
+	}
+	return rc;
+#else
+	return 0;
+#endif
 }

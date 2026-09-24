@@ -174,6 +174,33 @@ def build() -> None:
         if not source.is_file():
             raise SystemExit(f"required firmware evidence missing: {source}")
         shutil.copy2(source, evidence / name)
+    # Compile feature combinations too: the default offline image cannot cover
+    # TLS or the optional GPIO extension. These remain disconnected at boot.
+    for profile, extra in (
+        ("qc", ["-DEXTRA_CONF_FILE=qc.conf"]),
+        (
+            "network-qc-switch",
+            [
+                "-DEXTRA_CONF_FILE=network.conf;qc.conf",
+                "-DEXTRA_DTC_OVERLAY_FILE=boards/second-switch.overlay",
+            ],
+        ),
+    ):
+        run(
+            [
+                west(),
+                "build",
+                "--pristine=always",
+                "-b",
+                BOARD,
+                str(APP),
+                "-d",
+                str(ROOT / f"build-ci-{profile}"),
+                "--",
+                *extra,
+            ],
+            log=evidence / f"{profile}-build.log",
+        )
     summary(
         "### Firmware build: PASS\n\nSee RAM/ROM reports in "
         "the firmware job log. Evidence files are generated locally; no artifacts are uploaded."

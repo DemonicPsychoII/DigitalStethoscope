@@ -40,10 +40,16 @@ jobs:
         with:
           python-version: '3.12.10'
           cache: pip
-          cache-dependency-path: Development/system/testing/ci/requirements-ci.txt
+          cache-dependency-path: |
+            Development/system/testing/ci/requirements-ci.txt
+            Development/system/coding/bringup-zephyr/tools/requirements.txt
       - run: python -m pip install --require-hashes -r Development/system/testing/ci/requirements-ci.txt
       - name: Run static repository checks
         run: python Development/system/testing/ci/run_ci.py static
+      - name: Install host evaluation dependencies
+        run: python -m pip install --require-hashes -r Development/system/coding/bringup-zephyr/tools/requirements.txt
+      - name: Test DSP and FHIR readback
+        run: python -m pytest -q Development/system/coding/bringup-zephyr/tests/host
       - name: Run required QC evaluation
         run: python Development/system/testing/ci/run_ci.py qc
   firmware:
@@ -60,3 +66,9 @@ jobs:
         run: bash Development/system/testing/ci/setup_zephyr.sh
       - name: Pristine firmware build
         run: .ci-workspace/.venv/bin/python Development/system/testing/ci/run_ci.py build
+      - name: Test audio recovery and application logic
+        run: |
+          export ZEPHYR_BASE="$GITHUB_WORKSPACE/.ci-workspace/zephyr"
+          export PATH="$GITHUB_WORKSPACE/.ci-workspace/.venv/bin:$PATH"
+          west build --pristine=always -b native_sim/native/64 "$APP_DIR/tests/logic" -d build-logic
+          build-logic/zephyr/zephyr.exe

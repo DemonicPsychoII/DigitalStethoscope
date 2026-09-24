@@ -73,6 +73,12 @@ struct app_status_snapshot {
 	int32_t audio_peak;
 };
 
+/* One immediate initial attempt, then at most three delayed retries. The caller
+ * retains retries_used across short-lived successes and resets it only after
+ * sustained operation or an explicit restart. attempt owns failed-start cleanup. */
+int app_audio_start_bounded(bool initial, unsigned int *retries_used, int (*attempt)(void *),
+                            void (*backoff)(void *), void *context);
+
 bool app_probe_record(struct app_probe_state *state, int result, uint8_t max_attempts);
 uint32_t app_degraded_features(const struct component_status status[COMP_COUNT]);
 int app_switch_decode(int position_1, int position_2, int position_3);

@@ -184,7 +184,9 @@ def evaluate(repo: Path, tha: Path) -> dict:
         "PASS" if modular else "FAIL",
         10 if modular else 2,
         f"Target has {len(c_files)} C source file(s); main.c has {main_lines} lines. THA reference splits ADC, sensor, servo, stepper, display and shell modules.",
-        "Split peripheral probes/drivers, audio pipeline, UI/input and status reporting into owned modules.",
+        "None."
+        if modular
+        else "Split peripheral probes/drivers, audio pipeline, UI/input and status reporting into owned modules.",
     )
 
     add(

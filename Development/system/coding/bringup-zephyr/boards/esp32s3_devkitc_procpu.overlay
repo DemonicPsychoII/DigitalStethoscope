@@ -5,7 +5,8 @@
  * MUST NOT be used. GPIO43/44 are the UART console. GPIO19/20 are USB.
  * GPIO0/3/45/46 are strapping pins. None of those are used below.
  *
- * All pin numbers are proposals — adjust to your wiring, then rebuild.
+ * Existing signal wiring confirmed working by the user, 2026-09-16.
+ * The optional second-switch overlay is a separate, unverified extension.
  */
 
 #include <zephyr/dt-bindings/gpio/gpio.h>
@@ -197,3 +198,7 @@
 		};
 	};
 };
+
+/* Match the fitted N16R8; this changes memory geometry, not signal wiring. */
+&flash0 { reg = <0x0 DT_SIZE_M(16)>; ranges = <0x0 0x0 DT_SIZE_M(16)>; };
+&psram0 { status = "okay"; size = <DT_SIZE_M(8)>; };

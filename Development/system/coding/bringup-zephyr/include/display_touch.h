@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
+void display_touch_stats(uint32_t *errors, uint32_t *drops, uint32_t *max_ms);
 int display_touch_probe_display(void);
 int display_touch_probe_touch(void);
 int display_touch_show_color(uint8_t color_index);
