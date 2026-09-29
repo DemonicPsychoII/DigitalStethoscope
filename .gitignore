@@ -2,7 +2,8 @@
 
 # Zephyr toolchain workspace (west modules, SDK, venv, binary blobs).
 # Several GB of third-party content - recreate it with:
-#   Development/system/coding/tools/setup-toolchain.ps1
+#   tools/toolchain/setup-toolchain.ps1 -WorkspacePath <existing-directory>
+# Keep existing installations in place; script relocation does not relocate SDKs.
 Development/system/coding/tools/zephyrproject/
 Development/Toolchain/zephyrproject/
 

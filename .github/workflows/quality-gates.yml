@@ -15,7 +15,7 @@ env:
   ZEPHYR_REVISION: 357467a011cd2557a1a3f0b4be83d817c4addc9b
   ZEPHYR_SDK_VERSION: 1.0.1
   WEST_VERSION: 1.5.0
-  APP_DIR: Development/system/coding/bringup-zephyr
+  APP_DIR: software/evaluation/firmware
   BOARD: esp32s3_devkitc/esp32s3/procpu
 
 jobs:
@@ -35,23 +35,25 @@ jobs:
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: python3 Development/system/testing/ci/firmware_changes.py
+        run: python3 tools/ci/firmware_changes.py
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: '3.12.10'
           cache: pip
           cache-dependency-path: |
-            Development/system/testing/ci/requirements-ci.txt
-            Development/system/coding/bringup-zephyr/tools/requirements.txt
-      - run: python -m pip install --require-hashes -r Development/system/testing/ci/requirements-ci.txt
+            tools/ci/requirements-ci.txt
+            software/evaluation/firmware/tools/requirements.txt
+      - run: python -m pip install --require-hashes -r tools/ci/requirements-ci.txt
       - name: Run static repository checks
-        run: python Development/system/testing/ci/run_ci.py static
+        run: python tools/ci/run_ci.py static
       - name: Install host evaluation dependencies
-        run: python -m pip install --require-hashes -r Development/system/coding/bringup-zephyr/tools/requirements.txt
+        run: python -m pip install --require-hashes -r software/evaluation/firmware/tools/requirements.txt
+      - name: Test repository layout contracts
+        run: python -m pytest -q tools/ci/tests/test_repository_layout.py
       - name: Test DSP and FHIR readback
-        run: python -m pytest -q Development/system/coding/bringup-zephyr/tests/host
+        run: python -m pytest -q software/evaluation/firmware/tests/host
       - name: Run required QC evaluation
-        run: python Development/system/testing/ci/run_ci.py qc
+        run: python tools/ci/run_ci.py qc
   firmware:
     name: Zephyr / Firmware Build
     needs: static
@@ -63,9 +65,9 @@ jobs:
         with:
           persist-credentials: false
       - name: Provision pinned Zephyr workspace
-        run: bash Development/system/testing/ci/setup_zephyr.sh
+        run: bash tools/toolchain/setup_zephyr.sh
       - name: Pristine firmware build
-        run: .ci-workspace/.venv/bin/python Development/system/testing/ci/run_ci.py build
+        run: .ci-workspace/.venv/bin/python tools/ci/run_ci.py build
       - name: Test audio recovery and application logic
         run: |
           export ZEPHYR_BASE="$GITHUB_WORKSPACE/.ci-workspace/zephyr"
