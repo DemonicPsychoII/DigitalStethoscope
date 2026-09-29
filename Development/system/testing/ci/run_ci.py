@@ -9,6 +9,7 @@ import py_compile
 import shutil
 import subprocess
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 import yaml
@@ -134,6 +135,42 @@ def static() -> None:
     summary("### Static checks: PASS")
 
 
+def publish_local_firmware() -> None:
+    """Publish only after all local build profiles succeed; hosted CI stays credential-free."""
+    publisher = shutil.which("cloud-publish")
+    if os.environ.get("GITHUB_ACTIONS") == "true" or not publisher:
+        return
+    commit = subprocess.check_output(
+        ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True
+    ).strip()
+    dirty = bool(
+        subprocess.check_output(
+            ["git", "status", "--porcelain"], cwd=ROOT, text=True
+        ).strip()
+    )
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    version = f"{stamp}-{commit[:12]}{'-dirty' if dirty else ''}"
+    for profile, directory in (
+        ("offline", "build-ci"),
+        ("qc", "build-ci-qc"),
+        ("network-qc-switch", "build-ci-network-qc-switch"),
+    ):
+        run(
+            [
+                publisher,
+                "--project",
+                "Digital Stethoscope",
+                "--version",
+                f"{version}-{profile}",
+                "--commit",
+                commit,
+                "--board",
+                BOARD,
+                str(ROOT / directory / "zephyr/zephyr.bin"),
+            ]
+        )
+
+
 def build() -> None:
     out = ROOT / "build-ci"
     evidence = ARTIFACTS / "firmware"
@@ -201,9 +238,10 @@ def build() -> None:
             ],
             log=evidence / f"{profile}-build.log",
         )
+    publish_local_firmware()
     summary(
         "### Firmware build: PASS\n\nSee RAM/ROM reports in "
-        "the firmware job log. Evidence files are generated locally; no artifacts are uploaded."
+        "the firmware job log. Configured homelab builds also publish verified firmware to Personal Cloud."
     )
 
 

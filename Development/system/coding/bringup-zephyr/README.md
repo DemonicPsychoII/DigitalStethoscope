@@ -76,6 +76,26 @@ active contact; check the physical contact truth table when fitting a second swi
 
 ## Build and flash
 
+### Homelab cloud downloads
+
+On the configured homelab, use the repository's
+`python Development/system/testing/ci/run_ci.py build` entry point from the repository root
+with the Zephyr Python environment activated. After all three profiles succeed, it publishes
+their `zephyr.bin` outputs to
+[Personal Cloud → Firmware](https://homelab-server.tail15fafc.ts.net:8443/#firmware).
+Downloads require Tailscale and cloud sign-in. Build versions include a UTC timestamp, commit,
+profile, and a dirty-worktree marker when applicable. Firmware is not flashed automatically.
+
+This integration uses the installed `cloud-publish` command and a separate upload-only credential
+in the build user's `~/.config/personal-cloud/publisher.token`. Keep that credential outside the
+repository. Hosted GitHub Actions skips publication; other machines without `cloud-publish`
+retain normal local builds. Publishing failures fail the command visibly. Direct `west build`
+commands below do not publish automatically; append `&& cloud-publish --project 'Digital
+Stethoscope' --version BUILD_VERSION --board esp32s3_devkitc/esp32s3/procpu path/to/zephyr.bin`
+when publishing a manually built variant. Supply `--commit` to record source provenance.
+
+### Toolchain and commands
+
 Pinned Zephyr revision: 357467a011cd2557a1a3f0b4be83d817c4addc9b
 
 Pinned hal_espressif revision: 3d4d922a4d2994f844790ec031a584ec71240485
