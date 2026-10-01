@@ -82,9 +82,24 @@ On the configured homelab, use the repository's
 `python Development/system/testing/ci/run_ci.py build` entry point from the repository root
 with the Zephyr Python environment activated. After all three profiles succeed, it publishes
 their `zephyr.bin` outputs to
-[Personal Cloud → Firmware](https://homelab-server.tail15fafc.ts.net:8443/#firmware).
-Downloads require Tailscale and cloud sign-in. Build versions include a UTC timestamp, commit,
-profile, and a dirty-worktree marker when applicable. Firmware is not flashed automatically.
+[Personal Cloud → Firmware](https://homelab-server.tail15fafc.ts.net:8443/#firmware) in the
+`local` group, replacing the previous local build once every profile has uploaded. Downloads require Tailscale and cloud sign-in. Firmware is not flashed automatically.
+
+GitHub builds arrive there too, grouped by source: add the `firmware` label to a PR to publish
+a build of every push (`PR #N`, newest only, deleted when the PR closes), use *Run workflow*
+for any branch, and `integration` is built daily when it has changed (newest only). See
+`Development/system/testing/CI-QUALITY-GATES.md`.
+
+Each image identifies itself. The first console line after Zephyr's banner, and the shell
+command `stetho version`, print the build identity, which is also the cloud version string:
+
+```text
+Digital Stethoscope firmware pr-12 1a2b3c4d5e6f+merge qc 20261002T031705Z
+```
+
+That is channel, the first 12 characters of the source commit (`+merge`: a PR build of GitHub's
+merge into the base branch; `-dirty`: uncommitted tracked changes), profile and UTC build time.
+`run_ci.py` supplies it as `-DSTETHO_BUILD_ID`; a direct `west build` prints `local`.
 
 This integration uses the installed `cloud-publish` command and a separate upload-only credential
 in the build user's `~/.config/personal-cloud/publisher.token`. Keep that credential outside the
@@ -92,7 +107,8 @@ repository. Hosted GitHub Actions skips publication; other machines without `clo
 retain normal local builds. Publishing failures fail the command visibly. Direct `west build`
 commands below do not publish automatically; append `&& cloud-publish --project 'Digital
 Stethoscope' --version BUILD_VERSION --board esp32s3_devkitc/esp32s3/procpu path/to/zephyr.bin`
-when publishing a manually built variant. Supply `--commit` to record source provenance.
+when publishing a manually built variant. Supply `--commit` to record source provenance; such
+uploads appear under *Earlier builds*, without a channel.
 
 ### Toolchain and commands
 

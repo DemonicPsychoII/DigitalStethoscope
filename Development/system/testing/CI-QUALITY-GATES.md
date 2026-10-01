@@ -14,7 +14,16 @@ always validated. The firmware job runs only when the workflow, bring-up tree,
 or CI scripts change; otherwise GitHub reports it as skipped, which satisfies
 its required-check rule. Change detection compares the current base and head
 trees, includes deletions and both sides of renames, and fails on Git errors.
-There are no push, main-branch, or manual duplicate runs. Only Python package
+Regardless of paths, the firmware job also runs for same-repository PRs labelled
+`firmware` (when the label is added and on every later push), the daily
+03:17 UTC `schedule` run on `integration`, and manual *Run workflow* dispatches
+on any branch; these publish their images (see below). The daily run skips the
+firmware job, so no homelab VM starts, when the newest successful scheduled or
+dispatched `integration` run already built the same commit; only for that
+lookup the static job may read Actions history (`actions: read`). Dispatches
+always build. Other label events skip
+both jobs under distinct check names, so they neither cancel a real run nor
+replace a required check's result. There are no push runs. Only Python package
 caching remains; firmware builds are pristine with a 30-minute timeout.
 Repository contents are read-only and no secrets
 are used, so fork pull requests receive no privileged credentials.
@@ -44,8 +53,16 @@ merge and may be promoted selectively as the code is modularized.
 
 ## Artifacts and reporting
 
-No artifacts are uploaded. Build output and RAM/ROM reports appear in the job
-log; firmware evidence files remain available when running locally. The static
+Publishing builds (above) upload one artifact, `firmware-build-<attempt>`, kept
+for three days: each profile's `zephyr.bin` under a descriptive name plus a
+`manifest.json` (channel, commit, merged tree for PRs, UTC build time, board,
+per-file profile, boot-banner version and SHA-256). The homelab's firmware sync
+downloads it, checks it against GitHub's run record, and publishes it to
+Personal Cloud: the build guest never holds a cloud credential. Each PR and
+`integration` keep only their newest build; a PR's builds are deleted when it
+is closed or merged.
+Fork builds never upload. Otherwise build output and RAM/ROM reports appear in
+the job log; firmware evidence files remain available when running locally. The static
 job generates a QC scorecard and records its score in the run summary; a `HOLD`
 result fails the quality check.
 No serial captures, credentials, private

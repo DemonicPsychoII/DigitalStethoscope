@@ -1,5 +1,6 @@
 #include "audio_loopback.h"
 #include "display_touch.h"
+#include "stetho_build_id.h"
 #include "stetho_control.h"
 #include "stetho_fhir.h"
 #include <errno.h>
@@ -58,6 +59,9 @@ static int command(const struct shell *shell, size_t argc, char **argv)
 		rc = number(argv[3], &value);
 		if (!rc)
 			rc = stetho_setting_set(argv[2], value);
+	} else if (argc == 2 && !strcmp(argv[1], "version")) {
+		shell_print(shell, "%s", STETHO_BUILD_ID);
+		rc = 0;
 	} else if (argc == 2 && !strcmp(argv[1], "restart"))
 		rc = audio_loopback_start();
 	else if (argc == 2 && (!strcmp(argv[1], "capture") || !strcmp(argv[1], "replay") ||
@@ -117,7 +121,8 @@ static int command(const struct shell *shell, size_t argc, char **argv)
 	return rc;
 }
 SHELL_CMD_ARG_REGISTER(stetho, NULL,
-                       "status | set NAME VALUE | capture | replay | live | restart | color N | "
+                       "status | version | set NAME VALUE | capture | replay | live | restart | "
+                       "color N | "
                        "fixture reset/append HEX | net configure HOST PORT BASE PATIENT | net time "
                        "EPOCH | net sync HOST | net token TOKEN | net send",
                        command, 2, 5);
