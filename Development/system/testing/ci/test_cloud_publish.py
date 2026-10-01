@@ -55,7 +55,9 @@ class CloudPublishTests(unittest.TestCase):
             self.assertEqual(option["--parts"], "3")
             self.assertEqual(option["--build"], "local-20261002T031705Z-" + "a" * 12)
             self.assertIn("--dirty", args)
-            self.assertEqual(args[-1], f"/release/stethoscope-local-{profile}.bin")
+            self.assertEqual(
+                Path(args[-1]), Path("/release") / f"stethoscope-local-{profile}.bin"
+            )
 
     def test_failed_upload_retires_only_the_partial_build(self):
         with (

@@ -1,0 +1,11 @@
+{
+  "zephyr_revision": "357467a011cd2557a1a3f0b4be83d817c4addc9b",
+  "sdk_version": "1.0.1",
+  "west_version": "1.5.0",
+  "cmake_version": "4.4.3",
+  "ninja_version": "1.13.2",
+  "esptool_version": "5.0.2",
+  "toolchain": "xtensa-espressif_esp32s3_zephyr-elf",
+  "board": "esp32s3_devkitc/esp32s3/procpu",
+  "modules": ["hal_espressif", "mbedtls", "tf-psa-crypto", "mcuboot", "picolibc"]
+}

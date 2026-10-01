@@ -13,15 +13,16 @@ from pathlib import Path
 
 import firmware_release
 import yaml
+from build_support import BOARD, build_env
+from build_support import PROFILES as PROFILE_ARGS
 
 ROOT = Path(__file__).resolve().parents[4]
 APP = ROOT / "Development/system/coding/bringup-zephyr"
 ARTIFACTS = ROOT / "artifacts"
-BOARD = "esp32s3_devkitc/esp32s3/procpu"
-PROFILES = (
-    ("offline", "build-ci"),
-    ("qc", "build-ci-qc"),
-    ("network-qc-switch", "build-ci-network-qc-switch"),
+# (profile, build directory); each profile's CMake options live in build_support.
+PROFILES = tuple(
+    (profile, "build-ci" if profile == "offline" else f"build-ci-{profile}")
+    for profile in PROFILE_ARGS
 )
 
 
@@ -45,13 +46,7 @@ def run(
     if pinned_zephyr.is_dir():
         # CI commands run from the application repository, outside the nested
         # West workspace. Point West at the pinned Zephyr checkout explicitly.
-        env.setdefault("ZEPHYR_BASE", str(pinned_zephyr))
-        venv_bin = ROOT / (
-            ".ci-workspace/.venv/Scripts"
-            if os.name == "nt"
-            else ".ci-workspace/.venv/bin"
-        )
-        env["PATH"] = os.pathsep.join((str(venv_bin), env.get("PATH", "")))
+        env = build_env(ROOT / ".ci-workspace")
     if env_overrides:
         env.update(env_overrides)
     if log:
@@ -75,9 +70,6 @@ def run(
 
 
 def west() -> str:
-    found = shutil.which("west")
-    if found:
-        return found
     workspace_candidates = (
         ROOT / ".ci-workspace/.venv/bin/west",
         ROOT / ".ci-workspace/.venv/Scripts/west.exe",
@@ -85,6 +77,9 @@ def west() -> str:
     for candidate in workspace_candidates:
         if candidate.is_file():
             return str(candidate)
+    found = shutil.which("west")
+    if found:
+        return found
     raise SystemExit(
         "west was not found on PATH or in the pinned .ci-workspace virtual environment"
     )
@@ -220,16 +215,9 @@ def build() -> None:
         shutil.copy2(source, evidence / name)
     # Compile feature combinations too: the default offline image cannot cover
     # TLS or the optional GPIO extension. These remain disconnected at boot.
-    for profile, extra in (
-        ("qc", ["-DEXTRA_CONF_FILE=qc.conf"]),
-        (
-            "network-qc-switch",
-            [
-                "-DEXTRA_CONF_FILE=network.conf;qc.conf",
-                "-DEXTRA_DTC_OVERLAY_FILE=boards/second-switch.overlay",
-            ],
-        ),
-    ):
+    for profile, directory in PROFILES:
+        if profile == "offline":
+            continue
         run(
             [
                 west(),
@@ -239,9 +227,9 @@ def build() -> None:
                 BOARD,
                 str(APP),
                 "-d",
-                str(ROOT / f"build-ci-{profile}"),
+                str(ROOT / directory),
                 "--",
-                *extra,
+                *PROFILE_ARGS[profile],
                 identity.cmake_arg(profile),
             ],
             log=evidence / f"{profile}-build.log",

@@ -22,9 +22,6 @@ permissions:
   contents: read
 
 env:
-  ZEPHYR_REVISION: 357467a011cd2557a1a3f0b4be83d817c4addc9b
-  ZEPHYR_SDK_VERSION: 1.0.1
-  WEST_VERSION: 1.5.0
   APP_DIR: Development/system/coding/bringup-zephyr
   BOARD: esp32s3_devkitc/esp32s3/procpu
 
@@ -98,6 +95,16 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           persist-credentials: false
+      - name: Load toolchain pins
+        # toolchain.json is the one source of the pins for setup, CI and the benchmark.
+        run: |
+          python3 - >> "$GITHUB_ENV" <<'PY'
+          import json
+          pins = json.load(open("Development/system/testing/ci/toolchain.json"))
+          print(f"ZEPHYR_REVISION={pins['zephyr_revision']}")
+          print(f"ZEPHYR_SDK_VERSION={pins['sdk_version']}")
+          print(f"WEST_VERSION={pins['west_version']}")
+          PY
       - name: Reuse the guest's pinned Zephyr toolchain
         run: |
           # Each homelab job gets its own disposable VM; this workspace is never shared
