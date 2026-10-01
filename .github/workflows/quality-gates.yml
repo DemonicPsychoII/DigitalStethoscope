@@ -56,12 +56,25 @@ jobs:
     name: Zephyr / Firmware Build
     needs: static
     if: needs.static.outputs.firmware == 'true'
-    runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    # A repository variable can explicitly route new runs back to GitHub during maintenance.
+    runs-on: ${{ fromJSON(vars.ZEPHYR_RUNNER_LABELS || '["self-hosted","linux","x64","homelab-zephyr"]') }}
+    timeout-minutes: 60
+    env:
+      CMAKE_BUILD_PARALLEL_LEVEL: '2'
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           persist-credentials: false
+      - name: Reuse the guest's pinned Zephyr toolchain
+        run: |
+          # Each homelab job gets its own disposable VM; this workspace is never shared
+          # with another job. Hosted fallback runners simply provision from scratch.
+          cache=/opt/zephyr-workspace
+          if [[ -d "$cache/zephyr-sdk-$ZEPHYR_SDK_VERSION" ]] \
+            && [[ "$(git -C "$cache/zephyr" rev-parse HEAD)" == "$ZEPHYR_REVISION" ]] \
+            && [[ "$("$cache/.venv/bin/west" --version)" == "West version: $WEST_VERSION" ]]; then
+            ln -s "$cache" "$GITHUB_WORKSPACE/.ci-workspace"
+          fi
       - name: Provision pinned Zephyr workspace
         run: bash Development/system/testing/ci/setup_zephyr.sh
       - name: Pristine firmware build
