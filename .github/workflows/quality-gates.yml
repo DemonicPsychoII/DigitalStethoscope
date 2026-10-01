@@ -72,8 +72,11 @@ jobs:
           cache=/opt/zephyr-workspace
           if [[ -d "$cache/zephyr-sdk-$ZEPHYR_SDK_VERSION" ]] \
             && [[ "$(git -C "$cache/zephyr" rev-parse HEAD)" == "$ZEPHYR_REVISION" ]] \
-            && [[ "$("$cache/.venv/bin/west" --version)" == "West version: $WEST_VERSION" ]]; then
+            && [[ "$("$cache/.venv/bin/west" --version)" == "West version: v$WEST_VERSION" ]]; then
             ln -s "$cache" "$GITHUB_WORKSPACE/.ci-workspace"
+            echo 'Reusing the prepared guest toolchain for these exact pins.'
+          else
+            echo 'No matching prepared guest toolchain; provisioning from scratch.'
           fi
       - name: Provision pinned Zephyr workspace
         run: bash Development/system/testing/ci/setup_zephyr.sh
