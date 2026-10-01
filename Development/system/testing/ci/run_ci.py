@@ -9,15 +9,20 @@ import py_compile
 import shutil
 import subprocess
 import sys
-from datetime import datetime, timezone
 from pathlib import Path
 
+import firmware_release
 import yaml
 
 ROOT = Path(__file__).resolve().parents[4]
 APP = ROOT / "Development/system/coding/bringup-zephyr"
 ARTIFACTS = ROOT / "artifacts"
 BOARD = "esp32s3_devkitc/esp32s3/procpu"
+PROFILES = (
+    ("offline", "build-ci"),
+    ("qc", "build-ci-qc"),
+    ("network-qc-switch", "build-ci-network-qc-switch"),
+)
 
 
 def summary(line: str) -> None:
@@ -135,43 +140,33 @@ def static() -> None:
     summary("### Static checks: PASS")
 
 
-def publish_local_firmware() -> None:
+def publish_local_firmware(
+    build: firmware_release.Identity, manifest: dict, release: Path
+) -> None:
     """Publish only after all local build profiles succeed; hosted CI stays credential-free."""
     publisher = shutil.which("cloud-publish")
     if os.environ.get("GITHUB_ACTIONS") == "true" or not publisher:
         return
-    commit = subprocess.check_output(
-        ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True
-    ).strip()
-    dirty = bool(
-        subprocess.check_output(
-            ["git", "status", "--porcelain"], cwd=ROOT, text=True
-        ).strip()
-    )
-    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    version = f"{stamp}-{commit[:12]}{'-dirty' if dirty else ''}"
-    for profile, directory in (
-        ("offline", "build-ci"),
-        ("qc", "build-ci-qc"),
-        ("network-qc-switch", "build-ci-network-qc-switch"),
-    ):
-        run(
-            [
-                publisher,
-                "--project",
-                "Digital Stethoscope",
-                "--version",
-                f"{version}-{profile}",
-                "--commit",
-                commit,
-                "--board",
-                BOARD,
-                str(ROOT / directory / "zephyr/zephyr.bin"),
-            ]
-        )
+    stamp = build.built_at.replace("-", "").replace(":", "")
+    for entry in manifest["files"]:
+        argv = [
+            publisher,
+            *("--project", firmware_release.PROJECT, "--version", entry["version"]),
+            *("--commit", build.commit, "--board", BOARD),
+            *("--source", "local", "--trigger", "local", "--profile", entry["profile"]),
+            *("--build", f"local-{stamp}-{build.commit[:12]}"),
+            *("--parts", str(len(manifest["files"])), "--built-at", build.built_at),
+        ]
+        if build.dirty:
+            argv.append("--dirty")
+        if build.branch:
+            argv += ["--branch", build.branch]
+        run([*argv, str(release / entry["name"])])
 
 
 def build() -> None:
+    identity = firmware_release.identity(ROOT)
+    print(f"Firmware build identity: {identity.version('<profile>')}", flush=True)
     out = ROOT / "build-ci"
     evidence = ARTIFACTS / "firmware"
     evidence.mkdir(parents=True, exist_ok=True)
@@ -187,6 +182,7 @@ def build() -> None:
             str(out),
             "--",
             "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+            identity.cmake_arg("offline"),
         ],
         log=evidence / "build.log",
     )
@@ -235,12 +231,25 @@ def build() -> None:
                 str(ROOT / f"build-ci-{profile}"),
                 "--",
                 *extra,
+                identity.cmake_arg(profile),
             ],
             log=evidence / f"{profile}-build.log",
         )
-    publish_local_firmware()
+    # CI uploads this directory for the homelab's firmware sync; local runs publish it.
+    release = ARTIFACTS / "firmware-release"
+    manifest = firmware_release.stage(
+        identity,
+        [
+            (profile, ROOT / directory / "zephyr/zephyr.bin")
+            for profile, directory in PROFILES
+        ],
+        release,
+        BOARD,
+    )
+    publish_local_firmware(identity, manifest, release)
     summary(
-        "### Firmware build: PASS\n\nSee RAM/ROM reports in "
+        "### Firmware build: PASS\n\n"
+        f"Build identity: `{identity.version('<profile>')}`. See RAM/ROM reports in "
         "the firmware job log. Configured homelab builds also publish verified firmware to Personal Cloud."
     )
 

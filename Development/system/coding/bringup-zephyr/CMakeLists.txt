@@ -6,6 +6,21 @@ project(stetho_bringup)
 
 target_include_directories(app PRIVATE include)
 
+# Build identity printed at boot. run_ci.py passes -DSTETHO_BUILD_ID; a plain west build
+# reports "local". The cache entry is dropped once read, so reconfiguring the directory
+# without the option falls back to "local" instead of keeping an earlier CI identity.
+set(STETHO_BUILD_ID_VALUE "local")
+if(DEFINED STETHO_BUILD_ID)
+  set(STETHO_BUILD_ID_VALUE "${STETHO_BUILD_ID}")
+  unset(STETHO_BUILD_ID CACHE)
+endif()
+if(NOT STETHO_BUILD_ID_VALUE MATCHES "^[A-Za-z0-9 ._:+/-]+$")
+  message(FATAL_ERROR "STETHO_BUILD_ID allows only letters, digits, spaces and ._:+/-")
+endif()
+file(CONFIGURE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/stetho_build_id.h"
+     CONTENT "#define STETHO_BUILD_ID \"@STETHO_BUILD_ID_VALUE@\"\n" @ONLY)
+target_include_directories(app PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
+
 target_sources(app PRIVATE
     src/main.c
     src/app_logic.c

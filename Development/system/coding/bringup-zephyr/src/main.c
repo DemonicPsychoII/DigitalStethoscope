@@ -7,6 +7,7 @@
 #include "gpio_inputs.h"
 #include "peripherals.h"
 #include "status_reporting.h"
+#include "stetho_build_id.h"
 #include "stetho_control.h"
 #include <errno.h>
 #include <stdlib.h>
@@ -164,6 +165,8 @@ int main(void)
 {
 	struct app_context c = {0};
 	struct app_event event;
+	/* First console output after Zephyr's banner, so a flashed board names its build. */
+	printk("Digital Stethoscope firmware %s\n", STETHO_BUILD_ID);
 	LOG_INF("=== Stethoscope integrated evaluation ===");
 	peripherals_probe_all(&c.peripherals);
 	peripherals_report(&c.peripherals);
