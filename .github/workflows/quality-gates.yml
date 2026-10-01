@@ -56,8 +56,9 @@ jobs:
     name: Zephyr / Firmware Build
     needs: static
     if: needs.static.outputs.firmware == 'true'
-    # A repository variable can explicitly route new runs back to GitHub during maintenance.
-    runs-on: ${{ fromJSON(vars.ZEPHYR_RUNNER_LABELS || '["self-hosted","linux","x64","homelab-zephyr"]') }}
+    # Forks always use GitHub; each trusted run/attempt gets a separate homelab label.
+    # The repository variable retains the explicit hosted maintenance override.
+    runs-on: ${{ fromJSON(github.event.pull_request.head.repo.full_name != github.repository && '["ubuntu-24.04"]' || vars.ZEPHYR_RUNNER_LABELS || format('["homelab-zephyr-{0}-{1}"]', github.run_id, github.run_attempt)) }}
     timeout-minutes: 60
     env:
       CMAKE_BUILD_PARALLEL_LEVEL: '2'
