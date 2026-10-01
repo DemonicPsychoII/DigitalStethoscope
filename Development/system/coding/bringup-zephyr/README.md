@@ -83,11 +83,11 @@ On the configured homelab, use the repository's
 with the Zephyr Python environment activated. After all three profiles succeed, it publishes
 their `zephyr.bin` outputs to
 [Personal Cloud → Firmware](https://homelab-server.tail15fafc.ts.net:8443/#firmware) in the
-`local` group. Downloads require Tailscale and cloud sign-in. Firmware is not flashed automatically.
+`local` group, replacing the previous local build once every profile has uploaded. Downloads require Tailscale and cloud sign-in. Firmware is not flashed automatically.
 
 GitHub builds arrive there too, grouped by source: add the `firmware` label to a PR to publish
 a build of every push (`PR #N`, newest only, deleted when the PR closes), use *Run workflow*
-for any branch, and `integration` is built daily (newest only). See
+for any branch, and `integration` is built daily when it has changed (newest only). See
 `Development/system/testing/CI-QUALITY-GATES.md`.
 
 Each image identifies itself. The first console line after Zephyr's banner, and the shell

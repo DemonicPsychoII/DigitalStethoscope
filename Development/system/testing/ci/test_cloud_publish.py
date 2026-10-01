@@ -38,7 +38,12 @@ class CloudPublishTests(unittest.TestCase):
             patch.object(run_ci, "run") as run,
         ):
             run_ci.publish_local_firmware(IDENTITY, MANIFEST, Path("/release"))
-        self.assertEqual(run.call_count, 3)
+        self.assertEqual(run.call_count, 4)
+        build_id = "local-20261002T031705Z-" + "a" * 12
+        self.assertEqual(
+            run.call_args.args[0],
+            ["/usr/local/bin/cloud-publish", "--retire", "local", "--keep", build_id],
+        )
         for call, (profile, _) in zip(run.call_args_list, run_ci.PROFILES):
             args = call.args[0]
             option = dict(zip(args[1:-1:2], args[2:-1:2]))
@@ -51,6 +56,28 @@ class CloudPublishTests(unittest.TestCase):
             self.assertEqual(option["--build"], "local-20261002T031705Z-" + "a" * 12)
             self.assertIn("--dirty", args)
             self.assertEqual(args[-1], f"/release/stethoscope-local-{profile}.bin")
+
+    def test_failed_upload_retires_only_the_partial_build(self):
+        with (
+            patch.dict(run_ci.os.environ, {"GITHUB_ACTIONS": "false"}),
+            patch.object(run_ci.shutil, "which", return_value="cloud-publish"),
+            patch.object(
+                run_ci, "run", side_effect=[None, SystemExit("upload")]
+            ) as run,
+            patch.object(run_ci.subprocess, "run") as cleanup,
+        ):
+            with self.assertRaises(SystemExit):
+                run_ci.publish_local_firmware(IDENTITY, MANIFEST, Path("/release"))
+        self.assertEqual(run.call_count, 2)
+        cleanup.assert_called_once_with(
+            [
+                "cloud-publish",
+                "--retire",
+                "local",
+                "--build",
+                "local-20261002T031705Z-" + "a" * 12,
+            ]
+        )
 
     def test_hosted_ci_does_not_publish(self):
         with (

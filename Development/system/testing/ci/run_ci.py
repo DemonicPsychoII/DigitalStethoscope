@@ -143,25 +143,36 @@ def static() -> None:
 def publish_local_firmware(
     build: firmware_release.Identity, manifest: dict, release: Path
 ) -> None:
-    """Publish only after all local build profiles succeed; hosted CI stays credential-free."""
+    """Publish only after all local build profiles succeed; hosted CI stays credential-free.
+
+    Like the homelab's GitHub builds, the new build is uploaded completely before the
+    previous one is retired, so the `local` channel always holds one complete build.
+    """
     publisher = shutil.which("cloud-publish")
     if os.environ.get("GITHUB_ACTIONS") == "true" or not publisher:
         return
     stamp = build.built_at.replace("-", "").replace(":", "")
-    for entry in manifest["files"]:
-        argv = [
-            publisher,
-            *("--project", firmware_release.PROJECT, "--version", entry["version"]),
-            *("--commit", build.commit, "--board", BOARD),
-            *("--source", "local", "--trigger", "local", "--profile", entry["profile"]),
-            *("--build", f"local-{stamp}-{build.commit[:12]}"),
-            *("--parts", str(len(manifest["files"])), "--built-at", build.built_at),
-        ]
-        if build.dirty:
-            argv.append("--dirty")
-        if build.branch:
-            argv += ["--branch", build.branch]
-        run([*argv, str(release / entry["name"])])
+    build_id = f"local-{stamp}-{build.commit[:12]}"
+    try:
+        for entry in manifest["files"]:
+            argv = [
+                publisher,
+                *("--project", firmware_release.PROJECT, "--version", entry["version"]),
+                *("--commit", build.commit, "--board", BOARD),
+                *("--source", "local", "--trigger", "local"),
+                *("--profile", entry["profile"], "--build", build_id),
+                *("--parts", str(len(manifest["files"])), "--built-at", build.built_at),
+            ]
+            if build.dirty:
+                argv.append("--dirty")
+            if build.branch:
+                argv += ["--branch", build.branch]
+            run([*argv, str(release / entry["name"])])
+    except SystemExit:
+        # Remove this build's partial upload; the previous complete build stays.
+        subprocess.run([publisher, "--retire", "local", "--build", build_id])
+        raise
+    run([publisher, "--retire", "local", "--keep", build_id])
 
 
 def build() -> None:
