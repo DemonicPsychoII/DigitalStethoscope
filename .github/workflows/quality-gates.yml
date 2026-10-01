@@ -36,15 +36,26 @@ jobs:
     if: github.event.action != 'labeled' || github.event.label.name == 'firmware'
     runs-on: ubuntu-24.04
     timeout-minutes: 10
+    permissions:
+      contents: read
+      # Only for the daily skip: reads earlier runs of this workflow.
+      actions: read
     outputs:
       firmware: ${{ steps.changes.outputs.firmware }}
-      # Same-repository builds for Personal Cloud: labelled PRs, the daily schedule, dispatch.
-      publish: ${{ github.event_name != 'pull_request' || (github.event.pull_request.head.repo.full_name == github.repository && contains(github.event.pull_request.labels.*.name, 'firmware')) }}
+      # Same-repository builds for Personal Cloud: labelled PRs, the daily schedule (unless
+      # integration is unchanged; the firmware job then never queues a homelab VM), dispatch.
+      publish: ${{ (github.event_name != 'pull_request' && steps.daily.outputs.build != 'false') || (github.event.pull_request.head.repo.full_name == github.repository && contains(github.event.pull_request.labels.*.name, 'firmware')) }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           fetch-depth: 0
           persist-credentials: false
+      - name: Skip an unchanged daily firmware build
+        id: daily
+        if: github.event_name == 'schedule'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 Development/system/testing/ci/daily_build.py
       - name: Detect firmware changes
         id: changes
         if: github.event_name == 'pull_request'
