@@ -3,9 +3,19 @@ name: Mandatory quality gates
 on:
   pull_request:
     branches: [integration]
+    # `labeled` exists for the `firmware` label; jobs skip every other label below.
+    types: [opened, synchronize, reopened, labeled]
+  schedule:
+    # Daily integration firmware for Personal Cloud, off the hour.
+    - cron: '17 3 * * *'
+  workflow_dispatch:
 
 concurrency:
-  group: quality-gates-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  # An unrelated label event gets its own group so it cannot cancel a real run.
+  group: >-
+    quality-gates-${{ github.workflow }}-${{ github.event.pull_request.number
+    || format('{0}-{1}', github.event_name, github.ref) }}${{ github.event.action == 'labeled'
+    && github.event.label.name != 'firmware' && format('-ignored-{0}', github.run_id) || '' }}
   cancel-in-progress: true
 
 permissions:
@@ -20,11 +30,16 @@ env:
 
 jobs:
   static:
-    name: Quality / Static Checks
+    # A skipped check under the required name would replace this commit's real result,
+    # so ignored label events report under a different name.
+    name: ${{ github.event.action == 'labeled' && github.event.label.name != 'firmware' && 'Quality / Static Checks (label ignored)' || 'Quality / Static Checks' }}
+    if: github.event.action != 'labeled' || github.event.label.name == 'firmware'
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     outputs:
       firmware: ${{ steps.changes.outputs.firmware }}
+      # Same-repository builds for Personal Cloud: labelled PRs, the daily schedule, dispatch.
+      publish: ${{ github.event_name != 'pull_request' || (github.event.pull_request.head.repo.full_name == github.repository && contains(github.event.pull_request.labels.*.name, 'firmware')) }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
@@ -32,6 +47,7 @@ jobs:
           persist-credentials: false
       - name: Detect firmware changes
         id: changes
+        if: github.event_name == 'pull_request'
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
@@ -55,13 +71,18 @@ jobs:
   firmware:
     name: Zephyr / Firmware Build
     needs: static
-    if: needs.static.outputs.firmware == 'true'
+    if: needs.static.outputs.firmware == 'true' || needs.static.outputs.publish == 'true'
     # Forks always use GitHub; each trusted run/attempt gets a separate homelab label.
     # The repository variable retains the explicit hosted maintenance override.
-    runs-on: ${{ fromJSON(github.event.pull_request.head.repo.full_name != github.repository && '["ubuntu-24.04"]' || vars.ZEPHYR_RUNNER_LABELS || format('["homelab-zephyr-{0}-{1}"]', github.run_id, github.run_attempt)) }}
+    runs-on: ${{ fromJSON(github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository && '["ubuntu-24.04"]' || vars.ZEPHYR_RUNNER_LABELS || format('["homelab-zephyr-{0}-{1}"]', github.run_id, github.run_attempt)) }}
     timeout-minutes: 60
     env:
       CMAKE_BUILD_PARALLEL_LEVEL: '2'
+      FIRMWARE_PUBLISH: ${{ needs.static.outputs.publish }}
+      # Build identity for the boot banner and manifest (run_ci.py / firmware_release.py).
+      # PRs name their head commit; the checkout is GitHub's merge of it into the base.
+      STETHO_BUILD_CHANNEL: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || github.ref_name == 'integration' && 'integration' || format('branch/{0}', github.ref_name) }}
+      STETHO_BUILD_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
@@ -89,3 +110,13 @@ jobs:
           export PATH="$GITHUB_WORKSPACE/.ci-workspace/.venv/bin:$PATH"
           west build --pristine=always -b native_sim/native/64 "$APP_DIR/tests/logic" -d build-logic
           build-logic/zephyr/zephyr.exe
+      # Last, so only fully tested builds are offered. The guest never holds a cloud
+      # credential: the homelab's firmware sync downloads this artifact instead.
+      - name: Upload firmware for Personal Cloud
+        if: env.FIRMWARE_PUBLISH == 'true'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: firmware-build-${{ github.run_attempt }}
+          path: artifacts/firmware-release/
+          retention-days: 3
+          if-no-files-found: error
