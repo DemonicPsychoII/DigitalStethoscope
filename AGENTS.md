@@ -1,4 +1,4 @@
-# AGENTS.md — DigitalStethoscope-B.Thesis
+# AGENTS.md — DigitalStethoscope
 
 ## Merge policy
 
