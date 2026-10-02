@@ -14,10 +14,7 @@ BOARD = PINS["board"]
 PROFILES = {
     "offline": [],
     "qc": ["-DEXTRA_CONF_FILE=qc.conf"],
-    "network-qc-switch": [
-        "-DEXTRA_CONF_FILE=network.conf;qc.conf",
-        "-DEXTRA_DTC_OVERLAY_FILE=boards/second-switch.overlay",
-    ],
+    "network-qc": ["-DEXTRA_CONF_FILE=network.conf;qc.conf"],
 }
 
 

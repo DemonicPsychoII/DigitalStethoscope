@@ -31,7 +31,7 @@ on-target timing or electrical/audio evidence.
 The integrated stethoscope upgrade also has behavioral DSP/FHIR tests in
 `../coding/bringup-zephyr/tests/host` and a physical acceptance matrix in
 `../coding/bringup-zephyr/EVAL-GUIDE.md`. CI runs those host tests and builds the
-offline, QC, and combined network/QC/optional-switch profiles. The engineering
+offline, QC, and combined network/QC profiles. The engineering
 score above is separate from functional evaluation; it does not imply a complete
 stethoscope has passed the hardware matrix. Upgrade build/source hashes and
 host-test results are recorded in `../coding/bringup-zephyr/evidence/integrated-build-results.json`.

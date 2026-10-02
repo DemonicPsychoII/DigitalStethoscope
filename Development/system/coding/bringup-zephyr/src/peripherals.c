@@ -11,6 +11,7 @@
 #include "audio_loopback.h"
 #include "display_touch.h"
 #include "gpio_inputs.h"
+#include "sd_storage.h"
 
 LOG_MODULE_REGISTER(peripherals, LOG_LEVEL_INF);
 
@@ -79,6 +80,13 @@ static const struct component_definition definitions[COMP_COUNT] = {
                         "TX accepted only; acoustic output still unverified",
                         audio_loopback_probe_dac,
                         PRESENCE_TRANSFER_ACCEPTED,
+                },
+        [COMP_SD_CARD] =
+                {
+                        "SD card (SPI2, CS GPIO48)",
+                        "insert a FAT/exFAT card before boot or use 'fs mount fat /SD:'",
+                        sd_storage_probe,
+                        PRESENCE_PHYSICAL_VERIFIED,
                 },
 };
 

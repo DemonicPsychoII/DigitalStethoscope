@@ -41,8 +41,8 @@ cd ~/DigitalStethoscope-B.Thesis
 ```
 
 The default `offline` profile is the evaluation image. `--profiles offline qc
-network-qc-switch` also exercises stack diagnostics and the combined optional
-network/switch image used by CI. All profiles have the same board and source
+network-qc` also exercises stack diagnostics and the combined optional
+network image used by CI. All profiles have the same board and source
 pins. Every run produces a fresh `zephyr.bin`. Benchmarks do not publish or flash.
 
 Use four jobs for the direct comparison; the homelab has four logical CPUs.

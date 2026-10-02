@@ -35,6 +35,7 @@ target_sources(app PRIVATE
     src/stetho_shell.c
     src/stetho_fhir.c
     src/stetho_network.c
+    src/sd_storage.c
 )
 
 target_link_libraries(app PRIVATE m)

@@ -1,9 +1,11 @@
 # Digital stethoscope — integrated evaluation firmware
 
 ESP32-S3-DevKitC-1 **N16R8**, Zephyr, INMP441, PCM5102A, ILI9341/XPT2046,
-potentiometer, illuminated button and filter switch. The existing evaluation
-wiring was confirmed working by the user on **2026-09-16**; its signal assignments
-are preserved. That confirmation is distinct from testing this new firmware.
+potentiometer, illuminated button, filter and speed switches and the LCD module's
+SD card, as wired on evaluation carrier Rev A. The existing evaluation wiring was
+confirmed working by the user on **2026-09-16**; its signal assignments are
+preserved. That confirmation is distinct from testing this new firmware, and it
+predates the speed switch and SD card mapping.
 
 The default build is **offline**: no Wi-Fi connection or FHIR transmission.
 The optional network build also starts without credentials, server configuration
@@ -24,6 +26,12 @@ or automatic connection/transmission. Configure and connect explicitly when read
   saturation. Start at minimum. Brightness is a separate setting.
 - Filter switch: positions 1/2/3 select Raw/Murmur/BPM. Touch or serial selection
   remains active until the next physical switch transition.
+- Speed switch: positions 1/2/3 select 1.00×/0.75×/0.50× replay, with the same
+  last-transition-wins rule. With no switch fitted all contacts read open and
+  touch/serial stay in control.
+- SD card: mounted read/write at `/SD:` when a FAT/exFAT card is inserted before
+  boot. There is no card-detect line; after inserting later use `fs mount fat /SD:`.
+  The firmware never formats a card. Browse with `fs ls /SD:`.
 - Button: begin a volatile clip, or stop capture/replay and return to live.
   LED indicates active capture/replay. Default clip capacity: **5 seconds**.
 - Touch dashboard: filter/speed, capture/replay, live/heart-lung, point/brightness.
@@ -54,6 +62,8 @@ or automatic connection/transmission. Configure and connect explicitly when read
 | Button / button LED | input / output | 16 / 17 |
 | Potentiometer | ADC1 channel 0 | 1 |
 | Filter switch | Raw / Murmur / BPM | 18 / 21 / 38 |
+| Speed switch (carrier J9) | 1.00× / 0.75× / 0.50× | 2 / 39 / 47 |
+| SD card (LCD module, carrier J11) | CS; SCK / MOSI / MISO shared with SPI2 | 48 |
 
 The authoritative mapping is `boards/esp32s3_devkitc_procpu.overlay`. No existing
 signal pin was moved. GPIO38 also connects to the RGB LED on DevKitC-1 v1.1;
@@ -68,11 +78,17 @@ Keep the existing backlight driver and LED current limiting. PCM5102A is a
 line-output DAC: headphones require the appropriate amplifier stage in the
 assembly, not a firmware gain setting as a substitute.
 
-The optional `boards/second-switch.overlay` adds speed contacts on GPIO2/39/47,
-common GND. This extension is **not covered by the wiring confirmation**. It is
-unnecessary when using the touch/serial speed selector. GPIO39 then cannot also
-serve an external JTAG probe. Firmware expects three positions with exactly one
-active contact; check the physical contact truth table when fitting a second switch.
+The speed switch (GPIO2/39/47, common GND) and SD chip select (GPIO48) are part
+of the default build because carrier Rev A wires them. Neither is **covered by
+the wiring confirmation** yet. GPIO39 cannot also serve an external JTAG probe.
+Firmware expects three positions with exactly one active contact; check the
+physical contact truth table of the fitted switch.
+
+The SD card uses SPI mode on the display/touch bus. Its chip select is the third
+`cs-gpios` entry, so the SPI driver holds GPIO48 high from boot even when no card
+is fitted; the carrier adds a 10 kΩ pull-up (R20) for the time before that. Each SD
+request locks the bus, so display redraws and touch reads wait for it. GPIO48
+also drives the RGB LED on DevKitC-1 v1.0: keep any LED strip driver disabled.
 
 ## Build and flash
 
@@ -136,9 +152,6 @@ Profiles:
 ```sh
 # Stack measurement under simultaneous workload
 west build --pristine -b esp32s3_devkitc/esp32s3/procpu . -d build-qc -- -DEXTRA_CONF_FILE=qc.conf
-
-# Optional second switch, retaining the base overlay
-west build --pristine -b esp32s3_devkitc/esp32s3/procpu . -d build-switch -- -DEXTRA_DTC_OVERLAY_FILE=boards/second-switch.overlay
 
 # Optional network capability; still disconnected/unconfigured at boot
 west build --pristine -b esp32s3_devkitc/esp32s3/procpu . -d build-network -- -DEXTRA_CONF_FILE=network.conf

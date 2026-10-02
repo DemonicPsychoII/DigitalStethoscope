@@ -1,3 +1,5 @@
+> Update 2026-10-02: evaluation carrier Rev A wires the speed switch (GPIO2/39/47) and the LCD module SD card (shared SPI2, CS GPIO48); the default firmware build maps both. See the Eval README.
+
 > Update 2026-09-16: the user confirmed the existing Eval wiring working. The maintained signal map and integrated test instructions are in [the Eval README](../../Development/system/coding/bringup-zephyr/README.md). The inventory below is historical; only one physical switch is mapped by default, and playback speed is available through touch/serial. A second-switch overlay is optional and separately unverified.
 
 # Hardware — aktueller Stand
