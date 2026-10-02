@@ -1,0 +1,83 @@
+name: Agent Gate
+
+# Publishes the REQUIRED commit status `agent-gate` on a PR's head SHA. It replaces the human
+# `approved` label: an agent may merge its own PR once this is green. The policy itself lives in
+# .github/agent-gate/agent_gate.py (unit-tested); this file only decides WHEN to re-evaluate.
+#
+# Why a commit status and not this job's own check run: `issue_comment`, `workflow_run` and
+# `workflow_dispatch` runs execute in the context of the default branch, so their check runs land
+# on the default branch's commit, not the PR. Only an explicit status on the PR head SHA can be a
+# required check for every trigger. The job is deliberately NOT named `agent-gate`, so its own
+# check run can never be mistaken for the verdict. The ruleset pins the status to the GitHub
+# Actions app, so a personal token cannot forge it.
+#
+# Why these triggers:
+#   pull_request_target  push / body edit / draft toggle. `_target` runs THIS file and the gate
+#                        script from the base branch, so a PR cannot weaken its own gate. PR code
+#                        is never checked out or executed (only fetched as git objects to verify
+#                        a pure revert), which is what makes `_target` safe here.
+#   issue_comment        a reviewer's `<!-- agent-review ... -->` verdict, or `/agent-gate`.
+#   workflow_run         CI finished, so "pending: CI running" can become green.
+#   workflow_dispatch    manual / automation re-run (`-f pr=<n>` or `-f pr=all`). The GITHUB_TOKEN
+#                        anti-recursion rule suppresses every event above when the actor is
+#                        GITHUB_TOKEN (e.g. an auto-opened revert PR), but not dispatch.
+# Review-thread resolution emits no Actions event: comment `/agent-gate` after resolving. The
+# ruleset's "require conversation resolution" enforces it at merge time regardless.
+#
+# Every run reads LIVE PR state, never the event payload, and judges the PR as it is now.
+
+on:
+  pull_request_target:
+    branches: [integration]
+    types: [opened, reopened, synchronize, edited, ready_for_review, converted_to_draft]
+  issue_comment:
+    types: [created, edited, deleted]
+  workflow_run:
+    workflows: ["Mandatory quality gates"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: "PR number to evaluate, or 'all' for every open PR"
+        required: true
+
+concurrency:
+  # One evaluation per PR at a time; a queued newer run supersedes an older queued one, and
+  # because every run reads live state, the newest is always the right one to keep.
+  group: agent-gate-${{ github.event.pull_request.number || github.event.issue.number || inputs.pr || github.event.workflow_run.head_sha || github.run_id }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  evaluate:
+    name: agent-gate-evaluate
+    # issue_comment fires for every issue and PR comment: only PR comments that can change the
+    # verdict are worth a runner. Dispatch only from the default branch, so a branch copy of this
+    # workflow cannot be dispatched to publish a verdict.
+    if: >-
+      (github.event_name == 'pull_request_target')
+      || (github.event_name == 'issue_comment' && github.event.issue.pull_request
+          && (contains(github.event.comment.body, 'agent-review') || contains(github.event.comment.body, '/agent-gate')))
+      || (github.event_name == 'workflow_run'
+          && (github.event.workflow_run.event == 'pull_request' || github.event.workflow_run.event == 'workflow_dispatch'))
+      || (github.event_name == 'workflow_dispatch' && github.ref_name == github.event.repository.default_branch)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read        # fetch PR objects for revert verification
+      checks: read          # read CI check runs on the head SHA
+      statuses: write       # publish the agent-gate status
+      pull-requests: write  # read review threads; keep one sticky report comment up to date
+    steps:
+      - name: Check out the gate from the default branch (never PR code)
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          fetch-depth: 1
+      - name: Evaluate and publish the agent-gate status
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          AGENT_GATE_PR: ${{ inputs.pr }}
+        run: python3 .github/agent-gate/agent_gate.py
