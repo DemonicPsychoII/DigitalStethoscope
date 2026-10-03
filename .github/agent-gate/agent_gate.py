@@ -5,14 +5,30 @@ Publishes the commit status `agent-gate` on the PR's head SHA. The `integration`
 that status (from the GitHub Actions app), so this file is the merge policy. It passes only if:
 
   1. the PR is open and not a draft;
-  2. the body carries a valid `<!-- agent-author harness=.. model=.. session=.. -->` marker;
+  2. the body carries a valid
+     `<!-- agent-author harness=.. model=.. session=.. class=<quick-fix|feature|policy|revert> -->`;
   3. the body's "Risk & rollback" section answers what could break / how verified / how to revert;
-  4. the LATEST `<!-- agent-review verdict=.. sha=.. reviewer=.. session=.. -->` comment approves
-     exactly the current head SHA, from a session other than the author's — or the PR is a
-     machine-verified pure revert of merge commit(s) (see `verify_pure_revert`), which waives (4);
-  5. no review thread is unresolved;
-  6. every other check run / commit status on the head SHA is green, and every required check
+  4. every `<!-- owner-question id=X -->` (body or trusted comment) has a matching trusted
+     `<!-- owner-answer id=X -->` comment — resolving a thread is not an answer;
+  5. authorization, by class:
+       revert     the PR is a machine-verified pure revert of merge commit(s) (`agent-revert of=..`,
+                  see `verify_pure_revert`); review and owner approval are waived. An unverified
+                  `class=revert` fails: a revert that grew other changes is a fix and needs review.
+       quick-fix  the LATEST `<!-- agent-review verdict=.. sha=.. reviewer=.. session=.. -->`
+                  comment approves exactly the current head SHA, from another session;
+       feature,   the same review, PLUS an owner approval: the human-applied `approved` label or a
+       policy     trusted `<!-- owner-approval sha=<head sha|any> quote="..." -->` comment.
+     A PR touching `owner_approval_paths` (config.json: the gate, workflows, agent instructions)
+     needs the owner approval whatever its class, so a policy change cannot pass as a quick fix;
+  6. no review thread is unresolved;
+  7. every other check run / commit status on the head SHA is green, and every required check
      has reported (missing or still-running checks make the gate `pending`, not `failure`).
+
+Trust: only comments from OWNER/MEMBER/COLLABORATOR accounts count, never a `[bot]` account (a PR
+can make its own `pull_request` workflow comment as github-actions[bot]). All agents and the owner
+share one GitHub account, so class, session and owner-approval comments are honour-based; the
+`approved` label, applied by a human and checked against the label event's actor, is the stronger
+signal. `reviewer_logins` restricts review verdicts to dedicated reviewer accounts once they exist.
 
 Everything is read from LIVE API state, never from the triggering event's payload: the gate is
 re-run on pushes, body edits, review comments and CI completion, and each run must judge the PR as
@@ -24,6 +40,7 @@ Stdlib only; `evaluate()` is pure and unit-tested in test_agent_gate.py.
 
 from __future__ import annotations
 
+import fnmatch
 import json
 import os
 import re
@@ -37,21 +54,29 @@ from pathlib import Path
 from typing import Any
 
 GATE_CONTEXT = "agent-gate"
-# The workflow job that runs this script; its own check run must not gate itself.
-GATE_JOB_NAMES = frozenset({"agent-gate-evaluate"})
+# The workflow jobs that run this script; their own check runs must not gate themselves.
+GATE_JOB_NAMES = frozenset({"agent-gate-evaluate", "agent-gate-resolve"})
 REPORT_MARKER = "<!-- agent-gate-report -->"
 TRUSTED_ASSOCIATIONS = frozenset({"OWNER", "MEMBER", "COLLABORATOR"})
-TRUSTED_BOTS = frozenset({"github-actions[bot]"})
+# Only used to find the gate's own sticky report comment, never to trust a verdict.
+REPORT_BOTS = frozenset({"github-actions[bot]"})
+CLASSES = ("quick-fix", "feature", "policy", "revert")
+NEEDS_OWNER_APPROVAL = frozenset({"feature", "policy"})
 GREEN_CONCLUSIONS = frozenset({"success", "skipped", "neutral"})
 
 _SHA = re.compile(r"^[0-9a-f]{40}$")
 _VALUE = re.compile(r"^[A-Za-z0-9._:/@+-]{1,200}$")
-_ATTR = re.compile(r"([a-z]+)=(\S+)")
+_ATTR = re.compile(r'([a-z]+)=("[^"]*"|\S+)')
+_ID = re.compile(r"^[A-Za-z0-9._-]{1,64}$")
 _FENCE = re.compile(r"^[ \t]*(```|~~~).*?^[ \t]*\1[ \t]*$", re.M | re.S)
 _AUTHOR = re.compile(r"<!--[ \t]*agent-author[ \t]+([^>]*?)[ \t]*-->")
 _REVERT = re.compile(r"<!--[ \t]*agent-revert[ \t]+([^>]*?)[ \t]*-->")
 # Line-anchored: a marker quoted in a reply (`> <!-- agent-review ... -->`) is not a review.
 _REVIEW = re.compile(r"^[ \t]*<!--[ \t]*agent-review[ \t]+([^>]*?)[ \t]*-->", re.M)
+# Owner markers, line-anchored like reviews.
+_OWNER_APPROVAL = re.compile(r"^[ \t]*<!--[ \t]*owner-approval[ \t]+([^>]*?)[ \t]*-->", re.M)
+_OWNER_QUESTION = re.compile(r"^[ \t]*<!--[ \t]*owner-question[ \t]+([^>]*?)[ \t]*-->", re.M)
+_OWNER_ANSWER = re.compile(r"^[ \t]*<!--[ \t]*owner-answer[ \t]+([^>]*?)[ \t]*-->", re.M)
 _HTML_COMMENT = re.compile(r"<!--.*?-->", re.S)
 _RISK_HEADING = re.compile(r"^#{1,4}[ \t]*Risk[ \t]*(?:&|and)[ \t]*rollback\b.*$", re.M | re.I)
 _ANY_HEADING = re.compile(r"^#{1,4}[ \t]+\S", re.M)
@@ -77,6 +102,8 @@ def strip_code(text: str) -> str:
 def parse_attrs(raw: str) -> dict[str, str]:
     attrs: dict[str, str] = {}
     for key, value in _ATTR.findall(raw):
+        if len(value) >= 2 and value[0] == value[-1] == '"':
+            value = value[1:-1]
         attrs.setdefault(key, value)
     return attrs
 
@@ -91,6 +118,36 @@ def parse_author(body: str) -> dict[str, str] | None:
         if _valid(attrs, ("harness", "model", "session")):
             return attrs
     return None
+
+
+def owner_approval(body: str, head_sha: str) -> dict[str, str] | None:
+    """A valid `<!-- owner-approval sha=<head|any> quote="..." -->` in one comment, if it covers
+    `head_sha`. The quote records the owner's chat answer verbatim (honour-based)."""
+    for match in _OWNER_APPROVAL.finditer(strip_code(body)):
+        attrs = parse_attrs(match.group(1))
+        sha = attrs.get("sha", "").lower()
+        if len(attrs.get("quote", "").strip()) < 3:
+            continue
+        if sha == "any" or (_SHA.match(sha) and sha == head_sha.lower()):
+            return attrs
+    return None
+
+
+def _ids(rx: re.Pattern[str], body: str) -> set[str]:
+    out = set()
+    for match in rx.finditer(strip_code(body)):
+        ident = parse_attrs(match.group(1)).get("id", "")
+        if _ID.match(ident):
+            out.add(ident)
+    return out
+
+
+def owner_questions(body: str) -> set[str]:
+    return _ids(_OWNER_QUESTION, body)
+
+
+def owner_answers(body: str) -> set[str]:
+    return _ids(_OWNER_ANSWER, body)
 
 
 def parse_reverted(body: str) -> list[str]:
@@ -160,6 +217,11 @@ class Inputs:
     required_checks: list[str]
     ignore_checks: frozenset[str] = frozenset()
     reviewer_logins: frozenset[str] = frozenset()
+    # True when the owner-approval label is on the PR and was last applied by a human account.
+    owner_label: bool = False
+    owner_label_name: str = "approved"
+    changed_files: list[str] = field(default_factory=list)
+    owner_approval_paths: tuple[str, ...] = ()
     # None: not a revert PR. Otherwise (verified?, detail) from verify_pure_revert().
     revert: tuple[bool, str] | None = None
 
@@ -182,6 +244,14 @@ class Decision:
         return text if len(text) <= 140 else text[:137] + "..."
 
 
+def trusted(comment: dict[str, Any]) -> bool:
+    """A human-written comment from a repo owner/member/collaborator. Bots are never trusted: a PR
+    controls its own `pull_request` workflows, which can comment as github-actions[bot]."""
+    login = comment.get("login") or ""
+    return comment.get("association") in TRUSTED_ASSOCIATIONS and not login.endswith("[bot]") \
+        and REPORT_MARKER not in (comment.get("body") or "")
+
+
 def latest_review(
     comments: list[dict[str, Any]], reviewer_logins: frozenset[str] = frozenset()
 ) -> tuple[dict[str, str] | None, dict[str, Any] | None]:
@@ -190,11 +260,11 @@ def latest_review(
     ordered = sorted(comments, key=lambda c: (c.get("created_at") or "", c.get("id") or 0))
     for comment in reversed(ordered):
         if reviewer_logins:
-            trusted = comment.get("login") in reviewer_logins
+            ok = comment.get("login") in reviewer_logins
         else:
-            trusted = comment.get("association") in TRUSTED_ASSOCIATIONS or comment.get("login") in TRUSTED_BOTS
+            ok = trusted(comment)
         body = comment.get("body") or ""
-        if not trusted or REPORT_MARKER in body:
+        if not ok or REPORT_MARKER in body:
             continue
         review = parse_review(body)
         if review:
@@ -255,6 +325,56 @@ def ci_items(inputs: Inputs) -> list[tuple[str, str]]:
     return items
 
 
+def owner_question_items(inputs: Inputs) -> list[tuple[str, str]]:
+    asked = owner_questions(inputs.body)
+    answered: set[str] = set()
+    for comment in inputs.comments:
+        if trusted(comment):
+            asked |= owner_questions(comment.get("body") or "")
+            answered |= owner_answers(comment.get("body") or "")
+    open_ids = sorted(asked - answered)
+    if open_ids:
+        return [("fail", f"owner question(s) unanswered: {', '.join(open_ids)} — record the answer as "
+                         "`<!-- owner-answer id=<id> -->`")]
+    if asked:
+        return [("ok", f"owner question(s) answered: {', '.join(sorted(asked))}")]
+    return []
+
+
+def review_items(inputs: Inputs, author: dict[str, str] | None) -> list[tuple[str, str]]:
+    sha7 = inputs.head_sha[:7]
+    review, _ = latest_review(inputs.comments, inputs.reviewer_logins)
+    if review is None:
+        return [("fail", f"no agent review — a separate reviewer session must approve sha {sha7}")]
+    if review["sha"] != inputs.head_sha.lower():
+        return [("fail", f"latest agent review is for {review['sha'][:7]}, head is {sha7} — re-review")]
+    if review["verdict"] != "approve":
+        return [("fail", f"latest agent review of {sha7} requests changes ({review['reviewer']})")]
+    if author and review["session"] == author["session"]:
+        return [("fail", "reviewer session equals the author session — use a separate reviewer")]
+    return [("ok", f"approved at {sha7} by {review['reviewer']} session {review['session']}")]
+
+
+def policy_files(inputs: Inputs) -> list[str]:
+    return [f for f in inputs.changed_files if any(fnmatch.fnmatchcase(f, p) for p in inputs.owner_approval_paths)]
+
+
+def owner_approval_items(inputs: Inputs, klass: str) -> list[tuple[str, str]]:
+    touched = policy_files(inputs)
+    if klass not in NEEDS_OWNER_APPROVAL and not touched:
+        return [("ok", "quick fix: no owner approval needed (small correction, no open owner questions)")]
+    why = f"class={klass}" if klass in NEEDS_OWNER_APPROVAL else f"touches policy path {touched[0]}"
+    if inputs.owner_label:
+        return [("ok", f"owner approval ({why}): `{inputs.owner_label_name}` label applied by a human")]
+    for comment in reversed(sorted(inputs.comments, key=lambda c: (c.get("created_at") or "", c.get("id") or 0))):
+        if trusted(comment):
+            approval = owner_approval(comment.get("body") or "", inputs.head_sha)
+            if approval:
+                return [("ok", f"owner approval ({why}) recorded: \"{approval['quote'][:60]}\"")]
+    return [("fail", f"{why} needs explicit owner approval: the `{inputs.owner_label_name}` label, or a "
+                     "`<!-- owner-approval sha=<head|any> quote=\"...\" -->` comment quoting the owner's chat answer")]
+
+
 def evaluate(inputs: Inputs) -> Decision:
     items: list[tuple[str, str]] = []
     notes: list[str] = []
@@ -267,35 +387,39 @@ def evaluate(inputs: Inputs) -> Decision:
         items.append(("ok", "PR is open and ready"))
 
     author = parse_author(inputs.body)
-    if author:
-        items.append(("ok", f"author {author['harness']}/{author['model']} session {author['session']}"))
+    klass = (author or {}).get("class", "")
+    if author and klass in CLASSES:
+        items.append(("ok", f"author {author['harness']}/{author['model']} session {author['session']} class {klass}"))
+    elif author:
+        items.append(("fail", f"agent-author marker needs class=<{'|'.join(CLASSES)}> (got {klass or 'none'})"))
     else:
-        items.append(("fail", "PR body lacks a valid `<!-- agent-author harness=.. model=.. session=.. -->` marker"))
+        items.append(("fail", "PR body lacks a valid `<!-- agent-author harness=.. model=.. session=.. class=.. -->` marker"))
 
     risk = risk_section_problems(inputs.body)
     items.extend(("fail", p) for p in risk)
     if not risk:
         items.append(("ok", "Risk & rollback section filled"))
 
-    sha7 = inputs.head_sha[:7]
-    if inputs.revert is not None and inputs.revert[0]:
-        items.append(("ok", f"verified pure revert ({inputs.revert[1]}); agent review waived"))
+    items.extend(owner_question_items(inputs))
+
+    verified_revert = inputs.revert is not None and inputs.revert[0]
+    if klass == "revert":
+        if verified_revert:
+            items.append(("ok", f"verified pure revert ({inputs.revert[1]}); review and owner approval waived"))
+        else:
+            why = inputs.revert[1] if inputs.revert is not None else "no `<!-- agent-revert of=<merge sha> -->` marker"
+            items.append(("fail", f"class=revert but not a verified pure revert ({why}) — re-class it and get a review"))
     else:
         if inputs.revert is not None:
-            notes.append(f"Revert fast-track not applied: {inputs.revert[1]}")
+            notes.append(f"Revert fast-track not applied (class={klass or 'none'}): {inputs.revert[1]}")
+        reviewed = review_items(inputs, author)
+        items.extend(reviewed)
         review, _ = latest_review(inputs.comments, inputs.reviewer_logins)
-        if review is None:
-            items.append(("fail", f"no agent review — a separate reviewer session must approve sha {sha7}"))
-        elif review["sha"] != inputs.head_sha.lower():
-            items.append(("fail", f"latest agent review is for {review['sha'][:7]}, head is {sha7} — re-review"))
-        elif review["verdict"] != "approve":
-            items.append(("fail", f"latest agent review of {sha7} requests changes ({review['reviewer']})"))
-        elif author and review["session"] == author["session"]:
-            items.append(("fail", "reviewer session equals the author session — use a separate reviewer"))
-        else:
-            items.append(("ok", f"approved at {sha7} by {review['reviewer']} session {review['session']}"))
-            if author and family(review["reviewer"].split("/")[-1]) == family(author["model"]):
-                notes.append("Reviewer is the same model family as the author; prefer a different family.")
+        if reviewed[0][0] == "ok" and author and review \
+                and family(review["reviewer"].split("/")[-1]) == family(author["model"]):
+            notes.append("Reviewer is the same model family as the author; a different provider is preferred "
+                         "(acceptable when provider limits require it).")
+        items.extend(owner_approval_items(inputs, klass))
 
     if inputs.unresolved_threads:
         items.append(("fail", f"{inputs.unresolved_threads} unresolved review thread(s)"))
@@ -433,6 +557,27 @@ class GitHub:
                 return count
             cursor = threads["pageInfo"]["endCursor"]
 
+    def owner_label(self, number: int, labels: list[str], name: str) -> bool:
+        """The label is on the PR and its latest `labeled` event came from a human account. A PR's
+        own workflow can add labels as github-actions[bot]; that must not count as the owner."""
+        if name not in labels:
+            return False
+        events = self.paginate(f"repos/{self.repo}/issues/{number}/events")
+        actor = None
+        for event in events:
+            if event.get("event") == "labeled" and (event.get("label") or {}).get("name") == name:
+                actor = event.get("actor") or {}
+        return bool(actor) and actor.get("type") != "Bot" and not (actor.get("login") or "").endswith("[bot]")
+
+    def changed_files(self, number: int) -> list[str]:
+        files = self.paginate(f"repos/{self.repo}/pulls/{number}/files")
+        out: list[str] = []
+        for f in files:
+            out.append(f["filename"])
+            if f.get("previous_filename"):
+                out.append(f["previous_filename"])
+        return out
+
     def ruleset_required_checks(self, branch: str) -> list[str]:
         try:
             rules = self.paginate(f"repos/{self.repo}/rules/branches/{urllib.parse.quote(branch)}")
@@ -484,6 +629,8 @@ def gather(gh: GitHub, number: int, config: dict[str, Any], repo_dir: Path | Non
                     revert = verify_pure_revert(repo_dir, f"refs/remotes/origin/{base}", head, reverted)
             except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as exc:
                 revert = (False, f"git fetch failed: {exc}")
+    label_name = config.get("owner_approval_label", "approved")
+    labels = [lbl["name"] for lbl in pr.get("labels") or []]
     return Inputs(
         number=number, state=pr["state"], draft=bool(pr.get("draft")), head_sha=head, body=body,
         comments=comments,
@@ -493,6 +640,10 @@ def gather(gh: GitHub, number: int, config: dict[str, Any], repo_dir: Path | Non
         required_checks=required,
         ignore_checks=frozenset(config.get("ignore_checks", [])),
         reviewer_logins=frozenset(config.get("reviewer_logins", [])),
+        owner_label=gh.owner_label(number, labels, label_name),
+        owner_label_name=label_name,
+        changed_files=gh.changed_files(number),
+        owner_approval_paths=tuple(config.get("owner_approval_paths", [])),
         revert=revert,
     )
 
@@ -505,7 +656,7 @@ def publish(gh: GitHub, inputs: Inputs, decision: Decision, run_url: str) -> Non
     report = render_report(inputs, decision, run_url)
     existing = [
         c for c in inputs.comments
-        if c["login"] in TRUSTED_BOTS and c["body"].startswith(REPORT_MARKER)
+        if c["login"] in REPORT_BOTS and c["body"].startswith(REPORT_MARKER)
     ]
     if existing:
         if existing[-1]["body"].strip() != report.strip():
@@ -518,7 +669,7 @@ def target_prs(gh: GitHub, event_name: str, event: dict[str, Any], explicit: str
     if explicit.strip():
         if explicit.strip() == "all":
             return [p["number"] for p in gh.paginate(f"repos/{gh.repo}/pulls?state=open")]
-        return [int(explicit)]
+        return [int(n) for n in explicit.split(",") if n.strip()]
     if event_name in {"pull_request", "pull_request_target"}:
         return [event["pull_request"]["number"]]
     if event_name == "issue_comment":
@@ -538,6 +689,15 @@ def main() -> int:
     repo_dir = Path(env.get("GITHUB_WORKSPACE", here.parents[1]))
     run_url = f"{env.get('GITHUB_SERVER_URL', 'https://github.com')}/{gh.repo}/actions/runs/{env.get('GITHUB_RUN_ID', '')}"
     numbers = target_prs(gh, env.get("GITHUB_EVENT_NAME", ""), event, env.get("AGENT_GATE_PR", ""))
+    if "--resolve" in sys.argv[1:]:
+        # First workflow job: name the PR(s) this event concerns, so the evaluate job can key its
+        # concurrency group on the PR number for every trigger (workflow_run carries only a SHA).
+        prs = ",".join(str(n) for n in sorted(set(numbers)))
+        print(f"PRs for this event: {prs or 'none'}")
+        if env.get("GITHUB_OUTPUT"):
+            with open(env["GITHUB_OUTPUT"], "a", encoding="utf-8") as fh:
+                fh.write(f"prs={prs}\n")
+        return 0
     if not numbers:
         print("No open pull request to evaluate for this event.")
         return 0

@@ -1,8 +1,16 @@
 {
-  "_comment": "Checks agent-gate requires to have reported green on the PR head, in addition to every other check present. Keep in sync with HomelabServer scripts/github/apply-merge-policy.sh. 'Zephyr / Firmware Build' is skipped (counts green) when no firmware input changed.",
+  "_comment": "required_checks: checks agent-gate requires to have reported green on the PR head, in addition to every other check present; keep in sync with HomelabServer scripts/github/apply-merge-policy.sh. 'Zephyr / Firmware Build' is skipped (counts green) when no firmware input changed. owner_approval_label / owner_approval_paths: a PR touching these paths (fnmatch, '*' crosses '/') needs explicit owner approval whatever its class. reviewer_logins (optional): only these accounts may post review verdicts.",
   "required_checks": [
     "Quality / Static Checks",
     "Zephyr / Firmware Build"
   ],
-  "ignore_checks": ["Quality / Static Checks (label ignored)"]
+  "ignore_checks": ["Quality / Static Checks (label ignored)"],
+  "owner_approval_label": "approved",
+  "owner_approval_paths": [
+    ".github/agent-gate/*",
+    ".github/workflows/*",
+    ".github/pull_request_template.md",
+    "AGENTS.md",
+    "CLAUDE.md"
+  ]
 }

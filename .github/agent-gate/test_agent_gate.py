@@ -15,7 +15,7 @@ import agent_gate as g  # noqa: E402
 
 HEAD = "a" * 40
 OLD = "b" * 40
-AUTHOR = "<!-- agent-author harness=claude model=claude-opus-5-5 session=auth-1 -->"
+AUTHOR = "<!-- agent-author harness=claude model=claude-opus-5-5 session=auth-1 class=quick-fix -->"
 RISK = """
 ## Risk & rollback
 - **What could break:** the budget precheck could reject valid calls
@@ -23,6 +23,18 @@ RISK = """
 - **How to revert:** scripts/revert-last-merge.sh <pr> --deploy
 """
 BODY = f"{AUTHOR}\n## Summary\nThing.\n{RISK}\n## Verification\n- [x] tests"
+
+
+def body_with_class(klass):
+    return BODY.replace("class=quick-fix", f"class={klass}")
+
+
+def comment(text, created="2026-10-02T09:00:00Z", association="OWNER", login="DemonicPsychoII", cid=50):
+    return {"id": cid, "body": text, "created_at": created, "login": login, "association": association}
+
+
+APPROVAL_ANY = '<!-- owner-approval sha=any quote="yes, ship the new dashboard" -->'
+POLICY_PATHS = (".github/agent-gate/*", ".github/workflows/*", "AGENTS.md")
 
 
 def review(verdict="approve", sha=HEAD, session="rev-1", reviewer="codex/gpt-5.5", created="2026-10-02T10:00:00Z",
@@ -98,6 +110,23 @@ class ParsingTests(unittest.TestCase):
         self.assertIn("Risk & rollback: missing 'how to revert'", problems)
         self.assertIn("Risk & rollback: 'how verified' is not filled in", problems)
 
+    def test_quoted_attribute_values(self):
+        attrs = g.parse_attrs('sha=any quote="go ahead, merge it" id=q1')
+        self.assertEqual(attrs, {"sha": "any", "quote": "go ahead, merge it", "id": "q1"})
+
+    def test_owner_approval_marker(self):
+        self.assertIsNotNone(g.owner_approval(APPROVAL_ANY, HEAD))
+        self.assertIsNotNone(g.owner_approval(f'<!-- owner-approval sha={HEAD} quote="ok to merge" -->', HEAD))
+        self.assertIsNone(g.owner_approval(f'<!-- owner-approval sha={OLD} quote="ok to merge" -->', HEAD))
+        self.assertIsNone(g.owner_approval("<!-- owner-approval sha=any -->", HEAD))  # no quote
+        self.assertIsNone(g.owner_approval(f"```\n{APPROVAL_ANY}\n```", HEAD))
+        self.assertIsNone(g.owner_approval("> " + APPROVAL_ANY, HEAD))
+
+    def test_owner_question_and_answer_markers(self):
+        self.assertEqual(g.owner_questions("<!-- owner-question id=db-migration -->\nOK to drop?"), {"db-migration"})
+        self.assertEqual(g.owner_answers("<!-- owner-answer id=db-migration -->\nOwner: yes"), {"db-migration"})
+        self.assertEqual(g.owner_questions("<!-- owner-question id=<x> -->"), set())  # template placeholder
+
     def test_family(self):
         self.assertEqual(g.family("gpt-5.5-codex"), "openai")
         self.assertEqual(g.family("claude-opus-5-5"), "claude")
@@ -147,6 +176,17 @@ class EvaluateTests(unittest.TestCase):
     def test_untrusted_commenter_ignored(self):
         d = g.evaluate(inputs(comments=[review(association="NONE", login="stranger")]))
         self.assertEqual(d.state, "failure")
+
+    def test_bot_review_is_never_trusted(self):
+        # A PR controls its own pull_request workflows, which can comment as github-actions[bot].
+        for association in ("NONE", "CONTRIBUTOR", "MEMBER"):
+            bot = review(login="github-actions[bot]", association=association)
+            self.assertEqual(g.evaluate(inputs(comments=[bot])).state, "failure", association)
+
+    def test_bot_changes_verdict_cannot_hide_human_approval(self):
+        bot = review(verdict="changes", login="github-actions[bot]", association="NONE",
+                     created="2026-10-02T11:00:00Z", cid=2)
+        self.assertEqual(g.evaluate(inputs(comments=[review(), bot])).state, "success")
 
     def test_reviewer_logins_restrict_who_can_review(self):
         only_app = frozenset({"reviewer-app[bot]"})
@@ -204,13 +244,113 @@ class EvaluateTests(unittest.TestCase):
         self.assertEqual(d.state, "success")
 
     def test_verified_revert_waives_review(self):
-        d = g.evaluate(inputs(comments=[], revert=(True, "reverts abc1234")))
+        d = g.evaluate(inputs(body=body_with_class("revert"), comments=[], revert=(True, "reverts abc1234")))
         self.assertEqual(d.state, "success", d.items)
+
+    def test_verified_revert_waives_owner_approval_even_on_policy_paths(self):
+        d = g.evaluate(inputs(body=body_with_class("revert"), comments=[], revert=(True, "reverts abc1234"),
+                              changed_files=["AGENTS.md"], owner_approval_paths=POLICY_PATHS))
+        self.assertEqual(d.state, "success", d.items)
+
+    def test_revert_class_without_verification_fails_even_with_review(self):
+        d = g.evaluate(inputs(body=body_with_class("revert"), revert=(False, "branch contains a merge commit")))
+        self.assertEqual(d.state, "failure")
+        self.assertIn("not a verified pure revert", d.description)
+        d = g.evaluate(inputs(body=body_with_class("revert")))  # no agent-revert marker at all
+        self.assertEqual(d.state, "failure")
+
+    def test_verified_revert_without_revert_class_needs_review(self):
+        d = g.evaluate(inputs(comments=[], revert=(True, "reverts abc1234")))
+        self.assertEqual(d.state, "failure")
+        self.assertTrue(any("class=quick-fix" in n for n in d.notes))
 
     def test_unverified_revert_still_needs_review(self):
         d = g.evaluate(inputs(comments=[], revert=(False, "conflict-resolved")))
         self.assertEqual(d.state, "failure")
         self.assertTrue(any("conflict-resolved" in n for n in d.notes))
+
+    def test_open_owner_question_blocks_merge_even_for_reverts(self):
+        q = comment("<!-- owner-question id=q1 -->\nShould this also cover the backup path? (asked in chat)")
+        d = g.evaluate(inputs(comments=[review(), q]))
+        self.assertEqual(d.state, "failure")
+        self.assertIn("q1", d.description)
+        d = g.evaluate(inputs(body=body_with_class("revert"), comments=[q], revert=(True, "reverts abc1234")))
+        self.assertEqual(d.state, "failure")
+
+    def test_owner_question_in_body_blocks(self):
+        body = BODY + "\n<!-- owner-question id=scope -->\nKeep the old flag?"
+        self.assertEqual(g.evaluate(inputs(body=body)).state, "failure")
+
+    def test_owner_answer_unblocks(self):
+        q = comment("<!-- owner-question id=q1 -->\nKeep the old flag?", cid=51)
+        a = comment("<!-- owner-answer id=q1 -->\nOwner in chat: \"drop it\"", created="2026-10-02T09:30:00Z", cid=52)
+        d = g.evaluate(inputs(comments=[review(), q, a]))
+        self.assertEqual(d.state, "success", d.items)
+
+    def test_answer_must_match_id_and_be_trusted(self):
+        q = comment("<!-- owner-question id=q1 -->", cid=51)
+        for a in (comment("<!-- owner-answer id=q2 -->", cid=52),
+                  comment("<!-- owner-answer id=q1 -->", login="github-actions[bot]", association="NONE", cid=53),
+                  comment("> <!-- owner-answer id=q1 -->", cid=54)):
+            self.assertEqual(g.evaluate(inputs(comments=[review(), q, a])).state, "failure", a["body"])
+
+    def test_resolved_threads_do_not_answer_questions(self):
+        q = comment("<!-- owner-question id=q1 -->", cid=51)
+        self.assertEqual(g.evaluate(inputs(comments=[review(), q], unresolved_threads=0)).state, "failure")
+
+    def test_quick_fix_needs_no_owner_approval(self):
+        d = g.evaluate(inputs(changed_files=["src/app.py"], owner_approval_paths=POLICY_PATHS))
+        self.assertEqual(d.state, "success", d.items)
+
+    def test_missing_or_unknown_class_fails(self):
+        no_class = BODY.replace(" class=quick-fix", "")
+        self.assertEqual(g.evaluate(inputs(body=no_class)).state, "failure")
+        self.assertIn("class=", g.evaluate(inputs(body=no_class)).description)
+        self.assertEqual(g.evaluate(inputs(body=body_with_class("lowrisk"))).state, "failure")
+
+    def test_feature_and_policy_need_owner_approval(self):
+        for klass in ("feature", "policy"):
+            d = g.evaluate(inputs(body=body_with_class(klass)))
+            self.assertEqual(d.state, "failure", klass)
+            self.assertIn("owner approval", d.description)
+
+    def test_review_alone_never_authorizes_a_feature(self):
+        reviews = [review(cid=i, created=f"2026-10-02T1{i}:00:00Z") for i in range(1, 4)]
+        self.assertEqual(g.evaluate(inputs(body=body_with_class("feature"), comments=reviews)).state, "failure")
+
+    def test_owner_label_approves_feature(self):
+        d = g.evaluate(inputs(body=body_with_class("feature"), owner_label=True))
+        self.assertEqual(d.state, "success", d.items)
+
+    def test_owner_approval_comment_approves_feature(self):
+        d = g.evaluate(inputs(body=body_with_class("policy"), comments=[review(), comment(APPROVAL_ANY)]))
+        self.assertEqual(d.state, "success", d.items)
+        pinned = comment(f'<!-- owner-approval sha={HEAD} quote="merge it" -->')
+        self.assertEqual(g.evaluate(inputs(body=body_with_class("feature"), comments=[review(), pinned])).state,
+                         "success")
+
+    def test_owner_approval_for_old_sha_or_from_bot_does_not_count(self):
+        stale = comment(f'<!-- owner-approval sha={OLD} quote="merge it" -->')
+        bot = comment(APPROVAL_ANY, login="github-actions[bot]", association="NONE")
+        stranger = comment(APPROVAL_ANY, login="stranger", association="NONE")
+        for c in (stale, bot, stranger):
+            d = g.evaluate(inputs(body=body_with_class("feature"), comments=[review(), c]))
+            self.assertEqual(d.state, "failure", c)
+
+    def test_owner_approval_still_needs_review_and_ci(self):
+        d = g.evaluate(inputs(body=body_with_class("feature"), owner_label=True, comments=[]))
+        self.assertEqual(d.state, "failure")
+        runs = green_ci() + [{"id": 12, "name": "python-tests", "status": "completed", "conclusion": "failure"}]
+        d = g.evaluate(inputs(body=body_with_class("feature"), owner_label=True, check_runs=runs))
+        self.assertEqual(d.state, "failure")
+
+    def test_policy_path_needs_owner_approval_whatever_the_class(self):
+        for path in (".github/agent-gate/agent_gate.py", ".github/workflows/tests.yml", "AGENTS.md"):
+            d = g.evaluate(inputs(changed_files=[path], owner_approval_paths=POLICY_PATHS))
+            self.assertEqual(d.state, "failure", path)
+            self.assertIn("policy path", d.description)
+        d = g.evaluate(inputs(changed_files=["AGENTS.md"], owner_approval_paths=POLICY_PATHS, owner_label=True))
+        self.assertEqual(d.state, "success", d.items)
 
     def test_failure_beats_pending(self):
         runs = green_ci() + [{"id": 12, "name": "x", "status": "queued", "conclusion": None}]
@@ -223,6 +363,44 @@ class EvaluateTests(unittest.TestCase):
     def test_report_never_contains_a_review_marker(self):
         d = g.evaluate(inputs())
         self.assertIsNone(g.parse_review(g.render_report(inputs(), d, "https://x")))
+
+
+class FakeEvents(g.GitHub):
+    def __init__(self, events):
+        super().__init__("o/r", "token")
+        self.events = events
+
+    def paginate(self, path, key=None):
+        return self.events
+
+
+def label_event(login, kind="labeled", name="approved", actor_type="User"):
+    return {"event": kind, "label": {"name": name}, "actor": {"login": login, "type": actor_type}}
+
+
+class OwnerLabelTests(unittest.TestCase):
+    def test_human_applied_label_counts(self):
+        gh = FakeEvents([label_event("DemonicPsychoII")])
+        self.assertTrue(gh.owner_label(1, ["approved"], "approved"))
+
+    def test_bot_applied_label_does_not_count(self):
+        gh = FakeEvents([label_event("DemonicPsychoII"), label_event("DemonicPsychoII", "unlabeled"),
+                         label_event("github-actions[bot]", actor_type="Bot")])
+        self.assertFalse(gh.owner_label(1, ["approved"], "approved"))
+
+    def test_label_absent(self):
+        self.assertFalse(FakeEvents([label_event("DemonicPsychoII")]).owner_label(1, ["bug"], "approved"))
+
+
+class TargetTests(unittest.TestCase):
+    def test_explicit_comma_list(self):
+        self.assertEqual(g.target_prs(None, "workflow_dispatch", {}, "7,9"), [7, 9])
+        self.assertEqual(g.target_prs(None, "workflow_dispatch", {}, "12"), [12])
+
+    def test_event_numbers(self):
+        self.assertEqual(g.target_prs(None, "pull_request_target", {"pull_request": {"number": 3}}, ""), [3])
+        self.assertEqual(g.target_prs(None, "issue_comment", {"issue": {"number": 4, "pull_request": {"url": "u"}}}, ""), [4])
+        self.assertEqual(g.target_prs(None, "issue_comment", {"issue": {"number": 4}}, ""), [])
 
 
 def git(repo, *args):
