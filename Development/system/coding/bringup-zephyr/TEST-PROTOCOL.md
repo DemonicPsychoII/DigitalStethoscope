@@ -1485,8 +1485,9 @@ change, format `component: old pin → new pin (reason)`:
 > None. All tests were run with the pin map as documented above; no overlay pin
 > assignment was changed.
 >
-> Still open: SP3T throw 3 may have to move GPIO38 → GPIO48 (onboard WS2812 on
-> DevKitC-1 v1.1) — cannot be decided until a real 1P3T switch is fitted.
+> Historical note: the proposed GPIO38 → GPIO48 remap is no longer valid;
+> GPIO48 is reserved for SD chip select in the evaluation-carrier build. Audit
+> an unused pin if the DevKitC-1 v1.1 RGB LED interferes after fitting the switch.
 
 ---
 
