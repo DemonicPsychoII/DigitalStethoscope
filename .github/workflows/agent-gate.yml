@@ -87,11 +87,15 @@ jobs:
   evaluate:
     name: agent-gate-evaluate
     needs: resolve
-    if: needs.resolve.outputs.prs != ''
+    if: needs.resolve.outputs.prs != '[]' && needs.resolve.outputs.prs != ''
+    strategy:
+      fail-fast: false
+      matrix:
+        pr: ${{ fromJSON(needs.resolve.outputs.prs) }}
     # One evaluation per PR at a time, whatever the trigger; a queued newer run supersedes an older
     # queued one, and because every run reads live state, the newest is always the right one to keep.
     concurrency:
-      group: agent-gate-pr-${{ needs.resolve.outputs.prs }}
+      group: agent-gate-pr-${{ matrix.pr }}
       cancel-in-progress: false
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -110,5 +114,5 @@ jobs:
       - name: Evaluate and publish the agent-gate status
         env:
           GITHUB_TOKEN: ${{ github.token }}
-          AGENT_GATE_PR: ${{ needs.resolve.outputs.prs }}
+          AGENT_GATE_PR: ${{ matrix.pr }}
         run: python3 .github/agent-gate/agent_gate.py

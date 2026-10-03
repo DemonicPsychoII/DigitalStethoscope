@@ -692,8 +692,8 @@ def main() -> int:
     if "--resolve" in sys.argv[1:]:
         # First workflow job: name the PR(s) this event concerns, so the evaluate job can key its
         # concurrency group on the PR number for every trigger (workflow_run carries only a SHA).
-        prs = ",".join(str(n) for n in sorted(set(numbers)))
-        print(f"PRs for this event: {prs or 'none'}")
+        prs = json.dumps(sorted(set(numbers)))
+        print(f"PRs for this event: {prs}")
         if env.get("GITHUB_OUTPUT"):
             with open(env["GITHUB_OUTPUT"], "a", encoding="utf-8") as fh:
                 fh.write(f"prs={prs}\n")

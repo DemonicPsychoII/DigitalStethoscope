@@ -68,7 +68,11 @@ jobs:
               --jq '"\(.attempt) \(.status) \(.conclusion)"' || true)"
             read -r attempt status conclusion <<<"$state"
             if (( ${attempt:-1} > ATTEMPT )) && [[ "$status" == completed ]]; then
-              if [[ "$conclusion" == success ]]; then result=flaky; else result=confirmed; fi
+              case "$conclusion" in
+                success) result=flaky ;;
+                failure) result=confirmed ;;
+                *) result=unconfirmed ;; # Cancellation/timeouts do not reproduce a failing check.
+              esac
               break
             fi
           done
