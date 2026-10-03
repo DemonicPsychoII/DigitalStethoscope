@@ -13,6 +13,7 @@ enum component_id {
 	COMP_TOUCH,
 	COMP_MICROPHONE,
 	COMP_DAC,
+	COMP_SD_CARD,
 	COMP_COUNT,
 };
 

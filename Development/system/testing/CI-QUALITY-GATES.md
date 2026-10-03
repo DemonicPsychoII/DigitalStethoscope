@@ -95,7 +95,7 @@ The static job additionally installs the fully pinned
 `bringup-zephyr/tools/requirements.txt` with `--require-hashes` and runs
 `tests/host` against the portable DSP/FHIR implementation, evaluation CLI and a
 local HTTPS readback fixture. The firmware job also performs pristine QC and
-combined network/QC/second-switch builds, then builds and runs `tests/logic` on
+combined network/QC builds, then builds and runs `tests/logic` on
 `native_sim/native/64`, including bounded audio-start recovery regressions.
 These builds do not connect to Wi-Fi or send FHIR data. CA/server credentials
 are absent from CI and the latest local build evidence. Physical acceptance

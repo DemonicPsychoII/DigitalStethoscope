@@ -6,7 +6,8 @@
  * GPIO0/3/45/46 are strapping pins. None of those are used below.
  *
  * Existing signal wiring confirmed working by the user, 2026-09-16.
- * The optional second-switch overlay is a separate, unverified extension.
+ * Evaluation carrier Rev A (SO.SchDoc) adds the speed switch (GPIO2/39/47) and
+ * the LCD module SD card on the shared SPI2 bus (CS GPIO48); both are mapped here.
  */
 
 #include <zephyr/dt-bindings/gpio/gpio.h>
@@ -38,6 +39,11 @@
 		sw1-gpios = <&gpio0 18 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>,   /* Raw */
 			    <&gpio0 21 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>,   /* Murmur */
 			    <&gpio1 6  (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;   /* BPM   (GPIO38) */
+
+		/* Speed SP3T (carrier J9): common -> GND. GPIO39 is then unavailable to JTAG. */
+		speed-gpios = <&gpio0 2  (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>,  /* 1.00x */
+			      <&gpio1 7  (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>,  /* 0.75x (GPIO39) */
+			      <&gpio1 15 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;  /* 0.50x (GPIO47) */
 	};
 
 	chosen {
@@ -149,9 +155,15 @@
 	#size-cells = <0>;
 	pinctrl-0 = <&spim2_default>;
 	pinctrl-names = "default";
-	/* CS: index 0 = display (GPIO10), index 1 = touch (GPIO7) */
+	/*
+	 * CS: index 0 = display (GPIO10), index 1 = touch (GPIO7), index 2 = SD (GPIO48).
+	 * Listing GPIO48 here makes the SPI driver hold it high from boot, so the card
+	 * never answers display/touch traffic. GPIO48 also drives the DevKitC-1 v1.0
+	 * RGB LED: keep any LED strip driver disabled.
+	 */
 	cs-gpios = <&gpio0 10 GPIO_ACTIVE_LOW>,
-		   <&gpio0 7 GPIO_ACTIVE_LOW>;
+		   <&gpio0 7 GPIO_ACTIVE_LOW>,
+		   <&gpio1 16 GPIO_ACTIVE_LOW>;
 
 	/* Resistive touch (XPT2046) stays a plain SPI device. Label must not be
 	 * 'touch' - that collides with the ESP32-S3 built-in touch sensor node. */
@@ -169,6 +181,21 @@
 		min-y = <200>;
 		max-x = <3900>;
 		max-y = <3900>;
+	};
+
+	/* SD socket on the LCD module (carrier J11), SPI mode. The driver starts at
+	 * 400 kHz and raises the clock after init; 10 MHz matches the display wiring. */
+	sd_spi: sdhc@2 {
+		compatible = "zephyr,sdhc-spi-slot";
+		reg = <2>;
+		status = "okay";
+		spi-max-frequency = <10000000>;
+
+		mmc {
+			compatible = "zephyr,sdmmc-disk";
+			disk-name = "SD";
+			status = "okay";
+		};
 	};
 };
 

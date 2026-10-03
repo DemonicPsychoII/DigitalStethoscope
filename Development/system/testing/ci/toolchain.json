@@ -7,5 +7,5 @@
   "esptool_version": "5.0.2",
   "toolchain": "xtensa-espressif_esp32s3_zephyr-elf",
   "board": "esp32s3_devkitc/esp32s3/procpu",
-  "modules": ["hal_espressif", "mbedtls", "tf-psa-crypto", "mcuboot", "picolibc"]
+  "modules": ["hal_espressif", "mbedtls", "tf-psa-crypto", "mcuboot", "picolibc", "fatfs"]
 }
