@@ -16,9 +16,8 @@ winget install --id 7zip.7zip -e --silent
 python Development/system/testing/ci/setup_zephyr.py
 ```
 
-The older `Development/system/coding/tools/setup-toolchain.ps1` is separate: it
-still provisions its own legacy workspace and does not use these pins. Rerun
-`setup_zephyr.py` to complete an interrupted install. It retains
+The existing `Development/system/coding/tools/setup-toolchain.ps1` delegates to
+this same setup. Rerun setup to complete an interrupted install. It retains
 existing sources and downloads; it does not delete the workspace. Legacy
 workspaces in `Development/Toolchain/zephyrproject` or
 `Development/system/coding/tools/zephyrproject` remain independent.
@@ -36,7 +35,7 @@ python Development/system/testing/ci/benchmark_build.py run --device desktop --j
 Use `--device laptop` on this laptop. On the server:
 
 ```sh
-cd ~/DigitalStethoscope-B.Thesis
+cd ~/DigitalStethoscope
 .ci-workspace/.venv/bin/python Development/system/testing/ci/benchmark_build.py run --device homelab --jobs 4 --runs 3 --include-noop
 ```
 

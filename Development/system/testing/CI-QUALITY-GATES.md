@@ -6,9 +6,10 @@ other CI configuration. Pull requests into `integration` report two stable check
 - `Zephyr / Firmware Build`
 - `Quality / Static Checks`
 
-The workflow pins Zephyr commit `357467a011cd2557a1a3f0b4be83d817c4addc9b`,
-Zephyr SDK `1.0.1`, west `1.5.0`, the runner image, Python, and third-party
-actions. Static checks and QC run on every PR, including documentation-only
+`ci/toolchain.json` pins Zephyr commit `357467a011cd2557a1a3f0b4be83d817c4addc9b`,
+Zephyr SDK `1.0.1`, west `1.5.0`, CMake and Ninja for both local and CI builds.
+The workflow also pins the runner image, Python, and third-party actions.
+Static checks and QC run on every PR, including documentation-only
 changes, so changes to `.clang-format` and the QC traceability manifest are
 always validated. The firmware job runs only when the workflow, bring-up tree,
 or CI scripts change; otherwise GitHub reports it as skipped, which satisfies
@@ -30,12 +31,15 @@ are used, so fork pull requests receive no privileged credentials.
 
 ## Local parity
 
-Activate the pinned Zephyr virtual environment created by
-`Development/system/coding/tools/setup-toolchain.ps1`, set `ZEPHYR_BASE`, then
-run from the repository root:
+Run `python Development/system/testing/ci/setup_zephyr.py` (also available via
+`Development/system/coding/tools/setup-toolchain.ps1`) from the repository root.
+Use its virtual environment for the gates; `run_ci.py` selects the pinned
+workspace automatically. Install the CI check dependencies in that environment
+before running the static checks:
 
 ```powershell
-py "Development/system/testing/ci/run_ci.py" all
+.ci-workspace/.venv/Scripts/python.exe -m pip install ruff==0.12.9 clang-format==18.1.8
+.ci-workspace/.venv/Scripts/python.exe Development/system/testing/ci/run_ci.py all
 ```
 
 The Python entry point preserves paths containing spaces and parentheses and
@@ -43,8 +47,9 @@ returns non-zero on the first failed gate. Zephyr
 4.4's Windows Kconfig generator itself cannot configure a firmware build from a
 path containing parentheses; for the firmware stage, use a checkout path without
 parentheses (a drive mapping alone is insufficient because Python canonicalizes
-the path). Linux CI is unaffected and provisions the same pinned revision with
-`setup_zephyr.sh`; Windows developers use the existing PowerShell provisioner.
+the path). Linux CI provisions the same pinned tools using `setup_zephyr.sh`,
+which delegates to the shared Python provisioner. For device timing measurements
+without cloud publication, use [the build benchmark](BUILD-TIMES.md).
 CI treats all compiler warnings under Zephyr's default policy as
 diagnostics; warnings promoted by Zephyr/Kconfig itself fail. A blanket `-Werror`
 is intentionally not enabled because warnings in pinned upstream modules would
