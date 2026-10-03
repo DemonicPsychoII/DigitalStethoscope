@@ -1,0 +1,140 @@
+name: Post-merge revert
+
+# When the quality gates fail on `integration` after a merge, tell a failed check apart from a
+# confirmed regression before proposing a repository rollback:
+#
+#   1. Re-run the failed jobs once and wait for them (a failure on a re-run attempt counts as
+#      already confirmed). A green re-run is a flaky check: no revert, the owner is told.
+#   2. Confirmed regression: open a `git revert -m 1` PR for the merge (class=revert). It merges
+#      only through agent-gate, which verifies it is the exact inverse of the merge (anything else
+#      needs a normal review) and requires its checks to pass; agents then merge it. A corrective
+#      PR that fixes forward is equally fine; close the revert then.
+#
+# Runtime first: a red build never reaches Personal Cloud (only fully tested builds upload
+# firmware, and only daily/dispatch builds on integration publish), so the last working firmware
+# stays available without any merge. The revert restores a green integration, which every later
+# merge and the daily build need.
+#
+# Runs from the default branch's copy of this file (workflow_run), checks out only integration,
+# which is trusted and already-merged code, and never executes PR branch code.
+#
+# GITHUB_TOKEN anti-recursion: a branch pushed and a PR opened with GITHUB_TOKEN trigger no
+# workflows, so the script dispatches quality-gates.yml on the revert branch (its check runs land on
+# the branch head, under the required names; a dispatch off integration never publishes) and
+# agent-gate.yml for the PR. Opening the PR needs the repository setting "Allow GitHub Actions to
+# create pull requests" (HomelabServer scripts/github/apply-merge-policy.sh sets it).
+
+on:
+  workflow_run:
+    workflows: ["Mandatory quality gates"]
+    types: [completed]
+    branches: [integration]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: post-merge-revert-${{ github.event.workflow_run.head_sha }}
+  cancel-in-progress: false
+
+jobs:
+  revert:
+    name: confirm-and-open-revert-pr
+    if: github.event.workflow_run.event == 'push' && github.event.workflow_run.conclusion == 'failure'
+    runs-on: ubuntu-24.04
+    # Waiting for the re-run: the firmware job alone may take up to 60 minutes.
+    timeout-minutes: 95
+    permissions:
+      contents: write       # push the revert/<sha7> branch
+      pull-requests: write  # open the PR, comment on the original
+      actions: write        # re-run the failed jobs; dispatch quality-gates.yml and agent-gate.yml
+    steps:
+      - name: Confirm the failure by re-running the failed jobs
+        id: confirm
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+          ATTEMPT: ${{ github.event.workflow_run.run_attempt }}
+        run: |
+          if (( ATTEMPT > 1 )); then
+            echo "Attempt $ATTEMPT is itself a re-run and failed: regression confirmed."
+            echo "result=confirmed" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          gh run rerun "$RUN_ID" --repo "$GITHUB_REPOSITORY" --failed
+          deadline=$((SECONDS + 85 * 60)); result=timeout
+          while (( SECONDS < deadline )); do
+            sleep 60
+            state="$(gh run view "$RUN_ID" --repo "$GITHUB_REPOSITORY" --json attempt,status,conclusion \
+              --jq '"\(.attempt) \(.status) \(.conclusion)"' || true)"
+            read -r attempt status conclusion <<<"$state"
+            if (( ${attempt:-1} > ATTEMPT )) && [[ "$status" == completed ]]; then
+              case "$conclusion" in
+                success) result=flaky ;;
+                failure) result=confirmed ;;
+                *) result=unconfirmed ;; # Cancellation/timeouts do not reproduce a failing check.
+              esac
+              break
+            fi
+          done
+          echo "Re-run outcome: $result"
+          echo "result=$result" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        if: steps.confirm.outputs.result == 'confirmed'
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          fetch-depth: 0
+      - name: Open the revert PR
+        id: revert
+        if: steps.confirm.outputs.result == 'confirmed'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          MERGE_SHA: ${{ github.event.workflow_run.head_sha }}
+          RUN_URL: ${{ github.event.workflow_run.html_url }}
+          AGENT_HARNESS: github-actions
+          AGENT_MODEL: post-merge-revert
+          AGENT_SESSION: run-${{ github.run_id }}-${{ github.run_attempt }}
+          REVERT_DISPATCH_WORKFLOWS: quality-gates.yml
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          if [[ "$(git rev-list --parents -n1 "$MERGE_SHA" | wc -w)" -ne 3 ]]; then
+            echo "$MERGE_SHA is not a merge commit; nothing to revert automatically."
+            echo "rc=3" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          set +e
+          out="$(bash .github/agent-gate/revert-last-merge.sh "$MERGE_SHA" \
+            --reason "quality gates failed on integration after this merge, and again on a re-run: $RUN_URL" 2>&1)"
+          rc=$?
+          set -e
+          echo "$out"
+          echo "rc=$rc" >> "$GITHUB_OUTPUT"
+          echo "url=$(tail -n1 <<<"$out")" >> "$GITHUB_OUTPUT"
+      - name: Notify the owner on the original PR
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          MERGE_SHA: ${{ github.event.workflow_run.head_sha }}
+          RUN_URL: ${{ github.event.workflow_run.html_url }}
+          GH_REPO: ${{ github.repository }}  # may run without a checkout
+          RESULT: ${{ steps.confirm.outputs.result }}
+          RC: ${{ steps.revert.outputs.rc }}
+          URL: ${{ steps.revert.outputs.url }}
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          pr="$(gh api "repos/$GITHUB_REPOSITORY/commits/$MERGE_SHA/pulls" --jq '.[0].number // empty' || true)"
+          case "$RESULT/$RC" in
+            flaky/*)
+              msg="@$OWNER quality gates failed on \`integration\` after this merge (${RUN_URL}), but the re-run of the failed jobs passed: treated as a flaky check, no revert proposed." ;;
+            confirmed/0)
+              msg="@$OWNER confirmed regression: quality gates failed on \`integration\` after this merge and again on a re-run (${RUN_URL}). Published firmware is unaffected (red builds never publish). Revert PR: ${URL}. It is a verified pure revert, so agents merge it once its checks pass, unless a corrective PR lands first." ;;
+            confirmed/*)
+              msg="@$OWNER confirmed regression after this merge (${RUN_URL}), but the automatic revert could not be opened (exit ${RC:-?}; a conflicting revert needs a hand revert, \`git revert -m 1 ${MERGE_SHA}\`, and a normal review)." ;;
+            *)
+              msg="@$OWNER quality gates failed on \`integration\` after this merge (${RUN_URL}); the confirming re-run did not finish (${RESULT:-not started}). No revert proposed; check the run." ;;
+          esac
+          if [[ -n "$pr" ]]; then
+            gh pr comment "$pr" --body "$msg"
+          else
+            gh api "repos/$GITHUB_REPOSITORY/commits/$MERGE_SHA/comments" -f body="$msg" >/dev/null
+          fi
