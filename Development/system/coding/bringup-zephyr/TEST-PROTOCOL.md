@@ -439,9 +439,10 @@ appeared).
 
 1. Wire throw 3 to GPIO38, reset, flip to position 3.
 2. If `sw=3` never appears: on DevKitC-1 **v1.1** the onboard WS2812 RGB LED
-   sits on GPIO38. Move throw 3 to **GPIO48**, adjust the overlay
-   (`sw1-gpios` index 2 → `<&gpio1 16 ...>`, since GPIO48 = gpio1 index 16),
-   rebuild with `--pristine`, retest.
+   sits on GPIO38. Check its loading and the switch wiring before choosing a
+   spare GPIO and updating the overlay. **Do not use GPIO48:** the default
+   evaluation-carrier build reserves it for the SD card chip select. Any remapping
+   needs a pin audit and a pristine rebuild before retesting.
 3. Cross-check with a multimeter: position 3 must show continuity to GND.
 
 **Expected log**
