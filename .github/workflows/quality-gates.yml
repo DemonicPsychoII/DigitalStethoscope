@@ -35,7 +35,7 @@ jobs:
     # so ignored label events report under a different name.
     name: ${{ github.event.action == 'labeled' && github.event.label.name != 'firmware' && 'Quality / Static Checks (label ignored)' || 'Quality / Static Checks' }}
     if: github.event.action != 'labeled' || github.event.label.name == 'firmware'
-    runs-on: ubuntu-24.04
+    runs-on: homelab-stethoscope-static-${{ github.run_id }}-${{ github.run_attempt }}
     timeout-minutes: 10
     permissions:
       contents: read
@@ -98,9 +98,9 @@ jobs:
     name: Zephyr / Firmware Build
     needs: static
     if: needs.static.outputs.firmware == 'true' || needs.static.outputs.publish == 'true'
-    # Forks always use GitHub; each trusted run/attempt gets a separate homelab label.
-    # The repository variable retains the explicit hosted maintenance override.
-    runs-on: ${{ fromJSON(github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository && '["ubuntu-24.04"]' || vars.ZEPHYR_RUNNER_LABELS || format('["homelab-zephyr-{0}-{1}"]', github.run_id, github.run_attempt)) }}
+    # No hosted fallback. Fork jobs remain queued until explicitly handled by the owner;
+    # the controller and guest hook accept only same-repository code.
+    runs-on: homelab-zephyr-${{ github.run_id }}-${{ github.run_attempt }}
     timeout-minutes: 60
     env:
       CMAKE_BUILD_PARALLEL_LEVEL: '2'
@@ -126,7 +126,7 @@ jobs:
       - name: Reuse the guest's pinned Zephyr toolchain
         run: |
           # Each homelab job gets its own disposable VM; this workspace is never shared
-          # with another job. Hosted fallback runners simply provision from scratch.
+          # with another job. A guest with different pins provisions from scratch.
           cache=/opt/zephyr-workspace
           if [[ -d "$cache/zephyr-sdk-$ZEPHYR_SDK_VERSION" ]] \
             && [[ "$(git -C "$cache/zephyr" rev-parse HEAD)" == "$ZEPHYR_REVISION" ]] \

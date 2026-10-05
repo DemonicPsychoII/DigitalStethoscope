@@ -2,6 +2,12 @@
 
 ## Merge policy
 
+Heavy CI runs only in disposable VMs on the home-lab runner pool. Static/QC suites use
+`homelab-stethoscope-static-<run-id>-<attempt>`; firmware uses
+`homelab-zephyr-<run-id>-<attempt>`. No GitHub-hosted fallback or `ZEPHYR_RUNNER_LABELS` override.
+Offline home-lab/fork jobs remain queued until the owner handles them; merge/approval accounting
+workflows may remain hosted. Preserve required check names and existing gate policy.
+
 - **Enforcement starts only after a post-merge step.** Until the owner (or an agent on the
   homelab host, from HomelabServer) runs
   `scripts/github/apply-merge-policy.sh --apply DigitalStethoscope`, the `integration` ruleset
