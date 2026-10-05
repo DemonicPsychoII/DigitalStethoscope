@@ -22,9 +22,6 @@ Decision" on the home-lab whiteboard.
 
 - Calls go downward only. Upward communication uses Zephyr message queues
   (`k_msgq`), because data flows mostly linearly from component to component.
-- Timing is soft real-time. A missed audio block lowers sound quality but is not
-  a hazard, so it is counted and logged rather than treated as a failure.
-  Optimise only when measurements show a need.
 - Start on one core. Move to both cores as soon as measurements show the audio
   path needs more compute (Zephyr ESP32-S3: AMP today, SMP still experimental).
 - Zephyr provides drivers, DMA and interrupts. There is no project-owned HAL;
@@ -34,9 +31,14 @@ Decision" on the home-lab whiteboard.
 - The BPM path uses its own analysis filter. The filter switch selects only the
   listening filter.
 - `MON` collects supervision that the risk analysis requires: watchdog, stack and
-  heap watermarks, BPM quality gate, and the rule that test sources are never
-  sent as FHIR. Block deadline misses and buffer under-/overruns are recorded as
-  quality metrics.
+  heap watermarks, block deadline and buffer under-/overrun, BPM quality gate,
+  and the rule that test sources are never sent as FHIR.
 - Software safety class: IEC 62304 class B, argued in the thesis.
+
+## Reminder
+
+Software and testing scope stay as specified. When time runs short, keep in mind
+that a missed audio block lowers sound quality but is not a hazard: a working
+system comes first, optimisation second.
 
 Created by Claude-Opus-5.5 on behalf of Nico running in claude code.
