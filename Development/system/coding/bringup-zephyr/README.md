@@ -92,6 +92,11 @@ also drives the RGB LED on DevKitC-1 v1.0: keep any LED strip driver disabled.
 
 ## Build and flash
 
+For reproducible setup on Windows/Linux and build-time comparison across devices,
+see [Build-time analysis](../../testing/BUILD-TIMES.md). The shared setup installs
+pinned tools in `.ci-workspace`; the benchmark records clean-build timings, logs
+and machine metadata without publishing or flashing firmware.
+
 ### Homelab cloud downloads
 
 On the configured homelab, use the repository's

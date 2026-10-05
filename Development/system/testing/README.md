@@ -1,5 +1,8 @@
 # Quality-control evaluator
 
+For firmware setup and comparable build timings on Windows and the homelab,
+see [Build-time analysis](BUILD-TIMES.md).
+
 This directory compares the DigitalStethoscope Zephyr bring-up application with
 engineering controls demonstrated by the THA Embedded Systems 2 course material.
 The comparison is deliberately platform-neutral: STM32-specific implementation
