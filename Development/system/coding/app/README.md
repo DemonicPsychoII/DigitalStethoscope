@@ -20,15 +20,23 @@ Decision" on the home-lab whiteboard.
 
 ## Rules
 
-- Calls go downward only. Upward communication uses events or queues.
+- Calls go downward only. Upward communication uses Zephyr message queues
+  (`k_msgq`), because data flows mostly linearly from component to component.
+- Timing is soft real-time. A missed audio block lowers sound quality but is not
+  a hazard, so it is counted and logged rather than treated as a failure.
+  Optimise only when measurements show a need.
+- Start on one core. Move to both cores as soon as measurements show the audio
+  path needs more compute (Zephyr ESP32-S3: AMP today, SMP still experimental).
 - Zephyr provides drivers, DMA and interrupts. There is no project-owned HAL;
   Zephyr is SOUP in IEC 62304 terms.
 - `dsp_core` includes no Zephyr headers, so the same code runs on the PC. Q2 needs
   every filter evaluated on identical recordings.
 - The BPM path uses its own analysis filter. The filter switch selects only the
   listening filter.
-- `MON` collects supervision that the risk analysis requires: watchdog, block
-  deadline and buffer under-/overrun, stack and heap watermarks, BPM quality gate,
-  and the rule that test sources are never sent as FHIR.
+- `MON` collects supervision that the risk analysis requires: watchdog, stack and
+  heap watermarks, BPM quality gate, and the rule that test sources are never
+  sent as FHIR. Block deadline misses and buffer under-/overruns are recorded as
+  quality metrics.
+- Software safety class: IEC 62304 class B, argued in the thesis.
 
 Created by Claude-Opus-5.5 on behalf of Nico running in claude code.
