@@ -1,0 +1,51 @@
+# Configured by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+reviews:
+  # Native current-head approval can satisfy the existing independent-review gate.
+  request_changes_workflow: true
+  # Authors must not manufacture the bot approval trusted by the review gate.
+  allow_author_approval: false
+  auto_review:
+    enabled: true
+    drafts: false
+  path_instructions:
+    - path: "Development/system/coding/**"
+      instructions: |
+        Review embedded code for correctness, buffer bounds, integer overflow,
+        interrupt safety, concurrency, ownership, timing, error handling, and
+        test coverage. Check DSP sample-rate and unit assumptions and FHIR/TLS
+        behavior where relevant. Ground findings in the actual code and project
+        requirements. Distinguish host-test evidence from hardware validation.
+        Flag real embedded credentials; allow clearly nonsecret test placeholders.
+    - path: "Development/system/testing/**"
+      instructions: |
+        Check whether tests substantiate the stated claims and cover realistic
+        failure modes. Distinguish simulated, host, build, and target evidence.
+        Do not treat a passing build as proof of correct hardware behavior.
+    - path: "preThesis/**"
+      instructions: |
+        Review as academic planning and thesis material. Check clarity,
+        terminology, argument structure, reproducible methods, and consistency
+        with the implementation. Distinguish proposals and assumptions from
+        completed work and measured results. Flag unsupported claims, missing
+        citations, and overstated conclusions. Never invent sources, measurements,
+        or experimental outcomes. Preserve the author's language and intended
+        meaning; prioritize substantive issues over stylistic preferences.
+    - path: "**/*.tex"
+      instructions: |
+        Review as academic thesis source. Check clarity, terminology, argument
+        structure, reproducibility, cross-references, and implementation consistency.
+        Separate measured results from assumptions. Flag unsupported claims and
+        missing citations without inventing references or results. Preserve the
+        author's language and meaning. Do not claim to verify rendered PDF layout.
+    - path: "**/*.bib"
+      instructions: |
+        Check bibliography consistency, required bibliographic fields, duplicate
+        citation keys, and suspicious or incomplete references. Do not invent
+        sources, identifiers, publication details, or claim a source was verified
+        without evidence.
+    - path: "Development/system/requirements/**"
+      instructions: |
+        Check that requirements are clear, measurable, consistent, and traceable.
+        Distinguish goals from verified behavior. Flag contradictions with the
+        specification or implementation and identify evidence for the finding.

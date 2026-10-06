@@ -48,7 +48,7 @@ Den wissenschaftlichen Kern bildet ein messbarer Zielkonflikt der Filterauslegun
 - **Latenz:** Bei 0,5× unkritisch. Bei 1,0× Zielband < 30 ms, besser < 10 ms (Feinrecherche bei Bedarf).
 - **Plattform:** **ESP-IDF (C/FreeRTOS)** als Favorit. Vor Thesis-Start Zephyr-Probeläufe; finale Entscheidung zu Thesis-Beginn.
 - **Rechenbudget:** Bedingungen aus R10 einhaltbar. WiFi/FHIR außerhalb der Live-Wiedergabe oder als Low-Prio-Task; bei Problemen Prio-/Task-Tuning. CPU/RAM früh testen.
-- **FHIR/TLS:** `Observation` (Vital Signs, LOINC 8867-4, UCUM `/min`). SNTP vor Handshake, gepinntes Root-CA. Auth darf per hardcoded Secret abgekürzt werden; JSON-Erzeugung + Versand des gemessenen BPM dennoch vollständig.
+- **FHIR/TLS:** `Observation` (Vital Signs, LOINC 8867-4, UCUM `/min`). SNTP vor Handshake, gepinntes Root-CA. Authentifizierung darf für den Prototyp vereinfacht werden; echte Zugangsdaten werden lokal konfiguriert und niemals in Quellcode, Git-Historie oder Beispielen veröffentlicht. JSON-Erzeugung + Versand des gemessenen BPM bleiben vollständig.
 - **Lungenmodus:** Nur Interface/Symbole + Live-Wiedergabe. Keine BPM, keine Filter, kein Time-Stretch, kein FHIR.
 - **Bedienkonzept:** Poti = Lautstärke, Schalter 1 = Wiedergabegeschwindigkeit, Schalter 2 = Filter. Optional Touch-Display für Konfiguration, um physisches Interface zu minimieren. Bauteile (Potis, 3-Positions-Schalter, LED-Knöpfe) vorhanden.
 - **Formales:** Anmeldung Ende September angestrebt → Bearbeitungszeit 4 Monate ab **20. Oktober** → Abgabe **Ende Januar**. Bestätigung eingegangen; nächster Schritt Prüfer + Titel + Firmendokumente.

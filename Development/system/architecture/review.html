@@ -16,7 +16,7 @@ img{display:block;width:100%;height:100%;object-fit:contain;filter:invert(.92) h
 .viewport.zoomed{overflow:auto}
 .viewport.zoomed .stage{display:block}
 .viewport.zoomed img{object-fit:fill;max-width:none}
-</style></head><body><!-- Updated by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex. --><main><nav aria-label="Architecture views"><button type="button" data-index="0" aria-selected="true">Architecture</button><button type="button" data-index="1" aria-selected="false">System context</button><button type="button" data-index="2" aria-selected="false">System components</button><button type="button" data-index="3" aria-selected="false">Electrical interfaces</button><button type="button" data-index="4" aria-selected="false">Software components</button><button type="button" data-index="5" aria-selected="false">Threads</button><button type="button" data-index="6" aria-selected="false">Listening</button><button type="button" data-index="7" aria-selected="false">BPM measurement</button></nav><figure><div class="viewport"><div class="stage"><img id="diagram" src="rendered/architecture_choice.svg" alt="Architecture" draggable="false"></div></div><div class="zoom" hidden aria-label="Flowchart zoom"><button id="zoom-out" type="button" aria-label="Zoom out">−</button><button id="zoom-in" type="button" aria-label="Zoom in">+</button><button id="zoom-fit" type="button">Fit</button></div></figure></main><script>const views=[{"src": "rendered/architecture_choice.svg", "title": "Architecture", "flow": false}, {"src": "rendered/system_context.svg", "title": "System context", "flow": false}, {"src": "rendered/system_components.svg", "title": "System components", "flow": false}, {"src": "rendered/electrical_interfaces.svg", "title": "Electrical interfaces", "flow": false}, {"src": "rendered/software_components.svg", "title": "Software components", "flow": false}, {"src": "rendered/runtime_ownership.svg", "title": "Threads", "flow": false}, {"src": "rendered/listening_workflow.svg", "title": "Listening", "flow": true}, {"src": "rendered/measurement_workflow.svg", "title": "BPM measurement", "flow": true}];
+</style></head><body><!-- Updated by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex. --><main><nav role="tablist" aria-label="Architecture views"><button type="button" role="tab" id="view-0" aria-controls="diagram-panel" tabindex="0" data-index="0" aria-selected="true">Architecture</button><button type="button" role="tab" id="view-1" aria-controls="diagram-panel" tabindex="-1" data-index="1" aria-selected="false">System context</button><button type="button" role="tab" id="view-2" aria-controls="diagram-panel" tabindex="-1" data-index="2" aria-selected="false">System components</button><button type="button" role="tab" id="view-3" aria-controls="diagram-panel" tabindex="-1" data-index="3" aria-selected="false">Electrical interfaces</button><button type="button" role="tab" id="view-4" aria-controls="diagram-panel" tabindex="-1" data-index="4" aria-selected="false">Software components</button><button type="button" role="tab" id="view-5" aria-controls="diagram-panel" tabindex="-1" data-index="5" aria-selected="false">Threads</button><button type="button" role="tab" id="view-6" aria-controls="diagram-panel" tabindex="-1" data-index="6" aria-selected="false">Listening</button><button type="button" role="tab" id="view-7" aria-controls="diagram-panel" tabindex="-1" data-index="7" aria-selected="false">BPM measurement</button></nav><figure id="diagram-panel" role="tabpanel" aria-labelledby="view-0" tabindex="0"><div class="viewport"><div class="stage"><img id="diagram" src="rendered/architecture_choice.svg" alt="Architecture" draggable="false"></div></div><div class="zoom" hidden aria-label="Flowchart zoom"><button id="zoom-out" type="button" aria-label="Zoom out">−</button><button id="zoom-in" type="button" aria-label="Zoom in">+</button><button id="zoom-fit" type="button">Fit</button></div></figure></main><script>const views=[{"src": "rendered/architecture_choice.svg", "title": "Architecture", "flow": false}, {"src": "rendered/system_context.svg", "title": "System context", "flow": false}, {"src": "rendered/system_components.svg", "title": "System components", "flow": false}, {"src": "rendered/electrical_interfaces.svg", "title": "Electrical interfaces", "flow": false}, {"src": "rendered/software_components.svg", "title": "Software components", "flow": false}, {"src": "rendered/runtime_ownership.svg", "title": "Threads", "flow": false}, {"src": "rendered/listening_workflow.svg", "title": "Listening", "flow": true}, {"src": "rendered/measurement_workflow.svg", "title": "BPM measurement", "flow": true}];
 const navigation=document.querySelector('nav');
 const frame=document.querySelector('figure');
 const viewport=document.querySelector('.viewport');
@@ -53,9 +53,25 @@ function fitDiagram(){
 document.querySelectorAll('button[data-index]').forEach(button=>button.addEventListener('click',()=>{
  selected=Number(button.dataset.index);zoom=1;
  diagram.src=views[selected].src;diagram.alt=views[selected].title;
- document.querySelectorAll('button[data-index]').forEach(tab=>tab.setAttribute('aria-selected',String(tab===button)));
+ document.querySelectorAll('button[data-index]').forEach(tab=>{
+  tab.setAttribute('aria-selected',String(tab===button));
+  tab.tabIndex=tab===button?0:-1;
+ });
+ frame.setAttribute('aria-labelledby',button.id);
  applyZoom();
 }));
+navigation.addEventListener('keydown',event=>{
+ const tabs=Array.from(navigation.querySelectorAll('[role=tab]'));
+ const index=tabs.indexOf(event.target);
+ if(index<0)return;
+ let next;
+ if(event.key==='ArrowRight')next=(index+1)%tabs.length;
+ else if(event.key==='ArrowLeft')next=(index+tabs.length-1)%tabs.length;
+ else if(event.key==='Home')next=0;
+ else if(event.key==='End')next=tabs.length-1;
+ else return;
+ event.preventDefault();tabs[next].focus();tabs[next].click();
+});
 diagram.addEventListener('load',applyZoom);
 document.getElementById('zoom-in').addEventListener('click',()=>{zoom=Math.min(6,zoom*1.5);applyZoom();});
 document.getElementById('zoom-out').addEventListener('click',()=>{zoom=Math.max(1,zoom/1.5);applyZoom();});

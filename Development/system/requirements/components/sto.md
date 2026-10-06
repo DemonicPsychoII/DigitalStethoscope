@@ -14,7 +14,7 @@ Fixture storage shall validate supported sample format/rate, frame length and pr
 
 ## STO-002
 
-SD/host fixture acquisition shall prefetch into bounded processor-owned buffers outside the audio worker, using chunked serialized SPI operations.
+SD fixture acquisition shall prefetch into bounded processor-owned buffers outside the audio worker, using chunked serialized SPI operations. Host-uploaded target fixtures shall use bounded volatile buffers outside the audio worker without requiring SD/SPI access. Host-side tests shall inject fixture data into the same DSP path without target SPI operations.
 
 - **Derivation:** UC-04 → SR-08,SR-11; sources S03.
 - **Status:** Source-backed.
