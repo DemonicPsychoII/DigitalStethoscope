@@ -4,7 +4,7 @@ Required contexts remain `Quality / Static Checks`, `Zephyr / Firmware Build` an
 `agent-gate`. A short hosted job selects suites before requesting a disposable VM;
 selection errors fail the required static check. Static repository analysis and QC
 always run. Host DSP/FHIR, build-tooling and merge-gate tests run when their inputs
-change. Documentation/agent-gate-only edits skip firmware; unknown firmware/toolchain
+change. Documentation/agent-gate-only edits report a hosted no-op firmware context; unknown firmware/toolchain
 inputs and workflow changes select it. The existing daily unchanged-build guard now
 runs before VM allocation. A firmware label or integration publication still forces builds.
 
