@@ -37,7 +37,7 @@ BPM-006,BPM,"UC-05,UC-08","SR-05,SR-09",S03,Derived,—,"VT-06,VT-09",components
 STO-001,STO,UC-04,"SR-08,SR-11",S03,Source-backed; file formats proposed,P17,VT-10,components/sto.md#sto-001
 STO-002,STO,UC-04,"SR-08,SR-11",S03,Source-backed,P11,"VT-13,VT-02",components/sto.md#sto-002
 STO-003,STO,"UC-04,UC-08","SR-08,SR-09","S03,S07",Source-backed,—,"VT-10,VT-09",components/sto.md#sto-003
-STO-004,STO,"UC-04,UC-09","SR-08,SR-10","S03,S05",Derived,—,"VT-10,VT-11",components/sto.md#sto-004
+STO-004,STO,"UC-04,UC-09","SR-08,SR-10","S03,S05",Derived,—,"VT-05,VT-10,VT-11",components/sto.md#sto-004
 UI-001,UI,"UC-01,UC-02,UC-05,UC-06","SR-01,SR-03,SR-10","S03,S04",Source-backed,P10,"VT-04,VT-13",components/ui.md#ui-001
 UI-002,UI,"UC-03,UC-05,UC-08","SR-03,SR-09",S03,Source-backed,—,"VT-04,VT-05",components/ui.md#ui-002
 UI-003,UI,"UC-02,UC-09",SR-03,"S03,S04",Source-backed,—,VT-04,components/ui.md#ui-003

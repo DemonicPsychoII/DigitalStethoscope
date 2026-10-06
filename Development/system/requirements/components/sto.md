@@ -10,7 +10,7 @@ Fixture storage shall validate supported sample format/rate, frame length and pr
 - **Status:** Source-backed; file formats proposed.
 - **Parameters:** P17.
 - **Verification:** VT-10.
-- **Acceptance:** Known good, unsupported rate, truncated header/data and oversized fixtures tested; supported formats agreed.
+- **Acceptance:** Known-good, unsupported format/rate, missing or invalid required provenance, truncated header/data and oversized fixtures tested; invalid fixtures rejected before selection without resampling; supported formats agreed.
 
 ## STO-002
 
@@ -30,7 +30,7 @@ Mount failure, EOF, read error or fixture starvation shall produce a defined fix
 - **Status:** Source-backed.
 - **Parameters:** —.
 - **Verification:** VT-10,VT-09.
-- **Acceptance:** No implicit format/write and no fabricated samples; explicit source restoration event required after fixture fault.
+- **Acceptance:** No implicit format/write and no fabricated samples; for mount failure, EOF, read error and starvation, an available microphone listening path remains usable within the agreed VT-02 timing limits, verified by output and transport traces; explicit source restoration event required after fixture fault.
 
 ## STO-004
 
@@ -39,7 +39,7 @@ Fixture metadata shall retain content hash, license/reference, sample representa
 - **Derivation:** UC-04,UC-09 → SR-08,SR-10; sources S03,S05.
 - **Status:** Derived.
 - **Parameters:** —.
-- **Verification:** VT-10,VT-11.
+- **Verification:** VT-05,VT-10,VT-11.
 - **Acceptance:** Hash/config evidence matches source; SD write trace absent for capture/replay.
 
 Created by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.
