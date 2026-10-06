@@ -1,0 +1,24 @@
+@startuml architecture_choice
+' Updated by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.
+!pragma layout smetana
+skinparam shadowing false
+skinparam componentStyle rectangle
+skinparam defaultFontName SansSerif
+title Architecture
+top to bottom direction
+component "Layers (chosen)\n• Application chooses behaviour\n• Services do the work\n• Zephyr connects to hardware" as layers #CCEECC
+component "RTOS threads (chosen)\n• Workers run separately\n• Audio keeps moving\n• Messages coordinate work" as rt #CCEECC
+component "Events (chosen)\n• Inputs become commands\n• Controller owns settings\n• Workers return results" as events #CCEECC
+component "Superloop\n• One loop runs every task\n• Simple setup\n• Slow tasks delay audio" as loop #FFDDDD
+component "AUTOSAR\n• Software building blocks for car electronics\n• Choose modules; a tool generates the glue code\n• Useful for large car systems; too much setup here" as auto #FFDDDD
+component "Task isolation (MPU)\n• Optional addition to threads / layers\n• Keeps task memory separate\n• Requires hardware support" as mpu #E5E5E5
+layers -[hidden]right-> rt
+rt -[hidden]right-> events
+layers -[hidden]down-> loop
+rt -[hidden]down-> auto
+events -[hidden]down-> mpu
+loop -[hidden]right-> auto
+auto -[hidden]right-> mpu
+component "A/B firmware\n• Two images; choose one at boot\n• Updates / rollback\n• Separate from core / task layout" as ab #E5E5E5
+auto -[hidden]down-> ab
+@enduml
