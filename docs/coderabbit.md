@@ -21,6 +21,16 @@ human inspection verify the rendered thesis.
 
 ## Daily workflow
 
+CodeRabbit is the primary independent reviewer for DigitalStethoscope. Keep the
+existing GlobalAgentContext `rules/git.md` and `review` skill process as the
+fallback: use a separate agent session if CodeRabbit is unavailable, rate-limited,
+fails, or remains stuck across two watcher updates at least 15 minutes apart.
+Request a missing review once with `@coderabbitai review`, then use the app's
+PR watcher. Record why fallback was needed. A fallback verdict must approve the
+current head and address any material CodeRabbit findings already posted; it cannot
+override unresolved findings, required CI, or owner questions. Do not enable
+paid reviews or Agent usage to work around limits.
+
 1. Open a focused, ready-for-review PR into `integration`. Automatic reviews
    are enabled; draft PRs are excluded.
 2. Read the feedback. Fix material issues and explain false positives or
