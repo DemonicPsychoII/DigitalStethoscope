@@ -19,8 +19,8 @@ SD fixture acquisition shall prefetch into bounded processor-owned buffers outsi
 - **Derivation:** UC-04 → SR-08,SR-11; sources S03.
 - **Status:** Source-backed.
 - **Parameters:** P11.
-- **Verification:** VT-13,VT-02.
-- **Acceptance:** Audio worker performs no filesystem read; worst display/touch/SD contention measured; prefetch pressure bounded.
+- **Verification:** VT-13,VT-02,VT-10.
+- **Acceptance:** Audio worker performs no filesystem read; worst display/touch/SD contention measured; prefetch pressure bounded. For host-uploaded target fixtures, measure volatile-buffer use against the agreed bound and verify zero SD/SPI access. For host-side tests, verify fixture injection reaches the same DSP path with zero target-SPI operations.
 
 ## STO-003
 
