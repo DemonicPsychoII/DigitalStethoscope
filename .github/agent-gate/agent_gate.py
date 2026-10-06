@@ -21,7 +21,7 @@ retain their previous approval behavior until explicitly migrated. Agent markers
 must come from trusted collaborator accounts; native bot reviews additionally
 match the configured immutable user ID and Bot type. A CodeRabbit progress check
 is not an approval. CodeRabbit's native approval becomes the primary verdict once
-it has reviewed the PR; agent-session reviews remain the pre-install fallback.
+it has issued a decisive verdict; comment-only reviews retain the agent fallback.
 
 Everything is read from LIVE API state, never from the triggering event's payload: the gate is
 re-run on pushes, body edits, review comments and CI completion, and each run must judge the PR as
@@ -344,9 +344,9 @@ def review_items(inputs: Inputs, author: dict[str, str] | None) -> list[tuple[st
                    if (r.get("user") or {}).get("type") == "Bot"
                    and inputs.review_bots.get((r.get("user") or {}).get("login"))
                        == (r.get("user") or {}).get("id")]
-    if bot_reviews:
-        decisions = [r for r in bot_reviews if r.get("state") in {"APPROVED", "CHANGES_REQUESTED", "DISMISSED"}]
-        review = max(decisions or bot_reviews, key=lambda r: r.get("id", 0))
+    decisions = [r for r in bot_reviews if r.get("state") in {"APPROVED", "CHANGES_REQUESTED", "DISMISSED"}]
+    if decisions:
+        review = max(decisions, key=lambda r: r.get("id", 0))
         login = review["user"]["login"]
         if review.get("commit_id") != inputs.head_sha:
             return [("pending", f"{login} must review the current head SHA")]

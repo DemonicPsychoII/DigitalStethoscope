@@ -130,5 +130,5 @@ def main() -> None:
 if __name__ == "__main__":
     try:
         main()
-    except (subprocess.CalledProcessError, RuntimeError) as exc:
+    except (subprocess.CalledProcessError, RuntimeError, ValueError) as exc:
         raise SystemExit(str(exc)) from exc

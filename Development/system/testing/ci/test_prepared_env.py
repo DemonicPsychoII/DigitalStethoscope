@@ -47,6 +47,7 @@ class PreparedTests(unittest.TestCase):
             compiler = (
                 root
                 / f"zephyr-sdk-{p.PINS['sdk_version']}"
+                / "gnu"
                 / p.PINS["toolchain"]
                 / "bin"
                 / f"{p.PINS['toolchain']}-gcc"

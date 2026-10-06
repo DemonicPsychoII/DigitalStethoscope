@@ -23,9 +23,9 @@ this optimization does not create persistent writable runners or authorize publi
 No timing improvement should be claimed before real prepared-image runs are measured.
 
 CodeRabbit native approval is accepted for the current head from the configured immutable
-bot identity. Its progress check alone is insufficient. Once it participates, a blocking,
+bot identity. Its progress check alone is insufficient. Once it issues a decisive verdict, a blocking,
 stale or dismissed review cannot be replaced with an agent marker. Independent agent review
-remains available before CodeRabbit is active. Human-only approval is removed; material
+remains available before CodeRabbit issues a decisive verdict, including comment-only defaults. Human-only approval is removed; material
 findings and unresolved conversations still block. Optional suggestions may be acknowledged
 or declined and resolved without another code/review cycle.
 

@@ -534,13 +534,20 @@ class AutomatedPolicyTests(unittest.TestCase):
                                      native_reviews=[self.bot()], unresolved_threads=1))
         self.assertEqual(decision.state, "failure")
 
-    def test_stale_changed_dismissed_and_commented_bot_reviews_do_not_approve(self):
+    def test_stale_changed_and_dismissed_bot_reviews_do_not_approve(self):
         for review in (self.bot(sha=OLD), self.bot(state="CHANGES_REQUESTED"),
-                       self.bot(state="DISMISSED"), self.bot(state="COMMENTED")):
+                       self.bot(state="DISMISSED")):
             with self.subTest(review=review):
                 decision = g.evaluate(inputs(review_bots={"coderabbitai[bot]": 136622811},
                                              native_reviews=[review]))
                 self.assertNotEqual(decision.state, "success")
+
+    def test_comment_only_bot_review_retains_independent_agent_fallback(self):
+        options = {"review_bots": {"coderabbitai[bot]": 136622811},
+                   "native_reviews": [self.bot(state="COMMENTED")]}
+        self.assertEqual(g.evaluate(inputs(**options)).state, "success")
+        self.assertEqual(g.evaluate(inputs(comments=[], **options)).state, "failure")
+        self.assertEqual(g.evaluate(inputs(unresolved_threads=1, **options)).state, "failure")
 
     def test_matching_login_without_immutable_identity_never_counts(self):
         for review in (self.bot(uid=1), self.bot(login="another[bot]")):

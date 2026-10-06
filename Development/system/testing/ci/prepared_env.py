@@ -62,7 +62,9 @@ def state(kind: str, workspace: Path) -> dict:
         }
         sdk = workspace / f"zephyr-sdk-{PINS['sdk_version']}"
         suffix = ".exe" if sys.platform == "win32" else ""
-        compiler = sdk / PINS["toolchain"] / "bin" / f"{PINS['toolchain']}-gcc{suffix}"
+        compiler = (
+            sdk / "gnu" / PINS["toolchain"] / "bin" / f"{PINS['toolchain']}-gcc{suffix}"
+        )
         if not compiler.is_file():
             raise ValueError("SDK compiler is missing")
         result["compiler"] = hashlib.sha256(compiler.read_bytes()).hexdigest()
