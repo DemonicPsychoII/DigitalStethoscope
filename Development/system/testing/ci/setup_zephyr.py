@@ -12,6 +12,7 @@ import venv
 from pathlib import Path
 
 from build_support import PINS, ROOT, build_env, checked, python_path, west_command
+from prepared_env import MARKER, record
 
 
 def main() -> None:
@@ -37,6 +38,7 @@ def main() -> None:
                 "Install 7-Zip first: winget install --id 7zip.7zip -e --silent"
             )
     ws.mkdir(parents=True, exist_ok=True)
+    (ws / MARKER).unlink(missing_ok=True)
     if not python_path(ws).is_file():
         venv.create(ws / ".venv", with_pip=True)
     env = build_env(ws)
@@ -118,6 +120,7 @@ def main() -> None:
     )
     run([*west, "zephyr-export"])
     run([*west, "--version"])
+    record("zephyr", ws)
     print(
         f"\nReady. No activation required:\n{py} {Path(__file__).with_name('benchmark_build.py')} run --runs 3",
         flush=True,
@@ -127,5 +130,5 @@ def main() -> None:
 if __name__ == "__main__":
     try:
         main()
-    except (subprocess.CalledProcessError, RuntimeError) as exc:
+    except (subprocess.CalledProcessError, RuntimeError, ValueError) as exc:
         raise SystemExit(str(exc)) from exc
