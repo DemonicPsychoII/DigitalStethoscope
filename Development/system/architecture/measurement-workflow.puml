@@ -1,0 +1,42 @@
+@startuml measurement_workflow
+' Updated by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.
+!pragma layout smetana
+skinparam shadowing false
+skinparam componentStyle rectangle
+skinparam defaultFontName SansSerif
+title BPM measurement
+start
+:Start measurement;
+if (Heart + microphone + audio ready?) then (yes)
+ :Save patient / point / BPM settings;
+ repeat
+  :Update BPM;
+  if (Cancelled / settings or source changed / fault?) then (yes)
+   :Discard measurement;
+   :Show outcome;
+   stop
+  endif
+ repeat while (Configured measurement time elapsed?) is (no) not (yes)
+ :Combine valid estimates;
+ if (Valid result?) then (yes)
+  :Save result;
+  :Wait for listening to stop;
+  if (Server / patient / clock / trust ready?) then (yes)
+   :Send BPM over Wi-Fi / HTTPS;
+   if (Acknowledged + matching readback?) then (yes)
+    :Delivery verified;
+   else (no)
+    :Failed / unverified;
+   endif
+  else (no)
+   :Configuration needed;
+  endif
+ else (no)
+  :Invalid result;
+ endif
+else (no)
+ :Reject command;
+endif
+:Show outcome;
+stop
+@enduml

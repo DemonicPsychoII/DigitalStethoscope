@@ -1,6 +1,7 @@
-@startuml software-implementation
+@startuml software_implementation
+!pragma layout smetana
 ' Created by GPT-6.1-Sol on behalf of Nico running in codex.
-title Digital stethoscope — current evaluation software
+title Evaluation firmware
 top to bottom direction
 skinparam componentStyle rectangle
 skinparam shadowing false
