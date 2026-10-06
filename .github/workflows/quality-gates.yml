@@ -168,8 +168,12 @@ jobs:
         if: env.FIRMWARE_REQUIRED == 'true'
         id: prepared
         run: |
-          if python3 Development/system/testing/ci/prepared_env.py check zephyr /opt/zephyr-workspace; then
+          # Reuse the image's location even without a manifest. West SDK discovery
+          # selects its registered SDK regardless of a different --install-base.
+          if [[ -d /opt/zephyr-workspace ]]; then
             ln -s /opt/zephyr-workspace "$GITHUB_WORKSPACE/.ci-workspace"
+          fi
+          if python3 Development/system/testing/ci/prepared_env.py check zephyr /opt/zephyr-workspace; then
             echo 'ready=true' >> "$GITHUB_OUTPUT"
             echo 'All prepared toolchain pins, modules, packages and blobs match.'
           fi
