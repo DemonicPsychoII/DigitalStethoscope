@@ -5,7 +5,8 @@
     "Zephyr / Firmware Build"
   ],
   "ignore_checks": [
-    "Quality / Static Checks (label ignored)"
+    "Quality / Static Checks (label ignored)",
+    "Zephyr / Firmware Build (label ignored)"
   ],
   "require_owner_approval": false,
   "required_checks_only": true,

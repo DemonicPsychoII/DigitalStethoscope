@@ -125,7 +125,8 @@ jobs:
         if: needs.plan.outputs.gate == 'true'
         run: python -m unittest discover -s .github/agent-gate -v
   firmware:
-    name: Zephyr / Firmware Build
+    # Ignored labels must not replace a real firmware result with a skipped check.
+    name: ${{ github.event.action == 'labeled' && github.event.label.name != 'firmware' && 'Zephyr / Firmware Build (label ignored)' || 'Zephyr / Firmware Build' }}
     needs: static
     if: needs.static.outputs.firmware == 'true' || needs.static.outputs.publish == 'true'
     # No hosted fallback. Fork jobs remain queued until explicitly handled by the owner;
