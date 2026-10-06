@@ -1,0 +1,76 @@
+@startuml software-implementation
+' Created by GPT-6.1-Sol on behalf of Nico running in codex.
+title Digital stethoscope — current evaluation software
+top to bottom direction
+skinparam componentStyle rectangle
+skinparam shadowing false
+
+rectangle "Application and control — logical grouping" as Application #E8F1FC {
+  component "main.c\nBoot / input event consumer\nPotentiometer + LED orchestration" as Main
+  component "stetho_control.c\nMutex-protected settings + actions\nWritten by main, touch and shell paths" as Control
+  component "stetho_shell.c\nSerial commands + fixture transfer" as Shell
+  component "status_reporting.c\nStatus snapshots + logging" as Status
+}
+
+rectangle "Processing and support — logical grouping" as Services #E8F5E9 {
+  component "audio_loopback.c\nAudio thread, priority 5\nI2S buffers / volatile clip / fixtures\n128 frames = 8 ms" as Audio
+  component "stetho_dsp.c\nPure C filters + gain\nIndependent BPM analysis\nWSOLA replay + test signals" as DSP
+  component "peripherals.c + app_logic.c\nProbes, evidence, retry / degradation\nPure decision helpers" as Probes
+  component "stetho_network.c\nOptional network thread, priority 12\nJob queue / verified TLS / SNTP" as Network
+  component "stetho_fhir.c\nPure C Observation serialization" as FHIR
+}
+
+rectangle "Device integration — logical grouping" as Platform #FFF3E0 {
+  component "gpio_inputs.c\nGPIO ISR -> deferred debounce" as GPIO
+  component "analog_backlight.c\nADC + PWM access" as Analog
+  component "display_touch.c\nDisplay thread, priority 10\nTouch callback / dashboard" as Display
+  component "sd_storage.c\nSD mount probe" as SD
+}
+
+rectangle "Zephyr runtime and drivers" as OS #EEEEEE {
+  queue "app_event_queue\nButton / filter / speed / touch" as Events
+  component "Kernel / work queue / mutexes / atomics\nI2S + DMA / GPIO / ADC / PWM\nDisplay / input / SPI / FatFs\nShell / UART / optional Wi-Fi + TLS" as Zephyr
+}
+
+Application -[hidden]down-> Services
+Services -[hidden]down-> Platform
+Platform -[hidden]down-> OS
+
+Main -[norank]-> Control : settings / actions
+Shell -[norank]-> Control : settings / actions
+Main -[norank]-> Probes : boot probes + policy
+Main -[norank]-> Analog : sample volume / set brightness
+Main -[norank]-> GPIO : LED output
+Main -[norank]-> Audio : start / snapshots
+Main -[norank]-> Display : diagnostic colour request
+Main -[norank]-> Status : periodic reporting
+GPIO -[norank,dashed]-> Events : non-blocking input events
+Display -[norank,dashed]-> Events : non-blocking touch events
+Events -[norank,dashed]-> Main : sole consumer
+Audio -[norank]-> Control : read settings / restart action
+Audio -[norank]-> DSP : process live / replay blocks
+Display -[norank]-> Control : read settings
+Display -[norank]-> Audio : read snapshots
+Status -[norank]-> Audio : read snapshots
+Shell -[norank]-> Audio : clip / fixture transfer
+Shell -[norank]-> Network : enqueue send / sync jobs
+Network -[norank]-> Audio : eligible measurement snapshot
+Network -[norank]-> Control : eligibility checks
+Network -[norank]-> FHIR : serialize
+Probes -[norank]-> Platform : independent probes
+Probes -[norank]-> Audio : mic / DAC probes
+Probes -[norank]-> SD : mount probe
+Platform -[norank]-> Zephyr : device APIs
+Audio -[norank]-> Zephyr : I2S / slabs / synchronization
+Network -[norank]-> Zephyr : sockets / TLS / jobs
+Shell -[norank]-> Zephyr : shell / filesystem commands
+
+legend bottom
+  Boxes group existing responsibilities; they are not enforced source layers.
+  All application .c files currently live in bringup-zephyr/src/.
+  Direct Zephyr access and service -> control dependencies still exist.
+  SD mounts a filesystem; captured audio clips currently remain in RAM.
+  MON supervision is distributed; the dedicated MON module is a target design.
+endlegend
+footer Created by GPT-6.1-Sol on behalf of Nico running in codex.
+@enduml
