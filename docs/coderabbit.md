@@ -26,8 +26,8 @@ existing GlobalAgentContext `rules/git.md` and `review` skill process as the
 fallback: use a separate agent session if CodeRabbit is unavailable, rate-limited,
 fails, or remains stuck across two watcher updates at least 15 minutes apart.
 Request a missing review once with `@coderabbitai review`, then use the app's
-PR watcher. Record why fallback was needed. A fallback verdict must cover the
-current head and any material CodeRabbit findings already posted; it cannot
+PR watcher. Record why fallback was needed. A fallback verdict must approve the
+current head and address any material CodeRabbit findings already posted; it cannot
 override unresolved findings, required CI, or owner questions. Do not enable
 paid reviews or Agent usage to work around limits.
 
