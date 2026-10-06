@@ -288,6 +288,11 @@
      der Wert nach dem Boot. → deckt sich mit dem in R10 identifizierten Engpass.
 
 > Die FHIR-Kommunikation ist von der Firma verlangt, kann aber durch e.g. hardcoded Secret strings zur Authentifizierung abgekürzt werden. Json-Generierung und Parsing mit gemessenem BPM und anschließendem Verschicken sollte dennoch möglich sein.
+
+**Präzisierung für die Veröffentlichung:** Die obige Notiz beschreibt eine frühere
+Prototyp-Vereinfachung. Echte Zugangsdaten werden lokal konfiguriert und bleiben
+außerhalb von Quellcode und Git-Historie; veröffentlichte Beispiele verwenden nur
+eindeutig nicht geheime Platzhalter. Der FHIR-Funktionsnachweis bleibt erforderlich.
  
 
 ## 5. Scope-Abgrenzung
