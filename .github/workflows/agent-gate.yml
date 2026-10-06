@@ -1,8 +1,8 @@
 name: Agent Gate
 
 # Publishes the REQUIRED commit status `agent-gate` on a PR's head SHA: an agent may merge its own
-# PR once this is green. Green needs a review for normal changes and explicit owner approval (the
-# `approved` label or an owner-approval record) for features and policy changes. The policy itself
+# PR once this is green. Green needs independent automated review, resolved conversations and
+# required CI. Human approval is not a merge prerequisite. The policy itself
 # lives in .github/agent-gate/agent_gate.py (unit-tested); this file only decides WHEN to re-evaluate.
 #
 # Why a commit status and not this job's own check run: `issue_comment`, `workflow_run` and
@@ -39,7 +39,7 @@ on:
   issue_comment:
     types: [created, edited, deleted]
   workflow_run:
-    workflows: ["Mandatory quality gates"]
+    workflows: ["Mandatory quality gates", "Review signal"]
     types: [completed]
   workflow_dispatch:
     inputs:
@@ -62,7 +62,7 @@ jobs:
           && (contains(github.event.comment.body, 'agent-review') || contains(github.event.comment.body, 'owner-')
               || contains(github.event.comment.body, '/agent-gate')))
       || (github.event_name == 'workflow_run'
-          && (github.event.workflow_run.event == 'pull_request' || github.event.workflow_run.event == 'workflow_dispatch'))
+          && (github.event.workflow_run.event == 'pull_request' || github.event.workflow_run.event == 'workflow_dispatch' || github.event.workflow_run.event == 'pull_request_review'))
       || (github.event_name == 'workflow_dispatch' && github.ref_name == github.event.repository.default_branch)
     runs-on: ubuntu-latest
     timeout-minutes: 3

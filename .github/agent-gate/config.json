@@ -1,16 +1,15 @@
 {
-  "_comment": "required_checks: checks agent-gate requires to have reported green on the PR head, in addition to every other check present; keep in sync with HomelabServer scripts/github/apply-merge-policy.sh. 'Zephyr / Firmware Build' is skipped (counts green) when no firmware input changed. owner_approval_label / owner_approval_paths: a PR touching these paths (fnmatch, '*' crosses '/') needs explicit owner approval whatever its class. reviewer_logins (optional): only these accounts may post review verdicts.",
+  "_comment": "Required CI contexts and ruleset checks block merging; optional checks are advisory. Human approval is not required. review_bots maps native reviewer logins to immutable GitHub user IDs.",
   "required_checks": [
     "Quality / Static Checks",
     "Zephyr / Firmware Build"
   ],
-  "ignore_checks": ["Quality / Static Checks (label ignored)"],
-  "owner_approval_label": "approved",
-  "owner_approval_paths": [
-    ".github/agent-gate/*",
-    ".github/workflows/*",
-    ".github/pull_request_template.md",
-    "AGENTS.md",
-    "CLAUDE.md"
-  ]
+  "ignore_checks": [
+    "Quality / Static Checks (label ignored)"
+  ],
+  "require_owner_approval": false,
+  "required_checks_only": true,
+  "review_bots": {
+    "coderabbitai[bot]": 136622811
+  }
 }

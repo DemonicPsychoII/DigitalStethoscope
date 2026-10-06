@@ -6,6 +6,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest.mock import Mock
 from dataclasses import replace
 from pathlib import Path
 
@@ -397,6 +398,18 @@ class TargetTests(unittest.TestCase):
         self.assertEqual(g.target_prs(None, "workflow_dispatch", {}, "7,9"), [7, 9])
         self.assertEqual(g.target_prs(None, "workflow_dispatch", {}, "12"), [12])
 
+    def test_review_workflow_merge_ref_rechecks_only_linked_open_prs(self):
+        api = Mock()
+        api.repo = "owner/repo"
+        api.paginate.return_value = [
+            {"number": 3, "head": {"sha": "current"}},
+            {"number": 4, "head": {"sha": "other"}},
+        ]
+        event = {"workflow_run": {"head_sha": "merge", "pull_requests": [{"number": 3}, {"number": 8}]}}
+        self.assertEqual(g.target_prs(api, "workflow_run", event, ""), [3])
+        event["workflow_run"] = {"head_sha": "other"}
+        self.assertEqual(g.target_prs(api, "workflow_run", event, ""), [4])
+
     def test_event_numbers(self):
         self.assertEqual(g.target_prs(None, "pull_request_target", {"pull_request": {"number": 3}}, ""), [3])
         self.assertEqual(g.target_prs(None, "issue_comment", {"issue": {"number": 4, "pull_request": {"url": "u"}}}, ""), [4])
@@ -489,6 +502,56 @@ class RevertVerificationTests(unittest.TestCase):
         ok, detail = g.verify_pure_revert(self.repo, "integration", head, [self.merge])
         self.assertTrue(ok, detail)
 
+
+
+class AutomatedPolicyTests(unittest.TestCase):
+    def bot(self, state="APPROVED", sha=HEAD, uid=136622811, login="coderabbitai[bot]", rid=99):
+        return {"id": rid, "state": state, "commit_id": sha,
+                "user": {"type": "Bot", "login": login, "id": uid}}
+
+    def test_feature_policy_and_policy_paths_need_no_human_when_migrated(self):
+        for klass in ("quick-fix", "feature", "policy"):
+            decision = g.evaluate(inputs(body=body_with_class(klass), require_owner_approval=False,
+                                         changed_files=["AGENTS.md"], owner_approval_paths=POLICY_PATHS))
+            self.assertEqual(decision.state, "success", decision.items)
+
+    def test_only_required_checks_block_under_migrated_policy(self):
+        optional = {"id": 300, "name": "optional-nitpicks", "status": "completed", "conclusion": "failure"}
+        self.assertEqual(g.evaluate(inputs(required_checks_only=True,
+                                          check_runs=green_ci() + [optional],
+                                          statuses=[{"context": "optional-review", "state": "pending"}])).state,
+                         "success")
+        missing = g.evaluate(inputs(required_checks_only=True, required_checks=["missing"]))
+        self.assertEqual(missing.state, "pending")
+
+    def test_native_coderabbit_approval_replaces_agent_marker(self):
+        decision = g.evaluate(inputs(comments=[], review_bots={"coderabbitai[bot]": 136622811},
+                                     native_reviews=[self.bot()]))
+        self.assertEqual(decision.state, "success", decision.items)
+
+    def test_native_approval_never_bypasses_unresolved_threads(self):
+        decision = g.evaluate(inputs(comments=[], review_bots={"coderabbitai[bot]": 136622811},
+                                     native_reviews=[self.bot()], unresolved_threads=1))
+        self.assertEqual(decision.state, "failure")
+
+    def test_stale_changed_dismissed_and_commented_bot_reviews_do_not_approve(self):
+        for review in (self.bot(sha=OLD), self.bot(state="CHANGES_REQUESTED"),
+                       self.bot(state="DISMISSED"), self.bot(state="COMMENTED")):
+            with self.subTest(review=review):
+                decision = g.evaluate(inputs(review_bots={"coderabbitai[bot]": 136622811},
+                                             native_reviews=[review]))
+                self.assertNotEqual(decision.state, "success")
+
+    def test_matching_login_without_immutable_identity_never_counts(self):
+        for review in (self.bot(uid=1), self.bot(login="another[bot]")):
+            decision = g.evaluate(inputs(comments=[], review_bots={"coderabbitai[bot]": 136622811},
+                                         native_reviews=[review]))
+            self.assertEqual(decision.state, "failure")
+
+    def test_later_comment_does_not_dismiss_a_native_approval(self):
+        decision = g.evaluate(inputs(comments=[], review_bots={"coderabbitai[bot]": 136622811},
+                                     native_reviews=[self.bot(), self.bot(state="COMMENTED", rid=100)]))
+        self.assertEqual(decision.state, "success")
 
 if __name__ == "__main__":
     unittest.main()

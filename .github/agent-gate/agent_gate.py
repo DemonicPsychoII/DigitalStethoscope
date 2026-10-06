@@ -10,25 +10,18 @@ that status (from the GitHub Actions app), so this file is the merge policy. It 
   3. the body's "Risk & rollback" section answers what could break / how verified / how to revert;
   4. every `<!-- owner-question id=X -->` (body or trusted comment) has a matching trusted
      `<!-- owner-answer id=X -->` comment — resolving a thread is not an answer;
-  5. authorization, by class:
-       revert     the PR is a machine-verified pure revert of merge commit(s) (`agent-revert of=..`,
-                  see `verify_pure_revert`); review and owner approval are waived. An unverified
-                  `class=revert` fails: a revert that grew other changes is a fix and needs review.
-       quick-fix  the LATEST `<!-- agent-review verdict=.. sha=.. reviewer=.. session=.. -->`
-                  comment approves exactly the current head SHA, from another session;
-       feature,   the same review, PLUS an owner approval: the human-applied `approved` label or a
-       policy     trusted `<!-- owner-approval sha=<head sha|any> quote="..." -->` comment.
-     A PR touching `owner_approval_paths` (config.json: the gate, workflows, agent instructions)
-     needs the owner approval whatever its class, so a policy change cannot pass as a quick fix;
-  6. no review thread is unresolved;
-  7. every other check run / commit status on the head SHA is green, and every required check
-     has reported (missing or still-running checks make the gate `pending`, not `failure`).
+  5. an independent agent session or an allowlisted review bot approves the current SHA;
+     a machine-verified pure revert needs no review;
+  6. every review conversation has a disposition and is resolved;
+  7. configured and GitHub-required checks pass. Optional checks are advisory when
+     required_checks_only is enabled.
 
-Trust: only comments from OWNER/MEMBER/COLLABORATOR accounts count, never a `[bot]` account (a PR
-can make its own `pull_request` workflow comment as github-actions[bot]). All agents and the owner
-share one GitHub account, so class, session and owner-approval comments are honour-based; the
-`approved` label, applied by a human and checked against the label event's actor, is the stronger
-signal. `reviewer_logins` restricts review verdicts to dedicated reviewer accounts once they exist.
+The migrated configurations do not require human approval. Old configurations
+retain their previous approval behavior until explicitly migrated. Agent markers
+must come from trusted collaborator accounts; native bot reviews additionally
+match the configured immutable user ID and Bot type. A CodeRabbit progress check
+is not an approval. CodeRabbit's native approval becomes the primary verdict once
+it has reviewed the PR; agent-session reviews remain the pre-install fallback.
 
 Everything is read from LIVE API state, never from the triggering event's payload: the gate is
 re-run on pushes, body edits, review comments and CI completion, and each run must judge the PR as
@@ -217,7 +210,11 @@ class Inputs:
     required_checks: list[str]
     ignore_checks: frozenset[str] = frozenset()
     reviewer_logins: frozenset[str] = frozenset()
-    # True when the owner-approval label is on the PR and was last applied by a human account.
+    require_owner_approval: bool = True
+    required_checks_only: bool = False
+    review_bots: dict[str, int] = field(default_factory=dict)
+    native_reviews: list[dict[str, Any]] = field(default_factory=list)
+    # Compatibility for legacy owner-approval configurations.
     owner_label: bool = False
     owner_label_name: str = "approved"
     changed_files: list[str] = field(default_factory=list)
@@ -287,7 +284,7 @@ def ci_items(inputs: Inputs) -> list[tuple[str, str]]:
     latest: dict[str, dict[str, Any]] = {}
     for run in inputs.check_runs:
         name = run.get("name", "")
-        if name in excluded:
+        if name in excluded or (inputs.required_checks_only and name not in inputs.required_checks):
             continue
         if name not in latest or (run.get("id") or 0) > (latest[name].get("id") or 0):
             latest[name] = run
@@ -304,7 +301,7 @@ def ci_items(inputs: Inputs) -> list[tuple[str, str]]:
             items.append(("fail", f"CI `{name}` concluded {run.get('conclusion')}"))
     for status in inputs.statuses:
         name = status.get("context", "")
-        if name in excluded:
+        if name in excluded or (inputs.required_checks_only and name not in inputs.required_checks):
             continue
         state = status.get("state")
         if state == "success":
@@ -342,6 +339,22 @@ def owner_question_items(inputs: Inputs) -> list[tuple[str, str]]:
 
 
 def review_items(inputs: Inputs, author: dict[str, str] | None) -> list[tuple[str, str]]:
+    # Native reviews come from the GitHub API, not text that a PR can imitate.
+    bot_reviews = [r for r in inputs.native_reviews
+                   if (r.get("user") or {}).get("type") == "Bot"
+                   and inputs.review_bots.get((r.get("user") or {}).get("login"))
+                       == (r.get("user") or {}).get("id")]
+    if bot_reviews:
+        decisions = [r for r in bot_reviews if r.get("state") in {"APPROVED", "CHANGES_REQUESTED", "DISMISSED"}]
+        review = max(decisions or bot_reviews, key=lambda r: r.get("id", 0))
+        login = review["user"]["login"]
+        if review.get("commit_id") != inputs.head_sha:
+            return [("pending", f"{login} must review the current head SHA")]
+        if review.get("state") == "APPROVED":
+            return [("ok", f"approved at {inputs.head_sha[:7]} by {login}")]
+        if review.get("state") == "CHANGES_REQUESTED":
+            return [("fail", f"{login} requests changes on the current head")]
+        return [("pending", f"{login} has not approved the current head")]
     sha7 = inputs.head_sha[:7]
     review, _ = latest_review(inputs.comments, inputs.reviewer_logins)
     if review is None:
@@ -360,6 +373,8 @@ def policy_files(inputs: Inputs) -> list[str]:
 
 
 def owner_approval_items(inputs: Inputs, klass: str) -> list[tuple[str, str]]:
+    if not inputs.require_owner_approval:
+        return [("ok", "automated review and CI authorize merging; no human approval gate")]
     touched = policy_files(inputs)
     if klass not in NEEDS_OWNER_APPROVAL and not touched:
         return [("ok", "quick fix: no owner approval needed (small correction, no open owner questions)")]
@@ -445,8 +460,8 @@ def render_report(inputs: Inputs, decision: Decision, run_url: str) -> str:
         lines += ["", *(f"> {n}" for n in decision.notes)]
     lines += [
         "",
-        "Merge only when this is `success`: "
-        f"`gh pr merge {inputs.number} --merge --match-head-commit {inputs.head_sha}`.",
+        "After review and conversations are settled, enable auto-merge while required CI finishes: "
+        f"`gh pr merge {inputs.number} --auto --merge --match-head-commit {inputs.head_sha}`.",
         f"Re-evaluated on push, body edit, review comment and CI completion ([run]({run_url})). "
         "After resolving threads, comment `/agent-gate` to re-run.",
     ]
@@ -631,6 +646,9 @@ def gather(gh: GitHub, number: int, config: dict[str, Any], repo_dir: Path | Non
                 revert = (False, f"git fetch failed: {exc}")
     label_name = config.get("owner_approval_label", "approved")
     labels = [lbl["name"] for lbl in pr.get("labels") or []]
+    require_owner = config.get("require_owner_approval", True)
+    review_bots = config.get("review_bots", {})
+    native_reviews = gh.paginate(f"repos/{gh.repo}/pulls/{number}/reviews") if review_bots else []
     return Inputs(
         number=number, state=pr["state"], draft=bool(pr.get("draft")), head_sha=head, body=body,
         comments=comments,
@@ -640,7 +658,10 @@ def gather(gh: GitHub, number: int, config: dict[str, Any], repo_dir: Path | Non
         required_checks=required,
         ignore_checks=frozenset(config.get("ignore_checks", [])),
         reviewer_logins=frozenset(config.get("reviewer_logins", [])),
-        owner_label=gh.owner_label(number, labels, label_name),
+        require_owner_approval=require_owner,
+        required_checks_only=config.get("required_checks_only", False),
+        review_bots=review_bots, native_reviews=native_reviews,
+        owner_label=gh.owner_label(number, labels, label_name) if require_owner else False,
         owner_label_name=label_name,
         changed_files=gh.changed_files(number),
         owner_approval_paths=tuple(config.get("owner_approval_paths", [])),
@@ -670,13 +691,18 @@ def target_prs(gh: GitHub, event_name: str, event: dict[str, Any], explicit: str
         if explicit.strip() == "all":
             return [p["number"] for p in gh.paginate(f"repos/{gh.repo}/pulls?state=open")]
         return [int(n) for n in explicit.split(",") if n.strip()]
-    if event_name in {"pull_request", "pull_request_target"}:
+    if event_name in {"pull_request", "pull_request_target", "pull_request_review"}:
         return [event["pull_request"]["number"]]
     if event_name == "issue_comment":
         return [event["issue"]["number"]] if event["issue"].get("pull_request") else []
     if event_name == "workflow_run":
-        sha = event["workflow_run"]["head_sha"]
-        return [p["number"] for p in gh.paginate(f"repos/{gh.repo}/pulls?state=open") if p["head"]["sha"] == sha]
+        run = event["workflow_run"]
+        sha = run["head_sha"]
+        # Review workflows can run on a merge ref. Re-evaluate linked open PRs
+        # using live state rather than assuming the run SHA is the PR head.
+        linked = {p["number"] for p in run.get("pull_requests", [])}
+        return [p["number"] for p in gh.paginate(f"repos/{gh.repo}/pulls?state=open")
+                if p["number"] in linked or p["head"]["sha"] == sha]
     return []
 
 
