@@ -20,6 +20,14 @@ workflows may remain hosted. Preserve required check names and existing gate pol
   `<!-- agent-review verdict=<approve|changes> sha=<head sha> reviewer=<harness>/<model> session=<id> -->`.
   Prefer a different provider/model; a push invalidates the verdict. Configured CodeRabbit native
   approval also counts when it approves the current head; a progress check alone does not.
+- **Primary reviewer:** use CodeRabbit for independent PR review in this repository. If no review
+  starts, request `@coderabbitai review` once and use the app's PR watcher while it runs.
+  If CodeRabbit is unavailable, rate-limited, fails, or remains stuck without completing a review
+  across two watcher updates at least 15 minutes apart, use the existing GlobalAgentContext
+  `rules/git.md` and `review` skill workflow with a separate agent session as the fallback.
+  Record the reason for fallback in the PR. Never enable paid usage to obtain a review.
+  Fallback review must approve the current head and address any existing CodeRabbit blocking
+  findings; it does not bypass CI, owner questions, or conversation resolution.
 - Only material correctness, safety, security or verification findings block review. Nitpicks are
   optional: fix, acknowledge or decline them with a reason, then resolve the conversation.
   Follow-up reviews focus on blocking fixes and regressions introduced by them.
