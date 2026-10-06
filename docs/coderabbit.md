@@ -36,6 +36,10 @@ its review is complete, comments are resolved, and its pre-merge checks are
 clear. It does not merge PRs or waive CI, conversation resolution, or the
 existing review gate.
 
+Author-issued approval commands are disabled with `allow_author_approval: false`;
+the PR author cannot turn a manual bot command into the independent approval
+trusted by the gate.
+
 Free OSS reviews still have rate limits. Comment `@coderabbitai rate limit`
 to check availability; wait rather than enabling paid continuation. Disable or
 pause unnecessary review triggers if repeated pushes consume the allowance.

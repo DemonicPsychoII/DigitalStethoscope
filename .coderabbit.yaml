@@ -3,6 +3,8 @@
 reviews:
   # Native current-head approval can satisfy the existing independent-review gate.
   request_changes_workflow: true
+  # Authors must not manufacture the bot approval trusted by the review gate.
+  allow_author_approval: false
   auto_review:
     enabled: true
     drafts: false
