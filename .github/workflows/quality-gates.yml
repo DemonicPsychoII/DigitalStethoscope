@@ -30,23 +30,21 @@ env:
   BOARD: esp32s3_devkitc/esp32s3/procpu
 
 jobs:
-  static:
-    # A skipped check under the required name would replace this commit's real result,
-    # so ignored label events report under a different name.
-    name: ${{ github.event.action == 'labeled' && github.event.label.name != 'firmware' && 'Quality / Static Checks (label ignored)' || 'Quality / Static Checks' }}
+  plan:
+    name: CI / Select Checks
     if: github.event.action != 'labeled' || github.event.label.name == 'firmware'
-    runs-on: homelab-stethoscope-static-${{ github.run_id }}-${{ github.run_attempt }}
-    timeout-minutes: 10
+    # Lightweight routing only; static/QC suites and builds stay in disposable VMs.
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
     permissions:
       contents: read
-      # Only for the daily skip: reads earlier runs of this workflow.
       actions: read
     outputs:
       firmware: ${{ steps.changes.outputs.firmware }}
-      # Same-repository builds for Personal Cloud: labelled PRs, and the daily schedule (unless
-      # integration is unchanged; the firmware job then never queues a homelab VM) or a dispatch,
-      # both only on integration. Post-merge pushes and dispatches on any other branch (e.g. the
-      # revert/<sha7> PRs that post-merge-revert.yml dispatches) verify only and never publish.
+      host: ${{ steps.changes.outputs.host }}
+      tooling: ${{ steps.changes.outputs.tooling }}
+      gate: ${{ steps.changes.outputs.gate }}
+      daily: ${{ steps.daily.outputs.build }}
       publish: ${{ ((github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && github.ref_name == 'integration' && steps.daily.outputs.build != 'false') || (github.event.pull_request.head.repo.full_name == github.repository && contains(github.event.pull_request.labels.*.name, 'firmware')) }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -59,22 +57,49 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: python3 Development/system/testing/ci/daily_build.py
-      - name: Detect firmware changes
+      - name: Select checks from changed inputs
         id: changes
-        # A dispatch compares against its merge-base with integration, so a dispatched revert
-        # branch builds firmware only when firmware inputs changed. The firmware job is then
-        # skipped, and a skipped job still reports the required check (never pending forever).
-        if: github.event_name == 'pull_request' || github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
-          if [[ "$GITHUB_EVENT_NAME" == workflow_dispatch ]]; then
-            BASE_SHA="$(git merge-base origin/integration "$HEAD_SHA")"
-            export BASE_SHA
+          if [[ "$GITHUB_EVENT_NAME" == schedule ]]; then
+            for suite in firmware host tooling gate; do echo "$suite=true" >> "$GITHUB_OUTPUT"; done
+          else
+            if [[ "$GITHUB_EVENT_NAME" == workflow_dispatch ]]; then
+              BASE_SHA="$(git merge-base origin/integration "$HEAD_SHA")"
+              export BASE_SHA
+            fi
+            python3 Development/system/testing/ci/firmware_changes.py
           fi
-          python3 Development/system/testing/ci/firmware_changes.py
+  static:
+    name: ${{ github.event.action == 'labeled' && github.event.label.name != 'firmware' && 'Quality / Static Checks (label ignored)' || 'Quality / Static Checks' }}
+    needs: plan
+    if: always() && !cancelled() && needs.plan.result != 'skipped' && (needs.plan.result != 'success' || needs.plan.outputs.daily != 'false')
+    runs-on: homelab-stethoscope-static-${{ github.run_id }}-${{ github.run_attempt }}
+    timeout-minutes: 10
+    outputs:
+      firmware: ${{ needs.plan.outputs.firmware }}
+      publish: ${{ needs.plan.outputs.publish }}
+    steps:
+      - name: Require successful check selection
+        env:
+          PLAN_RESULT: ${{ needs.plan.result }}
+        run: test "$PLAN_RESULT" = success
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Validate the prepared Python environment
+        id: prepared
+        run: |
+          if python3 Development/system/testing/ci/prepared_env.py check static /opt/stethoscope-ci; then
+            echo /opt/stethoscope-ci/.venv/bin >> "$GITHUB_PATH"
+            echo 'ready=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'Prepared environment missing or changed; installing the checked-out pins.'
+          fi
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        if: steps.prepared.outputs.ready != 'true'
         with:
           python-version: '3.12.10'
           cache: pip
@@ -82,38 +107,54 @@ jobs:
             Development/system/testing/ci/requirements-ci.txt
             Development/system/coding/bringup-zephyr/tools/requirements.txt
       - run: python -m pip install --require-hashes -r Development/system/testing/ci/requirements-ci.txt
+        if: steps.prepared.outputs.ready != 'true'
       - name: Run static repository checks
         run: python Development/system/testing/ci/run_ci.py static
       - name: Test build tooling
+        if: needs.plan.outputs.tooling == 'true'
         run: python -m unittest discover -s Development/system/testing/ci -p 'test_*.py'
       - name: Install host evaluation dependencies
+        if: needs.plan.outputs.host == 'true' && steps.prepared.outputs.ready != 'true'
         run: python -m pip install --require-hashes -r Development/system/coding/bringup-zephyr/tools/requirements.txt
       - name: Test DSP and FHIR readback
+        if: needs.plan.outputs.host == 'true'
         run: python -m pytest -q Development/system/coding/bringup-zephyr/tests/host
       - name: Run required QC evaluation
         run: python Development/system/testing/ci/run_ci.py qc
       - name: Test the agent merge gate
+        if: needs.plan.outputs.gate == 'true'
         run: python -m unittest discover -s .github/agent-gate -v
   firmware:
-    name: Zephyr / Firmware Build
+    # Ignored labels must not replace a real firmware result with a skipped check.
+    name: ${{ github.event.action == 'labeled' && github.event.label.name != 'firmware' && 'Zephyr / Firmware Build (label ignored)' || 'Zephyr / Firmware Build' }}
     needs: static
-    if: needs.static.outputs.firmware == 'true' || needs.static.outputs.publish == 'true'
-    # No hosted fallback. Fork jobs remain queued until explicitly handled by the owner;
-    # the controller and guest hook accept only same-repository code.
-    runs-on: homelab-zephyr-${{ github.run_id }}-${{ github.run_attempt }}
+    # A skipped job keeps its raw name expression, losing the required context.
+    # Run hosted accounting when no firmware is selected; compilation stays on KVM.
+    if: always() && !cancelled() && needs.static.result != 'skipped'
+    runs-on: ${{ needs.static.result == 'success' && (needs.static.outputs.firmware == 'true' || needs.static.outputs.publish == 'true') && format('homelab-zephyr-{0}-{1}', github.run_id, github.run_attempt) || 'ubuntu-24.04' }}
     timeout-minutes: 60
     env:
       CMAKE_BUILD_PARALLEL_LEVEL: '2'
+      FIRMWARE_REQUIRED: ${{ needs.static.result == 'success' && (needs.static.outputs.firmware == 'true' || needs.static.outputs.publish == 'true') }}
       FIRMWARE_PUBLISH: ${{ needs.static.outputs.publish }}
       # Build identity for the boot banner and manifest (run_ci.py / firmware_release.py).
       # PRs name their head commit; the checkout is GitHub's merge of it into the base.
       STETHO_BUILD_CHANNEL: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || github.ref_name == 'integration' && 'integration' || format('branch/{0}', github.ref_name) }}
       STETHO_BUILD_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Report that no firmware build was selected
+        if: env.FIRMWARE_REQUIRED != 'true'
+        env:
+          STATIC_RESULT: ${{ needs.static.result }}
+        run: |
+          test "$STATIC_RESULT" = success
+          echo 'No firmware inputs changed; required firmware context is satisfied.'
+      - if: env.FIRMWARE_REQUIRED == 'true'
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           persist-credentials: false
       - name: Load toolchain pins
+        if: env.FIRMWARE_REQUIRED == 'true'
         # toolchain.json is the one source of the pins for setup, CI and the benchmark.
         run: |
           python3 - >> "$GITHUB_ENV" <<'PY'
@@ -123,24 +164,27 @@ jobs:
           print(f"ZEPHYR_SDK_VERSION={pins['sdk_version']}")
           print(f"WEST_VERSION={pins['west_version']}")
           PY
-      - name: Reuse the guest's pinned Zephyr toolchain
+      - name: Validate the prepared Zephyr toolchain
+        if: env.FIRMWARE_REQUIRED == 'true'
+        id: prepared
         run: |
-          # Each homelab job gets its own disposable VM; this workspace is never shared
-          # with another job. A guest with different pins provisions from scratch.
-          cache=/opt/zephyr-workspace
-          if [[ -d "$cache/zephyr-sdk-$ZEPHYR_SDK_VERSION" ]] \
-            && [[ "$(git -C "$cache/zephyr" rev-parse HEAD)" == "$ZEPHYR_REVISION" ]] \
-            && [[ "$("$cache/.venv/bin/west" --version)" == "West version: v$WEST_VERSION" ]]; then
-            ln -s "$cache" "$GITHUB_WORKSPACE/.ci-workspace"
-            echo 'Reusing the prepared guest toolchain for these exact pins.'
-          else
-            echo 'No matching prepared guest toolchain; provisioning from scratch.'
+          # Reuse the image's location even without a manifest. West SDK discovery
+          # selects its registered SDK regardless of a different --install-base.
+          if [[ -d /opt/zephyr-workspace ]]; then
+            ln -s /opt/zephyr-workspace "$GITHUB_WORKSPACE/.ci-workspace"
+          fi
+          if python3 Development/system/testing/ci/prepared_env.py check zephyr /opt/zephyr-workspace; then
+            echo 'ready=true' >> "$GITHUB_OUTPUT"
+            echo 'All prepared toolchain pins, modules, packages and blobs match.'
           fi
       - name: Provision pinned Zephyr workspace
+        if: env.FIRMWARE_REQUIRED == 'true' && steps.prepared.outputs.ready != 'true'
         run: bash Development/system/testing/ci/setup_zephyr.sh
       - name: Pristine firmware build
+        if: env.FIRMWARE_REQUIRED == 'true'
         run: .ci-workspace/.venv/bin/python Development/system/testing/ci/run_ci.py build
       - name: Test audio recovery and application logic
+        if: env.FIRMWARE_REQUIRED == 'true'
         run: |
           export ZEPHYR_BASE="$GITHUB_WORKSPACE/.ci-workspace/zephyr"
           export PATH="$GITHUB_WORKSPACE/.ci-workspace/.venv/bin:$PATH"
@@ -149,7 +193,7 @@ jobs:
       # Last, so only fully tested builds are offered. The guest never holds a cloud
       # credential: the homelab's firmware sync downloads this artifact instead.
       - name: Upload firmware for Personal Cloud
-        if: env.FIRMWARE_PUBLISH == 'true'
+        if: env.FIRMWARE_REQUIRED == 'true' && env.FIRMWARE_PUBLISH == 'true'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: firmware-build-${{ github.run_attempt }}

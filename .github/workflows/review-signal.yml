@@ -1,0 +1,16 @@
+name: Review signal
+
+# An unprivileged review event wakes the trusted default-branch gate via workflow_run.
+# No PR code is checked out and no write token is requested, including for fork PRs.
+on:
+  pull_request_review:
+    types: [submitted, edited, dismissed]
+permissions: {}
+jobs:
+  signal:
+    if: github.event.pull_request.base.ref == 'integration'
+    name: Review event received
+    runs-on: ubuntu-24.04
+    timeout-minutes: 1
+    steps:
+      - run: 'true'

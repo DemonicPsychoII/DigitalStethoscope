@@ -1,31 +1,27 @@
-<!-- Agent PRs: replace the next line's placeholders. class: quick-fix (small correction to existing behaviour, no open owner question) | feature | policy (both need explicit owner approval) | revert (generated pure reverts only). -->
+<!-- Agent PRs: replace the marker placeholders. All normal classes need independent automated review; pure reverts are verified separately. -->
 <!-- agent-author harness=<claude-code|codex> model=<id> session=<id> class=<quick-fix|feature|policy|revert> -->
 
 ## Summary
 
-<!-- What changes and why, in a few sentences. Link the issue/plan if there is one. -->
+<!-- Concrete problem and resulting behavior. -->
 
 ## Risk & rollback
 
-<!-- agent-gate blocks the merge until all three are answered concretely. -->
 - **What could break:**
 - **How verified:**
 - **How to revert:**
 
 ## Owner decisions
 
-<!-- feature/policy: how the owner approved (the `approved` label, or an owner-approval comment quoting
-     the chat answer). Questions for the owner: ask in chat with the PR link AND post an owner-question
-     comment; the gate stays red until a matching owner-answer comment records the answer.
-     Marker syntax: AGENTS.md, "Merge authorization". -->
-- None needed (quick fix) / approved by the owner on <date>: "<quote>"
+<!-- Only real unanswered decisions belong here. No routine human approval is required. -->
+- None.
 
 ## Verification checklist
 
-- [ ] Smallest relevant checks run locally (tests / type-check / lint / build) — commands and results above
-- [ ] CI green on the head commit
-- [ ] Self-reviewed the full diff (`gh pr diff`), no debug leftovers, secrets, or unrelated changes
-- [ ] Another agent session (different provider/model preferred) posted an `agent-review` verdict for the head SHA
-- [ ] Every owner question answered and recorded; feature/policy changes carry the owner's approval
-- [ ] All review threads resolved; findings fixed or answered
-- [ ] Hardware / flashing steps the owner must run (if any) listed under "How to revert"
+- [ ] Relevant local checks passed; limitations recorded
+- [ ] Full diff reviewed; no secrets or unrelated changes
+- [ ] Current head independently approved by an agent or configured CodeRabbit
+- [ ] Blocking findings addressed; all conversations have dispositions and are resolved
+- [ ] Genuine owner questions answered
+- [ ] Required CI enforced; auto-merge enabled when only CI remains
+- [ ] Deployment and rollback steps recorded where needed

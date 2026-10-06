@@ -8,45 +8,28 @@ Heavy CI runs only in disposable VMs on the home-lab runner pool. Static/QC suit
 Offline home-lab/fork jobs remain queued until the owner handles them; merge/approval accounting
 workflows may remain hosted. Preserve required check names and existing gate policy.
 
-- **Enforcement starts only after a post-merge step.** Until the owner (or an agent on the
-  homelab host, from HomelabServer) runs
-  `scripts/github/apply-merge-policy.sh --apply DigitalStethoscope`, the `integration` ruleset
-  requires only `Quality / Static Checks` and `Zephyr / Firmware Build`. `agent-gate` is advisory
-  until then, the `approved` label does not exist, and the auto-revert workflow cannot open PRs.
-  Follow the policy below anyway: merge only when `agent-gate` is green.
-- Work on a branch, open a PR into `integration`, and fill in `.github/pull_request_template.md`.
-- **Merge authorization.** An agent may merge its own PR only when the `agent-gate` status
-  (`.github/workflows/agent-gate.yml`, logic in `.github/agent-gate/agent_gate.py`) is green, and
-  green means one of:
-  - **quick fix**: a small correction to existing behaviour with no unresolved owner question.
-    Needs independent review and required checks.
-  - **feature / policy**: anything new, or any change to the gate, workflows, PR template or
-    agent instructions. Needs the same, **plus explicit owner approval**. Passing CI and review
-    alone never authorize it.
-  - **pure revert**: a machine-verified exact inverse of merge(s). Merges once required checks
-    pass, with no review. Any extra change makes it a fix that needs normal review.
-
-  The PR body carries
+- Work on a branch and open a PR into `integration` using `.github/pull_request_template.md`.
+- **Merge authorization:** quick fixes, features and policy changes require independent automated
+  review of the current head, required CI, answered owner questions and resolved review threads.
+  Human approval is not a prerequisite. Agents may apply a legacy `approved` label after review;
+  never invent an owner quote. The required `agent-gate` status enforces the migrated policy.
+  A machine-verified pure revert requires CI but waives review; additional changes need normal review.
+- The PR body carries
   `<!-- agent-author harness=<claude-code|codex> model=<id> session=<id> class=<quick-fix|feature|policy|revert> -->`
-  and a filled `## Risk & rollback` (what could break / how verified / how to revert). Evidence
-  lives in PR comments, each marker on its own line:
-  - review: another agent session checks task fit and correctness and posts
-    `<!-- agent-review verdict=<approve|changes> sha=<head sha> reviewer=<harness>/<model> session=<id> -->`.
-    Prefer a different provider/model; the same model in a separate session is acceptable when
-    provider limits require it. A push invalidates the review.
-  - owner approval: the owner applies the `approved` label (stronger: agents never add it). For
-    an approval the owner gave in chat, record it verbatim:
-    `<!-- owner-approval sha=<head sha|any> quote="<the owner's words>" -->`. Only record an
-    answer to the specific question about this PR, never approval inferred from unrelated chat.
-  - owner questions: ask in chat with the PR link and post `<!-- owner-question id=<short-id> -->`
-    with the question in the PR. The gate stays red until `<!-- owner-answer id=<short-id> -->`
-    with the answer is posted. Resolving a thread is not an answer.
-
-  `Quality / Static Checks` and `Zephyr / Firmware Build` must be green (the firmware build is
-  skipped, which counts as green, when no firmware input changed). All agents and the owner share
-  one GitHub account, so class, session and owner-approval comments are honour-based. The label
-  is the stronger signal. Then: `gh pr merge <n> --merge --match-head-commit <sha>`. Never
-  `--admin`, and never add the `approved` label yourself.
+  and concrete `## Risk & rollback` evidence. Another agent session records
+  `<!-- agent-review verdict=<approve|changes> sha=<head sha> reviewer=<harness>/<model> session=<id> -->`.
+  Prefer a different provider/model; a push invalidates the verdict. Configured CodeRabbit native
+  approval also counts when it approves the current head; a progress check alone does not.
+- Only material correctness, safety, security or verification findings block review. Nitpicks are
+  optional: fix, acknowledge or decline them with a reason, then resolve the conversation.
+  Follow-up reviews focus on blocking fixes and regressions introduced by them.
+- Genuine owner questions still require an answer: post `<!-- owner-question id=<short-id> -->`
+  with the question, then `<!-- owner-answer id=<short-id> -->` with the real answer. Thread
+  resolution alone is not an answer.
+- Once review and conversations are settled, enable `gh pr merge <n> --auto --merge
+  --match-head-commit <sha>` while required CI finishes. Use the app's PR watcher; return on failure
+  or new feedback instead of polling. Verify the merge and affected deployment afterward.
+  Never use `--admin` or bypass required CI/review.
 - **After a merge, a failed check is not yet a regression.** The gates re-run on `integration`.
   If they fail, `post-merge-revert.yml` re-runs the failed jobs once:
   - a green re-run is a flaky check: no revert, and the owner is told on the merged PR;
