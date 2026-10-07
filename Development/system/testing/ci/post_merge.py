@@ -33,7 +33,7 @@ def decision(
 ) -> str:
     if current["run_attempt"] == 1:
         return "rerun" if current["conclusion"] == "failure" else "ignore"
-    if first.get("conclusion") != "failure":
+    if current["run_attempt"] != 2 or first.get("conclusion") != "failure":
         return "ignore"
     if current["conclusion"] == "success":
         return "recovered"

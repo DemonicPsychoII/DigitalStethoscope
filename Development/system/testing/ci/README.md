@@ -113,7 +113,7 @@ admin-capable `gh` login; do not commit credentials.
 2. Use two real probe PRs to prove native protection accepts CodeRabbit and a
    separate fallback reviewer App/account. Each must show `reviewDecision=APPROVED`
    and that reviewer's native approval on its current head. The helper rejects
-   other current-head approving reviewers so each probe isolates the tested identity. Shared
+   other approving reviewers, including retained older approvals so each probe isolates the tested identity. Shared
    author credentials cannot approve their own PR. Provision the fallback identity
    before proceeding; comment-only independent reviews cannot satisfy this rule.
 
@@ -141,7 +141,8 @@ Leave protection in place throughout; a temporarily blocked merge is safe.
 
 ## Failures and local checks
 
-Post-merge recovery reruns failed jobs once and exits. A green rerun reports
+Post-merge recovery reruns failed jobs once and exits. Only attempts 1 and 2
+participate; later manual reruns never reopen the recovery decision. A green rerun reports
 recovery. Only the same allowlisted verification step failing on both attempts
 proposes a revert. Setup, queued-runner, upload and unclassified failures prompt
 inspection without an automatic revert. Revert PRs still obey active protection.

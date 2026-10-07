@@ -7,6 +7,9 @@ import tempfile
 import unittest
 import zipfile
 from pathlib import Path
+from unittest.mock import patch
+
+import release_reuse
 
 from build_support import BOARD, PROFILES
 from ci_results import problems
@@ -82,6 +85,42 @@ class OverhaulTests(unittest.TestCase):
         self.assertEqual(
             decision(failed, {**rerun, "conclusion": "success"}, jobs, []), "recovered"
         )
+
+    def test_later_manual_reruns_never_reopen_recovery(self):
+        first = {"run_attempt": 1, "conclusion": "failure"}
+        jobs = [
+            {"steps": [{"name": "Pristine firmware build", "conclusion": "failure"}]}
+        ]
+        for attempt in (3, 4):
+            for conclusion in ("success", "failure"):
+                self.assertEqual(
+                    decision(
+                        first,
+                        {"run_attempt": attempt, "conclusion": conclusion},
+                        jobs,
+                        jobs,
+                    ),
+                    "ignore",
+                )
+
+    def test_expired_selected_artifact_has_clear_failure(self):
+        run = {
+            "status": "completed",
+            "conclusion": "success",
+            "event": "push",
+            "head_branch": "integration",
+            "head_sha": SHA,
+            "path": ".github/workflows/quality-gates.yml",
+            "head_repository": {"full_name": "o/r"},
+        }
+        for artifacts in ([], [{"name": "verified-firmware-1", "expired": True}]):
+            with patch.object(
+                release_reuse, "api", side_effect=[run, {"artifacts": artifacts}]
+            ):
+                with self.assertRaisesRegex(
+                    ValueError, "unexpired verified firmware artifact"
+                ):
+                    release_reuse.download("o/r", SHA, 123)
 
     def test_promotion_rejects_other_runs_and_malformed_archives(self):
         run = {
@@ -212,6 +251,21 @@ class OverhaulTests(unittest.TestCase):
                     "reviews": [
                         *pr["reviews"],
                         {**pr["reviews"][0], "author": {"login": "another"}},
+                    ],
+                },
+                "fallback",
+            )
+        with self.assertRaises(ValueError):
+            probe(
+                {
+                    **pr,
+                    "reviews": [
+                        *pr["reviews"],
+                        {
+                            **pr["reviews"][0],
+                            "author": {"login": "another"},
+                            "commit": {"oid": "c" * 40},
+                        },
                     ],
                 },
                 "fallback",

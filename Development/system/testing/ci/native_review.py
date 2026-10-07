@@ -52,9 +52,7 @@ def probe(pr: dict, reviewer: str) -> None:
         if review["state"] in {"APPROVED", "CHANGES_REQUESTED", "DISMISSED"}:
             latest[review["author"]["login"]] = review
     if any(
-        login != reviewer
-        and review["state"] == "APPROVED"
-        and review["commit"]["oid"] == pr["headRefOid"]
+        login != reviewer and review["state"] == "APPROVED"
         for login, review in latest.items()
     ):
         raise ValueError("probe must isolate the tested approving identity")

@@ -101,6 +101,10 @@ def download(repo: str, sha: str, run_id: int) -> None:
     candidates = [
         a for a in artifacts if ARTIFACT.fullmatch(a["name"]) and not a["expired"]
     ]
+    if not candidates:
+        raise ValueError(
+            "source run no longer has an unexpired verified firmware artifact"
+        )
     artifact = max(candidates, key=lambda a: a["id"])
     if artifact["size_in_bytes"] > 16 * 1024 * 1024:
         raise ValueError("firmware download too large")
