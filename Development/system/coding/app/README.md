@@ -19,6 +19,27 @@ and `L0_platform/`, respectively; D11 leaves migration and naming open.
 | `common/` | Shared audio/event/result types | Nothing |
 | `tests/host/` | DSP tests on recorded WAVs | `dsp_core`, `common` |
 
+## Building the skeleton
+
+This directory is a standalone Zephyr application. `main.c` returns to the idle
+thread; the component `.c` / `.h` files reserve places for implementation and
+declare no APIs yet. `common/shared_types.h` reserves the shared data types.
+The board overlay is intentionally empty, so no application peripherals are
+configured. No audio processing, networking, storage, UI or monitoring is active.
+
+With the repository's pinned Zephyr environment activated, build from the repository root:
+
+```sh
+west build --pristine=always -b esp32s3_devkitc/esp32s3/procpu Development/system/coding/app -d build-app
+```
+
+`python Development/system/testing/ci/run_ci.py build` also compiles this skeleton
+to `build-ci-app`, before building and packaging the bring-up firmware. The skeleton
+is not packaged or published as the bring-up firmware. The pure C DSP placeholders
+will gain host tests in `tests/host` when their behavior is implemented.
+
+## Layer rules
+
 Calls go downward; upward notifications use events/message queues. Zephyr owns
 drivers, DMA and interrupts. DSP includes no Zephyr headers. Listening and BPM
 analysis filters are independent; Services enforce the test-source send prohibition,
