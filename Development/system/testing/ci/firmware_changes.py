@@ -44,7 +44,8 @@ def suites(paths: list[str]) -> dict[str, bool]:
             for p in paths
         ),
         "tooling": workflow
-        or any(p.startswith("Development/system/testing/ci/") for p in paths),
+        or any(p.startswith("Development/system/testing/ci/") for p in paths)
+        or "Development/system/testing/qc_eval.py" in paths,
         "gate": workflow or any(p.startswith(".github/agent-gate/") for p in paths),
     }
 

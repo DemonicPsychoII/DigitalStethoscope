@@ -69,6 +69,7 @@ class PreparedTests(unittest.TestCase):
             }
             listing = "\n".join(f"{name}|{name}" for name in p.PINS["modules"])
             with (
+                patch.object(p.sys, "platform", "linux"),
                 patch.object(
                     p,
                     "python_state",
