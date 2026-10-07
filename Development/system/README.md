@@ -12,6 +12,10 @@
 The linked documents distinguish source-backed behavior, proposed parameters and
 open choices. The evaluation firmware is a separate implementation.
 
+Historical draft checks are recorded in
+[documentation validation](testing/evidence/2026-10-06-draft-validation.md);
+device verification remains planned.
+
 **Editing:** component Markdown is the requirement text; `requirements/traceability.csv`
 is its index. Update both for ID/allocation changes. Edit `.puml` diagrams;
 original board snapshots remain immutable provenance.
