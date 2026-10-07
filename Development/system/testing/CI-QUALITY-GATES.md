@@ -1,112 +1,128 @@
-# Mandatory CI quality gates
+# CI quality gates
 
-Pull requests into `integration` require `Quality / Static Checks`,
-`Zephyr / Firmware Build` and `agent-gate`. Review/merge policy is in
-[AGENTS.md](../../../AGENTS.md); selection is implemented by
-[quality-gates.yml](../../../.github/workflows/quality-gates.yml) and
-[firmware_changes.py](ci/firmware_changes.py).
+The [quality workflow](../../../.github/workflows/quality-gates.yml) runs
+for PRs into `integration`, pushes to `integration`, the daily 03:17 UTC
+schedule and manual dispatches. Required contexts remain:
 
-## Selection and runners
+- `Quality / Static Checks`
+- `Zephyr / Firmware Build`
+- `agent-gate` (the separate merge/review policy gate)
 
-A lightweight hosted job selects suites before disposable VM allocation.
-Static analysis and QC run on every normal PR, including documentation changes;
-selection errors fail the static check. Host DSP/FHIR, build-tooling and merge-gate
-suites run when their inputs change. Documentation/agent-gate-only changes receive
-a hosted no-op firmware context. Unknown firmware/toolchain inputs and workflow
-changes select a build. Heavy jobs use only `homelab-stethoscope-static-<run-id>-<attempt>`
-and `homelab-zephyr-<run-id>-<attempt>`; there is no hosted fallback. Offline
-homelab/fork jobs remain queued for the owner.
+Keep these names stable. Merge and review requirements are defined in
+[AGENTS.md](../../../AGENTS.md), not by a QC score or this guide.
 
-The `firmware` PR label forces builds/publication on addition and later pushes.
-Daily 03:17 UTC runs build changed `integration`; the unchanged-build guard runs
-before VM allocation. Manual dispatch always builds; publication is selected for
-`integration` dispatches and same-repository labelled PRs. Pushes to `integration`
-rerun gates after merging. Unrelated label events cannot replace required checks
-or cancel a real run.
+Branch protection also requires an up-to-date branch. Avoid workflow-level path
+filters: filtered workflows cannot report required contexts for docs-only PRs.
+Add any new protected branch to the workflow trigger before requiring its checks.
 
-[toolchain.json](ci/toolchain.json) pins tools and source revisions.
-[Prepared environments](ci/README.md#prepared-environments) can skip matching
-setup; firmware profiles and native simulation still build pristine, without
-compiler caching. Fork builds receive no privileged credentials.
+## Check selection and runners
 
-## Local parity
+A short hosted selection job compares base and head trees, including deleted
+files and both sides of renames. Selection errors fail the static check.
+Static repository analysis and QC run for ordinary PRs, including docs-only
+changes. Host DSP/FHIR, tooling and agent-gate unit suites run when their inputs
+change. Firmware inputs and unknown application/CI inputs select firmware;
+documentation, host tooling and CI tests do not require firmware compilation.
+The workflow itself selects all suites when changed. The selector is
+`ci/firmware_changes.py`.
 
-Run `python Development/system/testing/ci/setup_zephyr.py` (also available via
-`Development/system/coding/tools/setup-toolchain.ps1`) from the repository root.
-Use its virtual environment for the gates; `run_ci.py` selects the pinned
-workspace automatically. Install the CI check dependencies in that environment
-before running the static checks:
+Same-repository PRs labelled `firmware` force firmware and publication.
+Scheduled runs select all suites, unless `ci/daily_build.py` finds the same
+commit in the newest successful scheduled/dispatched integration run.
+Manual dispatch uses changed inputs relative to `integration`; dispatching
+`integration` forces firmware publication. Other label events do not replace
+required contexts or cancel real runs.
+
+Heavy static/QC suites use disposable
+`homelab-stethoscope-static-<run-id>-<attempt>` VMs; firmware uses
+`homelab-zephyr-<run-id>-<attempt>` VMs. Firmware jobs have a 60-minute timeout
+and compile pristine offline, QC and combined network/QC profiles, followed by
+`tests/logic` on `native_sim/native/64`. When no firmware is selected, a hosted
+accounting job reports the required firmware context without compiling.
+There is no hosted fallback for heavy suites. Offline homelab/fork jobs remain
+queued for the owner; fork PRs receive no publication credentials.
+
+## Setup and local checks
+
+Install Python 3.12+ and Git. On Windows, also install 7-Zip:
 
 ```powershell
-.ci-workspace/.venv/Scripts/python.exe -m pip install ruff==0.12.9 clang-format==18.1.8
-.ci-workspace/.venv/Scripts/python.exe Development/system/testing/ci/run_ci.py all
+winget install --id 7zip.7zip -e --silent
+python Development/system/testing/ci/setup_zephyr.py
+.ci-workspace/.venv/Scripts/python.exe -m pip install --require-hashes -r Development/system/testing/ci/requirements-ci.txt
+.ci-workspace/.venv/Scripts/python.exe Development/system/testing/ci/run_ci.py static
+.ci-workspace/.venv/Scripts/python.exe Development/system/testing/ci/run_ci.py qc
 ```
 
-The Python entry point preserves paths containing spaces and parentheses and
-returns non-zero on the first failed gate. Zephyr
-4.4's Windows Kconfig generator itself cannot configure a firmware build from a
-path containing parentheses; for the firmware stage, use a checkout path without
-parentheses (a drive mapping alone is insufficient because Python canonicalizes
-the path). Linux CI provisions the same pinned tools using `setup_zephyr.sh`,
-which delegates to the shared Python provisioner. For device timing measurements
-without cloud publication, use [the build benchmark](BUILD-TIMES.md).
-CI treats all compiler warnings under Zephyr's default policy as
-diagnostics; warnings promoted by Zephyr/Kconfig itself fail. A blanket `-Werror`
-is intentionally not enabled because warnings in pinned upstream modules would
-make the gate unreliable. Application-owned warnings should be fixed before
-merge and may be promoted selectively as the code is modularized.
+For firmware compilation, run `run_ci.py build` with that same Python.
+`run_ci.py all` runs static, build and QC; it does not run the independent
+host, tooling, merge-gate or native simulation suites. A local build publishes
+only after all firmware profiles succeed, if `cloud-publish` is installed.
+Use [benchmark_build.py](BUILD-TIMES.md) for timing without publication or flashing.
 
-## Artifacts and reporting
+`Development/system/coding/tools/setup-toolchain.ps1` delegates to the same
+provisioner. Linux uses `python3` and `.ci-workspace/.venv/bin/python`; it also
+requires venv support, xz/tar and
+[Zephyr host prerequisites](https://docs.zephyrproject.org/latest/develop/getting_started/index.html).
+CI's `setup_zephyr.sh` delegates to the shared Python provisioner. Rerunning
+setup completes interrupted installations and retains sources/downloads.
+Legacy toolchain locations remain independent.
 
-Publishing builds (above) upload one artifact, `firmware-build-<attempt>`, kept
-for three days: each profile's `zephyr.bin` under a descriptive name plus a
-`manifest.json` (channel, commit, merged tree for PRs, UTC build time, board,
-per-file profile, boot-banner version and SHA-256). The homelab's firmware sync
-downloads it, checks it against GitHub's run record, and publishes it to
-Personal Cloud: the build guest never holds a cloud credential. Each PR and
-`integration` keep only their newest build; a PR's builds are deleted when it
-is closed or merged.
-Fork builds never upload. Otherwise build output and RAM/ROM reports appear in
-the job log; firmware evidence files remain available when running locally. The static
-job generates a QC scorecard and records its score in the run summary; a `HOLD`
-result fails the quality check.
-No serial captures, credentials, private
-hardware evidence, or developer paths are collected.
+`ci/toolchain.json` supplies the common tool, board and module pins. The
+workflow pins Python and actions; requirements are installed with hashes.
+Host tests additionally require a host C compiler and the pinned dependencies
+in `bringup-zephyr/tools/requirements.txt`. CI uses GCC. Run separate suites:
 
-## Branch protection (administrative step)
+```powershell
+python -m unittest discover -s Development/system/testing/ci -p 'test_*.py'
+python -m pytest -q Development/system/coding/bringup-zephyr/tests/host
+python -m unittest discover -s .github/agent-gate
+```
 
-The existing `integration` protection requires the three contexts above and an
-up-to-date branch. Keep those names stable. Do not use workflow-level path
-filters: a filtered-out workflow cannot report a required check for docs-only
-PRs. If CI is later required for another protected branch, add that branch to
-the workflow trigger before requiring these checks there.
+Commands fail on the first failed stage. Zephyr 4.4's Windows Kconfig generator
+cannot configure firmware in paths containing parentheses; use a checkout
+path without them. Compiler diagnostics follow Zephyr policy; no blanket
+`-Werror` is added for upstream modules.
 
-Equivalent GitHub CLI/API setup requires repository-administration authority;
-it is deliberately not performed by the local validation script.
+## Prepared environments
 
-## Hardware boundary
+`ci/prepared_env.py` validates `/opt/stethoscope-ci` against Python 3.12.10,
+installed package state and both hash-locked requirement files. Missing or
+changed state falls back to pinned installation.
 
-An ESP32-S3 build proves compilation/linking and resource fit; it does not prove that a microphone,
-DAC, display, touch controller, GPIO, ADC, PWM, or board wiring works. Physical
-validation remains a separate manual release gate using the
-[integrated protocol](../coding/bringup-zephyr/EVAL-GUIDE.md);
-[TEST-PROTOCOL.md](../coding/bringup-zephyr/TEST-PROTOCOL.md) records historical component evidence.
-Before release, retain the firmware commit, board revision/serial, operator,
-date, filled PASS/FAIL/BLOCKED verdicts, electrical checks, audio observations,
-and instrument evidence. Hardware-in-the-loop may become a separate protected
-scheduled/manual gate only after a controlled runner and real board are available.
+For `/opt/zephyr-workspace`, it verifies checkout tool pins, actual Zephyr and
+module revisions, package versions, compiler and Espressif blob hashes.
+Matching images skip setup; incomplete images use canonical provisioning.
+Images are read-only bases for disposable guests, not persistent writable
+runners. Every firmware profile and native test still builds pristine;
+compiler caching is disabled. Host image preparation/rollback is documented
+in HomelabServer's `scripts/ci-runner/STETHOSCOPE.md`. Timing improvements
+require measured prepared-image runs.
 
-## Integrated evaluation coverage (2026-09-24)
+## Reports, publication and hardware boundary
 
-When the host suite is selected, the static job installs the fully pinned
-`bringup-zephyr/tools/requirements.txt` with `--require-hashes` unless the prepared
-environment matches, and runs
-`tests/host` against the portable DSP/FHIR implementation, evaluation CLI and a
-local HTTPS readback fixture. The firmware job also performs pristine QC and
-combined network/QC builds, then builds and runs `tests/logic` on
-`native_sim/native/64`, including bounded audio-start recovery regressions.
-These builds do not connect to Wi-Fi or send FHIR data. CA/server credentials
-are absent from CI and the latest local build evidence. Physical acceptance
-remains in `bringup-zephyr/EVAL-GUIDE.md`.
+QC writes its Markdown scorecard and JSON to ignored `artifacts/qc/` and
+records the score in the run summary. HOLD fails the quality check. These
+source heuristics are separate from functional evaluation and physical proof;
+see the [testing index](README.md#source-level-qc).
+
+Publishing builds upload `firmware-build-<attempt>` for three days, containing
+each profile binary and a manifest with commit/merged-tree identity, UTC time,
+board, profile, boot-banner version and SHA-256. The homelab firmware sync
+validates the GitHub run before publishing to Personal Cloud; the build guest
+holds no cloud credential. Publication occurs only after all selected firmware
+and native tests succeed. Fork builds do not upload. Build and RAM/ROM logs
+remain in CI; local firmware evidence is under ignored `artifacts/`.
+
+ESP32-S3 builds prove compilation/linking and resource fit. Host DSP/FHIR and
+native tests do not connect a physical device to Wi-Fi or a patient server.
+Hardware acceptance remains in
+[the integrated EVAL-GUIDE.md](../coding/bringup-zephyr/EVAL-GUIDE.md) and the
+[planned verification procedures](specification-verification.md).
+[TEST-PROTOCOL.md](../coding/bringup-zephyr/TEST-PROTOCOL.md) records historical
+component observations; these do not establish acceptance of current firmware.
+Retain firmware identity, board/wiring revision, operator/date, actual
+PASS/FAIL/BLOCKED outcomes and instrument evidence. Flashing, serial and
+device-network operations require owner authorization.
 
 Updated by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.

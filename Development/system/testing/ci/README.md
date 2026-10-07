@@ -1,25 +1,27 @@
-# CI selection and prepared environments
+# CI tooling
 
-[CI quality gates](../CI-QUALITY-GATES.md) documents required contexts,
-triggers, suite selection, publication and local commands.
-[AGENTS.md](../../../../AGENTS.md) defines review and merge policy;
-CodeRabbit progress alone is not approval.
+[CI-QUALITY-GATES.md](../CI-QUALITY-GATES.md) is the authoritative guide for
+setup, check selection, prepared environments and publication. Merge and review
+policy lives in the repository's [AGENTS.md](../../../../AGENTS.md).
 
-## Prepared environments
+| File | Responsibility |
+|---|---|
+| `run_ci.py` | Local/CI static, firmware and QC entry points. |
+| `build_support.py` | Shared workspace paths, environment and firmware profiles. |
+| `toolchain.json` | Toolchain, board and module pins. |
+| `requirements-ci.txt` | Hash-locked static-check dependencies. |
+| `setup_zephyr.py`, `setup_zephyr.sh` | Canonical provisioner and Linux compatibility entry point. |
+| `prepared_env.py` | Validate prepared package, source, compiler and blob state. |
+| `firmware_changes.py` | Select affected firmware, host, tooling and merge-gate suites. |
+| `daily_build.py` | Skip unchanged successful daily integration builds. |
+| `firmware_release.py` | Boot identity and release manifest/staging. |
+| `benchmark_build.py` | Controlled build timing and comparison. |
+| `test_*.py` | Regression coverage for tooling, publication and QC failures. |
 
-Static jobs reuse `/opt/stethoscope-ci` only when Python 3.12.10, installed
-packages and both hash-locked requirement files match the preparation manifest.
-Otherwise normal Python setup and pinned installation run.
+Run the tooling suite from the repository root:
 
-Firmware jobs validate `/opt/zephyr-workspace` against checkout pins, actual
-Zephyr/module revisions, package versions, compiler and Espressif blob hashes.
-A complete match skips setup; missing/changed state falls back to canonical
-setup. Firmware profiles and native simulation still build pristine, without
-compiler caching.
-
-See HomelabServer's `scripts/ci-runner/STETHOSCOPE.md` for image preparation and
-rollback. Bases are read-only and guests disposable; this creates no persistent
-writable runner or public-fork authorization. Measure real prepared-image runs
-before claiming a timing improvement.
+```powershell
+python -m unittest discover -s Development/system/testing/ci -p 'test_*.py'
+```
 
 Updated by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.
