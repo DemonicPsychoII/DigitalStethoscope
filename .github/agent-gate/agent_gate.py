@@ -20,8 +20,9 @@ The migrated configurations do not require human approval. Old configurations
 retain their previous approval behavior until explicitly migrated. Agent markers
 must come from trusted collaborator accounts; native bot reviews additionally
 match the configured immutable user ID and Bot type. A CodeRabbit progress check
-is not an approval. CodeRabbit's native approval becomes the primary verdict once
-it has issued a decisive verdict; comment-only reviews retain the agent fallback.
+is not an approval. Current-head native decisions take precedence. A stale native
+approval permits an independent current-head agent fallback; native changes requests
+and dismissals remain blocking or pending, including after a push.
 
 Everything is read from LIVE API state, never from the triggering event's payload: the gate is
 re-run on pushes, body edits, review comments and CI completion, and each run must judge the PR as
@@ -349,12 +350,16 @@ def review_items(inputs: Inputs, author: dict[str, str] | None) -> list[tuple[st
         review = max(decisions, key=lambda r: r.get("id", 0))
         login = review["user"]["login"]
         if review.get("commit_id") != inputs.head_sha:
-            return [("pending", f"{login} must review the current head SHA")]
-        if review.get("state") == "APPROVED":
+            fallback, _ = latest_review(inputs.comments, inputs.reviewer_logins)
+            if review.get("state") != "APPROVED" or fallback is None:
+                return [("pending", f"{login} must review the current head SHA")]
+            # A past approval cannot veto the separately validated current-head fallback.
+        elif review.get("state") == "APPROVED":
             return [("ok", f"approved at {inputs.head_sha[:7]} by {login}")]
-        if review.get("state") == "CHANGES_REQUESTED":
+        elif review.get("state") == "CHANGES_REQUESTED":
             return [("fail", f"{login} requests changes on the current head")]
-        return [("pending", f"{login} has not approved the current head")]
+        else:
+            return [("pending", f"{login} has not approved the current head")]
     sha7 = inputs.head_sha[:7]
     review, _ = latest_review(inputs.comments, inputs.reviewer_logins)
     if review is None:
