@@ -5,6 +5,10 @@ architecture decision. Firmware placement/migration remains open under
 [D11](../../planning/implementation-readiness.md#decision-register); the
 [evaluation firmware](../bringup-zephyr/README.md) remains separate.
 
+The table uses the existing skeleton folder names. Detailed design proposes
+`application/`, `services/` and `platform/` for `L2_application/`, `L1_services/`
+and `L0_platform/`, respectively; D11 leaves migration and naming open.
+
 | Folder | Contents | May depend on |
 |---|---|---|
 | `L2_application/` | Controller (single writer of mode state), UI, shell | L1, L0, `common` |
