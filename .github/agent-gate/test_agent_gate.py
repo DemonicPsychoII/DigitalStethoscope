@@ -555,6 +555,16 @@ class AutomatedPolicyTests(unittest.TestCase):
                                          native_reviews=[review]))
             self.assertEqual(decision.state, "failure")
 
+    def test_stale_bot_fallback_needs_trusted_exact_head_record(self):
+        marker = f"<!-- review-fallback sha={HEAD} reason=unavailable -->"
+        options = {"review_bots": {"coderabbitai[bot]": 136622811},
+                   "native_reviews": [self.bot(sha=OLD)]}
+        self.assertEqual(g.evaluate(inputs(comments=[review(), comment(marker)], **options)).state, "success")
+        for invalid in (comment(marker, association="NONE"), comment(marker.replace(HEAD, OLD))):
+            self.assertNotEqual(g.evaluate(inputs(comments=[review(), invalid], **options)).state, "success")
+        options["native_reviews"] = [self.bot(state="CHANGES_REQUESTED")]
+        self.assertEqual(g.evaluate(inputs(comments=[review(), comment(marker)], **options)).state, "failure")
+
     def test_later_comment_does_not_dismiss_a_native_approval(self):
         decision = g.evaluate(inputs(comments=[], review_bots={"coderabbitai[bot]": 136622811},
                                      native_reviews=[self.bot(), self.bot(state="COMMENTED", rid=100)]))

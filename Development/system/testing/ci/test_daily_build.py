@@ -12,7 +12,13 @@ HEAD = "a" * 40
 
 
 def run(run_id, sha, event="schedule", conclusion="success"):
-    return {"id": run_id, "head_sha": sha, "event": event, "conclusion": conclusion}
+    return {
+        "id": run_id,
+        "head_sha": sha,
+        "event": event,
+        "conclusion": conclusion,
+        "published": True,
+    }
 
 
 class DailyBuildTests(unittest.TestCase):

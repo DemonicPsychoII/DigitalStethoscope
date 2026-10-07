@@ -8,7 +8,7 @@ on:
 permissions: {}
 jobs:
   signal:
-    if: github.event.pull_request.base.ref == 'integration'
+    if: vars.CI_NATIVE_REVIEW != 'true' && github.event.pull_request.base.ref == 'integration'
     name: Review event received
     runs-on: ubuntu-24.04
     timeout-minutes: 1

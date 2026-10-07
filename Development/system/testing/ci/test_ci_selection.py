@@ -25,7 +25,6 @@ class SelectionTests(unittest.TestCase):
             "include/stetho_dsp.h",
             "prj.conf",
             "CMakeLists.txt",
-            "tests/logic/src/main.c",
             "boards/board.overlay",
             "new-input",
         ):
@@ -34,14 +33,28 @@ class SelectionTests(unittest.TestCase):
         self.assertTrue(needs_firmware([CI + "setup_zephyr.py"]))
 
     def test_docs_and_gate_changes_select_only_needed_suites(self):
-        self.assertFalse(any(suites(["Development/architecture/design.md"]).values()))
+        self.assertTrue(suites(["Development/architecture/design.md"])["docs"])
         self.assertEqual(
             suites([".github/agent-gate/agent_gate.py"]),
-            {"firmware": False, "host": False, "tooling": False, "gate": True},
+            {
+                "firmware": False,
+                "native": False,
+                "docs": False,
+                "host": False,
+                "tooling": False,
+                "gate": True,
+                "qc": False,
+            },
         )
 
     def test_mixed_changes_and_workflow_changes_select_all_affected_suites(self):
-        self.assertTrue(all(suites([".github/workflows/quality-gates.yml"]).values()))
+        self.assertTrue(
+            all(
+                v
+                for k, v in suites([".github/workflows/quality-gates.yml"]).items()
+                if k != "docs"
+            )
+        )
         selected = suites([APP + "src/main.c", ".github/agent-gate/config.json"])
         self.assertTrue(selected["firmware"] and selected["host"] and selected["gate"])
 

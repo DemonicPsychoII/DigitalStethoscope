@@ -11,7 +11,9 @@ build/
 build-*/
 twister-out*/
 .ci-workspace/
+.ci-workspace
 .ci-hash-tmp/
+.ci-validation-tools/
 artifacts/
 *.elf
 *.map
@@ -22,4 +24,3 @@ __pycache__/
 *.py[cod]
 .venv/
 venv/
-

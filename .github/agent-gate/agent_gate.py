@@ -349,12 +349,20 @@ def review_items(inputs: Inputs, author: dict[str, str] | None) -> list[tuple[st
         review = max(decisions, key=lambda r: r.get("id", 0))
         login = review["user"]["login"]
         if review.get("commit_id") != inputs.head_sha:
-            return [("pending", f"{login} must review the current head SHA")]
-        if review.get("state") == "APPROVED":
+            # A recorded outage permits a new independent verdict after a push;
+            # current-head bot requests for changes still cannot be overridden.
+            fallback = f"<!-- review-fallback sha={inputs.head_sha} reason="
+            recorded = any(trusted(c) and any(fallback + reason + " -->" in strip_code(c.get("body") or "")
+                           for reason in ("unavailable", "rate-limited", "failed", "stuck"))
+                           for c in inputs.comments)
+            if not recorded:
+                return [("pending", f"{login} must review the current head SHA")]
+        elif review.get("state") == "APPROVED":
             return [("ok", f"approved at {inputs.head_sha[:7]} by {login}")]
-        if review.get("state") == "CHANGES_REQUESTED":
+        elif review.get("state") == "CHANGES_REQUESTED":
             return [("fail", f"{login} requests changes on the current head")]
-        return [("pending", f"{login} has not approved the current head")]
+        else:
+            return [("pending", f"{login} has not approved the current head")]
     sha7 = inputs.head_sha[:7]
     review, _ = latest_review(inputs.comments, inputs.reviewer_logins)
     if review is None:
