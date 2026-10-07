@@ -3,7 +3,10 @@
 PRs keep two stable required quality contexts: **Quality / Static Checks** and
 **Zephyr / Firmware Build**. The legacy **agent-gate** remains required until the
 native approval migration below passes. Builds and tests stay on disposable
-homelab VMs; routing, final accounting and artifact promotion use hosted runners.
+homelab VMs; routing and artifact promotion use hosted runners. The firmware
+job retains the deployed controller identity (`firmware`, `Zephyr / Firmware Build`).
+It performs final accounting in the same VM when heavy work is selected, or on a
+hosted runner when no heavy verification is required.
 
 ```mermaid
 flowchart LR
@@ -89,7 +92,7 @@ minutes; homelab VM time is also separate from billed GitHub minutes. The benefi
 here is less runner work, electricity and queueing, not a promised GitHub bill reduction.
 See [GitHub Actions billing](https://docs.github.com/en/billing/concepts/product-billing/github-actions)
 for minute and artifact-storage accounting.
-The final required accounting job deliberately remains: it catches missing outputs,
+The final required accounting step deliberately remains: it catches missing outputs,
 skipped selected work, failed dependencies and cancellations.
 
 ## Native approval migration (after manual review and merge)

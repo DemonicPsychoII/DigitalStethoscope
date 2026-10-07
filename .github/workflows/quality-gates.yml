@@ -170,13 +170,14 @@ jobs:
             artifacts/qc/
           retention-days: 14
           if-no-files-found: warn
-  heavy:
-    name: Zephyr / Selected Verification
+  firmware:
+    name: ${{ github.event.action == 'labeled' && github.event.label.name != 'firmware' && 'Zephyr / Firmware Build (label ignored)' || 'Zephyr / Firmware Build' }}
     needs: [plan, static]
-    if: needs.plan.outputs.daily != 'false' && (needs.plan.outputs.firmware == 'true' || needs.plan.outputs.native == 'true' || (needs.plan.outputs.publish == 'true' && needs.plan.outputs.reuse == ''))
-    runs-on: homelab-zephyr-${{ github.run_id }}-${{ github.run_attempt }}
+    if: always() && !cancelled() && needs.plan.result != 'skipped'
+    runs-on: ${{ needs.static.result == 'success' && (needs.plan.outputs.daily != 'false' && (needs.plan.outputs.firmware == 'true' || needs.plan.outputs.native == 'true' || (needs.plan.outputs.publish == 'true' && needs.plan.outputs.reuse == ''))) && format('homelab-zephyr-{0}-{1}', github.run_id, github.run_attempt) || 'ubuntu-24.04' }}
     timeout-minutes: 60
     env:
+      HEAVY_REQUIRED: ${{ needs.static.result == 'success' && (needs.plan.outputs.daily != 'false' && (needs.plan.outputs.firmware == 'true' || needs.plan.outputs.native == 'true' || (needs.plan.outputs.publish == 'true' && needs.plan.outputs.reuse == ''))) }}
       FIRMWARE: ${{ needs.plan.outputs.firmware }}
       NATIVE: ${{ needs.plan.outputs.native }}
       HOST: ${{ needs.plan.outputs.host }}
@@ -192,9 +193,11 @@ jobs:
       STETHO_BUILD_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        if: env.HEAVY_REQUIRED == 'true'
         with:
           persist-credentials: false
       - name: Load toolchain pins
+        if: env.HEAVY_REQUIRED == 'true'
         run: |
           python3 - >> "$GITHUB_ENV" <<'PYTHON'
           import json
@@ -204,6 +207,7 @@ jobs:
           print(f"WEST_VERSION={pins['west_version']}")
           PYTHON
       - name: Validate the prepared Zephyr toolchain
+        if: env.HEAVY_REQUIRED == 'true'
         id: prepared
         run: |
           if [[ -d /opt/zephyr-workspace ]]; then
@@ -213,18 +217,19 @@ jobs:
             echo 'ready=true' >> "$GITHUB_OUTPUT"
           fi
       - name: Provision pinned Zephyr workspace
-        if: steps.prepared.outputs.ready != 'true'
+        if: env.HEAVY_REQUIRED == 'true' && (steps.prepared.outputs.ready != 'true')
         run: bash Development/system/testing/ci/setup_zephyr.sh
       - name: Record verification identity
+        if: env.HEAVY_REQUIRED == 'true'
         run: .ci-workspace/.venv/bin/python Development/system/testing/ci/ci_evidence.py
       - name: Pristine firmware build
-        if: needs.plan.outputs.firmware == 'true' || needs.plan.outputs.publish == 'true'
+        if: env.HEAVY_REQUIRED == 'true' && (needs.plan.outputs.firmware == 'true' || needs.plan.outputs.publish == 'true')
         run: .ci-workspace/.venv/bin/python Development/system/testing/ci/run_ci.py build
       - name: Test audio recovery and application logic
-        if: needs.plan.outputs.native == 'true' || needs.plan.outputs.publish == 'true'
+        if: env.HEAVY_REQUIRED == 'true' && (needs.plan.outputs.native == 'true' || needs.plan.outputs.publish == 'true')
         run: .ci-workspace/.venv/bin/python Development/system/testing/ci/native_tests.py
       - name: Retain build and native evidence
-        if: always()
+        if: env.HEAVY_REQUIRED == 'true' && (always())
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: zephyr-evidence-${{ github.run_attempt }}
@@ -238,7 +243,7 @@ jobs:
           retention-days: 14
           if-no-files-found: warn
       - name: Retain verified integration firmware for exact-commit promotion
-        if: github.event_name == 'push' && github.ref_name == 'integration' && needs.plan.outputs.firmware == 'true'
+        if: env.HEAVY_REQUIRED == 'true' && (github.event_name == 'push' && github.ref_name == 'integration' && needs.plan.outputs.firmware == 'true')
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: verified-firmware-${{ github.run_attempt }}
@@ -246,34 +251,26 @@ jobs:
           retention-days: 3
           if-no-files-found: error
       - name: Upload firmware for Personal Cloud
-        if: needs.plan.outputs.publish == 'true'
+        if: env.HEAVY_REQUIRED == 'true' && (needs.plan.outputs.publish == 'true')
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: firmware-build-${{ github.run_attempt }}
           path: artifacts/firmware-release/
           retention-days: 3
           if-no-files-found: error
-  firmware:
-    name: ${{ github.event.action == 'labeled' && github.event.label.name != 'firmware' && 'Zephyr / Firmware Build (label ignored)' || 'Zephyr / Firmware Build' }}
-    needs: [plan, static, heavy]
-    if: always() && !cancelled() && needs.plan.result != 'skipped'
-    runs-on: ubuntu-24.04
-    timeout-minutes: 3
-    env:
-      FIRMWARE: ${{ needs.plan.outputs.firmware }}
-      NATIVE: ${{ needs.plan.outputs.native }}
-      PUBLISH: ${{ needs.plan.outputs.publish }}
-      DAILY: ${{ needs.plan.outputs.daily }}
-      REUSE: ${{ needs.plan.outputs.reuse }}
-      PLAN_RESULT: ${{ needs.plan.result }}
-      STATIC_RESULT: ${{ needs.static.result }}
-      HEAVY_RESULT: ${{ needs.heavy.result }}
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Check out accounting for runs without heavy verification
+        if: always() && env.HEAVY_REQUIRED != 'true'
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           persist-credentials: false
       - name: Account for every selected verification result
+        if: always() && !cancelled()
+        env:
+          PLAN_RESULT: ${{ needs.plan.result }}
+          STATIC_RESULT: ${{ needs.static.result }}
+          HEAVY_RESULT: ${{ env.HEAVY_REQUIRED == 'true' && job.status || 'skipped' }}
         run: python3 Development/system/testing/ci/ci_results.py --plan "$PLAN_RESULT" --static "$STATIC_RESULT" --heavy "$HEAVY_RESULT"
+
   promote:
     name: Firmware / Promote Verified Integration
     needs: [plan, firmware]

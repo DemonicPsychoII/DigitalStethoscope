@@ -20,7 +20,8 @@ Add any new protected branch to the workflow trigger before requiring its checks
 See [detailed CI operations](ci/OPERATIONS.md) for the selection table, workflow
 flow, schedules, artifact promotion and review migration. Native-test-only edits
 run native tests without ESP32 profiles. Static/QC remain required; selected heavy
-verification stays in a disposable homelab VM, with hosted final accounting.
+verification stays in a disposable homelab VM. The same firmware job accounts
+for results, using a hosted runner only when heavy work is unselected.
 The stable required check names above remain enforced. No hosted build fallback
 or workflow-level path filter is introduced.
 
