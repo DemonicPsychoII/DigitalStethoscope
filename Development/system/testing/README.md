@@ -18,6 +18,8 @@ native simulation tests are in
 - [Physical evaluation guide](../coding/bringup-zephyr/EVAL-GUIDE.md) and
   [hardware protocol](../coding/bringup-zephyr/TEST-PROTOCOL.md): target acceptance
   and recorded hardware observations.
+- [Integrated software evidence](../coding/bringup-zephyr/evidence/integrated-build-results.json):
+  historical build/source hashes and host-test results.
 
 ## Source-level QC
 

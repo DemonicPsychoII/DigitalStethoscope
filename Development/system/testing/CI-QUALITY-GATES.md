@@ -11,6 +11,10 @@ schedule and manual dispatches. Required contexts remain:
 Keep these names stable. Merge and review requirements are defined in
 [AGENTS.md](../../../AGENTS.md), not by a QC score or this guide.
 
+Branch protection also requires an up-to-date branch. Avoid workflow-level path
+filters: filtered workflows cannot report required contexts for docs-only PRs.
+Add any new protected branch to the workflow trigger before requiring its checks.
+
 ## Check selection and runners
 
 A short hosted selection job compares base and head trees, including deleted
@@ -113,9 +117,10 @@ remain in CI; local firmware evidence is under ignored `artifacts/`.
 ESP32-S3 builds prove compilation/linking and resource fit. Host DSP/FHIR and
 native tests do not connect a physical device to Wi-Fi or a patient server.
 Hardware acceptance remains in
-[TEST-PROTOCOL.md](../coding/bringup-zephyr/TEST-PROTOCOL.md),
-[EVAL-GUIDE.md](../coding/bringup-zephyr/EVAL-GUIDE.md) and the
+[the integrated EVAL-GUIDE.md](../coding/bringup-zephyr/EVAL-GUIDE.md) and the
 [planned verification procedures](specification-verification.md).
+[TEST-PROTOCOL.md](../coding/bringup-zephyr/TEST-PROTOCOL.md) records historical
+component observations; these do not establish acceptance of current firmware.
 Retain firmware identity, board/wiring revision, operator/date, actual
 PASS/FAIL/BLOCKED outcomes and instrument evidence. Flashing, serial and
 device-network operations require owner authorization.
