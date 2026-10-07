@@ -1,7 +1,16 @@
 @startuml system_components
-' Updated by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.
 !pragma layout smetana
 skinparam shadowing false
+skinparam component {
+ BackgroundColor<<optional>> #EEEEEE
+ BorderColor<<optional>> #888888
+ FontColor<<optional>> #666666
+}
+skinparam artifact {
+ BackgroundColor<<optional>> #EEEEEE
+ BorderColor<<optional>> #888888
+ FontColor<<optional>> #666666
+}
 skinparam componentStyle rectangle
 skinparam defaultFontName SansSerif
 title System components
@@ -12,9 +21,9 @@ node "ESP32-S3" as cpu
 component "PCM5102A\nDAC" as dac
 component "Headphone amplifier" as amp
 component "Headphones" as hp
-component "ILI9341 / XPT2046\nDisplay / touch" as ui
+component "ILI9341 / XPT2046\nDisplay / touch" as ui <<optional>>
 component "Buttons / switches\nPotentiometer / LED" as controls
-artifact "SD card" as sd
+artifact "SD card" as sd <<optional>>
 database "FHIR server" as server
 chest --> mic : sound
 mic --> cpu : I²S
@@ -28,4 +37,8 @@ cpu --> ui : display
 sd --> cpu : SPI
 cpu --> server : Wi-Fi / HTTPS
 server --> cpu : status / readback
+legend bottom
+  Grey / optional = beyond MVP.
+  Display, touch, SD and capture / slower replay are optional.
+endlegend
 @enduml

@@ -1,7 +1,16 @@
 @startuml runtime_ownership
-' Updated by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.
 !pragma layout smetana
 skinparam shadowing false
+skinparam component {
+ BackgroundColor<<optional>> #EEEEEE
+ BorderColor<<optional>> #888888
+ FontColor<<optional>> #666666
+}
+skinparam artifact {
+ BackgroundColor<<optional>> #EEEEEE
+ BorderColor<<optional>> #888888
+ FontColor<<optional>> #666666
+}
 skinparam componentStyle rectangle
 skinparam defaultFontName SansSerif
 title Threads
@@ -12,13 +21,13 @@ skinparam component {
  BackgroundColor<<interrupt>> #F0E5CF
 }
 component "GPIO ISR" as irq <<interrupt>>
-component "Touch / GPIO / ADC adapters" as adapters
-component "Input\nButtons / switches / touch" as inp <<thread>>
+component "GPIO / ADC adapters\nTouch adapter (optional)" as adapters
+component "Input\nButtons / switches\nTouch (optional)" as inp <<thread>>
 component "Main / controller" as ctl <<thread>>
-component "Audio\nFilter / capture / replay" as audio <<thread>>
+component "Audio\nFilter\nCapture / slow replay (optional)" as audio <<thread>>
 component "BPM\nWindow / aggregation" as bpm <<thread>>
-component "Storage" as storage <<thread>>
-component "Display" as display <<thread>>
+component "Storage" as storage <<optional>>
+component "Display" as display <<optional>>
 component "Network" as net <<thread>>
 irq --> inp : wake-up · semaphore
 adapters --> inp : input samples · driver reads
@@ -32,4 +41,8 @@ storage --> audio : file audio · block handles / k_msgq
 ctl --> display : UI state · snapshot copy
 ctl --> net : BPM result · k_msgq
 net --> ctl : send outcome · k_msgq
+legend bottom
+  Grey / optional = beyond MVP.
+  Display, touch, SD and capture / slower replay are optional.
+endlegend
 @enduml

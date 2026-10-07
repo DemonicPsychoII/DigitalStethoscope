@@ -1,10 +1,19 @@
 @startuml software_implementation
-!pragma layout smetana
-' Created by GPT-6.1-Sol on behalf of Nico running in codex.
+!pragma layout elk
 title Evaluation firmware
 top to bottom direction
 skinparam componentStyle rectangle
 skinparam shadowing false
+skinparam component {
+ BackgroundColor<<optional>> #EEEEEE
+ BorderColor<<optional>> #888888
+ FontColor<<optional>> #666666
+}
+skinparam artifact {
+ BackgroundColor<<optional>> #EEEEEE
+ BorderColor<<optional>> #888888
+ FontColor<<optional>> #666666
+}
 
 rectangle "Application and control — logical grouping" as Application #E8F1FC {
   component "main.c\nBoot / input event consumer\nPotentiometer + LED orchestration" as Main
@@ -15,7 +24,7 @@ rectangle "Application and control — logical grouping" as Application #E8F1FC 
 
 rectangle "Processing and support — logical grouping" as Services #E8F5E9 {
   component "audio_loopback.c\nAudio thread, priority 5\nI2S buffers / volatile clip / fixtures\n128 frames = 8 ms" as Audio
-  component "stetho_dsp.c\nPure C filters + gain\nIndependent BPM analysis\nWSOLA replay + test signals" as DSP
+  component "stetho_dsp.c\nPure C filters + gain\nIndependent BPM analysis\nWSOLA replay (optional) + test signals" as DSP
   component "peripherals.c + app_logic.c\nProbes, evidence, retry / degradation\nPure decision helpers" as Probes
   component "stetho_network.c\nOptional network thread, priority 12\nJob queue / verified TLS / SNTP" as Network
   component "stetho_fhir.c\nPure C Observation serialization" as FHIR
@@ -23,9 +32,9 @@ rectangle "Processing and support — logical grouping" as Services #E8F5E9 {
 
 rectangle "Device integration — logical grouping" as Platform #FFF3E0 {
   component "gpio_inputs.c\nGPIO ISR -> deferred debounce" as GPIO
-  component "analog_backlight.c\nADC + PWM access" as Analog
-  component "display_touch.c\nDisplay thread, priority 10\nTouch callback / dashboard" as Display
-  component "sd_storage.c\nSD mount probe" as SD
+  component "analog_backlight.c\nADC + optional backlight PWM" as Analog
+  component "display_touch.c\nDisplay thread, priority 10\nOptional touch / dashboard" as Display <<optional>>
+  component "sd_storage.c\nSD mount probe" as SD <<optional>>
 }
 
 rectangle "Zephyr runtime and drivers" as OS #EEEEEE {
@@ -67,11 +76,11 @@ Network -[norank]-> Zephyr : sockets / TLS / jobs
 Shell -[norank]-> Zephyr : shell / filesystem commands
 
 legend bottom
+  Grey / optional = beyond MVP, even if present in evaluation firmware.
   Boxes group existing responsibilities; they are not enforced source layers.
   All application .c files currently live in bringup-zephyr/src/.
   Direct Zephyr access and service -> control dependencies still exist.
   SD mounts a filesystem; captured audio clips currently remain in RAM.
   MON supervision is distributed; the dedicated MON module is a target design.
 endlegend
-footer Created by GPT-6.1-Sol on behalf of Nico running in codex.
 @enduml
