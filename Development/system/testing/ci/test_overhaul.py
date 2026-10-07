@@ -3,6 +3,8 @@
 import copy
 import hashlib
 import json
+import os
+import subprocess
 import tempfile
 import unittest
 import zipfile
@@ -10,6 +12,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import release_reuse
+import post_merge
 
 from build_support import BOARD, PROFILES
 from ci_results import problems
@@ -24,6 +27,39 @@ SHA = "a" * 40
 
 
 class OverhaulTests(unittest.TestCase):
+    def test_failed_rerun_request_emits_accurate_recovery_result(self):
+        with tempfile.TemporaryDirectory() as directory:
+            event = Path(directory) / "event.json"
+            output = Path(directory) / "output"
+            run = {
+                "id": 123,
+                "event": "push",
+                "head_branch": "integration",
+                "run_attempt": 1,
+                "conclusion": "failure",
+            }
+            event.write_text(json.dumps({"workflow_run": run}))
+            with (
+                patch.dict(
+                    os.environ,
+                    {
+                        "GITHUB_EVENT_PATH": str(event),
+                        "GITHUB_OUTPUT": str(output),
+                        "GITHUB_REPOSITORY": "owner/repo",
+                    },
+                ),
+                patch.object(
+                    post_merge, "api", side_effect=[run, {"jobs": []}, {"jobs": []}]
+                ),
+                patch.object(
+                    post_merge.subprocess,
+                    "run",
+                    return_value=subprocess.CompletedProcess([], 1),
+                ),
+            ):
+                post_merge.main()
+            self.assertEqual(output.read_text(), "result=rerun-request-failed\n")
+
     def test_native_only_change_skips_target_profiles(self):
         selected = suites(
             ["Development/system/coding/bringup-zephyr/tests/logic/src/main.c"]

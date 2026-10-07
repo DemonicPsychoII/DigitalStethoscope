@@ -176,6 +176,9 @@ jobs:
     if: always() && !cancelled() && needs.plan.result != 'skipped'
     runs-on: ${{ needs.static.result == 'success' && (needs.plan.outputs.daily != 'false' && (needs.plan.outputs.firmware == 'true' || needs.plan.outputs.native == 'true' || (needs.plan.outputs.publish == 'true' && needs.plan.outputs.reuse == ''))) && format('homelab-zephyr-{0}-{1}', github.run_id, github.run_attempt) || 'ubuntu-24.04' }}
     timeout-minutes: 60
+    permissions:
+      contents: read
+      actions: read
     env:
       HEAVY_REQUIRED: ${{ needs.static.result == 'success' && (needs.plan.outputs.daily != 'false' && (needs.plan.outputs.firmware == 'true' || needs.plan.outputs.native == 'true' || (needs.plan.outputs.publish == 'true' && needs.plan.outputs.reuse == ''))) }}
       FIRMWARE: ${{ needs.plan.outputs.firmware }}
@@ -193,7 +196,6 @@ jobs:
       STETHO_BUILD_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-        if: env.HEAVY_REQUIRED == 'true'
         with:
           persist-credentials: false
       - name: Load toolchain pins
@@ -250,19 +252,20 @@ jobs:
           path: artifacts/firmware-release/
           retention-days: 3
           if-no-files-found: error
+      - name: Verify source run, identity, complete profiles and checksums
+        if: needs.static.result == 'success' && env.HEAVY_REQUIRED != 'true' && needs.plan.outputs.publish == 'true' && needs.plan.outputs.reuse != '' && needs.plan.outputs.daily == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_RUN: ${{ needs.plan.outputs.reuse }}
+        run: python3 Development/system/testing/ci/release_reuse.py download --run "$SOURCE_RUN"
       - name: Upload firmware for Personal Cloud
-        if: env.HEAVY_REQUIRED == 'true' && (needs.plan.outputs.publish == 'true')
+        if: needs.static.result == 'success' && needs.plan.outputs.publish == 'true' && (env.HEAVY_REQUIRED == 'true' || (needs.plan.outputs.reuse != '' && needs.plan.outputs.daily == 'true'))
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: firmware-build-${{ github.run_attempt }}
           path: artifacts/firmware-release/
           retention-days: 3
           if-no-files-found: error
-      - name: Check out accounting for runs without heavy verification
-        if: always() && env.HEAVY_REQUIRED != 'true'
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-        with:
-          persist-credentials: false
       - name: Account for every selected verification result
         if: always() && !cancelled()
         env:
@@ -270,29 +273,3 @@ jobs:
           STATIC_RESULT: ${{ needs.static.result }}
           HEAVY_RESULT: ${{ env.HEAVY_REQUIRED == 'true' && job.status || 'skipped' }}
         run: python3 Development/system/testing/ci/ci_results.py --plan "$PLAN_RESULT" --static "$STATIC_RESULT" --heavy "$HEAVY_RESULT"
-
-  promote:
-    name: Firmware / Promote Verified Integration
-    needs: [plan, firmware]
-    if: needs.plan.outputs.publish == 'true' && needs.plan.outputs.reuse != '' && needs.plan.outputs.daily == 'true'
-    runs-on: ubuntu-24.04
-    timeout-minutes: 5
-    permissions:
-      contents: read
-      actions: read
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-        with:
-          persist-credentials: false
-      - name: Verify source run, identity, complete profiles and checksums
-        env:
-          GH_TOKEN: ${{ github.token }}
-          SOURCE_RUN: ${{ needs.plan.outputs.reuse }}
-        run: python3 Development/system/testing/ci/release_reuse.py download --run "$SOURCE_RUN"
-      - name: Upload firmware for Personal Cloud
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: firmware-build-${{ github.run_attempt }}
-          path: artifacts/firmware-release/
-          retention-days: 3
-          if-no-files-found: error

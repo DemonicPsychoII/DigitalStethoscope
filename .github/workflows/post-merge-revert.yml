@@ -99,6 +99,8 @@ jobs:
         run: |
           pr="$(gh api "repos/$GITHUB_REPOSITORY/commits/$MERGE_SHA/pulls" --jq '.[0].number // empty' || true)"
           case "$RESULT/$RC" in
+            rerun-request-failed/*)
+              msg="@$OWNER quality gates failed on \`integration\` after this merge (${RUN_URL}), but the confirming rerun request failed. No automatic revert proposed; inspect recovery diagnostics and retry the failed jobs." ;;
             recovered/*)
               msg="@$OWNER quality gates failed on \`integration\` after this merge (${RUN_URL}), but the re-run of the failed jobs passed: treated as a flaky check, no revert proposed." ;;
             confirmed/0)

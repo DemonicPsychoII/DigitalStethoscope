@@ -132,7 +132,7 @@ admin-capable `gh` login; do not commit credentials.
 
    The helper removes only `agent-gate` from required statuses, then sets
    `CI_NATIVE_REVIEW=true` to stop custom gate/review-signal jobs. Its first apply
-   saves `artifacts/ci/native-review-before.json`; keep that snapshot externally.
+   saves `artifacts/ci/native-review-before-<owner>_<repo>-<ruleset>.json`; keep that snapshot externally.
    Native reviews do not enforce session markers, owner-question markers or a
    CodeRabbit-only identity. Keep unanswered owner questions draft with auto-merge
    disabled. Native mode requires approval on reverts too.

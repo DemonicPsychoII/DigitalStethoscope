@@ -63,10 +63,12 @@ def main() -> None:
     ]
     result = decision(first, run, first_jobs, current_jobs)
     if result == "rerun":
-        subprocess.run(
+        request = subprocess.run(
             ["gh", "run", "rerun", str(run["id"]), "--repo", repo, "--failed"],
-            check=True,
+            check=False,
         )
+        if request.returncode:
+            result = "rerun-request-failed"
     with Path(os.environ["GITHUB_OUTPUT"]).open("a") as stream:
         stream.write(f"result={result}\n")
     print(f"Recovery decision: {result}; no runner waits for the rerun.")

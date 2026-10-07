@@ -115,7 +115,10 @@ def main() -> None:
         print("Dry run. No settings changed.")
         return
     # Retain a local rollback snapshot; API tokens are never included.
-    snapshot = Path("artifacts/ci/native-review-before.json")
+    safe_repo = args.repo.replace("/", "_")
+    snapshot = Path(
+        f"artifacts/ci/native-review-before-{safe_repo}-{args.ruleset}.json"
+    )
     snapshot.parent.mkdir(parents=True, exist_ok=True)
     if not snapshot.exists():
         snapshot.write_text(json.dumps(source, indent=2) + "\n")
