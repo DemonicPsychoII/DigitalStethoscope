@@ -4,13 +4,16 @@
 
 Develop an ESP32-S3 digital stethoscope research prototype: acquire the reused chestpiece's
 INMP441 signal, provide selectable listening filters and headphone output, determine heart
-rate from original-rate audio, replay a bounded recording more slowly, and send a completed
+rate from original-rate audio, and send a completed
 heart-rate result to a local FHIR server over validated TLS. Compare filter variants on identical
 licensed recordings against a defined reference. Filter superiority is a research question,
 not an assumed product property. Listening and measurement are independent workflows.
 
-The device boundary includes chestpiece coupling, microphone, MCU, controls, display/touch,
-removable fixture storage, DAC and external headphone amplifier. The listener, signal source,
+The MVP device boundary includes chestpiece coupling, microphone, MCU, physical controls,
+DAC and external headphone amplifier. Display, touch, SD-card fixture storage and bounded
+capture / slower replay are optional extensions beyond the MVP, per the 2026-10-07 feedback.
+Existing requirements and evaluation code for these features describe extension behavior;
+their presence does not make them MVP acceptance criteria. The listener, signal source,
 evaluation computer, network/time services and FHIR server are external actors/services.
 
 Lung mode provides Raw live listening at 1× only. It excludes BPM, replay and FHIR sending.

@@ -1,7 +1,16 @@
 @startuml system_context
-' Updated by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.
 !pragma layout smetana
 skinparam shadowing false
+skinparam component {
+ BackgroundColor<<optional>> #EEEEEE
+ BorderColor<<optional>> #888888
+ FontColor<<optional>> #666666
+}
+skinparam artifact {
+ BackgroundColor<<optional>> #EEEEEE
+ BorderColor<<optional>> #888888
+ FontColor<<optional>> #666666
+}
 skinparam componentStyle rectangle
 skinparam defaultFontName SansSerif
 title System context
@@ -13,8 +22,12 @@ database "FHIR server" as fhir
 cloud "Network / time" as net
 source --> device : sound
 operator --> device : controls
-device --> operator : audio / display
+device --> operator : audio / optional display
 device --> fhir : BPM Observation / readback request\nWi-Fi / HTTPS
 fhir --> device : status / readback
 net --> device : connectivity / time
+legend bottom
+  Grey / optional = beyond MVP.
+  Display, touch, SD and capture / slower replay are optional.
+endlegend
 @enduml
