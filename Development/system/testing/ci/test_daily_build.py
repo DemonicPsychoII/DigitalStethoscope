@@ -62,6 +62,17 @@ class DailyBuildTests(unittest.TestCase):
             with self.subTest(runs=runs):
                 self.assertEqual(self.decide(runs), "build=true\n")
 
+    def test_successful_unpublished_runs_do_not_skip_build(self):
+        for event in ("schedule", "workflow_dispatch"):
+            for published in (False, None):
+                with self.subTest(event=event, published=published):
+                    previous = run(8, HEAD, event=event)
+                    if published is None:
+                        previous.pop("published")
+                    else:
+                        previous["published"] = published
+                    self.assertEqual(self.decide([previous]), "build=true\n")
+
     def test_unreadable_history_builds(self):
         error = urllib.error.URLError("offline")
         self.assertEqual(self.decide(error), "build=true\n")
