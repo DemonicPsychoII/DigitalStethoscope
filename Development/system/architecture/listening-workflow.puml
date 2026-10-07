@@ -1,8 +1,5 @@
 @startuml listening_workflow
-' Updated by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.
-!pragma layout smetana
 skinparam shadowing false
-skinparam componentStyle rectangle
 skinparam defaultFontName SansSerif
 title Listening
 start
@@ -16,13 +13,13 @@ repeat
  endif
  :Apply volume;
  :Play audio;
- if (Heart mode + capture request?) then (yes)
-  :Record + listen;
+ if (Optional replay enabled + Heart mode + capture request?) then (yes)
+  #EEEEEE:Record + listen (optional);
   if (Cancelled / source or mode changed?) then (yes)
-   :Discard clip;
+   #EEEEEE:Discard clip (optional);
   else (clip full)
-   :Replay clip;
-   :End / cancel;
+   #EEEEEE:Replay clip at selected slower speed (optional);
+   #EEEEEE:End / cancel (optional);
   endif
  endif
  :Update settings;
@@ -30,4 +27,8 @@ repeat while (Stop / fault?) is (no) not (yes)
 :Mute;
 :Idle / Fault;
 stop
+legend bottom
+  Grey / optional = beyond MVP.
+  Display, touch, SD and capture / slower replay are optional.
+endlegend
 @enduml

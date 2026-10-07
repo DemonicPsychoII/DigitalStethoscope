@@ -1,7 +1,16 @@
 @startuml architecture_choice
-' Updated by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.
 !pragma layout smetana
 skinparam shadowing false
+skinparam component {
+ BackgroundColor<<optional>> #EEEEEE
+ BorderColor<<optional>> #888888
+ FontColor<<optional>> #666666
+}
+skinparam artifact {
+ BackgroundColor<<optional>> #EEEEEE
+ BorderColor<<optional>> #888888
+ FontColor<<optional>> #666666
+}
 skinparam componentStyle rectangle
 skinparam defaultFontName SansSerif
 title Architecture

@@ -8,8 +8,16 @@ from pathlib import Path
 def needs_firmware(paths: list[str]) -> bool:
     app = "Development/system/coding/bringup-zephyr/"
     ci = "Development/system/testing/ci/"
+    thesis_app = "Development/system/coding/app/"
     for path in paths:
         if path == ".github/workflows/quality-gates.yml":
+            return True
+        if path.startswith(thesis_app):
+            relative = path[len(thesis_app) :]
+            if relative.startswith("tests/host/") or relative.endswith(
+                (".md", ".png", ".svg", ".puml", ".gitkeep")
+            ):
+                continue
             return True
         if path.startswith(app):
             relative = path[len(app) :]

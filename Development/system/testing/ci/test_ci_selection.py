@@ -9,6 +9,19 @@ CI = "Development/system/testing/ci/"
 
 
 class SelectionTests(unittest.TestCase):
+    def test_thesis_application_inputs_compile_firmware(self):
+        app = "Development/system/coding/app/"
+        for path in (
+            "main.c",
+            "L1_services/audio/audio.h",
+            "CMakeLists.txt",
+            "prj.conf",
+            "boards/esp32s3_devkitc_procpu.overlay",
+        ):
+            self.assertTrue(needs_firmware([app + path]))
+        for path in ("README.md", "tests/host/test_filter.py", "common/.gitkeep"):
+            self.assertFalse(needs_firmware([app + path]))
+
     def test_host_tools_and_tests_do_not_compile_firmware(self):
         for path in ("tools/requirements.txt", "tests/host/test_dsp.py", "README.md"):
             self.assertFalse(needs_firmware([APP + path]))

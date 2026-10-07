@@ -18,6 +18,7 @@ from build_support import PROFILES as PROFILE_ARGS
 
 ROOT = Path(__file__).resolve().parents[4]
 APP = ROOT / "Development/system/coding/bringup-zephyr"
+THESIS_APP = ROOT / "Development/system/coding/app"
 ARTIFACTS = ROOT / "artifacts"
 # (profile, build directory); each profile's CMake options live in build_support.
 PROFILES = tuple(
@@ -128,6 +129,11 @@ def static() -> None:
             for path in area.rglob("*")
             if path.is_file() and path.suffix in {".c", ".h"}
         )
+        maintained_sources.extend(
+            str(path)
+            for path in sorted(THESIS_APP.rglob("*"))
+            if path.is_file() and path.suffix in {".c", ".h"}
+        )
         if not maintained_sources:
             raise SystemExit("no maintained C sources were discovered for formatting")
         run([clang_format, "--dry-run", "--Werror", *maintained_sources])
@@ -183,6 +189,20 @@ def publish_local_firmware(
 
 
 def build() -> None:
+    # Compile the future application without adding it to the bring-up release.
+    run(
+        [
+            west(),
+            "build",
+            "--pristine=always",
+            "-b",
+            BOARD,
+            str(THESIS_APP),
+            "-d",
+            str(ROOT / "build-ci-app"),
+        ],
+        log=ARTIFACTS / "firmware" / "app-build.log",
+    )
     identity = firmware_release.identity(ROOT)
     print(f"Firmware build identity: {identity.version('<profile>')}", flush=True)
     out = ROOT / "build-ci"

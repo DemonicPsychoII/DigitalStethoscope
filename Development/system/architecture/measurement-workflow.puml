@@ -1,8 +1,5 @@
 @startuml measurement_workflow
-' Updated by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.
-!pragma layout smetana
 skinparam shadowing false
-skinparam componentStyle rectangle
 skinparam defaultFontName SansSerif
 title BPM measurement
 start

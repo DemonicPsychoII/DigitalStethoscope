@@ -68,3 +68,16 @@ run in the audio module, rather than in all of the proposed separate workers.
 This reference describes the evaluation implementation, not the proposed worker layout.
 
 Updated by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.
+
+## Feedback preparation (2026-10-07)
+
+Display, touch, SD-card storage and capture / slower replay are optional beyond the MVP.
+Grey elements carry an explicit `optional` stereotype; mixed core/extension boxes
+name optional responsibilities in their labels. Existing evaluation capabilities
+remain visible without implying MVP scope. Component views use component syntax;
+listening and measurement use activity syntax (`start`, actions, decisions, `stop`).
+PlantUML infers the diagram family from these declarations; `@startuml` names
+the output and is not a diagram-type declaration.
+
+See [framework and transport evaluation](../planning/framework-and-transport-evaluation.md)
+for ESP32-S3 drivers, external C/C++ library integration and HTTP/HTTPS effort.
