@@ -1,4 +1,3 @@
-/* Created by GPT-6.1-Sol on behalf of Nico running in codex. */
 #ifndef STETHO_L2_APPLICATION_SHELL_SHELL_H
 #define STETHO_L2_APPLICATION_SHELL_SHELL_H
 
