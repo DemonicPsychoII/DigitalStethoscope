@@ -1,33 +1,33 @@
 # Mandatory CI quality gates
 
-GitHub Actions is used because `origin` is GitHub and the repository had no
-other CI configuration. Pull requests into `integration` report two stable checks:
+Pull requests into `integration` require `Quality / Static Checks`,
+`Zephyr / Firmware Build` and `agent-gate`. Review/merge policy is in
+[AGENTS.md](../../../AGENTS.md); selection is implemented by
+[quality-gates.yml](../../../.github/workflows/quality-gates.yml) and
+[firmware_changes.py](ci/firmware_changes.py).
 
-- `Zephyr / Firmware Build`
-- `Quality / Static Checks`
+## Selection and runners
 
-`ci/toolchain.json` pins Zephyr commit `357467a011cd2557a1a3f0b4be83d817c4addc9b`,
-Zephyr SDK `1.0.1`, west `1.5.0`, CMake and Ninja for both local and CI builds.
-The workflow also pins the runner image, Python, and third-party actions.
-Static checks and QC run on every PR, including documentation-only
-changes, so changes to `.clang-format` and the QC traceability manifest are
-always validated. The firmware job runs only when the workflow, bring-up tree,
-or CI scripts change; otherwise GitHub reports it as skipped, which satisfies
-its required-check rule. Change detection compares the current base and head
-trees, includes deletions and both sides of renames, and fails on Git errors.
-Regardless of paths, the firmware job also runs for same-repository PRs labelled
-`firmware` (when the label is added and on every later push), the daily
-03:17 UTC `schedule` run on `integration`, and manual *Run workflow* dispatches
-on any branch; these publish their images (see below). The daily run skips the
-firmware job, so no homelab VM starts, when the newest successful scheduled or
-dispatched `integration` run already built the same commit; only for that
-lookup the static job may read Actions history (`actions: read`). Dispatches
-always build. Other label events skip
-both jobs under distinct check names, so they neither cancel a real run nor
-replace a required check's result. There are no push runs. Only Python package
-caching remains; firmware builds are pristine with a 30-minute timeout.
-Repository contents are read-only and no secrets
-are used, so fork pull requests receive no privileged credentials.
+A lightweight hosted job selects suites before disposable VM allocation.
+Static analysis and QC run on every normal PR, including documentation changes;
+selection errors fail the static check. Host DSP/FHIR, build-tooling and merge-gate
+suites run when their inputs change. Documentation/agent-gate-only changes receive
+a hosted no-op firmware context. Unknown firmware/toolchain inputs and workflow
+changes select a build. Heavy jobs use only `homelab-stethoscope-static-<run-id>-<attempt>`
+and `homelab-zephyr-<run-id>-<attempt>`; there is no hosted fallback. Offline
+homelab/fork jobs remain queued for the owner.
+
+The `firmware` PR label forces builds/publication on addition and later pushes.
+Daily 03:17 UTC runs build changed `integration`; the unchanged-build guard runs
+before VM allocation. Manual dispatch always builds; publication is selected for
+`integration` dispatches and same-repository labelled PRs. Pushes to `integration`
+rerun gates after merging. Unrelated label events cannot replace required checks
+or cancel a real run.
+
+[toolchain.json](ci/toolchain.json) pins tools and source revisions.
+[Prepared environments](ci/README.md#prepared-environments) can skip matching
+setup; firmware profiles and native simulation still build pristine, without
+compiler caching. Fork builds receive no privileged credentials.
 
 ## Local parity
 
@@ -75,7 +75,7 @@ hardware evidence, or developer paths are collected.
 
 ## Branch protection (administrative step)
 
-The existing `integration` protection requires both check names above and an
+The existing `integration` protection requires the three contexts above and an
 up-to-date branch. Keep those names stable. Do not use workflow-level path
 filters: a filtered-out workflow cannot report a required check for docs-only
 PRs. If CI is later required for another protected branch, add that branch to
@@ -88,7 +88,9 @@ it is deliberately not performed by the local validation script.
 
 An ESP32-S3 build proves compilation/linking and resource fit; it does not prove that a microphone,
 DAC, display, touch controller, GPIO, ADC, PWM, or board wiring works. Physical
-validation remains a separate manual release gate using `TEST-PROTOCOL.md`.
+validation remains a separate manual release gate using the
+[integrated protocol](../coding/bringup-zephyr/EVAL-GUIDE.md);
+[TEST-PROTOCOL.md](../coding/bringup-zephyr/TEST-PROTOCOL.md) records historical component evidence.
 Before release, retain the firmware commit, board revision/serial, operator,
 date, filled PASS/FAIL/BLOCKED verdicts, electrical checks, audio observations,
 and instrument evidence. Hardware-in-the-loop may become a separate protected
@@ -96,8 +98,9 @@ scheduled/manual gate only after a controlled runner and real board are availabl
 
 ## Integrated evaluation coverage (2026-09-24)
 
-The static job additionally installs the fully pinned
-`bringup-zephyr/tools/requirements.txt` with `--require-hashes` and runs
+When the host suite is selected, the static job installs the fully pinned
+`bringup-zephyr/tools/requirements.txt` with `--require-hashes` unless the prepared
+environment matches, and runs
 `tests/host` against the portable DSP/FHIR implementation, evaluation CLI and a
 local HTTPS readback fixture. The firmware job also performs pristine QC and
 combined network/QC builds, then builds and runs `tests/logic` on
@@ -105,3 +108,5 @@ combined network/QC builds, then builds and runs `tests/logic` on
 These builds do not connect to Wi-Fi or send FHIR data. CA/server credentials
 are absent from CI and the latest local build evidence. Physical acceptance
 remains in `bringup-zephyr/EVAL-GUIDE.md`.
+
+Updated by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.

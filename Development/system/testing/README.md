@@ -1,40 +1,29 @@
-# Quality-control evaluator
+# Quality control and evaluation
 
-For firmware setup and comparable build timings on Windows and the homelab,
-see [Build-time analysis](BUILD-TIMES.md).
-
-This directory compares the DigitalStethoscope Zephyr bring-up application with
-engineering controls demonstrated by the THA Embedded Systems 2 course material.
-The comparison is deliberately platform-neutral: STM32-specific implementation
-details are not demanded from the ESP32-S3 target.
-
-Run from the repository root:
+The platform-neutral QC evaluator compares Zephyr bring-up engineering controls
+with THA Embedded Systems 2 material. Run from the repository root:
 
 ```powershell
 py Development/system/testing/qc_eval.py
 ```
 
-Outputs:
+It produces [QC-EVALUATION.md](QC-EVALUATION.md) and
+[qc-eval-results.json](qc-eval-results.json), exiting `0` only at 100/100 with
+every control `PASS`; otherwise `1`. CI enforces this result.
 
-- `QC-EVALUATION.md`: reviewable scorecard and actions
-- `qc-eval-results.json`: machine-readable CI/audit result
+The [baseline manifest](tha-baseline-traceability.json) pins the institutional
+revision and three SHA-256 records without copying source into CI. A local THA
+checkout must match those hashes. Repeatability requires the manual protocol,
+recorded verdicts and successful pristine ESP32-S3 build evidence.
 
-Institutional source files are not copied into CI. The evaluator validates the
-committed `tha-baseline-traceability.json` revision and SHA-256 records. When a
-local THA checkout is present, its three referenced files must match those
-hashes; CI uses the immutable metadata without exposing the source material.
+- [Firmware setup and build benchmarks](BUILD-TIMES.md)
+- [CI gates and local parity](CI-QUALITY-GATES.md)
+- [Behavioral DSP/FHIR tests](../coding/bringup-zephyr/tests/host)
+- [Physical acceptance protocol](../coding/bringup-zephyr/EVAL-GUIDE.md)
+- [Integrated software evidence](../coding/bringup-zephyr/evidence/integrated-build-results.json)
+- [Planned thesis verification](specification-verification.md)
 
-The standalone evaluator exits `0` only at 100/100 with every control at
-`PASS`; otherwise it exits `1`. CI enforces that outcome as part of the required
-quality check. The repeatability control requires a detailed
-manual protocol, recorded verdicts, and successful pristine ESP32-S3 build
-evidence. These source heuristics and compilation evidence cannot replace
-on-target timing or electrical/audio evidence.
+QC scores and compilation are separate from functional acceptance: neither
+establishes on-target timing, electrical/audio behavior or clinical validity.
 
-The integrated stethoscope upgrade also has behavioral DSP/FHIR tests in
-`../coding/bringup-zephyr/tests/host` and a physical acceptance matrix in
-`../coding/bringup-zephyr/EVAL-GUIDE.md`. CI runs those host tests and builds the
-offline, QC, and combined network/QC profiles. The engineering
-score above is separate from functional evaluation; it does not imply a complete
-stethoscope has passed the hardware matrix. Upgrade build/source hashes and
-host-test results are recorded in `../coding/bringup-zephyr/evidence/integrated-build-results.json`.
+Updated by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.
