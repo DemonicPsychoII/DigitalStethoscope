@@ -1,7 +1,16 @@
 @startuml software_components
-' Updated by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.
 !pragma layout smetana
 skinparam shadowing false
+skinparam component {
+ BackgroundColor<<optional>> #EEEEEE
+ BorderColor<<optional>> #888888
+ FontColor<<optional>> #666666
+}
+skinparam artifact {
+ BackgroundColor<<optional>> #EEEEEE
+ BorderColor<<optional>> #888888
+ FontColor<<optional>> #666666
+}
 skinparam componentStyle rectangle
 skinparam defaultFontName SansSerif
 title Software components
@@ -9,16 +18,16 @@ top to bottom direction
 component "MON Monitor" as mon
 package "L2 Application" as app {
  component "CTL Controller" as ctl
- component "UI Dashboard" as ui
+ component "UI Dashboard" as ui <<optional>>
  ctl -[hidden]right-> ui
 }
 package "L1 Services" as services {
  component "INP Input" as inp
  component "AUD Audio" as aud
  component "LIS Apply filter" as lis
- component "REC Capture / replay" as rec
+ component "REC Capture / replay" as rec <<optional>>
  component "BPM Analysis" as bpm
- component "STO Storage" as sto
+ component "STO Storage" as sto <<optional>>
  component "NET Delivery" as net
  inp -[hidden]right-> aud
  aud -[hidden]right-> lis
@@ -29,7 +38,7 @@ package "L1 Services" as services {
 }
 package "L0 Zephyr / adapters" as platform {
  component "Audio / GPIO / ADC" as io
- component "Display / touch / SD" as spi
+ component "Display / touch / SD" as spi <<optional>>
  component "Wi-Fi / time / TLS" as wifi
  io -[hidden]right-> spi
  spi -[hidden]right-> wifi
@@ -40,4 +49,8 @@ sto -[hidden]down-> spi
 services -down-> platform : driver calls
 mon ..> services : monitoring
 mon ..> platform : monitoring
+legend bottom
+  Grey / optional = beyond MVP.
+  Display, touch, SD and capture / slower replay are optional.
+endlegend
 @enduml

@@ -26,7 +26,9 @@ Original board [snapshots](sources/manifest.json) are immutable provenance.
 
 ## Render
 
-From this directory, render offline with Smetana (no Graphviz or remote includes):
+From this directory, render offline with PlantUML 1.2026.2 (no Graphviz or remote includes).
+Component views use Smetana; the evaluation implementation uses bundled ELK
+because Smetana fails on its labelled flat edges. Activity views use the activity renderer:
 
 ```sh
 java -jar /path/to/plantuml.jar -charset UTF-8 -failfast2 -tsvg -o rendered "*.puml"
@@ -35,3 +37,16 @@ java -jar /path/to/plantuml.jar -charset UTF-8 -failfast2 -tsvg -o rendered "*.p
 The viewer loads regenerated SVGs directly; only the flowcharts have zoom controls.
 
 Updated by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.
+
+## Feedback preparation (2026-10-07)
+
+Display, touch, SD-card storage and capture / slower replay are optional beyond the MVP.
+Grey elements carry an explicit `optional` stereotype; mixed core/extension boxes
+name optional responsibilities in their labels. Existing evaluation capabilities
+remain visible without implying MVP scope. Component views use component syntax;
+listening and measurement use activity syntax (`start`, actions, decisions, `stop`).
+PlantUML infers the diagram family from these declarations; `@startuml` names
+the output and is not a diagram-type declaration.
+
+See [framework and transport evaluation](../planning/framework-and-transport-evaluation.md)
+for ESP32-S3 drivers, external C/C++ library integration and HTTP/HTTPS effort.
