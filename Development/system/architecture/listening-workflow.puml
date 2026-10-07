@@ -13,7 +13,7 @@ repeat
  endif
  :Apply volume;
  :Play audio;
- if (Optional replay enabled + Heart capture request?) then (yes)
+ if (Optional replay enabled + Heart mode + capture request?) then (yes)
   #EEEEEE:Record + listen (optional);
   if (Cancelled / source or mode changed?) then (yes)
    #EEEEEE:Discard clip (optional);

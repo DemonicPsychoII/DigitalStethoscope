@@ -26,8 +26,8 @@ component "Input\nButtons / switches\nTouch (optional)" as inp <<thread>>
 component "Main / controller" as ctl <<thread>>
 component "Audio\nFilter\nCapture / slow replay (optional)" as audio <<thread>>
 component "BPM\nWindow / aggregation" as bpm <<thread>>
-component "Storage" as storage <<optional>>
-component "Display" as display <<optional>>
+component "Storage\nOptional thread" as storage <<optional>>
+component "Display\nOptional thread" as display <<optional>>
 component "Network" as net <<thread>>
 irq --> inp : wake-up · semaphore
 adapters --> inp : input samples · driver reads
