@@ -42,6 +42,33 @@ def source_code(text: str) -> str:
     )
 
 
+def discarded_driver_calls(code: str) -> int:
+    """Recognize bare call statements after braces or unbraced control headers."""
+    # Conditions can contain nested calls. Replace each complete control header
+    # with a statement boundary, leaving assigned/returned body calls untouched.
+    headers = list(re.finditer(r"\b(?:if|while|for)\s*\(", code))
+    for header in reversed(headers):
+        depth = 1
+        end = header.end()
+        while depth and end < len(code):
+            if code[end] == "(":
+                depth += 1
+            elif code[end] == ")":
+                depth -= 1
+            end += 1
+        if depth == 0:
+            code = code[: header.start()] + ";" + code[end:]
+    return len(
+        re.findall(
+            r"(?:^|[;{}]|\belse\b)\s*(?:\(\s*void\s*\)\s*)?"
+            r"(?:gpio_pin_set_dt|pwm_set_pulse_dt|display_write|"
+            r"i2s_write|i2s_trigger|adc_sequence_init_dt)\s*\(",
+            code,
+            re.MULTILINE,
+        )
+    )
+
+
 def validate_baseline_traceability(repo: Path, tha: Path) -> tuple[bool, str, str]:
     trace_path = repo / "Development/system/testing/tha-baseline-traceability.json"
     expected_paths = {
@@ -112,14 +139,7 @@ def evaluate(repo: Path, tha: Path) -> dict:
     }
     production = "\n".join(sources.values())
     main_lines = len(main.splitlines())
-    ignored_calls = len(
-        re.findall(
-            r"(?:^|[;{}])\s*(?:\(\s*void\s*\)\s*)?(?:gpio_pin_set_dt|pwm_set_pulse_dt|display_write|"
-            r"i2s_write|i2s_trigger|adc_sequence_init_dt)\s*\(",
-            production,
-            re.MULTILINE,
-        )
-    )
+    ignored_calls = discarded_driver_calls(production)
     synchronization_modules = [
         name
         for name, code in sources.items()

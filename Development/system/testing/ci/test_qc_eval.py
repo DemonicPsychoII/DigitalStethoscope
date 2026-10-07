@@ -71,6 +71,33 @@ class EvaluationTests(unittest.TestCase):
         (fixtures / "fixture.c").write_text("void bad(void) { i2s_write(d, b, s); }")
         self.assertEqual(self.control("API return-code discipline")["status"], "PASS")
 
+    def test_discarded_unbraced_conditional_calls_hold_gate(self):
+        path = self.app / "src/audio_loopback.c"
+        original = path.read_text()
+        for body in (
+            "if (ready) i2s_write(dev, data, size);",
+            "if (ready && check(nested())) (void)i2s_write(dev, data, size);",
+            "if (ready) rc = 0; else i2s_write(dev, data, size);",
+            "while (ready()) i2s_write(dev, data, size);",
+            "for (int i = 0; i < limit(); ++i) i2s_write(dev, data, size);",
+        ):
+            with self.subTest(body=body):
+                path.write_text(original + "\nvoid bad(void) { " + body + " }\n")
+                self.assertEqual(self.evaluate()["gate"], "HOLD")
+                self.assertEqual(
+                    self.control("API return-code discipline")["status"], "PARTIAL"
+                )
+
+    def test_consumed_conditional_call_results_do_not_hold_gate(self):
+        path = self.app / "src/audio_loopback.c"
+        path.write_text(
+            path.read_text() + "\nint checked(void) {\n"
+            " if (ready()) rc = (int)i2s_write(dev, data, size);\n"
+            " if (i2s_write(dev, data, size) < 0) recover();\n"
+            " if (ready) return i2s_write(dev, data, size);\n}\n"
+        )
+        self.assertEqual(self.control("API return-code discipline")["status"], "PASS")
+
     def test_gpio_module_interrupts_and_queue_replace_polling_claim(self):
         control = self.control("Real-time response and bounded work")
         self.assertEqual(control["status"], "PASS")
