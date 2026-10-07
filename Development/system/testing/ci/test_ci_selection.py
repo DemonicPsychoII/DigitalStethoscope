@@ -58,6 +58,20 @@ class SelectionTests(unittest.TestCase):
         selected = suites([APP + "src/main.c", ".github/agent-gate/config.json"])
         self.assertTrue(selected["firmware"] and selected["host"] and selected["gate"])
 
+    def test_qc_evaluator_changes_run_its_tooling_regressions_without_firmware(self):
+        self.assertEqual(
+            suites(["Development/system/testing/qc_eval.py"]),
+            {
+                "firmware": False,
+                "native": False,
+                "docs": False,
+                "qc": True,
+                "host": False,
+                "tooling": True,
+                "gate": False,
+            },
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

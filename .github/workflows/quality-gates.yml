@@ -167,7 +167,7 @@ jobs:
           name: static-evidence-${{ github.run_attempt }}
           path: |
             artifacts/ci/
-            Development/system/testing/qc-eval-results.json
+            artifacts/qc/
           retention-days: 14
           if-no-files-found: warn
   heavy:
