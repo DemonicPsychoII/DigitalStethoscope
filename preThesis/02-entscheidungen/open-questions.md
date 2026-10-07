@@ -1,3 +1,143 @@
+# Entscheidungen und offene Punkte — aktueller Stand
+
+> **Stand: 2026-10-07**, abgeglichen mit `integration` (`23c1ea4`, 2026-10-06).
+> Dieser aktuelle Registerteil ersetzt die Statusbewertung der historischen Notizen unten.
+> **[x]** = durch aktuelle Quellen festgelegt; **[ ]** = noch zu entscheiden oder nachzuweisen.
+> Eine dokumentierte Architekturentscheidung ist weder eine freigegebene Implementierungsbaseline
+> noch ein bestandener Gerätetest. Die ursprünglichen Rechercheberichte wurden nicht neu recherchiert.
+
+## Maßgebliche Quellen
+
+- [Aktuelle Abgabefassung](../01-aufgabenbeschreibung/Aufgabenbeschreibung-Abgabe.md): Thesis-Scope,
+  Evaluation und Aufwand. Sie hat Vorrang vor den älteren Q1–Q3-/AP-Fassungen.
+- [Produktscope und Quellenregister](../../Development/system/spec/product-scope.md): S04 für
+  Softwareentscheidungen, S05 für Scope, S07 für konkrete Verdrahtung.
+- [Architektur](../../Development/system/architecture/README.md): ausgewählte Architektur und
+  Abgrenzung zur bestehenden Evaluationsfirmware.
+- [Implementierungsbereitschaft](../../Development/system/planning/implementation-readiness.md):
+  offene Entscheidungen D01–D14. Dies ist das führende Register für Detailentscheidungen;
+  die folgende Übersicht ersetzt oder schließt diese D-Einträge nicht.
+- [Geplante Verifikation](../../Development/system/testing/specification-verification.md): VT-01–VT-13,
+  noch keine ausgeführten Produkt-Abnahmetests.
+- [Evaluationsfirmware und Signalplan](../../Development/system/coding/bringup-zephyr/README.md):
+  implementierter Bring-up-Stand und Grenzen der Hardwarebestätigung.
+
+## 1. Wissenschaftlicher Kern und Evaluation
+
+- [x] **Primärer Nachweis:** Filtervarianten hinsichtlich Genauigkeit und Zuverlässigkeit der
+  automatischen Herzfrequenzbestimmung quantitativ gegen eine geeignete Referenz vergleichen.
+  Auditive Anforderungen literaturgestützt herleiten und ergebnisoffen gegenüberstellen.
+  Eine Überlegenheit des Murmur-/BPM-Filters oder ein Zweckkonflikt ist kein vorweggenommenes Ergebnis.
+- [x] **Akustische Kette:** Komponenten anhand von Datenblättern und Literatur beurteilen;
+  keine messtechnische Charakterisierung der Übertragungskette. Die frühere Q1-/AP-2.2-Forderung
+  ist durch die aktuelle Abgabefassung überholt (D09; siehe [W1](widersprueche.md#w1--akustische-kette-und-frühere-q1ap-22-forderung)).
+  Playback-/Fixture-Ergebnisse erlauben keine Aussage über die Bruststück-Übertragungsfunktion.
+- [ ] **Datensatz und Referenz festlegen (D05/D13):** CirCor bleibt eine Rechercheempfehlung,
+  kein bereits ausgewählter oder ausgewerteter Datensatz. Lizenz, Signal-/Patientenannotation,
+  Referenz-Herzfrequenz, Auswahlkriterien und reproduzierbare Eingaben dokumentieren.
+  Pulsoximeter/Smartwatch waren Vorschläge; ein konkretes Referenzgerät samt Vergleichsverfahren
+  ist nicht festgelegt. S1/S2-Annotationen bzw. synchrones EKG sind je nach Datensatz zu prüfen.
+- [ ] **Metriken und Erfolgskriterien vorab festlegen (D04–D06):** BPM-Fehler, ungültige Ergebnisse,
+  Störungen/Ausreißer und Rechenkosten getrennt berichten. Murmur-SNR, Energieverhältnis und
+  Hüllkurvenkontrast aus R01 sind ergänzende Vorschläge, keine eingefrorenen Primärmetriken.
+  Gleiche Eingangssignale und Referenzfenster für gepaarte Filtervergleiche verwenden.
+- [x] **Hörevaluation optional:** Explorative Ergänzung, sofern Zeit und Organisation es erlauben;
+  kein klinischer Nutzennachweis. Der quantitative BPM-Vergleich und die Funktionstests bleiben.
+- [ ] **Falls Hörevaluation stattfindet:** Die bisherigen Vorschläge (n ≈ 5–10, Entwickler und
+  medizinisch Geschulte, Einführung, vorhanden/nicht vorhanden plus Sicherheitsskala) bleiben
+  Planungsgrundlagen. Stimuli, Lautheit, Verblindung/Randomisierung und Auswertung abstimmen.
+  Einwilligung, Teilnehmerdaten und zuständige ethische/datenschutzrechtliche Prüfung klären;
+  eine Datensatzlizenz beantwortet diese Fragen nicht.
+- [x] **Reduzierte Geschwindigkeit:** Hörhilfe mit Funktionsnachweis; Aufnahme in den Scope anhand
+  marktverfügbarer Vergleichsgeräte begründen. Die frühere Q3-Forderung nach messbarer Verbesserung
+  menschlicher Detektierbarkeit ist keine Pflicht der aktuellen Abgabefassung.
+
+## 2. Plattform, Datenfluss und Funktionsumfang
+
+- [x] **Zephyr gewählt (S04):** Die ältere ESP-IDF-Präferenz ist überholt. DSP als reines C in
+  Services, mit derselben Verarbeitung für Hosttests. Application, Services und Zephyr/Adapter
+  bilden die Schichten; MON beobachtet schichtübergreifend. Zunächst ein Kern, erst nach Messung
+  Arbeit auf den zweiten Kern verteilen. AMP/SMP bzw. A/B-Firmware sind keine ausgewählten Features.
+- [x] **Hören und Analyse unabhängig:** Raw/Murmur/BPM-Schalter steuert den Hörpfad; der
+  Analysefilter wird unabhängig gewählt. BPM erhält Originalraten-Audio vor Hörfilter und Gain,
+  auch während Replay. Messsitzung und flüchtiger Replay-Clip sind unterschiedliche Datenobjekte.
+- [x] **Netzwerk außerhalb Live-Hören (S04):** Ein abgeschlossenes gültiges Ergebnis wird erst
+  nach Stoppen des Hörens übertragen. Controller-/NET-Übergabe und Idle-Lease bleiben Entwurf (D01).
+- [x] **Lungenmodus:** Raw-Live-Wiedergabe bei 1×; keine BPM-Bestimmung, kein Replay, kein FHIR.
+- [x] **Keine dauerhafte Patientenaudiospeicherung:** Begrenzter flüchtiger Clip ist zulässig;
+  SD dient lizenzierten Test-Fixtures. Fixture-Daten sind keine Patientenmessung und dürfen
+  nicht als solche gesendet werden. Kein Gehäuse, keine ML-Klassifikation, kein klinischer
+  Nutzen-/Konformitätsnachweis.
+- [ ] **Implementierungsbaseline:** Der Review-Entwurf ist vollständig, aber noch nicht freigegeben.
+  D02/D03/D11/D14 enthalten offene Bedien-, Capture-/Session- und Ablageentscheidungen.
+  Vorgeschlagene separate Worker und Contracts sind nicht bereits Bring-up-Verhalten.
+  Eine separate `coding/thesis-zephyr/`-Struktur ist vorgeschlagen und existiert im geprüften Stand nicht.
+
+## 3. Hardware, Bedienung und Ressourcen
+
+- [x] **Bestückung:** ESP32-S3-DevKitC-1 N16R8, INMP441, PCM5102A, ILI9341/XPT2046,
+  Poti, LED-Taster, Filter-/Speed-Schalter und SD am LCD-Modul. INMP441 ist gesetzt;
+  Tieftonbegrenzungen dokumentieren, keine Kompensation oder S3/S4-Eignung ohne Nachweis behaupten.
+- [x] **Bedienrollen und Mapping:** Poti = Lautstärke, Filter = Raw/Murmur/BPM an GPIO18/21/38,
+  Speed = 1×/0,75×/0,5× an GPIO2/39/47; SD-CS = GPIO48, SPI mit Display/Touch geteilt.
+  Funktionsnamen statt uneinheitlicher Schalter-Nummern verwenden; Overlay ist die Pin-Baseline.
+- [ ] **Hardwarebestätigung (D07/VT-12):** Nicos Bestätigung vom 2026-09-16 umfasst die damalige
+  Verdrahtung, nicht die später ergänzten Speed-/SD-Verbindungen oder die aktuelle Firmware.
+  Schalter-Kontakttabelle, Carrier-Revision und Kopfhörerverstärker/Gain/Ausgangslimit prüfen.
+  PCM5102A ist ein Line-DAC und ersetzt keinen Kopfhörerverstärker.
+- [ ] **Filter-/BPM-/Replay-Parameter (D03–D06):** Bring-up nutzt 40–800 Hz bzw. 25–150 Hz,
+  20 ms Crossfade, 8 s BPM-Fenster/1 s Update, 30–200 BPM und 5 s Clip mit WSOLA.
+  Diese Werte sind Kandidaten, keine akzeptierten Thesis-Grenzen. Vorgeschlagene 30 s Sitzung,
+  Fehler max(5 BPM, 10 %), Qualität ≥0,6 und Coverage ≥80 % ebenfalls noch offen.
+  Periodizitätsqualität ist keine klinische Konfidenz.
+- [ ] **Latenz und Last (D10/VT-02/VT-13):** 16 kHz und 128 Frames ergeben 8 ms Blöcke;
+  dies ist keine gemessene End-to-End-Latenz. Board-Ziele 8 ms/≤4 ms und Soak-Dauer sind im
+  Detailentwurf zu prüfen. Frühere <30/<10-ms-Notizen sind nicht bestätigte Akzeptanzgrenzen.
+  DMA-interner SRAM, PSRAM-Clip/Fixtures, Queue-/Heap-Margen und SPI-Contention messen.
+
+## 4. FHIR und Sicherheit
+
+- [x] **FHIR/TLS-Funktionsnachweis bleibt Pflicht:** Der Architekturentwurf sieht geräteinitiiertes
+  PUT mit stabiler Identität und Readback für einen eingefrorenen abgeschlossenen Messwert vor.
+  Validiertes TLS, vertrauenswürdige Zeit, Provenienz und ausgeschlossene Test-/Lung-/ungültige
+  Ergebnisse gehören zur Verifikation, nicht nur erfolgreicher JSON-Versand.
+- [ ] **Konfiguration und Profil (D08/VT-07/VT-08):** HAPI R4, Patient, Authentifizierung,
+  Punktkodierung, Zeitpräzision und Profil verbindlich wählen. `effectivePeriod` ist der Entwurf
+  für die aggregierte Sitzung; das alte `effectiveDateTime`-Beispiel ist keine finale Festlegung.
+  LOINC 8867-4 und UCUM `/min` bleiben die Herzfrequenz-Basis.
+- [x] **Secrets außerhalb Git:** Echte Zugangsdaten ausschließlich lokal konfigurieren;
+  Beispiele verwenden nicht geheime Platzhalter. Die frühere Hardcoding-Notiz ist überholt.
+- [x] **Bring-up offline als Default:** Optionaler Network-Build startet ohne automatische
+  Verbindung/Übertragung. Das ist keine bereits erfolgte End-to-End-Abnahme der Thesis-Architektur.
+- [ ] **MON-/Normenargumentation (D12):** IEC 62304 Klasse B/Zephyr als SOUP sind dokumentierte
+  Architekturabsichten. Gefährdungen, Watchdog-/Mute-Verhalten und Anwendbarkeit separat begründen;
+  aus der Architektur oder EKG-Monitor-Toleranzen folgt keine regulatorische Konformität.
+
+## 5. Aufwand und Formales
+
+- [x] **Aufwandsbasis:** Aktuelle Abgabefassung: 320 h Kernarbeit, zusätzlich 64 h Puffer,
+  Firmeneinarbeitung separat 40–80 h; vorläufige Lieferzeit 1–3 Kalenderwochen.
+  Die alten AP-Phasen unten sind historische Planung. Die 24–37 h aus der Readiness-Datei
+  sind eine separate Kandidatenschätzung der restlichen Vorbereitung, kein neuer Thesis-Gesamtumfang.
+- [ ] **Kalender und Anmeldung:** Verbindliche Start-/Abgabetermine, Titel, Prüfer und
+  Firmendokumente ergänzen, sobald bestätigt. Die ältere Notiz „20. Oktober → Ende Januar"
+  ist kein bestätigter Termin und bildet vier Monate rechnerisch nicht ab.
+  Fakultätsspezifische Regeln prüfen; die August-Recherche enthält teils fremde Fakultätsfristen.
+- [ ] **Scope-/Parameterfreigabe:** Das frühere informelle „ist eigentlich so ok" zur initialen
+  Aufgabenbeschreibung ist keine Freigabe aller späteren Anforderungen und Zahlenwerte.
+  Offene D-/Parameter-Einträge vor Implementierungsabnahme klären, danach die betroffenen
+  Verifikationsfälle mit tatsächlicher Evidenz dokumentieren.
+
+Updated by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.
+
+## Historische Recherche und Originalannotation (August 2026)
+
+<details>
+<summary>Originalnotizen anzeigen — Statuskästchen und Empfehlungen sind historisch</summary>
+
+Die folgenden Texte bleiben als Herkunft der Entscheidungen unverändert erhalten. Ihre offenen
+Kästchen sind kein aktueller Status; maßgeblich sind der Registerteil oben und die verlinkten Quellen.
+
 # Offene Punkte / To clarify — vor Finalisierung der Aufgabenbeschreibung
 
 > Zum Annotieren: pro Punkt eigene Entscheidung/Notiz unter **→** ergänzen. Status: [ ] offen · [x] geklärt
@@ -373,3 +513,5 @@ eindeutig nicht geheime Platzhalter. Der FHIR-Funktionsnachweis bleibt erforderl
   → *Entscheidungspunkt — keine Recherche.*
 
 > Beide wissen von der initial erarbeiteten Aufgabenbeschreibung, von beiden kam ein 'ist eigentlich so ok'
+
+</details>
