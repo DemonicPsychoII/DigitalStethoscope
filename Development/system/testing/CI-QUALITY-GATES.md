@@ -1,33 +1,24 @@
 # Mandatory CI quality gates
 
-GitHub Actions is used because `origin` is GitHub and the repository had no
-other CI configuration. Pull requests into `integration` report two stable checks:
+Pull requests into `integration` require `Quality / Static Checks`,
+`Zephyr / Firmware Build` and `agent-gate`. Review/merge policy is in
+[AGENTS.md](../../../AGENTS.md); selection is implemented by
+[quality-gates.yml](../../../.github/workflows/quality-gates.yml) and
+[firmware_changes.py](ci/firmware_changes.py).
 
-- `Zephyr / Firmware Build`
-- `Quality / Static Checks`
+## Selection and runners
 
-`ci/toolchain.json` pins Zephyr commit `357467a011cd2557a1a3f0b4be83d817c4addc9b`,
-Zephyr SDK `1.0.1`, west `1.5.0`, CMake and Ninja for both local and CI builds.
-The workflow also pins the runner image, Python, and third-party actions.
-Static checks and QC run on every PR, including documentation-only
-changes, so changes to `.clang-format` and the QC traceability manifest are
-always validated. The firmware job runs only when the workflow, bring-up tree,
-or CI scripts change; otherwise GitHub reports it as skipped, which satisfies
-its required-check rule. Change detection compares the current base and head
-trees, includes deletions and both sides of renames, and fails on Git errors.
-Regardless of paths, the firmware job also runs for same-repository PRs labelled
-`firmware` (when the label is added and on every later push), the daily
-03:17 UTC `schedule` run on `integration`, and manual *Run workflow* dispatches
-on any branch; these publish their images (see below). The daily run skips the
-firmware job, so no homelab VM starts, when the newest successful scheduled or
-dispatched `integration` run already built the same commit; only for that
-lookup the static job may read Actions history (`actions: read`). Dispatches
-always build. Other label events skip
-both jobs under distinct check names, so they neither cancel a real run nor
-replace a required check's result. There are no push runs. Only Python package
-caching remains; firmware builds are pristine with a 30-minute timeout.
-Repository contents are read-only and no secrets
-are used, so fork pull requests receive no privileged credentials.
+See [detailed CI operations](ci/OPERATIONS.md) for the selection table, workflow
+flow, schedules, artifact promotion and review migration. Native-test-only edits
+run native tests without ESP32 profiles. Static/QC remain required; selected heavy
+verification stays in a disposable homelab VM, with hosted final accounting.
+The stable required check names above remain enforced. No hosted build fallback
+or workflow-level path filter is introduced.
+
+[toolchain.json](ci/toolchain.json) pins tools and source revisions.
+[Prepared environments](ci/README.md#prepared-environments) can skip matching
+setup; selected firmware profiles and native simulation still build pristine.
+Fork builds receive no privileged credentials.
 
 ## Local parity
 
@@ -35,7 +26,10 @@ Run `python Development/system/testing/ci/setup_zephyr.py` (also available via
 `Development/system/coding/tools/setup-toolchain.ps1`) from the repository root.
 Use its virtual environment for the gates; `run_ci.py` selects the pinned
 workspace automatically. Install the CI check dependencies in that environment
-before running the static checks:
+before running the static checks. Static checks additionally require actionlint
+1.7.12 and ShellCheck 0.11.0 on PATH; `ci/validation_tools.py` installs the pinned
+Linux x86-64 binaries. Install matching native binaries for Windows or run the
+static checks on Linux.
 
 ```powershell
 .ci-workspace/.venv/Scripts/python.exe -m pip install ruff==0.12.9 clang-format==18.1.8
@@ -58,25 +52,23 @@ merge and may be promoted selectively as the code is modularized.
 
 ## Artifacts and reporting
 
-Publishing builds (above) upload one artifact, `firmware-build-<attempt>`, kept
-for three days: each profile's `zephyr.bin` under a descriptive name plus a
-`manifest.json` (channel, commit, merged tree for PRs, UTC build time, board,
-per-file profile, boot-banner version and SHA-256). The homelab's firmware sync
-downloads it, checks it against GitHub's run record, and publishes it to
-Personal Cloud: the build guest never holds a cloud credential. Each PR and
-`integration` keep only their newest build; a PR's builds are deleted when it
-is closed or merged.
-Fork builds never upload. Otherwise build output and RAM/ROM reports appear in
-the job log; firmware evidence files remain available when running locally. The static
-job generates a QC scorecard and records its score in the run summary; a `HOLD`
-result fails the quality check.
-No serial captures, credentials, private
-hardware evidence, or developer paths are collected.
+[Evidence and publication](ci/OPERATIONS.md#evidence-and-publication) documents
+14-day diagnostic evidence and 3-day firmware artifacts. Static verification
+retains the QC scorecard; a failing score fails the quality check. Native and host
+tests retain JUnit results. Firmware diagnostics include build logs, configuration,
+ELF/map and RAM/ROM reports; logs can contain checkout/toolchain paths.
+
+Publishing still uses `firmware-build-<attempt>` with the three profiles and
+manifest; the homelab verifies it against the run record before Personal Cloud
+publication. Guests receive no cloud credential. Exact-commit successful
+integration push artifacts can supply daily publication without recompilation.
+Same-repository labelled PRs can publish previews; fork PRs cannot publish release
+artifacts. No serial capture or private hardware evidence is generated by CI.
 
 ## Branch protection (administrative step)
 
-The existing `integration` protection requires both check names above and an
-up-to-date branch. Keep those names stable. Do not use workflow-level path
+The existing `integration` protection requires the three contexts above. Native
+review migration is a staged administrative change described in the operations guide. Keep those names stable. Do not use workflow-level path
 filters: a filtered-out workflow cannot report a required check for docs-only
 PRs. If CI is later required for another protected branch, add that branch to
 the workflow trigger before requiring these checks there.
@@ -88,7 +80,9 @@ it is deliberately not performed by the local validation script.
 
 An ESP32-S3 build proves compilation/linking and resource fit; it does not prove that a microphone,
 DAC, display, touch controller, GPIO, ADC, PWM, or board wiring works. Physical
-validation remains a separate manual release gate using `TEST-PROTOCOL.md`.
+validation remains a separate manual release gate using the
+[integrated protocol](../coding/bringup-zephyr/EVAL-GUIDE.md);
+[TEST-PROTOCOL.md](../coding/bringup-zephyr/TEST-PROTOCOL.md) records historical component evidence.
 Before release, retain the firmware commit, board revision/serial, operator,
 date, filled PASS/FAIL/BLOCKED verdicts, electrical checks, audio observations,
 and instrument evidence. Hardware-in-the-loop may become a separate protected
@@ -96,8 +90,9 @@ scheduled/manual gate only after a controlled runner and real board are availabl
 
 ## Integrated evaluation coverage (2026-09-24)
 
-The static job additionally installs the fully pinned
-`bringup-zephyr/tools/requirements.txt` with `--require-hashes` and runs
+When the host suite is selected, the static job installs the fully pinned
+`bringup-zephyr/tools/requirements.txt` with `--require-hashes` unless the prepared
+environment matches, and runs
 `tests/host` against the portable DSP/FHIR implementation, evaluation CLI and a
 local HTTPS readback fixture. The firmware job also performs pristine QC and
 combined network/QC builds, then builds and runs `tests/logic` on
@@ -105,3 +100,5 @@ combined network/QC builds, then builds and runs `tests/logic` on
 These builds do not connect to Wi-Fi or send FHIR data. CA/server credentials
 are absent from CI and the latest local build evidence. Physical acceptance
 remains in `bringup-zephyr/EVAL-GUIDE.md`.
+
+Updated by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.
