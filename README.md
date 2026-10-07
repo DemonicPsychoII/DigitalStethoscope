@@ -1,12 +1,6 @@
 # Digital stethoscope
 
-ESP32-S3 evaluation firmware and testing material for the bachelor's thesis.
-
-- [Architecture and component specification — review draft](Development/system/README.md)
-- [Firmware, wiring and evaluation controls](Development/system/coding/bringup-zephyr/README.md)
-- [Toolchain setup and build-time comparison across devices](Development/system/testing/BUILD-TIMES.md)
-- [Quality-control evaluation](Development/system/testing/README.md)
-- [CodeRabbit reviews for code and thesis sources](docs/coderabbit.md)
+ESP32-S3 firmware and documentation for a bachelor's thesis.
 
 ## License
 
