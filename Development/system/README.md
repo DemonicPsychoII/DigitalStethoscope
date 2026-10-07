@@ -16,7 +16,7 @@ Review in this order:
 8. [Review decisions and implementation readiness](planning/implementation-readiness.md)
 
 Browse the [local diagram viewer](architecture/review.html). The checks performed on this draft
-are recorded in [documentation validation](testing/draft-validation.md); device tests remain planned.
+are recorded in [documentation validation](testing/evidence/2026-10-06-draft-validation.md); device tests remain planned.
 
 Requirements follow the SW-Basis pattern: trigger/precondition → shall behavior → observable
 outcome. Stable IDs connect use cases, system requirements, components and planned verification.

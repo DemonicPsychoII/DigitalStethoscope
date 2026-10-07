@@ -32,6 +32,16 @@ def has(text: str, pattern: str) -> bool:
     return re.search(pattern, text, re.MULTILINE) is not None
 
 
+def source_code(text: str) -> str:
+    """Exclude comments and literals from presence checks without joining tokens."""
+    return re.sub(
+        r'/\*.*?\*/|//[^\n]*|"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'',
+        lambda match: "".join("\n" if char == "\n" else " " for char in match[0]),
+        text,
+        flags=re.DOTALL,
+    )
+
+
 def validate_baseline_traceability(repo: Path, tha: Path) -> tuple[bool, str, str]:
     trace_path = repo / "Development/system/testing/tha-baseline-traceability.json"
     expected_paths = {
@@ -94,18 +104,44 @@ def evaluate(repo: Path, tha: Path) -> dict:
         repo, tha
     )
 
-    c_files = list(app.rglob("*.c"))
+    # Test fixtures and generated build trees must not satisfy production controls.
+    c_files = sorted((app / "src").rglob("*.c"))
+    sources = {
+        path.relative_to(app).as_posix(): source_code(path.read_text(encoding="utf-8"))
+        for path in c_files
+    }
+    production = "\n".join(sources.values())
     main_lines = len(main.splitlines())
     ignored_calls = len(
         re.findall(
-            r"^\s*(?:\(void\))?(?:gpio_pin_set_dt|pwm_set_pulse_dt|display_write|"
+            r"(?:^|[;{}])\s*(?:\(\s*void\s*\)\s*)?(?:gpio_pin_set_dt|pwm_set_pulse_dt|display_write|"
             r"i2s_write|i2s_trigger|adc_sequence_init_dt)\s*\(",
-            main,
+            production,
             re.MULTILINE,
         )
     )
-    synchronized = has(main, r"K_(?:MUTEX|MSGQ|SEM|FIFO)_DEFINE|atomic_t")
-    input_irq = has(main, r"gpio_pin_interrupt_configure|GPIO_INT_|gpio_add_callback")
+    synchronization_modules = [
+        name
+        for name, code in sources.items()
+        if has(code, r"\bK_(?:MUTEX|MSGQ|SEM|FIFO)_DEFINE\s*\(|\batomic_t\b")
+    ]
+    synchronized = bool(synchronization_modules)
+    input_irq = has(
+        sources.get("src/gpio_inputs.c", ""),
+        r"\bgpio_pin_interrupt_configure(?:_dt)?\s*\(",
+    ) and has(sources.get("src/main.c", ""), r"\bk_msgq_get\s*\(")
+    fault_isolation = all(
+        has(sources.get(module, ""), rf"\b{symbol}\s*\(")
+        for module, symbol in (
+            ("src/peripherals.c", "app_probe_record"),
+            ("src/peripherals.c", "peripherals_disable"),
+            ("src/main.c", "app_degraded_features"),
+            ("src/main.c", "app_driver_error_action"),
+            ("src/app_logic.c", "app_probe_record"),
+            ("src/app_logic.c", "app_degraded_features"),
+            ("src/app_logic.c", "app_driver_error_action"),
+        )
+    )
     build_evidence_path = app / "evidence/build-results.json"
     try:
         build_evidence = json.loads(build_evidence_path.read_text(encoding="utf-8"))
@@ -116,7 +152,7 @@ def evaluate(repo: Path, tha: Path) -> dict:
             if build.get("target") == "esp32s3_devkitc/esp32s3/procpu"
             and build.get("result") == "PASS"
         ]
-    except (OSError, TypeError, json.JSONDecodeError):
+    except (OSError, AttributeError, TypeError, json.JSONDecodeError):
         successful_esp32_builds = []
     required_runtime_options = (
         "CONFIG_STACK_SENTINEL=y",
@@ -129,8 +165,10 @@ def evaluate(repo: Path, tha: Path) -> dict:
         "CONFIG_THREAD_ANALYZER_STACK_SAFETY=y",
     )
     runtime_analysis = all(
-        option in conf for option in required_runtime_options
-    ) and all(option in qc_conf for option in required_qc_options)
+        has(conf, rf"^{re.escape(option)}\s*$") for option in required_runtime_options
+    ) and all(
+        has(qc_conf, rf"^{re.escape(option)}\s*$") for option in required_qc_options
+    )
     pinned_zephyr = has(
         readme, r"Zephyr[^\n]*(?:commit|revision|tag)\s*[:=]\s*[0-9a-fv]"
     )
@@ -183,7 +221,7 @@ def evaluate(repo: Path, tha: Path) -> dict:
         10,
         "PASS" if modular else "FAIL",
         10 if modular else 2,
-        f"Target has {len(c_files)} C source file(s); main.c has {main_lines} lines. THA reference splits ADC, sensor, servo, stepper, display and shell modules.",
+        f"Production src/ has {len(c_files)} C source file(s); main.c has {main_lines} lines. File counts and entry-point size do not prove module ownership.",
         "None."
         if modular
         else "Split peripheral probes/drivers, audio pipeline, UI/input and status reporting into owned modules.",
@@ -194,10 +232,12 @@ def evaluate(repo: Path, tha: Path) -> dict:
         10,
         "PASS" if synchronized else "FAIL",
         10 if synchronized else 3,
-        "Touch callback, main loop and audio thread exchange state; no atomic, mutex, message queue, semaphore or FIFO is declared."
+        "No atomic, mutex, message queue, semaphore or FIFO declaration found in production src/."
         if not synchronized
-        else "A synchronization primitive is declared.",
-        "Pass touch events through k_msgq/k_event or protect all callback/thread shared state atomically.",
+        else f"Synchronization declarations found in {', '.join(synchronization_modules)}; presence does not prove every shared access is protected.",
+        "None."
+        if synchronized
+        else "Declare synchronization for callback/thread shared state and verify its use.",
     )
 
     add(
@@ -205,8 +245,12 @@ def evaluate(repo: Path, tha: Path) -> dict:
         10,
         "PASS" if input_irq else "PARTIAL",
         10 if input_irq else 5,
-        "The button and SP3T are polled in a 20 ms loop; touch is interrupt/callback driven. THA latency study identifies ISR + deferred processing as the deterministic pattern.",
-        "Use GPIO interrupts for user inputs when a response-time requirement is introduced; document the current <=20 ms polling bound.",
+        "GPIO interrupt configuration and main event-queue consumption are present; target latency and work bounds are not measured by this check."
+        if input_irq
+        else "GPIO interrupt configuration or main event-queue consumption is missing.",
+        "None."
+        if input_irq
+        else "Restore interrupt-driven input and deferred event handling; measure target latency separately.",
     )
 
     add(
@@ -214,17 +258,23 @@ def evaluate(repo: Path, tha: Path) -> dict:
         10,
         "PASS" if ignored_calls == 0 else "PARTIAL",
         10 if ignored_calls == 0 else 5,
-        f"Heuristic found {ignored_calls} driver/API calls used as statements or explicitly discarded; several runtime output paths cannot report failure.",
-        "Check and log display_write, PWM, I2S write/trigger and GPIO set failures; define recovery behavior.",
+        f"Across production src/, heuristic found {ignored_calls} selected driver/API calls used as statements or explicitly discarded. Assigned returns still require behavioral review.",
+        "None."
+        if ignored_calls == 0
+        else "Handle the discarded driver/API results and define recovery behavior.",
     )
 
     add(
         "Fault isolation and degraded operation",
         10,
-        "PASS",
-        10,
-        "Per-component retry/probe table isolates missing peripherals; audio starts only when both endpoints pass.",
-        "Distinguish on-chip controller readiness from physical-device presence in machine-readable results.",
+        "PASS" if fault_isolation else "FAIL",
+        10 if fault_isolation else 0,
+        "Probe retry, component disable, degraded-feature and driver-error policy symbols are present in their production modules; fault behavior requires host/native and target tests."
+        if fault_isolation
+        else "One or more production probe/recovery policy symbols are missing.",
+        "None."
+        if fault_isolation
+        else "Restore per-component probe, disable and degraded-feature/error-policy mechanisms.",
     )
 
     add(
@@ -251,8 +301,10 @@ def evaluate(repo: Path, tha: Path) -> dict:
         10,
         "PASS" if repeatable else "PARTIAL",
         verification_score,
-        f"Detailed manual release protocol exists; successful recorded pristine ESP32-S3 builds={len(successful_esp32_builds)}; recorded hardware verdicts={filled_verdicts}. Compilation does not prove runtime or physical behavior.",
-        "Retain a successful pristine ESP32-S3 build and machine-readable physical-hardware verdicts keyed by firmware commit.",
+        f"Historical evidence: successful recorded ESP32-S3 builds={len(successful_esp32_builds)}; protocol verdict entries={filled_verdicts} (including partial/fail/blocked). These records do not verify the current source or imply hardware acceptance.",
+        "None."
+        if repeatable
+        else "Retain a detailed manual protocol, explicit verdict entries and successful ESP32-S3 build evidence.",
     )
 
     add(
@@ -277,7 +329,7 @@ def evaluate(repo: Path, tha: Path) -> dict:
     return {
         "schema_version": 1,
         "evaluation_date": date.today().isoformat(),
-        "scope": "Static QC comparison; hardware observations are inherited from TEST-PROTOCOL.md and are not re-verified.",
+        "scope": "Source-pattern QC comparison and historical evidence inventory; no current build, timing, concurrency or physical acceptance is established.",
         "target": str(app.relative_to(repo)).replace("\\", "/"),
         "baseline": f"THA@{baseline_revision}",
         "score": score,
@@ -317,10 +369,10 @@ def markdown(result: dict) -> str:
         "",
         "## Release interpretation",
         "",
-        "`HOLD` means the software remains suitable as an engineering bring-up tool, but it has not",
-        "yet met the THA-derived maintainability/concurrency gate for reuse as production firmware.",
-        "Hardware claims remain governed by `TEST-PROTOCOL.md`; untested items are not converted to",
-        "passes by this evaluator.",
+        "`PASS` means the source-level controls passed; it is not production or hardware approval.",
+        "`HOLD` means at least one source-level control failed. Suitability requires separate review.",
+        "Historical records are not current acceptance. Hardware claims remain governed by",
+        "the firmware's `TEST-PROTOCOL.md` and `EVAL-GUIDE.md`.",
         "",
         "## Reproduce",
         "",
@@ -330,6 +382,9 @@ def markdown(result: dict) -> str:
         "",
         "The command rewrites this report and `qc-eval-results.json`. A non-zero exit status indicates",
         "a `HOLD` gate, making it usable in CI.",
+        "Default output directory: ignored `artifacts/qc/` at the repository root.",
+        "",
+        "Generated by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.",
         "",
     ]
     return "\n".join(lines)
@@ -346,9 +401,11 @@ def main() -> int:
         / "THA/CreativeEngineering/SS26/Embedded2/Praktikum/src",
     )
     parser.add_argument(
-        "--output-dir", type=Path, default=Path(__file__).resolve().parent
+        "--output-dir", type=Path, help="Report directory (default: REPO/artifacts/qc)"
     )
     args = parser.parse_args()
+    if args.output_dir is None:
+        args.output_dir = args.repo / "artifacts/qc"
     result = evaluate(args.repo.resolve(), args.tha.resolve())
     args.output_dir.mkdir(parents=True, exist_ok=True)
     (args.output_dir / "qc-eval-results.json").write_text(

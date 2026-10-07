@@ -108,7 +108,7 @@ def static() -> None:
         if path.suffix in {".yaml", ".yml"}:
             yaml.safe_load(path.read_text(encoding="utf-8"))
     # Format all maintained application sources.
-    run([sys.executable, "-m", "ruff", "check", "Development/system/testing/ci"])
+    run([sys.executable, "-m", "ruff", "check", "Development/system/testing"])
     run(
         [
             sys.executable,
@@ -116,7 +116,7 @@ def static() -> None:
             "ruff",
             "format",
             "--check",
-            "Development/system/testing/ci",
+            "Development/system/testing",
         ]
     )
     clang_format = shutil.which("clang-format")
@@ -255,10 +255,15 @@ def build() -> None:
 
 def qc() -> None:
     evaluator = ROOT / "Development/system/testing/qc_eval.py"
-    result_process = subprocess.run([sys.executable, str(evaluator)], cwd=ROOT)
-    result = json.loads(
-        (evaluator.parent / "qc-eval-results.json").read_text(encoding="utf-8")
+    output = ARTIFACTS / "qc"
+    output.mkdir(parents=True, exist_ok=True)
+    # A crashed evaluator must not reuse a previous run's passing report.
+    for name in ("qc-eval-results.json", "QC-EVALUATION.md"):
+        (output / name).unlink(missing_ok=True)
+    result_process = subprocess.run(
+        [sys.executable, str(evaluator), "--output-dir", str(output)], cwd=ROOT
     )
+    result = json.loads((output / "qc-eval-results.json").read_text(encoding="utf-8"))
     required = {"schema_version", "score", "maximum_score", "gate", "controls"}
     if not required.issubset(result):
         raise SystemExit(f"QC JSON missing fields: {sorted(required - result.keys())}")

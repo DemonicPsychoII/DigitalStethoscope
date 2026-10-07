@@ -4,13 +4,15 @@ This record verifies the documentation and presentation artifacts. It does not
 verify device behavior or approve the proposed implementation baseline. The VT
 procedures remain planned and their open acceptance parameters remain visible.
 
+Archived from `testing/draft-validation.md`. These results describe the October 6
+review package and its follow-up revisions, not the current checkout.
+
 | Check | Result |
 |---|---|
 | PlantUML rendering | Nine sources rendered offline with PlantUML 1.2024.3, Java 21 and Smetana: eight presentation views plus one actual-evaluation-firmware reference. |
 | SVG integrity | All nine SVGs parse as XML and contain no PlantUML syntax-error output. |
 | Viewer behavior | Eight repository assets and tabs load; zoom is available only for Listening and BPM Measurement; enlargement, Fit reset and browser sizing pass in T3 preview with no console errors. |
-| CodeRabbit follow-up | Tab/panel roles, selected-state wiring, arrow-key wrapping, Home/End, panel focus, all eight assets, zoom and Fit passed in headless Edge with no JavaScript errors. STO-002 now distinguishes SD SPI reads, volatile host-uploaded target fixtures and host-side test injection. Static checks and all 83 gate tests passed again after merging `integration`. |
-| Second CodeRabbit follow-up | Eight distinct text descriptions match the selected diagram and its accessible description reference in headless Edge. Existing navigation/zoom checks pass without JavaScript errors. Static checks pass; STO-001/003 acceptance outcomes are explicit and STO-004 includes VT-05 in both requirement and CSV traceability. These are documentation checks, not executed device tests. |
+| CodeRabbit follow-up validation | Headless Edge passed tab/panel roles, selected-state wiring, arrow-key wrapping, Home/End, panel focus, eight assets and distinct accessible descriptions, zoom and Fit without JavaScript errors. STO-002 distinguishes SD SPI reads, volatile host-uploaded target fixtures and host-side injection; STO-001/003 acceptance outcomes are explicit; STO-004 includes VT-05 in requirements and CSV traceability. Static checks and all 83 gate tests passed after merging `integration` and static checks passed again after the second follow-up. These are documentation checks, not device tests. |
 | Source provenance | All four original board snapshots match their recorded SHA-256 hashes. Remote boards were not edited. |
 | Requirement identities | 56 unique component IDs match the CSV index and document anchors. |
 | Traceability | Every indexed source, use case, system requirement, parameter and verification ID exists. All nine use cases, eleven system requirements and thirteen VT procedures have component allocations. |

@@ -7,29 +7,16 @@ The ignored `.ci-workspace` contains west, CMake, Ninja, Zephyr, its required
 modules, Espressif blobs and the SDK's ESP32-S3 compiler. No shell activation is
 needed. Setup downloads are outside the build timer.
 
-## First setup on the Windows desktop
+## Setup
 
-Install Python 3.12+ and Git, then run from the repository root in PowerShell:
-
-```powershell
-winget install --id 7zip.7zip -e --silent
-python Development/system/testing/ci/setup_zephyr.py
-```
-
-The existing `Development/system/coding/tools/setup-toolchain.ps1` delegates to
-this same setup. Rerun setup to complete an interrupted install. It retains
-existing sources and downloads; it does not delete the workspace. Legacy
-workspaces in `Development/Toolchain/zephyrproject` or
-`Development/system/coding/tools/zephyrproject` remain independent.
-
-Linux requires Python 3.12+, Git, Python venv support, xz/tar and the host runtime
-prerequisites from [Zephyr's getting-started guide](https://docs.zephyrproject.org/latest/develop/getting_started/index.html).
-On the homelab use `python3` for the setup command.
+Follow [the shared setup instructions](CI-QUALITY-GATES.md#setup-and-local-checks)
+on each device before measuring. Use the pinned workspace Python for runs;
+downloads and provisioning are outside the timer.
 
 ## Repeat the same measurement on every device
 
 ```powershell
-python Development/system/testing/ci/benchmark_build.py run --device desktop --jobs 4 --runs 3 --include-noop
+.ci-workspace/.venv/Scripts/python.exe Development/system/testing/ci/benchmark_build.py run --device desktop --jobs 4 --runs 3 --include-noop
 ```
 
 Use `--device laptop` on this laptop. On the server:
@@ -87,3 +74,5 @@ absolute build paths; compare the source inputs when establishing equal workload
 `.ci-workspace`, `build-benchmark` and `artifacts` are ignored by Git. Keep the
 result files when collecting thesis measurements. CI still runs its normal
 quality checks and success-only homelab publication via `run_ci.py build`.
+
+Updated by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.
