@@ -354,6 +354,7 @@ def review_items(inputs: Inputs, author: dict[str, str] | None) -> list[tuple[st
             if review.get("state") != "APPROVED" or fallback is None:
                 return [("pending", f"{login} must review the current head SHA")]
             # A past approval cannot veto the separately validated current-head fallback.
+
         elif review.get("state") == "APPROVED":
             return [("ok", f"approved at {inputs.head_sha[:7]} by {login}")]
         elif review.get("state") == "CHANGES_REQUESTED":

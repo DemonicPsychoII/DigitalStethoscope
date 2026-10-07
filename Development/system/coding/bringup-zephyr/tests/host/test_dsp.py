@@ -1,6 +1,7 @@
 """Behavioral tests: response, reference BPM, replay duration/pitch, FHIR."""
 
 import json
+import os
 from pathlib import Path
 import subprocess
 
@@ -19,6 +20,8 @@ def runner(tmp_path_factory):
             "gcc",
             "-std=c11",
             "-O2",
+            *(["-fsanitize=address,undefined", "-fno-sanitize-recover=all", "-fno-omit-frame-pointer", "-fno-pie", "-no-pie"]
+              if os.environ.get("STETHO_SANITIZERS") == "true" else []),
             "-Wall",
             "-Wextra",
             "-Werror",

@@ -23,5 +23,5 @@
 - [ ] Current head independently approved by an agent or configured CodeRabbit
 - [ ] Blocking findings addressed; all conversations have dispositions and are resolved
 - [ ] Genuine owner questions answered
-- [ ] Required CI enforced; auto-merge enabled when only CI remains
+- [ ] Required CI enforced; follow any explicit owner manual-review hold
 - [ ] Deployment and rollback steps recorded where needed

@@ -1,5 +1,8 @@
 # CI tooling
 
+[Detailed CI operations](OPERATIONS.md) covers the workflow, suite table, retained
+evidence, minutes savings and staged native-review migration.
+
 [CI-QUALITY-GATES.md](../CI-QUALITY-GATES.md) is the authoritative guide for
 setup, check selection, prepared environments and publication. Merge and review
 policy lives in the repository's [AGENTS.md](../../../../AGENTS.md).

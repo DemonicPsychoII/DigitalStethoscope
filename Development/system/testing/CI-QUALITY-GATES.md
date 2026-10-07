@@ -11,38 +11,30 @@ schedule and manual dispatches. Required contexts remain:
 Keep these names stable. Merge and review requirements are defined in
 [AGENTS.md](../../../AGENTS.md), not by a QC score or this guide.
 
-Branch protection also requires an up-to-date branch. Avoid workflow-level path
+Keep the active branch-protection rules; native review migration remains staged. Avoid workflow-level path
 filters: filtered workflows cannot report required contexts for docs-only PRs.
 Add any new protected branch to the workflow trigger before requiring its checks.
 
-## Check selection and runners
+## Selection and runners
 
-A short hosted selection job compares base and head trees, including deleted
-files and both sides of renames. Selection errors fail the static check.
-Static repository analysis and QC run for ordinary PRs, including docs-only
-changes. Host DSP/FHIR, tooling and agent-gate unit suites run when their inputs
-change. Firmware inputs and unknown application/CI inputs select firmware;
-documentation, host tooling and CI tests do not require firmware compilation.
-The workflow itself selects all suites when changed. The selector is
-`ci/firmware_changes.py`.
+See [detailed CI operations](ci/OPERATIONS.md) for the selection table, workflow
+flow, schedules, artifact promotion and review migration. Native-test-only edits
+run native tests without ESP32 profiles. Static/QC remain required; selected heavy
+verification stays in a disposable homelab VM. The same firmware job accounts
+for results, using a hosted runner only when heavy work is unselected.
+The stable required check names above remain enforced. No hosted build fallback
+or workflow-level path filter is introduced.
 
-Same-repository PRs labelled `firmware` force firmware and publication.
-Scheduled runs select all suites, unless `ci/daily_build.py` finds the same
-commit in the newest successful scheduled/dispatched integration run.
-Manual dispatch uses changed inputs relative to `integration`; dispatching
-`integration` forces firmware publication. Other label events do not replace
-required contexts or cancel real runs.
-
-Heavy static/QC suites use disposable
-`homelab-stethoscope-static-<run-id>-<attempt>` VMs; firmware uses
-`homelab-zephyr-<run-id>-<attempt>` VMs. Firmware jobs have a 60-minute timeout
-and compile pristine offline, QC and combined network/QC profiles, followed by
-`tests/logic` on `native_sim/native/64`. When no firmware is selected, a hosted
-accounting job reports the required firmware context without compiling.
-There is no hosted fallback for heavy suites. Offline homelab/fork jobs remain
-queued for the owner; fork PRs receive no publication credentials.
+[toolchain.json](ci/toolchain.json) pins tools and source revisions.
+[Prepared environments](ci/OPERATIONS.md#prepared-environments) can skip matching
+setup; selected firmware profiles and native simulation still build pristine.
+Fork builds receive no privileged credentials.
 
 ## Setup and local checks
+
+Static checks also require actionlint 1.7.12 and ShellCheck 0.11.0 on PATH.
+`ci/validation_tools.py` installs pinned Linux x86-64 binaries; use matching
+native binaries on Windows or run static checks on Linux.
 
 Install Python 3.12+ and Git. On Windows, also install 7-Zip:
 
@@ -101,6 +93,9 @@ require measured prepared-image runs.
 
 ## Reports, publication and hardware boundary
 
+See [evidence and publication](ci/OPERATIONS.md#evidence-and-publication) for
+14-day diagnostic retention and exact-commit daily artifact promotion.
+
 QC writes its Markdown scorecard and JSON to ignored `artifacts/qc/` and
 records the score in the run summary. HOLD fails the quality check. These
 source heuristics are separate from functional evaluation and physical proof;
@@ -111,7 +106,7 @@ each profile binary and a manifest with commit/merged-tree identity, UTC time,
 board, profile, boot-banner version and SHA-256. The homelab firmware sync
 validates the GitHub run before publishing to Personal Cloud; the build guest
 holds no cloud credential. Publication occurs only after all selected firmware
-and native tests succeed. Fork builds do not upload. Build and RAM/ROM logs
+and native tests succeed. Fork builds do not publish firmware release artifacts. Build and RAM/ROM logs
 remain in CI; local firmware evidence is under ignored `artifacts/`.
 
 ESP32-S3 builds prove compilation/linking and resource fit. Host DSP/FHIR and

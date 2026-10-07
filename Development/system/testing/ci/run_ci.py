@@ -87,6 +87,7 @@ def west() -> str:
 
 
 def static() -> None:
+    ARTIFACTS.joinpath("ci").mkdir(parents=True, exist_ok=True)
     run(["git", "diff", "--check", "HEAD"])
     tracked = subprocess.check_output(["git", "ls-files", "-z"], cwd=ROOT).split(b"\0")
     forbidden = ("/build/", "/zephyr/", "/.west/", "twister-out")
@@ -138,6 +139,17 @@ def static() -> None:
         run([clang_format, "--dry-run", "--Werror", *maintained_sources])
     elif os.environ.get("CI"):
         raise SystemExit("clang-format is required in CI")
+    for tool in ("actionlint", "shellcheck"):
+        if not shutil.which(tool):
+            raise SystemExit(f"{tool} is required; run validation_tools.py first")
+    run(["actionlint", "-color"])
+    run(
+        [
+            "shellcheck",
+            "Development/system/testing/ci/setup_zephyr.sh",
+            ".github/agent-gate/revert-last-merge.sh",
+        ]
+    )
     summary("### Static checks: PASS")
 
 
@@ -300,7 +312,7 @@ def qc() -> None:
     summary(
         f"### QC evaluation: {disposition}\n\nScore: {result['score']}/"
         f"{result['maximum_score']}; gate: {result['gate']}. "
-        "The scorecard is generated locally; no artifacts are uploaded."
+        "The scorecard is retained with the CI evidence; it is source-level evidence only."
     )
     if result_process.returncode != 0:
         raise SystemExit(

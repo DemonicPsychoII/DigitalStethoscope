@@ -21,6 +21,7 @@ def last_built_commit(runs: list[dict], current_run_id: int) -> str | None:
             run["id"] != current_run_id
             and run["event"] in BUILDING_EVENTS
             and run["conclusion"] == "success"
+            and run.get("published") is True
         ):
             return run["head_sha"]
     return None
@@ -40,7 +41,22 @@ def integration_runs(environ: dict[str, str]) -> list[dict]:
         },
     )
     with urllib.request.urlopen(request, timeout=30) as response:
-        return json.load(response)["workflow_runs"]
+        runs = json.load(response)["workflow_runs"]
+    for run in runs:
+        run["published"] = False
+        if run["event"] not in BUILDING_EVENTS:
+            continue
+        request.full_url = (
+            f"{environ.get('GITHUB_API_URL', 'https://api.github.com')}/repos/"
+            f"{environ['GITHUB_REPOSITORY']}/actions/runs/{run['id']}/artifacts?per_page=100"
+        )
+        with urllib.request.urlopen(request, timeout=30) as response:
+            artifacts = json.load(response)["artifacts"]
+        run["published"] = any(
+            a["name"].startswith("firmware-build-") and not a["expired"]
+            for a in artifacts
+        )
+    return runs
 
 
 def main(environ: dict[str, str] = os.environ) -> None:
