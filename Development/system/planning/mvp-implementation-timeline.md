@@ -11,7 +11,7 @@ Tasks are direct children of TICKET-98 so the existing Jira timeline can display
 | FHIR | Implement HTTPS/FHIR delivery and invalid-result reporting | 8 h | 2026-10-21 → 2026-10-22 | WIFI | [TICKET-168](https://nfrie.atlassian.net/browse/TICKET-168) |
 | NETTEST | Verify one device-originated FHIR integration run | 4 h | 2026-10-23 → 2026-10-23 | FHIR | [TICKET-169](https://nfrie.atlassian.net/browse/TICKET-169) |
 | CTL | Implement session controller and alarm states | 8 h | 2026-10-26 → 2026-10-27 | BASE | [TICKET-170](https://nfrie.atlassian.net/browse/TICKET-170) |
-| BOARD | Verify latest evaluation carrier and component wiring | 4 h | 2026-10-28 → 2026-10-28 | CTL | [TICKET-171](https://nfrie.atlassian.net/browse/TICKET-171) |
+| BOARD | Verify latest evaluation carrier and component wiring | 4 h | 2026-10-28 → 2026-10-28 | Carrier and equipment availability | [TICKET-171](https://nfrie.atlassian.net/browse/TICKET-171) |
 | AUDIO | Implement and verify microphone-to-output audio path | 12 h | 2026-10-29 → 2026-11-02 | BOARD | [TICKET-172](https://nfrie.atlassian.net/browse/TICKET-172) |
 | DSP | Implement independent listening and analysis filters | 8 h | 2026-11-03 → 2026-11-04 | AUDIO | [TICKET-173](https://nfrie.atlassian.net/browse/TICKET-173) |
 | BPM | Implement streaming BPM and reference validation | 12 h | 2026-11-05 → 2026-11-09 | DSP | [TICKET-174](https://nfrie.atlassian.net/browse/TICKET-174) |
