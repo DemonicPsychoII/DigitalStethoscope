@@ -46,7 +46,7 @@ worker placement and ISR wake-up primitives remain proposed implementation choic
 | `StateSnapshot` | snapshot revision, effective and requested settings, source/provenance, playback/measurement/delivery states, active IDs, capabilities, BPM validity/time, clip progress, pending replay speed, error/outcome counters. Read as a coherent copy; UI never edits it. |
 | `Clip` | ID/generation, source, raw format/rate, allocated capacity and valid length, capture sample interval, evaluation metadata. Ownership REC; immutable after finalization until discarded. Never patient-persisted. |
 | `MeasurementResult` | result/session ID, source/generation, valid flag/reason, BPM value and declared precision, quality definition/value, coverage, first/last sample index, measurement monotonic interval and UTC mapping, frozen patient/point/config/filter IDs, completion status. Invalid results carry no sendable numeric value. |
-| `NetworkJob` | stable Observation ID, immutable result/payload, frozen endpoint/profile/auth-config reference, attempt type/count, lease ID. Secrets stay outside evidence. Result patient/time/value never resnapshotted from live state on retry. |
+| `NetworkJob` | stable Observation ID, immutable result/payload, frozen endpoint/profile/auth-config reference, attempt count (one in MVP), lease ID. Secrets stay outside evidence. Result patient/time/value never resnapshotted from live state. |
 | `HealthEvent` | component, error class, time/generation, severity, evidence level and counter reference. Hardware physical proof references explicit test evidence. |
 
 ## Ownership, memory and queues
@@ -62,7 +62,7 @@ hand-off; no lock spans I2S wait, SPI, file access, TLS or rendering. `k_msgq` c
 or handles, not audio payloads of unbounded length. Use nonblocking enqueue on the audio path.
 Analysis overflow marks a gap and resets its window; display coalesces to latest snapshot; input
 queue overflow reconciles stable values but rejects/report transient actions. A full network slot
-returns Busy and retains the completed result visibly; it does not silently overwrite a result.
+returns Busy without overwriting a job; a terminal failure retains only redacted outcome metadata, with no retry queue.
 
 Candidate memory accounting:
 
@@ -85,16 +85,13 @@ Candidate memory accounting:
 | Live | reset source-dependent state on source generation change | 128-frame normalized fan-out; selected listening filter; gain/saturation; TX | stop/fault mute; capture keeps live path |
 | Capture | allocate/claim bounded clip and ID; LED active | copy raw prefilter/pregain; normal live listening continues | full → Replay; cancel → Live; stop/fault → Idle/Fault, incomplete clip invalid |
 | Replay | freeze valid clip; initialize speed stage; LED active | raw clip → filter → WSOLA → gain/saturation; fresh mic still feeds analysis | end/cancel → Live; release clip cursor; stop/fault mutes |
-| Measurement Acquiring | freeze context/config/ID and clear aggregation | original-rate windows; independent filter; valid estimates | duration → Finalizing; context/cancel/fault discards session |
+| Measurement Acquiring | freeze context/config/ID and clear aggregation | original-rate windows; independent filter; valid estimates | Stop <15 s cancels; Stop ≥15 s → Finalizing; identity change rejected; DA invalidates session |
 | Finalizing | stop accepting windows for that interval | aggregate and union valid temporal coverage | freeze valid/invalid result once; late blocks cannot mutate result |
 | Delivery Pending | retain completed result and unsent identity | wait for Idle/prerequisites; do not force stop | grant job once; full slot leaves visible Pending |
-| Sending | acquire exclusive Idle lease; snapshot payload | bounded connect/TLS/PUT/readback | outcome event + release lease; start request cancels/drains first |
-| Fault | mute and invalidate active acquisition | expose cause, bounded explicit recovery | reinitialize to Boot; no automatic unbounded restart |
+| Sending | acquire exclusive Idle lease; snapshot payload | bounded connect/TLS/PUT/readback | outcome event + release lease; Start is Busy, never queued |
+| Fault | mute and invalidate active acquisition | expose latched DA cause | full device restart to Boot only |
 
-Changing Heart/Lung or source cancels relevant capture/measurement, resets filter/analysis context
-and rejects stale completions. Patient/point changes cancel an acquiring measurement but cannot
-modify a completed result. Analysis coefficient changes during a session require cancel/restart
-rather than aggregating across undocumented configurations. Playback filter changes are allowed.
+Changing Heart/Lung, source, patient or point during a session is rejected with a normal fault and leaves the frozen context unchanged. Outside a session the controller may accept configuration changes and reset source-dependent histories. Generation checks reject stale completions. Separate acknowledgement clears normal-fault indication without starting, retrying or changing an active workflow. Device Alarm remains latched until full restart.
 
 ## DSP and measurement design
 
@@ -126,7 +123,7 @@ A completed measurement has separate identity from a replay clip. Use a boot-uni
 plus session counter and keep the resulting FHIR resource ID stable for all attempts. Use PUT
 `/Observation/{id}` only after confirming the server permits update/create; do not switch to POST
 silently. One initial attempt may be queued automatically when a valid result and Idle/config
-prerequisites coincide; explicit retry is required after failure. Eligibility in Lung is denied.
+prerequisites coincide; failure aborts without any retry queue. Eligibility in Lung is denied.
 
 Map sample/monotonic measurement interval to UTC from an approved clock anchor. Use measurement
 time, not send time; clock loss/skew makes the result ineligible until its mapping is resolved,
@@ -137,13 +134,12 @@ The local profile/metadata mapping and decimal precision require agreement.
 
 NET verifies CA/name/time, checks bounded status/body parsing, and GETs the resource to compare
 ID/subject/code/unit/value/interval. Accepted without successful readback = Unverified, not Sent.
-An explicit retry after an uncertain response uses identical ID/payload to avoid duplicate logical
-observations. Configuration/auth errors and server failures remain visible; no automatic retry loop.
+An uncertain response terminates as Unverified; no retry is offered in MVP. Configuration/auth errors and server failures remain visible; no automatic retry loop.
 SNTP is a clock synchronization mechanism, not inherently authenticated trusted time; approve the
 local network/clock trust assumptions. Credentials are private deployment configuration.
 
 Network and live listening use an exclusive controller lease. Stop audio before granting network;
-a start request first cancels/drains network, then waits for release, then primes/starts audio.
+Start during analysis/sending is rejected Busy, with no cancellation or queued start. A fresh Start after release primes/starts audio.
 If release cannot be proven, remain stopped and show the reason. Radio/driver background behavior
 must be measured; disabling application jobs alone is not proof of interference isolation.
 
@@ -152,7 +148,11 @@ must be measured; disabling application jobs alone is not proof of interference 
 Service operations return Accepted / Rejected(reason) / Busy for commands and emit one terminal
 outcome per accepted action ID. Essential audio faults mute; optional display/touch/SD failure
 degrades capability. Analysis gaps invalidate analysis, not all listening. No component formats SD
-or persists captured patient audio. No old result is relabelled with a new ID. Recovery, watchdog
-thresholds and diagnostic cost are open; a bounded request is preferable to an implicit retry loop.
+or persists captured patient audio. No old result is relabelled with a new ID. DA requires complete restart; normal Wi-Fi indication clears manually only. Watchdog
+detection thresholds and diagnostic cost are open; a bounded request is preferable to an implicit retry loop.
 
 Created by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.
+
+## Current MVP baseline — 11 October
+
+[Owner decisions and numeric proposals](../planning/mvp-decisions-2026-10-11.md) supersede older clip/retry/recovery proposals here. Raw capture/REC/replay is optional; BPM retains bounded streaming analysis state and window estimates. Session identity changes are rejected with normal fault, never applied. Invalid BPM sends no numeric value and uses a separately validated error-report contract. Current session state transitions are in [the state diagram](../architecture/mvp-session-state.puml).

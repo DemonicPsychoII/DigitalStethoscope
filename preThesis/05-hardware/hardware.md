@@ -32,3 +32,21 @@
 
 - Kopfhörer / Verstärkerstufe hinter PCM5102A
 - Verkabelung/Adapterplatine, ggf. Steckbrett vs. Lötaufbau
+
+## Owner update — 11 October 2026
+
+Current evaluation target: newest Altium evaluation PCB. Hardware is present; carrier expected in approximately two weeks. No peripheral function has been demonstrated on this exact current board/image. Older passes above are historical. Record the exact PCB export/revision and firmware hash at bring-up. Measurement equipment/second microphone is not present; latency evidence remains outstanding.
+
+Component purchase references recovered from the saved [system-architecture snapshot](../../Development/system/architecture/sources/system-architecture-digital-stethoscope.json), checked against its adjacent component labels. These identify Nico's supplied modules; listing availability/specifications were not revalidated.
+
+| Component | Owner-supplied purchase reference | MVP role |
+|---|---|---|
+| ESP32-S3 WROOM-1 N16R8 DevKitC-1 | [B0FYFF8CB2](https://www.amazon.de/dp/B0FYFF8CB2) | MCU; first Wi-Fi/FHIR phase without carrier |
+| INMP441 microphone module | [B0GX5XNGP6](https://www.amazon.de/dp/B0GX5XNGP6) | I2S input |
+| DollaTek PCM5102A module | [B07PMGGMJF](https://www.amazon.de/dp/B07PMGGMJF) | I2S line output; amplifier still requires identification/verification |
+| Aussel B10K linear potentiometer | [B0734K6WYP](https://www.amazon.de/dp/B0734K6WYP) | Volume |
+| HUAZIZ LED pushbutton 12×12×7 mm | [B09QQJWTL5](https://www.amazon.de/dp/B09QQJWTL5) | Start/Stop and status; distinct error acknowledgement |
+| Fasizi 2.8-inch ILI9341 240×320 SPI touch display | [B09Z29CGY1](https://www.amazon.de/dp/B09Z29CGY1) | Optional display/touch |
+| eMagTech SP3T three-position THT slide switch | [B0FKSPJJJ6](https://www.amazon.de/dp/B0FKSPJJJ6) | Listening filter; second speed switch optional |
+
+The reused chestpiece has no purchase link. Software-observable faults and physical audio proof are separate; successful driver initialization is insufficient. See [current decisions and target budgets](../../Development/system/planning/mvp-decisions-2026-10-11.md).

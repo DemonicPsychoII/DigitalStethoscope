@@ -1,0 +1,44 @@
+@startuml mvp_session_state
+!pragma layout smetana
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+title MVP session and alarm transitions — owner decisions 11 October
+[*] --> Boot
+Boot --> Idle : software-observable startup checks pass
+Boot --> DA : essential functionality fails
+Idle --> Listening : Start / Heart or Lung
+Listening --> Measuring : Heart session begins / freeze context
+Listening --> Idle : Stop in Lung / mute, no BPM or send
+Measuring --> Idle : Stop before 15 s / cancel, no send
+Measuring --> Analysing : Stop at or after 15 s / mute, finalize
+Analysing --> Sending : valid BPM + configured prerequisites
+Analysing --> ReportingError : invalid BPM + validated error contract + prerequisites
+Analysing --> Idle : Wi-Fi unconfigured / no send or Wi-Fi error
+Analysing --> NormalFault : configured delivery prerequisites fail
+Sending --> Idle : accepted + matching readback
+Sending --> NormalFault : failed or unverified / abort, no retry
+ReportingError --> Idle : error report verified / no numeric BPM
+ReportingError --> NormalFault : report failed / abort, no retry
+NormalFault --> Idle : separate manual acknowledgement / no implicit Start
+DA --> Boot : full device restart only
+note right of Analysing
+  Start = Busy, visible activity.
+  No cancellation or queued Start.
+end note
+note right of Sending
+  Same Busy rule during both send paths.
+  Exclusive network lease; audio stopped.
+end note
+note bottom of Measuring
+  Reject mode/patient/context changes with a normal fault.
+  Keep frozen session identity and current session.
+  Normal Wi-Fi/BPM faults preserve functioning audio.
+  Normal-fault indication is latched separately from workflow;
+  acknowledgement does not change an active workflow.
+end note
+note bottom of DA
+  Any detected dangerous/essential-function fault -> DA.
+  Mute; invalidate incomplete work; latch until restart.
+  A button cannot restore operation.
+end note
+@enduml

@@ -6,7 +6,7 @@ Playback, measurement and delivery have independent state. “Record audio” in
 
 ## UC-01 — Power up and assess readiness
 
-- **Actors and trigger:** Operator; power-on or explicit recovery
+- **Actors and trigger:** Operator; power-on or full restart after Device Alarm
 - **Preconditions:** Fitted carrier and approved power/amplifier setup.
 - **Postconditions:** Output starts silent; capabilities and degraded/fault status are visible.
 - **Normal flow:** Initialize platform and memory; prime DAC with silence; check audio, controls and optional devices; publish Ready/Idle; await explicit listening command.
@@ -20,13 +20,13 @@ Playback, measurement and delivery have independent state. “Record audio” in
 - **Normal flow:** Start live; normalize microphone blocks; independently fan out analysis; apply listening filter, smoothed volume and saturation; handle stable control events at block boundaries.
 - **Alternatives/errors:** Slow speed in Live selects future replay speed, not unbounded live slowdown. Lung forces Raw/1×. Invalid switch contact keeps last valid setting; stop mutes output.
 
-## UC-03 — Capture a clip and replay slowly
+## UC-03 — Capture a clip and replay slowly (optional)
 
 - **Actors and trigger:** Operator; button or capture command
 - **Preconditions:** Heart mode, microphone, active live audio, free bounded clip RAM.
 - **Postconditions:** One raw volatile clip is replayed at selected speed then returns to live.
 - **Normal flow:** Assign clip ID; turn activity LED on; capture raw before filtering/gain while live continues; at configured capacity finalize clip; replay through selected filter and pitch-preserving speed stage; end returns live.
-- **Alternatives/errors:** Button during capture/replay cancels and returns live. Stop ends audio. Mode/source change discards stale clip. Allocation failure rejects capture without interrupting live.
+- **Alternatives/errors:** Button during capture/replay cancels and returns live. Stop ends audio. Clip/replay is optional; session mode/source changes are rejected. Allocation failure rejects capture without interrupting live.
 
 ## UC-04 — Evaluate using identical test recordings
 
@@ -42,22 +42,22 @@ Playback, measurement and delivery have independent state. “Record audio” in
 - **Preconditions:** Heart + microphone; active audio; patient/context captured; analysis parameters approved for evaluation.
 - **Postconditions:** One completed valid/invalid immutable result, or an explicitly cancelled session.
 - **Normal flow:** Assign session ID; freeze patient, point and analysis configuration; analyze original-rate windows independently of listening; aggregate accepted estimates over configured duration; freeze interval, quality, coverage and provenance.
-- **Alternatives/errors:** Poor quality/clipping/gaps prevent accepted windows. Cancel/context change/audio fault discards incomplete session. Invalid coverage produces invalid result and no send. Do not count S1/S2 as two beats.
+- **Alternatives/errors:** Poor quality/clipping/gaps prevent accepted windows. Stop before 15 s cancels. Context changes are rejected with a normal fault and preserve the session. Essential audio fault latches DA. Invalid coverage produces no numeric BPM; a separately validated error report may be sent after listening stops. Do not count S1/S2 as two beats.
 
-## UC-06 — Deliver or retry a completed result
+## UC-06 — Deliver a completed result or invalid-result error
 
-- **Actors and trigger:** Operator and FHIR/time services; result eligible, stop listening, explicit retry
-- **Preconditions:** Valid completed microphone result; Idle; patient/server/auth/time/trust configured.
-- **Postconditions:** One initial attempt per result; verified delivery or visible failed/unverified outcome.
-- **Normal flow:** Wait without stopping listening; operator stops; controller grants network lease; create R4 Observation; validate TLS/name/time; PUT stable ID; parse response; read back matching content; release lease.
-- **Alternatives/errors:** No config, invalid time or source → no request. Timeout/4xx/5xx/readback failure remains visible. Explicit retry retains ID, interval, patient and value. Start listening cancels/drains network before audio restarts.
+- **Actors and trigger:** Operator and FHIR/time services; completed result, Stop listening.
+- **Preconditions:** Idle, frozen completed microphone-session context, configured patient/server/time/trust. Lung/test/cancelled paths are excluded from production sending.
+- **Postconditions:** One attempt; verified delivery or terminal failed/unverified outcome.
+- **Normal flow:** Grant exclusive network lease; serialize numeric R4 Observation for valid BPM or separately validated missing-value/error representation for invalid BPM; verify TLS/name/time; PUT stable ID; read back matching content; release lease.
+- **Alternatives/errors:** Unconfigured Wi-Fi causes no send/error. Configured connection failure permits offline listening and latches a manually cleared normal fault. Timeout/4xx/5xx/readback failure aborts without retry queue. Start during analysis/sending is Busy with activity indication and cannot cancel or queue a new session. Timeout after server commit remains Unverified.
 
 ## UC-07 — Operate in lung mode
 
 - **Actors and trigger:** Operator; select Lung
 - **Preconditions:** Audio ready.
 - **Postconditions:** Raw live at 1×; no BPM, clip replay or FHIR.
-- **Normal flow:** Controller cancels active clip/measurement; invalidates heart estimate; forces Raw and 1×; displays Lung; keeps volume and point controls available.
+- **Normal flow:** Controller accepts mode changes only outside a session; invalidates heart estimate; forces Raw and 1×; displays Lung; keeps volume available; context remains fixed during a session.
 - **Alternatives/errors:** BPM/replay/send commands rejected with reason. Previously completed heart result is retained only as historical context and cannot be sent while in Lung.
 
 ## UC-08 — Cancel, stop or recover from faults
@@ -65,8 +65,8 @@ Playback, measurement and delivery have independent state. “Record audio” in
 - **Actors and trigger:** Operator or MON; cancel/stop/failure
 - **Preconditions:** Any active operation or muted Fault.
 - **Postconditions:** Buffers and jobs have a documented outcome; essential failure stays muted until recovery succeeds.
-- **Normal flow:** Cancel clip or measurement independently; stop cancels active operations and mutes; MON reports essential fault; controller releases resources; explicit recovery reinitializes boundedly and returns Idle.
-- **Alternatives/errors:** UI or SD failure preserves microphone listening. Resource/analysis overflow resets analysis validity. Recovery failure remains Fault; no endless retry or old result relabelled as new.
+- **Normal flow:** Cancel clip or measurement independently; stop cancels active operations and mutes; MON reports essential fault; controller releases resources; Device Alarm stays muted/latched until full restart and startup checks succeed. Normal faults have a separate acknowledgement action.
+- **Alternatives/errors:** UI or SD failure preserves microphone listening. Resource/analysis overflow resets analysis validity. Button acknowledgement cannot clear DA; no old result relabelled as new.
 
 ## UC-09 — Configure and inspect the prototype
 
@@ -76,10 +76,6 @@ Playback, measurement and delivery have independent state. “Record audio” in
 - **Normal flow:** Calibrate touch and volume; assign patient and named listening point; set server/trust/auth/time; inspect build/carrier/config IDs, timing/resource/error counters; select approved research parameters.
 - **Alternatives/errors:** Reject invalid values atomically. Configuration changes cannot mutate a frozen result. Diagnostic test sources stay visibly marked and excluded from patient delivery.
 
-## Control workflow proposal
+## Current MVP control workflow
 
-The physical button starts clip capture from Live and cancels capture/replay on the next press. Separate touch/shell commands provide Start listening, Stop, Start measurement, Cancel measurement, Send/retry and Recovery. No undocumented long-press behavior is assumed. Mode/source/patient/point changes during acquisition cancel that measurement to avoid mixing contexts. A valid completed result can wait in Pending while listening continues. Entering Idle permits an initial send only if delivery prerequisites are met; failed delivery never loops automatically.
-
-Physical switches, touch and shell use last stable transition wins for filter/speed. An unchanged physical switch does not overwrite a newer touch/shell choice every polling cycle. Display shows effective settings and pending replay speed, not simply contact positions.
-
-Created by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.
+See [11 October decisions](../planning/mvp-decisions-2026-10-11.md) for the confirmed Busy, acknowledgement, DA, context and cancellation transitions. Capture/replay and display/touch are optional; their historical proposal is not the MVP button mapping. Normal Start/Stop and separate acknowledgement remain distinct; no undocumented long press is assumed. Physical filter transitions and volume affect the listening path independently of frozen analysis settings.

@@ -1,5 +1,7 @@
 # Architecture view boundaries and provenance
 
+Current owner decisions and numeric proposals: [11 October MVP decisions](../planning/mvp-decisions-2026-10-11.md). Older source snapshots and evaluation behavior remain historical evidence.
+
 These notes qualify the [presentation viewer](review.html); the diagrams describe
 a proposed thesis product, except for the separate evaluation implementation view.
 
