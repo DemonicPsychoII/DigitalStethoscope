@@ -1,0 +1,33 @@
+@startuml listening_workflow
+' Updated by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.
+!pragma layout smetana
+skinparam shadowing false
+skinparam componentStyle rectangle
+skinparam defaultFontName SansSerif
+title Listening
+start
+:Idle;
+:Start listening;
+repeat
+ if (Lung mode or Raw selected?) then (yes)
+  :Bypass filter;
+ else (no)
+  :Apply selected filter;
+ endif
+ :Apply volume;
+ :Play audio;
+ if (Heart mode + capture request?) then (yes)
+  :Record + listen;
+  if (Cancelled / source or mode changed?) then (yes)
+   :Discard clip;
+  else (clip full)
+   :Replay clip;
+   :End / cancel;
+  endif
+ endif
+ :Update settings;
+repeat while (Stop / fault?) is (no) not (yes)
+:Mute;
+:Idle / Fault;
+stop
+@enduml

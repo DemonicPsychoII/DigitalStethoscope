@@ -1,0 +1,31 @@
+@startuml system_components
+' Updated by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.
+!pragma layout smetana
+skinparam shadowing false
+skinparam componentStyle rectangle
+skinparam defaultFontName SansSerif
+title System components
+left to right direction
+component "Chestpiece" as chest
+component "INMP441\nMicrophone" as mic
+node "ESP32-S3" as cpu
+component "PCM5102A\nDAC" as dac
+component "Headphone amplifier" as amp
+component "Headphones" as hp
+component "ILI9341 / XPT2046\nDisplay / touch" as ui
+component "Buttons / switches\nPotentiometer / LED" as controls
+artifact "SD card" as sd
+database "FHIR server" as server
+chest --> mic : sound
+mic --> cpu : I²S
+cpu --> dac : I²S
+dac --> amp : analog audio
+amp --> hp : analog audio
+controls --> cpu : controls
+cpu --> controls : status
+ui --> cpu : touch
+cpu --> ui : display
+sd --> cpu : SPI
+cpu --> server : Wi-Fi / HTTPS
+server --> cpu : status / readback
+@enduml

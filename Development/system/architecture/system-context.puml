@@ -1,0 +1,20 @@
+@startuml system_context
+' Updated by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.
+!pragma layout smetana
+skinparam shadowing false
+skinparam componentStyle rectangle
+skinparam defaultFontName SansSerif
+title System context
+left to right direction
+actor "Operator" as operator
+actor "Patient / sound source" as source
+rectangle "Digital stethoscope" as device
+database "FHIR server" as fhir
+cloud "Network / time" as net
+source --> device : sound
+operator --> device : controls
+device --> operator : audio / display
+device --> fhir : BPM Observation / readback request\nWi-Fi / HTTPS
+fhir --> device : status / readback
+net --> device : connectivity / time
+@enduml

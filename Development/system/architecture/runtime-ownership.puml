@@ -1,0 +1,35 @@
+@startuml runtime_ownership
+' Updated by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.
+!pragma layout smetana
+skinparam shadowing false
+skinparam componentStyle rectangle
+skinparam defaultFontName SansSerif
+title Threads
+top to bottom direction
+skinparam component {
+ BackgroundColor<<thread>> #DCEBFA
+ BorderColor<<thread>> #345E87
+ BackgroundColor<<interrupt>> #F0E5CF
+}
+component "GPIO ISR" as irq <<interrupt>>
+component "Touch / GPIO / ADC adapters" as adapters
+component "Input\nButtons / switches / touch" as inp <<thread>>
+component "Main / controller" as ctl <<thread>>
+component "Audio\nFilter / capture / replay" as audio <<thread>>
+component "BPM\nWindow / aggregation" as bpm <<thread>>
+component "Storage" as storage <<thread>>
+component "Display" as display <<thread>>
+component "Network" as net <<thread>>
+irq --> inp : wake-up · semaphore
+adapters --> inp : input samples · driver reads
+inp --> ctl : control events · k_msgq
+ctl --> audio : settings / commands · k_msgq
+audio --> bpm : original-rate sample blocks\nbefore filter / gain · handles / k_msgq
+bpm --> ctl : BPM result · k_msgq
+audio --> ctl : completion / fault · k_msgq
+ctl --> storage : file request · k_msgq
+storage --> audio : file audio · block handles / k_msgq
+ctl --> display : UI state · snapshot copy
+ctl --> net : BPM result · k_msgq
+net --> ctl : send outcome · k_msgq
+@enduml

@@ -1,0 +1,43 @@
+@startuml software_components
+' Updated by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.
+!pragma layout smetana
+skinparam shadowing false
+skinparam componentStyle rectangle
+skinparam defaultFontName SansSerif
+title Software components
+top to bottom direction
+component "MON Monitor" as mon
+package "L2 Application" as app {
+ component "CTL Controller" as ctl
+ component "UI Dashboard" as ui
+ ctl -[hidden]right-> ui
+}
+package "L1 Services" as services {
+ component "INP Input" as inp
+ component "AUD Audio" as aud
+ component "LIS Apply filter" as lis
+ component "REC Capture / replay" as rec
+ component "BPM Analysis" as bpm
+ component "STO Storage" as sto
+ component "NET Delivery" as net
+ inp -[hidden]right-> aud
+ aud -[hidden]right-> lis
+ lis -[hidden]right-> rec
+ inp -[hidden]down-> bpm
+ bpm -[hidden]right-> sto
+ sto -[hidden]right-> net
+}
+package "L0 Zephyr / adapters" as platform {
+ component "Audio / GPIO / ADC" as io
+ component "Display / touch / SD" as spi
+ component "Wi-Fi / time / TLS" as wifi
+ io -[hidden]right-> spi
+ spi -[hidden]right-> wifi
+}
+mon -down-> ctl : health events
+ctl -down-> aud : commands
+sto -[hidden]down-> spi
+services -down-> platform : driver calls
+mon ..> services : monitoring
+mon ..> platform : monitoring
+@enduml

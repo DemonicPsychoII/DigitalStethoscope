@@ -1,0 +1,31 @@
+@startuml electrical_interfaces
+' Updated by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.
+!pragma layout smetana
+skinparam shadowing false
+skinparam componentStyle rectangle
+skinparam defaultFontName SansSerif
+' Presentation I2S1 = devicetree i2s0 (mic); I2S2 = i2s1 (DAC).
+title Electrical interfaces
+left to right direction
+component "INMP441\nMic" as mic
+component "PCM5102A\nDAC" as dac
+node "ESP32-S3" as cpu
+component "ILI9341\nDisplay" as display
+component "XPT2046\nTouch" as touch
+artifact "SD card" as sd
+component "Shared SPI bus" as spi
+component "Button / switches" as controls
+component "Potentiometer" as pot
+component "LED" as led
+component "Backlight" as backlight
+mic --> cpu : I²S1
+cpu --> dac : I²S2
+cpu -- spi : SPI
+spi -- display
+spi -- touch
+spi -- sd
+controls --> cpu : GPIO
+pot --> cpu : ADC
+cpu --> led : GPIO
+cpu --> backlight : PWM
+@enduml

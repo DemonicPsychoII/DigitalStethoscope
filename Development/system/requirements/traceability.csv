@@ -1,0 +1,57 @@
+id,component,use_cases,system_requirements,sources,status,parameters,verification,document
+HW-001,HW,"UC-01,UC-02","SR-01,SR-11","S01,S03,S07",Source-backed,—,VT-12,components/hw.md#hw-001
+HW-002,HW,UC-02,"SR-02,SR-11","S01,S03",Source-backed; amplifier open,P16,VT-12,components/hw.md#hw-002
+HW-003,HW,"UC-04,UC-09",SR-11,"S03,S07",Source-backed,—,"VT-12,VT-13",components/hw.md#hw-003
+HW-004,HW,"UC-02,UC-04","SR-02,SR-08","S01,S03,S05",Derived scope reconciliation,—,"VT-12,VT-10",components/hw.md#hw-004
+INP-001,INP,"UC-02,UC-03",SR-03,"S03,S04",Source-backed,P10,VT-04,components/inp.md#inp-001
+INP-002,INP,UC-02,SR-03,"S03,S04",Source-backed,—,"VT-04,VT-02",components/inp.md#inp-002
+INP-003,INP,"UC-02,UC-09",SR-03,"S03,S07",Derived,"P10,P16",VT-04,components/inp.md#inp-003
+INP-004,INP,"UC-02,UC-08","SR-03,SR-09","S03,S04",Source-backed + derived overflow policy,P11,"VT-04,VT-09",components/inp.md#inp-004
+CTL-001,CTL,"UC-01,UC-02,UC-09","SR-01,SR-03",S04,Source-backed,—,VT-04,components/ctl.md#ctl-001
+CTL-002,CTL,UC-02,SR-03,"S03,S04",Source-backed,P10,VT-04,components/ctl.md#ctl-002
+CTL-003,CTL,"UC-03,UC-05,UC-08","SR-04,SR-05,SR-09",S03,Derived,—,"VT-04,VT-09",components/ctl.md#ctl-003
+CTL-004,CTL,UC-07,SR-07,"S03,S05",Source-backed,—,"VT-04,VT-06,VT-07",components/ctl.md#ctl-004
+CTL-005,CTL,"UC-06,UC-08","SR-06,SR-09",S04,Source-backed + derived lease contract,"P13,P19",VT-08,components/ctl.md#ctl-005
+CTL-006,CTL,"UC-01,UC-03,UC-05","SR-01,SR-04,SR-05","S02,S03",Proposed workflow,P20,"VT-04,VT-05",components/ctl.md#ctl-006
+AUD-001,AUD,"UC-02,UC-04","SR-02,SR-08","S03,S07",Source-backed,P01,"VT-02,VT-10",components/aud.md#aud-001
+AUD-002,AUD,"UC-01,UC-02","SR-01,SR-02","S03,S07",Source-backed,"P11,P15","VT-01,VT-02",components/aud.md#aud-002
+AUD-003,AUD,UC-02,SR-02,"S03,S04",Source-backed target,"P01,P02",VT-02,components/aud.md#aud-003
+AUD-004,AUD,"UC-02,UC-05","SR-02,SR-05","S03,S04",Source-backed,P11,"VT-06,VT-09",components/aud.md#aud-004
+AUD-005,AUD,"UC-02,UC-08","SR-02,SR-09",S03,Source-backed + proposed response bound,P12,VT-09,components/aud.md#aud-005
+AUD-006,AUD,"UC-02,UC-04","SR-02,SR-08",S03,Derived,—,"VT-10,VT-09",components/aud.md#aud-006
+LIS-001,LIS,"UC-02,UC-04","SR-02,SR-08","S03,S04",Source-backed,P08,"VT-03,VT-10",components/lis.md#lis-001
+LIS-002,LIS,UC-02,SR-02,"S03,S07",Source-backed; smoothing open,"P09,P16",VT-03,components/lis.md#lis-002
+LIS-003,LIS,"UC-02,UC-05","SR-02,SR-05","S03,S04",Source-backed,—,VT-06,components/lis.md#lis-003
+LIS-004,LIS,UC-02,SR-02,"S03,S06",Source-backed target,P03,VT-02,components/lis.md#lis-004
+LIS-005,LIS,UC-04,SR-08,S04,Source-backed,—,"VT-03,VT-10",components/lis.md#lis-005
+REC-001,REC,UC-03,SR-04,S03,Proposal; recording policy open,P04,VT-05,components/rec.md#rec-001
+REC-002,REC,UC-03,SR-04,S03,Source-backed workflow,"P04,P14","VT-05,VT-06",components/rec.md#rec-002
+REC-003,REC,UC-03,SR-04,"S03,S06",Source-backed; acceptance open,P14,VT-05,components/rec.md#rec-003
+REC-004,REC,"UC-03,UC-08","SR-04,SR-09",S03,Derived,—,"VT-05,VT-09",components/rec.md#rec-004
+BPM-001,BPM,UC-05,SR-05,"S03,S04",Source-backed,P08,VT-06,components/bpm.md#bpm-001
+BPM-002,BPM,UC-05,SR-05,S03,Source-backed; estimator parameters open,"P05,P06",VT-06,components/bpm.md#bpm-002
+BPM-003,BPM,"UC-05,UC-08","SR-05,SR-09","S03,S04",Source-backed; thresholds open,P07,"VT-06,VT-09",components/bpm.md#bpm-003
+BPM-004,BPM,UC-05,SR-05,S03,Source-backed; aggregation design derived,"P05,P07,P18",VT-06,components/bpm.md#bpm-004
+BPM-005,BPM,UC-05,SR-05,"S03,S06",Open acceptance target,"P06,P07",VT-06,components/bpm.md#bpm-005
+BPM-006,BPM,"UC-05,UC-08","SR-05,SR-09",S03,Derived,—,"VT-06,VT-09",components/bpm.md#bpm-006
+STO-001,STO,UC-04,"SR-08,SR-11",S03,Source-backed; file formats proposed,P17,VT-10,components/sto.md#sto-001
+STO-002,STO,UC-04,"SR-08,SR-11",S03,Source-backed,P11,"VT-13,VT-02",components/sto.md#sto-002
+STO-003,STO,"UC-04,UC-08","SR-08,SR-09","S03,S07",Source-backed,—,"VT-10,VT-09",components/sto.md#sto-003
+STO-004,STO,"UC-04,UC-09","SR-08,SR-10","S03,S05",Derived,—,"VT-10,VT-11",components/sto.md#sto-004
+UI-001,UI,"UC-01,UC-02,UC-05,UC-06","SR-01,SR-03,SR-10","S03,S04",Source-backed,P10,"VT-04,VT-13",components/ui.md#ui-001
+UI-002,UI,"UC-03,UC-05,UC-08","SR-03,SR-09",S03,Source-backed,—,"VT-04,VT-05",components/ui.md#ui-002
+UI-003,UI,"UC-02,UC-09",SR-03,"S03,S04",Source-backed,—,VT-04,components/ui.md#ui-003
+UI-004,UI,"UC-04,UC-08","SR-09,SR-11",S03,Source-backed,P10,"VT-09,VT-13",components/ui.md#ui-004
+UI-005,UI,"UC-04,UC-05,UC-09","SR-08,SR-10","S03,S07",Derived,P18,"VT-04,VT-11",components/ui.md#ui-005
+NET-001,NET,"UC-06,UC-09",SR-06,S04,Source-backed + derived lease,P19,VT-08,components/net.md#net-001
+NET-002,NET,UC-06,"SR-06,SR-08","S03,S04",Source-backed,P18,VT-07,components/net.md#net-002
+NET-003,NET,UC-06,SR-06,S03,Source-backed,P18,VT-07,components/net.md#net-003
+NET-004,NET,UC-06,SR-06,"S02,S03",Source-backed + derived idempotent PUT,—,"VT-07,VT-08",components/net.md#net-004
+NET-005,NET,UC-06,SR-06,"S03,S06",Source-backed,P18,VT-08,components/net.md#net-005
+NET-006,NET,UC-06,"SR-06,SR-09",S03,Source-backed,P13,"VT-07,VT-08",components/net.md#net-006
+NET-007,NET,"UC-06,UC-09","SR-06,SR-10","S03,S06",Derived privacy constraint,P18,"VT-08,VT-11",components/net.md#net-007
+MON-001,MON,"UC-02,UC-08","SR-02,SR-09,SR-10",S04,Source-backed,—,"VT-02,VT-09,VT-11",components/mon.md#mon-001
+MON-002,MON,"UC-01,UC-08,UC-09","SR-01,SR-09,SR-10","S03,S04",Source-backed,—,"VT-01,VT-11",components/mon.md#mon-002
+MON-003,MON,"UC-02,UC-09","SR-02,SR-10","S03,S04",Source-backed; resource margins proposed,P15,"VT-02,VT-11",components/mon.md#mon-003
+MON-004,MON,UC-08,SR-09,"S03,S04",Derived watchdog/recovery design,P12,VT-09,components/mon.md#mon-004
+MON-005,MON,"UC-04,UC-09","SR-08,SR-10","S03,S04",Source-backed,—,VT-11,components/mon.md#mon-005
