@@ -1,0 +1,165 @@
+{
+  "aes_lester_boley_2007": {
+    "reference": "Lester, M. & Boley, J. (2007). The Effects of Latency on Live Sound Monitoring. 123rd AES Convention, Paper 7198.",
+    "doi": "unverified",
+    "url": "https://secure.aes.org/forum/pubs/conventions/?elib=14256",
+    "verified": "AES Convention record opened; authors, date, abstract, paper number, and abstract result inspected. Full-text access not verified.",
+    "paywalled": "unverified",
+    "page": "Abstract; AES Convention 123, Paper 7198"
+  },
+  "wang_low_latency_thesis": {
+    "reference": "Wang, Y. (2018). Low Latency Audio Processing. PhD thesis, Queen Mary University of London.",
+    "doi": "unverified",
+    "url": "https://qmro.qmul.ac.uk/xmlui/bitstream/handle/123456789/44697/WANG_Yonghao_Final_PhD_070918.pdf?sequence=1",
+    "verified": "QMUL repository and thesis PDF search excerpt inspected; full page-level threshold data not verified.",
+    "paywalled": false,
+    "page": "unverified"
+  },
+  "sharma_audio_haptic_2023": {
+    "reference": "Sharma, G., Yasuda, H. & Kuehner, M. (2023). Detection Threshold of Audio Haptic Asynchrony in a Driving Context. arXiv:2307.05451.",
+    "doi": "unverified",
+    "url": "https://arxiv.org/abs/2307.05451",
+    "verified": "arXiv record opened; authors, title, abstract and reported detection interval inspected.",
+    "paywalled": false,
+    "page": "Abstract"
+  },
+  "rhythm_audio_vibrotactile_2020": {
+    "reference": "The influence of rhythm on detection of auditory and vibrotactile asynchrony (2020). Peer-reviewed article, PMC7181424.",
+    "doi": "unverified",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7181424/",
+    "verified": "Article search result inspected; reports mean vibrotactile and auditory thresholds.",
+    "paywalled": false,
+    "page": "Abstract; exact page unverified"
+  },
+  "esp_i2s_s3": {
+    "reference": "Espressif Systems. ESP-IDF Programming Guide, Inter-IC Sound (I2S), ESP32-S3, v6.1 documentation.",
+    "doi": "unverified",
+    "url": "https://docs.espressif.com/projects/esp-idf/en/stable/esp32s3/api-reference/peripherals/i2s.html",
+    "verified": "Official ESP-IDF ESP32-S3 I2S documentation opened; controller features, mode matrix, PDM conversion, DMA, and power management sections inspected.",
+    "paywalled": false,
+    "page": "Introduction; Overview of All Modes; PDM RX Mode; Data Transport"
+  },
+  "esp_dsp_benchmarks": {
+    "reference": "Espressif Systems. ESP-DSP Library Benchmarks, ESP32S3 column.",
+    "doi": "unverified",
+    "url": "https://docs.espressif.com/projects/esp-dsp/en/latest/esp32/esp-dsp-benchmarks.html",
+    "verified": "Official Espressif ESP-DSP benchmark table opened; cycle-count method and S3 FIR, FFT, and biquad entries inspected.",
+    "paywalled": false,
+    "page": "Benchmark table: FIR Filters, FFTs Radix-2, IIR Filters"
+  },
+  "esp_dsp_api": {
+    "reference": "Espressif Systems. ESP-DSP Library API Reference.",
+    "doi": "unverified",
+    "url": "https://docs.espressif.com/projects/esp-dsp/en/latest/esp32/esp-dsp-apis.html",
+    "verified": "Official ESP-DSP API documentation opened; library/API reference verified.",
+    "paywalled": false,
+    "page": "unverified"
+  },
+  "esp_s3_datasheet": {
+    "reference": "Espressif Systems. ESP32-S3 Series Datasheet.",
+    "doi": "unverified",
+    "url": "https://documentation.espressif.com/esp32-s3_datasheet_en.pdf",
+    "verified": "Espressif official datasheet URL verified and opened via official document listing; technical detail not independently extracted from PDF in this pass.",
+    "paywalled": false,
+    "page": "unverified"
+  },
+  "zephyr_s3_board": {
+    "reference": "Zephyr Project. ESP32-S3-DevKitC board documentation.",
+    "doi": "unverified",
+    "url": "https://docs.zephyrproject.org/latest/boards/espressif/esp32s3_devkitc/doc/index.html",
+    "verified": "Official Zephyr board documentation opened; board support and build configuration verified.",
+    "paywalled": false,
+    "page": "Board Support Package; Supported Features"
+  },
+  "zephyr_i2s_binding": {
+    "reference": "Zephyr Project. espressif,esp32-i2s devicetree binding.",
+    "doi": "unverified",
+    "url": "https://docs.zephyrproject.org/latest/build/dts/api/bindings/i2s/espressif,esp32-i2s.html",
+    "verified": "Official Zephyr binding page opened and binding existence/properties inspected.",
+    "paywalled": false,
+    "page": "Binding properties"
+  },
+  "esp_tls_s3": {
+    "reference": "Espressif Systems. ESP-IDF Programming Guide, ESP-TLS, ESP32-S3, v6.1 documentation.",
+    "doi": "unverified",
+    "url": "https://docs.espressif.com/projects/esp-idf/en/stable/esp32s3/api-reference/protocols/esp_tls.html",
+    "verified": "Official ESP-TLS ESP32-S3 documentation opened; server verification methods, insecure bypass warning, and SNI sections inspected.",
+    "paywalled": false,
+    "page": "Overview; TLS Server Verification; SNI"
+  },
+  "esp_mbedtls_s3": {
+    "reference": "Espressif Systems. ESP-IDF Programming Guide, Mbed TLS, ESP32-S3, v6.1 documentation.",
+    "doi": "unverified",
+    "url": "https://docs.espressif.com/projects/esp-idf/en/stable/esp32s3/api-reference/protocols/mbedtls.html",
+    "verified": "Official ESP-IDF Mbed TLS ESP32-S3 documentation opened; document identity and component scope verified.",
+    "paywalled": false,
+    "page": "unverified"
+  },
+  "esp_tls_faq": {
+    "reference": "Espressif Systems. ESP-FAQ, ESP-TLS.",
+    "doi": "unverified",
+    "url": "https://docs.espressif.com/projects/esp-faq/en/latest/software-framework/protocols/esp-tls.html",
+    "verified": "Official Espressif FAQ opened; handshake heap estimate, memory fragmentation note, insecure verification bypass, TLS version and expired-certificate answers inspected.",
+    "paywalled": false,
+    "page": "Questions on handshake memory, protocol versions, certificate verification, certificate expiry"
+  },
+  "fhir_r4_vitals_official": {
+    "reference": "HL7. FHIR Release 4, Observation Vital Signs Profile (v4.0.1).",
+    "doi": "unverified",
+    "url": "https://hl7.org/fhir/R4/observation-vitalsigns.html",
+    "verified": "Official HL7 FHIR R4 profile opened; required vital-sign observations and heart-rate row inspected.",
+    "paywalled": false,
+    "page": "Vital Signs Profile; Heart rate row"
+  },
+  "loinc_8867_official": {
+    "reference": "Regenstrief Institute. LOINC 8867-4: Heart rate.",
+    "doi": "unverified",
+    "url": "https://loinc.org/8867-4",
+    "verified": "Official LOINC term page opened; code, term, and unit details inspected.",
+    "paywalled": false,
+    "page": "Term details; Example Units"
+  },
+  "fhir_observation_r4": {
+    "reference": "HL7. FHIR Release 4, Observation resource.",
+    "doi": "unverified",
+    "url": "https://hl7.org/fhir/R4/observation.html",
+    "verified": "Official HL7 FHIR R4 Observation resource page verified; base resource specification.",
+    "paywalled": false,
+    "page": "unverified"
+  },
+  "tha_faq_ba": {
+    "reference": "Technische Hochschule Augsburg. FAQs zur Bachelorarbeit, version 02.26.",
+    "doi": "unverified",
+    "url": "https://www.tha.de/index.php/Binaries/Binary89415/FAQ-Bachelorarbeit-02.26-clean.pdf",
+    "verified": "Official THA FAQ PDF opened; DMS workflow, required initial fields, four-month period, August restriction, and submission sections inspected.",
+    "paywalled": false,
+    "page": "Sections 2, 3, 4 and 5"
+  },
+  "tha_gestaltung_ba": {
+    "reference": "Technische Hochschule Augsburg, Fakultät Gestaltung. Abschlussarbeit (Interaktive Medien).",
+    "doi": "unverified",
+    "url": "https://www.tha.de/Gestaltung/Interaktive-Medien/Abschlussarbeit.pdf",
+    "verified": "Official THA PDF search result opened via search excerpt; title-change text and deadline verified.",
+    "paywalled": false,
+    "page": "Section “Änderung des Titels der Abschlussarbeit”"
+  },
+  "tha_elektrotechnik_duration": {
+    "reference": "Technische Hochschule Augsburg, Fakultät Elektrotechnik. Welchen Arbeitsumfang hat eine Bachelorarbeit und wie lange dauert deren Bearbeitung?",
+    "doi": "unverified",
+    "url": "https://www.tha.de/Elektrotechnik/Welchen-Arbeitsumfang-hat-eine-Bachelorarbeit-und-wie-lange-dauert-deren-Bearbeitung.html",
+    "verified": "Official THA Elektrotechnik page opened; publication/page existence verified; relevant text not extracted in this pass.",
+    "paywalled": false,
+    "page": "unverified"
+  },
+  "tha_mb_merblatt": {
+    "reference": "Technische Hochschule Augsburg. Merkblatt für Bachelorarbeiten Maschinenbau und Umwelt.",
+    "doi": "unverified",
+    "url": "https://www.tha.de/Binaries/Binary77874/Merkblatt-Bachelorarbeit.pdf",
+    "verified": "Direct PDF open failed, but a fresh official THA search result displayed Section 5 and the five-month maximum text; source existence and cited claim verified via indexed excerpt.",
+    "paywalled": false,
+    "page": "Section 5 Arbeitsumfang der Bachelorarbeit; printed page unverified"
+  },
+  "_metadata": {
+    "watermark": "created by GPT-6-Luna on behalf of Nico running in T3 Code through Codex."
+  }
+}
