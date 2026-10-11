@@ -65,7 +65,7 @@ Playback, measurement and delivery have independent state. “Record audio” in
 - **Actors and trigger:** Operator or MON; cancel/stop/failure
 - **Preconditions:** Any active operation or muted Fault.
 - **Postconditions:** Buffers and jobs have a documented outcome; essential failure stays muted until recovery succeeds.
-- **Normal flow:** Cancel optional clip operations independently. Stop mutes listening; an active Heart measurement cancels without sending before 15 s and finalizes at or after 15 s subject to quality and coverage checks. Stop does not cancel analysis or sending; their Busy rule remains in force; MON reports essential fault; controller releases resources; Device Alarm stays muted/latched until full restart and startup checks succeed. Normal faults have a separate acknowledgement action.
+- **Normal flow:** Cancel optional clip operations independently. Stop mutes listening; an active Heart measurement cancels without sending before 15 s and finalizes at or after 15 s subject to quality and coverage checks. Stop does not cancel analysis or sending; their Busy rule remains in force; MON reports essential fault; controller invalidates any active Heart acquisition session and does not deliver its result, then releases resources; Device Alarm stays muted/latched until full restart and startup checks succeed. Normal faults have a separate acknowledgement action.
 - **Alternatives/errors:** UI or SD failure preserves microphone listening. Resource/analysis overflow resets analysis validity. Button acknowledgement cannot clear DA; no old result relabelled as new.
 
 ## UC-09 — Configure and inspect the prototype
