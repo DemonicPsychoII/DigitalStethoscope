@@ -14,7 +14,7 @@ a proposed thesis product, except for the separate evaluation implementation vie
 | Software components | [software-components.puml](software-components.puml) | Individual components in Application, Services and Zephyr/adapters. DSP belongs inside Services; MON observes across layers. |
 | Threads | [runtime-ownership.puml](runtime-ownership.puml) | Proposed workers and data/communication methods. Touch belongs to Input; original-rate blocks reach BPM before listening filter/gain. |
 | Listening | [listening-workflow.puml](listening-workflow.puml) | Selected filter or Raw bypass, volume, playback and optional bounded capture/replay. Lung is Raw; Heart can also select Raw. |
-| BPM measurement | [measurement-workflow.puml](measurement-workflow.puml) | Save measurement settings, acquire until configured time elapses, aggregate, then deliver a valid result when listening is stopped. |
+| BPM measurement | [measurement-workflow.puml](measurement-workflow.puml) | Freeze measurement settings and acquire until Stop; cancel without sending before 15 s, or finalize at or after 15 s subject to quality/coverage. Aggregate after listening stops, then deliver the result or validated error report. |
 
 ## Hardware naming
 

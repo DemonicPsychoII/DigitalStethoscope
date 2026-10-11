@@ -10,7 +10,7 @@ Playback, measurement and delivery have independent state. “Record audio” in
 - **Preconditions:** Fitted carrier and approved power/amplifier setup.
 - **Postconditions:** Output starts silent; capabilities and degraded/fault status are visible.
 - **Normal flow:** Initialize platform and memory; prime DAC with silence; check audio, controls and optional devices; publish Ready/Idle; await explicit listening command.
-- **Alternatives/errors:** Essential microphone/DAC failure → muted Fault. Display/touch/SD/network failure → degraded capability, never falsely marked physically verified.
+- **Alternatives/errors:** Essential microphone/DAC startup failure → muted, latched Device Alarm; recovery requires a full device restart and successful startup checks. Display/touch/SD/network failure → degraded capability, never falsely marked physically verified.
 
 ## UC-02 — Listen and change parameters
 
