@@ -1,0 +1,12 @@
+50c901377e374eac18bcf076a07947d3adce09e4
+50c9013 Preserve script modes after syntax verification
+0df6012 Add a bounded static CI lane and remove human approval gates
+5439d9c Move the whiteboard sidebar onto the Homelab design (#88)
+707441c Use Homelab tokens for every whiteboard control colour
+f3622b6 Brand the portal edges: login, error pages, realm, API title (#87)
+d2ef671 Move Personal Cloud onto the Homelab design, dark only (#86)
+ca62a09 Move the Pages UI onto the Homelab design system (#85)
+9fa29ad Move the research vault pages onto the Homelab design system (#84)
+fatal: ambiguous argument 'origin/main...HEAD': unknown revision or path not in the working tree.
+Use '--' to separate paths from revisions, like this:
+'git <command> [<revision>...] -- [<file>...]'
