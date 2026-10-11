@@ -32,6 +32,10 @@
     GNU toolchains to install. Only the ESP32-S3 one is needed for this project;
     installing all of them costs several extra GB.
 
+.PARAMETER WorkspaceDir
+    Override the default tools/zephyrproject directory, for example to keep
+    downloaded tools in the checkout's ignored .ci-workspace/toolchain folder.
+
 .PARAMETER SkipBlobs
     Skip 'west blobs fetch hal_espressif'. Builds for ESP32-S3 will fail without
     the blobs; only useful for offline or partial setups.
@@ -50,6 +54,7 @@ param(
     [string]   $ZephyrRevision = '357467a011cd2557a1a3f0b4be83d817c4addc9b',
     [string]   $SdkVersion     = '1.0.1',
     [string[]] $SdkToolchains  = @('xtensa-espressif_esp32s3_zephyr-elf'),
+    [string]   $WorkspaceDir,
     [switch]   $SkipBlobs,
     [switch]   $Force
 )
@@ -59,7 +64,8 @@ $ErrorActionPreference = 'Stop'
 
 # --------------------------------------------------------------------- paths
 $ToolsDir     = $PSScriptRoot
-$WorkspaceDir = Join-Path $ToolsDir 'zephyrproject'
+if (-not $WorkspaceDir) { $WorkspaceDir = Join-Path $ToolsDir 'zephyrproject' }
+$WorkspaceDir = [System.IO.Path]::GetFullPath($WorkspaceDir)
 $VenvDir      = Join-Path $WorkspaceDir '.venv'
 $VenvPython   = Join-Path $VenvDir 'Scripts\python.exe'
 $VenvWest     = Join-Path $VenvDir 'Scripts\west.exe'
@@ -107,7 +113,7 @@ function Invoke-Native {
 }
 
 function Resolve-HostPython {
-    # Zephyr 4.4 requires Python >= 3.10.
+    # The pinned Zephyr scripts require Python >= 3.12.
     $candidates = @()
     foreach ($name in 'python', 'python3') {
         $cmd = Get-Command $name -ErrorAction SilentlyContinue
@@ -122,14 +128,14 @@ function Resolve-HostPython {
         $banner = (& $exe -V 2>&1) -join ' '
         if ($LASTEXITCODE -eq 0 -and $banner -match 'Python\s+(\d+\.\d+(\.\d+)?)') {
             $version = [version]$Matches[1]
-            if ($version -ge [version]'3.10') {
+            if ($version -ge [version]'3.12') {
                 Write-Verbose "Using host Python $version at $exe"
                 return $exe
             }
-            Write-Verbose "Ignoring Python $version at $exe (need >= 3.10)"
+            Write-Verbose "Ignoring Python $version at $exe (need >= 3.12)"
         }
     }
-    throw 'No Python 3.10 or newer found on PATH. Install it from https://www.python.org/downloads/ and re-run.'
+    throw 'No Python 3.12 or newer found on PATH. Install it from https://www.python.org/downloads/ and re-run.'
 }
 
 # ------------------------------------------------------- 1. prerequisites
@@ -178,6 +184,10 @@ foreach ($tool in 'gperf', 'dtc') {
 
 # --------------------------------------------------- 2. clean / create root
 if ($Force -and (Test-Path $WorkspaceDir)) {
+    if ($WorkspaceDir -eq [System.IO.Path]::GetPathRoot($WorkspaceDir) -or
+        (Split-Path $WorkspaceDir -Leaf) -notin @('zephyrproject', 'toolchain')) {
+        throw 'Refusing recursive removal: workspace must be a named zephyrproject or toolchain directory.'
+    }
     if ($PSCmdlet.ShouldProcess($WorkspaceDir, 'Delete the existing toolchain workspace')) {
         Write-Step "Removing existing workspace $WorkspaceDir"
         Remove-Item -LiteralPath $WorkspaceDir -Recurse -Force
@@ -201,11 +211,7 @@ Invoke-Native -FilePath $VenvPython -Arguments @('-m', 'pip', 'install', '--upgr
 
 # ------------------------------------------------------------- 4. west tool
 Write-Step 'Installing west'
-if (Test-Path $VenvWest) {
-    Write-Skip 'west already installed'
-} else {
-    Invoke-Native -FilePath $VenvPython -Arguments @('-m', 'pip', 'install', 'west')
-}
+Invoke-Native -FilePath $VenvPython -Arguments @('-m', 'pip', 'install', 'west==1.5.0')
 
 # ------------------------------------------------- 5. Zephyr sources (west)
 Write-Step "Fetching Zephyr and its modules (revision $($ZephyrRevision.Substring(0,12)))"
@@ -217,10 +223,10 @@ if (Test-Path (Join-Path $WorkspaceDir '.west\config')) {
 
 # Pin to the exact revision the firmware was tested against before pulling the
 # modules, so the module revisions come from that manifest.
-Invoke-Native -FilePath 'git' -Arguments @('fetch', 'origin') -WorkingDirectory $ZephyrDir
+Invoke-Native -FilePath 'git' -Arguments @('fetch', '--depth=1', 'origin', $ZephyrRevision) -WorkingDirectory $ZephyrDir
 Invoke-Native -FilePath 'git' -Arguments @('checkout', '--detach', $ZephyrRevision) -WorkingDirectory $ZephyrDir
 
-Invoke-Native -FilePath $VenvWest -Arguments @('update') -WorkingDirectory $WorkspaceDir
+Invoke-Native -FilePath $VenvWest -Arguments @('update', '--narrow', '-o=--depth=1') -WorkingDirectory $WorkspaceDir
 
 # Must run before zephyr-export, which fails on a missing jsonschema otherwise.
 Write-Step 'Installing the Python packages required by Zephyr'

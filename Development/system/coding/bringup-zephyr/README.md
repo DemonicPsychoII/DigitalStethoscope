@@ -76,6 +76,55 @@ active contact; check the physical contact truth table when fitting a second swi
 
 ## Build and flash
 
+### Local Windows evaluation builds
+
+From the repository root, prepare the environment once and build:
+
+```powershell
+& .\Development\Toolchain\setup-eval.ps1
+. .\Development\Toolchain\zephyr-env.ps1
+python Development/system/testing/ci/build_eval.py --profile qc
+```
+
+Setup checks the pinned Zephyr and Espressif revisions and SDK 1.0.1, reuses
+an installed toolchain from this checkout or the primary Git worktree, and
+creates a separate Python 3.12+ environment in `.ci-workspace/.venv`. Its pip
+configuration uses public PyPI within that environment. To select an existing
+west workspace explicitly, pass `-Workspace C:\path\to\zephyrproject` to setup.
+If no toolchain exists, setup provisions one under `.ci-workspace/toolchain`
+using `setup-toolchain.ps1`; this requires 7-Zip and several GB of disk space.
+The environment file contains local absolute paths and is not versioned;
+rerun setup after moving the checkout or changing the host Python installation.
+
+The default `qc` profile enables periodic stack measurements for evaluation.
+Use `--profile offline` for the default firmware, `--profile network-qc-switch`
+for the combined optional features, or `--profile all` to verify all three.
+This local entry point builds and collects reports without flashing or cloud
+publication. Firmware is at `build-eval-<profile>/zephyr/zephyr.bin`.
+
+```powershell
+# Three pristine builds with a fixed parallel-job count
+python Development/system/testing/ci/build_eval.py --profile qc --repeat 3 --jobs 8
+# Rebuild existing outputs; with no source changes this measures a no-op build
+python Development/system/testing/ci/build_eval.py --profile qc --incremental --jobs 8
+# Inspect or flash the QC image separately when hardware is ready
+west build -d build-eval-qc -t ram_report
+west build -d build-eval-qc -t rom_report
+west flash -d build-eval-qc --esp-device COM6
+```
+
+Each run stores `results.json`, build and RAM/ROM logs, the ELF/map/binary,
+resolved configuration/devicetree, `compile_commands.json`, `.ninja_log`, and
+installed Python package versions in `artifacts/evaluation/<profile>/<UTC>/`.
+The JSON records source hashes, Git state, host/tool versions, parallelism,
+elapsed build time and separate report times, including failed build stages.
+Build time includes CMake configuration and compilation; downloads, reports
+and copying artifacts are excluded. Pristine builds clear generated outputs
+but retain OS/tool caches, so they are not cold-cache benchmarks. Keep job
+count and background load comparable when collecting repeated measurements.
+Runtime stack and audio timing still require executing the firmware on the
+ESP32-S3; build reports alone measure static memory and host build performance.
+
 ### Homelab cloud downloads
 
 On the configured homelab, use the repository's
