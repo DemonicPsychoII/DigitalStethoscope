@@ -7,7 +7,7 @@ A complete specification draft is not the same as permission to implement unagre
 
 ## Decision register
 
-All rows are open unless stated otherwise. Nico can edit the proposed resolution directly.
+The original register below is historical preparation context. [11 October owner decisions](mvp-decisions-2026-10-11.md) supersede D02/D03/D08/D12/D14 workflow and scope proposals. Numeric criteria remain proposals; [the component timeline](mvp-implementation-timeline.md) replaces the old audio-first implementation sequence.
 
 | ID | Decision / conflict | Proposed draft treatment | Blocks |
 |---|---|---|---|
@@ -33,7 +33,7 @@ All rows are open unless stated otherwise. Nico can edit the proposed resolution
 | Excessive output/transient or incorrect amplifier load | Zero-gain startup, smooth transitions, saturation, approved amplifier/output level | HW-002, LIS-002; VT-03/VT-12 |
 | Misleading BPM from S1/S2, noise, stale/missing audio | Whole-cycle estimator, validity/coverage/gap gating, explicit invalid display | BPM-002..006, UI-005; VT-06/VT-09 |
 | Wrong patient/test source/time transmitted | Frozen provenance/context, worker-side guards, validated clock/profile | CTL-003, NET-002/003/007; VT-07/VT-08 |
-| Duplicate observation after uncertain network response | Stable identity/payload and explicit retry/readback | NET-004/006; VT-07 |
+| Uncertain server commit after a lost response | Stable identity/payload, terminal Unverified, no retry queue | NET-004/006; VT-07 |
 | Audio stalls due to UI/storage/TLS or memory pressure | Bounded independent workers, internal DMA, prefetch, network lease, monitored deadlines | AUD-002..004, STO-002, CTL-005, MON-001/003; VT-02/VT-08/VT-13 |
 | Driver initialized but peripheral absent/wrong | Separate readiness/transfer/physical evidence; essential faults mute | MON-002, AUD-005; VT-01/VT-12 |
 
@@ -56,14 +56,7 @@ below are proposed remaining review/design effort, not measured effort or a repl
 
 ## Implementation sequence after review
 
-1. Create the agreed thesis structure, pure-C contracts and host fixtures; preserve evaluation firmware.
-2. Implement controller guards/snapshots and audio source/output; measure block/latency budgets on
-   authorized hardware before placing work on two cores.
-3. Implement independent analysis and bounded raw capture/replay; verify cancellation and source
-   provenance before integrating UI and storage contention.
-4. Integrate input/UI/fixture adapters with bounded shared-bus operations; repeat timing/fault tests.
-5. Add frozen result/FHIR delivery and exclusive Idle lease; verify semantics, TLS/readback and retries.
-6. Evaluate filters/reference metrics; review changes and repeat affected verification.
+Follow the [component timeline](mvp-implementation-timeline.md): release/contracts → Wi-Fi/time → HTTPS/FHIR/error contract → device transport evidence → controller/alarm states → carrier checks → audio → independent DSP → streaming BPM/reference → complete-session FHIR → timing/fault verification. Saved raw audio/replay remains optional. Functional dependency links and one-person calendar sequencing are recorded separately; hardware/equipment prerequisites remain explicit.
 
 ## Readiness checklist for baseline approval
 

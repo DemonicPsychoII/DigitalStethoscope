@@ -1,6 +1,6 @@
 # Architecture
 
-Open the [local viewer](review.html) for eight proposed thesis-product views.
+Open the [local viewer](review.html) for the proposed thesis-product views.
 PlantUML sources are editable; the SVG previews are generated. These views do
 not establish that the evaluation firmware implements the proposed contracts.
 
@@ -13,6 +13,7 @@ not establish that the evaluation firmware implements the proposed contracts.
 | Software components | [software-components.puml](software-components.puml) |
 | Threads | [runtime-ownership.puml](runtime-ownership.puml) |
 | Listening | [listening-workflow.puml](listening-workflow.puml) |
+| MVP session / alarms | [mvp-session-state.puml](mvp-session-state.puml) |
 | BPM measurement | [measurement-workflow.puml](measurement-workflow.puml) |
 
 [View notes](VIEW-NOTES.md) record review boundaries, I2S presentation-name mapping,
@@ -50,3 +51,5 @@ the output and is not a diagram-type declaration.
 
 See [framework and transport evaluation](../planning/framework-and-transport-evaluation.md)
 for ESP32-S3 drivers, external C/C++ library integration and HTTP/HTTPS effort.
+
+Current workflows follow [11 October owner decisions](../planning/mvp-decisions-2026-10-11.md): Busy blocks Start, failed sends abort, context changes are rejected and DA requires full restart. Numeric targets remain proposals. [Component timeline](../planning/mvp-implementation-timeline.md) puts Wi-Fi/FHIR before carrier-dependent audio.
