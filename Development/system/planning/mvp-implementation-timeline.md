@@ -40,7 +40,7 @@ Carrier arrival around 25 October and access to a latency fixture are external p
 
 **Inputs:** Frozen result/error contracts, endpoint https://nglegion:8443/fhir, ca.pem, synthetic Patient/stetho-test-01.
 
-**Output and acceptance evidence:** Stable-ID PUT plus matching GET; CA, hostname and clock verification. One attempt then terminal failed/unverified indication and no retry queue. Invalid BPM has no numeric value; agree and validate missing-value error representation with server. Production fixture provenance guard remains intact.
+**Output and acceptance evidence:** Conditional create (`POST` + `If-None-Exist` on the stable identifier) plus matching GET, numeric value comparison; CA, hostname and clock verification. One attempt then terminal failed/unverified indication and no retry queue. Invalid BPM has no numeric value; agree and validate missing-value error representation with server. Production fixture provenance guard remains intact.
 
 ## NETTEST — Verify one device-originated FHIR integration run
 

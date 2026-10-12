@@ -49,7 +49,7 @@ Playback, measurement and delivery have independent state. “Record audio” in
 - **Actors and trigger:** Operator and FHIR/time services; completed result, Stop listening.
 - **Preconditions:** Idle, frozen completed microphone-session context, configured patient/server/time/trust. Lung/test/cancelled paths are excluded from production sending.
 - **Postconditions:** One attempt; verified delivery or terminal failed/unverified outcome.
-- **Normal flow:** Grant exclusive network lease; serialize numeric R4 Observation for valid BPM or separately validated missing-value/error representation for invalid BPM; verify TLS/name/time; PUT stable ID; read back matching content; release lease.
+- **Normal flow:** Grant exclusive network lease; serialize numeric R4 Observation for valid BPM or separately validated missing-value/error representation for invalid BPM; verify TLS/name/time; conditional create with stable identifier; read back matching content; release lease.
 - **Alternatives/errors:** Unconfigured Wi-Fi causes no send/error. Configured connection failure permits offline listening and latches a manually cleared normal fault. Timeout/4xx/5xx/readback failure aborts without retry queue. Start during analysis/sending is Busy with activity indication and cannot cancel or queue a new session. Timeout after server commit remains Unverified.
 
 ## UC-07 — Operate in lung mode

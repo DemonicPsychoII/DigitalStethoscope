@@ -146,10 +146,36 @@ class EvaluateTests(unittest.TestCase):
     def test_closed_fails(self):
         self.assertEqual(g.evaluate(inputs(state="closed")).state, "failure")
 
-    def test_missing_author_fails(self):
-        d = g.evaluate(inputs(body=RISK))
-        self.assertEqual(d.state, "failure")
-        self.assertIn("agent-author", d.description)
+    def test_human_pr_without_agent_metadata_passes(self):
+        d = g.evaluate(inputs(body="Fix the audio buffer bounds."))
+        self.assertEqual(d.state, "success", d.items)
+
+    def test_untouched_agent_template_does_not_declare_agent_authorship(self):
+        template = Path(__file__).resolve().parents[1].joinpath("pull_request_template.md").read_text()
+        d = g.evaluate(inputs(body=template))
+        self.assertEqual(d.state, "success", d.items)
+
+    def test_incomplete_agent_declaration_still_fails(self):
+        for marker in ("<!-- agent-author harness=codex -->",
+                       AUTHOR.replace("session=auth-1", "session=<id>"),
+                       AUTHOR.replace("class=quick-fix", "class=unknown")):
+            with self.subTest(marker=marker):
+                d = g.evaluate(inputs(body=marker + RISK))
+                self.assertEqual(d.state, "failure", d.items)
+                self.assertIn("agent-author", d.description)
+
+    def test_agent_pr_still_requires_risk_evidence(self):
+        d = g.evaluate(inputs(body=AUTHOR))
+        self.assertEqual(d.state, "failure", d.items)
+        self.assertIn("Risk & rollback", d.description)
+
+    def test_unmarked_pr_preserves_review_ci_threads_and_owner_questions(self):
+        for options in ({"comments": []}, {"comments": [review(sha=OLD)]},
+                        {"check_runs": []}, {"unresolved_threads": 1},
+                        {"comments": [review(), comment("<!-- owner-question id=q1 --> Proceed?")]}):
+            with self.subTest(options=options):
+                d = g.evaluate(inputs(body="Human-written fix.", **options))
+                self.assertNotEqual(d.state, "success", d.items)
 
     def test_no_review_fails(self):
         self.assertEqual(g.evaluate(inputs(comments=[])).state, "failure")
@@ -528,6 +554,18 @@ class AutomatedPolicyTests(unittest.TestCase):
         decision = g.evaluate(inputs(comments=[], review_bots={"coderabbitai[bot]": 136622811},
                                      native_reviews=[self.bot()]))
         self.assertEqual(decision.state, "success", decision.items)
+
+    def test_dependabot_pr_without_agent_metadata_passes_with_native_approval(self):
+        d = g.evaluate(inputs(body="Bumps the actions group with 3 updates.", comments=[],
+                              review_bots={"coderabbitai[bot]": 136622811},
+                              native_reviews=[self.bot()]))
+        self.assertEqual(d.state, "success", d.items)
+        for bot_review in (self.bot(sha=OLD), self.bot(state="CHANGES_REQUESTED")):
+            with self.subTest(review=bot_review):
+                d = g.evaluate(inputs(body="Bumps actions.", comments=[],
+                                      review_bots={"coderabbitai[bot]": 136622811},
+                                      native_reviews=[bot_review]))
+                self.assertNotEqual(d.state, "success", d.items)
 
     def test_native_approval_never_bypasses_unresolved_threads(self):
         decision = g.evaluate(inputs(comments=[], review_bots={"coderabbitai[bot]": 136622811},
