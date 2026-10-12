@@ -343,7 +343,9 @@ def source_topic(key):
 # Zählwerte einmal berechnen und in allen erzeugten Texten wiederverwenden.
 broken_before={k for k,s in original_sources.items() if 'broken' in s.get('link_check','')}
 broken_after={k for k,s in sources.items() if 'broken' in s.get('link_check','')}
-repaired={k for k in overrides if k not in broken_after}
+# Nur ein zuvor defekter, jetzt erreichbarer Link zählt als Reparatur; übrige Overrides sind Metadatenkorrekturen.
+repaired={k for k in overrides if k in broken_before and k not in broken_after}
+metadata_only={k for k in overrides if k not in broken_before}
 stats={'audit_units':len(units),'active_units':len(active),'superseded_ids':len(replaced),
  'superseding_units':sum(bool(u.get('supersedes')) for u in units),
  'citation_units':sum(u['needs_citation'] for u in units),
@@ -354,7 +356,7 @@ stats={'audit_units':len(units),'active_units':len(active),'superseded_ids':len(
  'broken_entries_before':len(broken_before),'broken_entries_after':len(broken_after),
  'broken_affected_units_before':broken_affected_units_stage1,
  'broken_affected_units_after':sum(any(c['key'] in broken_after for c in u.get('sources',[])) for u in units),
- 'source_keys':len(sources),'verified_repairs':len(repaired),
+ 'source_keys':len(sources),'verified_repairs':len(repaired),'metadata_only_corrections':len(metadata_only),
  'chapter_files':{path:len(groups[path]) for path in files}}
 bib_text='# Quellenverzeichnis und Fundstellen\n\n[Zum Einstieg](README.md) · [Linkkorrekturen](linkkorrekturen.md) · [BibTeX](quellen.bib)\n\n'+f'{len(original_sources)} Quellenschlüssel aus Stage 1, nach Stage-2-Aufteilung {len(sources)}.'+' Doppelte Werke unter verschiedenen Schlüsseln bleiben für die Rückverfolgung erhalten. Die Zuordnung ist thematisch; alle zitierenden IDs werden genannt, auch ersetzte. „ok“ bezeichnet Linkzugang, nicht die Tragfähigkeit jeder Aussage. Seitenangaben sind getrennt zu prüfen.\n\n'+f'**BibTeX:** Für {len(overrides)} neu geprüfte Einträge stehen belegte Metadaten bereit.'+' Die übrigen Minimal-Einträge enthalten nur die in Stage 1 überprüfte URL, wenn sie dort als erreichbar markiert ist, und eine als unsicher gekennzeichnete Arbeitsnotiz. Autoren, Titel, Jahre und DOIs werden dort nicht aus Freitext erraten. Vor der finalen Abgabe Originalmetadaten importieren.\n\n'
 for category in sorted({source_topic(k) for k in sources}):
@@ -380,7 +382,8 @@ for key,s in sources.items():
     fields=dict(s.get('bib',{}))
     if (key in overrides or s.get('link_check','').startswith('ok')) and str(s.get('url')).startswith(('https://','http://')):fields['url']=s['url']
     if key in overrides:
-        fields['note']='Metadaten anhand der Primärfundstelle geprüft am '+overrides[key].get('checked','2026-10-05')+'. Zitierte Einzelseiten und Aussagepassung separat prüfen. '+s['fix_reason']
+        if key in broken_after:fields['note']='Metadaten korrigiert; Primärfundstelle nicht unabhängig erreichbar (Link defekt), Volltext ungeprüft. '+s['fix_reason']
+        else:fields['note']='Metadaten anhand der Primärfundstelle geprüft am '+overrides[key].get('checked','2026-10-05')+'. Zitierte Einzelseiten und Aussagepassung separat prüfen. '+s['fix_reason']
     else:
         fields['note']='UNSICHERER MINIMALEINTRAG. Bibliografische Felder vor Verwendung am Original ergänzen. Referenztext aus Stage 1, nicht als Feldmetadaten verifiziert: '+s['reference']+' Linkstatus: '+s.get('link_check','nicht geprüft')
     bib.append('@misc{'+key+',\n'+',\n'.join('  '+k+' = {'+(str(v) if k in ('url','doi','author') else bib_escape(v))+'}' for k,v in fields.items())+'\n}\n')
@@ -394,7 +397,10 @@ for key,v in overrides.items():
 # Metadatenkorrektur ohne erreichbaren Link ist keine Reparatur.
 fixes+='## Metadaten korrigiert, Link weiterhin defekt\n\n'
 for key,v in overrides.items():
-    if key not in repaired:fixes+=fix_entry(key,v)
+    if key in broken_after:fixes+=fix_entry(key,v)
+fixes+='## Metadaten korrigiert, Link war nicht defekt\n\n'
+for key,v in overrides.items():
+    if key in metadata_only:fixes+=fix_entry(key,v)
 fixes+='## Korrekturen an Einheiten und Schlüsseln\n\n'
 for uid,fix in corrections['units'].items():
     fixes+=f'- {unit_link(uid,"linkkorrekturen.md")} ({fix["date"]}): {fix["reason"]}\n'
@@ -440,7 +446,7 @@ for text,ids,*conflict in [
  ('Filter 40–800 Hz / 25–150 Hz, Live-Latenz <30 ms bzw. ≤10/≤5 ms und BPM-Grenzen sind vorläufige Entwicklungsziele. Eine gemeinsame Anforderungsversion und Messmethode festlegen.', ['U027','U102','U110','C001','A056','A057'], 'targets'),
  ('10–40-ms-DMA-Startwerte passen nicht ohne Prüfung zum ≤10-ms-End-to-End-Ziel. Tatsächliche Blocklatenz, Wandler- und Schedulinganteile am Prototyp messen.', ['C027','C001','U101'], 'dma'),
  ('Builds und Hosttests ersetzen keine integrierte Hardwareevaluation. Physische Tests am dokumentierten Firmware-Commit nachholen; Verdrahtungsbestätigung separat ausweisen.', ['U119','U125','U129','U130','U131']),
- ('Pilotstudienquelle: Leon-/Teresi-Metadatenkonflikt klären. Zusätzlich FDA-Publikationsjahr 1998 statt 2023 und EC13-1992-Bezug in der reparierten FDA-Fassung beachten.'+(' **Stand 2026-10-12:** Leon-/Teresi-Konflikt zugunsten Teresi et al. (2022) aufgelöst, siehe [Linkkorrekturen](linkkorrekturen.md#pilot_guidelines); der FDA-Link bleibt defekt.' if 'pilot_guidelines' in repaired else ''), ['B001','B016','A052']),
+ (('FDA-Leitlinie: Link bleibt defekt; Publikationsjahr 1998 statt 2023 und EC13-1992-Bezug beachten, Volltext beschaffen. Der Leon-/Teresi-Konflikt der Pilotstudienquelle ist zugunsten Teresi et al. (2022) aufgelöst, siehe [Linkkorrekturen](linkkorrekturen.md#pilot_guidelines).' if 'pilot_guidelines' in repaired else 'Pilotstudienquelle: Leon-/Teresi-Metadatenkonflikt klären. Zusätzlich FDA-Publikationsjahr 1998 statt 2023 und EC13-1992-Bezug in der reparierten FDA-Fassung beachten.'), ['B001','B016','A052']),
 ]:
     open_text+='- **Nico:** '+text+' Bezüge: '+', '.join(unit_link(i,'offene-punkte.md') for i in ids)+'.\n'
     if conflict:open_text+='\n  '+render_note(notes['conflicts'][conflict[0]],'offene-punkte.md')+'\n\n'
@@ -466,7 +472,7 @@ open_text+='\n## Ungeprüfte Seiten und Fundstellen\n\n'+f"Die {stats['unverifie
 for u in units:
     refs=[c for c in u.get('sources',[]) if 'unverified' in str(c.get('page','unverified')).lower()]
     if refs:open_text+=f'- {unit_link(u["id"],"offene-punkte.md")}'+(' (ersetzt)' if u['id'] in replaced else '')+': '+', '.join(source_link(c['key'],'offene-punkte.md')+(f' — Hinweis: {c["page_hint"]}' if c.get('page_hint') else '') for c in refs)+'. **Nico:** Original öffnen, Aussagepassung und konkrete Seite/Abschnitt eintragen.\n'
-open_text+='\n## Defekte Links und Quellenidentität\n\n'+f"{len(repaired)} verifizierte Korrekturen sind in [linkkorrekturen.md](linkkorrekturen.md) belegt. {len(broken_after)} Einträge bleiben defekt."+'\n\n'
+open_text+='\n## Defekte Links und Quellenidentität\n\n'+f"{len(repaired)} verifizierte Linkreparaturen und {len(metadata_only)} reine Metadatenkorrekturen sind in [linkkorrekturen.md](linkkorrekturen.md) belegt. {len(broken_after)} Einträge bleiben defekt."+'\n\n'
 for key in sorted(broken_after):
     open_text+=f'- {source_link(key,"offene-punkte.md")}: {sources[key]["link_check"]}. Betroffen: '+', '.join(unit_link(uid,'offene-punkte.md') for uid in usage[key])+'. **Nico:** identisches Werk über Originalanbieter/Hochschulbibliothek beschaffen; Metadaten und Fundstelle bestätigen.\n'
 outputs['offene-punkte.md']=open_text
@@ -493,7 +499,7 @@ Pro Absatz eine Kernaussage wählen, Originalbeleg öffnen und die genaue Fundst
 - **Widersprüche:** W1 (Q1/AP 2.2 versus gestrichene Kettenmessung), W2 (Schalterzuordnung), CirCor 5.272/5.282, Helmholtz-Modell und Knowles-LFRO. Sie stehen zuerst in [offene-punkte.md](offene-punkte.md#widersprueche).
 - **Eigene Zielwerte:** 40–800 Hz / 25–150 Hz, <30 ms bzw. ≤10/≤5 ms und BPM-Akzeptanzgrenzen sind vorläufige Entwicklungsentscheidungen, keine allgemeingültigen Literaturgrenzen.
 - **Quellenstand des Audits:** {stats['citation_units']} zitierbedürftige Einheiten, {stats['citation_units_with_at_least_three_sources']} davon mit mindestens drei Quellen, {stats['incomplete_source_sets']} unvollständige Quellensets. {stats['unverified_pages_exact']} von {stats['source_references']} Quellenverweisen haben exakt `page: unverified`. Nico muss diese Seiten prüfen.
-- **Defekte Links:** ursprünglich {len(broken_before)} Einträge, betroffen {stats['broken_affected_units_before']} Einheiten. {len(repaired)} verifiziert korrigiert, {len(broken_after)} sichtbar defekt; weiterhin betroffen: {stats['broken_affected_units_after']} Audit-Einheiten. [Korrekturprotokoll](linkkorrekturen.md). {'Der Leon-/Teresi-Metadatenkonflikt der Pilotstudienquelle ist in Stage 2 aufgelöst.' if 'pilot_guidelines' in repaired else 'Die Pilotstudienquelle enthält zusätzlich einen ungelösten Metadatenkonflikt.'}
+- **Defekte Links:** ursprünglich {len(broken_before)} Einträge, betroffen {stats['broken_affected_units_before']} Einheiten. {len(repaired)} verifiziert repariert, {len(broken_after)} sichtbar defekt, {len(metadata_only)} weitere Einträge nur in den Metadaten korrigiert; weiterhin betroffen: {stats['broken_affected_units_after']} Audit-Einheiten. [Korrekturprotokoll](linkkorrekturen.md). {'Der Leon-/Teresi-Metadatenkonflikt der Pilotstudienquelle ist in Stage 2 aufgelöst.' if 'pilot_guidelines' in repaired else 'Die Pilotstudienquelle enthält zusätzlich einen ungelösten Metadatenkonflikt.'}
 - Build-/Host-/QC-Erfolg belegt keine integrierte physische Funktion. Historische Messungen nur mit Datum und Firmwarestand verwenden.
 - **Stand integration {notes['stand']}:** W1 ist im Entwurf zugunsten der Abgabefassung ohne Kettenmessung behandelt (D09), die Bestätigung steht aus. W2 betrifft auch den im MVP optionalen Geschwindigkeitsschalter und die neue Trägerplatine. Für Latenz- und BPM-Ziele gibt es eine gemeinsame, noch nicht freigegebene Vorschlagsfassung vom 11.10. Details: [Abgleich mit integration](#abgleich-mit-integration).
 

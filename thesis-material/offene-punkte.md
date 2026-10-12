@@ -65,7 +65,7 @@ Die R07-Angabe von 30 Hz LFRO für SPH18R1LM4H-1 weicht von der Knowles/SELTECH-
   > **Neuerer Stand (Stand integration, 2026-10-12):** Die Blockgröße ist auf 128 Frames/8 ms festgelegt. Aktuell: Vorschlag ≤4 ms kritische Ausführung je 8-ms-Block; End-to-End-Latenz weiterhin am Aufbau messen. – siehe [Latenzbudgets 11.10.](../Development/system/planning/mvp-decisions-2026-10-11.md#latency-research-and-proposed-budgets).
 
 - **Nico:** Builds und Hosttests ersetzen keine integrierte Hardwareevaluation. Physische Tests am dokumentierten Firmware-Commit nachholen; Verdrahtungsbestätigung separat ausweisen. Bezüge: [U119](08-evaluation/01-fragen-kriterien.md#u119), [U125](08-evaluation/01-fragen-kriterien.md#u125), [U129](08-evaluation/07-firmware-funktion-ressourcen.md#u129), [U130](08-evaluation/07-firmware-funktion-ressourcen.md#u130), [U131](08-evaluation/01-fragen-kriterien.md#u131).
-- **Nico:** Pilotstudienquelle: Leon-/Teresi-Metadatenkonflikt klären. Zusätzlich FDA-Publikationsjahr 1998 statt 2023 und EC13-1992-Bezug in der reparierten FDA-Fassung beachten. **Stand 2026-10-12:** Leon-/Teresi-Konflikt zugunsten Teresi et al. (2022) aufgelöst, siehe [Linkkorrekturen](linkkorrekturen.md#pilot_guidelines); der FDA-Link bleibt defekt. Bezüge: [B001](08-evaluation/05-hoerstudie.md#b001), [B016](08-evaluation/05-hoerstudie.md#b016), [A052](08-evaluation/04-bpm-validierung.md#a052).
+- **Nico:** FDA-Leitlinie: Link bleibt defekt; Publikationsjahr 1998 statt 2023 und EC13-1992-Bezug beachten, Volltext beschaffen. Der Leon-/Teresi-Konflikt der Pilotstudienquelle ist zugunsten Teresi et al. (2022) aufgelöst, siehe [Linkkorrekturen](linkkorrekturen.md#pilot_guidelines). Bezüge: [B001](08-evaluation/05-hoerstudie.md#b001), [B016](08-evaluation/05-hoerstudie.md#b016), [A052](08-evaluation/04-bpm-validierung.md#a052).
 
 <a id="integration-abgleich"></a>
 ## Abgleich mit integration — nicht eindeutig entschieden
@@ -454,7 +454,7 @@ Die 327 expliziten `page: unverified`-Verweise sind keine gesicherten Seitenanga
 
 ## Defekte Links und Quellenidentität
 
-6 verifizierte Korrekturen sind in [linkkorrekturen.md](linkkorrekturen.md) belegt. 11 Einträge bleiben defekt.
+4 verifizierte Linkreparaturen und 2 reine Metadatenkorrekturen sind in [linkkorrekturen.md](linkkorrekturen.md) belegt. 11 Einträge bleiben defekt.
 
 - [aes_lester_boley_2007](quellen.md#aes_lester_boley_2007): broken (HTTP 522) on 2026-10-05 check. Betroffen: [C001](03-grundlagen-technisch/09-latenz.md#c001), [C002](04-stand-der-technik.md#c002), [C003](04-stand-der-technik.md#c003), [C004](04-stand-der-technik.md#c004). **Nico:** identisches Werk über Originalanbieter/Hochschulbibliothek beschaffen; Metadaten und Fundstelle bestätigen.
 - [ecm_datasheet_im69d130](quellen.md#ecm_datasheet_im69d130): broken (HTTP 404) on 2026-10-05 check. Betroffen: [B048](03-grundlagen-technisch/02-mems-mikrofone.md#b048), [B049](03-grundlagen-technisch/02-mems-mikrofone.md#b049), [B054](03-grundlagen-technisch/02-mems-mikrofone.md#b054), [B055](03-grundlagen-technisch/02-mems-mikrofone.md#b055), [B080](03-grundlagen-technisch/02-mems-mikrofone.md#b080). **Nico:** identisches Werk über Originalanbieter/Hochschulbibliothek beschaffen; Metadaten und Fundstelle bestätigen.

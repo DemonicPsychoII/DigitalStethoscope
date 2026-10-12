@@ -79,6 +79,8 @@ Unter der Helmholtz-Modellannahme sinkt die Resonanzfrequenz bei größerem Volu
 
 R07 berechnet im vereinfachten Helmholtz-Modell für 6-mm-Halsdurchmesser, A ≈ 28,3 mm² und effektive Länge 10 mm ein Volumen von ungefähr 21 ml für eine 20-Hz-Resonanz; dies ist eine theoretische Abschätzung.
 
+> **Vorbehalt (2026-10-12):** Rechenfehler in R07: Mit A ≈ 28,3 mm², L = 10 mm, c ≈ 343 m/s und f = 20 Hz ergibt V = A·c²/(4π²·f²·L) ≈ 0,021 m³ (≈ 21 l), nicht 21 ml. Ein Volumen von 21 ml liefert mit diesen Halsmaßen etwa 634 Hz. Die Empfehlung einer kleinen Kammer mit Resonanz oberhalb des Nutzbands bleibt davon unberührt; der Zahlenwert darf so nicht zitiert werden. Bezug: [U059](01-akustik-bruststueck.md#u059).
+
 **Ursprung:** [preThesis/03-recherche/R07-bruststueck-mems.md:118-136](../../preThesis/03-recherche/R07-bruststueck-mems.md#L118)
 **Belege:** [Weiss, D 2019 · invitro_stethoscopes](https://pmc.ncbi.nlm.nih.gov/articles/PMC6339642/) — Seite prüfen; [Alanazi, A., Atcherson, S., Franklin, C., & Bryan, M 2020 · frequency_response_stethoscopes](https://doi.org/10.4103/sjmms.sjmms_118_19) — Seite prüfen; [Nussbaumer, M 2022 · nussbaumer_stethoscope_acoustics](https://www.repository.cam.ac.uk/items/feadd88b-9e03-44fb-a875-c49f7c550259) — Seite prüfen · 🔒 Volltextzugang prüfen: Publisher full text paywalled; Cambridge record is open.
 
@@ -86,6 +88,8 @@ R07 berechnet im vereinfachten Helmholtz-Modell für 6-mm-Halsdurchmesser, A ≈
 **U059 · EIGENER ZIELWERT / VORLÄUFIGER VORSCHLAG · QUELLENSET UNVOLLSTÄNDIG**
 
 R07 gibt als Helmholtz-Resonanzabschätzung für 20 Hz ca. 21 ml bei üblichen Halsabmessungen an und empfiehlt eine kleine, kurze, bedämpfte Kammer, um Resonanz oberhalb des Bands 20–600 Hz zu legen.
+
+> **Vorbehalt (2026-10-12):** Rechenfehler in R07: Mit A ≈ 28,3 mm², L = 10 mm, c ≈ 343 m/s und f = 20 Hz ergibt V = A·c²/(4π²·f²·L) ≈ 0,021 m³ (≈ 21 l), nicht 21 ml. Ein Volumen von 21 ml liefert mit diesen Halsmaßen etwa 634 Hz. Die Empfehlung einer kleinen Kammer mit Resonanz oberhalb des Nutzbands bleibt davon unberührt; der Zahlenwert darf so nicht zitiert werden. Bezug: [B044](01-akustik-bruststueck.md#b044).
 
 **Ursprung:** [preThesis/02-entscheidungen/open-questions.md:179-182](../../preThesis/02-entscheidungen/open-questions.md#L179)
 **Belege:** [Morse, P 1948 · helmholtz_textbook](https://archive.org/details/vibrationsound0000mors) — Seite prüfen (Hinweis: Relevant article section/table not verified in full text during this pass.); [Exploring Microphone Technologies for Digital Auscul 2023 · mems_microphones_review](https://www.mdpi.com/2072-666X/14/11/2092) — Seite prüfen (Hinweis: Relevant article section/table not verified in full text during this pass.); [Weiss, D 2019 · invitro_stethoscopes](https://pmc.ncbi.nlm.nih.gov/articles/PMC6339642/) — Seite prüfen (Hinweis: Relevant article section/table not verified in full text during this pass.)

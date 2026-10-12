@@ -36,18 +36,6 @@ Herstellerlink mit dokumentiertem fileId-Parameter ersetzt die defekte URL ohne 
 
 **Identitätsnachweise:** [Primärquelle 1](https://www.infineon.com/assets/row/public/documents/24/49/infineon-im68a130-datasheet-en.pdf?fileId=8ac78c8c85ecb34701860371623f1204)
 
-### goh_chestpiece
-
-**Geprüft:** 2026-10-12
-
-Ausgangs-DOI 10.1109/SENNANO57767.2023 bezeichnet den Tagungsband, nicht den Artikel. Artikel-DOI per Crossref-Datensatz und doi.org-Auflösung geprüft. Bisherige Institutions-URL: https://staffprofiles.bournemouth.ac.uk/display/journal-article/388323.
-
-**Vorher:** https://staffprofiles.bournemouth.ac.uk/display/journal-article/388323; DOI: https://doi.org/10.1109/SENNANO57767.2023
-
-**Jetzt:** [Fundstelle](https://doi.org/10.1109/SENNANO57767.2023.10352567) · ok — DOI am 2026-10-12 aufgelöst (HTTP 302 zu IEEE Xplore 10352567); Crossref nennt Titel, Goh als Erstautor, S. 137–140
-
-**Identitätsnachweise:** [Primärquelle 1](https://api.crossref.org/works/10.1109/SENNANO57767.2023.10352567), [Primärquelle 2](https://ieeexplore.ieee.org/document/10352567/)
-
 ### pilot_guidelines
 
 **Geprüft:** 2026-10-12
@@ -60,18 +48,6 @@ Titel und PMC-URL gehören zu Teresi et al. (2022); Referenz und DOI des Ausgang
 
 **Identitätsnachweise:** [Primärquelle 1](https://pmc.ncbi.nlm.nih.gov/tools/idconv/api/v1/articles/?ids=PMC8849521&format=json), [Primärquelle 2](https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pmc&id=8849521&retmode=json)
 
-### esp_dsp_benchmarks
-
-**Geprüft:** 2026-10-12
-
-Schlüssel kam in round2/C-sources.json und round2/D-sources.json mit unterschiedlichen Metadaten vor; sources-merged.json behielt den allgemeineren D-Eintrag. Spezifischere C-Metadaten (ESP32-S3-Spalte, geprüfte Tabellen) übernommen; dieselbe Espressif-Seite.
-
-**Vorher:** https://docs.espressif.com/projects/esp-dsp/en/latest/esp32/esp-dsp-benchmarks.html; DOI: unverified
-
-**Jetzt:** [Fundstelle](https://docs.espressif.com/projects/esp-dsp/en/latest/esp32/esp-dsp-benchmarks.html) · ok
-
-**Identitätsnachweise:** [Primärquelle 1](https://docs.espressif.com/projects/esp-dsp/en/latest/esp32/esp-dsp-benchmarks.html)
-
 ## Metadaten korrigiert, Link weiterhin defekt
 
 ### fda_ec13_guidance
@@ -83,6 +59,32 @@ Defekten PDF-Link durch die von der FDA-Guidance-Suche gelistete HTML-Seite dess
 **Jetzt:** [Fundstelle](https://www.fda.gov/regulatory-information/search-fda-guidance-documents/cardiac-monitor-guidance-including-cardiotachometer-and-rate-alarm-guidance-industry) · broken (HTTP 404) bei Nachprüfung am 2026-10-05 — Sol meldete die HTML-Fassung als geöffnet, ein unabhängiger Abruf lieferte 404; Dokument über FDA-Guidance-Suche manuell finden
 
 **Identitätsnachweise:** [Primärquelle 1](https://www.fda.gov/regulatory-information/search-fda-guidance-documents/cardiac-monitor-guidance-including-cardiotachometer-and-rate-alarm-guidance-industry)
+
+## Metadaten korrigiert, Link war nicht defekt
+
+### goh_chestpiece
+
+**Geprüft:** 2026-10-12
+
+Ausgangs-DOI 10.1109/SENNANO57767.2023 bezeichnet den Tagungsband, nicht den Artikel. Artikel-DOI per Crossref-Datensatz und doi.org-Auflösung geprüft. Bisherige Institutions-URL: https://staffprofiles.bournemouth.ac.uk/display/journal-article/388323.
+
+**Vorher:** https://staffprofiles.bournemouth.ac.uk/display/journal-article/388323; DOI: https://doi.org/10.1109/SENNANO57767.2023
+
+**Jetzt:** [Fundstelle](https://doi.org/10.1109/SENNANO57767.2023.10352567) · ok — DOI am 2026-10-12 aufgelöst (HTTP 302 zu IEEE Xplore 10352567); Crossref nennt Titel, Goh als Erstautor, S. 137–140
+
+**Identitätsnachweise:** [Primärquelle 1](https://api.crossref.org/works/10.1109/SENNANO57767.2023.10352567), [Primärquelle 2](https://ieeexplore.ieee.org/document/10352567/)
+
+### esp_dsp_benchmarks
+
+**Geprüft:** 2026-10-12
+
+Schlüssel kam in round2/C-sources.json und round2/D-sources.json mit unterschiedlichen Metadaten vor; sources-merged.json behielt den allgemeineren D-Eintrag. Spezifischere C-Metadaten (ESP32-S3-Spalte, geprüfte Tabellen) übernommen; dieselbe Espressif-Seite.
+
+**Vorher:** https://docs.espressif.com/projects/esp-dsp/en/latest/esp32/esp-dsp-benchmarks.html; DOI: unverified
+
+**Jetzt:** [Fundstelle](https://docs.espressif.com/projects/esp-dsp/en/latest/esp32/esp-dsp-benchmarks.html) · ok
+
+**Identitätsnachweise:** [Primärquelle 1](https://docs.espressif.com/projects/esp-dsp/en/latest/esp32/esp-dsp-benchmarks.html)
 
 ## Korrekturen an Einheiten und Schlüsseln
 

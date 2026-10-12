@@ -164,6 +164,18 @@
     }
   },
   "caveats": {
+    "B044": {
+      "label": "Vorbehalt",
+      "date": "2026-10-12",
+      "text": "Rechenfehler in R07: Mit A ≈ 28,3 mm², L = 10 mm, c ≈ 343 m/s und f = 20 Hz ergibt V = A·c²/(4π²·f²·L) ≈ 0,021 m³ (≈ 21 l), nicht 21 ml. Ein Volumen von 21 ml liefert mit diesen Halsmaßen etwa 634 Hz. Die Empfehlung einer kleinen Kammer mit Resonanz oberhalb des Nutzbands bleibt davon unberührt; der Zahlenwert darf so nicht zitiert werden.",
+      "ids": ["U059"]
+    },
+    "U059": {
+      "label": "Vorbehalt",
+      "date": "2026-10-12",
+      "text": "Rechenfehler in R07: Mit A ≈ 28,3 mm², L = 10 mm, c ≈ 343 m/s und f = 20 Hz ergibt V = A·c²/(4π²·f²·L) ≈ 0,021 m³ (≈ 21 l), nicht 21 ml. Ein Volumen von 21 ml liefert mit diesen Halsmaßen etwa 634 Hz. Die Empfehlung einer kleinen Kammer mit Resonanz oberhalb des Nutzbands bleibt davon unberührt; der Zahlenwert darf so nicht zitiert werden.",
+      "ids": ["B044"]
+    },
     "A059": {
       "label": "Vorbehalt",
       "date": "2026-10-12",

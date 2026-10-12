@@ -13,7 +13,8 @@
   "broken_affected_units_before": 72,
   "broken_affected_units_after": 27,
   "source_keys": 105,
-  "verified_repairs": 6,
+  "verified_repairs": 4,
+  "metadata_only_corrections": 2,
   "chapter_files": {
     "01-einleitung.md": 2,
     "02-grundlagen-medizinisch.md": 6,
