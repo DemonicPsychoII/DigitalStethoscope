@@ -1,5 +1,7 @@
 # Product scope and specification basis
 
+Current owner decisions and numeric proposals: [11 October MVP decisions](../planning/mvp-decisions-2026-10-11.md). Older source snapshots and evaluation behavior remain historical evidence.
+
 ## Goal and boundary
 
 Develop an ESP32-S3 digital stethoscope research prototype: acquire the reused chestpiece's

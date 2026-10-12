@@ -106,6 +106,9 @@
   Punktkodierung, Zeitpräzision und Profil verbindlich wählen. `effectivePeriod` ist der Entwurf
   für die aggregierte Sitzung; das alte `effectiveDateTime`-Beispiel ist keine finale Festlegung.
   LOINC 8867-4 und UCUM `/min` bleiben die Herzfrequenz-Basis.
+  **Patient entschieden (12.10.):** Auswahl über das Hotspot-Portal des Geräts, gespeichert in
+  `Device.patient` auf dem FHIR-Server; siehe
+  [Entscheidungen 12. Oktober](../../Development/system/planning/mvp-decisions-2026-10-12.md).
 - [x] **Secrets außerhalb Git:** Echte Zugangsdaten ausschließlich lokal konfigurieren;
   Beispiele verwenden nicht geheime Platzhalter. Die frühere Hardcoding-Notiz ist überholt.
 - [x] **Bring-up offline als Default:** Optionaler Network-Build startet ohne automatische
@@ -129,7 +132,7 @@
   Offene D-/Parameter-Einträge vor Implementierungsabnahme klären, danach die betroffenen
   Verifikationsfälle mit tatsächlicher Evidenz dokumentieren.
 
-Updated by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.
+Updated by Claude-Opus-5.5 on behalf of Nico running in T3 Code through Claude Code.
 
 ## Historische Recherche und Originalannotation (August 2026)
 

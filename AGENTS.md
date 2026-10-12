@@ -16,9 +16,12 @@ workflows may remain hosted. Preserve required check names and existing gate pol
   Native mode requires one eligible GitHub approval and dismisses stale approvals; separate
   reviewer credentials are necessary when agents share the PR author identity.
   Legacy mode waives review only for a machine-verified pure revert; additional changes need review.
-- The PR body carries
+- Agent-managed PRs carry
   `<!-- agent-author harness=<claude-code|codex> model=<id> session=<id> class=<quick-fix|feature|policy|revert> -->`
-  and concrete `## Risk & rollback` evidence. Another agent session records
+  and concrete `## Risk & rollback` evidence. Human and other bot PRs without an agent-author
+  declaration do not need agent metadata; untouched template placeholders are ignored. They still
+  need current-head independent review, required CI, answered owner questions and resolved threads.
+  Agents must declare their authorship even when using the owner's GitHub account. Another agent session records
   `<!-- agent-review verdict=<approve|changes> sha=<head sha> reviewer=<harness>/<model> session=<id> -->`.
   Prefer a different provider/model; a push invalidates the verdict. Configured CodeRabbit native
   approval also counts when it approves the current head; a progress check alone does not.

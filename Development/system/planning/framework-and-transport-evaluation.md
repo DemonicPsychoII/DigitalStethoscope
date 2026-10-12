@@ -41,7 +41,7 @@ already supports them.
 | SD card (optional) | `zephyr,sdhc-spi-slot`, `zephyr,sdmmc-disk`, disk access + FatFs | Existing mount probe. Mounting is not a complete fixture-streaming implementation; test shared-SPI contention and removal/error paths. |
 | Backlight (optional) | Zephyr PWM | Existing adapter; tied to optional display. |
 | Headphone amplifier | External analog stage | No software driver assumed; select/verify gain, output limits and load behavior. |
-| Wi-Fi + HTTP/HTTPS client | Zephyr Wi-Fi, DHCP, DNS, BSD-style sockets, TLS via Mbed TLS | Existing optional network configuration and FHIR sender. Requires target AP/DNS/time/certificate/server tests. The device is a client, not an embedded web server. |
+| Wi-Fi + HTTP/HTTPS client | Zephyr Wi-Fi, DHCP, DNS, BSD-style sockets, TLS via Mbed TLS | Existing optional network configuration and FHIR sender. Requires target AP/DNS/time/certificate/server tests. The device is a FHIR client. Since [12 October](mvp-decisions-2026-10-12.md) it also serves a local hotspot portal (SoftAP + HTTP server) in Idle; verify both on target. |
 
 See the maintained [overlay](../coding/bringup-zephyr/boards/esp32s3_devkitc_procpu.overlay),
 [configuration](../coding/bringup-zephyr/prj.conf),
@@ -111,3 +111,5 @@ be confused with the proposed acknowledgement-plus-matching-readback contract.
 - [PlantUML component syntax](https://plantuml.com/component-diagram) and [activity syntax](https://plantuml.com/activity-diagram-beta)
 
 Created by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.
+
+Updated by Claude-Opus-5.5 on behalf of Nico running in T3 Code through Claude Code.

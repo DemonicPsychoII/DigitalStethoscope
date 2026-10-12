@@ -1,6 +1,8 @@
 # CTL — Application controller
 
-**Status: local review draft.** “Source-backed” identifies origin, not formal approval. Acceptance with open parameters remains conditional. Interface names are proposed contracts, not existing APIs.
+Current owner decisions and numeric proposals: [11 October MVP decisions](../../planning/mvp-decisions-2026-10-11.md). Older source snapshots and evaluation behavior remain historical evidence.
+
+**Status: current owner behavior decisions with proposed numeric acceptance.** “Source-backed” identifies origin, not formal approval. Acceptance with open parameters remains conditional. Interface names are proposed contracts, not existing APIs.
 
 ## CTL-001
 
@@ -24,17 +26,17 @@ The controller shall apply the last accepted stable filter/speed transition from
 
 ## CTL-003
 
-On mode/source/patient/point changes during acquisition, the controller shall cancel the affected incomplete session and tag subsequent commands with a new generation so late completions cannot change current state.
+During acquisition, finalization and delivery, the controller shall reject mode/source/patient/point changes with a normal fault and preserve frozen session context. A new session receives a new generation so late completions cannot change current state.
 
 - **Derivation:** UC-03,UC-05,UC-08 → SR-04,SR-05,SR-09; sources S03.
 - **Status:** Derived.
 - **Parameters:** —.
 - **Verification:** VT-04,VT-09.
-- **Acceptance:** Race cancellation with block/result completion; no mixed context, stale replay or new-result relabelling.
+- **Acceptance:** Race rejected changes and cancellation with completion; context remains unchanged, no mixed identity or new-result relabelling.
 
 ## CTL-004
 
-On entry to Lung, the controller shall cancel clip/measurement activity, invalidate current BPM, force Raw live 1× and reject capture/replay/measurement/send requests until Heart is selected.
+Accept entry to Lung only outside a session; reject an in-session mode change without mutation. On accepted entry invalidate current BPM, force Raw live 1× and reject capture/replay/measurement/send requests until Heart is selected.
 
 - **Derivation:** UC-07 → SR-07; sources S03,S05.
 - **Status:** Source-backed.
@@ -44,7 +46,7 @@ On entry to Lung, the controller shall cancel clip/measurement activity, invalid
 
 ## CTL-005
 
-The controller shall grant network work only in Idle with no active capture, replay or measurement; a listening-start request shall wait for network cancellation/completion acknowledgement before audio resumes.
+The controller shall grant network work only in Idle with no active capture, replay or measurement; a Start request during analysis or sending shall be rejected as Busy with visible activity, without cancellation or a queued start. Audio resumes only on a fresh Start after the lease is released.
 
 - **Derivation:** UC-06,UC-08 → SR-06,SR-09; sources S04.
 - **Status:** Source-backed + derived lease contract.
@@ -54,7 +56,7 @@ The controller shall grant network work only in Idle with no active capture, rep
 
 ## CTL-006
 
-The controller shall expose distinct start/stop listening, capture/cancel clip, start/cancel measurement and retry commands, and shall map the physical button to capture from Live and cancel from Capture/Replay.
+The MVP controller shall expose ordinary Start/Stop and separate normal-error acknowledgement. Stop before 15 seconds cancels measurement. During analysis/sending Start is Busy; Device Alarm recovery requires full restart. Capture/replay commands are optional extensions; retry is excluded from MVP.
 
 - **Derivation:** UC-01,UC-03,UC-05 → SR-01,SR-04,SR-05; sources S02,S03.
 - **Status:** Proposed workflow.
@@ -62,4 +64,16 @@ The controller shall expose distinct start/stop listening, capture/cancel clip, 
 - **Verification:** VT-04,VT-05.
 - **Acceptance:** Transition table covers each event/state and rejection reason; review D02/P20 before implementation.
 
+## CTL-007
+
+The controller shall enter Portal only from Idle, on the hotspot long press or automatically after startup checks when no Wi-Fi credentials are stored; it shall hold the Portal state with an exclusive network lease until confirmation, cancel or timeout, reject Start and session commands while in Portal, and own the local patient assignment: set only from a matching server readback, frozen into each session, and cleared on failed assignment.
+
+- **Derivation:** UC-05,UC-10 → SR-03,SR-12; sources S05; [12 October decisions](../../planning/mvp-decisions-2026-10-12.md).
+- **Status:** Owner decision 12 October; timeout and assignment lifetime proposed.
+- **Parameters:** P19,P21.
+- **Verification:** VT-04,VT-14.
+- **Acceptance:** Long press in every state; boot without credentials passes startup checks and Idle before Portal; Start during Portal; timeout/cancel leaves assignment unchanged; failed readback leaves the device unassigned; a session keeps its frozen patient after reassignment.
+
 Created by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.
+
+Updated by Claude-Opus-5.5 on behalf of Nico running in T3 Code through Claude Code.

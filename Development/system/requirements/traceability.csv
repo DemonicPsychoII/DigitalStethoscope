@@ -7,12 +7,14 @@ INP-001,INP,"UC-02,UC-03",SR-03,"S03,S04",Source-backed,P10,VT-04,components/inp
 INP-002,INP,UC-02,SR-03,"S03,S04",Source-backed,—,"VT-04,VT-02",components/inp.md#inp-002
 INP-003,INP,"UC-02,UC-09",SR-03,"S03,S07",Derived,"P10,P16",VT-04,components/inp.md#inp-003
 INP-004,INP,"UC-02,UC-08","SR-03,SR-09","S03,S04",Source-backed + derived overflow policy,P11,"VT-04,VT-09",components/inp.md#inp-004
+INP-005,INP,UC-10,SR-12,S05,Owner decision 12 October,"P10,P21","VT-04,VT-14",components/inp.md#inp-005
 CTL-001,CTL,"UC-01,UC-02,UC-09","SR-01,SR-03",S04,Source-backed,—,VT-04,components/ctl.md#ctl-001
 CTL-002,CTL,UC-02,SR-03,"S03,S04",Source-backed,P10,VT-04,components/ctl.md#ctl-002
 CTL-003,CTL,"UC-03,UC-05,UC-08","SR-04,SR-05,SR-09",S03,Derived,—,"VT-04,VT-09",components/ctl.md#ctl-003
 CTL-004,CTL,UC-07,SR-07,"S03,S05",Source-backed,—,"VT-04,VT-06,VT-07",components/ctl.md#ctl-004
 CTL-005,CTL,"UC-06,UC-08","SR-06,SR-09",S04,Source-backed + derived lease contract,"P13,P19",VT-08,components/ctl.md#ctl-005
 CTL-006,CTL,"UC-01,UC-03,UC-05","SR-01,SR-04,SR-05","S02,S03",Proposed workflow,P20,"VT-04,VT-05",components/ctl.md#ctl-006
+CTL-007,CTL,"UC-05,UC-10","SR-03,SR-12",S05,Owner decision 12 October,"P19,P21","VT-04,VT-14",components/ctl.md#ctl-007
 AUD-001,AUD,"UC-02,UC-04","SR-02,SR-08","S03,S07",Source-backed,P01,"VT-02,VT-10",components/aud.md#aud-001
 AUD-002,AUD,"UC-01,UC-02","SR-01,SR-02","S03,S07",Source-backed,"P11,P15","VT-01,VT-02",components/aud.md#aud-002
 AUD-003,AUD,UC-02,SR-02,"S03,S04",Source-backed target,"P01,P02",VT-02,components/aud.md#aud-003
@@ -43,6 +45,8 @@ UI-002,UI,"UC-03,UC-05,UC-08","SR-03,SR-09",S03,Source-backed,—,"VT-04,VT-05",
 UI-003,UI,"UC-02,UC-09",SR-03,"S03,S04",Source-backed,—,VT-04,components/ui.md#ui-003
 UI-004,UI,"UC-04,UC-08","SR-09,SR-11",S03,Source-backed,P10,"VT-09,VT-13",components/ui.md#ui-004
 UI-005,UI,"UC-04,UC-05,UC-09","SR-08,SR-10","S03,S07",Derived,P18,"VT-04,VT-11",components/ui.md#ui-005
+UI-006,UI,UC-10,SR-12,S05,Owner decision 12 October,P21,VT-14,components/ui.md#ui-006
+UI-007,UI,UC-10,"SR-10,SR-12","S05,S06",Derived security constraint,P21,"VT-14,VT-11",components/ui.md#ui-007
 NET-001,NET,"UC-06,UC-09",SR-06,S04,Source-backed + derived lease,P19,VT-08,components/net.md#net-001
 NET-002,NET,UC-06,"SR-06,SR-08","S03,S04",Source-backed,P18,VT-07,components/net.md#net-002
 NET-003,NET,UC-06,SR-06,S03,Source-backed,P18,VT-07,components/net.md#net-003
@@ -50,6 +54,8 @@ NET-004,NET,UC-06,SR-06,"S02,S03",Source-backed + derived idempotent PUT,—,"VT
 NET-005,NET,UC-06,SR-06,"S03,S06",Source-backed,P18,VT-08,components/net.md#net-005
 NET-006,NET,UC-06,"SR-06,SR-09",S03,Source-backed,P13,"VT-07,VT-08",components/net.md#net-006
 NET-007,NET,"UC-06,UC-09","SR-06,SR-10","S03,S06",Derived privacy constraint,P18,"VT-08,VT-11",components/net.md#net-007
+NET-008,NET,"UC-01,UC-10",SR-12,S05,Owner decision 12 October,"P13,P18",VT-14,components/net.md#net-008
+NET-009,NET,"UC-06,UC-10","SR-06,SR-12",S05,Owner decision 12 October,"P13,P18,P21","VT-14,VT-07",components/net.md#net-009
 MON-001,MON,"UC-02,UC-08","SR-02,SR-09,SR-10",S04,Source-backed,—,"VT-02,VT-09,VT-11",components/mon.md#mon-001
 MON-002,MON,"UC-01,UC-08,UC-09","SR-01,SR-09,SR-10","S03,S04",Source-backed,—,"VT-01,VT-11",components/mon.md#mon-002
 MON-003,MON,"UC-02,UC-09","SR-02,SR-10","S03,S04",Source-backed; resource margins proposed,P15,"VT-02,VT-11",components/mon.md#mon-003

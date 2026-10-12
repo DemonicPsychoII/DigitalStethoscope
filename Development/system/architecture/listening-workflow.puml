@@ -22,7 +22,8 @@ repeat
    #EEEEEE:End / cancel (optional);
   endif
  endif
- :Update settings;
+ :Update listening filter / volume;
+ :Reject session identity changes with normal fault;
 repeat while (Stop / fault?) is (no) not (yes)
 :Mute;
 :Idle / Fault;

@@ -1,6 +1,8 @@
 # MON — Monitoring and evidence
 
-**Status: local review draft.** “Source-backed” identifies origin, not formal approval. Acceptance with open parameters remains conditional. Interface names are proposed contracts, not existing APIs.
+Current owner decisions and numeric proposals: [11 October MVP decisions](../../planning/mvp-decisions-2026-10-11.md). Older source snapshots and evaluation behavior remain historical evidence.
+
+**Status: current owner behavior decisions with proposed numeric acceptance.** “Source-backed” identifies origin, not formal approval. Acceptance with open parameters remains conditional. Interface names are proposed contracts, not existing APIs.
 
 ## MON-001
 
@@ -34,13 +36,13 @@ Monitoring shall report measured stack/heap watermarks and separate internal DMA
 
 ## MON-004
 
-Supervision shall detect stalled required workers and request a muted fault/recovery outcome under an agreed watchdog policy without falsely treating invalid BPM or an optional peripheral failure as whole-system failure.
+Supervision shall detect stalled required workers and request a muted, latched Device Alarm requiring full device restart under the watchdog policy without falsely treating invalid BPM or an optional peripheral failure as whole-system failure.
 
 - **Derivation:** UC-08 → SR-09; sources S03,S04.
 - **Status:** Derived watchdog/recovery design.
 - **Parameters:** P12.
 - **Verification:** VT-09.
-- **Acceptance:** Stall each worker independently; exercise bounded recovery attempts; watchdog timeouts remain D12 until reviewed.
+- **Acceptance:** Stall each worker independently; verify no button or automatic reinitialization clears a Device Alarm; full restart reruns startup checks. Watchdog detection timeouts remain proposals until verified.
 
 ## MON-005
 

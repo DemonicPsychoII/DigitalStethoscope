@@ -1,39 +1,58 @@
 @startuml measurement_workflow
 skinparam shadowing false
 skinparam defaultFontName SansSerif
-title BPM measurement
+title MVP BPM session
 start
-:Start measurement;
+:Start Heart session;
 if (Heart + microphone + audio ready?) then (yes)
- :Save patient / point / BPM settings;
+ :Freeze patient / point / analysis settings;
  repeat
-  :Update BPM;
-  if (Cancelled / settings or source changed / fault?) then (yes)
-   :Discard measurement;
-   :Show outcome;
+  :Stream independent BPM analysis while listening;
+  :Reject identity changes with normal fault;
+  if (Essential audio fault?) then (yes)
+   :Mute and latch Device Alarm;
+   :Require full device restart;
    stop
   endif
- repeat while (Configured measurement time elapsed?) is (no) not (yes)
- :Combine valid estimates;
- if (Valid result?) then (yes)
-  :Save result;
-  :Wait for listening to stop;
-  if (Server / patient / clock / trust ready?) then (yes)
-   :Send BPM over Wi-Fi / HTTPS;
-   if (Acknowledged + matching readback?) then (yes)
+ repeat while (Stop pressed?) is (no) not (yes)
+ :Mute listening;
+ if (Duration less than 15 seconds?) then (yes)
+  :Cancel measurement, no send;
+  stop
+ endif
+ :Indicate Busy; reject Start without queuing;
+ :Aggregate retained valid estimates and interval;
+ if (Invalid BPM?) then (yes)
+  :Latch normal BPM fault; no numeric value;
+ endif
+ if (Wi-Fi configured?) then (yes)
+  if (Patient / clock / trust / endpoint ready?) then (yes)
+   if (Valid BPM?) then (yes)
+    :One HTTPS/FHIR numeric result attempt;
+   else (no)
+    :One error report using validated server contract;
+    :Never transmit numeric BPM;
+   endif
+   if (Accepted + matching readback?) then (yes)
     :Delivery verified;
    else (no)
-    :Failed / unverified;
+    :Latch normal fault; abort, no retry;
    endif
   else (no)
-   :Configuration needed;
+   :Latch configured-delivery normal fault;
   endif
  else (no)
-  :Invalid result;
+  :No send attempt or Wi-Fi error;
  endif
 else (no)
  :Reject command;
 endif
-:Show outcome;
+:Release Busy and network lease;
+:Idle; separate manual error acknowledgement;
 stop
+legend bottom
+  Streaming BPM requires no saved raw-session audio.
+  Duration/windows/filter/quality targets remain proposals.
+  Lung = listening only; no measurement/FHIR/error report.
+endlegend
 @enduml
