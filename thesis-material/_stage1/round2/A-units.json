@@ -1,0 +1,1962 @@
+{
+  "units": [
+    {
+      "id": "A001",
+      "statement": "Für Murmur-Detektierbarkeit existiert in den recherchierten Quellen keine einzelne allgemein normierte Kennzahl; verwendet werden Energie-, Spektral-, Hüllkurven- oder Detektor-Leistungsmerkmale.",
+      "origin": [
+        "preThesis/03-recherche/R01-murmur-metrik.md:22-41"
+      ],
+      "chapter": "Stand der Technik",
+      "type": "fact",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "murmur_text",
+          "link": "https://accesscardiology.mhmedical.com/content.aspx?bookid=382&sectionid=40663653",
+          "page": "Chapter 2, Clinical Auscultation and Conventional Phonocardiography (web lines 144–150)"
+        },
+        {
+          "key": "digital_auscultation_murmur",
+          "link": "https://link.springer.com/article/10.1007/s10439-008-9611-z",
+          "page": "Introduction, murmur and heart cycle description (existing registry reports web lines 71–85)"
+        },
+        {
+          "key": "murmur_filter",
+          "link": "https://arxiv.org/abs/2303.02988",
+          "page": "Section 2.1, preprocessing pipeline (arXiv text lines 13–26)"
+        }
+      ],
+      "supersedes": "U041"
+    },
+    {
+      "id": "A002",
+      "statement": "Bandbegrenzte Murmur-SNR kann als 10·log10(P_Murmur/P_Noise) oder 20·log10(A_Signal/A_Noise) berechnet werden.",
+      "origin": [
+        "preThesis/03-recherche/R01-murmur-metrik.md:45-48"
+      ],
+      "chapter": "Grundlagen (technisch: Akustik, MEMS, I2S, DSP/Filter, BPM, Time-Stretch, Embedded/RTOS, FHIR/TLS)",
+      "type": "definition",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "murmur_text",
+          "link": "https://accesscardiology.mhmedical.com/content.aspx?bookid=382&sectionid=40663653",
+          "page": "Chapter 2, Clinical Auscultation and Conventional Phonocardiography (web lines 144–150)"
+        },
+        {
+          "key": "digital_auscultation_murmur",
+          "link": "https://link.springer.com/article/10.1007/s10439-008-9611-z",
+          "page": "Introduction, murmur and heart cycle description (existing registry reports web lines 71–85)"
+        },
+        {
+          "key": "murmur_filter",
+          "link": "https://arxiv.org/abs/2303.02988",
+          "page": "Section 2.1, preprocessing pipeline (arXiv text lines 13–26)"
+        }
+      ]
+    },
+    {
+      "id": "A003",
+      "statement": "Murmur-to-S1/S2-Ratio kann als E_M/(E_S1+E_S2) angegeben werden und ist nicht gleich SNR.",
+      "origin": [
+        "preThesis/03-recherche/R01-murmur-metrik.md:47-49"
+      ],
+      "chapter": "Grundlagen (medizinisch: Herztöne, Murmurs, Auskultation)",
+      "type": "definition",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "murmur_text",
+          "link": "https://accesscardiology.mhmedical.com/content.aspx?bookid=382&sectionid=40663653",
+          "page": "Chapter 2, Clinical Auscultation and Conventional Phonocardiography (web lines 144–150)"
+        },
+        {
+          "key": "digital_auscultation_murmur",
+          "link": "https://link.springer.com/article/10.1007/s10439-008-9611-z",
+          "page": "Introduction, murmur and heart cycle description (existing registry reports web lines 71–85)"
+        },
+        {
+          "key": "murmur_filter",
+          "link": "https://arxiv.org/abs/2303.02988",
+          "page": "Section 2.1, preprocessing pipeline (arXiv text lines 13–26)"
+        }
+      ]
+    },
+    {
+      "id": "A004",
+      "statement": "Bandenergieverhältnis, spektraler Kontrast und Envelope-Kontrast sind mögliche Vergleichsgrößen; Bandgrenzen und Referenzfenster sind vorab festzulegen.",
+      "origin": [
+        "preThesis/03-recherche/R01-murmur-metrik.md:49-55"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "method",
+      "status": "assumption",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "murmur_text",
+          "link": "https://accesscardiology.mhmedical.com/content.aspx?bookid=382&sectionid=40663653",
+          "page": "Chapter 2, Clinical Auscultation and Conventional Phonocardiography (web lines 144–150)"
+        },
+        {
+          "key": "digital_auscultation_murmur",
+          "link": "https://link.springer.com/article/10.1007/s10439-008-9611-z",
+          "page": "Introduction, murmur and heart cycle description (existing registry reports web lines 71–85)"
+        },
+        {
+          "key": "murmur_filter",
+          "link": "https://arxiv.org/abs/2303.02988",
+          "page": "Section 2.1, preprocessing pipeline (arXiv text lines 13–26)"
+        }
+      ]
+    },
+    {
+      "id": "A005",
+      "statement": "Spektraler Schwerpunkt und Roll-off beschreiben spektrale Form, belegen aber allein keine bessere Murmur-Detektierbarkeit.",
+      "origin": [
+        "preThesis/03-recherche/R01-murmur-metrik.md:51"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "method",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "murmur_text",
+          "link": "https://accesscardiology.mhmedical.com/content.aspx?bookid=382&sectionid=40663653",
+          "page": "Chapter 2, Clinical Auscultation and Conventional Phonocardiography (web lines 144–150)"
+        },
+        {
+          "key": "digital_auscultation_murmur",
+          "link": "https://link.springer.com/article/10.1007/s10439-008-9611-z",
+          "page": "Introduction, murmur and heart cycle description (existing registry reports web lines 71–85)"
+        },
+        {
+          "key": "murmur_filter",
+          "link": "https://arxiv.org/abs/2303.02988",
+          "page": "Section 2.1, preprocessing pipeline (arXiv text lines 13–26)"
+        }
+      ]
+    },
+    {
+      "id": "A006",
+      "statement": "Spektrale Entropie und Flachheit beschreiben die Verteilung normalisierter Spektralenergie und sind allein eingeschränkt interpretierbar.",
+      "origin": [
+        "preThesis/03-recherche/R01-murmur-metrik.md:52"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "method",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "murmur_text",
+          "link": "https://accesscardiology.mhmedical.com/content.aspx?bookid=382&sectionid=40663653",
+          "page": "Chapter 2, Clinical Auscultation and Conventional Phonocardiography (web lines 144–150)"
+        },
+        {
+          "key": "digital_auscultation_murmur",
+          "link": "https://link.springer.com/article/10.1007/s10439-008-9611-z",
+          "page": "Introduction, murmur and heart cycle description (existing registry reports web lines 71–85)"
+        },
+        {
+          "key": "murmur_filter",
+          "link": "https://arxiv.org/abs/2303.02988",
+          "page": "Section 2.1, preprocessing pipeline (arXiv text lines 13–26)"
+        }
+      ]
+    },
+    {
+      "id": "A007",
+      "statement": "Envelope-Energie kann mit RMS-, Hilbert- oder Shannon-Energie des Murmurfensters bestimmt werden.",
+      "origin": [
+        "preThesis/03-recherche/R01-murmur-metrik.md:53"
+      ],
+      "chapter": "Grundlagen (technisch: Akustik, MEMS, I2S, DSP/Filter, BPM, Time-Stretch, Embedded/RTOS, FHIR/TLS)",
+      "type": "method",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "hilbert_env",
+          "link": "https://www.sciencedirect.com/science/article/pii/S1746809422003780",
+          "page": "Abstract (publisher page; full text paywalled)"
+        },
+        {
+          "key": "shannon_env",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11469632/",
+          "page": "unverified"
+        },
+        {
+          "key": "murmur_text",
+          "link": "https://accesscardiology.mhmedical.com/content.aspx?bookid=382&sectionid=40663653",
+          "page": "Chapter 2, Clinical Auscultation and Conventional Phonocardiography (web lines 144–150)"
+        }
+      ]
+    },
+    {
+      "id": "A008",
+      "statement": "Murmur-Dauer oder Flächenanteil oberhalb eines Hüllkurvenschwellwerts ist stark schwellenabhängig.",
+      "origin": [
+        "preThesis/03-recherche/R01-murmur-metrik.md:55"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "method",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "hilbert_env",
+          "link": "https://www.sciencedirect.com/science/article/pii/S1746809422003780",
+          "page": "Abstract (publisher page; full text paywalled)"
+        },
+        {
+          "key": "shannon_env",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11469632/",
+          "page": "unverified"
+        },
+        {
+          "key": "digital_auscultation_murmur",
+          "link": "https://link.springer.com/article/10.1007/s10439-008-9611-z",
+          "page": "Introduction, murmur and heart cycle description (existing registry reports web lines 71–85)"
+        }
+      ]
+    },
+    {
+      "id": "A009",
+      "statement": "AUC, Sensitivität, Spezifität, F1 und Balanced Accuracy benötigen Labels oder einen festgelegten Referenzdetektor.",
+      "origin": [
+        "preThesis/03-recherche/R01-murmur-metrik.md:56"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "method",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "murmur_filter",
+          "link": "https://arxiv.org/abs/2303.02988",
+          "page": "Section 2.1, preprocessing pipeline (arXiv text lines 13–26)"
+        },
+        {
+          "key": "circor_paper",
+          "link": "https://arxiv.org/abs/2108.00813",
+          "page": "Abstract, arXiv text lines 3–6; journal pages unverified"
+        },
+        {
+          "key": "physionet_challenge_2022",
+          "link": "https://physionet.org/content/challenge-2022/1.0.0/papers/",
+          "page": "Data Variables, lines 92–97"
+        }
+      ]
+    },
+    {
+      "id": "A010",
+      "statement": "Eine Verbesserung von breitbandigem SNR oder RMS allein belegt keine bessere Murmur-Detektierbarkeit.",
+      "origin": [
+        "preThesis/03-recherche/R01-murmur-metrik.md:22-41"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "fact",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "murmur_text",
+          "link": "https://accesscardiology.mhmedical.com/content.aspx?bookid=382&sectionid=40663653",
+          "page": "Chapter 2, Clinical Auscultation and Conventional Phonocardiography (web lines 144–150)"
+        },
+        {
+          "key": "digital_auscultation_murmur",
+          "link": "https://link.springer.com/article/10.1007/s10439-008-9611-z",
+          "page": "Introduction, murmur and heart cycle description (existing registry reports web lines 71–85)"
+        },
+        {
+          "key": "murmur_filter",
+          "link": "https://arxiv.org/abs/2303.02988",
+          "page": "Section 2.1, preprocessing pipeline (arXiv text lines 13–26)"
+        }
+      ],
+      "supersedes": "U043"
+    },
+    {
+      "id": "A011",
+      "statement": "Bei synthetisch verrauschter PCG mit clean signal x und Rauschen n gilt x_in=x+n; SNR_out−SNR_in ist eine mögliche SNR-Änderung.",
+      "origin": [
+        "preThesis/03-recherche/R01-murmur-metrik.md:64-106"
+      ],
+      "chapter": "Grundlagen (technisch: Akustik, MEMS, I2S, DSP/Filter, BPM, Time-Stretch, Embedded/RTOS, FHIR/TLS)",
+      "type": "definition",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "murmur_text",
+          "link": "https://accesscardiology.mhmedical.com/content.aspx?bookid=382&sectionid=40663653",
+          "page": "Chapter 2, Clinical Auscultation and Conventional Phonocardiography (web lines 144–150)"
+        },
+        {
+          "key": "digital_auscultation_murmur",
+          "link": "https://link.springer.com/article/10.1007/s10439-008-9611-z",
+          "page": "Introduction, murmur and heart cycle description (existing registry reports web lines 71–85)"
+        },
+        {
+          "key": "murmur_filter",
+          "link": "https://arxiv.org/abs/2303.02988",
+          "page": "Section 2.1, preprocessing pipeline (arXiv text lines 13–26)"
+        }
+      ]
+    },
+    {
+      "id": "A012",
+      "statement": "Eine SNR-Berechnung mit bekanntem Nutzsignal ist bei klinischen Aufnahmen nur mit Referenzsignal, paralleler Messung oder experimentell erzeugtem Rauschen möglich.",
+      "origin": [
+        "preThesis/03-recherche/R01-murmur-metrik.md:99-106"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "risk",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "murmur_text",
+          "link": "https://accesscardiology.mhmedical.com/content.aspx?bookid=382&sectionid=40663653",
+          "page": "Chapter 2, Clinical Auscultation and Conventional Phonocardiography (web lines 144–150)"
+        },
+        {
+          "key": "digital_auscultation_murmur",
+          "link": "https://link.springer.com/article/10.1007/s10439-008-9611-z",
+          "page": "Introduction, murmur and heart cycle description (existing registry reports web lines 71–85)"
+        },
+        {
+          "key": "murmur_filter",
+          "link": "https://arxiv.org/abs/2303.02988",
+          "page": "Section 2.1, preprocessing pipeline (arXiv text lines 13–26)"
+        }
+      ]
+    },
+    {
+      "id": "A013",
+      "statement": "R01 nennt 20·log10(A_S/(4σ_N)) als reale PCG-SNR-Definition; 4σ_N wird als angenommene 95-%-Rauschamplitude bei Normalverteilung interpretiert.",
+      "origin": [
+        "preThesis/03-recherche/R01-murmur-metrik.md:107-126"
+      ],
+      "chapter": "Grundlagen (technisch: Akustik, MEMS, I2S, DSP/Filter, BPM, Time-Stretch, Embedded/RTOS, FHIR/TLS)",
+      "type": "definition",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "murmur_text",
+          "link": "https://accesscardiology.mhmedical.com/content.aspx?bookid=382&sectionid=40663653",
+          "page": "Chapter 2, Clinical Auscultation and Conventional Phonocardiography (web lines 144–150)"
+        },
+        {
+          "key": "digital_auscultation_murmur",
+          "link": "https://link.springer.com/article/10.1007/s10439-008-9611-z",
+          "page": "Introduction, murmur and heart cycle description (existing registry reports web lines 71–85)"
+        },
+        {
+          "key": "murmur_filter",
+          "link": "https://arxiv.org/abs/2303.02988",
+          "page": "Section 2.1, preprocessing pipeline (arXiv text lines 13–26)"
+        }
+      ]
+    },
+    {
+      "id": "A014",
+      "statement": "R01 nennt 10–140 Hz als S1-Schwerpunkt, 10–200 Hz für S2/tiefe Komponenten und 20–200 Hz für tieffrequente Herzschallanteile und tiefe Murmurs.",
+      "origin": [
+        "preThesis/03-recherche/R01-murmur-metrik.md:197-215"
+      ],
+      "chapter": "Grundlagen (medizinisch: Herztöne, Murmurs, Auskultation)",
+      "type": "parameter",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "murmur_text",
+          "link": "https://accesscardiology.mhmedical.com/content.aspx?bookid=382&sectionid=40663653",
+          "page": "Chapter 2, Clinical Auscultation and Conventional Phonocardiography (web lines 144–150)"
+        },
+        {
+          "key": "highfreq_pcg",
+          "link": "https://www.sciencedirect.com/science/article/pii/0002914961901783",
+          "page": "Abstract (publisher page)"
+        },
+        {
+          "key": "digital_auscultation_murmur",
+          "link": "https://link.springer.com/article/10.1007/s10439-008-9611-z",
+          "page": "Introduction, murmur and heart cycle description (existing registry reports web lines 71–85)"
+        }
+      ]
+    },
+    {
+      "id": "A015",
+      "statement": "R01 nennt 20–500 Hz als breiten Herzschallbereich, 25–400 Hz als Vorverarbeitung einer PCG-Murmurklassifikation und 30–800/0–800 Hz für weitere Analysen.",
+      "origin": [
+        "preThesis/03-recherche/R01-murmur-metrik.md:197-215"
+      ],
+      "chapter": "Grundlagen (medizinisch: Herztöne, Murmurs, Auskultation)",
+      "type": "parameter",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "murmur_filter",
+          "link": "https://arxiv.org/abs/2303.02988",
+          "page": "Section 2.1, preprocessing pipeline (arXiv text lines 13–26)"
+        },
+        {
+          "key": "highfreq_pcg",
+          "link": "https://www.sciencedirect.com/science/article/pii/0002914961901783",
+          "page": "Abstract (publisher page)"
+        },
+        {
+          "key": "murmur_text",
+          "link": "https://accesscardiology.mhmedical.com/content.aspx?bookid=382&sectionid=40663653",
+          "page": "Chapter 2, Clinical Auscultation and Conventional Phonocardiography (web lines 144–150)"
+        }
+      ]
+    },
+    {
+      "id": "A016",
+      "statement": "R01 nennt 50–1200 Hz als breiten Bereich der kardiopulmonalen Auskultation.",
+      "origin": [
+        "preThesis/03-recherche/R01-murmur-metrik.md:197-215"
+      ],
+      "chapter": "Grundlagen (medizinisch: Herztöne, Murmurs, Auskultation)",
+      "type": "parameter",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "murmur_text",
+          "link": "https://accesscardiology.mhmedical.com/content.aspx?bookid=382&sectionid=40663653",
+          "page": "Chapter 2, Clinical Auscultation and Conventional Phonocardiography (web lines 144–150)"
+        },
+        {
+          "key": "highfreq_pcg",
+          "link": "https://www.sciencedirect.com/science/article/pii/0002914961901783",
+          "page": "Abstract (publisher page)"
+        },
+        {
+          "key": "digital_auscultation_murmur",
+          "link": "https://link.springer.com/article/10.1007/s10439-008-9611-z",
+          "page": "Introduction, murmur and heart cycle description (existing registry reports web lines 71–85)"
+        }
+      ]
+    },
+    {
+      "id": "A017",
+      "statement": "R01 empfiehlt für Filtervergleiche gleiche absolute ADC-Skalierung, Eingangsamplitude und Messkette oder eine gemeinsame Normierung am ungefilterten Signal.",
+      "origin": [
+        "preThesis/03-recherche/R01-murmur-metrik.md:262-282"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "method",
+      "status": "assumption",
+      "needs_citation": false,
+      "sources": []
+    },
+    {
+      "id": "A018",
+      "statement": "R01 empfiehlt identische Zeitfenster aus gemeinsamer Referenzsegmentierung, damit Filterwirkung nicht zugleich die Segmentierung verändert.",
+      "origin": [
+        "preThesis/03-recherche/R01-murmur-metrik.md:128-157"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "method",
+      "status": "assumption",
+      "needs_citation": false,
+      "sources": [],
+      "supersedes": "U042"
+    },
+    {
+      "id": "A019",
+      "statement": "Bei nicht normalverteilten gepaarten Differenzen nennt R01 Wilcoxon-Vorzeichen-Rang-Test, Median, Hodges–Lehmann-Schätzer und Bootstrap-Konfidenzintervall.",
+      "origin": [
+        "preThesis/03-recherche/R01-murmur-metrik.md:544-548"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "method",
+      "status": "assumption",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "bland_altman",
+          "link": "https://doi.org/10.1016/S0140-6736(86)90837-8",
+          "page": "Abstract and bibliographic metadata; full text paywalled"
+        },
+        {
+          "key": "bland_review",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4470095/",
+          "page": "Methods overview; section/page unverified"
+        },
+        {
+          "key": "ec13",
+          "link": "https://mdcpp.com/doc/standard/ANSIAAMIEC13-2002.pdf",
+          "page": "Clause 4.2.7 (accessible copy; official publication status not verified)"
+        }
+      ]
+    },
+    {
+      "id": "A020",
+      "statement": "R01 führt Cohen-d-Richtwerte 0,2/0,5/0,8 als klein/mittel/groß auf; dies sind keine klinischen Murmur-Schwellen.",
+      "origin": [
+        "preThesis/03-recherche/R01-murmur-metrik.md:501-531"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "parameter",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "bland_review",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4470095/",
+          "page": "Methods overview; section/page unverified"
+        },
+        {
+          "key": "digital_auscultation_murmur",
+          "link": "https://link.springer.com/article/10.1007/s10439-008-9611-z",
+          "page": "Introduction, murmur and heart cycle description (existing registry reports web lines 71–85)"
+        },
+        {
+          "key": "murmur_text",
+          "link": "https://accesscardiology.mhmedical.com/content.aspx?bookid=382&sectionid=40663653",
+          "page": "Chapter 2, Clinical Auscultation and Conventional Phonocardiography (web lines 144–150)"
+        }
+      ]
+    },
+    {
+      "id": "A021",
+      "statement": "R02 gibt 5.272 CirCor-Aufnahmen an, während die zitierte Originalpublikation 5.282 nennt; die Aufnahmenzahl ist daher in der Recherche widersprüchlich und vor Thesis-Verwendung anhand der Version 1.0.3 zu klären.",
+      "origin": [
+        "preThesis/03-recherche/R02-ground-truth.md:35-57"
+      ],
+      "chapter": "Stand der Technik",
+      "type": "contradiction",
+      "status": "contradicted",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "circor_dataset",
+          "link": "https://physionet.org/content/circor-heart-sound/1.0.3/",
+          "page": "Data Description, lines 112–205; access/license lines 342–350"
+        },
+        {
+          "key": "circor_paper",
+          "link": "https://arxiv.org/abs/2108.00813",
+          "page": "Abstract, arXiv text lines 3–6; journal pages unverified"
+        },
+        {
+          "key": "physionet_challenge_2022",
+          "link": "https://physionet.org/content/challenge-2022/1.0.0/papers/",
+          "page": "Data Variables, lines 92–97"
+        }
+      ],
+      "supersedes": "U044",
+      "sources_incomplete": true
+    },
+    {
+      "id": "A022",
+      "statement": "CirCor wird als Datensatz bis Alter 21 Jahre mit typischer Abtastrate 4 kHz beschrieben; Header nennen die konkrete Rate pro Patient.",
+      "origin": [
+        "preThesis/03-recherche/R02-ground-truth.md:35-40"
+      ],
+      "chapter": "Stand der Technik",
+      "type": "fact",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "circor_dataset",
+          "link": "https://physionet.org/content/circor-heart-sound/1.0.3/",
+          "page": "Data Description, lines 112–205; access/license lines 342–350"
+        },
+        {
+          "key": "circor_paper",
+          "link": "https://arxiv.org/abs/2108.00813",
+          "page": "Abstract, arXiv text lines 3–6; journal pages unverified"
+        },
+        {
+          "key": "physionet_challenge_2022",
+          "link": "https://physionet.org/content/challenge-2022/1.0.0/papers/",
+          "page": "Data Variables, lines 92–97"
+        }
+      ]
+    },
+    {
+      "id": "A023",
+      "statement": "CirCor enthält Murmurstatus Present/Absent/Unknown sowie Ort, am besten hörbare Lokalisation, Timing, Form, Tonhöhe, Qualität und Grad.",
+      "origin": [
+        "preThesis/03-recherche/R02-ground-truth.md:35-57"
+      ],
+      "chapter": "Grundlagen (medizinisch: Herztöne, Murmurs, Auskultation)",
+      "type": "fact",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "circor_dataset",
+          "link": "https://physionet.org/content/circor-heart-sound/1.0.3/",
+          "page": "Data Description, lines 112–205; access/license lines 342–350"
+        },
+        {
+          "key": "circor_paper",
+          "link": "https://arxiv.org/abs/2108.00813",
+          "page": "Abstract, arXiv text lines 3–6; journal pages unverified"
+        },
+        {
+          "key": "physionet_challenge_2022",
+          "link": "https://physionet.org/content/challenge-2022/1.0.0/papers/",
+          "page": "Data Variables, lines 92–97"
+        }
+      ]
+    },
+    {
+      "id": "A024",
+      "statement": "CirCor-TSV-Dateien enthalten Segmentierungen von S1, Systole, S2 und Diastole.",
+      "origin": [
+        "preThesis/03-recherche/R02-ground-truth.md:42-59"
+      ],
+      "chapter": "Stand der Technik",
+      "type": "fact",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "circor_dataset",
+          "link": "https://physionet.org/content/circor-heart-sound/1.0.3/",
+          "page": "Data Description, lines 112–205; access/license lines 342–350"
+        },
+        {
+          "key": "circor_paper",
+          "link": "https://arxiv.org/abs/2108.00813",
+          "page": "Abstract, arXiv text lines 3–6; journal pages unverified"
+        },
+        {
+          "key": "physionet_challenge_2022",
+          "link": "https://physionet.org/content/challenge-2022/1.0.0/papers/",
+          "page": "Data Variables, lines 92–97"
+        }
+      ]
+    },
+    {
+      "id": "A025",
+      "statement": "CirCor v1.0.3 steht laut R02 unter ODC-By 1.0; Attribution und Lizenzbedingungen sind einzuhalten.",
+      "origin": [
+        "preThesis/03-recherche/R02-ground-truth.md:35-40,71-74"
+      ],
+      "chapter": "Projektmanagement/Formales",
+      "type": "formal-rule",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "circor_dataset",
+          "link": "https://physionet.org/content/circor-heart-sound/1.0.3/",
+          "page": "Data Description, lines 112–205; access/license lines 342–350"
+        },
+        {
+          "key": "circor_paper",
+          "link": "https://arxiv.org/abs/2108.00813",
+          "page": "Abstract, arXiv text lines 3–6; journal pages unverified"
+        },
+        {
+          "key": "physionet_challenge_2022",
+          "link": "https://physionet.org/content/challenge-2022/1.0.0/papers/",
+          "page": "Data Variables, lines 92–97"
+        }
+      ]
+    },
+    {
+      "id": "A026",
+      "statement": "R02 beschreibt systolische CirCor-Murmurgrade I/VI, II/VI und III/VI; höhere Grade sind nicht weiter getrennt.",
+      "origin": [
+        "preThesis/03-recherche/R02-ground-truth.md:46-55"
+      ],
+      "chapter": "Grundlagen (medizinisch: Herztöne, Murmurs, Auskultation)",
+      "type": "fact",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "circor_dataset",
+          "link": "https://physionet.org/content/circor-heart-sound/1.0.3/",
+          "page": "Data Description, lines 112–205; access/license lines 342–350"
+        },
+        {
+          "key": "circor_paper",
+          "link": "https://arxiv.org/abs/2108.00813",
+          "page": "Abstract, arXiv text lines 3–6; journal pages unverified"
+        },
+        {
+          "key": "physionet_challenge_2022",
+          "link": "https://physionet.org/content/challenge-2022/1.0.0/papers/",
+          "page": "Data Variables, lines 92–97"
+        }
+      ]
+    },
+    {
+      "id": "A027",
+      "statement": "CinC 2016 enthält laut R02 rund 3.126 Aufnahmen, resampelt auf 2 kHz und als WAV-Dateien.",
+      "origin": [
+        "preThesis/03-recherche/R02-ground-truth.md:35-40,61-68"
+      ],
+      "chapter": "Stand der Technik",
+      "type": "fact",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "physionet2016",
+          "link": "https://physionet.org/challenge/2016/",
+          "page": "unverified"
+        },
+        {
+          "key": "physionet_challenge_2022",
+          "link": "https://physionet.org/content/challenge-2022/1.0.0/papers/",
+          "page": "Data Variables, lines 92–97"
+        },
+        {
+          "key": "circor_dataset",
+          "link": "https://physionet.org/content/circor-heart-sound/1.0.3/",
+          "page": "Data Description, lines 112–205; access/license lines 342–350"
+        }
+      ]
+    },
+    {
+      "id": "A028",
+      "statement": "CinC 2016 enthält Normal/Abnormal/Unsure und S1/S2-/Systole-/Diastole-Segmentierung, aber keine standardisierten Murmur-Typen oder Murmurgrade.",
+      "origin": [
+        "preThesis/03-recherche/R02-ground-truth.md:38,61-68"
+      ],
+      "chapter": "Stand der Technik",
+      "type": "fact",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "physionet2016",
+          "link": "https://physionet.org/challenge/2016/",
+          "page": "unverified"
+        },
+        {
+          "key": "physionet_challenge_2022",
+          "link": "https://physionet.org/content/challenge-2022/1.0.0/papers/",
+          "page": "Data Variables, lines 92–97"
+        },
+        {
+          "key": "circor_paper",
+          "link": "https://arxiv.org/abs/2108.00813",
+          "page": "Abstract, arXiv text lines 3–6; journal pages unverified"
+        }
+      ],
+      "supersedes": "U045"
+    },
+    {
+      "id": "A029",
+      "statement": "R02 bewertet CirCor als am besten geeignete öffentliche Murmur-Ground-Truth-Quelle und CinC 2016 als nur eingeschränkt passend.",
+      "origin": [
+        "preThesis/03-recherche/R02-ground-truth.md:22-40,104-118"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "decision",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "circor_dataset",
+          "link": "https://physionet.org/content/circor-heart-sound/1.0.3/",
+          "page": "Data Description, lines 112–205; access/license lines 342–350"
+        },
+        {
+          "key": "circor_paper",
+          "link": "https://arxiv.org/abs/2108.00813",
+          "page": "Abstract, arXiv text lines 3–6; journal pages unverified"
+        },
+        {
+          "key": "physionet_challenge_2022",
+          "link": "https://physionet.org/content/challenge-2022/1.0.0/papers/",
+          "page": "Data Variables, lines 92–97"
+        }
+      ]
+    },
+    {
+      "id": "A030",
+      "statement": "Für CirCor schlägt R02 Present/Absent als Hauptgruppen und Unknown separat oder ausgeschlossen vor.",
+      "origin": [
+        "preThesis/03-recherche/R02-ground-truth.md:104-118"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "method",
+      "status": "assumption",
+      "needs_citation": false,
+      "sources": []
+    },
+    {
+      "id": "A031",
+      "statement": "R02 empfiehlt patientenweise statt aufnahmeweise in Trainings-/Testdaten zu teilen, damit dieselbe Person nicht in beiden Gruppen liegt.",
+      "origin": [
+        "preThesis/03-recherche/R02-ground-truth.md:110-118"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "method",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "circor_dataset",
+          "link": "https://physionet.org/content/circor-heart-sound/1.0.3/",
+          "page": "Data Description, lines 112–205; access/license lines 342–350"
+        },
+        {
+          "key": "circor_paper",
+          "link": "https://arxiv.org/abs/2108.00813",
+          "page": "Abstract, arXiv text lines 3–6; journal pages unverified"
+        },
+        {
+          "key": "physionet_challenge_2022",
+          "link": "https://physionet.org/content/challenge-2022/1.0.0/papers/",
+          "page": "Data Variables, lines 92–97"
+        }
+      ]
+    },
+    {
+      "id": "A032",
+      "statement": "Simulatoraufnahmen ersetzen keine klinischen Patientendaten; ihre Übertragbarkeit auf reale Thoraxbedingungen muss laut R02 experimentell geprüft werden.",
+      "origin": [
+        "preThesis/03-recherche/R02-ground-truth.md:22-31,154-169"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "risk",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "circor_paper",
+          "link": "https://arxiv.org/abs/2108.00813",
+          "page": "Abstract, arXiv text lines 3–6; journal pages unverified"
+        },
+        {
+          "key": "physionet_challenge_2022",
+          "link": "https://physionet.org/content/challenge-2022/1.0.0/papers/",
+          "page": "Data Variables, lines 92–97"
+        },
+        {
+          "key": "murmur_text",
+          "link": "https://accesscardiology.mhmedical.com/content.aspx?bookid=382&sectionid=40663653",
+          "page": "Chapter 2, Clinical Auscultation and Conventional Phonocardiography (web lines 144–150)"
+        }
+      ]
+    },
+    {
+      "id": "A033",
+      "statement": "R02 skizziert einen Selbstbau-Prüfstand aus WAV-Quelle, Lautsprecher/Exciter, Thoraxplatte und definierten Bruststückpositionen als kontrollierte Zusatzquelle.",
+      "origin": [
+        "preThesis/03-recherche/R02-ground-truth.md:94,141-152"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "method",
+      "status": "assumption",
+      "needs_citation": false,
+      "sources": []
+    },
+    {
+      "id": "A034",
+      "statement": "Für den Selbstbau schlägt R02 mindestens 10–20 Wiederholungen desselben Signals sowie Referenzmikrofon oder Referenzstethoskop vor.",
+      "origin": [
+        "preThesis/03-recherche/R02-ground-truth.md:141-152"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "method",
+      "status": "assumption",
+      "needs_citation": false,
+      "sources": []
+    },
+    {
+      "id": "A035",
+      "statement": "R02 nennt Kyoto Kagaku K ver. 2 mit 88 Fällen, darunter 14 Herzkrankheits- und 12 normale Herzgeräuschfälle; Preis auf Anfrage.",
+      "origin": [
+        "preThesis/03-recherche/R02-ground-truth.md:85-88"
+      ],
+      "chapter": "Stand der Technik",
+      "type": "fact",
+      "status": "assumption",
+      "needs_citation": false,
+      "sources": []
+    },
+    {
+      "id": "A036",
+      "statement": "R02 nennt Sakamoto Auscultation Simulator II mit 20 Herzschalloptionen und Richtpreis 9.000–10.000 USD.",
+      "origin": [
+        "preThesis/03-recherche/R02-ground-truth.md:89"
+      ],
+      "chapter": "Stand der Technik",
+      "type": "parameter",
+      "status": "assumption",
+      "needs_citation": false,
+      "sources": []
+    },
+    {
+      "id": "A037",
+      "statement": "R02 nennt SAM Basic Adult für etwa 3.500–5.000 USD und PAT Basic Pediatric für etwa 2.000–3.000 USD, jeweils abhängig von Ausstattung.",
+      "origin": [
+        "preThesis/03-recherche/R02-ground-truth.md:90-91"
+      ],
+      "chapter": "Stand der Technik",
+      "type": "parameter",
+      "status": "assumption",
+      "needs_citation": false,
+      "sources": []
+    },
+    {
+      "id": "A038",
+      "statement": "R02 nennt Evo AuRA mit etwa 2.995 USD und empfiehlt, vor Beschaffung den Zugriff auf Soundausgänge für Messaufnahmen zu klären.",
+      "origin": [
+        "preThesis/03-recherche/R02-ground-truth.md:92"
+      ],
+      "chapter": "Stand der Technik",
+      "type": "parameter",
+      "status": "assumption",
+      "needs_citation": false,
+      "sources": []
+    },
+    {
+      "id": "A039",
+      "statement": "R02 nennt 3B-Handheld-Trainer mit Murmur-Soundkarte für 16 Aufnahmen, Händlerpreis etwa £226,68 inkl. VAT.",
+      "origin": [
+        "preThesis/03-recherche/R02-ground-truth.md:93"
+      ],
+      "chapter": "Stand der Technik",
+      "type": "parameter",
+      "status": "assumption",
+      "needs_citation": false,
+      "sources": []
+    },
+    {
+      "id": "A040",
+      "statement": "R03 empfiehlt synchron aufgezeichnetes EKG als primäre BPM-Referenz; Herzfrequenz wird aus R-Zacken bzw. R-R-Intervallen abgeleitet.",
+      "origin": [
+        "preThesis/03-recherche/R03-bpm-referenz.md:30-60"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "method",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "ec13",
+          "link": "https://mdcpp.com/doc/standard/ANSIAAMIEC13-2002.pdf",
+          "page": "Clause 4.2.7 (accessible copy; official publication status not verified)"
+        },
+        {
+          "key": "iec60601",
+          "link": "https://webstore.iec.ch/en/publication/2638",
+          "page": "Scope / standard description; accuracy clause not inspected"
+        },
+        {
+          "key": "bland_altman",
+          "link": "https://doi.org/10.1016/S0140-6736(86)90837-8",
+          "page": "Abstract and bibliographic metadata; full text paywalled"
+        }
+      ],
+      "supersedes": "U047"
+    },
+    {
+      "id": "A041",
+      "statement": "Simulierte EKG-Pulse eignen sich laut R03 für technische Funktions- und Grenzbereichstests, nicht als klinischer Patiententest.",
+      "origin": [
+        "preThesis/03-recherche/R03-bpm-referenz.md:32-39"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "method",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "ec13",
+          "link": "https://mdcpp.com/doc/standard/ANSIAAMIEC13-2002.pdf",
+          "page": "Clause 4.2.7 (accessible copy; official publication status not verified)"
+        },
+        {
+          "key": "iec60601",
+          "link": "https://webstore.iec.ch/en/publication/2638",
+          "page": "Scope / standard description; accuracy clause not inspected"
+        },
+        {
+          "key": "physionet_challenge_2022",
+          "link": "https://physionet.org/content/challenge-2022/1.0.0/papers/",
+          "page": "Data Variables, lines 92–97"
+        }
+      ]
+    },
+    {
+      "id": "A042",
+      "statement": "Manuelle Auskultation ist laut R03 nur sekundäre Plausibilitätsreferenz, weil zeitliche Zählfehler möglich sind.",
+      "origin": [
+        "preThesis/03-recherche/R03-bpm-referenz.md:34-38"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "risk",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "murmur_text",
+          "link": "https://accesscardiology.mhmedical.com/content.aspx?bookid=382&sectionid=40663653",
+          "page": "Chapter 2, Clinical Auscultation and Conventional Phonocardiography (web lines 144–150)"
+        },
+        {
+          "key": "bland_altman",
+          "link": "https://doi.org/10.1016/S0140-6736(86)90837-8",
+          "page": "Abstract and bibliographic metadata; full text paywalled"
+        },
+        {
+          "key": "digital_auscultation_murmur",
+          "link": "https://link.springer.com/article/10.1007/s10439-008-9611-z",
+          "page": "Introduction, murmur and heart cycle description (existing registry reports web lines 71–85)"
+        }
+      ]
+    },
+    {
+      "id": "A043",
+      "statement": "Ein zweiter PCG-Kanal misst ein ähnliches physikalisches Signal und ist laut R03 kein unabhängiger Goldstandard.",
+      "origin": [
+        "preThesis/03-recherche/R03-bpm-referenz.md:37-39"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "risk",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "murmur_text",
+          "link": "https://accesscardiology.mhmedical.com/content.aspx?bookid=382&sectionid=40663653",
+          "page": "Chapter 2, Clinical Auscultation and Conventional Phonocardiography (web lines 144–150)"
+        },
+        {
+          "key": "bland_altman",
+          "link": "https://doi.org/10.1016/S0140-6736(86)90837-8",
+          "page": "Abstract and bibliographic metadata; full text paywalled"
+        },
+        {
+          "key": "digital_auscultation_murmur",
+          "link": "https://link.springer.com/article/10.1007/s10439-008-9611-z",
+          "page": "Introduction, murmur and heart cycle description (existing registry reports web lines 71–85)"
+        }
+      ]
+    },
+    {
+      "id": "A044",
+      "statement": "S1/S2- oder Normal/Abnormal-Labels liefern nicht automatisch BPM-Ground-Truth; dafür sind EKG oder verlässliche Beat-Zeitpunkte nötig.",
+      "origin": [
+        "preThesis/03-recherche/R03-bpm-referenz.md:38-44"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "fact",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "circor_dataset",
+          "link": "https://physionet.org/content/circor-heart-sound/1.0.3/",
+          "page": "Data Description, lines 112–205; access/license lines 342–350"
+        },
+        {
+          "key": "physionet_challenge_2022",
+          "link": "https://physionet.org/content/challenge-2022/1.0.0/papers/",
+          "page": "Data Variables, lines 92–97"
+        },
+        {
+          "key": "bland_altman",
+          "link": "https://doi.org/10.1016/S0140-6736(86)90837-8",
+          "page": "Abstract and bibliographic metadata; full text paywalled"
+        }
+      ]
+    },
+    {
+      "id": "A045",
+      "statement": "R03 schlägt synchrone PCG-/EKG-Aufnahme, R-Zacken-Detektion mit visueller Stichprobenkontrolle und identische Auswertefenster vor.",
+      "origin": [
+        "preThesis/03-recherche/R03-bpm-referenz.md:45-60"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "method",
+      "status": "assumption",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "bland_altman",
+          "link": "https://doi.org/10.1016/S0140-6736(86)90837-8",
+          "page": "Abstract and bibliographic metadata; full text paywalled"
+        },
+        {
+          "key": "bland_review",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4470095/",
+          "page": "Methods overview; section/page unverified"
+        },
+        {
+          "key": "ec13",
+          "link": "https://mdcpp.com/doc/standard/ANSIAAMIEC13-2002.pdf",
+          "page": "Clause 4.2.7 (accessible copy; official publication status not verified)"
+        }
+      ]
+    },
+    {
+      "id": "A046",
+      "statement": "EKG-Referenz-Herzfrequenz kann als 60 geteilt durch das mittlere RR-Intervall in Sekunden berechnet werden.",
+      "origin": [
+        "preThesis/03-recherche/R03-bpm-referenz.md:45-60"
+      ],
+      "chapter": "Grundlagen (technisch: Akustik, MEMS, I2S, DSP/Filter, BPM, Time-Stretch, Embedded/RTOS, FHIR/TLS)",
+      "type": "definition",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "ec13",
+          "link": "https://mdcpp.com/doc/standard/ANSIAAMIEC13-2002.pdf",
+          "page": "Clause 4.2.7 (accessible copy; official publication status not verified)"
+        },
+        {
+          "key": "iec60601",
+          "link": "https://webstore.iec.ch/en/publication/2638",
+          "page": "Scope / standard description; accuracy clause not inspected"
+        },
+        {
+          "key": "bland_altman",
+          "link": "https://doi.org/10.1016/S0140-6736(86)90837-8",
+          "page": "Abstract and bibliographic metadata; full text paywalled"
+        }
+      ]
+    },
+    {
+      "id": "A047",
+      "statement": "Der Fehler pro Messung lautet e_i=HR_PCG,i−HR_EKG,i.",
+      "origin": [
+        "preThesis/03-recherche/R03-bpm-referenz.md:63-71"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "definition",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "bland_altman",
+          "link": "https://doi.org/10.1016/S0140-6736(86)90837-8",
+          "page": "Abstract and bibliographic metadata; full text paywalled"
+        },
+        {
+          "key": "bland_review",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4470095/",
+          "page": "Methods overview; section/page unverified"
+        },
+        {
+          "key": "ec13",
+          "link": "https://mdcpp.com/doc/standard/ANSIAAMIEC13-2002.pdf",
+          "page": "Clause 4.2.7 (accessible copy; official publication status not verified)"
+        }
+      ]
+    },
+    {
+      "id": "A048",
+      "statement": "MAE ist der Mittelwert absoluter bpm-Fehler; MAPE ist der mittlere absolute Fehler relativ zur EKG-Herzfrequenz in Prozent.",
+      "origin": [
+        "preThesis/03-recherche/R03-bpm-referenz.md:63-71"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "definition",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "bland_altman",
+          "link": "https://doi.org/10.1016/S0140-6736(86)90837-8",
+          "page": "Abstract and bibliographic metadata; full text paywalled"
+        },
+        {
+          "key": "bland_review",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4470095/",
+          "page": "Methods overview; section/page unverified"
+        },
+        {
+          "key": "ec13",
+          "link": "https://mdcpp.com/doc/standard/ANSIAAMIEC13-2002.pdf",
+          "page": "Clause 4.2.7 (accessible copy; official publication status not verified)"
+        }
+      ]
+    },
+    {
+      "id": "A049",
+      "statement": "Bland–Altman-Bias ist der Mittelwert der Differenzen; 95-%-Übereinstimmungsgrenzen sind mittlere Differenz ±1,96 SD.",
+      "origin": [
+        "preThesis/03-recherche/R03-bpm-referenz.md:63-71"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "definition",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "bland_altman",
+          "link": "https://doi.org/10.1016/S0140-6736(86)90837-8",
+          "page": "Abstract and bibliographic metadata; full text paywalled"
+        },
+        {
+          "key": "bland_review",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4470095/",
+          "page": "Methods overview; section/page unverified"
+        },
+        {
+          "key": "ec13",
+          "link": "https://mdcpp.com/doc/standard/ANSIAAMIEC13-2002.pdf",
+          "page": "Clause 4.2.7 (accessible copy; official publication status not verified)"
+        }
+      ]
+    },
+    {
+      "id": "A050",
+      "statement": "Ein Korrelationskoeffizient zeigt Zusammenhang, aber keinen ausreichenden Nachweis der Übereinstimmung zweier Messverfahren.",
+      "origin": [
+        "preThesis/03-recherche/R03-bpm-referenz.md:71-85"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "fact",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "bland_altman",
+          "link": "https://doi.org/10.1016/S0140-6736(86)90837-8",
+          "page": "Abstract and bibliographic metadata; full text paywalled"
+        },
+        {
+          "key": "bland_review",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4470095/",
+          "page": "Methods overview; section/page unverified"
+        },
+        {
+          "key": "ec13",
+          "link": "https://mdcpp.com/doc/standard/ANSIAAMIEC13-2002.pdf",
+          "page": "Clause 4.2.7 (accessible copy; official publication status not verified)"
+        }
+      ]
+    },
+    {
+      "id": "A051",
+      "statement": "R03 nennt Bias, 95-%-Limits of Agreement, MAE, MAPE und Anteile innerhalb definierter Toleranzen als Ergebnisgrößen.",
+      "origin": [
+        "preThesis/03-recherche/R03-bpm-referenz.md:76-85"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "method",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "bland_altman",
+          "link": "https://doi.org/10.1016/S0140-6736(86)90837-8",
+          "page": "Abstract and bibliographic metadata; full text paywalled"
+        },
+        {
+          "key": "bland_review",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4470095/",
+          "page": "Methods overview; section/page unverified"
+        },
+        {
+          "key": "ec13",
+          "link": "https://mdcpp.com/doc/standard/ANSIAAMIEC13-2002.pdf",
+          "page": "Clause 4.2.7 (accessible copy; official publication status not verified)"
+        }
+      ]
+    },
+    {
+      "id": "A052",
+      "statement": "ANSI/AAMI EC13:2002 nennt für EKG-Herzfrequenzmesser mindestens 30–200 bpm und Anzeigeabweichung höchstens ±10 % oder ±5 bpm, je nachdem, welcher Wert größer ist.",
+      "origin": [
+        "preThesis/03-recherche/R03-bpm-referenz.md:87-110"
+      ],
+      "chapter": "Stand der Technik",
+      "type": "parameter",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "ec13",
+          "link": "https://mdcpp.com/doc/standard/ANSIAAMIEC13-2002.pdf",
+          "page": "Clause 4.2.7 (accessible copy; official publication status not verified)"
+        },
+        {
+          "key": "iec60601",
+          "link": "https://webstore.iec.ch/en/publication/2638",
+          "page": "Scope / standard description; accuracy clause not inspected"
+        },
+        {
+          "key": "fda_ec13_guidance",
+          "link": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/cardiac-monitor-guidance-including-cardiotachometer-and-rate-alarm-guidance-industry",
+          "page": "unverified"
+        }
+      ],
+      "supersedes": "U048"
+    },
+    {
+      "id": "A053",
+      "statement": "R03 nennt für IEC 60601-2-27 ±10 % oder ±5/min sowie Bereiche 30–200/min (Erwachsene), 30–250/min (pädiatrisch/neonatal).",
+      "origin": [
+        "preThesis/03-recherche/R03-bpm-referenz.md:89-93,113-143"
+      ],
+      "chapter": "Stand der Technik",
+      "type": "parameter",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "iec60601",
+          "link": "https://webstore.iec.ch/en/publication/2638",
+          "page": "Scope / standard description; accuracy clause not inspected"
+        },
+        {
+          "key": "ec13",
+          "link": "https://mdcpp.com/doc/standard/ANSIAAMIEC13-2002.pdf",
+          "page": "Clause 4.2.7 (accessible copy; official publication status not verified)"
+        },
+        {
+          "key": "fda_ec13_guidance",
+          "link": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/cardiac-monitor-guidance-including-cardiotachometer-and-rate-alarm-guidance-industry",
+          "page": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "A054",
+      "statement": "Die EKG-Monitor-Toleranz ist laut R03 kein Konformitätsnachweis für ein PCG-/Stethoskopgerät.",
+      "origin": [
+        "preThesis/03-recherche/R03-bpm-referenz.md:22-29,145-150"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "risk",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "ec13",
+          "link": "https://mdcpp.com/doc/standard/ANSIAAMIEC13-2002.pdf",
+          "page": "Clause 4.2.7 (accessible copy; official publication status not verified)"
+        },
+        {
+          "key": "iec60601",
+          "link": "https://webstore.iec.ch/en/publication/2638",
+          "page": "Scope / standard description; accuracy clause not inspected"
+        },
+        {
+          "key": "fda_ec13_guidance",
+          "link": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/cardiac-monitor-guidance-including-cardiotachometer-and-rate-alarm-guidance-industry",
+          "page": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "A055",
+      "statement": "Die Normlogik max(5 bpm, 10 % des Referenzwertes) ergibt bei 40 bpm ±5 bpm, 60 bpm ±6 bpm, 100 bpm ±10 bpm und 200 bpm ±20 bpm.",
+      "origin": [
+        "preThesis/03-recherche/R03-bpm-referenz.md:100-111"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "parameter",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "ec13",
+          "link": "https://mdcpp.com/doc/standard/ANSIAAMIEC13-2002.pdf",
+          "page": "Clause 4.2.7 (accessible copy; official publication status not verified)"
+        },
+        {
+          "key": "iec60601",
+          "link": "https://webstore.iec.ch/en/publication/2638",
+          "page": "Scope / standard description; accuracy clause not inspected"
+        },
+        {
+          "key": "fda_ec13_guidance",
+          "link": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/cardiac-monitor-guidance-including-cardiotachometer-and-rate-alarm-guidance-industry",
+          "page": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "A056",
+      "statement": "R03 schlägt MAE ≤5 bpm, MAPE ≤10 % und mindestens 90 % der Fenster innerhalb definierter Toleranz als Entwicklungsziel vor.",
+      "origin": [
+        "preThesis/03-recherche/R03-bpm-referenz.md:113-143"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "method",
+      "status": "assumption",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "ec13",
+          "link": "https://mdcpp.com/doc/standard/ANSIAAMIEC13-2002.pdf",
+          "page": "Clause 4.2.7 (accessible copy; official publication status not verified)"
+        },
+        {
+          "key": "iec60601",
+          "link": "https://webstore.iec.ch/en/publication/2638",
+          "page": "Scope / standard description; accuracy clause not inspected"
+        },
+        {
+          "key": "fda_ec13_guidance",
+          "link": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/cardiac-monitor-guidance-including-cardiotachometer-and-rate-alarm-guidance-industry",
+          "page": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "A057",
+      "statement": "R03 schlägt als ambitioniertes Ziel MAE ≤3 bpm, MAPE ≤5 % und mindestens 95 % innerhalb ±5 bpm bei ruhigen Probanden vor.",
+      "origin": [
+        "preThesis/03-recherche/R03-bpm-referenz.md:139-143"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "method",
+      "status": "assumption",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "ec13",
+          "link": "https://mdcpp.com/doc/standard/ANSIAAMIEC13-2002.pdf",
+          "page": "Clause 4.2.7 (accessible copy; official publication status not verified)"
+        },
+        {
+          "key": "iec60601",
+          "link": "https://webstore.iec.ch/en/publication/2638",
+          "page": "Scope / standard description; accuracy clause not inspected"
+        },
+        {
+          "key": "fda_ec13_guidance",
+          "link": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/cardiac-monitor-guidance-including-cardiotachometer-and-rate-alarm-guidance-industry",
+          "page": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "A058",
+      "statement": "Time-Scale Modification verändert die Signaldauer ohne Tonhöhenänderung; Resampling mit Faktor r verschiebt Frequenzen näherungsweise auf f_neu=r·f_alt.",
+      "origin": [
+        "preThesis/03-recherche/R04-time-stretch.md:22-60"
+      ],
+      "chapter": "Grundlagen (technisch: Akustik, MEMS, I2S, DSP/Filter, BPM, Time-Stretch, Embedded/RTOS, FHIR/TLS)",
+      "type": "definition",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "tsm_review",
+          "link": "https://www.mdpi.com/2076-3417/6/2/57",
+          "page": "Abstract and review overview; article section/page unverified"
+        },
+        {
+          "key": "wsola_roelands",
+          "link": "https://www.isca-archive.org/eurospeech_1993/roelands93_eurospeech.html",
+          "page": "Abstract and bibliographic record"
+        },
+        {
+          "key": "phase_vocoder",
+          "link": "https://ltfat.org/notes/ltfatnote050.pdf",
+          "page": "Abstract and Introduction (PDF; document pages unverified)"
+        }
+      ]
+    },
+    {
+      "id": "A059",
+      "statement": "Bei 0,5× verdoppelt sich Dauer und Frequenzlage sinkt auf 50 %; bei 0,75× wird Dauer 1,333-fach und Frequenzlage sinkt auf 75 %.",
+      "origin": [
+        "preThesis/03-recherche/R04-time-stretch.md:48-60"
+      ],
+      "chapter": "Grundlagen (technisch: Akustik, MEMS, I2S, DSP/Filter, BPM, Time-Stretch, Embedded/RTOS, FHIR/TLS)",
+      "type": "parameter",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "tsm_review",
+          "link": "https://www.mdpi.com/2076-3417/6/2/57",
+          "page": "Abstract and review overview; article section/page unverified"
+        },
+        {
+          "key": "wsola_roelands",
+          "link": "https://www.isca-archive.org/eurospeech_1993/roelands93_eurospeech.html",
+          "page": "Abstract and bibliographic record"
+        },
+        {
+          "key": "phase_vocoder",
+          "link": "https://ltfat.org/notes/ltfatnote050.pdf",
+          "page": "Abstract and Introduction (PDF; document pages unverified)"
+        }
+      ]
+    },
+    {
+      "id": "A060",
+      "statement": "R04 beschreibt S1/S2 als kurze, nichtstationäre Ereignisse mit breitbandigen, zeitlich veränderlichen Anteilen.",
+      "origin": [
+        "preThesis/03-recherche/R04-time-stretch.md:30-46"
+      ],
+      "chapter": "Grundlagen (medizinisch: Herztöne, Murmurs, Auskultation)",
+      "type": "fact",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "murmur_text",
+          "link": "https://accesscardiology.mhmedical.com/content.aspx?bookid=382&sectionid=40663653",
+          "page": "Chapter 2, Clinical Auscultation and Conventional Phonocardiography (web lines 144–150)"
+        },
+        {
+          "key": "highfreq_pcg",
+          "link": "https://www.sciencedirect.com/science/article/pii/0002914961901783",
+          "page": "Abstract (publisher page)"
+        },
+        {
+          "key": "tsm_review",
+          "link": "https://www.mdpi.com/2076-3417/6/2/57",
+          "page": "Abstract and review overview; article section/page unverified"
+        }
+      ]
+    },
+    {
+      "id": "A061",
+      "statement": "Pitch-erhaltendes Time-Stretching erhält Frequenzlage näherungsweise, verändert aber zeitliche Verhältnisse und kann Artefakte hinzufügen.",
+      "origin": [
+        "preThesis/03-recherche/R04-time-stretch.md:22-60"
+      ],
+      "chapter": "Grundlagen (technisch: Akustik, MEMS, I2S, DSP/Filter, BPM, Time-Stretch, Embedded/RTOS, FHIR/TLS)",
+      "type": "fact",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "tsm_review",
+          "link": "https://www.mdpi.com/2076-3417/6/2/57",
+          "page": "Abstract and review overview; article section/page unverified"
+        },
+        {
+          "key": "wsola_roelands",
+          "link": "https://www.isca-archive.org/eurospeech_1993/roelands93_eurospeech.html",
+          "page": "Abstract and bibliographic record"
+        },
+        {
+          "key": "phase_vocoder",
+          "link": "https://ltfat.org/notes/ltfatnote050.pdf",
+          "page": "Abstract and Introduction (PDF; document pages unverified)"
+        }
+      ]
+    },
+    {
+      "id": "A062",
+      "statement": "R04 ordnet verlangsamte Wiedergabe als zusätzliche Hörhilfe, nicht als diagnostisch validiertes Verfahren ein; Originalgeschwindigkeit soll verfügbar bleiben.",
+      "origin": [
+        "preThesis/03-recherche/R04-time-stretch.md:22-60"
+      ],
+      "chapter": "Anforderungen",
+      "type": "decision",
+      "status": "assumption",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "tsm_review",
+          "link": "https://www.mdpi.com/2076-3417/6/2/57",
+          "page": "Abstract and review overview; article section/page unverified"
+        },
+        {
+          "key": "wsola_roelands",
+          "link": "https://www.isca-archive.org/eurospeech_1993/roelands93_eurospeech.html",
+          "page": "Abstract and bibliographic record"
+        },
+        {
+          "key": "phase_vocoder",
+          "link": "https://ltfat.org/notes/ltfatnote050.pdf",
+          "page": "Abstract and Introduction (PDF; document pages unverified)"
+        }
+      ],
+      "supersedes": "U051"
+    },
+    {
+      "id": "A063",
+      "statement": "SOLA verbindet überlappende Abschnitte mit möglichst gutem Wellenformanschluss; R04 nennt Phasensprünge, Knacken und Transientenartefakte.",
+      "origin": [
+        "preThesis/03-recherche/R04-time-stretch.md:63-68"
+      ],
+      "chapter": "Grundlagen (technisch: Akustik, MEMS, I2S, DSP/Filter, BPM, Time-Stretch, Embedded/RTOS, FHIR/TLS)",
+      "type": "definition",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "tsm_review",
+          "link": "https://www.mdpi.com/2076-3417/6/2/57",
+          "page": "Abstract and review overview; article section/page unverified"
+        },
+        {
+          "key": "wsola_roelands",
+          "link": "https://www.isca-archive.org/eurospeech_1993/roelands93_eurospeech.html",
+          "page": "Abstract and bibliographic record"
+        },
+        {
+          "key": "phase_vocoder",
+          "link": "https://ltfat.org/notes/ltfatnote050.pdf",
+          "page": "Abstract and Introduction (PDF; document pages unverified)"
+        }
+      ]
+    },
+    {
+      "id": "A064",
+      "statement": "WSOLA ergänzt SOLA durch Suche nach einer Analyseposition mit maximaler Wellenformähnlichkeit.",
+      "origin": [
+        "preThesis/03-recherche/R04-time-stretch.md:63-68"
+      ],
+      "chapter": "Grundlagen (technisch: Akustik, MEMS, I2S, DSP/Filter, BPM, Time-Stretch, Embedded/RTOS, FHIR/TLS)",
+      "type": "definition",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "wsola_roelands",
+          "link": "https://www.isca-archive.org/eurospeech_1993/roelands93_eurospeech.html",
+          "page": "Abstract and bibliographic record"
+        },
+        {
+          "key": "tsm_review",
+          "link": "https://www.mdpi.com/2076-3417/6/2/57",
+          "page": "Abstract and review overview; article section/page unverified"
+        },
+        {
+          "key": "phase_vocoder",
+          "link": "https://ltfat.org/notes/ltfatnote050.pdf",
+          "page": "Abstract and Introduction (PDF; document pages unverified)"
+        }
+      ]
+    },
+    {
+      "id": "A065",
+      "statement": "R04 empfiehlt WSOLA als einfache Echtzeitoption für das Projekt; die Eignung für Herzschall bleibt zu prüfen.",
+      "origin": [
+        "preThesis/03-recherche/R04-time-stretch.md:63-80"
+      ],
+      "chapter": "Stand der Technik",
+      "type": "decision",
+      "status": "assumption",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "tsm_review",
+          "link": "https://www.mdpi.com/2076-3417/6/2/57",
+          "page": "Abstract and review overview; article section/page unverified"
+        },
+        {
+          "key": "wsola_roelands",
+          "link": "https://www.isca-archive.org/eurospeech_1993/roelands93_eurospeech.html",
+          "page": "Abstract and bibliographic record"
+        },
+        {
+          "key": "phase_vocoder",
+          "link": "https://ltfat.org/notes/ltfatnote050.pdf",
+          "page": "Abstract and Introduction (PDF; document pages unverified)"
+        }
+      ]
+    },
+    {
+      "id": "A066",
+      "statement": "R04 nennt Transientenverdopplung, Transientenauslassen, Stottern und Amplitudenmodulation als mögliche WSOLA-Artefakte.",
+      "origin": [
+        "preThesis/03-recherche/R04-time-stretch.md:71-90"
+      ],
+      "chapter": "Grundlagen (technisch: Akustik, MEMS, I2S, DSP/Filter, BPM, Time-Stretch, Embedded/RTOS, FHIR/TLS)",
+      "type": "risk",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "tsm_review",
+          "link": "https://www.mdpi.com/2076-3417/6/2/57",
+          "page": "Abstract and review overview; article section/page unverified"
+        },
+        {
+          "key": "wsola_roelands",
+          "link": "https://www.isca-archive.org/eurospeech_1993/roelands93_eurospeech.html",
+          "page": "Abstract and bibliographic record"
+        },
+        {
+          "key": "phase_vocoder",
+          "link": "https://ltfat.org/notes/ltfatnote050.pdf",
+          "page": "Abstract and Introduction (PDF; document pages unverified)"
+        }
+      ]
+    },
+    {
+      "id": "A067",
+      "statement": "R04 beschreibt PSOLA als perioden-/grundtonsynchrone Segmentierung und bewertet sie für vollständige PCG wegen fehlender stabiler Periodizität als ungeeignet.",
+      "origin": [
+        "preThesis/03-recherche/R04-time-stretch.md:63-68,116-127"
+      ],
+      "chapter": "Stand der Technik",
+      "type": "fact",
+      "status": "assumption",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "tsm_review",
+          "link": "https://www.mdpi.com/2076-3417/6/2/57",
+          "page": "Abstract and review overview; article section/page unverified"
+        },
+        {
+          "key": "wsola_roelands",
+          "link": "https://www.isca-archive.org/eurospeech_1993/roelands93_eurospeech.html",
+          "page": "Abstract and bibliographic record"
+        },
+        {
+          "key": "phase_vocoder",
+          "link": "https://ltfat.org/notes/ltfatnote050.pdf",
+          "page": "Abstract and Introduction (PDF; document pages unverified)"
+        }
+      ]
+    },
+    {
+      "id": "A068",
+      "statement": "Ein Phase-Vocoder verändert zeitliche Positionen von STFT-Rahmen, rekonstruiert Phasen und führt inverse STFT aus.",
+      "origin": [
+        "preThesis/03-recherche/R04-time-stretch.md:63-68,95-113"
+      ],
+      "chapter": "Grundlagen (technisch: Akustik, MEMS, I2S, DSP/Filter, BPM, Time-Stretch, Embedded/RTOS, FHIR/TLS)",
+      "type": "definition",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "tsm_review",
+          "link": "https://www.mdpi.com/2076-3417/6/2/57",
+          "page": "Abstract and review overview; article section/page unverified"
+        },
+        {
+          "key": "phase_vocoder",
+          "link": "https://ltfat.org/notes/ltfatnote050.pdf",
+          "page": "Abstract and Introduction (PDF; document pages unverified)"
+        },
+        {
+          "key": "wsola_roelands",
+          "link": "https://www.isca-archive.org/eurospeech_1993/roelands93_eurospeech.html",
+          "page": "Abstract and bibliographic record"
+        }
+      ]
+    },
+    {
+      "id": "A069",
+      "statement": "R04 nennt beim Phase-Vocoder Transientenschmierung, phasigen/hallähnlichen Eindruck und Phasenkohärenzverlust als mögliche Artefakte.",
+      "origin": [
+        "preThesis/03-recherche/R04-time-stretch.md:95-113"
+      ],
+      "chapter": "Grundlagen (technisch: Akustik, MEMS, I2S, DSP/Filter, BPM, Time-Stretch, Embedded/RTOS, FHIR/TLS)",
+      "type": "risk",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "tsm_review",
+          "link": "https://www.mdpi.com/2076-3417/6/2/57",
+          "page": "Abstract and review overview; article section/page unverified"
+        },
+        {
+          "key": "phase_vocoder",
+          "link": "https://ltfat.org/notes/ltfatnote050.pdf",
+          "page": "Abstract and Introduction (PDF; document pages unverified)"
+        }
+      ],
+      "sources_incomplete": true
+    },
+    {
+      "id": "A070",
+      "statement": "R04 nennt Identity Phase Locking, Onset-/Transientenerkennung und Hybrid WSOLA/Phase-Vocoder als mögliche Gegenmaßnahmen.",
+      "origin": [
+        "preThesis/03-recherche/R04-time-stretch.md:104-113"
+      ],
+      "chapter": "Grundlagen (technisch: Akustik, MEMS, I2S, DSP/Filter, BPM, Time-Stretch, Embedded/RTOS, FHIR/TLS)",
+      "type": "method",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "tsm_review",
+          "link": "https://www.mdpi.com/2076-3417/6/2/57",
+          "page": "Abstract and review overview; article section/page unverified"
+        },
+        {
+          "key": "phase_vocoder",
+          "link": "https://ltfat.org/notes/ltfatnote050.pdf",
+          "page": "Abstract and Introduction (PDF; document pages unverified)"
+        }
+      ],
+      "sources_incomplete": true
+    },
+    {
+      "id": "A071",
+      "statement": "R04 listet WSOLA-Startparameter bei 8 kHz: Frames 20–40 ms, Überlappung 50–75 %, Synthese-Hop 5–15 ms, Suchbereich ±5–10 ms.",
+      "origin": [
+        "preThesis/03-recherche/R04-time-stretch.md:129-141"
+      ],
+      "chapter": "Grundlagen (technisch: Akustik, MEMS, I2S, DSP/Filter, BPM, Time-Stretch, Embedded/RTOS, FHIR/TLS)",
+      "type": "parameter",
+      "status": "assumption",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "tsm_review",
+          "link": "https://www.mdpi.com/2076-3417/6/2/57",
+          "page": "Abstract and review overview; article section/page unverified"
+        },
+        {
+          "key": "wsola_roelands",
+          "link": "https://www.isca-archive.org/eurospeech_1993/roelands93_eurospeech.html",
+          "page": "Abstract and bibliographic record"
+        },
+        {
+          "key": "phase_vocoder",
+          "link": "https://ltfat.org/notes/ltfatnote050.pdf",
+          "page": "Abstract and Introduction (PDF; document pages unverified)"
+        }
+      ]
+    },
+    {
+      "id": "A072",
+      "statement": "R04 listet Phase-Vocoder-Beispielparameter FFT 256/512, Fenster 32–64 ms, Hop 25–50 %, Hann-Fenster und Overlap-Add.",
+      "origin": [
+        "preThesis/03-recherche/R04-time-stretch.md:144-153"
+      ],
+      "chapter": "Grundlagen (technisch: Akustik, MEMS, I2S, DSP/Filter, BPM, Time-Stretch, Embedded/RTOS, FHIR/TLS)",
+      "type": "parameter",
+      "status": "assumption",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "tsm_review",
+          "link": "https://www.mdpi.com/2076-3417/6/2/57",
+          "page": "Abstract and review overview; article section/page unverified"
+        },
+        {
+          "key": "wsola_roelands",
+          "link": "https://www.isca-archive.org/eurospeech_1993/roelands93_eurospeech.html",
+          "page": "Abstract and bibliographic record"
+        },
+        {
+          "key": "phase_vocoder",
+          "link": "https://ltfat.org/notes/ltfatnote050.pdf",
+          "page": "Abstract and Introduction (PDF; document pages unverified)"
+        }
+      ]
+    },
+    {
+      "id": "A073",
+      "statement": "Bei 8 kHz und 512-Punkt-FFT beträgt die Frequenzbinbreite rund 15,6 Hz; bei 256 Punkten rund 31,25 Hz.",
+      "origin": [
+        "preThesis/03-recherche/R04-time-stretch.md:154-163"
+      ],
+      "chapter": "Grundlagen (technisch: Akustik, MEMS, I2S, DSP/Filter, BPM, Time-Stretch, Embedded/RTOS, FHIR/TLS)",
+      "type": "parameter",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "tsm_review",
+          "link": "https://www.mdpi.com/2076-3417/6/2/57",
+          "page": "Abstract and review overview; article section/page unverified"
+        },
+        {
+          "key": "wsola_roelands",
+          "link": "https://www.isca-archive.org/eurospeech_1993/roelands93_eurospeech.html",
+          "page": "Abstract and bibliographic record"
+        },
+        {
+          "key": "phase_vocoder",
+          "link": "https://ltfat.org/notes/ltfatnote050.pdf",
+          "page": "Abstract and Introduction (PDF; document pages unverified)"
+        }
+      ]
+    },
+    {
+      "id": "A074",
+      "statement": "R04 schätzt 20–50 Mio. Zyklen/s für WSOLA und 10–30 Mio. Zyklen/s für Phase-Vocoder auf ESP32-S3; dies sind Schätzungen, keine gemessenen Gesamtanwendungsbenchmarks.",
+      "origin": [
+        "preThesis/03-recherche/R04-time-stretch.md:192-250"
+      ],
+      "chapter": "Systemarchitektur",
+      "type": "parameter",
+      "status": "assumption",
+      "needs_citation": false,
+      "sources": [],
+      "supersedes": "U052"
+    },
+    {
+      "id": "A075",
+      "statement": "R04 nennt ESP-DSP-Grundoperationsbenchmarks, aber keinen direkt vergleichbaren vollständigen ESP32-S3-WSOLA-/Phase-Vocoder-Benchmark bei 8 kHz.",
+      "origin": [
+        "preThesis/03-recherche/R04-time-stretch.md:167-190,247-260"
+      ],
+      "chapter": "Systemarchitektur",
+      "type": "fact",
+      "status": "assumption",
+      "needs_citation": false,
+      "sources": []
+    },
+    {
+      "id": "A076",
+      "statement": "R04 empfiehlt CPU-Last, RAM, Latenz, Dropouts, Frequenzlage, S1/S2-Dauer und subjektive Artefakte zu messen.",
+      "origin": [
+        "preThesis/03-recherche/R04-time-stretch.md:262-279"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "method",
+      "status": "assumption",
+      "needs_citation": false,
+      "sources": []
+    },
+    {
+      "id": "A077",
+      "statement": "R04 empfiehlt WSOLA als Hauptverfahren, 0,75× als Standard und 0,5× als optionalen Modus mit erhöhtem Artefaktrisiko.",
+      "origin": [
+        "preThesis/03-recherche/R04-time-stretch.md:281-290"
+      ],
+      "chapter": "Anforderungen",
+      "type": "decision",
+      "status": "assumption",
+      "needs_citation": false,
+      "sources": []
+    },
+    {
+      "id": "A078",
+      "statement": "R04 nennt Offline-Time-Stretching oder Verarbeitung auf PC/Smartphone als Alternativen, falls On-device-Verarbeitung Qualitäts- oder Zeitziele verfehlt.",
+      "origin": [
+        "preThesis/03-recherche/R04-time-stretch.md:308-324"
+      ],
+      "chapter": "Diskussion/Ausblick",
+      "type": "alternative-rejected",
+      "status": "assumption",
+      "needs_citation": false,
+      "sources": []
+    },
+    {
+      "id": "A079",
+      "statement": "R04 nennt 0,75×-Resampling mit Tonhöhenänderung als robuste Minimalfunktion, die als nicht frequenztreu zu kennzeichnen wäre.",
+      "origin": [
+        "preThesis/03-recherche/R04-time-stretch.md:308-324"
+      ],
+      "chapter": "Diskussion/Ausblick",
+      "type": "alternative-rejected",
+      "status": "assumption",
+      "needs_citation": false,
+      "sources": []
+    }
+  ]
+}

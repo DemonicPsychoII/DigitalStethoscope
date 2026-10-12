@@ -1,0 +1,2455 @@
+{
+  "units": [
+    {
+      "id": "B001",
+      "statement": "Mit n = 5–10 sollte die Untersuchung ausdrücklich als explorative Hör- und Machbarkeitspilotstudie angelegt werden, nicht als Studie zum Nachweis klinischer Überlegenheit oder zur belastbaren Generalisierung auf die Bevölkerung.",
+      "origin": [
+        "preThesis/03-recherche/R05-hoerstudie-design.md:22-31"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "method",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "pilot_consort_extension",
+          "link": "https://www.bmj.com/content/355/bmj.i5239",
+          "page": "unverified"
+        },
+        {
+          "key": "pilot_feasibility_guidelines",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4775223/",
+          "page": "unverified"
+        },
+        {
+          "key": "pilot_sample_size",
+          "link": "https://pubmed.ncbi.nlm.nih.gov/22169081/",
+          "page": "unverified"
+        }
+      ],
+      "supersedes": "U053"
+    },
+    {
+      "id": "B002",
+      "statement": "Die Pilotstudie soll technische Filterwirkung, auditive Diskriminierbarkeit und klinische Interpretation als getrennte Ebenen behandeln; klinische Diagnoseklassifikation gilt bei n = 5–10 als nicht belastbar.",
+      "origin": [
+        "preThesis/03-recherche/R05-hoerstudie-design.md:34-48"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "method",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "pilot_consort_extension",
+          "link": "https://www.bmj.com/content/355/bmj.i5239",
+          "page": "unverified"
+        },
+        {
+          "key": "pilot_feasibility_guidelines",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4775223/",
+          "page": "unverified"
+        },
+        {
+          "key": "pilot_sample_size",
+          "link": "https://pubmed.ncbi.nlm.nih.gov/22169081/",
+          "page": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "B003",
+      "statement": "Eine Auskultationstest-Studie mit 109 Teilnehmenden fand einen Zusammenhang zwischen Erfahrung und Diagnosefähigkeit (r = 0,45; P < 0,0001), aber keinen Zusammenhang zwischen Erfahrung und Erkennung von Herzgeräusch versus gesundem Herzton; alle Gruppen neigten zu falsch-positiver Murmur-Klassifikation.",
+      "origin": [
+        "preThesis/03-recherche/R05-hoerstudie-design.md:52-66"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "measurement",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "cardiac_auscultation_test",
+          "link": "https://pubmed.ncbi.nlm.nih.gov/19241211/",
+          "page": "pp. 56–61"
+        },
+        {
+          "key": "murmur_agreement",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9848245/",
+          "page": "unverified"
+        },
+        {
+          "key": "digital_auscultation_murmur",
+          "link": "https://link.springer.com/article/10.1007/s10439-008-9611-z",
+          "page": "Introduction, heart cycle/murmur description (web text lines 71–73; 85)."
+        }
+      ]
+    },
+    {
+      "id": "B004",
+      "statement": "Bei einer kleinen Pilot-Hörstudie sind Laien vertretbar, wenn die Aufgabe als auditive Detektion oder Diskrimination und nicht als medizinische Diagnose formuliert ist.",
+      "origin": [
+        "preThesis/03-recherche/R05-hoerstudie-design.md:68-81"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "method",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "cardiac_auscultation_test",
+          "link": "https://pubmed.ncbi.nlm.nih.gov/19241211/",
+          "page": "pp. 56–61"
+        },
+        {
+          "key": "murmur_agreement",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9848245/",
+          "page": "unverified"
+        },
+        {
+          "key": "digital_auscultation_murmur",
+          "link": "https://link.springer.com/article/10.1007/s10439-008-9611-z",
+          "page": "Introduction, heart cycle/murmur description (web text lines 71–73; 85)."
+        }
+      ]
+    },
+    {
+      "id": "B005",
+      "statement": "Ein belastbarer statistischer Vergleich zwischen Laien und medizinisch geschulten Hörern ist mit n = 5–10 nicht möglich; ein Gruppenvergleich wäre allenfalls deskriptiv.",
+      "origin": [
+        "preThesis/03-recherche/R05-hoerstudie-design.md:68-81"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "risk",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "pilot_consort_extension",
+          "link": "https://www.bmj.com/content/355/bmj.i5239",
+          "page": "unverified"
+        },
+        {
+          "key": "pilot_feasibility_guidelines",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4775223/",
+          "page": "unverified"
+        },
+        {
+          "key": "pilot_sample_size",
+          "link": "https://pubmed.ncbi.nlm.nih.gov/22169081/",
+          "page": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "B006",
+      "statement": "Für den Filtervergleich empfiehlt R05 eine ABX-Aufgabe: A und B sind bekannte Referenzen, X ist zufällig A oder B; die Antwortzuordnung hat Zufallsniveau 50 %.",
+      "origin": [
+        "preThesis/03-recherche/R05-hoerstudie-design.md:83-107"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "method",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "2afc_signal_detection",
+          "link": "https://www.sciencedirect.com/science/article/pii/S0022249605000921",
+          "page": "pp. 411–420"
+        },
+        {
+          "key": "abx_strategy",
+          "link": "https://pubmed.ncbi.nlm.nih.gov/11916304/",
+          "page": "unverified"
+        },
+        {
+          "key": "2afc_bias",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC2811854/",
+          "page": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "B007",
+      "statement": "Eine 2AFC-Aufgabe präsentiert zwei Intervalle; die Versuchsperson entscheidet, in welchem Intervall das definierte Geräuschmerkmal bzw. die Zielversion liegt.",
+      "origin": [
+        "preThesis/03-recherche/R05-hoerstudie-design.md:85-107"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "definition",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "2afc_signal_detection",
+          "link": "https://www.sciencedirect.com/science/article/pii/S0022249605000921",
+          "page": "pp. 411–420"
+        },
+        {
+          "key": "abx_strategy",
+          "link": "https://pubmed.ncbi.nlm.nih.gov/11916304/",
+          "page": "unverified"
+        },
+        {
+          "key": "2afc_bias",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC2811854/",
+          "page": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "B008",
+      "statement": "Eine Filterdiskrimination kann ohne Diagnosefähigkeit gemessen werden, weil sie fragt, ob zwei Audiosignale unterscheidbar sind, nicht welche Krankheit sie anzeigen.",
+      "origin": [
+        "preThesis/03-recherche/R05-hoerstudie-design.md:109-120"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "method",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "2afc_signal_detection",
+          "link": "https://www.sciencedirect.com/science/article/pii/S0022249605000921",
+          "page": "pp. 411–420"
+        },
+        {
+          "key": "abx_strategy",
+          "link": "https://pubmed.ncbi.nlm.nih.gov/11916304/",
+          "page": "unverified"
+        },
+        {
+          "key": "2afc_bias",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC2811854/",
+          "page": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "B009",
+      "statement": "Ein Within-Subject-Design lässt jede Person jede Filterbedingung hören und reduziert interindividuelle Hör- und Aufmerksamkeitsunterschiede.",
+      "origin": [
+        "preThesis/03-recherche/R05-hoerstudie-design.md:138-149"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "method",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "pilot_consort_extension",
+          "link": "https://www.bmj.com/content/355/bmj.i5239",
+          "page": "unverified"
+        },
+        {
+          "key": "pilot_feasibility_guidelines",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4775223/",
+          "page": "unverified"
+        },
+        {
+          "key": "pilot_sample_size",
+          "link": "https://pubmed.ncbi.nlm.nih.gov/22169081/",
+          "page": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "B010",
+      "statement": "Stimulusmaterial sollte mehrere unabhängige Herzgeräuschaufnahmen, normale Herztöne, gleiche Ausschnittslängen und kontrollierte Lautheit umfassen.",
+      "origin": [
+        "preThesis/03-recherche/R05-hoerstudie-design.md:151-163"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "method",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "cardiac_auscultation_test",
+          "link": "https://pubmed.ncbi.nlm.nih.gov/19241211/",
+          "page": "pp. 56–61"
+        },
+        {
+          "key": "murmur_agreement",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9848245/",
+          "page": "unverified"
+        },
+        {
+          "key": "digital_auscultation_murmur",
+          "link": "https://link.springer.com/article/10.1007/s10439-008-9611-z",
+          "page": "Introduction, heart cycle/murmur description (web text lines 71–73; 85)."
+        }
+      ]
+    },
+    {
+      "id": "B011",
+      "statement": "Mehr Trials verbessern die Präzision der individuellen Leistungsschätzung, ersetzen aber keine unabhängigen Versuchspersonen; Wiederholung desselben Stimulus kann Lernen, Ermüdung und Erinnerungsstrategien verursachen.",
+      "origin": [
+        "preThesis/03-recherche/R05-hoerstudie-design.md:165-184"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "risk",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "pilot_consort_extension",
+          "link": "https://www.bmj.com/content/355/bmj.i5239",
+          "page": "unverified"
+        },
+        {
+          "key": "pilot_feasibility_guidelines",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4775223/",
+          "page": "unverified"
+        },
+        {
+          "key": "pilot_sample_size",
+          "link": "https://pubmed.ncbi.nlm.nih.gov/22169081/",
+          "page": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "B012",
+      "statement": "Für Hörversuche empfiehlt R05 die Randomisierung von Aufnahmereihenfolge, Filterreihenfolge, A/B-Labels, ABX-X-Zuordnung und Wiederholungsreihenfolge.",
+      "origin": [
+        "preThesis/03-recherche/R05-hoerstudie-design.md:186-196"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "method",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "2afc_signal_detection",
+          "link": "https://www.sciencedirect.com/science/article/pii/S0022249605000921",
+          "page": "pp. 411–420"
+        },
+        {
+          "key": "abx_strategy",
+          "link": "https://pubmed.ncbi.nlm.nih.gov/11916304/",
+          "page": "unverified"
+        },
+        {
+          "key": "2afc_bias",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC2811854/",
+          "page": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "B013",
+      "statement": "Zur Verblindung empfiehlt R05 neutrale Stimuluskennungen, automatisierte Wiedergabe, keine Filterhinweise und Entschlüsselung der Zuordnung erst nach der Auswertung.",
+      "origin": [
+        "preThesis/03-recherche/R05-hoerstudie-design.md:198-211"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "method",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "2afc_signal_detection",
+          "link": "https://www.sciencedirect.com/science/article/pii/S0022249605000921",
+          "page": "pp. 411–420"
+        },
+        {
+          "key": "abx_strategy",
+          "link": "https://pubmed.ncbi.nlm.nih.gov/11916304/",
+          "page": "unverified"
+        },
+        {
+          "key": "2afc_bias",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC2811854/",
+          "page": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "B014",
+      "statement": "Vor Testtrials sollen 3–5 Übungsdurchgänge mit Feedback stattfinden; in den eigentlichen Testtrials soll keine Rückmeldung gegeben werden.",
+      "origin": [
+        "preThesis/03-recherche/R05-hoerstudie-design.md:213-225"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "method",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "2afc_signal_detection",
+          "link": "https://www.sciencedirect.com/science/article/pii/S0022249605000921",
+          "page": "pp. 411–420"
+        },
+        {
+          "key": "abx_strategy",
+          "link": "https://pubmed.ncbi.nlm.nih.gov/11916304/",
+          "page": "unverified"
+        },
+        {
+          "key": "2afc_bias",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC2811854/",
+          "page": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "B015",
+      "statement": "Primäre Hörstudienvariable kann die Trefferquote (korrekte Antworten / gültige Trials) sein; ergänzend sind individuelle, bedingungs- und stimulusbezogene Trefferquoten, Fehlversuche und fehlende Trials auszuweisen.",
+      "origin": [
+        "preThesis/03-recherche/R05-hoerstudie-design.md:227-252"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "method",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "2afc_signal_detection",
+          "link": "https://www.sciencedirect.com/science/article/pii/S0022249605000921",
+          "page": "pp. 411–420"
+        },
+        {
+          "key": "abx_strategy",
+          "link": "https://pubmed.ncbi.nlm.nih.gov/11916304/",
+          "page": "unverified"
+        },
+        {
+          "key": "2afc_bias",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC2811854/",
+          "page": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "B016",
+      "statement": "Bei n = 5–10 empfiehlt R05 Rohdaten bzw. individuelle Werte, Median und Wertebereich sowie Unsicherheitsintervalle; Pilotstudien sollen primär Machbarkeit und Unsicherheit beschreiben.",
+      "origin": [
+        "preThesis/03-recherche/R05-hoerstudie-design.md:254-267"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "method",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "pilot_consort_extension",
+          "link": "https://www.bmj.com/content/355/bmj.i5239",
+          "page": "unverified"
+        },
+        {
+          "key": "pilot_feasibility_guidelines",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4775223/",
+          "page": "unverified"
+        },
+        {
+          "key": "pilot_sample_size",
+          "link": "https://pubmed.ncbi.nlm.nih.gov/22169081/",
+          "page": "unverified"
+        }
+      ],
+      "supersedes": "U055"
+    },
+    {
+      "id": "B017",
+      "statement": "Für ABX/2AFC kann die Leistung pro Person ergänzend gegen das Zufallsniveau von 0,5 mit einem exakten Binomialtest oder Konfidenzintervall betrachtet werden; dies ist explorativ.",
+      "origin": [
+        "preThesis/03-recherche/R05-hoerstudie-design.md:269-279"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "method",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "2afc_signal_detection",
+          "link": "https://www.sciencedirect.com/science/article/pii/S0022249605000921",
+          "page": "pp. 411–420"
+        },
+        {
+          "key": "abx_strategy",
+          "link": "https://pubmed.ncbi.nlm.nih.gov/11916304/",
+          "page": "unverified"
+        },
+        {
+          "key": "2afc_bias",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC2811854/",
+          "page": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "B018",
+      "statement": "Filterunterschiede können als absolute Trefferquotendifferenz, mediane individuelle Differenz und rangbasierte Effektgröße dargestellt werden; Rohdaten der Versuchspersonen sollen sichtbar bleiben.",
+      "origin": [
+        "preThesis/03-recherche/R05-hoerstudie-design.md:281-296"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "method",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "pilot_consort_extension",
+          "link": "https://www.bmj.com/content/355/bmj.i5239",
+          "page": "unverified"
+        },
+        {
+          "key": "pilot_feasibility_guidelines",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4775223/",
+          "page": "unverified"
+        },
+        {
+          "key": "pilot_sample_size",
+          "link": "https://pubmed.ncbi.nlm.nih.gov/22169081/",
+          "page": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "B019",
+      "statement": "Für gepaarte Filtervergleiche nennt R05 Wilcoxon-Vorzeichen-Rang-Test oder exakten Permutationstest; p-Werte bei n = 5–10 sollen nur ergänzend explorativ sein.",
+      "origin": [
+        "preThesis/03-recherche/R05-hoerstudie-design.md:298-307"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "method",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "pilot_consort_extension",
+          "link": "https://www.bmj.com/content/355/bmj.i5239",
+          "page": "unverified"
+        },
+        {
+          "key": "pilot_feasibility_guidelines",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4775223/",
+          "page": "unverified"
+        },
+        {
+          "key": "pilot_sample_size",
+          "link": "https://pubmed.ncbi.nlm.nih.gov/22169081/",
+          "page": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "B020",
+      "statement": "Trials sind innerhalb von Personen und Stimuli verschachtelt und dürfen nicht als unabhängige Versuchspersonen behandelt werden; mit 5–10 Personen wäre ein logistisches Mixed-Effects-Modell instabil und allenfalls sekundär.",
+      "origin": [
+        "preThesis/03-recherche/R05-hoerstudie-design.md:309-325"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "method",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "pilot_consort_extension",
+          "link": "https://www.bmj.com/content/355/bmj.i5239",
+          "page": "unverified"
+        },
+        {
+          "key": "pilot_feasibility_guidelines",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4775223/",
+          "page": "unverified"
+        },
+        {
+          "key": "pilot_sample_size",
+          "link": "https://pubmed.ncbi.nlm.nih.gov/22169081/",
+          "page": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "B021",
+      "statement": "Mit n = 5–10 sollte keine allgemeine Aussage zur Hörbarkeit in der Bevölkerung, Gleichwertigkeit der Filter oder Verbesserung klinischer Diagnosen abgeleitet werden.",
+      "origin": [
+        "preThesis/03-recherche/R05-hoerstudie-design.md:350-360"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "risk",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "pilot_consort_extension",
+          "link": "https://www.bmj.com/content/355/bmj.i5239",
+          "page": "unverified"
+        },
+        {
+          "key": "pilot_feasibility_guidelines",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4775223/",
+          "page": "unverified"
+        },
+        {
+          "key": "pilot_sample_size",
+          "link": "https://pubmed.ncbi.nlm.nih.gov/22169081/",
+          "page": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "B022",
+      "statement": "R06 berichtet, dass es keine einheitliche deutsche gesetzliche Vorschrift gibt, wonach jede Bachelorarbeit mit menschlichen Versuchspersonen zwingend ein Ethikvotum benötigt; Einordnung hängt von Risiko, Datenart, Hochschulregeln und weiteren Anforderungen ab.",
+      "origin": [
+        "preThesis/03-recherche/R06-ethik-datenschutz.md:33-61"
+      ],
+      "chapter": "Ethik/Datenschutz/Regulatorik",
+      "type": "fact",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "gehba_faq",
+          "link": "https://www.gehba.de/fileadmin/daten/Gehba/GEHBa-FAQ_2.1.pdf",
+          "page": "FAQ sections “Wann sollte man einen Ethikantrag stellen?” and “Wann muss man keinen Ethikantrag stellen?”"
+        },
+        {
+          "key": "gehba_forms",
+          "link": "https://www.gehba.de/antrag-und-dokumente",
+          "page": "“Antrag und Dokumente” page"
+        },
+        {
+          "key": "gdpr_text",
+          "link": "https://eur-lex.europa.eu/eli/reg/2016/679/oj",
+          "page": "unverified"
+        }
+      ],
+      "supersedes": "U056"
+    },
+    {
+      "id": "B023",
+      "statement": "GEHBa empfiehlt einen Ethikantrag, wenn bei Forschung mit Beteiligten ein möglicher Schaden oder eine unverhältnismäßige Belastung nicht auszuschließen ist oder ethische Grundprinzipien berührt werden; ohne erwartete Risiken/Schäden und ohne Verletzung dieser Prinzipien ist kein Antrag erforderlich.",
+      "origin": [
+        "preThesis/03-recherche/R06-ethik-datenschutz.md:63-71"
+      ],
+      "chapter": "Ethik/Datenschutz/Regulatorik",
+      "type": "formal-rule",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "gehba_faq",
+          "link": "https://www.gehba.de/fileadmin/daten/Gehba/GEHBa-FAQ_2.1.pdf",
+          "page": "FAQ sections “Wann sollte man einen Ethikantrag stellen?” and “Wann muss man keinen Ethikantrag stellen?”"
+        },
+        {
+          "key": "gehba_forms",
+          "link": "https://www.gehba.de/antrag-und-dokumente",
+          "page": "“Antrag und Dokumente” page"
+        },
+        {
+          "key": "gdpr_text",
+          "link": "https://eur-lex.europa.eu/eli/reg/2016/679/oj",
+          "page": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "B024",
+      "statement": "GEHBa sieht für Bachelor- und Masterarbeiten regelmäßig keinen vollständigen Ethikantrag vor, sondern eine Selbsteinschätzung zu Ethik und Datenschutz; institutionelle Sonderregeln bleiben möglich.",
+      "origin": [
+        "preThesis/03-recherche/R06-ethik-datenschutz.md:63-71"
+      ],
+      "chapter": "Ethik/Datenschutz/Regulatorik",
+      "type": "formal-rule",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "gehba_faq",
+          "link": "https://www.gehba.de/fileadmin/daten/Gehba/GEHBa-FAQ_2.1.pdf",
+          "page": "FAQ sections “Wann sollte man einen Ethikantrag stellen?” and “Wann muss man keinen Ethikantrag stellen?”"
+        },
+        {
+          "key": "gehba_forms",
+          "link": "https://www.gehba.de/antrag-und-dokumente",
+          "page": "“Antrag und Dokumente” page"
+        },
+        {
+          "key": "gdpr_text",
+          "link": "https://eur-lex.europa.eu/eli/reg/2016/679/oj",
+          "page": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "B025",
+      "statement": "GEHBa-Anträge sollen vor Beginn der Forschung gestellt werden; R06 berichtet, dass nachträgliche Anträge regelmäßig nicht mehr bewertet werden.",
+      "origin": [
+        "preThesis/03-recherche/R06-ethik-datenschutz.md:73-90"
+      ],
+      "chapter": "Ethik/Datenschutz/Regulatorik",
+      "type": "formal-rule",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "gehba_faq",
+          "link": "https://www.gehba.de/fileadmin/daten/Gehba/GEHBa-FAQ_2.1.pdf",
+          "page": "FAQ sections “Wann sollte man einen Ethikantrag stellen?” and “Wann muss man keinen Ethikantrag stellen?”"
+        },
+        {
+          "key": "gehba_forms",
+          "link": "https://www.gehba.de/antrag-und-dokumente",
+          "page": "“Antrag und Dokumente” page"
+        },
+        {
+          "key": "gdpr_text",
+          "link": "https://eur-lex.europa.eu/eli/reg/2016/679/oj",
+          "page": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "B026",
+      "statement": "R06 konnte keine eigenständige, öffentlich eindeutig dokumentierte Ethikkommission der TH Augsburg mit Humanforschungs-Zuständigkeit feststellen; die Zuständigkeit soll für das konkrete Projekt bei Betreuer, Hochschule und gegebenenfalls GEHBa geklärt werden.",
+      "origin": [
+        "preThesis/03-recherche/R06-ethik-datenschutz.md:63-90"
+      ],
+      "chapter": "Ethik/Datenschutz/Regulatorik",
+      "type": "open-question",
+      "status": "open",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "gehba_faq",
+          "link": "https://www.gehba.de/fileadmin/daten/Gehba/GEHBa-FAQ_2.1.pdf",
+          "page": "FAQ sections “Wann sollte man einen Ethikantrag stellen?” and “Wann muss man keinen Ethikantrag stellen?”"
+        },
+        {
+          "key": "gehba_forms",
+          "link": "https://www.gehba.de/antrag-und-dokumente",
+          "page": "“Antrag und Dokumente” page"
+        },
+        {
+          "key": "gdpr_text",
+          "link": "https://eur-lex.europa.eu/eli/reg/2016/679/oj",
+          "page": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "B027",
+      "statement": "Bei personenbezogenen Bewertungsdaten wird eine informierte, freiwillige, zweckgebundene und nachweisbare Einwilligung als mögliche Rechtsgrundlage nach DSGVO genannt; bei Gesundheitsdaten ist zusätzlich Art. 9 zu berücksichtigen.",
+      "origin": [
+        "preThesis/03-recherche/R06-ethik-datenschutz.md:92-124"
+      ],
+      "chapter": "Ethik/Datenschutz/Regulatorik",
+      "type": "formal-rule",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "gdpr_text",
+          "link": "https://eur-lex.europa.eu/eli/reg/2016/679/oj",
+          "page": "unverified"
+        },
+        {
+          "key": "edpb_pseudonymisation",
+          "link": "https://www.edpb.europa.eu/our-work-tools/documents/public-consultations/2025/guidelines-012025-pseudonymisation_en",
+          "page": "unverified"
+        },
+        {
+          "key": "health_data_guidance",
+          "link": "https://health.ec.europa.eu/system/files/2021-02/ms_rules_health-data_en_0.pdf",
+          "page": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "B028",
+      "statement": "Die Teilnehmerinformation soll Zweck und Ablauf, Datenarten, Rechtsgrundlage, Speicherort, Speicherdauer, Empfänger, Freiwilligkeit, Abbruch, Widerruf und Betroffenenrechte nennen.",
+      "origin": [
+        "preThesis/03-recherche/R06-ethik-datenschutz.md:94-124"
+      ],
+      "chapter": "Ethik/Datenschutz/Regulatorik",
+      "type": "method",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "gdpr_text",
+          "link": "https://eur-lex.europa.eu/eli/reg/2016/679/oj",
+          "page": "unverified"
+        },
+        {
+          "key": "edpb_pseudonymisation",
+          "link": "https://www.edpb.europa.eu/our-work-tools/documents/public-consultations/2025/guidelines-012025-pseudonymisation_en",
+          "page": "unverified"
+        },
+        {
+          "key": "health_data_guidance",
+          "link": "https://health.ec.europa.eu/system/files/2021-02/ms_rules_health-data_en_0.pdf",
+          "page": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "B029",
+      "statement": "Werden die Versuchspersonen selbst audioaufgezeichnet, empfiehlt R06 eine ausdrücklich auf diese Audioaufnahme bezogene Einwilligung; das bloße Abspielen bestehender Herzschall-Dateien ist keine Aufnahme der Versuchsperson.",
+      "origin": [
+        "preThesis/03-recherche/R06-ethik-datenschutz.md:126-130"
+      ],
+      "chapter": "Ethik/Datenschutz/Regulatorik",
+      "type": "formal-rule",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "gdpr_text",
+          "link": "https://eur-lex.europa.eu/eli/reg/2016/679/oj",
+          "page": "unverified"
+        },
+        {
+          "key": "edpb_pseudonymisation",
+          "link": "https://www.edpb.europa.eu/our-work-tools/documents/public-consultations/2025/guidelines-012025-pseudonymisation_en",
+          "page": "unverified"
+        },
+        {
+          "key": "health_data_guidance",
+          "link": "https://health.ec.europa.eu/system/files/2021-02/ms_rules_health-data_en_0.pdf",
+          "page": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "B030",
+      "statement": "R06 unterscheidet echte Anonymisierung von Pseudonymisierung: pseudonymisierte oder nur de-identifizierte Aufnahmen bleiben personenbezogene Daten, wenn Zuordnung mit Zusatzinformationen möglich ist.",
+      "origin": [
+        "preThesis/03-recherche/R06-ethik-datenschutz.md:132-151"
+      ],
+      "chapter": "Ethik/Datenschutz/Regulatorik",
+      "type": "definition",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "gdpr_text",
+          "link": "https://eur-lex.europa.eu/eli/reg/2016/679/oj",
+          "page": "unverified"
+        },
+        {
+          "key": "edpb_pseudonymisation",
+          "link": "https://www.edpb.europa.eu/our-work-tools/documents/public-consultations/2025/guidelines-012025-pseudonymisation_en",
+          "page": "unverified"
+        },
+        {
+          "key": "health_data_guidance",
+          "link": "https://health.ec.europa.eu/system/files/2021-02/ms_rules_health-data_en_0.pdf",
+          "page": "unverified"
+        }
+      ],
+      "supersedes": "U057"
+    },
+    {
+      "id": "B031",
+      "statement": "Ein datensparsames Hörstudiendesign soll Teilnehmende mit Zufalls-ID erfassen, Identitätsschlüssel getrennt verschlüsselt speichern, unnötige Identifikatoren vermeiden und Ergebnisse aggregiert veröffentlichen.",
+      "origin": [
+        "preThesis/03-recherche/R06-ethik-datenschutz.md:132-151"
+      ],
+      "chapter": "Ethik/Datenschutz/Regulatorik",
+      "type": "method",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "gdpr_text",
+          "link": "https://eur-lex.europa.eu/eli/reg/2016/679/oj",
+          "page": "unverified"
+        },
+        {
+          "key": "edpb_pseudonymisation",
+          "link": "https://www.edpb.europa.eu/our-work-tools/documents/public-consultations/2025/guidelines-012025-pseudonymisation_en",
+          "page": "unverified"
+        },
+        {
+          "key": "health_data_guidance",
+          "link": "https://health.ec.europa.eu/system/files/2021-02/ms_rules_health-data_en_0.pdf",
+          "page": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "B032",
+      "statement": "R06 nennt für Bachelorarbeiten keine pauschale DSGVO-Aufbewahrungsfrist; Frist und Löschung sollen aus Forschungszweck, institutionellen Vorgaben und Nachweispflichten begründet werden.",
+      "origin": [
+        "preThesis/03-recherche/R06-ethik-datenschutz.md:153-171"
+      ],
+      "chapter": "Ethik/Datenschutz/Regulatorik",
+      "type": "fact",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "gdpr_text",
+          "link": "https://eur-lex.europa.eu/eli/reg/2016/679/oj",
+          "page": "unverified"
+        },
+        {
+          "key": "edpb_pseudonymisation",
+          "link": "https://www.edpb.europa.eu/our-work-tools/documents/public-consultations/2025/guidelines-012025-pseudonymisation_en",
+          "page": "unverified"
+        },
+        {
+          "key": "health_data_guidance",
+          "link": "https://health.ec.europa.eu/system/files/2021-02/ms_rules_health-data_en_0.pdf",
+          "page": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "B033",
+      "statement": "Die öffentliche Zugänglichkeit eines Datensatzes belegt nicht automatisch Anonymität oder freie Nachnutzungsrechte; Lizenz, Re-Identifizierbarkeit und Erhebungsbedingungen sind zu prüfen.",
+      "origin": [
+        "preThesis/03-recherche/R06-ethik-datenschutz.md:173-189"
+      ],
+      "chapter": "Ethik/Datenschutz/Regulatorik",
+      "type": "risk",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "physionet_dua",
+          "link": "https://www.physionet.org/content/semeval2015/view-dua/1.0/",
+          "page": "clauses 1–10"
+        },
+        {
+          "key": "gdpr_text",
+          "link": "https://eur-lex.europa.eu/eli/reg/2016/679/oj",
+          "page": "unverified"
+        },
+        {
+          "key": "health_data_guidance",
+          "link": "https://health.ec.europa.eu/system/files/2021-02/ms_rules_health-data_en_0.pdf",
+          "page": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "B034",
+      "statement": "PhysioNet Credentialed Health Data Use Agreement untersagt Re-Identifizierungsversuche und Weitergabe und verlangt angemessene Sicherheitsmaßnahmen sowie Nutzung für den bewilligten Forschungszweck.",
+      "origin": [
+        "preThesis/03-recherche/R06-ethik-datenschutz.md:173-189"
+      ],
+      "chapter": "Ethik/Datenschutz/Regulatorik",
+      "type": "formal-rule",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "physionet_dua",
+          "link": "https://www.physionet.org/content/semeval2015/view-dua/1.0/",
+          "page": "clauses 1–10"
+        },
+        {
+          "key": "gdpr_text",
+          "link": "https://eur-lex.europa.eu/eli/reg/2016/679/oj",
+          "page": "unverified"
+        },
+        {
+          "key": "health_data_guidance",
+          "link": "https://health.ec.europa.eu/system/files/2021-02/ms_rules_health-data_en_0.pdf",
+          "page": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "B035",
+      "statement": "Für die geplante Hörstudie empfiehlt R06 synthetische oder ausdrücklich wissenschaftlich nachnutzbare, möglichst vollständig anonymisierte Herzschall-Dateien und keine eigenen Patientendaten.",
+      "origin": [
+        "preThesis/03-recherche/R06-ethik-datenschutz.md:191-208"
+      ],
+      "chapter": "Ethik/Datenschutz/Regulatorik",
+      "type": "decision",
+      "status": "assumption",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "physionet_dua",
+          "link": "https://www.physionet.org/content/semeval2015/view-dua/1.0/",
+          "page": "clauses 1–10"
+        },
+        {
+          "key": "gdpr_text",
+          "link": "https://eur-lex.europa.eu/eli/reg/2016/679/oj",
+          "page": "unverified"
+        },
+        {
+          "key": "health_data_guidance",
+          "link": "https://health.ec.europa.eu/system/files/2021-02/ms_rules_health-data_en_0.pdf",
+          "page": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "B036",
+      "statement": "R07 empfiehlt, die Bruststückmembran beizubehalten und das Mikrofon in einer kleinen, abgedichteten Kammer unmittelbar hinter der Membran mit kurzem akustischem Weg zu platzieren.",
+      "origin": [
+        "preThesis/03-recherche/R07-bruststueck-mems.md:22-55"
+      ],
+      "chapter": "Systemarchitektur",
+      "type": "decision",
+      "status": "assumption",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "frequency_response_stethoscopes",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7305673/",
+          "page": "unverified"
+        },
+        {
+          "key": "invitro_stethoscopes",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6339642/",
+          "page": "unverified"
+        },
+        {
+          "key": "goh_chestpiece",
+          "link": "https://staffprofiles.bournemouth.ac.uk/display/journal-article/388323",
+          "page": "pp. 137–140"
+        }
+      ],
+      "supersedes": "U058"
+    },
+    {
+      "id": "B037",
+      "statement": "Bei Bottom-Port-Mikrofonen muss die Mikrofonöffnung der Leiterplatte mit dem akustischen Kanal fluchten; R07 nennt wenige Millimeter Abstand und möglichst gute Abdichtung als Konstruktionsziele.",
+      "origin": [
+        "preThesis/03-recherche/R07-bruststueck-mems.md:38-65"
+      ],
+      "chapter": "Systemarchitektur",
+      "type": "method",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "frequency_response_stethoscopes",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7305673/",
+          "page": "unverified"
+        },
+        {
+          "key": "invitro_stethoscopes",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6339642/",
+          "page": "unverified"
+        },
+        {
+          "key": "goh_chestpiece",
+          "link": "https://staffprofiles.bournemouth.ac.uk/display/journal-article/388323",
+          "page": "pp. 137–140"
+        }
+      ]
+    },
+    {
+      "id": "B038",
+      "statement": "Für Mikrofonmontage nennt R07 weiche Silikon-/TPU-Dichtungen sowie mechanische Entkopplung gegen Griff-, Reibungs- und Körperschall.",
+      "origin": [
+        "preThesis/03-recherche/R07-bruststueck-mems.md:56-65"
+      ],
+      "chapter": "Systemarchitektur",
+      "type": "method",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "frequency_response_stethoscopes",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7305673/",
+          "page": "unverified"
+        },
+        {
+          "key": "invitro_stethoscopes",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6339642/",
+          "page": "unverified"
+        },
+        {
+          "key": "goh_chestpiece",
+          "link": "https://staffprofiles.bournemouth.ac.uk/display/journal-article/388323",
+          "page": "pp. 137–140"
+        }
+      ]
+    },
+    {
+      "id": "B039",
+      "statement": "R07 unterscheidet direkte Mikrofonankopplung, kurzen Schlauchstummel, Membran-/Kavitätsankopplung, Mikrofon in Schlauchkammer, Kontaktaufnehmer und Hybridaufbau; Varianten unterscheiden sich hinsichtlich Schlauchverlusten, Körperschallkopplung und Komplexität.",
+      "origin": [
+        "preThesis/03-recherche/R07-bruststueck-mems.md:67-105"
+      ],
+      "chapter": "Grundlagen (technisch: Akustik, MEMS, I2S, DSP/Filter, BPM, Time-Stretch, Embedded/RTOS, FHIR/TLS)",
+      "type": "definition",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "mems_cardiorespiratory_review",
+          "link": "https://arxiv.org/abs/2406.12432",
+          "page": "unverified"
+        },
+        {
+          "key": "pulmonary_acoustic_methods",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6874908/",
+          "page": "unverified"
+        },
+        {
+          "key": "digital_auscultation_murmur",
+          "link": "https://link.springer.com/article/10.1007/s10439-008-9611-z",
+          "page": "Introduction, heart cycle/murmur description (web text lines 71–73; 85)."
+        }
+      ]
+    },
+    {
+      "id": "B040",
+      "statement": "Eine Publikation zu einem kostengünstigen 3D-gedruckten digitalen Stethoskop beschreibt ein Elektretmikrofon im Bruststückkörper.",
+      "origin": [
+        "preThesis/03-recherche/R07-bruststueck-mems.md:67-105"
+      ],
+      "chapter": "Grundlagen (technisch: Akustik, MEMS, I2S, DSP/Filter, BPM, Time-Stretch, Embedded/RTOS, FHIR/TLS)",
+      "type": "fact",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "frequency_response_stethoscopes",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7305673/",
+          "page": "unverified"
+        },
+        {
+          "key": "invitro_stethoscopes",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6339642/",
+          "page": "unverified"
+        },
+        {
+          "key": "goh_chestpiece",
+          "link": "https://staffprofiles.bournemouth.ac.uk/display/journal-article/388323",
+          "page": "pp. 137–140"
+        }
+      ]
+    },
+    {
+      "id": "B041",
+      "statement": "R07 beschreibt ein Open-Source-Beispiel mit 5-cm-Leitung und 8-mm-Innendurchmesser und ein weiteres System mit 5-cm-Schlauch und 6-mm-Innendurchmesser.",
+      "origin": [
+        "preThesis/03-recherche/R07-bruststueck-mems.md:67-105"
+      ],
+      "chapter": "Grundlagen (technisch: Akustik, MEMS, I2S, DSP/Filter, BPM, Time-Stretch, Embedded/RTOS, FHIR/TLS)",
+      "type": "parameter",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "frequency_response_stethoscopes",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7305673/",
+          "page": "unverified"
+        },
+        {
+          "key": "invitro_stethoscopes",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6339642/",
+          "page": "unverified"
+        },
+        {
+          "key": "goh_chestpiece",
+          "link": "https://staffprofiles.bournemouth.ac.uk/display/journal-article/388323",
+          "page": "pp. 137–140"
+        }
+      ]
+    },
+    {
+      "id": "B042",
+      "statement": "R07 verwendet für die Hohlraumkopplung eine vereinfachte Helmholtz-Resonanzabschätzung mit f_H = c/(2π)·√(A/(V·L_eff)); deren Anwendbarkeit auf das gekoppelte Stethoskop-Brust-System ist fraglich.",
+      "origin": [
+        "preThesis/03-recherche/R07-bruststueck-mems.md:107-116"
+      ],
+      "chapter": "Grundlagen (technisch: Akustik, MEMS, I2S, DSP/Filter, BPM, Time-Stretch, Embedded/RTOS, FHIR/TLS)",
+      "type": "definition",
+      "status": "assumption",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "invitro_stethoscopes",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6339642/",
+          "page": "unverified"
+        },
+        {
+          "key": "frequency_response_stethoscopes",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7305673/",
+          "page": "unverified"
+        },
+        {
+          "key": "nussbaumer_stethoscope_acoustics",
+          "link": "https://www.repository.cam.ac.uk/items/feadd88b-9e03-44fb-a875-c49f7c550259",
+          "page": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "B043",
+      "statement": "Unter der Helmholtz-Modellannahme sinkt die Resonanzfrequenz bei größerem Volumen und längerer Halslänge und steigt bei größerem Halsquerschnitt.",
+      "origin": [
+        "preThesis/03-recherche/R07-bruststueck-mems.md:107-116"
+      ],
+      "chapter": "Grundlagen (technisch: Akustik, MEMS, I2S, DSP/Filter, BPM, Time-Stretch, Embedded/RTOS, FHIR/TLS)",
+      "type": "fact",
+      "status": "assumption",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "invitro_stethoscopes",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6339642/",
+          "page": "unverified"
+        },
+        {
+          "key": "frequency_response_stethoscopes",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7305673/",
+          "page": "unverified"
+        },
+        {
+          "key": "nussbaumer_stethoscope_acoustics",
+          "link": "https://www.repository.cam.ac.uk/items/feadd88b-9e03-44fb-a875-c49f7c550259",
+          "page": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "B044",
+      "statement": "R07 berechnet im vereinfachten Helmholtz-Modell für 6-mm-Halsdurchmesser, A ≈ 28,3 mm² und effektive Länge 10 mm ein Volumen von ungefähr 21 ml für eine 20-Hz-Resonanz; dies ist eine theoretische Abschätzung.",
+      "origin": [
+        "preThesis/03-recherche/R07-bruststueck-mems.md:118-136"
+      ],
+      "chapter": "Grundlagen (technisch: Akustik, MEMS, I2S, DSP/Filter, BPM, Time-Stretch, Embedded/RTOS, FHIR/TLS)",
+      "type": "parameter",
+      "status": "assumption",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "invitro_stethoscopes",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6339642/",
+          "page": "unverified"
+        },
+        {
+          "key": "frequency_response_stethoscopes",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7305673/",
+          "page": "unverified"
+        },
+        {
+          "key": "nussbaumer_stethoscope_acoustics",
+          "link": "https://www.repository.cam.ac.uk/items/feadd88b-9e03-44fb-a875-c49f7c550259",
+          "page": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "B045",
+      "statement": "R07 bewertet Leckagen an Membran, Bruststück und Mikrofonkammer als potenzielle Ursache für Hochpasswirkung und Dämpfung niederfrequenter Signale um 20–40 Hz.",
+      "origin": [
+        "preThesis/03-recherche/R07-bruststueck-mems.md:138-147"
+      ],
+      "chapter": "Systemarchitektur",
+      "type": "risk",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "frequency_response_stethoscopes",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7305673/",
+          "page": "unverified"
+        },
+        {
+          "key": "invitro_stethoscopes",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6339642/",
+          "page": "unverified"
+        },
+        {
+          "key": "goh_chestpiece",
+          "link": "https://staffprofiles.bournemouth.ac.uk/display/journal-article/388323",
+          "page": "pp. 137–140"
+        }
+      ]
+    },
+    {
+      "id": "B046",
+      "statement": "Berührung, Kabelbewegung, Handdruck, Reibung am Membranring und Leiterplattenvibration werden als mögliche Körperschall-/Handhabungsstörungen benannt.",
+      "origin": [
+        "preThesis/03-recherche/R07-bruststueck-mems.md:149-165"
+      ],
+      "chapter": "Systemarchitektur",
+      "type": "risk",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "mems_cardiorespiratory_review",
+          "link": "https://arxiv.org/abs/2406.12432",
+          "page": "unverified"
+        },
+        {
+          "key": "pulmonary_acoustic_methods",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6874908/",
+          "page": "unverified"
+        },
+        {
+          "key": "digital_auscultation_murmur",
+          "link": "https://link.springer.com/article/10.1007/s10439-008-9611-z",
+          "page": "Introduction, heart cycle/murmur description (web text lines 71–73; 85)."
+        }
+      ]
+    },
+    {
+      "id": "B047",
+      "statement": "R07 beschreibt Schlauchdämpfung tiefer Frequenzen und stehende Wellen als Risiken für die Stethoskopübertragung.",
+      "origin": [
+        "preThesis/03-recherche/R07-bruststueck-mems.md:166-180"
+      ],
+      "chapter": "Grundlagen (technisch: Akustik, MEMS, I2S, DSP/Filter, BPM, Time-Stretch, Embedded/RTOS, FHIR/TLS)",
+      "type": "fact",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "invitro_stethoscopes",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6339642/",
+          "page": "unverified"
+        },
+        {
+          "key": "frequency_response_stethoscopes",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7305673/",
+          "page": "unverified"
+        },
+        {
+          "key": "nussbaumer_stethoscope_acoustics",
+          "link": "https://www.repository.cam.ac.uk/items/feadd88b-9e03-44fb-a875-c49f7c550259",
+          "page": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "B048",
+      "statement": "Der Hersteller spezifiziert IM69D130 als PDM-Mikrofon mit 28-Hz-LFRO, 69 dB(A) SNR und 130 dB SPL AOP.",
+      "origin": [
+        "preThesis/03-recherche/R07-bruststueck-mems.md:183-216"
+      ],
+      "chapter": "Grundlagen (technisch: Akustik, MEMS, I2S, DSP/Filter, BPM, Time-Stretch, Embedded/RTOS, FHIR/TLS)",
+      "type": "parameter",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "ecm_datasheet_im69d130",
+          "link": "https://www.infineon.com/assets/row/public/documents/24/49/infineon-im69d130-datasheet-en.pdf",
+          "page": "Table 1, Acoustic specifications; datasheet p. 4"
+        },
+        {
+          "key": "ecm_product_im69d130",
+          "link": "https://www.infineon.com/cms/de/product/sensor/mems-microphones/mems-microphones-for-consumer/im69d130/",
+          "page": "Features/product specification"
+        },
+        {
+          "key": "mems_cardiorespiratory_review",
+          "link": "https://arxiv.org/abs/2406.12432",
+          "page": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "B049",
+      "statement": "R07 bewertet IM69D130 für Signale ab etwa 30 Hz als geeignet, aber 20 Hz liegt bereits unterhalb des spezifizierten 28-Hz-LFRO.",
+      "origin": [
+        "preThesis/03-recherche/R07-bruststueck-mems.md:204-216"
+      ],
+      "chapter": "Grundlagen (technisch: Akustik, MEMS, I2S, DSP/Filter, BPM, Time-Stretch, Embedded/RTOS, FHIR/TLS)",
+      "type": "fact",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "ecm_datasheet_im69d130",
+          "link": "https://www.infineon.com/assets/row/public/documents/24/49/infineon-im69d130-datasheet-en.pdf",
+          "page": "Table 1, Acoustic specifications; datasheet p. 4"
+        },
+        {
+          "key": "ecm_product_im69d130",
+          "link": "https://www.infineon.com/cms/de/product/sensor/mems-microphones/mems-microphones-for-consumer/im69d130/",
+          "page": "Features/product specification"
+        },
+        {
+          "key": "mems_cardiorespiratory_review",
+          "link": "https://arxiv.org/abs/2406.12432",
+          "page": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "B050",
+      "statement": "Laut R07 liegt ICS-40180 mit analogem Ausgang, 60-Hz-LFRO, 65-dBA-SNR und etwa 124-dB-SPL-AOP zu hoch für eine unverfälschte Erfassung von S3/S4-Anteilen bei 20–60 Hz.",
+      "origin": [
+        "preThesis/03-recherche/R07-bruststueck-mems.md:218-229"
+      ],
+      "chapter": "Grundlagen (technisch: Akustik, MEMS, I2S, DSP/Filter, BPM, Time-Stretch, Embedded/RTOS, FHIR/TLS)",
+      "type": "parameter",
+      "status": "assumption",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "ics40180_datasheet",
+          "link": "https://invensense.tdk.com/wp-content/uploads/2015/02/ICS-40180_DS.pdf",
+          "page": "unverified"
+        },
+        {
+          "key": "ics40180_product",
+          "link": "https://product.tdk.com/en/search/sw_piezo/mic/mems-mic/info?part_no=ICS-40180",
+          "page": "Electrical characteristics"
+        },
+        {
+          "key": "mems_cardiorespiratory_review",
+          "link": "https://arxiv.org/abs/2406.12432",
+          "page": "unverified"
+        }
+      ],
+      "supersedes": "U061"
+    },
+    {
+      "id": "B051",
+      "statement": "Laut R07 besitzt ICS-43434 einen digitalen I²S-Ausgang und eine 60-Hz-Untergrenze; Herstellerdaten nennen 65 dBA SNR im High-Performance-Modus (64 dBA im Low-Power-Modus) und 120 dB SPL AOP; R07 bewertet ihn als nicht ausreichend für 20–60 Hz.",
+      "origin": [
+        "preThesis/03-recherche/R07-bruststueck-mems.md:231-247"
+      ],
+      "chapter": "Grundlagen (technisch: Akustik, MEMS, I2S, DSP/Filter, BPM, Time-Stretch, Embedded/RTOS, FHIR/TLS)",
+      "type": "parameter",
+      "status": "assumption",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "ics43434_datasheet_verified",
+          "link": "https://invensense.tdk.com/wp-content/uploads/2016/02/DS-000069-ICS-43434-v1.2.pdf",
+          "page": "unverified"
+        },
+        {
+          "key": "ics43434_product",
+          "link": "https://www.invensense.tdk.com/en-us/products/microphone/ics-43434",
+          "page": "Product details/features"
+        },
+        {
+          "key": "mems_cardiorespiratory_review",
+          "link": "https://arxiv.org/abs/2406.12432",
+          "page": "unverified"
+        }
+      ],
+      "supersedes": "U061"
+    },
+    {
+      "id": "B052",
+      "statement": "R07 listet SPK18R1LM4H-1 als digitales PDM-MEMS-Mikrofon mit 20-Hz-LFRO, 70,5-dB(A)-SNR und 128-dB-SPL-AOP bei 10 % THD.",
+      "origin": [
+        "preThesis/03-recherche/R07-bruststueck-mems.md:183-202"
+      ],
+      "chapter": "Grundlagen (technisch: Akustik, MEMS, I2S, DSP/Filter, BPM, Time-Stretch, Embedded/RTOS, FHIR/TLS)",
+      "type": "parameter",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "knowles_spk18_datasheet",
+          "link": "https://www.mouser.com/datasheet/3/6144/1/SPK18R1LM4H_1_Hyperion_Datasheet.pdf",
+          "page": "Table 3, acoustic characteristics"
+        },
+        {
+          "key": "mems_cardiorespiratory_review",
+          "link": "https://arxiv.org/abs/2406.12432",
+          "page": "unverified"
+        },
+        {
+          "key": "pulmonary_acoustic_methods",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6874908/",
+          "page": "unverified"
+        }
+      ],
+      "supersedes": "U061"
+    },
+    {
+      "id": "B053",
+      "statement": "R07 empfiehlt IM68A130 als analoge Alternative und die Herstellerdaten spezifizieren 10-Hz-LFRO, 68-dB(A)-SNR und 130-dB-SPL-AOP.",
+      "origin": [
+        "preThesis/03-recherche/R07-bruststueck-mems.md:249-260"
+      ],
+      "chapter": "Grundlagen (technisch: Akustik, MEMS, I2S, DSP/Filter, BPM, Time-Stretch, Embedded/RTOS, FHIR/TLS)",
+      "type": "parameter",
+      "status": "assumption",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "im68a130_datasheet",
+          "link": "https://www.infineon.com/assets/row/public/documents/24/49/infineon-im68a130-datasheet-en.pdf",
+          "page": "unverified"
+        },
+        {
+          "key": "im68a130_product",
+          "link": "https://www.infineon.com/part/IM68A130",
+          "page": "Product details/features"
+        },
+        {
+          "key": "mems_cardiorespiratory_review",
+          "link": "https://arxiv.org/abs/2406.12432",
+          "page": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "B054",
+      "statement": "R07 empfiehlt IM69D130 als praktisch verfügbare digitale Alternative; ein Shield2Go-Board mit ADAU7002 wird als Breakoutoption genannt.",
+      "origin": [
+        "preThesis/03-recherche/R07-bruststueck-mems.md:204-216"
+      ],
+      "chapter": "Systemarchitektur",
+      "type": "decision",
+      "status": "assumption",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "ecm_datasheet_im69d130",
+          "link": "https://www.infineon.com/assets/row/public/documents/24/49/infineon-im69d130-datasheet-en.pdf",
+          "page": "Table 1, Acoustic specifications; datasheet p. 4"
+        },
+        {
+          "key": "ecm_product_im69d130",
+          "link": "https://www.infineon.com/cms/de/product/sensor/mems-microphones/mems-microphones-for-consumer/im69d130/",
+          "page": "Features/product specification"
+        },
+        {
+          "key": "mems_cardiorespiratory_review",
+          "link": "https://arxiv.org/abs/2406.12432",
+          "page": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "B055",
+      "statement": "Eine digitale Entzerrung kann den Amplitudenabfall im Mikrofonfrequenzgang ausgleichen, aber fehlende Signalanteile oder den Rauschboden unterhalb der Grenzfrequenz nicht zurückgewinnen.",
+      "origin": [
+        "preThesis/03-recherche/R07-bruststueck-mems.md:272-281"
+      ],
+      "chapter": "Grundlagen (technisch: Akustik, MEMS, I2S, DSP/Filter, BPM, Time-Stretch, Embedded/RTOS, FHIR/TLS)",
+      "type": "fact",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "ecm_datasheet_im69d130",
+          "link": "https://www.infineon.com/assets/row/public/documents/24/49/infineon-im69d130-datasheet-en.pdf",
+          "page": "Table 1, Acoustic specifications; datasheet p. 4"
+        },
+        {
+          "key": "ecm_product_im69d130",
+          "link": "https://www.infineon.com/cms/de/product/sensor/mems-microphones/mems-microphones-for-consumer/im69d130/",
+          "page": "Features/product specification"
+        },
+        {
+          "key": "mems_cardiorespiratory_review",
+          "link": "https://arxiv.org/abs/2406.12432",
+          "page": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "B056",
+      "statement": "R07 empfiehlt für Prototypvergleich direkte Kammerankopplung und 5-cm-Schlauchankopplung mit demselben Mikrofon zu messen.",
+      "origin": [
+        "preThesis/03-recherche/R07-bruststueck-mems.md:283-319"
+      ],
+      "chapter": "Systemarchitektur",
+      "type": "method",
+      "status": "assumption",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "frequency_response_stethoscopes",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7305673/",
+          "page": "unverified"
+        },
+        {
+          "key": "invitro_stethoscopes",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6339642/",
+          "page": "unverified"
+        },
+        {
+          "key": "goh_chestpiece",
+          "link": "https://staffprofiles.bournemouth.ac.uk/display/journal-article/388323",
+          "page": "pp. 137–140"
+        }
+      ]
+    },
+    {
+      "id": "B057",
+      "statement": "R08 hält fest, dass keine allgemein verbindliche akustische Produktnorm für elektronische Stethoskope existiert.",
+      "origin": [
+        "preThesis/03-recherche/R08-messmethode-akustik.md:22-32"
+      ],
+      "chapter": "Grundlagen (technisch: Akustik, MEMS, I2S, DSP/Filter, BPM, Time-Stretch, Embedded/RTOS, FHIR/TLS)",
+      "type": "fact",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "invitro_stethoscopes",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6339642/",
+          "page": "unverified"
+        },
+        {
+          "key": "frequency_response_stethoscopes",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7305673/",
+          "page": "unverified"
+        },
+        {
+          "key": "nussbaumer_stethoscope_acoustics",
+          "link": "https://www.repository.cam.ac.uk/items/feadd88b-9e03-44fb-a875-c49f7c550259",
+          "page": "unverified"
+        },
+        {
+          "key": "nussbaumer_stethoscope_acoustics",
+          "link": "https://www.repository.cam.ac.uk/items/feadd88b-9e03-44fb-a875-c49f7c550259",
+          "page": "unverified"
+        }
+      ],
+      "supersedes": "U063"
+    },
+    {
+      "id": "B058",
+      "statement": "R08 definiert die zu messende Kette als Bruststück → Kopplung → MEMS-Mikrofon → ADC und empfiehlt einen Lautsprecher-/Shakerantrieb mit definiertem Koppler bzw. Kunstbrust.",
+      "origin": [
+        "preThesis/03-recherche/R08-messmethode-akustik.md:22-34"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "method",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "invitro_stethoscopes",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6339642/",
+          "page": "unverified"
+        },
+        {
+          "key": "frequency_response_stethoscopes",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7305673/",
+          "page": "unverified"
+        },
+        {
+          "key": "nussbaumer_stethoscope_acoustics",
+          "link": "https://www.repository.cam.ac.uk/items/feadd88b-9e03-44fb-a875-c49f7c550259",
+          "page": "unverified"
+        },
+        {
+          "key": "nowak_stethoscope_method",
+          "link": "https://pubmed.ncbi.nlm.nih.gov/28372089/",
+          "page": "141(3), article p. 1940 (record verified)"
+        }
+      ]
+    },
+    {
+      "id": "B059",
+      "statement": "Die Übertragungsfunktion soll als Verhältnis des Stethoskopsignals X_steth(f) zum gleichzeitig gemessenen Referenzschalldruck P_ref(f) bestimmt werden.",
+      "origin": [
+        "preThesis/03-recherche/R08-messmethode-akustik.md:36-82"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "method",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "invitro_stethoscopes",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6339642/",
+          "page": "unverified"
+        },
+        {
+          "key": "frequency_response_stethoscopes",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7305673/",
+          "page": "unverified"
+        },
+        {
+          "key": "nussbaumer_stethoscope_acoustics",
+          "link": "https://www.repository.cam.ac.uk/items/feadd88b-9e03-44fb-a875-c49f7c550259",
+          "page": "unverified"
+        },
+        {
+          "key": "nowak_stethoscope_method",
+          "link": "https://pubmed.ncbi.nlm.nih.gov/28372089/",
+          "page": "141(3), article p. 1940 (record verified)"
+        }
+      ]
+    },
+    {
+      "id": "B060",
+      "statement": "R08 beschreibt einen akustischen Koppler mit reproduzierbarer Auflagefläche, Abdichtung, dokumentierter Geometrie, Referenzmikrofonöffnung und definierter Anpresskraft.",
+      "origin": [
+        "preThesis/03-recherche/R08-messmethode-akustik.md:84-97"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "method",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "invitro_stethoscopes",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6339642/",
+          "page": "unverified"
+        },
+        {
+          "key": "frequency_response_stethoscopes",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7305673/",
+          "page": "unverified"
+        },
+        {
+          "key": "nussbaumer_stethoscope_acoustics",
+          "link": "https://www.repository.cam.ac.uk/items/feadd88b-9e03-44fb-a875-c49f7c550259",
+          "page": "unverified"
+        },
+        {
+          "key": "nowak_stethoscope_method",
+          "link": "https://pubmed.ncbi.nlm.nih.gov/28372089/",
+          "page": "141(3), article p. 1940 (record verified)"
+        }
+      ]
+    },
+    {
+      "id": "B061",
+      "statement": "R08 empfiehlt Lautsprecher plus Koppler als Minimalaufbau; ein Shaker mit Kunstbrust ist mechanisch realistischer, aber komplexer und erfordert die Definition der mechanischen Eingangsgröße.",
+      "origin": [
+        "preThesis/03-recherche/R08-messmethode-akustik.md:99-132"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "method",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "invitro_stethoscopes",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6339642/",
+          "page": "unverified"
+        },
+        {
+          "key": "frequency_response_stethoscopes",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7305673/",
+          "page": "unverified"
+        },
+        {
+          "key": "nussbaumer_stethoscope_acoustics",
+          "link": "https://www.repository.cam.ac.uk/items/feadd88b-9e03-44fb-a875-c49f7c550259",
+          "page": "unverified"
+        },
+        {
+          "key": "nowak_stethoscope_method",
+          "link": "https://pubmed.ncbi.nlm.nih.gov/28372089/",
+          "page": "141(3), article p. 1940 (record verified)"
+        }
+      ]
+    },
+    {
+      "id": "B062",
+      "statement": "R08 empfiehlt einen exponentiellen Swept-Sine (ESS) für den Frequenzgang; Deconvolution des inversen Sweeps ergibt Impulsantwort und Frequenzgang, während Verzerrungsanteile zeitlich separiert werden können.",
+      "origin": [
+        "preThesis/03-recherche/R08-messmethode-akustik.md:136-168"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "method",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "farina_ess",
+          "link": "https://aes.org/publications/elibrary-page/?id=10211",
+          "page": "Abstract; paper page unverified"
+        },
+        {
+          "key": "ciric_swept_sine",
+          "link": "https://www.sciencedirect.com/science/article/abs/pii/S0003682X12002563",
+          "page": "pp. 375–382 (metadata verified)"
+        },
+        {
+          "key": "iec60268_5",
+          "link": "https://webstore.iec.ch/en/publication/1224",
+          "page": "Scope/product page"
+        }
+      ]
+    },
+    {
+      "id": "B063",
+      "statement": "R08 nennt ESS-Einstellungen von 15–20 Hz Start, 1200–1500 Hz Ende, 10–30 s Dauer und mindestens drei Wiederholungen für einen 20–1000-Hz-Auswertebereich.",
+      "origin": [
+        "preThesis/03-recherche/R08-messmethode-akustik.md:136-168"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "parameter",
+      "status": "assumption",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "farina_ess",
+          "link": "https://aes.org/publications/elibrary-page/?id=10211",
+          "page": "Abstract; paper page unverified"
+        },
+        {
+          "key": "ciric_swept_sine",
+          "link": "https://www.sciencedirect.com/science/article/abs/pii/S0003682X12002563",
+          "page": "pp. 375–382 (metadata verified)"
+        },
+        {
+          "key": "iec60268_5",
+          "link": "https://webstore.iec.ch/en/publication/1224",
+          "page": "Scope/product page"
+        }
+      ]
+    },
+    {
+      "id": "B064",
+      "statement": "R08 empfiehlt Stepped Sine zur Prüfung einzelner Frequenzpunkte, Pegellinearität und THD mit mehreren Pegelstufen.",
+      "origin": [
+        "preThesis/03-recherche/R08-messmethode-akustik.md:170-197"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "method",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "farina_ess",
+          "link": "https://aes.org/publications/elibrary-page/?id=10211",
+          "page": "Abstract; paper page unverified"
+        },
+        {
+          "key": "ciric_swept_sine",
+          "link": "https://www.sciencedirect.com/science/article/abs/pii/S0003682X12002563",
+          "page": "pp. 375–382 (metadata verified)"
+        },
+        {
+          "key": "iec60268_5",
+          "link": "https://webstore.iec.ch/en/publication/1224",
+          "page": "Scope/product page"
+        }
+      ]
+    },
+    {
+      "id": "B065",
+      "statement": "R08 nennt rosa Rauschen mit Terz-/Oktavbandanalyse für Plausibilitäts-, Pegel- und Rauschmessung; für präzisen Frequenzgang wird ESS oder Stepped Sine bevorzugt.",
+      "origin": [
+        "preThesis/03-recherche/R08-messmethode-akustik.md:199-216"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "method",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "farina_ess",
+          "link": "https://aes.org/publications/elibrary-page/?id=10211",
+          "page": "Abstract; paper page unverified"
+        },
+        {
+          "key": "ciric_swept_sine",
+          "link": "https://www.sciencedirect.com/science/article/abs/pii/S0003682X12002563",
+          "page": "pp. 375–382 (metadata verified)"
+        },
+        {
+          "key": "iec60268_5",
+          "link": "https://webstore.iec.ch/en/publication/1224",
+          "page": "Scope/product page"
+        }
+      ]
+    },
+    {
+      "id": "B066",
+      "statement": "R08 empfiehlt das Referenzmikrofon vor der Messreihe mit einem Schallpegelkalibrator bei 1 kHz und typischerweise 94 dB SPL oder 114 dB SPL zu kalibrieren.",
+      "origin": [
+        "preThesis/03-recherche/R08-messmethode-akustik.md:218-236"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "method",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "iec61672_1",
+          "link": "https://webstore.ansi.org/standards/iec/iec61672ed2013",
+          "page": "unverified"
+        },
+        {
+          "key": "iec60268_5",
+          "link": "https://webstore.iec.ch/en/publication/1224",
+          "page": "Scope/product page"
+        },
+        {
+          "key": "invitro_stethoscopes",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6339642/",
+          "page": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "B067",
+      "statement": "R08 empfiehlt, Referenz- und Stethoskopsignal synchron aufzuzeichnen, damit Lautsprecher-/Verstärkerfrequenzgang und Pegelschwankungen über das gemessene Eingangssignal korrigiert werden.",
+      "origin": [
+        "preThesis/03-recherche/R08-messmethode-akustik.md:238-262"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "method",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "invitro_stethoscopes",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6339642/",
+          "page": "unverified"
+        },
+        {
+          "key": "frequency_response_stethoscopes",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7305673/",
+          "page": "unverified"
+        },
+        {
+          "key": "nussbaumer_stethoscope_acoustics",
+          "link": "https://www.repository.cam.ac.uk/items/feadd88b-9e03-44fb-a875-c49f7c550259",
+          "page": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "B068",
+      "statement": "R08 definiert den Schalldruckpegel als Lp = 20 log10(p_rms / 20 μPa).",
+      "origin": [
+        "preThesis/03-recherche/R08-messmethode-akustik.md:264-276"
+      ],
+      "chapter": "Grundlagen (technisch: Akustik, MEMS, I2S, DSP/Filter, BPM, Time-Stretch, Embedded/RTOS, FHIR/TLS)",
+      "type": "definition",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "iec61672_1",
+          "link": "https://webstore.ansi.org/standards/iec/iec61672ed2013",
+          "page": "unverified"
+        },
+        {
+          "key": "iec60268_5",
+          "link": "https://webstore.iec.ch/en/publication/1224",
+          "page": "Scope/product page"
+        },
+        {
+          "key": "invitro_stethoscopes",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6339642/",
+          "page": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "B069",
+      "statement": "R08 empfiehlt eine Rauschmessung ohne akustische Anregung über 30–60 s mit RMS im Band 20–1000 Hz und PSD-Auswertung.",
+      "origin": [
+        "preThesis/03-recherche/R08-messmethode-akustik.md:278-313"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "method",
+      "status": "assumption",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "invitro_stethoscopes",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6339642/",
+          "page": "unverified"
+        },
+        {
+          "key": "frequency_response_stethoscopes",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7305673/",
+          "page": "unverified"
+        },
+        {
+          "key": "nussbaumer_stethoscope_acoustics",
+          "link": "https://www.repository.cam.ac.uk/items/feadd88b-9e03-44fb-a875-c49f7c550259",
+          "page": "unverified"
+        },
+        {
+          "key": "nowak_stethoscope_method",
+          "link": "https://pubmed.ncbi.nlm.nih.gov/28372089/",
+          "page": "141(3), article p. 1940 (record verified)"
+        }
+      ]
+    },
+    {
+      "id": "B070",
+      "statement": "R08 definiert THD als Verhältnis der quadratischen Summe der Obertonamplituden zur Grundschwingungsamplitude.",
+      "origin": [
+        "preThesis/03-recherche/R08-messmethode-akustik.md:315-358"
+      ],
+      "chapter": "Grundlagen (technisch: Akustik, MEMS, I2S, DSP/Filter, BPM, Time-Stretch, Embedded/RTOS, FHIR/TLS)",
+      "type": "definition",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "farina_ess",
+          "link": "https://aes.org/publications/elibrary-page/?id=10211",
+          "page": "Abstract; paper page unverified"
+        },
+        {
+          "key": "ciric_swept_sine",
+          "link": "https://www.sciencedirect.com/science/article/abs/pii/S0003682X12002563",
+          "page": "pp. 375–382 (metadata verified)"
+        },
+        {
+          "key": "iec60268_5",
+          "link": "https://webstore.iec.ch/en/publication/1224",
+          "page": "Scope/product page"
+        }
+      ]
+    },
+    {
+      "id": "B071",
+      "statement": "IEC 60268-5 behandelt Lautsprechermessverfahren mit Sinus-, spezifizierten Rausch- oder Impulssignalen, aber ist keine Stethoskop-Prüfnorm.",
+      "origin": [
+        "preThesis/03-recherche/R08-messmethode-akustik.md:360-374"
+      ],
+      "chapter": "Grundlagen (technisch: Akustik, MEMS, I2S, DSP/Filter, BPM, Time-Stretch, Embedded/RTOS, FHIR/TLS)",
+      "type": "formal-rule",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "iec61672_1",
+          "link": "https://webstore.ansi.org/standards/iec/iec61672ed2013",
+          "page": "unverified"
+        },
+        {
+          "key": "iec60268_5",
+          "link": "https://webstore.iec.ch/en/publication/1224",
+          "page": "Scope/product page"
+        },
+        {
+          "key": "invitro_stethoscopes",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6339642/",
+          "page": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "B072",
+      "statement": "R08 ordnet IEC 61672-1 als Referenz für Klassen-1/2-Schallpegelmesser und Referenzmikrofon-Auswahl ein, nicht als Stethoskopnorm.",
+      "origin": [
+        "preThesis/03-recherche/R08-messmethode-akustik.md:360-374"
+      ],
+      "chapter": "Grundlagen (technisch: Akustik, MEMS, I2S, DSP/Filter, BPM, Time-Stretch, Embedded/RTOS, FHIR/TLS)",
+      "type": "formal-rule",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "iec61672_1",
+          "link": "https://webstore.ansi.org/standards/iec/iec61672ed2013",
+          "page": "unverified"
+        },
+        {
+          "key": "iec60268_5",
+          "link": "https://webstore.iec.ch/en/publication/1224",
+          "page": "Scope/product page"
+        },
+        {
+          "key": "invitro_stethoscopes",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6339642/",
+          "page": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "B073",
+      "statement": "R08 weist darauf hin, dass Ergebnisse mit Koppler-/Shakeraufbau keine direkte Aussage über Frequenzgang am menschlichen Brustkorb oder klinische Empfindlichkeit erlauben.",
+      "origin": [
+        "preThesis/03-recherche/R08-messmethode-akustik.md:421-439"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "risk",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "invitro_stethoscopes",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6339642/",
+          "page": "unverified"
+        },
+        {
+          "key": "frequency_response_stethoscopes",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7305673/",
+          "page": "unverified"
+        },
+        {
+          "key": "nussbaumer_stethoscope_acoustics",
+          "link": "https://www.repository.cam.ac.uk/items/feadd88b-9e03-44fb-a875-c49f7c550259",
+          "page": "unverified"
+        },
+        {
+          "key": "nowak_stethoscope_method",
+          "link": "https://pubmed.ncbi.nlm.nih.gov/28372089/",
+          "page": "141(3), article p. 1940 (record verified)"
+        }
+      ]
+    },
+    {
+      "id": "B074",
+      "statement": "R08 empfiehlt, Kopplergeometrie, Anpresskraft und Bruststückposition zu dokumentieren, Referenz- und Testkanäle synchron aufzuzeichnen und Wiederholungsmessungen für die Unsicherheit zu berichten.",
+      "origin": [
+        "preThesis/03-recherche/R08-messmethode-akustik.md:378-419"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "method",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "invitro_stethoscopes",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6339642/",
+          "page": "unverified"
+        },
+        {
+          "key": "frequency_response_stethoscopes",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7305673/",
+          "page": "unverified"
+        },
+        {
+          "key": "nussbaumer_stethoscope_acoustics",
+          "link": "https://www.repository.cam.ac.uk/items/feadd88b-9e03-44fb-a875-c49f7c550259",
+          "page": "unverified"
+        },
+        {
+          "key": "nowak_stethoscope_method",
+          "link": "https://pubmed.ncbi.nlm.nih.gov/28372089/",
+          "page": "141(3), article p. 1940 (record verified)"
+        }
+      ]
+    },
+    {
+      "id": "B075",
+      "statement": "R07 behandelt die Kavität näherungsweise als Helmholtz-Resonator; Nussbaumer und Agarwal modellieren dagegen das Bruststück, den Brustkorb und die haltende Hand als gekoppeltes System und führen die maßgebliche Resonanz nicht auf eine isolierte kleine Luftmasse im Hals nach Helmholtz zurück. Die 21-ml-Schätzung ist daher nicht ohne Weiteres auf die reale Stethoskopkopplung übertragbar.",
+      "origin": [
+        "preThesis/03-recherche/R07-bruststueck-mems.md:107-136",
+        "preThesis/03-recherche/R08-messmethode-akustik.md:84-97"
+      ],
+      "chapter": "Diskussion/Ausblick",
+      "type": "contradiction",
+      "status": "contradicted",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "nussbaumer_stethoscope_acoustics",
+          "link": "https://www.repository.cam.ac.uk/items/feadd88b-9e03-44fb-a875-c49f7c550259",
+          "page": "unverified"
+        },
+        {
+          "key": "frequency_response_stethoscopes",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7305673/",
+          "page": "unverified"
+        },
+        {
+          "key": "invitro_stethoscopes",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6339642/",
+          "page": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "B076",
+      "statement": "R05 nennt als Pilotkonfiguration 5–10 unabhängige Herzgeräuschaufnahmen, etwa 10–20 Trials je Vergleich und ungefähr 40–100 Antworten pro Person, abhängig von Stimuluszahl.",
+      "origin": [
+        "preThesis/03-recherche/R05-hoerstudie-design.md:165-184"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "parameter",
+      "status": "assumption",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "pilot_consort_extension",
+          "link": "https://www.bmj.com/content/355/bmj.i5239",
+          "page": "unverified"
+        },
+        {
+          "key": "pilot_feasibility_guidelines",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4775223/",
+          "page": "unverified"
+        },
+        {
+          "key": "pilot_sample_size",
+          "link": "https://pubmed.ncbi.nlm.nih.gov/22169081/",
+          "page": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "B077",
+      "statement": "R05 empfiehlt eine möglichst 20–40-minütige Hörsitzung mit kurzen Pausen etwa alle 10–15 Minuten, um Ermüdung zu begrenzen.",
+      "origin": [
+        "preThesis/03-recherche/R05-hoerstudie-design.md:165-184"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "method",
+      "status": "assumption",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "pilot_consort_extension",
+          "link": "https://www.bmj.com/content/355/bmj.i5239",
+          "page": "unverified"
+        },
+        {
+          "key": "pilot_feasibility_guidelines",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4775223/",
+          "page": "unverified"
+        },
+        {
+          "key": "pilot_sample_size",
+          "link": "https://pubmed.ncbi.nlm.nih.gov/22169081/",
+          "page": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "B078",
+      "statement": "R07 führt Knowles SPH0645LM4H-B als I²S-MEMS-Mikrofon mit 45-Hz-LFRO, 65-dB(A)-SNR und 120-dB-SPL-AOP auf; die Herstellerunterlage bestätigt diese Werte.",
+      "origin": [
+        "preThesis/03-recherche/R07-bruststueck-mems.md:183-202"
+      ],
+      "chapter": "Grundlagen (technisch: Akustik, MEMS, I2S, DSP/Filter, BPM, Time-Stretch, Embedded/RTOS, FHIR/TLS)",
+      "type": "parameter",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "knowles_sph0645_flex",
+          "link": "https://www.mouser.com/datasheet/2/218/kas-700-0137-crawford-mic-on-flex-product-brief-re-1624260.pdf",
+          "page": "Key Parameters Specifications, PDF p. 1"
+        },
+        {
+          "key": "mems_cardiorespiratory_review",
+          "link": "https://arxiv.org/abs/2406.12432",
+          "page": "unverified"
+        },
+        {
+          "key": "pulmonary_acoustic_methods",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6874908/",
+          "page": "unverified"
+        }
+      ],
+      "supersedes": "U061"
+    },
+    {
+      "id": "B079",
+      "statement": "Die R07-Angabe von 30 Hz LFRO für SPH18R1LM4H-1 weicht von der Knowles/SELTECH-Portfolioangabe 35 Hz ab; Modellrevision und Quelle müssen vor einer Bauteilvergleichstabelle geklärt werden.",
+      "origin": [
+        "preThesis/03-recherche/R07-bruststueck-mems.md:183-202"
+      ],
+      "chapter": "Diskussion/Ausblick",
+      "type": "contradiction",
+      "status": "contradicted",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "knowles_portfolio_2023",
+          "link": "https://cdn.thomasnet.com/ccp/30973684/351950.pdf",
+          "page": "Digital portfolio table, PDF p. 13"
+        }
+      ],
+      "sources_incomplete": true,
+      "supersedes": "U061"
+    },
+    {
+      "id": "B080",
+      "statement": "Der Knowles/SELTECH-Portfolioleitfaden definiert LFRO als den -3-dB-Punkt relativ zur Mikrofonempfindlichkeit bei 1 kHz.",
+      "origin": [
+        "preThesis/03-recherche/R07-bruststueck-mems.md:183-202"
+      ],
+      "chapter": "Grundlagen (technisch: Akustik, MEMS, I2S, DSP/Filter, BPM, Time-Stretch, Embedded/RTOS, FHIR/TLS)",
+      "type": "definition",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "knowles_portfolio_2023",
+          "link": "https://cdn.thomasnet.com/ccp/30973684/351950.pdf",
+          "page": "LFRO definition, PDF p. 5"
+        },
+        {
+          "key": "ecm_datasheet_im69d130",
+          "link": "https://www.infineon.com/assets/row/public/documents/24/49/infineon-im69d130-datasheet-en.pdf",
+          "page": "unverified"
+        },
+        {
+          "key": "knowles_spk18_datasheet",
+          "link": "https://www.mouser.com/datasheet/3/6144/1/SPK18R1LM4H_1_Hyperion_Datasheet.pdf",
+          "page": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "B081",
+      "statement": "Laien und medizinisch geschulte Personen können entweder als homogene Stichprobe getrennt oder als explorative Mischstichprobe untersucht werden; bei n = 5–10 wäre ein Gruppenvergleich nur qualitativ/deskriptiv.",
+      "origin": [
+        "preThesis/03-recherche/R05-hoerstudie-design.md:68-81"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "method",
+      "status": "assumption",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "pilot_consort_extension",
+          "link": "https://www.bmj.com/content/355/bmj.i5239",
+          "page": "unverified"
+        },
+        {
+          "key": "pilot_feasibility_guidelines",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4775223/",
+          "page": "unverified"
+        },
+        {
+          "key": "pilot_sample_size",
+          "link": "https://pubmed.ncbi.nlm.nih.gov/22169081/",
+          "page": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "B082",
+      "statement": "Eine zusätzliche einfache Murmur-Detektionsstufe (2AFC oder Ja/Nein) setzt eine nachvollziehbare Referenzklassifikation der verwendeten Aufnahmen voraus; diagnostische Kategorien sollen höchstens sekundär und explorativ erhoben werden.",
+      "origin": [
+        "preThesis/03-recherche/R05-hoerstudie-design.md:122-136"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "method",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "2afc_signal_detection",
+          "link": "https://www.sciencedirect.com/science/article/pii/S0022249605000921",
+          "page": "pp. 411–420"
+        },
+        {
+          "key": "abx_strategy",
+          "link": "https://pubmed.ncbi.nlm.nih.gov/11916304/",
+          "page": "unverified"
+        },
+        {
+          "key": "2afc_bias",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC2811854/",
+          "page": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "B083",
+      "statement": "R05 schlägt vor, Alter, Geschlecht, Hörprobleme und medizinische Erfahrung zu erfassen und vor der Hörstudie ein kurzes Hörscreening durchzuführen oder selbstberichtete relevante Hörstörungen auszuschließen.",
+      "origin": [
+        "preThesis/03-recherche/R05-hoerstudie-design.md:329-349"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "method",
+      "status": "assumption",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "pilot_consort_extension",
+          "link": "https://www.bmj.com/content/355/bmj.i5239",
+          "page": "unverified"
+        },
+        {
+          "key": "pilot_feasibility_guidelines",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4775223/",
+          "page": "unverified"
+        },
+        {
+          "key": "pilot_sample_size",
+          "link": "https://pubmed.ncbi.nlm.nih.gov/22169081/",
+          "page": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "B084",
+      "statement": "R05 empfiehlt neben Trefferquoten optionale Messung der Antwortdauer und kurze Ratings zu Verständlichkeit bzw. Höranstrengung.",
+      "origin": [
+        "preThesis/03-recherche/R05-hoerstudie-design.md:227-252"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "method",
+      "status": "assumption",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "pilot_consort_extension",
+          "link": "https://www.bmj.com/content/355/bmj.i5239",
+          "page": "unverified"
+        },
+        {
+          "key": "pilot_feasibility_guidelines",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4775223/",
+          "page": "unverified"
+        },
+        {
+          "key": "pilot_sample_size",
+          "link": "https://pubmed.ncbi.nlm.nih.gov/22169081/",
+          "page": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "B085",
+      "statement": "R05 nennt bei 20 ABX-Trials 10/20 Antworten als Zufallsniveau, 15/20 als deskriptiv auffällig über Zufall und mindestens 17/20 als stärkere Evidenz gegen reines Raten; dies soll nur explorativ interpretiert werden.",
+      "origin": [
+        "preThesis/03-recherche/R05-hoerstudie-design.md:269-279"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "parameter",
+      "status": "assumption",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "2afc_signal_detection",
+          "link": "https://www.sciencedirect.com/science/article/pii/S0022249605000921",
+          "page": "pp. 411–420"
+        },
+        {
+          "key": "abx_strategy",
+          "link": "https://pubmed.ncbi.nlm.nih.gov/11916304/",
+          "page": "unverified"
+        },
+        {
+          "key": "2afc_bias",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC2811854/",
+          "page": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "B086",
+      "statement": "R05 empfiehlt neutrale Beschriftungen und Lautheitsabgleich; gleiche Lautheit und Dauer sind nur dann einzusetzen, wenn Lautheit nicht selbst Untersuchungsvariable ist.",
+      "origin": [
+        "preThesis/03-recherche/R05-hoerstudie-design.md:198-211"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "method",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "2afc_signal_detection",
+          "link": "https://www.sciencedirect.com/science/article/pii/S0022249605000921",
+          "page": "pp. 411–420"
+        },
+        {
+          "key": "abx_strategy",
+          "link": "https://pubmed.ncbi.nlm.nih.gov/11916304/",
+          "page": "unverified"
+        },
+        {
+          "key": "2afc_bias",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC2811854/",
+          "page": "unverified"
+        }
+      ]
+    }
+  ]
+}

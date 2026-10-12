@@ -1,0 +1,1299 @@
+{
+  "units": [
+    {
+      "id": "C001",
+      "statement": "Für das geplante digitale Stethoskop wird als Literatur-basiertes Entwicklungsziel eine End-to-End-Latenz ≤10 ms empfohlen; ≤5 ms wird als bevorzugtes Ziel genannt.",
+      "origin": [
+        "preThesis/03-recherche/R09-latenz.md:22,35"
+      ],
+      "chapter": "Grundlagen (technisch: Akustik, MEMS, I2S, DSP/Filter, BPM, Time-Stretch, Embedded/RTOS, FHIR/TLS)",
+      "type": "parameter",
+      "status": "assumption",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "aes_lester_boley_2007",
+          "link": "unverified",
+          "page": "Abstract; AES Convention 123, Paper 7198"
+        },
+        {
+          "key": "wang_low_latency_thesis",
+          "link": "unverified",
+          "page": "unverified"
+        },
+        {
+          "key": "rhythm_audio_vibrotactile_2020",
+          "link": "unverified",
+          "page": "Abstract; exact page unverified"
+        }
+      ],
+      "note": "Übertragung von Live-Performer-Literatur auf Stethoskop-Auskultation ist eine begründete Extrapolation, keine validierte medizinische Schwelle.",
+      "supersedes": "U064"
+    },
+    {
+      "id": "C002",
+      "statement": "Die Latenz, die bei Live-Monitoring akzeptabel ist, variiert mit Instrument und Monitoringumgebung; der AES-Versuch nennt akzeptable Werte von 42 ms bis möglicherweise unter 1,4 ms in den untersuchten Bedingungen.",
+      "origin": [
+        "preThesis/03-recherche/R09-latenz.md:22,27"
+      ],
+      "chapter": "Stand der Technik",
+      "type": "fact",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "aes_lester_boley_2007",
+          "link": "unverified",
+          "page": "Abstract; AES Convention 123, Paper 7198"
+        },
+        {
+          "key": "wang_low_latency_thesis",
+          "link": "unverified",
+          "page": "unverified"
+        },
+        {
+          "key": "sharma_audio_haptic_2023",
+          "link": "unverified",
+          "page": "Abstract"
+        }
+      ]
+    },
+    {
+      "id": "C003",
+      "statement": "Die im Bericht genannten Bereiche <10 ms, 10–15 ms und 15–30 ms sind als grobe Orientierungsbereiche für Wahrnehmbarkeit/Akzeptanz/Störung formuliert und hängen von Aufgabe und Person ab.",
+      "origin": [
+        "preThesis/03-recherche/R09-latenz.md:25-27"
+      ],
+      "chapter": "Stand der Technik",
+      "type": "fact",
+      "status": "assumption",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "aes_lester_boley_2007",
+          "link": "unverified",
+          "page": "Abstract; AES Convention 123, Paper 7198"
+        },
+        {
+          "key": "wang_low_latency_thesis",
+          "link": "unverified",
+          "page": "unverified"
+        },
+        {
+          "key": "rhythm_audio_vibrotactile_2020",
+          "link": "unverified",
+          "page": "Abstract; exact page unverified"
+        }
+      ],
+      "note": "Nicht als universelle Wahrnehmungsschwellen zu verwenden."
+    },
+    {
+      "id": "C004",
+      "statement": "In einer Fahrsimulationsstudie lag die Audio-Haptik-Asynchronie-Detektionsschwelle für 50 % der Teilnehmenden außerhalb des Bereichs −75 bis +110 ms.",
+      "origin": [
+        "preThesis/03-recherche/R09-latenz.md:29-30"
+      ],
+      "chapter": "Stand der Technik",
+      "type": "measurement",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "sharma_audio_haptic_2023",
+          "link": "unverified",
+          "page": "Abstract"
+        },
+        {
+          "key": "rhythm_audio_vibrotactile_2020",
+          "link": "unverified",
+          "page": "Abstract; exact page unverified"
+        },
+        {
+          "key": "aes_lester_boley_2007",
+          "link": "unverified",
+          "page": "Abstract; AES Convention 123, Paper 7198"
+        }
+      ],
+      "note": "Kontext: haptisches Force-Feedback-Lenkrad und Audio-Rumble-Stimuli; diese Schwelle ist nicht direkt auf live Auskultation übertragbar."
+    },
+    {
+      "id": "C005",
+      "statement": "Der Bericht fand keine belastbar publizierten offiziellen Latenzwerte für 3M Littmann CORE/3200 oder Eko; die Produktlatenz bleibt offen und müsste am konkreten Aufbau gemessen oder durch Herstellerdaten belegt werden.",
+      "origin": [
+        "preThesis/03-recherche/R09-latenz.md:32-35"
+      ],
+      "chapter": "Stand der Technik",
+      "type": "open-question",
+      "status": "open",
+      "needs_citation": false,
+      "sources": [],
+      "sources_incomplete": true
+    },
+    {
+      "id": "C006",
+      "statement": "Der Bericht nennt pro A/D- und D/A-Wandlung typischerweise rund 1–1,5 ms; die verwendete Quelle ist ein nichtakademischer Technik-Blog und die Angabe ist nicht unabhängig abgesichert.",
+      "origin": [
+        "preThesis/03-recherche/R09-latenz.md:33"
+      ],
+      "chapter": "Grundlagen (technisch: Akustik, MEMS, I2S, DSP/Filter, BPM, Time-Stretch, Embedded/RTOS, FHIR/TLS)",
+      "type": "parameter",
+      "status": "assumption",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "wang_low_latency_thesis",
+          "link": "unverified",
+          "page": "unverified"
+        }
+      ],
+      "sources_incomplete": true,
+      "note": "Die im R09-Bericht referenzierte Einzelquelle für diese konkrete Zahl ist kein akademischer Beleg; Wert als grobe Angabe behandeln."
+    },
+    {
+      "id": "C007",
+      "statement": "R09 fordert, „Echtzeit“ für die Live-Auskultation über eine messbare End-to-End-Latenz zu operationalisieren.",
+      "origin": [
+        "preThesis/03-recherche/R09-latenz.md:10-17"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "method",
+      "status": "confirmed",
+      "needs_citation": false,
+      "sources": []
+    },
+    {
+      "id": "C008",
+      "statement": "Der ESP32-S3 stellt zwei I²S-Peripherieeinheiten bereit, die Sampledaten ein- und ausgeben können; jeder Controller besitzt RX- und TX-Kanäle sowie DMA-Transport.",
+      "origin": [
+        "preThesis/03-recherche/R10-esp32-plattform.md:85-92"
+      ],
+      "chapter": "Grundlagen (technisch: Akustik, MEMS, I2S, DSP/Filter, BPM, Time-Stretch, Embedded/RTOS, FHIR/TLS)",
+      "type": "fact",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "esp_i2s_s3",
+          "link": "unverified",
+          "page": "Introduction; Overview of All Modes"
+        },
+        {
+          "key": "esp_s3_datasheet",
+          "link": "unverified",
+          "page": "unverified"
+        },
+        {
+          "key": "esp_dsp_api",
+          "link": "unverified",
+          "page": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "C009",
+      "statement": "Beim ESP32-S3 unterstützt ESP-IDF I²S Standard- und TDM-Modi auf I²S0/I²S1; PDM-RX/TX ist auf I²S0/I²S1 ausgewiesen.",
+      "origin": [
+        "preThesis/03-recherche/R10-esp32-plattform.md:85"
+      ],
+      "chapter": "Grundlagen (technisch: Akustik, MEMS, I2S, DSP/Filter, BPM, Time-Stretch, Embedded/RTOS, FHIR/TLS)",
+      "type": "fact",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "esp_i2s_s3",
+          "link": "unverified",
+          "page": "Overview of All Modes"
+        },
+        {
+          "key": "esp_s3_datasheet",
+          "link": "unverified",
+          "page": "unverified"
+        },
+        {
+          "key": "esp_dsp_api",
+          "link": "unverified",
+          "page": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "C010",
+      "statement": "Laut ESP-IDF-Modusübersicht besitzt der ESP32-S3 keine integrierte I²S-ADC/DAC-Funktion; die Audioausgabe des Prototyps ist daher auf einen externen Audio-DAC/-Codec oder Verstärker angewiesen.",
+      "origin": [
+        "preThesis/03-recherche/R10-esp32-plattform.md:109-117"
+      ],
+      "chapter": "Systemarchitektur",
+      "type": "fact",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "esp_i2s_s3",
+          "link": "unverified",
+          "page": "Overview of All Modes"
+        },
+        {
+          "key": "esp_s3_datasheet",
+          "link": "unverified",
+          "page": "unverified"
+        },
+        {
+          "key": "zephyr_s3_board",
+          "link": "unverified",
+          "page": "Supported Features"
+        }
+      ]
+    },
+    {
+      "id": "C011",
+      "statement": "PDM-zu-PCM-Konvertierung erfolgt per Hardware auf ESP32-S3-I²S0; an einem Port ohne Konverter muss die Software die rohe PDM-Datenfolge filtern und dezimieren.",
+      "origin": [
+        "preThesis/03-recherche/R10-esp32-plattform.md:85-92"
+      ],
+      "chapter": "Grundlagen (technisch: Akustik, MEMS, I2S, DSP/Filter, BPM, Time-Stretch, Embedded/RTOS, FHIR/TLS)",
+      "type": "fact",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "esp_i2s_s3",
+          "link": "unverified",
+          "page": "Overview of All Modes; PDM RX Mode in PCM Format"
+        },
+        {
+          "key": "esp_s3_datasheet",
+          "link": "unverified",
+          "page": "unverified"
+        },
+        {
+          "key": "esp_dsp_api",
+          "link": "unverified",
+          "page": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "C012",
+      "statement": "ESP-IDF I²S-Datenübertragung nutzt DMA; Datenblöcke werden über DMA-Puffer transportiert, und blockierende read/write APIs beziehungsweise Callback-basierte asynchrone Verarbeitung sind dokumentiert.",
+      "origin": [
+        "preThesis/03-recherche/R10-esp32-plattform.md:85-92"
+      ],
+      "chapter": "Grundlagen (technisch: Akustik, MEMS, I2S, DSP/Filter, BPM, Time-Stretch, Embedded/RTOS, FHIR/TLS)",
+      "type": "fact",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "esp_i2s_s3",
+          "link": "unverified",
+          "page": "Data Transport"
+        },
+        {
+          "key": "esp_s3_datasheet",
+          "link": "unverified",
+          "page": "unverified"
+        },
+        {
+          "key": "zephyr_i2s_binding",
+          "link": "unverified",
+          "page": "Binding properties"
+        }
+      ]
+    },
+    {
+      "id": "C013",
+      "statement": "R10 bewertet ESP-IDF mit FreeRTOS als risikoärmere Basis für die konkrete Kombination aus ESP32-S3-PDM/I²S, DMA, Wi-Fi, TLS und Espressif-DSP-Bibliothek; Zephyr wird als grundsätzlich nutzbar, aber integrationsintensiver eingeordnet.",
+      "origin": [
+        "preThesis/03-recherche/R10-esp32-plattform.md:20-57,363-395"
+      ],
+      "chapter": "Systemarchitektur",
+      "type": "decision",
+      "status": "assumption",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "esp_i2s_s3",
+          "link": "unverified",
+          "page": "Overview of All Modes; Application Example"
+        },
+        {
+          "key": "zephyr_s3_board",
+          "link": "unverified",
+          "page": "Board Support Package; Supported Features"
+        },
+        {
+          "key": "zephyr_i2s_binding",
+          "link": "unverified",
+          "page": "Binding properties"
+        }
+      ],
+      "note": "Berichtsempfehlung, keine empirische Vergleichsstudie; Projektentscheidung separat dokumentieren.",
+      "supersedes": "U065"
+    },
+    {
+      "id": "C014",
+      "statement": "Die Zephyr-Dokumentation enthält ein ESP32-S3-DevKitC-Boardziel und einen Espressif-ESP32-I²S-Devicetree-Binding-Eintrag.",
+      "origin": [
+        "preThesis/03-recherche/R10-esp32-plattform.md:94-118"
+      ],
+      "chapter": "Stand der Technik",
+      "type": "fact",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "zephyr_s3_board",
+          "link": "unverified",
+          "page": "Board Support Package"
+        },
+        {
+          "key": "zephyr_i2s_binding",
+          "link": "unverified",
+          "page": "Binding properties"
+        },
+        {
+          "key": "esp_i2s_s3",
+          "link": "unverified",
+          "page": "Introduction"
+        }
+      ]
+    },
+    {
+      "id": "C015",
+      "statement": "Für die untersuchte Anwendung verlangt R10 vor Implementierungsfestlegung einen Hands-on-Test von PDM-RX, PDM-zu-PCM-Konvertierung und DMA-Pufferung auf dem tatsächlich verwendeten Board.",
+      "origin": [
+        "preThesis/03-recherche/R10-esp32-plattform.md:70-93"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "method",
+      "status": "confirmed",
+      "needs_citation": false,
+      "sources": []
+    },
+    {
+      "id": "C016",
+      "statement": "Der ESP-DSP-Benchmark weist für `dsps_biquad_f32` auf ESP32-S3 17 552 Zyklen pro 1 024 Eingangssamples aus (O2-optimierte Assembly-Implementierung).",
+      "origin": [
+        "preThesis/03-recherche/R10-esp32-plattform.md:213-231"
+      ],
+      "chapter": "Grundlagen (technisch: Akustik, MEMS, I2S, DSP/Filter, BPM, Time-Stretch, Embedded/RTOS, FHIR/TLS)",
+      "type": "measurement",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "esp_dsp_benchmarks",
+          "link": "unverified",
+          "page": "IIR Filters row; benchmark methodology"
+        },
+        {
+          "key": "esp_dsp_api",
+          "link": "unverified",
+          "page": "unverified"
+        }
+      ],
+      "note": "Bibliotheksbenchmark, kein Messwert des vollständigen Audio-Subsystems.",
+      "sources_incomplete": true
+    },
+    {
+      "id": "C017",
+      "statement": "Der ESP-DSP-Benchmark weist für ESP32-S3 bei `dsps_fir_f32` mit 256 Koeffizienten 443 671 Zyklen für 1 024 Samples aus; dezimierend (Faktor 4) sind es 115 499 Zyklen.",
+      "origin": [
+        "preThesis/03-recherche/R10-esp32-plattform.md:233-256"
+      ],
+      "chapter": "Grundlagen (technisch: Akustik, MEMS, I2S, DSP/Filter, BPM, Time-Stretch, Embedded/RTOS, FHIR/TLS)",
+      "type": "measurement",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "esp_dsp_benchmarks",
+          "link": "unverified",
+          "page": "FIR Filters rows"
+        },
+        {
+          "key": "esp_dsp_api",
+          "link": "unverified",
+          "page": "unverified"
+        }
+      ],
+      "note": "Die Daten sind Funktionsbenchmarkwerte; PDM-Decimation, DMA, Kopien und Taskverwaltung sind nicht enthalten.",
+      "sources_incomplete": true
+    },
+    {
+      "id": "C018",
+      "statement": "Abgeleitet aus den Benchmarkzahlen schätzt R10 drei parallele 256-Tap-FIR-Filter bei 8 kHz auf rund 10,4 Mio. Zyklen/s beziehungsweise 4,3 % eines 240-MHz-Kerns.",
+      "origin": [
+        "preThesis/03-recherche/R10-esp32-plattform.md:245-256,367-371"
+      ],
+      "chapter": "Systemarchitektur",
+      "type": "parameter",
+      "status": "assumption",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "esp_dsp_benchmarks",
+          "link": "unverified",
+          "page": "FIR Filters row; ESP32S3 O2"
+        },
+        {
+          "key": "esp_s3_datasheet",
+          "link": "unverified",
+          "page": "unverified"
+        },
+        {
+          "key": "esp_dsp_api",
+          "link": "unverified",
+          "page": "unverified"
+        }
+      ],
+      "note": "Rechnerische Hochrechnung aus einer ESP-DSP-Funktionsmessung; Gesamtsystemkosten sind höher und müssen gemessen werden."
+    },
+    {
+      "id": "C019",
+      "statement": "Der ESP-DSP-Benchmark weist für ESP32-S3 97 847 Zyklen für `dsps_fft2r_fc32` mit 1 024 komplexen Punkten bei O2 aus.",
+      "origin": [
+        "preThesis/03-recherche/R10-esp32-plattform.md:285-307"
+      ],
+      "chapter": "Grundlagen (technisch: Akustik, MEMS, I2S, DSP/Filter, BPM, Time-Stretch, Embedded/RTOS, FHIR/TLS)",
+      "type": "measurement",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "esp_dsp_benchmarks",
+          "link": "unverified",
+          "page": "FFTs Radix-2, 1024 complex points row"
+        },
+        {
+          "key": "esp_dsp_api",
+          "link": "unverified",
+          "page": "unverified"
+        }
+      ],
+      "sources_incomplete": true
+    },
+    {
+      "id": "C020",
+      "statement": "Der Bericht findet keinen ESP32-S3-spezifischen belastbaren publizierten Benchmark für seine Hüllkurven-/Autokorrelations-BPM-Variante; deren Laufzeit ist daher auf dem Prototyp zu messen.",
+      "origin": [
+        "preThesis/03-recherche/R10-esp32-plattform.md:258-281"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "open-question",
+      "status": "open",
+      "needs_citation": false,
+      "sources": []
+    },
+    {
+      "id": "C021",
+      "statement": "R10 schlägt für BPM eine gefilterte Amplituden-/Energiehüllkurve, Tiefpass, Reduktion auf 100–250 Hz und Autokorrelation über ein 2–8-s-Fenster mit Peaksuche im physiologischen BPM-Bereich vor.",
+      "origin": [
+        "preThesis/03-recherche/R10-esp32-plattform.md:258-281"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "method",
+      "status": "assumption",
+      "needs_citation": false,
+      "sources": [],
+      "note": "Vorgeschlagene Implementierungsmethode im Bericht, nicht als validiertes BPM-Verfahren nachgewiesen."
+    },
+    {
+      "id": "C022",
+      "statement": "R10 kennzeichnet Bewegungsartefakte, Doppelpeaks und variable Herztöne als Robustheitsprobleme für BPM-Schätzung, getrennt von CPU-Rechenkosten.",
+      "origin": [
+        "preThesis/03-recherche/R10-esp32-plattform.md:271-281"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "risk",
+      "status": "assumption",
+      "needs_citation": false,
+      "sources": []
+    },
+    {
+      "id": "C023",
+      "statement": "R10 unterscheidet Resampling, WSOLA/Granularverfahren und Phase-Vocoder-Ansätze mit steigender Komplexität; es ordnet hochwertiges transientenerhaltendes Time-Stretching als größtes DSP-Risiko ein.",
+      "origin": [
+        "preThesis/03-recherche/R10-esp32-plattform.md:285-307"
+      ],
+      "chapter": "Stand der Technik",
+      "type": "fact",
+      "status": "assumption",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "wsola_roelands",
+          "link": "https://doi.org/10.21437/Eurospeech.1993-59",
+          "page": "Abstract and bibliographic record (web text lines 4–18)."
+        },
+        {
+          "key": "wsola_verhelst",
+          "link": "unverified",
+          "page": "unverified"
+        },
+        {
+          "key": "esp_dsp_benchmarks",
+          "link": "unverified",
+          "page": "FFTs Radix-2, 1024 complex points row"
+        }
+      ],
+      "note": "Die konkrete Kostenbewertung für den ESP32-S3 im Bericht ist eine technische Einschätzung; die Algorithmen sind nicht auf dem Zielsystem vermessen."
+    },
+    {
+      "id": "C024",
+      "statement": "R10 empfiehlt, optionale Time-Stretch-Verfahren getrennt zu implementieren und zu vermessen; für höhere Audioqualität sind mehrere FFTs pro Hop, Overlap-Add, Zwischenpuffer und kleine Blocklängen als Aufwandstreiber benannt.",
+      "origin": [
+        "preThesis/03-recherche/R10-esp32-plattform.md:297-307"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "method",
+      "status": "assumption",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "wsola_roelands",
+          "link": "https://doi.org/10.21437/Eurospeech.1993-59",
+          "page": "Abstract and bibliographic record (web text lines 4–18)."
+        },
+        {
+          "key": "wsola_verhelst",
+          "link": "unverified",
+          "page": "unverified"
+        },
+        {
+          "key": "esp_dsp_benchmarks",
+          "link": "unverified",
+          "page": "FFTs Radix-2 rows"
+        }
+      ]
+    },
+    {
+      "id": "C025",
+      "statement": "R10 bewertet das Rechenbudget als voraussichtlich ausreichend, sofern Filter blockweise mit DMA und ESP32-S3-optimiertem esp-dsp laufen, BPM auf einer heruntergesampelten Hüllkurve bestimmt wird, TLS/FHIR außerhalb der hochpriorisierten Audio-Task bleibt und ein externer I²S-DAC oder -Verstärker verwendet wird.",
+      "origin": [
+        "preThesis/03-recherche/R10-esp32-plattform.md:20-57,363-395"
+      ],
+      "chapter": "Systemarchitektur",
+      "type": "decision",
+      "status": "assumption",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "esp_dsp_benchmarks",
+          "link": "unverified",
+          "page": "FIR Filters; IIR Filters"
+        },
+        {
+          "key": "esp_i2s_s3",
+          "link": "unverified",
+          "page": "Overview of All Modes; Data Transport"
+        },
+        {
+          "key": "esp_tls_faq",
+          "link": "unverified",
+          "page": "Question on handshake memory"
+        }
+      ],
+      "note": "R10-Einschätzung anhand Komponentenbenchmarks; tatsächliche CPU-/RAM-Reserve im integrierten System messen.",
+      "supersedes": "U066"
+    },
+    {
+      "id": "C026",
+      "statement": "R10 empfiehlt, TLS/FHIR nicht synchron in der zeitkritischen Audio-Task auszuführen, Audio- und Netzwerkpfad getrennt zu planen und Heap-/Stack-Wasserstände sowie Pufferlaufzeiten im Prototyp zu beobachten.",
+      "origin": [
+        "preThesis/03-recherche/R10-esp32-plattform.md:311-359"
+      ],
+      "chapter": "Systemarchitektur",
+      "type": "decision",
+      "status": "assumption",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "esp_tls_faq",
+          "link": "unverified",
+          "page": "Question on TLS handshake memory"
+        },
+        {
+          "key": "esp_i2s_s3",
+          "link": "unverified",
+          "page": "Data Transport"
+        },
+        {
+          "key": "esp_mbedtls_s3",
+          "link": "unverified",
+          "page": "unverified"
+        }
+      ],
+      "note": "Empfehlung aus der Recherche, im Zielsystem durch Messung zu bestätigen.",
+      "supersedes": "U029"
+    },
+    {
+      "id": "C027",
+      "statement": "R10 nennt 10–40-ms-DMA-Blöcke und zwei bis vier DMA-Puffer lediglich als Startwerte; die endgültige Audiolatenz und Robustheit sind vom gewählten Blockformat und Scheduling abhängig.",
+      "origin": [
+        "preThesis/03-recherche/R10-esp32-plattform.md:334-344"
+      ],
+      "chapter": "Systemarchitektur",
+      "type": "parameter",
+      "status": "assumption",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "esp_i2s_s3",
+          "link": "unverified",
+          "page": "Data Transport"
+        },
+        {
+          "key": "esp_s3_datasheet",
+          "link": "unverified",
+          "page": "unverified"
+        }
+      ],
+      "sources_incomplete": true
+    },
+    {
+      "id": "C028",
+      "statement": "R10 bewertet TLS-Handshake/CA-Prüfung und zusammenhängenden internen Heap, DMA-/Taskplanung unter WLAN-Verkehr sowie optionales hochwertiges Time-Stretching als wahrscheinliche Engpässe; nicht die einfachen IIR-/FIR-Pfade.",
+      "origin": [
+        "preThesis/03-recherche/R10-esp32-plattform.md:363-395"
+      ],
+      "chapter": "Systemarchitektur",
+      "type": "risk",
+      "status": "assumption",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "esp_tls_faq",
+          "link": "unverified",
+          "page": "Question on handshake memory"
+        },
+        {
+          "key": "esp_dsp_benchmarks",
+          "link": "unverified",
+          "page": "FIR Filters; IIR Filters"
+        },
+        {
+          "key": "esp_i2s_s3",
+          "link": "unverified",
+          "page": "Data Transport"
+        }
+      ],
+      "note": "Engpassbewertung ist eine Hypothese auf Basis von Einzelkomponentenbenchmarks; vor Schlussfolgerung im Zielsystem messen.",
+      "supersedes": "U067"
+    },
+    {
+      "id": "C029",
+      "statement": "Für Herzfrequenz empfiehlt der Bericht eine FHIR-`Observation` mit vital-signs-Kategorie, LOINC 8867-4, `subject`, Messzeitpunkt und numerischem `valueQuantity` mit UCUM-System und Code `/min`.",
+      "origin": [
+        "preThesis/03-recherche/R11-fhir-tls.md:22-49"
+      ],
+      "chapter": "Grundlagen (technisch: Akustik, MEMS, I2S, DSP/Filter, BPM, Time-Stretch, Embedded/RTOS, FHIR/TLS)",
+      "type": "definition",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "fhir_r4_vitals_official",
+          "link": "unverified",
+          "page": "Vital Signs Profile; Heart rate row"
+        },
+        {
+          "key": "loinc_8867_official",
+          "link": "unverified",
+          "page": "Term details; Example Units"
+        },
+        {
+          "key": "fhir_observation_r4",
+          "link": "unverified",
+          "page": "unverified"
+        }
+      ],
+      "chapter_secondary": "Ethik/Datenschutz/Regulatorik"
+    },
+    {
+      "id": "C030",
+      "statement": "Das FHIR-R4-Profil Vital Signs identifiziert die Herzfrequenz mit LOINC-Code 8867-4; die zugehörige Größe verwendet eine UCUM-Einheit wie `/min`.",
+      "origin": [
+        "preThesis/03-recherche/R11-fhir-tls.md:32-49"
+      ],
+      "chapter": "Grundlagen (technisch: Akustik, MEMS, I2S, DSP/Filter, BPM, Time-Stretch, Embedded/RTOS, FHIR/TLS)",
+      "type": "fact",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "fhir_r4_vitals_official",
+          "link": "unverified",
+          "page": "Vital Signs Profile; Heart rate row"
+        },
+        {
+          "key": "loinc_8867_official",
+          "link": "unverified",
+          "page": "Term details; Example Units"
+        },
+        {
+          "key": "fhir_observation_r4",
+          "link": "unverified",
+          "page": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "C031",
+      "statement": "Die im Bericht gezeigte JSON-Beispielressource verwendet `status: final`, die Kategorie `vital-signs`, ein LOINC-Herzfrequenz-`code`, `Patient/123` als `subject`, `effectiveDateTime` und ein `valueQuantity`-Objekt.",
+      "origin": [
+        "preThesis/03-recherche/R11-fhir-tls.md:51-92"
+      ],
+      "chapter": "Implementierung",
+      "type": "fact",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "fhir_r4_vitals_official",
+          "link": "unverified",
+          "page": "Vital Signs Profile; Heart rate row"
+        },
+        {
+          "key": "loinc_8867_official",
+          "link": "unverified",
+          "page": "Term details"
+        },
+        {
+          "key": "fhir_observation_r4",
+          "link": "unverified",
+          "page": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "C032",
+      "statement": "Der `Patient`-Verweis in `Observation.subject` kann auf eine bereits vorhandene Serverressource zeigen und muss nicht zusammen mit der Observation übertragen werden.",
+      "origin": [
+        "preThesis/03-recherche/R11-fhir-tls.md:47-50"
+      ],
+      "chapter": "Grundlagen (technisch: Akustik, MEMS, I2S, DSP/Filter, BPM, Time-Stretch, Embedded/RTOS, FHIR/TLS)",
+      "type": "fact",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "fhir_r4_vitals_official",
+          "link": "unverified",
+          "page": "Vital Signs Profile"
+        },
+        {
+          "key": "fhir_observation_r4",
+          "link": "unverified",
+          "page": "unverified"
+        },
+        {
+          "key": "tha_faq_ba",
+          "link": "unverified",
+          "page": "Section 5"
+        }
+      ],
+      "sources_incomplete": true
+    },
+    {
+      "id": "C033",
+      "statement": "FHIR-Semantik und Profilierung liegen auf Anwendungsebene; TLS sichert die darunterliegende HTTPS-Transportverbindung und ersetzt keine FHIR-Profilvalidierung.",
+      "origin": [
+        "preThesis/03-recherche/R11-fhir-tls.md:94-124"
+      ],
+      "chapter": "Grundlagen (technisch: Akustik, MEMS, I2S, DSP/Filter, BPM, Time-Stretch, Embedded/RTOS, FHIR/TLS)",
+      "type": "definition",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "fhir_observation_r4",
+          "link": "unverified",
+          "page": "unverified"
+        },
+        {
+          "key": "esp_tls_s3",
+          "link": "unverified",
+          "page": "Overview"
+        },
+        {
+          "key": "fhir_r4_vitals_official",
+          "link": "unverified",
+          "page": "Vital Signs Profile"
+        }
+      ]
+    },
+    {
+      "id": "C034",
+      "statement": "ESP-TLS bietet serverseitige Zertifikatsprüfung unter anderem über CA-Puffer, globalen CA-Speicher oder X.509-Zertifikatsbundle; ohne konfigurierte Verifikationsmethode schlägt der Verbindungsaufbau fehl.",
+      "origin": [
+        "preThesis/03-recherche/R11-fhir-tls.md:126-158"
+      ],
+      "chapter": "Grundlagen (technisch: Akustik, MEMS, I2S, DSP/Filter, BPM, Time-Stretch, Embedded/RTOS, FHIR/TLS)",
+      "type": "fact",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "esp_tls_s3",
+          "link": "unverified",
+          "page": "TLS Server Verification"
+        },
+        {
+          "key": "esp_mbedtls_s3",
+          "link": "unverified",
+          "page": "unverified"
+        },
+        {
+          "key": "esp_tls_faq",
+          "link": "unverified",
+          "page": "Question on server certificate verification"
+        }
+      ]
+    },
+    {
+      "id": "C035",
+      "statement": "ESP-TLS dokumentiert das Überspringen der Serverzertifikatsprüfung als unsichere Testoption, da dadurch eine Verbindung zu einem Server mit gefälschter Identität möglich ist.",
+      "origin": [
+        "preThesis/03-recherche/R11-fhir-tls.md:158"
+      ],
+      "chapter": "Ethik/Datenschutz/Regulatorik",
+      "type": "risk",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "esp_tls_s3",
+          "link": "unverified",
+          "page": "TLS Server Verification"
+        },
+        {
+          "key": "esp_tls_faq",
+          "link": "unverified",
+          "page": "Question on skipping server certificate check"
+        },
+        {
+          "key": "esp_mbedtls_s3",
+          "link": "unverified",
+          "page": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "C036",
+      "statement": "R11 beschreibt ein einzelnes, kontrolliertes Root-CA-Zertifikat als speichersparendere Wahl bei einem bekannten Server und ein CA-Bundle als flexibler für unterschiedliche öffentliche Zertifizierungsstellen; konkrete Flash-/RAM-Unterschiede sind in diesem Bericht nicht quantifiziert.",
+      "origin": [
+        "preThesis/03-recherche/R11-fhir-tls.md:128-158"
+      ],
+      "chapter": "Systemarchitektur",
+      "type": "decision",
+      "status": "assumption",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "esp_tls_s3",
+          "link": "unverified",
+          "page": "TLS Server Verification"
+        },
+        {
+          "key": "esp_mbedtls_s3",
+          "link": "unverified",
+          "page": "unverified"
+        },
+        {
+          "key": "esp_tls_faq",
+          "link": "unverified",
+          "page": "Question on handshake memory"
+        }
+      ],
+      "note": "Konfigurationsentscheidung hängt von Endpunkt, Vertrauensmodell und Zertifikatswechsel ab.",
+      "supersedes": "U069"
+    },
+    {
+      "id": "C037",
+      "statement": "Wenn mbedTLS die X.509-Gültigkeitszeiträume validiert, benötigt es eine zutreffende Systemzeit; R11 schlägt deshalb Netzwerkverbindung und SNTP-Zeitsynchronisierung vor dem TLS-Aufbau vor.",
+      "origin": [
+        "preThesis/03-recherche/R11-fhir-tls.md:160-184"
+      ],
+      "chapter": "Systemarchitektur",
+      "type": "requirement",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "esp_tls_s3",
+          "link": "unverified",
+          "page": "TLS Server Verification"
+        },
+        {
+          "key": "esp_mbedtls_s3",
+          "link": "unverified",
+          "page": "unverified"
+        },
+        {
+          "key": "esp_tls_faq",
+          "link": "unverified",
+          "page": "Questions on certificate verification and expiry"
+        }
+      ],
+      "chapter_secondary": "Ethik/Datenschutz/Regulatorik"
+    },
+    {
+      "id": "C038",
+      "statement": "R11 nennt `MBEDTLS_X509_BADCERT_FUTURE` und `MBEDTLS_X509_BADCERT_EXPIRED` als mögliche Folgen einer Systemzeit, die außerhalb des Zertifikatszeitraums liegt.",
+      "origin": [
+        "preThesis/03-recherche/R11-fhir-tls.md:160-184"
+      ],
+      "chapter": "Grundlagen (technisch: Akustik, MEMS, I2S, DSP/Filter, BPM, Time-Stretch, Embedded/RTOS, FHIR/TLS)",
+      "type": "fact",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "esp_mbedtls_s3",
+          "link": "unverified",
+          "page": "unverified"
+        },
+        {
+          "key": "esp_tls_s3",
+          "link": "unverified",
+          "page": "TLS Server Verification"
+        },
+        {
+          "key": "esp_tls_faq",
+          "link": "unverified",
+          "page": "Question on certificate expiry"
+        }
+      ],
+      "sources_incomplete": true
+    },
+    {
+      "id": "C039",
+      "statement": "R11 empfiehlt, die TLS-Zertifikats- und Hostnamenprüfung aktiviert zu lassen, TLS-Fehler zu protokollieren, bei Bedarf später erneut zu versuchen und niemals stillschweigend auf unverschlüsseltes HTTP zurückzufallen.",
+      "origin": [
+        "preThesis/03-recherche/R11-fhir-tls.md:186-195"
+      ],
+      "chapter": "Ethik/Datenschutz/Regulatorik",
+      "type": "requirement",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "esp_tls_s3",
+          "link": "unverified",
+          "page": "TLS Server Verification"
+        },
+        {
+          "key": "esp_tls_faq",
+          "link": "unverified",
+          "page": "Questions on verification and expired certificates"
+        },
+        {
+          "key": "esp_mbedtls_s3",
+          "link": "unverified",
+          "page": "unverified"
+        }
+      ]
+    },
+    {
+      "id": "C040",
+      "statement": "Die Espressif-FAQ schätzt, dass ein ESP32-TLS-Handshake typischerweise 40–50 kB freien Heap für temporäre Allokationen benötigt; Heap-Fragmentierung kann auch bei nominell ausreichendem freien Speicher zum Fehlschlag führen.",
+      "origin": [
+        "preThesis/03-recherche/R11-fhir-tls.md:197-207"
+      ],
+      "chapter": "Grundlagen (technisch: Akustik, MEMS, I2S, DSP/Filter, BPM, Time-Stretch, Embedded/RTOS, FHIR/TLS)",
+      "type": "parameter",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "esp_tls_faq",
+          "link": "unverified",
+          "page": "Question: How much memory is required for a stable TLS handshake?"
+        },
+        {
+          "key": "esp_mbedtls_s3",
+          "link": "unverified",
+          "page": "unverified"
+        },
+        {
+          "key": "esp_tls_s3",
+          "link": "unverified",
+          "page": "Overview"
+        }
+      ],
+      "chapter_secondary": "Systemarchitektur"
+    },
+    {
+      "id": "C041",
+      "statement": "R11 nennt ungefähre Mbed-TLS-Heapwerte von 42 kB in der Standardkonfiguration, 38,5 kB nach Freigabe des Peer-Zertifikats und 22 kB mit dynamischen TX/RX-Puffern; die Werte hängen ausdrücklich von Version und Konfiguration ab.",
+      "origin": [
+        "preThesis/03-recherche/R11-fhir-tls.md:201-218"
+      ],
+      "chapter": "Grundlagen (technisch: Akustik, MEMS, I2S, DSP/Filter, BPM, Time-Stretch, Embedded/RTOS, FHIR/TLS)",
+      "type": "parameter",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "esp_mbedtls_s3",
+          "link": "unverified",
+          "page": "unverified"
+        },
+        {
+          "key": "esp_tls_faq",
+          "link": "unverified",
+          "page": "Question on handshake memory"
+        }
+      ],
+      "sources_incomplete": true
+    },
+    {
+      "id": "C042",
+      "statement": "R11 empfiehlt, den größten verfügbaren internen Heap zu beobachten und ihn während des Handshakes bei weiterhin belegten Audiopuffern zu messen, da die gesamte freie Heapmenge nach dem Boot nicht belegt, dass die Spitzenallokation des Handshakes gelingt.",
+      "origin": [
+        "preThesis/03-recherche/R11-fhir-tls.md:209-218"
+      ],
+      "chapter": "Evaluation/Methodik",
+      "type": "method",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "esp_tls_faq",
+          "link": "unverified",
+          "page": "Question on handshake memory"
+        },
+        {
+          "key": "esp_mbedtls_s3",
+          "link": "unverified",
+          "page": "unverified"
+        },
+        {
+          "key": "esp_tls_s3",
+          "link": "unverified",
+          "page": "Overview"
+        }
+      ]
+    },
+    {
+      "id": "C043",
+      "statement": "Der in R11 vorgeschlagene Übertragungspfad lautet: BPM-Observation mit Zeitstempel erzeugen, Uhrzeit synchronisieren, verifiziertes HTTPS aufbauen, FHIR-JSON per POST senden, HTTP-/FHIR-Antworten prüfen und transiente Fehler mit Backoff erneut versuchen.",
+      "origin": [
+        "preThesis/03-recherche/R11-fhir-tls.md:220-233"
+      ],
+      "chapter": "Systemarchitektur",
+      "type": "method",
+      "status": "assumption",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "fhir_r4_vitals_official",
+          "link": "unverified",
+          "page": "Vital Signs Profile"
+        },
+        {
+          "key": "esp_tls_s3",
+          "link": "unverified",
+          "page": "TLS Server Verification"
+        },
+        {
+          "key": "esp_tls_faq",
+          "link": "unverified",
+          "page": "Question on certificate expiry"
+        }
+      ]
+    },
+    {
+      "id": "C044",
+      "statement": "Die THA-FAQ 02.26 beschreibt die erste Anmeldung der Bachelorarbeit über das DMS; Titel sowie Erst- und Zweitprüfer werden demnach eingetragen, nachdem das Studierendensekretariat die formalen Voraussetzungen bestätigt hat.",
+      "origin": [
+        "preThesis/03-recherche/R12-tha-formales.md:20-22,35-36"
+      ],
+      "chapter": "Projektmanagement/Formales",
+      "type": "formal-rule",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "tha_faq_ba",
+          "link": "unverified",
+          "page": "Sections 2-3"
+        }
+      ],
+      "sources_incomplete": true,
+      "chapter_secondary": "Anforderungen"
+    },
+    {
+      "id": "C045",
+      "statement": "Die THA-FAQ nennt eine viermonatige Bearbeitungszeit der Bachelorarbeit ab dem nächsten 20. des Monats, in dem die Anmeldung im DMS erfolgt; eine Anmeldung im August ist demnach nicht möglich.",
+      "origin": [
+        "preThesis/03-recherche/R12-tha-formales.md:33-38"
+      ],
+      "chapter": "Projektmanagement/Formales",
+      "type": "formal-rule",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "tha_faq_ba",
+          "link": "unverified",
+          "page": "Section 4"
+        },
+        {
+          "key": "tha_elektrotechnik_duration",
+          "link": "unverified",
+          "page": "unverified"
+        }
+      ],
+      "sources_incomplete": true
+    },
+    {
+      "id": "C046",
+      "statement": "Der R12-Bericht fand keine öffentlich belegte THA-weite Regel zu maximaler/minimaler Titellänge, Titelsprache oder Übersetzungspflicht; fakultäts- oder betreuungsspezifische Vorgaben bleiben ungeklärt.",
+      "origin": [
+        "preThesis/03-recherche/R12-tha-formales.md:24-31,49-53"
+      ],
+      "chapter": "Projektmanagement/Formales",
+      "type": "open-question",
+      "status": "open",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "tha_faq_ba",
+          "link": "unverified",
+          "page": "Sections 2-4"
+        },
+        {
+          "key": "tha_gestaltung_ba",
+          "link": "unverified",
+          "page": "Section “Änderung des Titels der Abschlussarbeit”"
+        }
+      ],
+      "note": "Das Fehlen einer Regel in den geprüften öffentlichen Quellen beweist nicht, dass es keine lokale Vorgabe gibt; Fakultät und Studiengang sind zu klären.",
+      "sources_incomplete": true
+    },
+    {
+      "id": "C047",
+      "statement": "Laut R12 trägt das Titelblatt der THA-Vorlage das Feld „Thema der Arbeit“ und erlaubt einen optionalen Untertitel; die Vorlage selbst wurde in dieser Runde nicht geöffnet.",
+      "origin": [
+        "preThesis/03-recherche/R12-tha-formales.md:29,57-66"
+      ],
+      "chapter": "Projektmanagement/Formales",
+      "type": "formal-rule",
+      "status": "assumption",
+      "needs_citation": true,
+      "sources": [],
+      "sources_incomplete": true,
+      "note": "Der zitierte Vorlagenlink liegt im Moodle und war in dieser Runde nicht zugänglich."
+    },
+    {
+      "id": "C048",
+      "statement": "Die THA-Fakultät Gestaltung veröffentlichte für das SoSe 2026 einen fakultätsspezifischen Zeitplan mit Fristen für Thema/Prüfer und Zulassungsantrag, einem Bearbeitungszeitraum vom 14. März bis 14. Juli sowie einer Frist zur Titeländerung bis zwei Wochen vor Abgabe; dieser Zeitplan gilt nicht automatisch für andere Fakultäten oder spätere Semester.",
+      "origin": [
+        "preThesis/03-recherche/R12-tha-formales.md:39-40,47"
+      ],
+      "chapter": "Projektmanagement/Formales",
+      "type": "formal-rule",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "tha_gestaltung_ba",
+          "link": "unverified",
+          "page": "Section “Änderung des Titels der Abschlussarbeit”"
+        },
+        {
+          "key": "tha_faq_ba",
+          "link": "unverified",
+          "page": "Sections 4-5"
+        }
+      ],
+      "sources_incomplete": true,
+      "note": "Zeit- und fakultätsspezifisches Beispiel, keine allgemeine THA-Regel für Bachelorarbeiten."
+    },
+    {
+      "id": "C049",
+      "statement": "Das THA-Merkblatt für Maschinenbau und Umwelt nennt eine maximale Bearbeitungszeit von fünf Monaten nach APO sowie fakultätsspezifische Anmelde- und Abgabetermine.",
+      "origin": [
+        "preThesis/03-recherche/R12-tha-formales.md:41,57-68"
+      ],
+      "chapter": "Projektmanagement/Formales",
+      "type": "formal-rule",
+      "status": "confirmed",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "tha_mb_merblatt",
+          "link": "unverified",
+          "page": "Section 5 Arbeitsumfang der Bachelorarbeit; printed page unverified"
+        }
+      ],
+      "sources_incomplete": true,
+      "note": "Fakultätsspezifische Regel, nicht automatisch auf einen anderen Studiengang übertragbar."
+    },
+    {
+      "id": "C050",
+      "statement": "Laut R12 weist die THA-Seite für Elektrotechnik darauf hin, dass das im DMS ausgewiesene Abgabedatum einzuhalten ist und eine frühere Abgabe möglich ist.",
+      "origin": [
+        "preThesis/03-recherche/R12-tha-formales.md:45-46,57-68"
+      ],
+      "chapter": "Projektmanagement/Formales",
+      "type": "formal-rule",
+      "status": "assumption",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "tha_elektrotechnik_duration",
+          "link": "unverified",
+          "page": "unverified"
+        },
+        {
+          "key": "tha_faq_ba",
+          "link": "unverified",
+          "page": "Section 5"
+        }
+      ],
+      "sources_incomplete": true
+    },
+    {
+      "id": "C051",
+      "statement": "R12 berichtet einen kontextabhängigen Unterschied der Bearbeitungszeit (vier Monate in der FAQ gegenüber höchstens fünf Monaten laut Merkblatt Maschinenbau/Umwelt); die für den konkreten Studiengang geltende Regel bleibt zu prüfen.",
+      "origin": [
+        "preThesis/03-recherche/R12-tha-formales.md:37-41,49-53"
+      ],
+      "chapter": "Projektmanagement/Formales",
+      "type": "open-question",
+      "status": "open",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "tha_faq_ba",
+          "link": "unverified",
+          "page": "Section 4"
+        },
+        {
+          "key": "tha_mb_merblatt",
+          "link": "unverified",
+          "page": "Section 5 Arbeitsumfang der Bachelorarbeit; printed page unverified"
+        }
+      ],
+      "sources_incomplete": true,
+      "note": "Die beiden Dokumente betreffen unterschiedliche Regelungskontexte; die für den konkreten Studiengang geltende Regel muss geprüft werden."
+    },
+    {
+      "id": "C052",
+      "statement": "Für Anmeldeverfahren, Bearbeitungszeit, Titelformat und Abgabe sind institutionelle THA/APO/SPO-Unterlagen die passenden Belege; die Quellenliste von R12 besteht deshalb aus institutionellen Dokumenten statt akademischer Literatur.",
+      "origin": [
+        "preThesis/03-recherche/R12-tha-formales.md:20-68"
+      ],
+      "chapter": "Projektmanagement/Formales",
+      "type": "method",
+      "status": "confirmed",
+      "needs_citation": false,
+      "sources": []
+    }
+  ],
+  "watermark": "created by GPT-6-Luna on behalf of Nico running in T3 Code through Codex."
+}

@@ -1,0 +1,86 @@
+{
+  "murmur_text": {
+    "reference": "Noponen, A.-L., Lukkarinen, S., & Sepponen, R. Chapter 2: Phonocardiography. In Multimodal Cardiovascular Imaging: Principles and Clinical Applications. McGraw Hill.",
+    "doi": "unverified",
+    "url": "https://accesscardiology.mhmedical.com/content.aspx?bookid=382&sectionid=40663653",
+    "verified": "Publisher page opened; title/authors and relevant passages inspected.",
+    "paywalled": true
+  },
+  "murmur_filter": {
+    "reference": "Wen, H. & Kang, J. (2023). Searching for Effective Neural Network Architectures for Heart Murmur Detection from Phonocardiogram. arXiv:2303.02988.",
+    "doi": "unverified",
+    "url": "https://arxiv.org/abs/2303.02988",
+    "verified": "arXiv full text opened; filter setup inspected.",
+    "paywalled": false
+  },
+  "hilbert_env": {
+    "reference": "Hilbert-envelope features for cardiac disease classification from noisy phonocardiograms. Biomedical Signal Processing and Control, 78 (2022), 103864. DOI: 10.1016/j.bspc.2022.103864.",
+    "doi": "https://doi.org/10.1016/j.bspc.2022.103864",
+    "url": "https://www.sciencedirect.com/science/article/pii/S1746809422003780",
+    "verified": "Publisher abstract opened; citation metadata and abstract inspected.",
+    "paywalled": true
+  },
+  "shannon_env": {
+    "reference": "Arjoune, Y. et al. (2024). A Noise-Robust Heart Sound Segmentation Algorithm Based on Shannon Energy. IEEE Access, 12, 7747–7761. DOI: 10.1109/ACCESS.2024.3351570.",
+    "doi": "https://doi.org/10.1109/ACCESS.2024.3351570",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11469632/",
+    "verified": "Search metadata/abstract inspected; direct open blocked by reCAPTCHA.",
+    "paywalled": false
+  },
+  "highfreq_pcg": {
+    "reference": "Luisada, A. A. et al. (1961). High frequency phonocardiography. The American Journal of Cardiology, 8(1), 51–62. DOI: 10.1016/0002-9149(61)90178-3.",
+    "doi": "https://doi.org/10.1016/0002-9149(61)90178-3",
+    "url": "https://www.sciencedirect.com/science/article/pii/0002914961901783",
+    "verified": "Publisher abstract opened; journal/year/pages and frequency bands inspected.",
+    "paywalled": true
+  },
+  "physionet2016": {
+    "reference": "Liu, C. et al. (2016). Classification of Heart Sound Recordings: The PhysioNet/Computing in Cardiology Challenge 2016. PhysioNet v1.0.0. Original article: An Open Access Database for the Evaluation of Heart Sound Algorithms. Physiological Measurement, 37(12), 2181–2213. DOI: 10.1088/0967-3334/37/12/2181.",
+    "doi": "https://doi.org/10.1088/0967-3334/37/12/2181",
+    "url": "https://physionet.org/content/challenge-2016/1.0.0/",
+    "verified": "Official PhysioNet page opened; authors, version, 3,126 recording count, 2 kHz resampling, labels and S1/S2/systole/diastole segmentation inspected.",
+    "paywalled": false
+  },
+  "bland_altman": {
+    "reference": "Bland, J. M. & Altman, D. G. (1986). Statistical methods for assessing agreement between two methods of clinical measurement. The Lancet, 327(8476), 307–310. DOI: 10.1016/S0140-6736(86)90837-8.",
+    "doi": "https://doi.org/10.1016/S0140-6736(86)90837-8",
+    "url": "https://doi.org/10.1016/S0140-6736(86)90837-8",
+    "verified": "Publisher metadata and abstract inspected; full text inaccessible.",
+    "paywalled": true
+  },
+  "bland_review": {
+    "reference": "Giavarina, D. (2015). Understanding Bland Altman analysis. Biochemia Medica, 25(2), 141–151. DOI: 10.11613/BM.2015.015.",
+    "doi": "https://doi.org/10.11613/BM.2015.015",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4470095/",
+    "verified": "PMC result inspected; publication identity and limits-of-agreement summary verified.",
+    "paywalled": false
+  },
+  "ec13": {
+    "reference": "ANSI/AAMI EC13:2002. Cardiac monitors, heart rate meters, and alarms. Association for the Advancement of Medical Instrumentation.",
+    "doi": "unverified",
+    "url": "https://mdcpp.com/doc/standard/ANSIAAMIEC13-2002.pdf",
+    "verified": "Accessible copy/search excerpt inspected for clause 4.2.7; official licensed copy not consulted.",
+    "paywalled": false
+  },
+  "iec60601": {
+    "reference": "IEC 60601-2-27:2011. Medical electrical equipment — Particular requirements for ECG monitoring equipment. International Electrotechnical Commission.",
+    "doi": "unverified",
+    "url": "https://webstore.iec.ch/en/publication/2638",
+    "verified": "Official IEC product page opened; scope confirms the standard applies to ECG monitoring equipment; accuracy clause not inspected.",
+    "paywalled": true
+  },
+  "tsm_review": {
+    "reference": "Driedger, J. & Müller, M. (2016). A Review of Time-Scale Modification of Music Signals. Applied Sciences, 6(2), 57. DOI: 10.3390/app6020057.",
+    "doi": "https://doi.org/10.3390/app6020057",
+    "url": "https://www.mdpi.com/2076-3417/6/2/57",
+    "verified": "Search results and FAU metadata opened; citation and abstract verified.",
+    "paywalled": false
+  },
+  "phase_vocoder": {
+    "reference": "Prusa, Z. & Holighaus, N. (2022). Phase Vocoder Done Right. arXiv:2202.07382. DOI: 10.48550/arXiv.2202.07382.",
+    "doi": "https://doi.org/10.48550/arXiv.2202.07382",
+    "url": "https://ltfat.org/notes/ltfatnote050.pdf",
+    "verified": "PDF opened; author/title and discussion of STFT phase coherence, transient smearing, echo and phasiness inspected.",
+    "paywalled": false
+  }
+}

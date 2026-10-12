@@ -1,0 +1,266 @@
+{
+  "_zweck": "Redaktionelle Abgleichsnotizen gegen neuere Entscheidungen auf integration. Der Generator rendert sie direkt unter der jeweiligen Aussage; Stage 1 bleibt unverändert. Pfade sind relativ zur Repository-Wurzel, Anker sind GitHub-Überschriftenanker und werden beim Generatorlauf geprüft.",
+  "stand": "2026-10-12",
+  "integration_commit": "e2cd6e8",
+  "units": {
+    "U002": {
+      "label": "Überholt",
+      "changed": "Verlangsamte Wiedergabe gehört nicht mehr zum MVP-Umfang; gespeichertes Audio, Replay, Display/Touch, SD und Geschwindigkeitsstufen sind optional (Feedback 2026-10-07, Entscheidung 2026-10-11).",
+      "current": "optionale Erweiterung ohne MVP-Abnahmekriterium (SR-04 optional). Der Wortlaut der Aufgabenbeschreibung selbst ist nicht angepasst, siehe offene Punkte.",
+      "refs": [
+        ["MVP-Entscheidungen 11.10.", "Development/system/planning/mvp-decisions-2026-10-11.md", "confirmed-scope-and-behavior"],
+        ["Produktumfang", "Development/system/spec/product-scope.md", "goal-and-boundary"]
+      ]
+    },
+    "U005": {
+      "label": "Überholt",
+      "changed": "Reduzierte Wiedergabegeschwindigkeit ist kein MVP-Prüfgegenstand mehr; Speed-Presets und Replay sind optional.",
+      "current": "MVP-Funktionsprüfung umfasst Audiopfad, Filterwahl und HTTPS/FHIR-Übertragung; Replay nur als optionale Erweiterung.",
+      "refs": [
+        ["MVP-Entscheidungen 11.10.", "Development/system/planning/mvp-decisions-2026-10-11.md", "confirmed-scope-and-behavior"],
+        ["Produktumfang", "Development/system/spec/product-scope.md", "goal-and-boundary"]
+      ]
+    },
+    "U020": {
+      "label": "Überholt",
+      "changed": "WSOLA-Stufen 1,0×/0,75×/0,5× sind kein MVP-Bestandteil mehr.",
+      "current": "Replay mit WSOLA bleibt optionale Erweiterung (REC, optional); MVP-BPM arbeitet mit begrenztem Streaming-Zustand statt Sitzungsaufnahme.",
+      "refs": [
+        ["MVP-Entscheidungen 11.10.", "Development/system/planning/mvp-decisions-2026-10-11.md", "confirmed-scope-and-behavior"],
+        ["Design: MVP-Basis", "Development/system/design/interfaces-and-behavior.md", "current-mvp-baseline--11-october"]
+      ]
+    },
+    "U032": {
+      "label": "Überholt",
+      "changed": "Das MVP hat weder Display noch Touch; Geschwindigkeitsschalter/Speed-Presets sind optional.",
+      "current": "Bedienung über Taster (Start/Stop, Quittierung, langer Druck ≥2 s im Idle öffnet das Hotspot-Portal), Filterschalter und Potentiometer; Patientenzuordnung und WLAN-Einrichtung über eine Handy-Browserseite im Geräte-Hotspot.",
+      "refs": [
+        ["MVP-Entscheidungen 12.10.", "Development/system/planning/mvp-decisions-2026-10-12.md", "confirmed-decisions"],
+        ["MVP-Entscheidungen 11.10.", "Development/system/planning/mvp-decisions-2026-10-11.md", "confirmed-scope-and-behavior"]
+      ]
+    },
+    "U028": {
+      "label": "Überholt",
+      "changed": "Die Plattformentscheidung ist nicht mehr offen; die ESP-IDF-Präferenz der internen Fassung ist durch S04 ersetzt.",
+      "current": "Zephyr wird für das MVP beibehalten, solange die On-Target-Prüfungen keinen konkreten Blocker zeigen.",
+      "refs": [
+        ["Framework- und Transportbewertung", "Development/system/planning/framework-and-transport-evaluation.md", "recommendation-for-the-next-discussion"],
+        ["Quellenregister S04/S06", "Development/system/spec/product-scope.md", "source-register-and-precedence"]
+      ]
+    },
+    "U035": {
+      "label": "Überholt",
+      "changed": "Die Auswahl zwischen C/ESP-IDF und C/Zephyr ist getroffen.",
+      "current": "C/Zephyr für das MVP; ein Frameworkwechsel würde Gerätekonfiguration, Synchronisation, Netzwerk und Verifikation erneut erfordern.",
+      "refs": [
+        ["Framework- und Transportbewertung", "Development/system/planning/framework-and-transport-evaluation.md", "recommendation-for-the-next-discussion"]
+      ]
+    },
+    "C013": {
+      "label": "Überholt",
+      "changed": "Die R10-Empfehlung für ESP-IDF ist historischer Recherchekontext, keine Projektentscheidung.",
+      "current": "Zephyr bleibt Plattform des MVP; ESP-IDF-Komponenten sind keine Drop-in-Bibliotheken unter Zephyr.",
+      "refs": [
+        ["Framework- und Transportbewertung", "Development/system/planning/framework-and-transport-evaluation.md", "recommendation-for-the-next-discussion"],
+        ["Quellenregister S06", "Development/system/spec/product-scope.md", "source-register-and-precedence"]
+      ]
+    },
+    "C001": {
+      "label": "Überholt",
+      "changed": "≤10 ms bzw. ≤5 ms End-to-End sind nicht mehr das Projektziel; die R09-Aussage einer universellen 10–15-ms-Grenze ist laut neuerer Literaturprüfung nur eingeschränkt belastbar.",
+      "current": "Vorschlag (nicht freigegeben): Live-Hören <30 ms als Basisziel, <10 ms als Stretch-Ziel, stabile Verzögerung; Messung mit gemeinsamem Takt inklusive Mikrofon, Puffern, DSP, DAC und Verstärker.",
+      "refs": [
+        ["Latenzbudgets 11.10.", "Development/system/planning/mvp-decisions-2026-10-11.md", "latency-research-and-proposed-budgets"]
+      ]
+    },
+    "C027": {
+      "label": "Überholt",
+      "changed": "Die 10–40-ms-DMA-Startwerte sind durch die gewählte Blockgröße ersetzt.",
+      "current": "128 Frames bei 16 kHz (8 ms) je Block; Vorschlag ≤4 ms kritische Ausführung pro Block, Scheduling- und Wartezeiten getrennt messen.",
+      "refs": [
+        ["Latenzbudgets 11.10.", "Development/system/planning/mvp-decisions-2026-10-11.md", "latency-research-and-proposed-budgets"],
+        ["Entscheidungsregister D10", "Development/system/planning/implementation-readiness.md", "decision-register"]
+      ]
+    },
+    "U110": {
+      "label": "Überholt",
+      "changed": "Mehrere EVAL-GUIDE-Zielwerte sind ersetzt: BPM „≥90 % gültige Fenster“, physische Eingabereaktion ≤35 ms und Tonhöhe ±2 % bei 440 Hz. Unverändert bleibt das Live-Latenzziel <30 ms.",
+      "current": "Vorschläge (nicht freigegeben): BPM-MAE ≤5 BPM und ≥95 % gültiger Sitzungsergebnisse innerhalb max(5 BPM, 10 % Referenz) sowie ≥95 % gültige abgeschlossene Sitzungen; wirksame Bedienreaktion ≤100 ms, sichtbarer Status ≤500 ms; Replay (optional) Tonhöhenänderung <1 % (P14).",
+      "refs": [
+        ["BPM-Akzeptanztabelle 11.10.", "Development/system/planning/mvp-decisions-2026-10-11.md", "proposed-bpm-acceptance-table"],
+        ["Latenzbudgets 11.10.", "Development/system/planning/mvp-decisions-2026-10-11.md", "latency-research-and-proposed-budgets"],
+        ["Parameterregister P10/P14", "Development/system/requirements/parameters.md", "parameter-and-acceptance-register"]
+      ]
+    },
+    "U111": {
+      "label": "Überholt",
+      "changed": "Die Dauerlaufprüfung von ≥10 Minuten ist ersetzt; ≥25 % Stack-/Heap-Reserve bleibt.",
+      "current": "Vorschlag: 30-Minuten-Soak mit Wasserständen während TLS und BPM, DMA-SRAM und PSRAM getrennt, zusätzlich kleinster größter freier Block und Allokationsfehlerpfade.",
+      "refs": [
+        ["Latenzbudgets 11.10. (Resources)", "Development/system/planning/mvp-decisions-2026-10-11.md", "latency-research-and-proposed-budgets"],
+        ["Entscheidungsregister D10", "Development/system/planning/implementation-readiness.md", "decision-register"]
+      ]
+    },
+    "A056": {
+      "label": "Überholt",
+      "changed": "Das R03-Entwicklungsziel (MAE ≤5 bpm, MAPE ≤10 %, ≥90 % der Fenster) ist nicht mehr der Projektvorschlag.",
+      "current": "Vorschlag (nicht freigegeben): Sitzungs-MAE ≤5 BPM und ≥95 % gültiger Sitzungsergebnisse innerhalb max(5 BPM, 10 % Referenz); ungültige Läufe getrennt berichten; Bereich 30–200 BPM.",
+      "refs": [
+        ["BPM-Akzeptanztabelle 11.10.", "Development/system/planning/mvp-decisions-2026-10-11.md", "proposed-bpm-acceptance-table"]
+      ]
+    },
+    "U107": {
+      "label": "Überholt",
+      "changed": "Beschreibt das Sendeverhalten der Bring-up-Firmware (gültiger aktueller BPM, Low-Priority-Worker). Das MVP-Zielverhalten ist anders festgelegt.",
+      "current": "Nur eine abgeschlossene Messsitzung (≥15 s, Aggregation nach Stop) ist sendefähig; Netzwerkarbeit nur im Idle unter exklusivem Netzwerk-Lease; ungültiger BPM sendet keinen Zahlenwert, sondern eine getrennte Fehlermeldung; Patient aus `Device.patient` mit Prüfung vor dem `PUT`. Vorgeschlagen: NET merkt sich dabei `Device.meta.versionId` und liest das Device nach dem Observation-Readback erneut; jede Versionsänderung ergibt „Unverified“ mit normalem Fehler statt „Sent“. FHIR bietet keine atomare Bedingung über `Device` und `Observation`, eine KIS-Änderung zwischen Prüfung und `PUT` bleibt daher ein Restrisiko, das nur sichtbar gemacht wird.",
+      "refs": [
+        ["MVP-Entscheidungen 11.10.", "Development/system/planning/mvp-decisions-2026-10-11.md", "confirmed-scope-and-behavior"],
+        ["MVP-Entscheidungen 12.10.", "Development/system/planning/mvp-decisions-2026-10-12.md", "proposed-behavior"]
+      ]
+    },
+    "U126": {
+      "label": "Überholt",
+      "changed": "„Retry is explicit“ gilt für das MVP nicht mehr.",
+      "current": "Fehlgeschlagene Sendungen werden angezeigt und abgebrochen; keine automatische oder manuelle Wiederholungswarteschlange; Zeitüberschreitung nach Server-Commit gilt als „Unverified“. Readback-Abgleich bleibt.",
+      "refs": [
+        ["MVP-Entscheidungen 11.10.", "Development/system/planning/mvp-decisions-2026-10-11.md", "confirmed-scope-and-behavior"]
+      ]
+    },
+    "C039": {
+      "label": "Überholt",
+      "changed": "Nur der Teil „bei Bedarf später erneut versuchen“ ist überholt; Zertifikats-/Hostnamenprüfung und kein HTTP-Fallback gelten weiter.",
+      "current": "Im MVP keine Wiederholung: fehlgeschlagene Sendung anzeigen und abbrechen.",
+      "refs": [
+        ["MVP-Entscheidungen 11.10.", "Development/system/planning/mvp-decisions-2026-10-11.md", "confirmed-scope-and-behavior"],
+        ["Framework- und Transportbewertung", "Development/system/planning/framework-and-transport-evaluation.md", "recommendation-for-the-next-discussion"]
+      ]
+    },
+    "C043": {
+      "label": "Überholt",
+      "changed": "Übertragung per `POST` mit Backoff-Wiederholung ist nicht der Projektpfad.",
+      "current": "`PUT /Observation/{id}` mit stabiler Ressourcen-ID und anschließendem Readback, ohne Wiederholungswarteschlange; vor dem `PUT` wird `Device.patient` erneut gelesen und `Device.meta.versionId` festgehalten. Vorgeschlagen: Nach dem Observation-Readback wird das Device erneut gelesen; jede Versionsänderung ergibt „Unverified“ mit normalem Fehler statt „Sent“ (fängt auch A→B→A-Umzuordnungen, kann falsch-positiv sein). Ohne atomare Bedingung über `Device` und `Observation` bleibt eine Umzuordnung zwischen Prüfung und `PUT` ein sichtbar gemachtes Restrisiko.",
+      "refs": [
+        ["Design: Delivery", "Development/system/design/interfaces-and-behavior.md", "delivery-clock-and-configuration"],
+        ["MVP-Entscheidungen 12.10.", "Development/system/planning/mvp-decisions-2026-10-12.md", "proposed-behavior"]
+      ]
+    },
+    "U037": {
+      "label": "Neuerer Stand",
+      "changed": "Der Entwurf folgt inzwischen der Abgabefassung (S05): Komponenteneignung über Datenblätter/Literatur und funktionaler Audiotest, keine gemessene Aussage zur Übertragungskette; die ältere Messabsicht bleibt als ersetzter Vorschlag erhalten. Die Bestätigung ist laut D09 noch ausstehend.",
+      "current": "keine Kettenmessung im aktuellen Umfang; zusätzlich ist laut 11.10. keine Messausrüstung/kein zweites Mikrofon verfügbar.",
+      "refs": [
+        ["Entscheidungsregister D09", "Development/system/planning/implementation-readiness.md", "decision-register"],
+        ["Produktumfang", "Development/system/spec/product-scope.md", "goal-and-boundary"]
+      ]
+    },
+    "U038": {
+      "label": "Neuerer Stand",
+      "changed": "Von den drei W1-Optionen ist im Entwurf die Herausnahme der Kettenmessung gewählt (S05); die Abstimmung mit dem Betreuer ist laut D09 weiterhin ausstehend.",
+      "current": "keine Kettenmessung; Q1/AP 2.2 entsprechend qualitativ behandeln, sobald bestätigt.",
+      "refs": [
+        ["Entscheidungsregister D09", "Development/system/planning/implementation-readiness.md", "decision-register"],
+        ["Produktumfang", "Development/system/spec/product-scope.md", "goal-and-boundary"]
+      ]
+    }
+  },
+  "caveats": {
+    "B044": {
+      "label": "Vorbehalt",
+      "date": "2026-10-12",
+      "text": "Rechenfehler in R07: Mit A ≈ 28,3 mm², L = 10 mm, c ≈ 343 m/s und f = 20 Hz ergibt V = A·c²/(4π²·f²·L) ≈ 0,021 m³ (≈ 21 l), nicht 21 ml. Ein Volumen von 21 ml liefert mit diesen Halsmaßen etwa 634 Hz. Die Empfehlung einer kleinen Kammer mit Resonanz oberhalb des Nutzbands bleibt davon unberührt; der Zahlenwert darf so nicht zitiert werden.",
+      "ids": ["U059"]
+    },
+    "U059": {
+      "label": "Vorbehalt",
+      "date": "2026-10-12",
+      "text": "Rechenfehler in R07: Mit A ≈ 28,3 mm², L = 10 mm, c ≈ 343 m/s und f = 20 Hz ergibt V = A·c²/(4π²·f²·L) ≈ 0,021 m³ (≈ 21 l), nicht 21 ml. Ein Volumen von 21 ml liefert mit diesen Halsmaßen etwa 634 Hz. Die Empfehlung einer kleinen Kammer mit Resonanz oberhalb des Nutzbands bleibt davon unberührt; der Zahlenwert darf so nicht zitiert werden.",
+      "ids": ["B044"]
+    },
+    "A059": {
+      "label": "Vorbehalt",
+      "date": "2026-10-12",
+      "text": "Die Frequenzverschiebung auf 50 % bzw. 75 % gilt nur für Resampling (Wiedergabe mit veränderter Abtastrate). Tonhöhenerhaltende Time-Scale Modification wie WSOLA verlängert die Dauer ohne diese Verschiebung.",
+      "ids": ["A058"]
+    },
+    "B017": {
+      "label": "Vorbehalt",
+      "date": "2026-10-12",
+      "text": "Exakter Binomialtest und sein Konfidenzintervall setzen unabhängige Trials voraus. Unabhängige Aufnahmen (B076) genügen dafür nicht, wenn derselbe Stimulus wiederholt wird (B011); Trials sind in Personen und Stimuli verschachtelt (B020). Bei wiederholten Stimuli das Binomialergebnis nur deskriptiv berichten oder ein Verfahren mit Stimulus-Clusterung wählen. Entscheidung offen, siehe offene Punkte.",
+      "ids": ["B076", "B011", "B020"]
+    }
+  },
+  "conflicts": {
+    "framework": {
+      "label": "Neuerer Stand",
+      "changed": "Die Frameworkentscheidung ist dokumentiert.",
+      "current": "Zephyr für das MVP beibehalten; Begründung in der Framework- und Transportbewertung.",
+      "refs": [["Framework- und Transportbewertung", "Development/system/planning/framework-and-transport-evaluation.md", "recommendation-for-the-next-discussion"]]
+    },
+    "targets": {
+      "label": "Neuerer Stand",
+      "changed": "Eine gemeinsame Vorschlagsfassung für BPM- und Latenzziele liegt vor (nicht freigegeben).",
+      "current": "Live-Latenz <30 ms (Stretch <10 ms), BPM-Akzeptanztabelle mit 30–200 BPM; Filter 40–800 Hz / 25–150 Hz bleiben Kandidaten.",
+      "refs": [
+        ["BPM-Akzeptanztabelle 11.10.", "Development/system/planning/mvp-decisions-2026-10-11.md", "proposed-bpm-acceptance-table"],
+        ["Latenzbudgets 11.10.", "Development/system/planning/mvp-decisions-2026-10-11.md", "latency-research-and-proposed-budgets"]
+      ]
+    },
+    "dma": {
+      "label": "Neuerer Stand",
+      "changed": "Die Blockgröße ist auf 128 Frames/8 ms festgelegt.",
+      "current": "Vorschlag ≤4 ms kritische Ausführung je 8-ms-Block; End-to-End-Latenz weiterhin am Aufbau messen.",
+      "refs": [["Latenzbudgets 11.10.", "Development/system/planning/mvp-decisions-2026-10-11.md", "latency-research-and-proposed-budgets"]]
+    }
+  },
+  "review_questions": [
+    {
+      "text": "Hörstudie: Ob die ausgewerteten Trials auf Antwortebene unabhängig sind, ist nicht festgelegt. Wiederholt sich ein Stimulus, ist der exakte Binomialtest nur deskriptiv oder durch ein Verfahren mit Stimulus-Clusterung zu ersetzen. Stimulusplan und Auswertung gemeinsam festlegen.",
+      "ids": ["B017", "B076", "B011", "B020"]
+    }
+  ],
+  "open_questions": [
+    {
+      "text": "Aufgabenbeschreibung (U001–U005) nennt verlangsamte Wiedergabe weiterhin als Arbeitsinhalt, während das MVP sie seit dem Feedback vom 07.10. als optional führt. Klären, ob die Thesis die Verlangsamung als optionale Erweiterung, als Ausblick oder doch als Pflichtteil behandelt; ggf. mit Betreuer die Aufgabenbeschreibung abgleichen.",
+      "ids": ["U002", "U005", "U014", "U020"],
+      "refs": [["Produktumfang", "Development/system/spec/product-scope.md", "goal-and-boundary"]]
+    },
+    {
+      "text": "BPM-Referenz: Die interne Fassung hält Pulsoximeter/Smartwatch für realistisch. Der Vorschlag vom 11.10. verlangt für Genauigkeitstests Datensätze mit unabhängig nutzbarem Schlag-Timing bzw. synchronem EKG, äußert sich aber nicht ausdrücklich zu Pulsoximeter/Smartwatch als Live-Referenz. Nicht als überholt markiert; Referenzart festlegen.",
+      "ids": ["U018", "A040", "A045"],
+      "refs": [["BPM-Akzeptanztabelle 11.10.", "Development/system/planning/mvp-decisions-2026-10-11.md", "proposed-bpm-acceptance-table"]]
+    },
+    {
+      "text": "FHIR-Zeitbezug: Recherche und Bring-up nutzen `effectiveDateTime`; das Design schlägt für das Sitzungsaggregat `effectivePeriod` vor (D08, nur Vorschlag). Bis zur Entscheidung nicht als überholt markiert.",
+      "ids": ["U068", "C029", "C031"],
+      "refs": [["Design: Delivery", "Development/system/design/interfaces-and-behavior.md", "delivery-clock-and-configuration"]]
+    },
+    {
+      "text": "Schalter W2 und Pinbelegung: Evaluation erfolgt laut 11.10. auf der neuesten Altium-Evaluationsplatine; der Geschwindigkeitsschalter ist im MVP optional. Ob die Rev-A-GPIO-Zuordnung und die W2-Nummerierung für die neue Trägerplatine gelten, ist offen (BOARD-Aufgabe).",
+      "ids": ["U039", "U040", "U087", "U106", "U120"],
+      "refs": [["MVP-Entscheidungen 11.10.", "Development/system/planning/mvp-decisions-2026-10-11.md", "confirmed-scope-and-behavior"], ["Zeitplan BOARD", "Development/system/planning/mvp-implementation-timeline.md", "board--verify-latest-evaluation-carrier-and-component-wiring"]]
+    },
+    {
+      "text": "Konfigurationsspeicher: U107 beschreibt Konfiguration und Tokens nur im RAM. Die Entscheidung vom 12.10. spricht von „gespeicherten“ WLAN-Zugangsdaten beim Boot. Ob WLAN-Zugangsdaten im MVP persistent abgelegt werden und wie, ist nicht ausdrücklich festgelegt.",
+      "ids": ["U107"],
+      "refs": [["MVP-Entscheidungen 12.10.", "Development/system/planning/mvp-decisions-2026-10-12.md", "confirmed-decisions"]]
+    },
+    {
+      "text": "Lungenmodus: U031 nennt Interface/Symbole. Das MVP hat kein Display; welche Anzeige im Lungenmodus bleibt (z. B. LED), ist nicht beschrieben.",
+      "ids": ["U031"],
+      "refs": [["Produktumfang", "Development/system/spec/product-scope.md", "goal-and-boundary"]]
+    }
+  ],
+  "relocated_origins": {
+    "Development/system/testing/QC-EVALUATION.md": {
+      "commit": "23c1ea492270b897532896179e35f873eee823be",
+      "note": "seit 89ca8b1 nicht mehr eingecheckt; wird von `qc_eval.py` nach `artifacts/qc/` erzeugt. Link zeigt die zitierte historische Fassung.",
+      "current": ["Testing-README: Source-level QC", "Development/system/testing/README.md", "source-level-qc"]
+    },
+    "Development/system/testing/qc-eval-results.json": {
+      "commit": "23c1ea492270b897532896179e35f873eee823be",
+      "note": "seit 89ca8b1 nicht mehr eingecheckt; wird von `qc_eval.py` nach `artifacts/qc/` erzeugt. Link zeigt die zitierte historische Fassung.",
+      "current": ["Testing-README: Source-level QC", "Development/system/testing/README.md", "source-level-qc"]
+    }
+  },
+  "repository_url": "https://github.com/DemonicPsychoII/DigitalStethoscope"
+}
