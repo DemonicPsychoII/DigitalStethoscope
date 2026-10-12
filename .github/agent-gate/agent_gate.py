@@ -5,9 +5,9 @@ Publishes the commit status `agent-gate` on the PR's head SHA. The `integration`
 that status (from the GitHub Actions app), so this file is the merge policy. It passes only if:
 
   1. the PR is open and not a draft;
-  2. the body carries a valid
+  2. agent-managed PRs carry a valid
      `<!-- agent-author harness=.. model=.. session=.. class=<quick-fix|feature|policy|revert> -->`;
-  3. the body's "Risk & rollback" section answers what could break / how verified / how to revert;
+  3. agent-managed PRs have a "Risk & rollback" section answering what could break / how verified / how to revert;
   4. every `<!-- owner-question id=X -->` (body or trusted comment) has a matching trusted
      `<!-- owner-answer id=X -->` comment — resolving a thread is not an answer;
   5. an independent agent session or an allowlisted review bot approves the current SHA;
@@ -15,6 +15,11 @@ that status (from the GitHub Actions app), so this file is the merge policy. It 
   6. every review conversation has a disposition and is resolved;
   7. configured and GitHub-required checks pass. Optional checks are advisory when
      required_checks_only is enabled.
+
+A filled agent-author marker opts a PR into agent metadata requirements. Human and
+other bot PRs without a marker (or with untouched template placeholders) still need
+current-head independent review, required CI and resolved conversations. GitHub
+account identity cannot distinguish a human from an agent using the same account.
 
 The migrated configurations do not require human approval. Old configurations
 retain their previous approval behavior until explicitly migrated. Agent markers
@@ -63,7 +68,7 @@ _VALUE = re.compile(r"^[A-Za-z0-9._:/@+-]{1,200}$")
 _ATTR = re.compile(r'([a-z]+)=("[^"]*"|\S+)')
 _ID = re.compile(r"^[A-Za-z0-9._-]{1,64}$")
 _FENCE = re.compile(r"^[ \t]*(```|~~~).*?^[ \t]*\1[ \t]*$", re.M | re.S)
-_AUTHOR = re.compile(r"<!--[ \t]*agent-author[ \t]+([^>]*?)[ \t]*-->")
+_AUTHOR = re.compile(r"<!--[ \t]*agent-author[ \t]+(.*?)[ \t]*-->", re.S)
 _REVERT = re.compile(r"<!--[ \t]*agent-revert[ \t]+([^>]*?)[ \t]*-->")
 # Line-anchored: a marker quoted in a reply (`> <!-- agent-review ... -->`) is not a review.
 _REVIEW = re.compile(r"^[ \t]*<!--[ \t]*agent-review[ \t]+([^>]*?)[ \t]*-->", re.M)
@@ -112,6 +117,16 @@ def parse_author(body: str) -> dict[str, str] | None:
         if _valid(attrs, ("harness", "model", "session")):
             return attrs
     return None
+
+
+def agent_metadata_required(body: str) -> bool:
+    """An untouched PR template is not an agent's authorship declaration."""
+    for match in _AUTHOR.finditer(strip_code(body)):
+        attrs = parse_attrs(match.group(1))
+        if not all(re.fullmatch(r"<[^<>]+>", attrs.get(key, ""))
+                   for key in ("harness", "model", "session", "class")):
+            return True
+    return False
 
 
 def owner_approval(body: str, head_sha: str) -> dict[str, str] | None:
@@ -409,17 +424,20 @@ def evaluate(inputs: Inputs) -> Decision:
 
     author = parse_author(inputs.body)
     klass = (author or {}).get("class", "")
-    if author and klass in CLASSES:
-        items.append(("ok", f"author {author['harness']}/{author['model']} session {author['session']} class {klass}"))
-    elif author:
-        items.append(("fail", f"agent-author marker needs class=<{'|'.join(CLASSES)}> (got {klass or 'none'})"))
-    else:
-        items.append(("fail", "PR body lacks a valid `<!-- agent-author harness=.. model=.. session=.. class=.. -->` marker"))
+    if agent_metadata_required(inputs.body):
+        if author and klass in CLASSES:
+            items.append(("ok", f"author {author['harness']}/{author['model']} session {author['session']} class {klass}"))
+        elif author:
+            items.append(("fail", f"agent-author marker needs class=<{'|'.join(CLASSES)}> (got {klass or 'none'})"))
+        else:
+            items.append(("fail", "PR body lacks a valid `<!-- agent-author harness=.. model=.. session=.. class=.. -->` marker"))
 
-    risk = risk_section_problems(inputs.body)
-    items.extend(("fail", p) for p in risk)
-    if not risk:
-        items.append(("ok", "Risk & rollback section filled"))
+        risk = risk_section_problems(inputs.body)
+        items.extend(("fail", p) for p in risk)
+        if not risk:
+            items.append(("ok", "Risk & rollback section filled"))
+    else:
+        items.append(("ok", "PR has no agent authorship declaration; agent metadata is not required"))
 
     items.extend(owner_question_items(inputs))
 
