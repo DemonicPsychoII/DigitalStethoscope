@@ -15,6 +15,7 @@ not establish that the evaluation firmware implements the proposed contracts.
 | Listening | [listening-workflow.puml](listening-workflow.puml) |
 | MVP session / alarms | [mvp-session-state.puml](mvp-session-state.puml) |
 | BPM measurement | [measurement-workflow.puml](measurement-workflow.puml) |
+| Patient assignment | [patient-assignment-workflow.puml](patient-assignment-workflow.puml) |
 
 [View notes](VIEW-NOTES.md) record review boundaries, I2S presentation-name mapping,
 provenance, runtime assumptions and the separate evaluation implementation view.
@@ -37,7 +38,7 @@ java -jar /path/to/plantuml.jar -charset UTF-8 -failfast2 -tsvg -o rendered "*.p
 
 The viewer loads regenerated SVGs directly; only the flowcharts have zoom controls.
 
-Updated by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.
+Updated by Claude-Opus-5.5 on behalf of Nico running in T3 Code through Claude Code.
 
 ## Feedback preparation (2026-10-07)
 
@@ -53,3 +54,5 @@ See [framework and transport evaluation](../planning/framework-and-transport-eva
 for ESP32-S3 drivers, external C/C++ library integration and HTTP/HTTPS effort.
 
 Current workflows follow [11 October owner decisions](../planning/mvp-decisions-2026-10-11.md): Busy blocks Start, failed sends abort, context changes are rejected and DA requires full restart. Numeric targets remain proposals. [Component timeline](../planning/mvp-implementation-timeline.md) puts Wi-Fi/FHIR before carrier-dependent audio.
+
+[12 October decisions](../planning/mvp-decisions-2026-10-12.md) add the hotspot portal and patient assignment to the MVP. The patient-assignment view is a sequence diagram; the session state view gains the Portal state and the context view the phone browser.

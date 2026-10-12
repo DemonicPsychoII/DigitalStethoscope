@@ -39,7 +39,7 @@ Playback, measurement and delivery have independent state. “Record audio” in
 ## UC-05 — Determine one heart-rate result
 
 - **Actors and trigger:** Operator; explicit start-measurement event
-- **Preconditions:** Heart + microphone; active audio; patient/context captured; analysis parameters approved for evaluation.
+- **Preconditions:** Heart + microphone; active audio; analysis parameters approved for evaluation. The patient is the local assignment confirmed by UC-10; without one, measurement runs but nothing is sent.
 - **Postconditions:** One completed valid/invalid immutable result, or an explicitly cancelled session.
 - **Normal flow:** Assign session ID; freeze patient, point and analysis configuration; analyze original-rate windows independently of listening; aggregate accepted estimates over configured duration; freeze interval, quality, coverage and provenance.
 - **Alternatives/errors:** Poor quality/clipping/gaps prevent accepted windows. Stop before 15 s cancels. Context changes are rejected with a normal fault and preserve the session. Essential audio fault latches DA. Invalid coverage produces no numeric BPM; a separately validated error report may be sent after listening stops. Do not count S1/S2 as two beats.
@@ -73,9 +73,19 @@ Playback, measurement and delivery have independent state. “Record audio” in
 - **Actors and trigger:** Operator/researcher; setup or diagnostics
 - **Preconditions:** Idle for network/time configuration; authorized physical/serial access.
 - **Postconditions:** Validated configuration and capability/measurement evidence available without secrets in logs.
-- **Normal flow:** Calibrate touch and volume; assign patient and named listening point; set server/trust/auth/time; inspect build/carrier/config IDs, timing/resource/error counters; select approved research parameters.
+- **Normal flow:** Calibrate touch and volume; assign named listening point; set server/trust/auth/time (patient and Wi-Fi: UC-10; shell remains a diagnostic fallback); inspect build/carrier/config IDs, timing/resource/error counters; select approved research parameters.
 - **Alternatives/errors:** Reject invalid values atomically. Configuration changes cannot mutate a frozen result. Diagnostic test sources stay visibly marked and excluded from patient delivery.
+
+## UC-10 — Assign patient and Wi-Fi through the device hotspot
+
+- **Actors and trigger:** Operator with phone browser, FHIR server; long press ≥2 s in Idle, or boot without stored Wi-Fi credentials
+- **Preconditions:** Idle (no listening, measurement, analysis or sending). Patient selection additionally needs working hospital Wi-Fi, trusted time and the registered Device.
+- **Postconditions:** A confirmed patient assignment stored in `Device.patient` and matched by readback, stored Wi-Fi credentials, or no change. Hospital Wi-Fi is rejoined when configured.
+- **Normal flow:** Load in-progress Encounters with their patients; switch to a WPA2 hotspot with timeout; operator opens the page, sees name, birth date, ID and the list load time, and confirms one patient; close hotspot, rejoin Wi-Fi; `PATCH Device.patient`; matching readback becomes the local assignment. The Wi-Fi page stores credentials without echoing them.
+- **Alternatives/errors:** Long press outside Idle is rejected without change. List load failure → hotspot offers Wi-Fi setup only. Timeout or cancel → no change. Failed PATCH/readback → device unassigned and normal fault. Start while the hotspot is open is rejected. See [12 October decisions](../planning/mvp-decisions-2026-10-12.md).
 
 ## Current MVP control workflow
 
-See [11 October decisions](../planning/mvp-decisions-2026-10-11.md) for the confirmed Busy, acknowledgement, DA, context and cancellation transitions. Capture/replay and display/touch are optional; their historical proposal is not the MVP button mapping. Normal Start/Stop and separate acknowledgement remain distinct; no undocumented long press is assumed. Physical filter transitions and volume affect the listening path independently of frozen analysis settings.
+See [11 October decisions](../planning/mvp-decisions-2026-10-11.md) for the confirmed Busy, acknowledgement, DA, context and cancellation transitions. Capture/replay and display/touch are optional; their historical proposal is not the MVP button mapping. Normal Start/Stop and separate acknowledgement remain distinct. The only long press is the documented ≥2 s Idle gesture that opens the hotspot (UC-10). Physical filter transitions and volume affect the listening path independently of frozen analysis settings.
+
+Updated by Claude-Opus-5.5 on behalf of Nico running in T3 Code through Claude Code.

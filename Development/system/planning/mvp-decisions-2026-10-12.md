@@ -1,0 +1,46 @@
+# MVP decisions — patient assignment and device hotspot, 12 October 2026
+
+Nico's answers in T3 thread `d5e44f69-2ecc-4a3e-917b-31a7b084c12b` extend the [11 October decisions](mvp-decisions-2026-10-11.md). They replace the 11 October treatment of the captive portal as an optional follow-up and the "client, not embedded web server" statement in the [framework evaluation](framework-and-transport-evaluation.md). Everything else from 11 October stands. This records decisions and proposals, not implemented firmware behavior. Numeric values are proposals.
+
+The MVP has no display or touch. The operator therefore assigns the patient through a phone browser on a device hotspot; the FHIR server stores the assignment. The [patient-assignment sequence](../architecture/patient-assignment-workflow.puml) shows the complete flow.
+
+## Confirmed decisions
+
+- **Hotspot portal is MVP scope.** It provides patient selection and Wi-Fi setup. The serial shell remains a diagnostic fallback for both.
+- **Gesture:** a long press of at least 2 s while Idle opens the hotspot. The long press is a documented, separate gesture; ordinary Start/Stop and normal-error acknowledgement keep their meaning. Outside Idle the long press is rejected and nothing changes.
+- **No stored Wi-Fi credentials at boot** opens the hotspot automatically with the Wi-Fi setup page. Credentials are entered in the portal and never echoed back.
+- **The FHIR server holds the assignment.** The device registers its own `Device` resource; the selected patient is stored in R4 `Device.patient`. The KIS can also set or clear it, for example via curl or the HAPI web UI during the MVP.
+- **Patient list loading:** the device loads the list on the hospital Wi-Fi immediately before switching to hotspot mode, then shows it with its load time. Hospital Wi-Fi is down while the hotspot is open.
+
+## Proposed behavior
+
+1. **Boot and registration.** Join the stored Wi-Fi, synchronize time, then `GET /Device/{id}`. Not found → `PUT /Device/{id}` without a patient. Found → adopt its `patient` as the local assignment; update only device metadata (for example firmware version) with `PATCH`. A blind `PUT` would erase an existing assignment. The ID is derived from a stable hardware identifier and contains a letter (`stetho-…`) because HAPI rejects client-assigned purely numeric IDs.
+2. **Open portal (Idle only).** Long press → `GET /Encounter?status=in-progress&_include=Encounter:subject` (bounded result count) → leave hospital Wi-Fi → start WPA2 hotspot with timeout.
+3. **Select.** The page lists name, birth date and patient ID only, plus the list load time. The operator confirms one patient explicitly. Nothing is assigned without confirmation.
+4. **Assign.** Close the hotspot, rejoin hospital Wi-Fi, `PATCH /Device/{id}` with `patient`, then read back. Only a matching readback becomes the local assignment; failure leaves the device unassigned and latches a normal fault.
+5. **Measure.** Start does no network work (network exclusion stays). The controller freezes the local assignment into the session and prints the patient reference to the serial log. No assignment → listening and measurement still work, but nothing is sent.
+6. **Send.** Under the Idle network lease, NET re-reads `Device.patient` before the Observation `PUT`. A different or cleared assignment means no send and a normal fault, so a reassignment in the KIS can never relabel a frozen result. Otherwise `PUT /Observation/{id}` with `subject` and `device`, then matching readback, as before.
+
+## Wrong-patient risk (not a completed ISO 14971 analysis)
+
+Without a display, the operator cannot see the active patient on the device. Proposed controls: explicit confirmation on the phone with name and birth date; readback before the assignment is accepted; freeze at session start; patient reference in the serial log; pre-send comparison with the server assignment; no assignment, no send. Stale lists are limited by loading immediately before the hotspot opens and showing the load time.
+
+A remaining hazard is that the assignment persists: a measurement on the next patient goes to the previous one if nobody reassigns the device. Proposed control, **pending owner decision:** clear the assignment after a verified delivery, so every new patient needs a fresh selection. Alternative: a maximum assignment age.
+
+## Security and privacy notes
+
+The device now accepts inbound connections while the hotspot is open. Proposed controls: WPA2 with a per-device passphrase outside source code; hotspot only in Idle, with a timeout; minimal patient fields; no credentials or patient data in logs; Wi-Fi password write-only in the page. A portal login is still open. The hotspot passphrase provisioning method is still open.
+
+## Open points
+
+- Assignment lifetime after delivery (see risk above).
+- Portal login beyond WPA2, and how the per-device hotspot passphrase is provisioned.
+- `Device.patient` means "patient to whom the device is affixed" in R4. It is accepted for the MVP; `DeviceUseStatement` is the more precise alternative if the lab backend requires it.
+- The lab server needs a seeded in-progress `Encounter` for the synthetic `Patient/stetho-test-01`.
+- Zephyr on ESP32-S3: verify SoftAP, HTTP server and station/AP switching on target before relying on them. A captive-portal DNS redirect is optional; the page URL can be printed on the device label.
+
+## Effort
+
+The new [PORTAL task](mvp-implementation-timeline.md#portal--implement-hotspot-portal-and-patient-assignment) is estimated at 16 h. The plan was already full, so implementation now ends after the 18 November deadline; see the timeline for the shifted dates.
+
+Created by Claude-Opus-5.5 on behalf of Nico running in T3 Code through Claude Code.

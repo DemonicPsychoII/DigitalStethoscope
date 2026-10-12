@@ -1,0 +1,44 @@
+@startuml patient_assignment_workflow
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam sequenceMessageAlign center
+title MVP patient assignment and delivery — owner decisions 12 October
+actor "Operator\n(button / phone browser)" as op
+participant "Digital stethoscope\n(no display)" as dev
+database "HAPI FHIR server\n(KIS)" as fhir
+
+== 1 · Boot and register ==
+dev -> dev : join stored Wi-Fi\n(none stored → open hotspot, Wi-Fi page)
+dev -> dev : SNTP time sync
+dev -> fhir : GET /Device/{stetho-id}
+alt Device absent
+  dev -> fhir : PUT /Device/{stetho-id} (no patient)
+else Device present
+  fhir --> dev : Device (adopt patient as local assignment)
+  dev -> fhir : PATCH metadata only, never patient
+end
+
+== 2 · Assign patient (Idle only) ==
+op -> dev : long press >= 2 s
+dev -> fhir : GET /Encounter?status=in-progress\n&_include=Encounter:subject
+fhir --> dev : Bundle: admitted patients
+dev -> dev : leave hospital Wi-Fi,\nopen WPA2 hotspot with timeout
+op -> dev : phone joins hotspot, opens portal
+dev --> op : name / birth date / ID + list load time
+op -> dev : pick and confirm patient
+dev -> dev : close hotspot, rejoin hospital Wi-Fi
+dev -> fhir : PATCH /Device/{id} patient
+dev -> fhir : GET /Device/{id} (readback)
+note right of dev : mismatch or failure →\nunassigned + normal fault
+
+== 3 · Measure and send ==
+op -> dev : Start (no network work)
+dev -> dev : freeze local assignment,\nlog patient reference to serial
+dev -> dev : listen → BPM (device only)
+op -> dev : Stop
+dev -> fhir : GET /Device/{id} (pre-send check)
+note right of dev : missing or different patient →\nno send + normal fault
+dev -> fhir : PUT /Observation/{id}\nsubject + device, LOINC 8867-4, /min
+dev -> fhir : GET /Observation/{id} (readback)
+note right of dev : mismatch or failure →\nUnverified, abort, no retry
+@enduml
