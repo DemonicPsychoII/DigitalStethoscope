@@ -17,5 +17,8 @@ Current owner decisions and numeric proposals: [11 October MVP decisions](../pla
 | SR-09 | UC-01,UC-08 | S03,S04 | The system shall isolate optional-component failures, latch and mute Device Alarms until full restart, reject in-session identity changes, and expose manually acknowledged normal faults. | VT-01,VT-09 |
 | SR-10 | UC-09 | S03,S04 | The system shall retain build/configuration, timing/resource and anomaly evidence sufficient to reproduce evaluation without exposing credentials or claiming unperformed physical verification. | VT-11 |
 | SR-11 | UC-04,UC-09 | S01,S03,S07 | The system shall use the selected hardware interfaces and serialized shared SPI bus with bounded fixture/display transfers and no filesystem operation in the audio deadline path. | VT-12,VT-13 |
+| SR-12 | UC-05,UC-06,UC-10 | S05 | The system shall register its own FHIR Device, let the operator assign the patient and Wi-Fi through an Idle-only device hotspot with explicit confirmation, store the assignment on the server with matching readback, freeze it per session, and send nothing when the assignment is missing or no longer matches before delivery. | VT-14,VT-07 |
 
 Created by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.
+
+Updated by Claude-Opus-5.5 on behalf of Nico running in T3 Code through Claude Code.

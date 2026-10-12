@@ -74,4 +74,26 @@ Network configuration shall keep credentials outside source/evidence/logs, valid
 - **Verification:** VT-08,VT-11.
 - **Acceptance:** Malformed fields rejected; redacted diagnostic output; frozen result unchanged by later config edits.
 
+## NET-008
+
+At boot, under the Idle lease and after trusted time, NET shall read its own Device resource by stable non-numeric ID, create it with `PUT` only when absent, update device metadata only by `PATCH`, and adopt an existing `Device.patient` as the local assignment. It shall never overwrite an existing assignment during registration.
+
+- **Derivation:** UC-01,UC-10 → SR-12; sources S05; [12 October decisions](../../planning/mvp-decisions-2026-10-12.md).
+- **Status:** Owner decision 12 October.
+- **Parameters:** P13,P18.
+- **Verification:** VT-14.
+- **Acceptance:** Absent, present-unassigned and present-assigned Device; firmware version change; server unreachable leaves listening available and no assignment.
+
+## NET-009
+
+NET shall load the patient list before the hotspot opens, store a confirmed selection with `PATCH Device.patient` followed by matching readback, and before each Observation `PUT` re-read `Device.patient`; a missing or different assignment shall abort the send with a normal fault and no numeric request. NET shall record the Device `meta.versionId` at the pre-send check and re-read the Device after the Observation readback; any version change shall make the outcome Unverified with a normal fault, because the check and the `PUT` are not atomic.
+
+- **Derivation:** UC-06,UC-10 → SR-06,SR-12; sources S05; [12 October decisions](../../planning/mvp-decisions-2026-10-12.md).
+- **Status:** Owner decision 12 October; list query and size proposed.
+- **Parameters:** P13,P18,P21.
+- **Verification:** VT-14,VT-07.
+- **Acceptance:** List timeout/empty/oversized response; PATCH failure, readback mismatch; reassignment and clearing between freeze and pre-send check produce zero Observation requests; any Device update between check and post-readback read, including A→B→A reassignment, yields Unverified, never Sent.
+
 Created by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.
+
+Updated by Claude-Opus-5.5 on behalf of Nico running in T3 Code through Claude Code.

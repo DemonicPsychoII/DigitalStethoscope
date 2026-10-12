@@ -64,4 +64,16 @@ The MVP controller shall expose ordinary Start/Stop and separate normal-error ac
 - **Verification:** VT-04,VT-05.
 - **Acceptance:** Transition table covers each event/state and rejection reason; review D02/P20 before implementation.
 
+## CTL-007
+
+The controller shall enter Portal only from Idle, on the hotspot long press or automatically after startup checks when no Wi-Fi credentials are stored; it shall hold the Portal state with an exclusive network lease until confirmation, cancel or timeout, reject Start and session commands while in Portal, and own the local patient assignment: set only from a matching server readback, frozen into each session, and cleared on failed assignment.
+
+- **Derivation:** UC-05,UC-10 → SR-03,SR-12; sources S05; [12 October decisions](../../planning/mvp-decisions-2026-10-12.md).
+- **Status:** Owner decision 12 October; timeout and assignment lifetime proposed.
+- **Parameters:** P19,P21.
+- **Verification:** VT-04,VT-14.
+- **Acceptance:** Long press in every state; boot without credentials passes startup checks and Idle before Portal; Start during Portal; timeout/cancel leaves assignment unchanged; failed readback leaves the device unassigned; a session keeps its frozen patient after reassignment.
+
 Created by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.
+
+Updated by Claude-Opus-5.5 on behalf of Nico running in T3 Code through Claude Code.

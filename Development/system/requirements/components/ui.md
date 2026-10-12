@@ -52,4 +52,26 @@ The UI shall clearly label test sources, invalid/stale BPM and research-only out
 - **Verification:** VT-04,VT-11.
 - **Acceptance:** Screens/shell snapshots for test/lung/invalid states and configured anatomical labels.
 
+## UI-006
+
+The hotspot portal shall show the patient list with only name, birth date and patient ID plus the list load time, require explicit confirmation of one patient, and offer a Wi-Fi page that validates and stores credentials without displaying them again. The activity LED shall show a distinct pattern while the hotspot is open.
+
+- **Derivation:** UC-10 → SR-12; sources S05; [12 October decisions](../../planning/mvp-decisions-2026-10-12.md).
+- **Status:** Owner decision 12 October; LED pattern and list size proposed.
+- **Parameters:** P21.
+- **Verification:** VT-14.
+- **Acceptance:** Page inspection for empty/full/failed list and stale load time; no assignment without confirmation; stored password never returned in any response; LED pattern distinguishable from activity.
+
+## UI-007
+
+The hotspot shall use WPA2 with a per-device passphrase kept outside source code, run only in Portal state, close after the configured timeout, accept a bounded number of clients and requests, and keep credentials and patient data out of logs.
+
+- **Derivation:** UC-10 → SR-10,SR-12; sources S05,S06; [12 October decisions](../../planning/mvp-decisions-2026-10-12.md).
+- **Status:** Derived security constraint; portal login and passphrase provisioning open.
+- **Parameters:** P21.
+- **Verification:** VT-14,VT-11.
+- **Acceptance:** Open/WEP join refused; hotspot down outside Portal and after timeout; oversized/malformed requests rejected without crash; log inspection shows no credentials or patient fields.
+
 Created by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.
+
+Updated by Claude-Opus-5.5 on behalf of Nico running in T3 Code through Claude Code.

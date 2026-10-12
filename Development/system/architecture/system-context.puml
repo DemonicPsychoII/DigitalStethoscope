@@ -17,6 +17,7 @@ title System context
 left to right direction
 actor "Operator" as operator
 actor "Patient / sound source" as source
+actor "Phone browser" as phone
 rectangle "Digital stethoscope" as device
 database "FHIR server" as fhir
 cloud "Network / time" as net
@@ -26,6 +27,8 @@ device --> operator : audio / optional display
 device --> fhir : BPM Observation / readback request\nWi-Fi / HTTPS
 fhir --> device : status / readback
 net --> device : connectivity / time
+phone --> device : patient / Wi-Fi selection\nhotspot portal (Idle only)
+device --> fhir : Device registration /\npatient list / Device.patient
 legend bottom
   Grey / optional = beyond MVP.
   Display, touch, SD and capture / slower replay are optional.

@@ -26,5 +26,8 @@ Open values are review candidates, not approved acceptance thresholds. Requireme
 | P18 | Patient / point / FHIR / time | FHIR R4; local HAPI; patient reference; named point list; approved clock source and skew | Partly board-fixed; deployment/profile/clock choices open | CTL,NET |
 | P19 | Network exclusion | No Wi-Fi connection/time-sync/TLS/HTTP work in Live/Capture/Replay or active measurement | Saved S04 decision; lease mechanism derived | NET,CTL |
 | P20 | Startup mode | Proposed Ready/Idle at zero gain; explicit Start listening | Open: S03 also shows ready/live; agree UI transition | CTL,AUD |
+| P21 | Hotspot portal | Proposed long press ≥2 s (decided); hotspot timeout 5 min; ≤20 listed patients; 1 client; assignment cleared after verified delivery (pending owner decision) | 12 October decision; timeout, list size and lifetime proposed | INP,CTL,UI,NET |
 
 Created by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.
+
+Updated by Claude-Opus-5.5 on behalf of Nico running in T3 Code through Claude Code.
