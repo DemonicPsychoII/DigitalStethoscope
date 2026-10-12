@@ -103,8 +103,9 @@
   Validiertes TLS, vertrauenswürdige Zeit, Provenienz und ausgeschlossene Test-/Lung-/ungültige
   Ergebnisse gehören zur Verifikation, nicht nur erfolgreicher JSON-Versand.
 - [ ] **Konfiguration und Profil (D08/VT-07/VT-08):** HAPI R4, Patient, Authentifizierung,
-  Punktkodierung, Zeitpräzision und Profil verbindlich wählen. `effectivePeriod` ist der Entwurf
-  für die aggregierte Sitzung; das alte `effectiveDateTime`-Beispiel ist keine finale Festlegung.
+  Punktkodierung, Zeitpräzision und Profil verbindlich wählen. **Entschieden (12.10.):** `effectiveDateTime`
+  = Ende des Messintervalls (`effectivePeriod` scheiterte an der R4-Herzfrequenz-Validierung);
+  Schreiben per bedingtem Create (`POST` + `If-None-Exist`), nie per Update.
   LOINC 8867-4 und UCUM `/min` bleiben die Herzfrequenz-Basis.
   **Patient entschieden (12.10.):** Auswahl über das Hotspot-Portal des Geräts, gespeichert in
   `Device.patient` auf dem FHIR-Server; siehe

@@ -46,7 +46,7 @@ worker placement and ISR wake-up primitives remain proposed implementation choic
 | `StateSnapshot` | snapshot revision, effective and requested settings, source/provenance, playback/measurement/delivery states, active IDs, capabilities, BPM validity/time, clip progress, pending replay speed, error/outcome counters. Read as a coherent copy; UI never edits it. |
 | `Clip` | ID/generation, source, raw format/rate, allocated capacity and valid length, capture sample interval, evaluation metadata. Ownership REC; immutable after finalization until discarded. Never patient-persisted. |
 | `MeasurementResult` | result/session ID, source/generation, valid flag/reason, BPM value and declared precision, quality definition/value, coverage, first/last sample index, measurement monotonic interval and UTC mapping, frozen patient/point/config/filter IDs, completion status. Invalid results carry no sendable numeric value. |
-| `NetworkJob` | stable Observation ID, immutable result/payload, frozen endpoint/profile/auth-config reference, attempt count (one in MVP), lease ID. Secrets stay outside evidence. Result patient/time/value never resnapshotted from live state. |
+| `NetworkJob` | stable Observation identifier (device, random boot ID, session counter), immutable result/payload, frozen endpoint/profile/auth-config reference, attempt count (one in MVP), lease ID. Secrets stay outside evidence. Result patient/time/value never resnapshotted from live state. |
 | `HealthEvent` | component, error class, time/generation, severity, evidence level and counter reference. Hardware physical proof references explicit test evidence. |
 
 ## Ownership, memory and queues
@@ -120,15 +120,15 @@ stage at the current source cursor without pretending the duration was constant-
 ## Delivery, clock and configuration
 
 A completed measurement has separate identity from a replay clip. Use a boot-unique identifier
-plus session counter and keep the resulting FHIR resource ID stable for all attempts. Use PUT
-`/Observation/{id}` only after confirming the server permits update/create; do not switch to POST
-silently. One initial attempt may be queued automatically when a valid result and Idle/config
+plus session counter as the Observation `identifier` and create it with `POST` plus `If-None-Exist`
+on that identifier; never update an Observation. The server assigns the resource ID (from `Location`).
+A retry or collision returns the existing resource instead of overwriting it (D08, 12 October). One initial attempt may be queued automatically when a valid result and Idle/config
 prerequisites coincide; failure aborts without any retry queue. Eligibility in Lung is denied.
 
 Map sample/monotonic measurement interval to UTC from an approved clock anchor. Use measurement
 time, not send time; clock loss/skew makes the result ineligible until its mapping is resolved,
-not rewritten. FHIR `effectivePeriod` is proposed for the aggregate interval (D08), versus existing
-bring-up `effectiveDateTime` of a rolling estimate. Preserve subject, point (approved coding or
+not rewritten. FHIR `effectiveDateTime` carries the end of the aggregate interval (D08, 12 October):
+`effectivePeriod` failed the R4 heart-rate profile in validation. The interval stays in the local result. Preserve subject, point (approved coding or
 evaluation-only metadata), value, interval and analysis settings in the immutable local result.
 The local profile/metadata mapping and decimal precision require agreement.
 
@@ -159,7 +159,7 @@ Created by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.
 
 ## Patient assignment and hotspot portal — 12 October
 
-[Owner decisions](../planning/mvp-decisions-2026-10-12.md) make the hotspot portal MVP scope; the [sequence diagram](../architecture/patient-assignment-workflow.puml) shows the flow. The FHIR server holds the assignment in `Device.patient`; CTL keeps a local copy that is set only from a matching readback (CTL-007). NET registers the Device at boot without erasing an assignment (NET-008), loads the list before the hotspot opens and re-reads the assignment before each Observation `PUT` (NET-009).
+[Owner decisions](../planning/mvp-decisions-2026-10-12.md) make the hotspot portal MVP scope; the [sequence diagram](../architecture/patient-assignment-workflow.puml) shows the flow. The FHIR server holds the assignment in `Device.patient`; CTL keeps a local copy that is set only from a matching readback (CTL-007). NET registers the Device at boot without erasing an assignment (NET-008), loads the list before the hotspot opens and re-reads the assignment before each Observation create (NET-009).
 
 Portal is an Idle-only controller state with the exclusive network lease: station Wi-Fi is down, Start and session commands are rejected, and the state ends on confirmation, cancel or timeout. Start does no network work; the session freezes the local assignment. `MeasurementResult` and `NetworkJob` therefore carry the frozen patient reference and the Device ID; a missing local assignment makes the result ineligible for sending. The portal HTTP handler runs outside audio and controller threads and submits typed control events like the shell (UI-003); it never writes state directly.
 

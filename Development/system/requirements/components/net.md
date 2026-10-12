@@ -26,7 +26,7 @@ The production network worker shall reject incomplete, cancelled, Lung-mode, syn
 
 ## NET-003
 
-FHIR serialization shall encode a final R4 heart-rate Observation with LOINC 8867-4, vital-signs category, UCUM /min, frozen subject/value and effective measurement interval/time.
+FHIR serialization shall encode a final R4 heart-rate Observation with LOINC 8867-4, vital-signs category, UCUM /min, frozen subject/value/device and `effectiveDateTime` set to the end of the measurement interval; the interval itself stays in the frozen local result.
 
 - **Derivation:** UC-06 → SR-06; sources S03.
 - **Status:** Source-backed.
@@ -36,13 +36,13 @@ FHIR serialization shall encode a final R4 heart-rate Observation with LOINC 886
 
 ## NET-004
 
-The MVP delivery service shall schedule at most one attempt per completed result/error job with a stable Observation ID and frozen payload; failed/unverified delivery is terminal and has no automatic or manual retry queue.
+The MVP delivery service shall schedule at most one attempt per completed result/error job with a stable logical identifier and frozen payload, written as a conditional create (`POST` + `If-None-Exist` on that identifier) and never as an update; failed/unverified delivery is terminal and has no automatic or manual retry queue.
 
 - **Derivation:** UC-06 → SR-06; sources S02,S03.
-- **Status:** Source-backed + derived idempotent PUT.
+- **Status:** Source-backed; conditional create decided 12 October (D08).
 - **Parameters:** —.
 - **Verification:** VT-07,VT-08.
-- **Acceptance:** Timeout after server commit remains Unverified; no retry or new resource is created. Retain redacted outcome evidence, not a sendable failed payload; no mutable patient/value.
+- **Acceptance:** Timeout after server commit remains Unverified; no retry or new resource is created. An identifier collision returns the existing resource and never overwrites it; readback mismatch then yields Unverified. Retain redacted outcome evidence, not a sendable failed payload; no mutable patient/value.
 
 ## NET-005
 
@@ -76,7 +76,7 @@ Network configuration shall keep credentials outside source/evidence/logs, valid
 
 ## NET-008
 
-At boot, under the Idle lease and after trusted time, NET shall read its own Device resource by stable non-numeric ID, create it with `PUT` only when absent, update device metadata only by `PATCH`, and adopt an existing `Device.patient` as the local assignment. It shall never overwrite an existing assignment during registration.
+At boot, under the Idle lease and after trusted time, NET shall read its own Device resource by stable non-numeric ID, create it with `PUT` only when absent (404 or 410), update device metadata only by `PATCH`, and adopt an existing `Device.patient` as the local assignment. It shall never overwrite an existing assignment during registration.
 
 - **Derivation:** UC-01,UC-10 → SR-12; sources S05; [12 October decisions](../../planning/mvp-decisions-2026-10-12.md).
 - **Status:** Owner decision 12 October.
@@ -86,13 +86,13 @@ At boot, under the Idle lease and after trusted time, NET shall read its own Dev
 
 ## NET-009
 
-NET shall load the patient list before the hotspot opens, store a confirmed selection with `PATCH Device.patient` followed by matching readback, and before each Observation `PUT` re-read `Device.patient`; a missing or different assignment shall abort the send with a normal fault and no numeric request. NET shall record the Device `meta.versionId` at the pre-send check and re-read the Device after the Observation readback; any version change shall make the outcome Unverified with a normal fault, because the check and the `PUT` are not atomic.
+NET shall load the patient list before the hotspot opens, store a confirmed selection with `PATCH Device.patient` guarded by `If-Match` followed by matching readback, and before each Observation create re-read `Device.patient`; a missing or different assignment shall abort the send with a normal fault and no numeric request. NET shall record the Device `meta.versionId` at the pre-send check and re-read the Device after the Observation readback; any version change shall make the outcome Unverified with a normal fault, because the check and the create are not atomic.
 
 - **Derivation:** UC-06,UC-10 → SR-06,SR-12; sources S05; [12 October decisions](../../planning/mvp-decisions-2026-10-12.md).
 - **Status:** Owner decision 12 October; list query and size proposed.
 - **Parameters:** P13,P18,P21.
 - **Verification:** VT-14,VT-07.
-- **Acceptance:** List timeout/empty/oversized response; PATCH failure, readback mismatch; reassignment and clearing between freeze and pre-send check produce zero Observation requests; any Device update between check and post-readback read, including A→B→A reassignment, yields Unverified, never Sent.
+- **Acceptance:** List response contains only name, birth date and identifier; list timeout/empty/oversized response; PATCH failure, `If-Match` conflict, readback mismatch; reassignment and clearing between freeze and pre-send check produce zero Observation requests; any Device update between check and post-readback read, including A→B→A reassignment, yields Unverified, never Sent.
 
 Created by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.
 
