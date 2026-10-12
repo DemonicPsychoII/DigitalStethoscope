@@ -2,6 +2,8 @@
 
 > **Stand: 2026-10-07**, abgeglichen mit `integration` (`23c1ea4`, 2026-10-06).
 > Dieser aktuelle Registerteil ersetzt die Statusbewertung der historischen Notizen unten.
+> Nachträge vom 2026-10-12 (Patientenzuordnung, FHIR-Schreibvertrag D08) sind im Text mit
+> „12.10.“ gekennzeichnet; der übrige Abgleich bleibt auf dem Stand vom 2026-10-07.
 > **[x]** = durch aktuelle Quellen festgelegt; **[ ]** = noch zu entscheiden oder nachzuweisen.
 > Eine dokumentierte Architekturentscheidung ist weder eine freigegebene Implementierungsbaseline
 > noch ein bestandener Gerätetest. Die ursprünglichen Rechercheberichte wurden nicht neu recherchiert.

@@ -42,7 +42,7 @@ The MVP delivery service shall schedule at most one attempt per completed result
 - **Status:** Source-backed; conditional create decided 12 October (D08).
 - **Parameters:** —.
 - **Verification:** VT-07,VT-08.
-- **Acceptance:** Timeout after server commit remains Unverified; no retry or new resource is created. An identifier collision returns the existing resource and never overwrites it. Sent requires a full payload match (identifier, subject, device, code, unit, numeric value, `effectiveDateTime`) for 201 and 200 alike; any difference yields Unverified. Retain redacted outcome evidence, not a sendable failed payload; no mutable patient/value.
+- **Acceptance:** Timeout after server commit remains Unverified; no retry or new resource is created. An identifier collision returns the existing resource and never overwrites it. Sent requires a full payload match (identifier, subject, device, code, unit, numeric value, `effectiveDateTime`) for 201 and 200 alike; any difference yields Unverified. The resource is located via `Location`/`Content-Location`, otherwise by identifier search; zero or several matches yield Unverified. Retain redacted outcome evidence, not a sendable failed payload; no mutable patient/value.
 
 ## NET-005
 
