@@ -112,7 +112,7 @@
     "U107": {
       "label": "Überholt",
       "changed": "Beschreibt das Sendeverhalten der Bring-up-Firmware (gültiger aktueller BPM, Low-Priority-Worker). Das MVP-Zielverhalten ist anders festgelegt.",
-      "current": "Nur eine abgeschlossene Messsitzung (≥15 s, Aggregation nach Stop) ist sendefähig; Netzwerkarbeit nur im Idle unter exklusivem Netzwerk-Lease; ungültiger BPM sendet keinen Zahlenwert, sondern eine getrennte Fehlermeldung; Patient aus `Device.patient` mit Prüfung vor dem `PUT`.",
+      "current": "Nur eine abgeschlossene Messsitzung (≥15 s, Aggregation nach Stop) ist sendefähig; Netzwerkarbeit nur im Idle unter exklusivem Netzwerk-Lease; ungültiger BPM sendet keinen Zahlenwert, sondern eine getrennte Fehlermeldung; Patient aus `Device.patient` mit Prüfung vor dem `PUT`. Vorgeschlagen: NET merkt sich dabei `Device.meta.versionId` und liest das Device nach dem Observation-Readback erneut; jede Versionsänderung ergibt „Unverified“ mit normalem Fehler statt „Sent“. FHIR bietet keine atomare Bedingung über `Device` und `Observation`, eine KIS-Änderung zwischen Prüfung und `PUT` bleibt daher ein Restrisiko, das nur sichtbar gemacht wird.",
       "refs": [
         ["MVP-Entscheidungen 11.10.", "Development/system/planning/mvp-decisions-2026-10-11.md", "confirmed-scope-and-behavior"],
         ["MVP-Entscheidungen 12.10.", "Development/system/planning/mvp-decisions-2026-10-12.md", "proposed-behavior"]
@@ -138,7 +138,7 @@
     "C043": {
       "label": "Überholt",
       "changed": "Übertragung per `POST` mit Backoff-Wiederholung ist nicht der Projektpfad.",
-      "current": "`PUT /Observation/{id}` mit stabiler Ressourcen-ID und anschließendem Readback, ohne Wiederholungswarteschlange; vor dem `PUT` wird `Device.patient` erneut gelesen.",
+      "current": "`PUT /Observation/{id}` mit stabiler Ressourcen-ID und anschließendem Readback, ohne Wiederholungswarteschlange; vor dem `PUT` wird `Device.patient` erneut gelesen und `Device.meta.versionId` festgehalten. Vorgeschlagen: Nach dem Observation-Readback wird das Device erneut gelesen; jede Versionsänderung ergibt „Unverified“ mit normalem Fehler statt „Sent“ (fängt auch A→B→A-Umzuordnungen, kann falsch-positiv sein). Ohne atomare Bedingung über `Device` und `Observation` bleibt eine Umzuordnung zwischen Prüfung und `PUT` ein sichtbar gemachtes Restrisiko.",
       "refs": [
         ["Design: Delivery", "Development/system/design/interfaces-and-behavior.md", "delivery-clock-and-configuration"],
         ["MVP-Entscheidungen 12.10.", "Development/system/planning/mvp-decisions-2026-10-12.md", "proposed-behavior"]
@@ -161,6 +161,20 @@
         ["Entscheidungsregister D09", "Development/system/planning/implementation-readiness.md", "decision-register"],
         ["Produktumfang", "Development/system/spec/product-scope.md", "goal-and-boundary"]
       ]
+    }
+  },
+  "caveats": {
+    "A059": {
+      "label": "Vorbehalt",
+      "date": "2026-10-12",
+      "text": "Die Frequenzverschiebung auf 50 % bzw. 75 % gilt nur für Resampling (Wiedergabe mit veränderter Abtastrate). Tonhöhenerhaltende Time-Scale Modification wie WSOLA verlängert die Dauer ohne diese Verschiebung.",
+      "ids": ["A058"]
+    },
+    "B017": {
+      "label": "Vorbehalt",
+      "date": "2026-10-12",
+      "text": "Exakter Binomialtest und sein Konfidenzintervall setzen unabhängige Trials voraus. Unabhängige Aufnahmen (B076) genügen dafür nicht, wenn derselbe Stimulus wiederholt wird (B011); Trials sind in Personen und Stimuli verschachtelt (B020). Bei wiederholten Stimuli das Binomialergebnis nur deskriptiv berichten oder ein Verfahren mit Stimulus-Clusterung wählen. Entscheidung offen, siehe offene Punkte.",
+      "ids": ["B076", "B011", "B020"]
     }
   },
   "conflicts": {
@@ -186,6 +200,12 @@
       "refs": [["Latenzbudgets 11.10.", "Development/system/planning/mvp-decisions-2026-10-11.md", "latency-research-and-proposed-budgets"]]
     }
   },
+  "review_questions": [
+    {
+      "text": "Hörstudie: Ob die ausgewerteten Trials auf Antwortebene unabhängig sind, ist nicht festgelegt. Wiederholt sich ein Stimulus, ist der exakte Binomialtest nur deskriptiv oder durch ein Verfahren mit Stimulus-Clusterung zu ersetzen. Stimulusplan und Auswertung gemeinsam festlegen.",
+      "ids": ["B017", "B076", "B011", "B020"]
+    }
+  ],
   "open_questions": [
     {
       "text": "Aufgabenbeschreibung (U001–U005) nennt verlangsamte Wiedergabe weiterhin als Arbeitsinhalt, während das MVP sie seit dem Feedback vom 07.10. als optional führt. Klären, ob die Thesis die Verlangsamung als optionale Erweiterung, als Ausblick oder doch als Pflichtteil behandelt; ggf. mit Betreuer die Aufgabenbeschreibung abgleichen.",

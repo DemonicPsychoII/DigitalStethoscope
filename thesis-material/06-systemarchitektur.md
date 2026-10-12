@@ -36,7 +36,7 @@ Bestandsliste: PCM5102A I²S-DAC zur Kopfhörerwiedergabe und INMP441 I²S-MEMS-
 Bei Bottom-Port-Mikrofonen muss die Mikrofonöffnung der Leiterplatte mit dem akustischen Kanal fluchten; R07 nennt wenige Millimeter Abstand und möglichst gute Abdichtung als Konstruktionsziele.
 
 **Ursprung:** [preThesis/03-recherche/R07-bruststueck-mems.md:38-65](../preThesis/03-recherche/R07-bruststueck-mems.md#L38)
-**Belege:** [Alanazi, A., Atcherson, S., Franklin, C., & Bryan, M 2020 · frequency_response_stethoscopes](https://doi.org/10.4103/sjmms.sjmms_118_19) — Seite prüfen; [Weiss, D 2019 · invitro_stethoscopes](https://pmc.ncbi.nlm.nih.gov/articles/PMC6339642/) — Seite prüfen; [Goh, R 2023 · goh_chestpiece](https://staffprofiles.bournemouth.ac.uk/display/journal-article/388323) — Fundstelle: pp. 137–140 (aus Stage 1; am Original prüfen) · 🔒 Volltext kostenpflichtig
+**Belege:** [Alanazi, A., Atcherson, S., Franklin, C., & Bryan, M 2020 · frequency_response_stethoscopes](https://doi.org/10.4103/sjmms.sjmms_118_19) — Seite prüfen; [Weiss, D 2019 · invitro_stethoscopes](https://pmc.ncbi.nlm.nih.gov/articles/PMC6339642/) — Seite prüfen; [Goh, R 2023 · goh_chestpiece](https://doi.org/10.1109/SENNANO57767.2023.10352567) — Fundstelle: pp. 137–140 (aus Stage 1; am Original prüfen) · 🔒 Volltext kostenpflichtig
 
 <a id="u023"></a>
 **U023 · EIGENE ENTSCHEIDUNG / ENTWURFSEMPFEHLUNG**
@@ -52,7 +52,7 @@ Die Membran des Bruststücks soll erhalten bleiben; Kopplung Mikrofon an Hohlrau
 Für Mikrofonmontage nennt R07 weiche Silikon-/TPU-Dichtungen sowie mechanische Entkopplung gegen Griff-, Reibungs- und Körperschall.
 
 **Ursprung:** [preThesis/03-recherche/R07-bruststueck-mems.md:56-65](../preThesis/03-recherche/R07-bruststueck-mems.md#L56)
-**Belege:** [Alanazi, A., Atcherson, S., Franklin, C., & Bryan, M 2020 · frequency_response_stethoscopes](https://doi.org/10.4103/sjmms.sjmms_118_19) — Seite prüfen; [Weiss, D 2019 · invitro_stethoscopes](https://pmc.ncbi.nlm.nih.gov/articles/PMC6339642/) — Seite prüfen; [Goh, R 2023 · goh_chestpiece](https://staffprofiles.bournemouth.ac.uk/display/journal-article/388323) — Fundstelle: pp. 137–140 (aus Stage 1; am Original prüfen) · 🔒 Volltext kostenpflichtig
+**Belege:** [Alanazi, A., Atcherson, S., Franklin, C., & Bryan, M 2020 · frequency_response_stethoscopes](https://doi.org/10.4103/sjmms.sjmms_118_19) — Seite prüfen; [Weiss, D 2019 · invitro_stethoscopes](https://pmc.ncbi.nlm.nih.gov/articles/PMC6339642/) — Seite prüfen; [Goh, R 2023 · goh_chestpiece](https://doi.org/10.1109/SENNANO57767.2023.10352567) — Fundstelle: pp. 137–140 (aus Stage 1; am Original prüfen) · 🔒 Volltext kostenpflichtig
 
 <a id="u012"></a>
 **U012 · OFFENE FRAGE · OFFEN**
@@ -76,7 +76,7 @@ R07 bezeichnet Leckage als kritischen Baufehler mit starker Dämpfung bei 20–4
 R07 empfiehlt, die Bruststückmembran beizubehalten und das Mikrofon in einer kleinen, abgedichteten Kammer unmittelbar hinter der Membran mit kurzem akustischem Weg zu platzieren.
 
 **Ursprung:** [preThesis/03-recherche/R07-bruststueck-mems.md:22-55](../preThesis/03-recherche/R07-bruststueck-mems.md#L22)
-**Belege:** [Alanazi, A., Atcherson, S., Franklin, C., & Bryan, M 2020 · frequency_response_stethoscopes](https://doi.org/10.4103/sjmms.sjmms_118_19) — Seite prüfen; [Weiss, D 2019 · invitro_stethoscopes](https://pmc.ncbi.nlm.nih.gov/articles/PMC6339642/) — Seite prüfen; [Goh, R 2023 · goh_chestpiece](https://staffprofiles.bournemouth.ac.uk/display/journal-article/388323) — Fundstelle: pp. 137–140 (aus Stage 1; am Original prüfen) · 🔒 Volltext kostenpflichtig
+**Belege:** [Alanazi, A., Atcherson, S., Franklin, C., & Bryan, M 2020 · frequency_response_stethoscopes](https://doi.org/10.4103/sjmms.sjmms_118_19) — Seite prüfen; [Weiss, D 2019 · invitro_stethoscopes](https://pmc.ncbi.nlm.nih.gov/articles/PMC6339642/) — Seite prüfen; [Goh, R 2023 · goh_chestpiece](https://doi.org/10.1109/SENNANO57767.2023.10352567) — Fundstelle: pp. 137–140 (aus Stage 1; am Original prüfen) · 🔒 Volltext kostenpflichtig
 
 ## Audiohardware und getrennte Signalpfade
 
@@ -294,7 +294,7 @@ Plattformentscheidung intern zunächst offen: ESP-IDF (C/FreeRTOS) Favorit; Zeph
 
 Der in R11 vorgeschlagene Übertragungspfad lautet: BPM-Observation mit Zeitstempel erzeugen, Uhrzeit synchronisieren, verifiziertes HTTPS aufbauen, FHIR-JSON per POST senden, HTTP-/FHIR-Antworten prüfen und transiente Fehler mit Backoff erneut versuchen.
 
-> **Überholt (Stand integration, 2026-10-12):** Übertragung per `POST` mit Backoff-Wiederholung ist nicht der Projektpfad. Aktuell: `PUT /Observation/{id}` mit stabiler Ressourcen-ID und anschließendem Readback, ohne Wiederholungswarteschlange; vor dem `PUT` wird `Device.patient` erneut gelesen. – siehe [Design: Delivery](../Development/system/design/interfaces-and-behavior.md#delivery-clock-and-configuration), [MVP-Entscheidungen 12.10.](../Development/system/planning/mvp-decisions-2026-10-12.md#proposed-behavior).
+> **Überholt (Stand integration, 2026-10-12):** Übertragung per `POST` mit Backoff-Wiederholung ist nicht der Projektpfad. Aktuell: `PUT /Observation/{id}` mit stabiler Ressourcen-ID und anschließendem Readback, ohne Wiederholungswarteschlange; vor dem `PUT` wird `Device.patient` erneut gelesen und `Device.meta.versionId` festgehalten. Vorgeschlagen: Nach dem Observation-Readback wird das Device erneut gelesen; jede Versionsänderung ergibt „Unverified“ mit normalem Fehler statt „Sent“ (fängt auch A→B→A-Umzuordnungen, kann falsch-positiv sein). Ohne atomare Bedingung über `Device` und `Observation` bleibt eine Umzuordnung zwischen Prüfung und `PUT` ein sichtbar gemachtes Restrisiko. – siehe [Design: Delivery](../Development/system/design/interfaces-and-behavior.md#delivery-clock-and-configuration), [MVP-Entscheidungen 12.10.](../Development/system/planning/mvp-decisions-2026-10-12.md#proposed-behavior).
 
 **Ursprung:** [preThesis/03-recherche/R11-fhir-tls.md:220-233](../preThesis/03-recherche/R11-fhir-tls.md#L220)
 **Belege:** [HL7 · fhir_r4_vitals_official](https://hl7.org/fhir/R4/observation-vitalsigns.html) — Fundstelle: Vital Signs Profile (aus Stage 1; am Original prüfen); [Espressif Systems · esp_tls_s3](https://docs.espressif.com/projects/esp-idf/en/stable/esp32s3/api-reference/protocols/esp_tls.html) — Fundstelle: TLS Server Verification (aus Stage 1; am Original prüfen); [Espressif Systems · esp_tls_faq](https://docs.espressif.com/projects/esp-faq/en/latest/software-framework/protocols/esp-tls.html) — Fundstelle: Question on certificate expiry (aus Stage 1; am Original prüfen)

@@ -17,7 +17,39 @@ original_sources = json.loads((AUDIT / 'sources-merged.json').read_text(encoding
 overrides = json.loads((ROOT / '_build/source-overrides.json').read_text(encoding='utf-8'))
 # Abgleich mit neueren integration-Entscheidungen: Notizen ergänzen die Aussagen, ersetzen sie nicht.
 notes = json.loads((ROOT / '_build/integration-notes.json').read_text(encoding='utf-8'))
+corrections = json.loads((ROOT / '_build/stage2-corrections.json').read_text(encoding='utf-8'))
 sources = {k: dict(v, **overrides.get(k, {})) for k, v in original_sources.items()}
+
+# Die Stage-1-Quellendateien wurden außerhalb dieses Generators zusammengeführt. Gleiche Schlüssel mit
+# verschiedenen belegten DOIs bezeichnen verschiedene Werke und müssen ausdrücklich aufgeteilt werden.
+def real_doi(v):
+    return str(v.get('doi', '')).lower().removeprefix('https://doi.org/') if str(v.get('doi', '')).startswith(('https://doi.org/', '10.')) else None
+first_seen = {}
+for f in [AUDIT / 'sources.json', *sorted((AUDIT / 'round2').glob('*-sources.json'))]:
+    for key, rec in json.loads(f.read_text(encoding='utf-8')).items():
+        prev = first_seen.setdefault(key, (f.name, rec))
+        if prev[1] is not rec and real_doi(prev[1]) and real_doi(rec) and real_doi(prev[1]) != real_doi(rec):
+            assert key in corrections['split_sources'], f'Schlüsselkollision {key}: {prev[0]} vs. {f.name}; in _build/stage2-corrections.json aufteilen'
+for key, split in corrections['split_sources'].items():
+    for new_key, rec in split['into'].items():
+        assert new_key not in sources, new_key
+        sources[new_key] = dict(rec, split_from=key)
+
+# Ausgangszahl vor allen Stage-2-Korrekturen festhalten.
+broken_affected_units_stage1=sum(any('broken' in original_sources[c['key']].get('link_check','') for c in u.get('sources',[])) for u in units)
+# Stage-2-Korrekturen an Einheiten anwenden; Stage 1 selbst bleibt unverändert.
+for u in units:
+    fix = corrections['units'].get(u['id'])
+    if fix:
+        if 'origin' in fix: u['origin'] = fix['origin']
+        drop = set(fix.get('remove_sources', []))
+        assert drop <= {c['key'] for c in u.get('sources', [])}, (u['id'], drop)
+        u['sources'] = [c for c in u.get('sources', []) if c['key'] not in drop]
+        if drop: assert u.get('sources_incomplete'), u['id']
+    for c in u.get('sources', []):
+        split = corrections['split_sources'].get(c['key'])
+        if split: c['key'] = split['by_unit_prefix'][u['id'][0]]
+assert set(corrections['units']) <= {u['id'] for u in units}
 by_id = {u['id']: u for u in units}
 assert len(by_id) == len(units) == 350
 stage1_before = {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest()
@@ -187,6 +219,11 @@ def render_note(note, src):
     refs = ', '.join(repo_link(t, p, a, src) for t, p, a in note['refs'])
     return f'> **{note["label"]} (Stand integration, {notes["stand"]}):** {note["changed"]} Aktuell: {note["current"]} – siehe {refs}.'
 
+def render_caveat(note, src):
+    # Fachlicher Vorbehalt ohne neuere Entscheidung: Aussage bleibt stehen, Einschränkung wird sichtbar.
+    ids = ', '.join(unit_link(i, src) for i in note['ids'])
+    return f'> **{note["label"]} ({note["date"]}):** {note["text"]} Bezug: {ids}.'
+
 def unit_link(uid, src):
     target = replaced.get(uid, [uid])[0]
     return f'[{uid}]({relative(src,route[target])}#{target.lower()})'
@@ -225,7 +262,10 @@ def short_ref(key):
     s=sources[key]; ref=s['reference']
     first=ref.split('. ')[0]
     year=re.search(r'\((\d{4})\)',ref)
-    return (first[:52]+(' '+year[1] if year else '')) + f' · {key}'
+    first=first[:52]
+    # Eine abgeschnittene Klammer würde als offenes „(“ im Linktext stehen bleiben.
+    if first.count('(')>first.count(')'): first=first[:first.rfind('(')].rstrip()
+    return (first+(' '+year[1] if year else '')) + f' · {key}'
 
 def citation(c, src):
     key=c['key']; s=sources[key]
@@ -249,7 +289,11 @@ def render_unit(u, src):
     tail=' · ersetzt '+', '.join(olds) if olds else ''
     lines=[f'<a id="{uid.lower()}"></a>',f'**{uid} · {" · ".join(tags)}{tail}**', '',u['statement'],'']
     if uid in notes['units']: lines+=[render_note(notes['units'][uid],src),'']
+    if uid in notes['caveats']: lines+=[render_caveat(notes['caveats'][uid],src),'']
     lines.append(f'**Ursprung:** {origins(u,src)}')
+    if uid in corrections['units']:
+        fix=corrections['units'][uid]
+        lines.append(f'**Korrektur Stage 2 ({fix["date"]}):** {fix["reason"]} Quelle: [_build/stage2-corrections.json]({relative(src,"_build/stage2-corrections.json")}).')
     if u.get('chapter_secondary'): lines.append('**Weiterer Kapitelbezug:** '+str(u['chapter_secondary']))
     lines.append('**Belege:** '+('; '.join(citation(c,src) for c in u.get('sources',[])) or 'Keine externen Belege im Inventar; Projektursprung verwenden.'))
     if u.get('removed'):lines.append('**Audit:** verworfene Quellen siehe '+relative(src,'_stage1/inventory-merged.json')+' (Feld `removed`).')
@@ -296,7 +340,23 @@ def source_topic(key):
     if re.search(r'circor|physionet|challenge|database',key):return 'Datensätze und Referenzlabels'
     if re.search(r'stethoscope|acoustic|helmholtz|goh_|farina|ciric|iec60|iec61',key):return 'Akustik, Bruststück und Messmethoden'
     return 'Herzschall, Filter und Signalanalyse'
-bib_text='# Quellenverzeichnis und Fundstellen\n\n[Zum Einstieg](README.md) · [Linkkorrekturen](linkkorrekturen.md) · [BibTeX](quellen.bib)\n\n103 Quellenschlüssel aus Stage 1. Doppelte Werke unter verschiedenen Schlüsseln bleiben für die Rückverfolgung erhalten. Die Zuordnung ist thematisch; alle zitierenden IDs werden genannt, auch ersetzte. „ok“ bezeichnet Linkzugang, nicht die Tragfähigkeit jeder Aussage. Seitenangaben sind getrennt zu prüfen.\n\n**BibTeX:** Für vier neu geprüfte Einträge stehen belegte Metadaten bereit. Die übrigen Minimal-Einträge enthalten nur die in Stage 1 überprüfte URL, wenn sie dort als erreichbar markiert ist, und eine als unsicher gekennzeichnete Arbeitsnotiz. Autoren, Titel, Jahre und DOIs werden dort nicht aus Freitext erraten. Vor der finalen Abgabe Originalmetadaten importieren.\n\n'
+# Zählwerte einmal berechnen und in allen erzeugten Texten wiederverwenden.
+broken_before={k for k,s in original_sources.items() if 'broken' in s.get('link_check','')}
+broken_after={k for k,s in sources.items() if 'broken' in s.get('link_check','')}
+repaired={k for k in overrides if k not in broken_after}
+stats={'audit_units':len(units),'active_units':len(active),'superseded_ids':len(replaced),
+ 'superseding_units':sum(bool(u.get('supersedes')) for u in units),
+ 'citation_units':sum(u['needs_citation'] for u in units),
+ 'citation_units_with_at_least_three_sources':sum(u['needs_citation'] and len(u.get('sources',[]))>=3 for u in units),
+ 'incomplete_source_sets':sum(bool(u.get('sources_incomplete')) for u in units),
+ 'source_references':sum(len(u.get('sources',[])) for u in units),
+ 'unverified_pages_exact':sum(c.get('page')=='unverified' for u in units for c in u.get('sources',[])),
+ 'broken_entries_before':len(broken_before),'broken_entries_after':len(broken_after),
+ 'broken_affected_units_before':broken_affected_units_stage1,
+ 'broken_affected_units_after':sum(any(c['key'] in broken_after for c in u.get('sources',[])) for u in units),
+ 'source_keys':len(sources),'verified_repairs':len(repaired),
+ 'chapter_files':{path:len(groups[path]) for path in files}}
+bib_text='# Quellenverzeichnis und Fundstellen\n\n[Zum Einstieg](README.md) · [Linkkorrekturen](linkkorrekturen.md) · [BibTeX](quellen.bib)\n\n'+f'{len(original_sources)} Quellenschlüssel aus Stage 1, nach Stage-2-Aufteilung {len(sources)}.'+' Doppelte Werke unter verschiedenen Schlüsseln bleiben für die Rückverfolgung erhalten. Die Zuordnung ist thematisch; alle zitierenden IDs werden genannt, auch ersetzte. „ok“ bezeichnet Linkzugang, nicht die Tragfähigkeit jeder Aussage. Seitenangaben sind getrennt zu prüfen.\n\n'+f'**BibTeX:** Für {len(overrides)} neu geprüfte Einträge stehen belegte Metadaten bereit.'+' Die übrigen Minimal-Einträge enthalten nur die in Stage 1 überprüfte URL, wenn sie dort als erreichbar markiert ist, und eine als unsicher gekennzeichnete Arbeitsnotiz. Autoren, Titel, Jahre und DOIs werden dort nicht aus Freitext erraten. Vor der finalen Abgabe Originalmetadaten importieren.\n\n'
 for category in sorted({source_topic(k) for k in sources}):
     bib_text+=f'## {category}\n\n'
     for key in sorted(k for k in sources if source_topic(k)==category):
@@ -307,7 +367,9 @@ for category in sorted({source_topic(k) for k in sources}):
         if s.get('doi') and s['doi']!='unverified':bib_text+=f' · DOI aus Arbeitsdatensatz: [{s["doi"]}]({s["doi"]})'
         bib_text+='\n\n**Prüfnachweis Stage 1:** '+s.get('verified','keiner')+'\n\n'
         if key in overrides:bib_text+='**Korrektur Stage 2:** '+overrides[key]['fix_reason']+'\n\n'
-        if key=='pilot_guidelines':bib_text+='**METADATENKONFLIKT:** Der verlinkte PMC-Text gehört zu Teresi et al. (2022), Medical Care 60(1), 95–103, DOI 10.1097/MLR.0000000000001664. Der Ausgangseintrag nennt Leon (2011). Keine automatische Ersetzung: erst klären, welches Werk die Aussagen tatsächlich belegt.\n\n'
+        if s.get('split_from'):bib_text+=f'**Korrektur Stage 2 ({corrections["split_sources"][s["split_from"]]["date"]}):** Aus Schlüssel {source_link(s["split_from"],"quellen.md")} aufgeteilt. {corrections["split_sources"][s["split_from"]]["reason"]}\n\n'
+        if key in corrections['split_sources']:bib_text+='**Korrektur Stage 2:** Schlüssel aufgeteilt in '+', '.join(source_link(k,'quellen.md') for k in corrections['split_sources'][key]['into'])+'; zitierende Einheiten verweisen jetzt dorthin.\n\n'
+        if key=='pilot_guidelines' and key not in overrides:bib_text+='**METADATENKONFLIKT:** Der verlinkte PMC-Text gehört zu Teresi et al. (2022), Medical Care 60(1), 95–103, DOI 10.1097/MLR.0000000000001664. Der Ausgangseintrag nennt Leon (2011). Keine automatische Ersetzung: erst klären, welches Werk die Aussagen tatsächlich belegt.\n\n'
         bib_text+='**Zitiert von:** '+(', '.join(unit_link(uid,'quellen.md')+(' (ersetzt)' if uid in replaced else '') for uid in usage[key]) or 'Keine Einheit im Inventar.')+'\n\n'
 outputs['quellen.md']=bib_text.rstrip('\n')+'\n'
 
@@ -318,24 +380,34 @@ for key,s in sources.items():
     fields=dict(s.get('bib',{}))
     if (key in overrides or s.get('link_check','').startswith('ok')) and str(s.get('url')).startswith(('https://','http://')):fields['url']=s['url']
     if key in overrides:
-        fields['note']='Metadaten anhand der Primärfundstelle geprüft am 2026-10-05. Zitierte Einzelseiten und Aussagepassung separat prüfen. '+s['fix_reason']
+        fields['note']='Metadaten anhand der Primärfundstelle geprüft am '+overrides[key].get('checked','2026-10-05')+'. Zitierte Einzelseiten und Aussagepassung separat prüfen. '+s['fix_reason']
     else:
         fields['note']='UNSICHERER MINIMALEINTRAG. Bibliografische Felder vor Verwendung am Original ergänzen. Referenztext aus Stage 1, nicht als Feldmetadaten verifiziert: '+s['reference']+' Linkstatus: '+s.get('link_check','nicht geprüft')
     bib.append('@misc{'+key+',\n'+',\n'.join('  '+k+' = {'+(str(v) if k in ('url','doi','author') else bib_escape(v))+'}' for k,v in fields.items())+'\n}\n')
 outputs['quellen.bib']='\n'.join(bib)
 
-broken_before={k for k,s in original_sources.items() if 'broken' in s.get('link_check','')}
-broken_after={k for k,s in sources.items() if 'broken' in s.get('link_check','')}
-fixes='# Linkkorrekturen und Suchprotokoll\n\n[Zum Einstieg](README.md)\n\nPrüfdatum: 05.10.2026. Änderungen liegen ausschließlich in [_build/source-overrides.json](_build/source-overrides.json); Stage 1 bleibt unverändert. Direkte HTTP-Proben: [_build/link-probes.json](_build/link-probes.json). Ein Suchtreffer allein genügt nicht zum Reparieren eines Links. Keine Seitenzahlen wurden neu festgelegt.\n\n## Verifiziert korrigiert\n\n'
+fixes='# Linkkorrekturen und Suchprotokoll\n\n[Zum Einstieg](README.md)\n\nPrüfdatum: 05.10.2026; spätere Prüfungen tragen ihr eigenes Datum. Änderungen liegen ausschließlich in [_build/source-overrides.json](_build/source-overrides.json) und [_build/stage2-corrections.json](_build/stage2-corrections.json); Stage 1 bleibt unverändert. Direkte HTTP-Proben: [_build/link-probes.json](_build/link-probes.json). Ein Suchtreffer allein genügt nicht zum Reparieren eines Links. Keine Seitenzahlen wurden neu festgelegt.\n\n## Verifiziert korrigiert\n\n'
+def fix_entry(key,v):
+    return f'### {key}\n\n'+(f'**Geprüft:** {v["checked"]}\n\n' if v.get('checked') else '')+f'{v["fix_reason"]}\n\n**Vorher:** {original_sources[key]["url"]}; DOI: {original_sources[key].get("doi","—")}\n\n**Jetzt:** [Fundstelle]({v["url"]}) · {v["link_check"]}\n\n**Identitätsnachweise:** '+', '.join(f'[Primärquelle {i+1}]({url})' for i,url in enumerate(v['evidence']))+'\n\n'
 for key,v in overrides.items():
-    fixes+=f'### {key}\n\n{v["fix_reason"]}\n\n**Vorher:** {original_sources[key]["url"]}; DOI: {original_sources[key].get("doi","—")}\n\n**Jetzt:** [Fundstelle]({v["url"]}) · {v["link_check"]}\n\n**Identitätsnachweise:** '+', '.join(f'[Primärquelle {i+1}]({url})' for i,url in enumerate(v['evidence']))+'\n\n'
-fixes+='## Unrepariert: sichtbar defekt\n\n'
+    if key in repaired:fixes+=fix_entry(key,v)
+# Metadatenkorrektur ohne erreichbaren Link ist keine Reparatur.
+fixes+='## Metadaten korrigiert, Link weiterhin defekt\n\n'
+for key,v in overrides.items():
+    if key not in repaired:fixes+=fix_entry(key,v)
+fixes+='## Korrekturen an Einheiten und Schlüsseln\n\n'
+for uid,fix in corrections['units'].items():
+    fixes+=f'- {unit_link(uid,"linkkorrekturen.md")} ({fix["date"]}): {fix["reason"]}\n'
+for key,split in corrections['split_sources'].items():
+    fixes+=f'- {source_link(key,"linkkorrekturen.md")} ({split["date"]}): aufgeteilt in '+', '.join(source_link(k,'linkkorrekturen.md') for k in split['into'])+f'. {split["reason"]}\n'
+fixes+='\n## Unrepariert: sichtbar defekt\n\n'
 reasons={
  'pilot_guidelines':'Titel gefunden, aber Werkidentität widersprüchlich (Leon 2011 versus Teresi 2022). Korrekturkandidat DOI 10.1097/MLR.0000000000001664; direkter Abruf HTTP 403. Aussagepassung zum PMC-Artikel prüfen, bevor Metadaten ersetzt werden.',
  'aes_lester_boley_2007':'Gleicher AES-Treffer gefunden; direkter Abruf endet mit Timeout bzw. Werkzeugfehler. Kein sicher funktionierender Ersatz.',
  'ecm_datasheet_im69d130':'Hersteller-PDF und älterer dgdl-Link gefunden, beide direkt nicht erreichbar (404). Produktseite ist kein Ersatz für dieselbe Datenblattfassung.',
  'ics40180_datasheet':'Herstellerkandidat DS-000021-v1.22.pdf aus bibliografischem Verweis geprüft; HTTP 404. Keine gesicherte Herstellerfassung erreichbar.',
  'tha_elektrotechnik_duration':'Passenden offiziellen PDF-Suchtreffer gefunden; direkter Abruf HTTP 404. Kein verifiziert erreichbarer Ersatz.',
+ 'fda_ec13_guidance':'PDF-Link und gelistete HTML-Seite lieferten bei unabhängigem Abruf am 2026-10-05 und 2026-10-12 HTTP 404; Metadaten sind korrigiert, der Volltext ist nicht unabhängig geprüft. Dokument über die FDA-Guidance-Suche (Titel „Cardiac Monitor Guidance (including Cardiotachometer and Rate Alarm)“) erneut finden; falls dort nicht verfügbar, archivierte Fassung beim Originalanbieter oder über eine Hochschulbibliothek beschaffen.',
 }
 for key in sorted(broken_after):
     reason=reasons.get(key,'THA-Suche nach Dokumenttitel, FAQ 02.26, Merkblatt und Abschlussarbeitsseite ergab keinen verifiziert erreichbaren identischen Ersatz. Fakultätsportal oder Hochschulzugang verwenden; nicht durch fachfremde Regeln ersetzen.')
@@ -368,7 +440,7 @@ for text,ids,*conflict in [
  ('Filter 40–800 Hz / 25–150 Hz, Live-Latenz <30 ms bzw. ≤10/≤5 ms und BPM-Grenzen sind vorläufige Entwicklungsziele. Eine gemeinsame Anforderungsversion und Messmethode festlegen.', ['U027','U102','U110','C001','A056','A057'], 'targets'),
  ('10–40-ms-DMA-Startwerte passen nicht ohne Prüfung zum ≤10-ms-End-to-End-Ziel. Tatsächliche Blocklatenz, Wandler- und Schedulinganteile am Prototyp messen.', ['C027','C001','U101'], 'dma'),
  ('Builds und Hosttests ersetzen keine integrierte Hardwareevaluation. Physische Tests am dokumentierten Firmware-Commit nachholen; Verdrahtungsbestätigung separat ausweisen.', ['U119','U125','U129','U130','U131']),
- ('Pilotstudienquelle: Leon-/Teresi-Metadatenkonflikt klären. Zusätzlich FDA-Publikationsjahr 1998 statt 2023 und EC13-1992-Bezug in der reparierten FDA-Fassung beachten.', ['B001','B016','A052']),
+ ('Pilotstudienquelle: Leon-/Teresi-Metadatenkonflikt klären. Zusätzlich FDA-Publikationsjahr 1998 statt 2023 und EC13-1992-Bezug in der reparierten FDA-Fassung beachten.'+(' **Stand 2026-10-12:** Leon-/Teresi-Konflikt zugunsten Teresi et al. (2022) aufgelöst, siehe [Linkkorrekturen](linkkorrekturen.md#pilot_guidelines); der FDA-Link bleibt defekt.' if 'pilot_guidelines' in repaired else ''), ['B001','B016','A052']),
 ]:
     open_text+='- **Nico:** '+text+' Bezüge: '+', '.join(unit_link(i,'offene-punkte.md') for i in ids)+'.\n'
     if conflict:open_text+='\n  '+render_note(notes['conflicts'][conflict[0]],'offene-punkte.md')+'\n\n'
@@ -377,41 +449,33 @@ open_text+=f'Stand integration {notes["stand"]} ({notes["integration_commit"]}).
 for q in notes['open_questions']:
     open_text+='- **Nico:** '+q['text']+' Bezüge: '+', '.join(unit_link(i,'offene-punkte.md') for i in q['ids'])+'; '+', '.join(repo_link(t,p,a,'offene-punkte.md') for t,p,a in q['refs'])+'.\n'
 open_text+='- **Nico:** Zitierte QC-Berichte (`QC-EVALUATION.md`, `qc-eval-results.json`) sind seit 89ca8b1 nicht mehr eingecheckt, sondern werden nach `artifacts/qc/` erzeugt. Die Herkunftslinks zeigen auf die historische Fassung in Git; für die Thesis entscheiden, ob der historische Bericht vom 24.09. oder ein neu erzeugter, datierter Bericht zitiert wird. Bezüge: '+', '.join(unit_link(i,'offene-punkte.md') for i in ('U091','U092','U097'))+'.\n'
+open_text+='\n<a id="fachliche-vorbehalte"></a>\n## Fachliche Vorbehalte aus dem Review\n\n'
+for q in notes['review_questions']:
+    open_text+='- **Nico:** '+q['text']+' Bezüge: '+', '.join(unit_link(i,'offene-punkte.md') for i in q['ids'])+'.\n'
 open_text+='\n## Offene Fragen, Annahmen und Risiken\n\n'
 for u in active:
     if u['type'] not in ('open-question','risk') and u['status'] not in ('open','assumption'):continue
     task='Antwort festlegen und im Projektursprung dokumentieren.' if u['type']=='open-question' else 'Geltungsbereich und Nachweis prüfen; bei einem Projektziel Entscheidung samt Akzeptanzkriterium dokumentieren.'
     if u['type']=='risk':task='Eintrittsbedingung und Auswirkung prüfen; Maßnahme oder begründete Begrenzung dokumentieren.'
     open_text+=f'- **{unit_link(u["id"],"offene-punkte.md")} · {u["status"]}:** {u["statement"]} **Nico:** {task}\n'
-open_text+='\n## Unvollständige Quellensets\n\n45 Flags aus Stage 1; mehrere Quellen sind kein automatischer Qualitätsnachweis. Passende Primärbelege und konkrete Fundstellen prüfen; irrelevante Belege streichen. Flags ersetzter Einheiten bleiben als Audit-Hinweis, ohne sie automatisch auf den Ersatz zu übertragen.\n\n'
+open_text+='\n## Unvollständige Quellensets\n\n'+f"{stats['incomplete_source_sets']} Flags aus Stage 1 (nach Stage-2-Korrekturen);"+' mehrere Quellen sind kein automatischer Qualitätsnachweis. Passende Primärbelege und konkrete Fundstellen prüfen; irrelevante Belege streichen. Flags ersetzter Einheiten bleiben als Audit-Hinweis, ohne sie automatisch auf den Ersatz zu übertragen.\n\n'
 for u in units:
     if u.get('sources_incomplete'):
         open_text+=f'- {unit_link(u["id"],"offene-punkte.md")}'+(' (ersetzt; ursprüngliches Flag)' if u['id'] in replaced else '')+f': {len(u.get("sources",[]))} Belege. **Nico:** Aussage gegen passende Originalquellen prüfen; Lücke schließen oder Anspruch begrenzen.\n'
-open_text+='\n## Ungeprüfte Seiten und Fundstellen\n\nDie 328 expliziten `page: unverified`-Verweise sind keine gesicherten Seitenangaben. Auch übernommene Abschnitts-/Tabellenhinweise am Original prüfen. Die folgende Liste umfasst zusätzlich Angaben, die „unverified“ nur als Teiltext enthalten.\n\n'
+open_text+='\n## Ungeprüfte Seiten und Fundstellen\n\n'+f"Die {stats['unverified_pages_exact']} expliziten"+' `page: unverified`-Verweise sind keine gesicherten Seitenangaben. Auch übernommene Abschnitts-/Tabellenhinweise am Original prüfen. Die folgende Liste umfasst zusätzlich Angaben, die „unverified“ nur als Teiltext enthalten.\n\n'
 for u in units:
     refs=[c for c in u.get('sources',[]) if 'unverified' in str(c.get('page','unverified')).lower()]
     if refs:open_text+=f'- {unit_link(u["id"],"offene-punkte.md")}'+(' (ersetzt)' if u['id'] in replaced else '')+': '+', '.join(source_link(c['key'],'offene-punkte.md')+(f' — Hinweis: {c["page_hint"]}' if c.get('page_hint') else '') for c in refs)+'. **Nico:** Original öffnen, Aussagepassung und konkrete Seite/Abschnitt eintragen.\n'
-open_text+='\n## Defekte Links und Quellenidentität\n\nVier Reparaturen sind in [linkkorrekturen.md](linkkorrekturen.md) belegt. Elf Ausgangseinträge bleiben defekt.\n\n'
+open_text+='\n## Defekte Links und Quellenidentität\n\n'+f"{len(repaired)} verifizierte Korrekturen sind in [linkkorrekturen.md](linkkorrekturen.md) belegt. {len(broken_after)} Einträge bleiben defekt."+'\n\n'
 for key in sorted(broken_after):
     open_text+=f'- {source_link(key,"offene-punkte.md")}: {sources[key]["link_check"]}. Betroffen: '+', '.join(unit_link(uid,'offene-punkte.md') for uid in usage[key])+'. **Nico:** identisches Werk über Originalanbieter/Hochschulbibliothek beschaffen; Metadaten und Fundstelle bestätigen.\n'
 outputs['offene-punkte.md']=open_text
 
-stats={'audit_units':len(units),'active_units':len(active),'superseded_ids':len(replaced),
- 'superseding_units':sum(bool(u.get('supersedes')) for u in units),
- 'citation_units':sum(u['needs_citation'] for u in units),
- 'citation_units_with_at_least_three_sources':sum(u['needs_citation'] and len(u.get('sources',[]))>=3 for u in units),
- 'incomplete_source_sets':sum(bool(u.get('sources_incomplete')) for u in units),
- 'source_references':sum(len(u.get('sources',[])) for u in units),
- 'unverified_pages_exact':sum(c.get('page')=='unverified' for u in units for c in u.get('sources',[])),
- 'broken_entries_before':len(broken_before),'broken_entries_after':len(broken_after),
- 'broken_affected_units_before':sum(any(c['key'] in broken_before for c in u.get('sources',[])) for u in units),
- 'broken_affected_units_after':sum(any(c['key'] in broken_after for c in u.get('sources',[])) for u in units),
- 'chapter_files':{path:len(groups[path]) for path in files}}
 readme=f'''# Schreibbaukasten für Nicos Bachelorarbeit
 
 DigitalStethoscope · ESP32/Zephyr · TH Augsburg · Abgabe laut Nico: **11.01.2027**.
 
-Hier liegen geordnete Schreibbausteine aus 350 Informationseinheiten, keine fertige Thesis und keine neue Hardwarevalidierung. **{len(active)} aktive Aussagen** werden gezeigt; **{len(replaced)} ältere IDs** bleiben über „ersetzt …“ und den [Einheitenindex](einheitenindex.md) auffindbar. Die 26 Ersatz-Einheiten können dieselbe ältere ID aufteilen. Das unveränderte Verzeichnis `_stage1/` ist der Audit-Trail; sein HANDOFF beschreibt teilweise einen älteren Inventarstand.
+Hier liegen geordnete Schreibbausteine aus 350 Informationseinheiten, keine fertige Thesis und keine neue Hardwarevalidierung. **{len(active)} aktive Aussagen** werden gezeigt; **{len(replaced)} ältere IDs** bleiben über „ersetzt …“ und den [Einheitenindex](einheitenindex.md) auffindbar. Die {stats['superseding_units']} Ersatz-Einheiten können dieselbe ältere ID aufteilen. Das unveränderte Verzeichnis `_stage1/` ist der Audit-Trail; sein HANDOFF beschreibt teilweise einen älteren Inventarstand.
 
 ## Jetzt mit Grundlagen anfangen
 
@@ -429,7 +493,7 @@ Pro Absatz eine Kernaussage wählen, Originalbeleg öffnen und die genaue Fundst
 - **Widersprüche:** W1 (Q1/AP 2.2 versus gestrichene Kettenmessung), W2 (Schalterzuordnung), CirCor 5.272/5.282, Helmholtz-Modell und Knowles-LFRO. Sie stehen zuerst in [offene-punkte.md](offene-punkte.md#widersprueche).
 - **Eigene Zielwerte:** 40–800 Hz / 25–150 Hz, <30 ms bzw. ≤10/≤5 ms und BPM-Akzeptanzgrenzen sind vorläufige Entwicklungsentscheidungen, keine allgemeingültigen Literaturgrenzen.
 - **Quellenstand des Audits:** {stats['citation_units']} zitierbedürftige Einheiten, {stats['citation_units_with_at_least_three_sources']} davon mit mindestens drei Quellen, {stats['incomplete_source_sets']} unvollständige Quellensets. {stats['unverified_pages_exact']} von {stats['source_references']} Quellenverweisen haben exakt `page: unverified`. Nico muss diese Seiten prüfen.
-- **Defekte Links:** ursprünglich 15 Einträge, betroffen 72 Einheiten. Vier verifiziert repariert, elf sichtbar defekt; weiterhin betroffen: {stats['broken_affected_units_after']} Audit-Einheiten. [Korrekturprotokoll](linkkorrekturen.md). Die Pilotstudienquelle enthält zusätzlich einen ungelösten Metadatenkonflikt.
+- **Defekte Links:** ursprünglich {len(broken_before)} Einträge, betroffen {stats['broken_affected_units_before']} Einheiten. {len(repaired)} verifiziert korrigiert, {len(broken_after)} sichtbar defekt; weiterhin betroffen: {stats['broken_affected_units_after']} Audit-Einheiten. [Korrekturprotokoll](linkkorrekturen.md). {'Der Leon-/Teresi-Metadatenkonflikt der Pilotstudienquelle ist in Stage 2 aufgelöst.' if 'pilot_guidelines' in repaired else 'Die Pilotstudienquelle enthält zusätzlich einen ungelösten Metadatenkonflikt.'}
 - Build-/Host-/QC-Erfolg belegt keine integrierte physische Funktion. Historische Messungen nur mit Datum und Firmwarestand verwenden.
 - **Stand integration {notes['stand']}:** W1 ist im Entwurf zugunsten der Abgabefassung ohne Kettenmessung behandelt (D09), die Bestätigung steht aus. W2 betrifft auch den im MVP optionalen Geschwindigkeitsschalter und die neue Trägerplatine. Für Latenz- und BPM-Ziele gibt es eine gemeinsame, noch nicht freigegebene Vorschlagsfassung vom 11.10. Details: [Abgleich mit integration](#abgleich-mit-integration).
 
@@ -450,7 +514,7 @@ Die Zahlen zählen aktive Aussagen, nicht ersetzte IDs, Querverweise oder Quelle
 |---|---:|
 '''
 for path,title,_ in chapters:readme+=f'| [{title}]({path}) | {len(groups[path])} |\n'
-readme+='''
+readme+=f'''
 ## Marker und Nutzung
 
 | Marker | Bedeutung beim Schreiben |
@@ -469,7 +533,7 @@ readme+='''
 
 `confirmed` wird nicht eigens angezeigt: Es bedeutet im Inventar dokumentiert, nicht unabhängig wahrheitsgeprüft. Auch vorhandene Abschnitts-/Tabellenverweise sind aus Stage 1 übernommen. Alle Aussagen behalten exakt ihre Quellsprache; einzelne englische Firmwareeinheiten sind deshalb weiterhin Englisch.
 
-[Quellenverzeichnis](quellen.md) führt alle 103 Schlüssel mit zitierenden IDs. [quellen.bib](quellen.bib) enthält konservative Minimal-Einträge und kennzeichnet fehlende Metadaten; es ist noch kein abgabefertiges Literaturverzeichnis. [Einheitenindex](einheitenindex.md) führt jede Audit-ID zur Schreibstelle. [Offene Punkte](offene-punkte.md) sind die Arbeitsliste für Entscheidungen, Seiten und Quellenlücken.
+[Quellenverzeichnis](quellen.md) führt alle {len(sources)} Schlüssel mit zitierenden IDs. [quellen.bib](quellen.bib) enthält konservative Minimal-Einträge und kennzeichnet fehlende Metadaten; es ist noch kein abgabefertiges Literaturverzeichnis. [Einheitenindex](einheitenindex.md) führt jede Audit-ID zur Schreibstelle. [Offene Punkte](offene-punkte.md) sind die Arbeitsliste für Entscheidungen, Seiten und Quellenlücken.
 
 ## Regenerieren und prüfen
 
@@ -512,8 +576,8 @@ report=f'''# Vollständigkeitsprüfung
 **PASS: 350/350 Audit-IDs in den Kapiteldateien vorhanden.**
 
 - {len(active)} aktive Aussagen jeweils genau einmal mit eigenem Anker.
-- {len(replaced)} ersetzte IDs ausdrücklich als „ersetzt …“ erhalten; 26 Ersatz-Einheiten.
-- 103 Quellenschlüssel; alle Quellenverweise auf bekannte Einträge.
+- {len(replaced)} ersetzte IDs ausdrücklich als „ersetzt …“ erhalten; {stats['superseding_units']} Ersatz-Einheiten.
+- {len(sources)} Quellenschlüssel; alle Quellenverweise auf bekannte Einträge.
 - Alle lokalen Markdown-Linkziele vorhanden.
 - `_stage1/` während des Generatorlaufs unverändert (SHA-256-Vergleich).
 - Fehlende IDs: keine. Unbekannte IDs: keine.

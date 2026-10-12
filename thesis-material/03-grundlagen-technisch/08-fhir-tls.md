@@ -53,7 +53,8 @@ Das FHIR-R4-Profil Vital Signs identifiziert die Herzfrequenz mit LOINC-Code 886
 Der `Patient`-Verweis in `Observation.subject` kann auf eine bereits vorhandene Serverressource zeigen und muss nicht zusammen mit der Observation übertragen werden.
 
 **Ursprung:** [preThesis/03-recherche/R11-fhir-tls.md:47-50](../../preThesis/03-recherche/R11-fhir-tls.md#L47)
-**Belege:** [HL7 · fhir_r4_vitals_official](https://hl7.org/fhir/R4/observation-vitalsigns.html) — Fundstelle: Vital Signs Profile (aus Stage 1; am Original prüfen); [HL7 · fhir_observation_r4](https://hl7.org/fhir/R4/observation.html) — Seite prüfen; [Technische Hochschule Augsburg · tha_faq_ba](https://www.tha.de/index.php/Binaries/Binary89415/FAQ-Bachelorarbeit-02.26-clean.pdf) — Fundstelle: Section 5 (aus Stage 1; am Original prüfen) · **LINK DEFEKT**
+**Korrektur Stage 2 (2026-10-12):** THA-FAQ zur Bachelorarbeit (DMS-Anmeldung, Fristen) belegt keine FHIR-Referenzsemantik. Quellenset bleibt als unvollständig markiert. Quelle: [_build/stage2-corrections.json](../_build/stage2-corrections.json).
+**Belege:** [HL7 · fhir_r4_vitals_official](https://hl7.org/fhir/R4/observation-vitalsigns.html) — Fundstelle: Vital Signs Profile (aus Stage 1; am Original prüfen); [HL7 · fhir_observation_r4](https://hl7.org/fhir/R4/observation.html) — Seite prüfen
 
 <a id="c034"></a>
 **C034 · LITERATURFAKT / REGEL**

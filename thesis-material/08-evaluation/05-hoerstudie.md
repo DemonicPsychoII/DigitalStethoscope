@@ -42,7 +42,7 @@ Für Murmur-Detektierbarkeit ist intern eine binäre Antwort vorhanden/nicht vor
 Laien und medizinisch geschulte Personen können entweder als homogene Stichprobe getrennt oder als explorative Mischstichprobe untersucht werden; bei n = 5–10 wäre ein Gruppenvergleich nur qualitativ/deskriptiv.
 
 **Ursprung:** [preThesis/03-recherche/R05-hoerstudie-design.md:68-81](../../preThesis/03-recherche/R05-hoerstudie-design.md#L68)
-**Belege:** [Eldridge, S 2016 · pilot_consort_extension](https://www.bmj.com/content/355/bmj.i5239) — Seite prüfen; [Eldridge, S 2016 · pilot_feasibility_guidelines](https://pmc.ncbi.nlm.nih.gov/articles/PMC4775223/) — Seite prüfen; [Hertzog, M 2008 · pilot_sample_size](https://pubmed.ncbi.nlm.nih.gov/22169081/) — Seite prüfen · 🔒 Volltextzugang prüfen: May be paywalled.
+**Belege:** [Eldridge, S 2016 · pilot_consort_extension](https://www.bmj.com/content/355/bmj.i5239) — Seite prüfen; [Eldridge, S 2016 · pilot_feasibility_guidelines](https://pmc.ncbi.nlm.nih.gov/articles/PMC4775223/) — Seite prüfen; [Sim, J 2012 · pilot_sample_size_sim_lewis](https://pubmed.ncbi.nlm.nih.gov/22169081/) — Seite prüfen · 🔒 Volltext kostenpflichtig
 
 <a id="b001"></a>
 **B001 · METHODENVORSCHLAG · ersetzt U053**
@@ -50,7 +50,7 @@ Laien und medizinisch geschulte Personen können entweder als homogene Stichprob
 Mit n = 5–10 sollte die Untersuchung ausdrücklich als explorative Hör- und Machbarkeitspilotstudie angelegt werden, nicht als Studie zum Nachweis klinischer Überlegenheit oder zur belastbaren Generalisierung auf die Bevölkerung.
 
 **Ursprung:** [preThesis/03-recherche/R05-hoerstudie-design.md:22-31](../../preThesis/03-recherche/R05-hoerstudie-design.md#L22)
-**Belege:** [Eldridge, S 2016 · pilot_consort_extension](https://www.bmj.com/content/355/bmj.i5239) — Seite prüfen; [Eldridge, S 2016 · pilot_feasibility_guidelines](https://pmc.ncbi.nlm.nih.gov/articles/PMC4775223/) — Seite prüfen; [Hertzog, M 2008 · pilot_sample_size](https://pubmed.ncbi.nlm.nih.gov/22169081/) — Seite prüfen · 🔒 Volltextzugang prüfen: May be paywalled.
+**Belege:** [Eldridge, S 2016 · pilot_consort_extension](https://www.bmj.com/content/355/bmj.i5239) — Seite prüfen; [Eldridge, S 2016 · pilot_feasibility_guidelines](https://pmc.ncbi.nlm.nih.gov/articles/PMC4775223/) — Seite prüfen; [Sim, J 2012 · pilot_sample_size_sim_lewis](https://pubmed.ncbi.nlm.nih.gov/22169081/) — Seite prüfen · 🔒 Volltext kostenpflichtig
 
 <a id="b021"></a>
 **B021 · RISIKO / EINORDNUNG**
@@ -58,7 +58,7 @@ Mit n = 5–10 sollte die Untersuchung ausdrücklich als explorative Hör- und M
 Mit n = 5–10 sollte keine allgemeine Aussage zur Hörbarkeit in der Bevölkerung, Gleichwertigkeit der Filter oder Verbesserung klinischer Diagnosen abgeleitet werden.
 
 **Ursprung:** [preThesis/03-recherche/R05-hoerstudie-design.md:350-360](../../preThesis/03-recherche/R05-hoerstudie-design.md#L350)
-**Belege:** [Eldridge, S 2016 · pilot_consort_extension](https://www.bmj.com/content/355/bmj.i5239) — Seite prüfen; [Eldridge, S 2016 · pilot_feasibility_guidelines](https://pmc.ncbi.nlm.nih.gov/articles/PMC4775223/) — Seite prüfen; [Hertzog, M 2008 · pilot_sample_size](https://pubmed.ncbi.nlm.nih.gov/22169081/) — Seite prüfen · 🔒 Volltextzugang prüfen: May be paywalled.
+**Belege:** [Eldridge, S 2016 · pilot_consort_extension](https://www.bmj.com/content/355/bmj.i5239) — Seite prüfen; [Eldridge, S 2016 · pilot_feasibility_guidelines](https://pmc.ncbi.nlm.nih.gov/articles/PMC4775223/) — Seite prüfen; [Sim, J 2012 · pilot_sample_size_sim_lewis](https://pubmed.ncbi.nlm.nih.gov/22169081/) — Seite prüfen · 🔒 Volltext kostenpflichtig
 
 ## Aufgaben und Versuchsdesign
 
@@ -88,7 +88,7 @@ Bei einer kleinen Pilot-Hörstudie sind Laien vertretbar, wenn die Aufgabe als a
 Die Pilotstudie soll technische Filterwirkung, auditive Diskriminierbarkeit und klinische Interpretation als getrennte Ebenen behandeln; klinische Diagnoseklassifikation gilt bei n = 5–10 als nicht belastbar.
 
 **Ursprung:** [preThesis/03-recherche/R05-hoerstudie-design.md:34-48](../../preThesis/03-recherche/R05-hoerstudie-design.md#L34)
-**Belege:** [Eldridge, S 2016 · pilot_consort_extension](https://www.bmj.com/content/355/bmj.i5239) — Seite prüfen; [Eldridge, S 2016 · pilot_feasibility_guidelines](https://pmc.ncbi.nlm.nih.gov/articles/PMC4775223/) — Seite prüfen; [Hertzog, M 2008 · pilot_sample_size](https://pubmed.ncbi.nlm.nih.gov/22169081/) — Seite prüfen · 🔒 Volltextzugang prüfen: May be paywalled.
+**Belege:** [Eldridge, S 2016 · pilot_consort_extension](https://www.bmj.com/content/355/bmj.i5239) — Seite prüfen; [Eldridge, S 2016 · pilot_feasibility_guidelines](https://pmc.ncbi.nlm.nih.gov/articles/PMC4775223/) — Seite prüfen; [Sim, J 2012 · pilot_sample_size_sim_lewis](https://pubmed.ncbi.nlm.nih.gov/22169081/) — Seite prüfen · 🔒 Volltext kostenpflichtig
 
 <a id="b009"></a>
 **B009 · METHODE / PRÜFVERFAHREN**
@@ -96,7 +96,7 @@ Die Pilotstudie soll technische Filterwirkung, auditive Diskriminierbarkeit und 
 Ein Within-Subject-Design lässt jede Person jede Filterbedingung hören und reduziert interindividuelle Hör- und Aufmerksamkeitsunterschiede.
 
 **Ursprung:** [preThesis/03-recherche/R05-hoerstudie-design.md:138-149](../../preThesis/03-recherche/R05-hoerstudie-design.md#L138)
-**Belege:** [Eldridge, S 2016 · pilot_consort_extension](https://www.bmj.com/content/355/bmj.i5239) — Seite prüfen; [Eldridge, S 2016 · pilot_feasibility_guidelines](https://pmc.ncbi.nlm.nih.gov/articles/PMC4775223/) — Seite prüfen; [Hertzog, M 2008 · pilot_sample_size](https://pubmed.ncbi.nlm.nih.gov/22169081/) — Seite prüfen · 🔒 Volltextzugang prüfen: May be paywalled.
+**Belege:** [Eldridge, S 2016 · pilot_consort_extension](https://www.bmj.com/content/355/bmj.i5239) — Seite prüfen; [Eldridge, S 2016 · pilot_feasibility_guidelines](https://pmc.ncbi.nlm.nih.gov/articles/PMC4775223/) — Seite prüfen; [Sim, J 2012 · pilot_sample_size_sim_lewis](https://pubmed.ncbi.nlm.nih.gov/22169081/) — Seite prüfen · 🔒 Volltext kostenpflichtig
 
 <a id="b008"></a>
 **B008 · METHODE / PRÜFVERFAHREN**
@@ -132,7 +132,7 @@ Für den Filtervergleich empfiehlt R05 eine ABX-Aufgabe: A und B sind bekannte R
 R05 nennt als Pilotkonfiguration 5–10 unabhängige Herzgeräuschaufnahmen, etwa 10–20 Trials je Vergleich und ungefähr 40–100 Antworten pro Person, abhängig von Stimuluszahl.
 
 **Ursprung:** [preThesis/03-recherche/R05-hoerstudie-design.md:165-184](../../preThesis/03-recherche/R05-hoerstudie-design.md#L165)
-**Belege:** [Eldridge, S 2016 · pilot_consort_extension](https://www.bmj.com/content/355/bmj.i5239) — Seite prüfen; [Eldridge, S 2016 · pilot_feasibility_guidelines](https://pmc.ncbi.nlm.nih.gov/articles/PMC4775223/) — Seite prüfen; [Hertzog, M 2008 · pilot_sample_size](https://pubmed.ncbi.nlm.nih.gov/22169081/) — Seite prüfen · 🔒 Volltextzugang prüfen: May be paywalled.
+**Belege:** [Eldridge, S 2016 · pilot_consort_extension](https://www.bmj.com/content/355/bmj.i5239) — Seite prüfen; [Eldridge, S 2016 · pilot_feasibility_guidelines](https://pmc.ncbi.nlm.nih.gov/articles/PMC4775223/) — Seite prüfen; [Sim, J 2012 · pilot_sample_size_sim_lewis](https://pubmed.ncbi.nlm.nih.gov/22169081/) — Seite prüfen · 🔒 Volltext kostenpflichtig
 
 ### Folgerungen, Entwurfsentscheidungen und Grenzen
 
@@ -150,7 +150,7 @@ Für Hörversuche empfiehlt R05 die Randomisierung von Aufnahmereihenfolge, Filt
 Mehr Trials verbessern die Präzision der individuellen Leistungsschätzung, ersetzen aber keine unabhängigen Versuchspersonen; Wiederholung desselben Stimulus kann Lernen, Ermüdung und Erinnerungsstrategien verursachen.
 
 **Ursprung:** [preThesis/03-recherche/R05-hoerstudie-design.md:165-184](../../preThesis/03-recherche/R05-hoerstudie-design.md#L165)
-**Belege:** [Eldridge, S 2016 · pilot_consort_extension](https://www.bmj.com/content/355/bmj.i5239) — Seite prüfen; [Eldridge, S 2016 · pilot_feasibility_guidelines](https://pmc.ncbi.nlm.nih.gov/articles/PMC4775223/) — Seite prüfen; [Hertzog, M 2008 · pilot_sample_size](https://pubmed.ncbi.nlm.nih.gov/22169081/) — Seite prüfen · 🔒 Volltextzugang prüfen: May be paywalled.
+**Belege:** [Eldridge, S 2016 · pilot_consort_extension](https://www.bmj.com/content/355/bmj.i5239) — Seite prüfen; [Eldridge, S 2016 · pilot_feasibility_guidelines](https://pmc.ncbi.nlm.nih.gov/articles/PMC4775223/) — Seite prüfen; [Sim, J 2012 · pilot_sample_size_sim_lewis](https://pubmed.ncbi.nlm.nih.gov/22169081/) — Seite prüfen · 🔒 Volltext kostenpflichtig
 
 <a id="b077"></a>
 **B077 · METHODENVORSCHLAG · ANNAHME**
@@ -158,7 +158,7 @@ Mehr Trials verbessern die Präzision der individuellen Leistungsschätzung, ers
 R05 empfiehlt eine möglichst 20–40-minütige Hörsitzung mit kurzen Pausen etwa alle 10–15 Minuten, um Ermüdung zu begrenzen.
 
 **Ursprung:** [preThesis/03-recherche/R05-hoerstudie-design.md:165-184](../../preThesis/03-recherche/R05-hoerstudie-design.md#L165)
-**Belege:** [Eldridge, S 2016 · pilot_consort_extension](https://www.bmj.com/content/355/bmj.i5239) — Seite prüfen; [Eldridge, S 2016 · pilot_feasibility_guidelines](https://pmc.ncbi.nlm.nih.gov/articles/PMC4775223/) — Seite prüfen; [Hertzog, M 2008 · pilot_sample_size](https://pubmed.ncbi.nlm.nih.gov/22169081/) — Seite prüfen · 🔒 Volltextzugang prüfen: May be paywalled.
+**Belege:** [Eldridge, S 2016 · pilot_consort_extension](https://www.bmj.com/content/355/bmj.i5239) — Seite prüfen; [Eldridge, S 2016 · pilot_feasibility_guidelines](https://pmc.ncbi.nlm.nih.gov/articles/PMC4775223/) — Seite prüfen; [Sim, J 2012 · pilot_sample_size_sim_lewis](https://pubmed.ncbi.nlm.nih.gov/22169081/) — Seite prüfen · 🔒 Volltext kostenpflichtig
 
 <a id="b086"></a>
 **B086 · METHODENVORSCHLAG**
@@ -174,7 +174,7 @@ R05 empfiehlt neutrale Beschriftungen und Lautheitsabgleich; gleiche Lautheit un
 R05 schlägt verblindetes, randomisiertes within-subject ABX/2AFC mit mehreren Aufnahmen, kontrollierter Lautheit, neutralen Codes, Übung und Pausen vor.
 
 **Ursprung:** [preThesis/02-entscheidungen/open-questions.md:142-146](../../preThesis/02-entscheidungen/open-questions.md#L142)
-**Belege:** [Leon, A 2011 · pilot_guidelines](https://pmc.ncbi.nlm.nih.gov/articles/PMC8849521/) — Fundstelle: Sections 1–2 (aus Stage 1; am Original prüfen) · **LINK DEFEKT**; [Eldridge, S 2016 · pilot_studies](https://www.bmj.com/content/355/bmj.i5239) — Seite prüfen (Hinweis: Relevant article section/table not verified in full text during this pass.); [Thabane, L 2010 · pilot_tutorial](https://pmc.ncbi.nlm.nih.gov/articles/PMC2824145/) — Seite prüfen (Hinweis: Relevant article section/table not verified in full text during this pass.)
+**Belege:** [Teresi, J 2022 · pilot_guidelines](https://pmc.ncbi.nlm.nih.gov/articles/PMC8849521/) — Fundstelle: Sections 1–2 (aus Stage 1; am Original prüfen); [Eldridge, S 2016 · pilot_studies](https://www.bmj.com/content/355/bmj.i5239) — Seite prüfen (Hinweis: Relevant article section/table not verified in full text during this pass.); [Thabane, L 2010 · pilot_tutorial](https://pmc.ncbi.nlm.nih.gov/articles/PMC2824145/) — Seite prüfen (Hinweis: Relevant article section/table not verified in full text during this pass.)
 
 <a id="b083"></a>
 **B083 · METHODENVORSCHLAG · ANNAHME**
@@ -182,7 +182,7 @@ R05 schlägt verblindetes, randomisiertes within-subject ABX/2AFC mit mehreren A
 R05 schlägt vor, Alter, Geschlecht, Hörprobleme und medizinische Erfahrung zu erfassen und vor der Hörstudie ein kurzes Hörscreening durchzuführen oder selbstberichtete relevante Hörstörungen auszuschließen.
 
 **Ursprung:** [preThesis/03-recherche/R05-hoerstudie-design.md:329-349](../../preThesis/03-recherche/R05-hoerstudie-design.md#L329)
-**Belege:** [Eldridge, S 2016 · pilot_consort_extension](https://www.bmj.com/content/355/bmj.i5239) — Seite prüfen; [Eldridge, S 2016 · pilot_feasibility_guidelines](https://pmc.ncbi.nlm.nih.gov/articles/PMC4775223/) — Seite prüfen; [Hertzog, M 2008 · pilot_sample_size](https://pubmed.ncbi.nlm.nih.gov/22169081/) — Seite prüfen · 🔒 Volltextzugang prüfen: May be paywalled.
+**Belege:** [Eldridge, S 2016 · pilot_consort_extension](https://www.bmj.com/content/355/bmj.i5239) — Seite prüfen; [Eldridge, S 2016 · pilot_feasibility_guidelines](https://pmc.ncbi.nlm.nih.gov/articles/PMC4775223/) — Seite prüfen; [Sim, J 2012 · pilot_sample_size_sim_lewis](https://pubmed.ncbi.nlm.nih.gov/22169081/) — Seite prüfen · 🔒 Volltext kostenpflichtig
 
 <a id="b010"></a>
 **B010 · METHODENVORSCHLAG**
@@ -236,7 +236,7 @@ R05 nennt bei 20 ABX-Trials 10/20 Antworten als Zufallsniveau, 15/20 als deskrip
 Bei n = 5–10 empfiehlt R05 Rohdaten bzw. individuelle Werte, Median und Wertebereich sowie Unsicherheitsintervalle; Pilotstudien sollen primär Machbarkeit und Unsicherheit beschreiben.
 
 **Ursprung:** [preThesis/03-recherche/R05-hoerstudie-design.md:254-267](../../preThesis/03-recherche/R05-hoerstudie-design.md#L254)
-**Belege:** [Eldridge, S 2016 · pilot_consort_extension](https://www.bmj.com/content/355/bmj.i5239) — Seite prüfen; [Eldridge, S 2016 · pilot_feasibility_guidelines](https://pmc.ncbi.nlm.nih.gov/articles/PMC4775223/) — Seite prüfen; [Hertzog, M 2008 · pilot_sample_size](https://pubmed.ncbi.nlm.nih.gov/22169081/) — Seite prüfen · 🔒 Volltextzugang prüfen: May be paywalled.
+**Belege:** [Eldridge, S 2016 · pilot_consort_extension](https://www.bmj.com/content/355/bmj.i5239) — Seite prüfen; [Eldridge, S 2016 · pilot_feasibility_guidelines](https://pmc.ncbi.nlm.nih.gov/articles/PMC4775223/) — Seite prüfen; [Sim, J 2012 · pilot_sample_size_sim_lewis](https://pubmed.ncbi.nlm.nih.gov/22169081/) — Seite prüfen · 🔒 Volltext kostenpflichtig
 
 <a id="b005"></a>
 **B005 · RISIKO / EINORDNUNG**
@@ -244,7 +244,7 @@ Bei n = 5–10 empfiehlt R05 Rohdaten bzw. individuelle Werte, Median und Werteb
 Ein belastbarer statistischer Vergleich zwischen Laien und medizinisch geschulten Hörern ist mit n = 5–10 nicht möglich; ein Gruppenvergleich wäre allenfalls deskriptiv.
 
 **Ursprung:** [preThesis/03-recherche/R05-hoerstudie-design.md:68-81](../../preThesis/03-recherche/R05-hoerstudie-design.md#L68)
-**Belege:** [Eldridge, S 2016 · pilot_consort_extension](https://www.bmj.com/content/355/bmj.i5239) — Seite prüfen; [Eldridge, S 2016 · pilot_feasibility_guidelines](https://pmc.ncbi.nlm.nih.gov/articles/PMC4775223/) — Seite prüfen; [Hertzog, M 2008 · pilot_sample_size](https://pubmed.ncbi.nlm.nih.gov/22169081/) — Seite prüfen · 🔒 Volltextzugang prüfen: May be paywalled.
+**Belege:** [Eldridge, S 2016 · pilot_consort_extension](https://www.bmj.com/content/355/bmj.i5239) — Seite prüfen; [Eldridge, S 2016 · pilot_feasibility_guidelines](https://pmc.ncbi.nlm.nih.gov/articles/PMC4775223/) — Seite prüfen; [Sim, J 2012 · pilot_sample_size_sim_lewis](https://pubmed.ncbi.nlm.nih.gov/22169081/) — Seite prüfen · 🔒 Volltext kostenpflichtig
 
 <a id="b018"></a>
 **B018 · METHODENVORSCHLAG**
@@ -252,12 +252,14 @@ Ein belastbarer statistischer Vergleich zwischen Laien und medizinisch geschulte
 Filterunterschiede können als absolute Trefferquotendifferenz, mediane individuelle Differenz und rangbasierte Effektgröße dargestellt werden; Rohdaten der Versuchspersonen sollen sichtbar bleiben.
 
 **Ursprung:** [preThesis/03-recherche/R05-hoerstudie-design.md:281-296](../../preThesis/03-recherche/R05-hoerstudie-design.md#L281)
-**Belege:** [Eldridge, S 2016 · pilot_consort_extension](https://www.bmj.com/content/355/bmj.i5239) — Seite prüfen; [Eldridge, S 2016 · pilot_feasibility_guidelines](https://pmc.ncbi.nlm.nih.gov/articles/PMC4775223/) — Seite prüfen; [Hertzog, M 2008 · pilot_sample_size](https://pubmed.ncbi.nlm.nih.gov/22169081/) — Seite prüfen · 🔒 Volltextzugang prüfen: May be paywalled.
+**Belege:** [Eldridge, S 2016 · pilot_consort_extension](https://www.bmj.com/content/355/bmj.i5239) — Seite prüfen; [Eldridge, S 2016 · pilot_feasibility_guidelines](https://pmc.ncbi.nlm.nih.gov/articles/PMC4775223/) — Seite prüfen; [Sim, J 2012 · pilot_sample_size_sim_lewis](https://pubmed.ncbi.nlm.nih.gov/22169081/) — Seite prüfen · 🔒 Volltext kostenpflichtig
 
 <a id="b017"></a>
 **B017 · METHODE / PRÜFVERFAHREN**
 
 Für ABX/2AFC kann die Leistung pro Person ergänzend gegen das Zufallsniveau von 0,5 mit einem exakten Binomialtest oder Konfidenzintervall betrachtet werden; dies ist explorativ.
+
+> **Vorbehalt (2026-10-12):** Exakter Binomialtest und sein Konfidenzintervall setzen unabhängige Trials voraus. Unabhängige Aufnahmen (B076) genügen dafür nicht, wenn derselbe Stimulus wiederholt wird (B011); Trials sind in Personen und Stimuli verschachtelt (B020). Bei wiederholten Stimuli das Binomialergebnis nur deskriptiv berichten oder ein Verfahren mit Stimulus-Clusterung wählen. Entscheidung offen, siehe offene Punkte. Bezug: [B076](05-hoerstudie.md#b076), [B011](05-hoerstudie.md#b011), [B020](05-hoerstudie.md#b020).
 
 **Ursprung:** [preThesis/03-recherche/R05-hoerstudie-design.md:269-279](../../preThesis/03-recherche/R05-hoerstudie-design.md#L269)
 **Belege:** [Macmillan, N 2006 · 2afc_signal_detection](https://www.sciencedirect.com/science/article/pii/S0022249605000921) — Fundstelle: pp. 411–420 (aus Stage 1; am Original prüfen) · 🔒 Volltext kostenpflichtig; [Decision strategies in the ABX (matching-to-sample)  2002 · abx_strategy](https://pubmed.ncbi.nlm.nih.gov/11916304/) — Seite prüfen · 🔒 Volltext kostenpflichtig; [Likelihood Ratio, Optimal Decision Rules, and Relati · 2afc_bias](https://pmc.ncbi.nlm.nih.gov/articles/PMC2811854/) — Seite prüfen
@@ -268,7 +270,7 @@ Für ABX/2AFC kann die Leistung pro Person ergänzend gegen das Zufallsniveau vo
 Für gepaarte Filtervergleiche nennt R05 Wilcoxon-Vorzeichen-Rang-Test oder exakten Permutationstest; p-Werte bei n = 5–10 sollen nur ergänzend explorativ sein.
 
 **Ursprung:** [preThesis/03-recherche/R05-hoerstudie-design.md:298-307](../../preThesis/03-recherche/R05-hoerstudie-design.md#L298)
-**Belege:** [Eldridge, S 2016 · pilot_consort_extension](https://www.bmj.com/content/355/bmj.i5239) — Seite prüfen; [Eldridge, S 2016 · pilot_feasibility_guidelines](https://pmc.ncbi.nlm.nih.gov/articles/PMC4775223/) — Seite prüfen; [Hertzog, M 2008 · pilot_sample_size](https://pubmed.ncbi.nlm.nih.gov/22169081/) — Seite prüfen · 🔒 Volltextzugang prüfen: May be paywalled.
+**Belege:** [Eldridge, S 2016 · pilot_consort_extension](https://www.bmj.com/content/355/bmj.i5239) — Seite prüfen; [Eldridge, S 2016 · pilot_feasibility_guidelines](https://pmc.ncbi.nlm.nih.gov/articles/PMC4775223/) — Seite prüfen; [Sim, J 2012 · pilot_sample_size_sim_lewis](https://pubmed.ncbi.nlm.nih.gov/22169081/) — Seite prüfen · 🔒 Volltext kostenpflichtig
 
 <a id="b015"></a>
 **B015 · METHODE / PRÜFVERFAHREN**
@@ -284,7 +286,7 @@ Primäre Hörstudienvariable kann die Trefferquote (korrekte Antworten / gültig
 R05 empfiehlt neben Trefferquoten optionale Messung der Antwortdauer und kurze Ratings zu Verständlichkeit bzw. Höranstrengung.
 
 **Ursprung:** [preThesis/03-recherche/R05-hoerstudie-design.md:227-252](../../preThesis/03-recherche/R05-hoerstudie-design.md#L227)
-**Belege:** [Eldridge, S 2016 · pilot_consort_extension](https://www.bmj.com/content/355/bmj.i5239) — Seite prüfen; [Eldridge, S 2016 · pilot_feasibility_guidelines](https://pmc.ncbi.nlm.nih.gov/articles/PMC4775223/) — Seite prüfen; [Hertzog, M 2008 · pilot_sample_size](https://pubmed.ncbi.nlm.nih.gov/22169081/) — Seite prüfen · 🔒 Volltextzugang prüfen: May be paywalled.
+**Belege:** [Eldridge, S 2016 · pilot_consort_extension](https://www.bmj.com/content/355/bmj.i5239) — Seite prüfen; [Eldridge, S 2016 · pilot_feasibility_guidelines](https://pmc.ncbi.nlm.nih.gov/articles/PMC4775223/) — Seite prüfen; [Sim, J 2012 · pilot_sample_size_sim_lewis](https://pubmed.ncbi.nlm.nih.gov/22169081/) — Seite prüfen · 🔒 Volltext kostenpflichtig
 
 <a id="b020"></a>
 **B020 · METHODE / PRÜFVERFAHREN**
@@ -292,4 +294,4 @@ R05 empfiehlt neben Trefferquoten optionale Messung der Antwortdauer und kurze R
 Trials sind innerhalb von Personen und Stimuli verschachtelt und dürfen nicht als unabhängige Versuchspersonen behandelt werden; mit 5–10 Personen wäre ein logistisches Mixed-Effects-Modell instabil und allenfalls sekundär.
 
 **Ursprung:** [preThesis/03-recherche/R05-hoerstudie-design.md:309-325](../../preThesis/03-recherche/R05-hoerstudie-design.md#L309)
-**Belege:** [Eldridge, S 2016 · pilot_consort_extension](https://www.bmj.com/content/355/bmj.i5239) — Seite prüfen; [Eldridge, S 2016 · pilot_feasibility_guidelines](https://pmc.ncbi.nlm.nih.gov/articles/PMC4775223/) — Seite prüfen; [Hertzog, M 2008 · pilot_sample_size](https://pubmed.ncbi.nlm.nih.gov/22169081/) — Seite prüfen · 🔒 Volltextzugang prüfen: May be paywalled.
+**Belege:** [Eldridge, S 2016 · pilot_consort_extension](https://www.bmj.com/content/355/bmj.i5239) — Seite prüfen; [Eldridge, S 2016 · pilot_feasibility_guidelines](https://pmc.ncbi.nlm.nih.gov/articles/PMC4775223/) — Seite prüfen; [Sim, J 2012 · pilot_sample_size_sim_lewis](https://pubmed.ncbi.nlm.nih.gov/22169081/) — Seite prüfen · 🔒 Volltext kostenpflichtig

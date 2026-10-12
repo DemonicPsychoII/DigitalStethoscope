@@ -16,7 +16,7 @@ Zuständigkeit → Einwilligung → Datenminimierung → Transport → Grenzen d
 GEHBa empfiehlt einen Ethikantrag, wenn bei Forschung mit Beteiligten ein möglicher Schaden oder eine unverhältnismäßige Belastung nicht auszuschließen ist oder ethische Grundprinzipien berührt werden; ohne erwartete Risiken/Schäden und ohne Verletzung dieser Prinzipien ist kein Antrag erforderlich.
 
 **Ursprung:** [preThesis/03-recherche/R06-ethik-datenschutz.md:63-71](../preThesis/03-recherche/R06-ethik-datenschutz.md#L63)
-**Belege:** [Gemeinsame Ethikkommission der Hochschulen Bayerns ( · gehba_faq](https://www.gehba.de/fileadmin/daten/Gehba/GEHBa-FAQ_2.1.pdf) — Fundstelle: FAQ sections “Wann sollte man einen Ethikantrag stellen?” and “Wann muss man keinen Ethikantrag stellen?” (aus Stage 1; am Original prüfen); [Gemeinsame Ethikkommission der Hochschulen Bayerns ( · gehba_forms](https://www.gehba.de/antrag-und-dokumente) — Fundstelle: “Antrag und Dokumente” page (aus Stage 1; am Original prüfen); [European Parliament and Council · gdpr_text](https://eur-lex.europa.eu/eli/reg/2016/679/oj) — Seite prüfen
+**Belege:** [Gemeinsame Ethikkommission der Hochschulen Bayerns · gehba_faq](https://www.gehba.de/fileadmin/daten/Gehba/GEHBa-FAQ_2.1.pdf) — Fundstelle: FAQ sections “Wann sollte man einen Ethikantrag stellen?” and “Wann muss man keinen Ethikantrag stellen?” (aus Stage 1; am Original prüfen); [Gemeinsame Ethikkommission der Hochschulen Bayerns · gehba_forms](https://www.gehba.de/antrag-und-dokumente) — Fundstelle: “Antrag und Dokumente” page (aus Stage 1; am Original prüfen); [European Parliament and Council · gdpr_text](https://eur-lex.europa.eu/eli/reg/2016/679/oj) — Seite prüfen
 
 <a id="b025"></a>
 **B025 · LITERATURFAKT / REGEL**
@@ -24,7 +24,7 @@ GEHBa empfiehlt einen Ethikantrag, wenn bei Forschung mit Beteiligten ein mögli
 GEHBa-Anträge sollen vor Beginn der Forschung gestellt werden; R06 berichtet, dass nachträgliche Anträge regelmäßig nicht mehr bewertet werden.
 
 **Ursprung:** [preThesis/03-recherche/R06-ethik-datenschutz.md:73-90](../preThesis/03-recherche/R06-ethik-datenschutz.md#L73)
-**Belege:** [Gemeinsame Ethikkommission der Hochschulen Bayerns ( · gehba_faq](https://www.gehba.de/fileadmin/daten/Gehba/GEHBa-FAQ_2.1.pdf) — Fundstelle: FAQ sections “Wann sollte man einen Ethikantrag stellen?” and “Wann muss man keinen Ethikantrag stellen?” (aus Stage 1; am Original prüfen); [Gemeinsame Ethikkommission der Hochschulen Bayerns ( · gehba_forms](https://www.gehba.de/antrag-und-dokumente) — Fundstelle: “Antrag und Dokumente” page (aus Stage 1; am Original prüfen); [European Parliament and Council · gdpr_text](https://eur-lex.europa.eu/eli/reg/2016/679/oj) — Seite prüfen
+**Belege:** [Gemeinsame Ethikkommission der Hochschulen Bayerns · gehba_faq](https://www.gehba.de/fileadmin/daten/Gehba/GEHBa-FAQ_2.1.pdf) — Fundstelle: FAQ sections “Wann sollte man einen Ethikantrag stellen?” and “Wann muss man keinen Ethikantrag stellen?” (aus Stage 1; am Original prüfen); [Gemeinsame Ethikkommission der Hochschulen Bayerns · gehba_forms](https://www.gehba.de/antrag-und-dokumente) — Fundstelle: “Antrag und Dokumente” page (aus Stage 1; am Original prüfen); [European Parliament and Council · gdpr_text](https://eur-lex.europa.eu/eli/reg/2016/679/oj) — Seite prüfen
 
 ### Folgerungen, Entwurfsentscheidungen und Grenzen
 
@@ -34,7 +34,7 @@ GEHBa-Anträge sollen vor Beginn der Forschung gestellt werden; R06 berichtet, d
 R06 konnte keine eigenständige, öffentlich eindeutig dokumentierte Ethikkommission der TH Augsburg mit Humanforschungs-Zuständigkeit feststellen; die Zuständigkeit soll für das konkrete Projekt bei Betreuer, Hochschule und gegebenenfalls GEHBa geklärt werden.
 
 **Ursprung:** [preThesis/03-recherche/R06-ethik-datenschutz.md:63-90](../preThesis/03-recherche/R06-ethik-datenschutz.md#L63)
-**Belege:** [Gemeinsame Ethikkommission der Hochschulen Bayerns ( · gehba_faq](https://www.gehba.de/fileadmin/daten/Gehba/GEHBa-FAQ_2.1.pdf) — Fundstelle: FAQ sections “Wann sollte man einen Ethikantrag stellen?” and “Wann muss man keinen Ethikantrag stellen?” (aus Stage 1; am Original prüfen); [Gemeinsame Ethikkommission der Hochschulen Bayerns ( · gehba_forms](https://www.gehba.de/antrag-und-dokumente) — Fundstelle: “Antrag und Dokumente” page (aus Stage 1; am Original prüfen); [European Parliament and Council · gdpr_text](https://eur-lex.europa.eu/eli/reg/2016/679/oj) — Seite prüfen
+**Belege:** [Gemeinsame Ethikkommission der Hochschulen Bayerns · gehba_faq](https://www.gehba.de/fileadmin/daten/Gehba/GEHBa-FAQ_2.1.pdf) — Fundstelle: FAQ sections “Wann sollte man einen Ethikantrag stellen?” and “Wann muss man keinen Ethikantrag stellen?” (aus Stage 1; am Original prüfen); [Gemeinsame Ethikkommission der Hochschulen Bayerns · gehba_forms](https://www.gehba.de/antrag-und-dokumente) — Fundstelle: “Antrag und Dokumente” page (aus Stage 1; am Original prüfen); [European Parliament and Council · gdpr_text](https://eur-lex.europa.eu/eli/reg/2016/679/oj) — Seite prüfen
 
 ## Einwilligung und Information
 
@@ -86,7 +86,7 @@ R06 unterscheidet echte Anonymisierung von Pseudonymisierung: pseudonymisierte o
 GEHBa sieht für Bachelor- und Masterarbeiten regelmäßig keinen vollständigen Ethikantrag vor, sondern eine Selbsteinschätzung zu Ethik und Datenschutz; institutionelle Sonderregeln bleiben möglich.
 
 **Ursprung:** [preThesis/03-recherche/R06-ethik-datenschutz.md:63-71](../preThesis/03-recherche/R06-ethik-datenschutz.md#L63)
-**Belege:** [Gemeinsame Ethikkommission der Hochschulen Bayerns ( · gehba_faq](https://www.gehba.de/fileadmin/daten/Gehba/GEHBa-FAQ_2.1.pdf) — Fundstelle: FAQ sections “Wann sollte man einen Ethikantrag stellen?” and “Wann muss man keinen Ethikantrag stellen?” (aus Stage 1; am Original prüfen); [Gemeinsame Ethikkommission der Hochschulen Bayerns ( · gehba_forms](https://www.gehba.de/antrag-und-dokumente) — Fundstelle: “Antrag und Dokumente” page (aus Stage 1; am Original prüfen); [European Parliament and Council · gdpr_text](https://eur-lex.europa.eu/eli/reg/2016/679/oj) — Seite prüfen
+**Belege:** [Gemeinsame Ethikkommission der Hochschulen Bayerns · gehba_faq](https://www.gehba.de/fileadmin/daten/Gehba/GEHBa-FAQ_2.1.pdf) — Fundstelle: FAQ sections “Wann sollte man einen Ethikantrag stellen?” and “Wann muss man keinen Ethikantrag stellen?” (aus Stage 1; am Original prüfen); [Gemeinsame Ethikkommission der Hochschulen Bayerns · gehba_forms](https://www.gehba.de/antrag-und-dokumente) — Fundstelle: “Antrag und Dokumente” page (aus Stage 1; am Original prüfen); [European Parliament and Council · gdpr_text](https://eur-lex.europa.eu/eli/reg/2016/679/oj) — Seite prüfen
 
 <a id="b034"></a>
 **B034 · LITERATURFAKT / REGEL**
@@ -102,7 +102,7 @@ PhysioNet Credentialed Health Data Use Agreement untersagt Re-Identifizierungsve
 R06 berichtet, dass es keine einheitliche deutsche gesetzliche Vorschrift gibt, wonach jede Bachelorarbeit mit menschlichen Versuchspersonen zwingend ein Ethikvotum benötigt; Einordnung hängt von Risiko, Datenart, Hochschulregeln und weiteren Anforderungen ab.
 
 **Ursprung:** [preThesis/03-recherche/R06-ethik-datenschutz.md:33-61](../preThesis/03-recherche/R06-ethik-datenschutz.md#L33)
-**Belege:** [Gemeinsame Ethikkommission der Hochschulen Bayerns ( · gehba_faq](https://www.gehba.de/fileadmin/daten/Gehba/GEHBa-FAQ_2.1.pdf) — Fundstelle: FAQ sections “Wann sollte man einen Ethikantrag stellen?” and “Wann muss man keinen Ethikantrag stellen?” (aus Stage 1; am Original prüfen); [Gemeinsame Ethikkommission der Hochschulen Bayerns ( · gehba_forms](https://www.gehba.de/antrag-und-dokumente) — Fundstelle: “Antrag und Dokumente” page (aus Stage 1; am Original prüfen); [European Parliament and Council · gdpr_text](https://eur-lex.europa.eu/eli/reg/2016/679/oj) — Seite prüfen
+**Belege:** [Gemeinsame Ethikkommission der Hochschulen Bayerns · gehba_faq](https://www.gehba.de/fileadmin/daten/Gehba/GEHBa-FAQ_2.1.pdf) — Fundstelle: FAQ sections “Wann sollte man einen Ethikantrag stellen?” and “Wann muss man keinen Ethikantrag stellen?” (aus Stage 1; am Original prüfen); [Gemeinsame Ethikkommission der Hochschulen Bayerns · gehba_forms](https://www.gehba.de/antrag-und-dokumente) — Fundstelle: “Antrag und Dokumente” page (aus Stage 1; am Original prüfen); [European Parliament and Council · gdpr_text](https://eur-lex.europa.eu/eli/reg/2016/679/oj) — Seite prüfen
 
 <a id="b032"></a>
 **B032 · LITERATURFAKT / REGEL**

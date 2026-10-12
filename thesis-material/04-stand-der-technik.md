@@ -32,7 +32,7 @@ Die Latenz, die bei Live-Monitoring akzeptabel ist, variiert mit Instrument und 
 Eine Publikation zu einem kostengünstigen 3D-gedruckten digitalen Stethoskop beschreibt ein Elektretmikrofon im Bruststückkörper.
 
 **Ursprung:** [preThesis/03-recherche/R07-bruststueck-mems.md:67-105](../preThesis/03-recherche/R07-bruststueck-mems.md#L67)
-**Belege:** [Alanazi, A., Atcherson, S., Franklin, C., & Bryan, M 2020 · frequency_response_stethoscopes](https://doi.org/10.4103/sjmms.sjmms_118_19) — Seite prüfen; [Weiss, D 2019 · invitro_stethoscopes](https://pmc.ncbi.nlm.nih.gov/articles/PMC6339642/) — Seite prüfen; [Goh, R 2023 · goh_chestpiece](https://staffprofiles.bournemouth.ac.uk/display/journal-article/388323) — Fundstelle: pp. 137–140 (aus Stage 1; am Original prüfen) · 🔒 Volltext kostenpflichtig
+**Belege:** [Alanazi, A., Atcherson, S., Franklin, C., & Bryan, M 2020 · frequency_response_stethoscopes](https://doi.org/10.4103/sjmms.sjmms_118_19) — Seite prüfen; [Weiss, D 2019 · invitro_stethoscopes](https://pmc.ncbi.nlm.nih.gov/articles/PMC6339642/) — Seite prüfen; [Goh, R 2023 · goh_chestpiece](https://doi.org/10.1109/SENNANO57767.2023.10352567) — Fundstelle: pp. 137–140 (aus Stage 1; am Original prüfen) · 🔒 Volltext kostenpflichtig
 
 <a id="u011"></a>
 **U011 · LITERATURFAKT / REGEL**
@@ -106,7 +106,8 @@ R02 nennt SAM Basic Adult für etwa 3.500–5.000 USD und PAT Basic Pediatric f�
 R02 nennt Simulator-Preise: Sakamoto ca. 9.092 USD, SAM Basic ca. 3.750 USD, PAT Basic ca. 2.200 USD; 3B Scientific Hand-Held Trainer plus Murmur-Soundkarte mit 16 Murmurs ca. £227.
 
 **Ursprung:** [preThesis/02-entscheidungen/open-questions.md:50-53](../preThesis/02-entscheidungen/open-questions.md#L50)
-**Belege:** [Oliveira, J 2022 · circor_dataset](https://physionet.org/content/circor-heart-sound/1.0.3/) — Seite prüfen (Hinweis: Relevant article section/table not verified in full text during this pass.)
+**Korrektur Stage 2 (2026-10-12):** circor_dataset stand zugleich in `sources` und `removed` (Begründung dort: keine Relevanz für Simulatorpreise). Quellenset jetzt leer und weiterhin unvollständig, bis datierte Hersteller-/Händlerpreise geprüft sind. Quelle: [_build/stage2-corrections.json](_build/stage2-corrections.json).
+**Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
 **Audit:** verworfene Quellen siehe _stage1/inventory-merged.json (Feld `removed`).
 
 <a id="b041"></a>
@@ -115,7 +116,7 @@ R02 nennt Simulator-Preise: Sakamoto ca. 9.092 USD, SAM Basic ca. 3.750 USD, PAT
 R07 beschreibt ein Open-Source-Beispiel mit 5-cm-Leitung und 8-mm-Innendurchmesser und ein weiteres System mit 5-cm-Schlauch und 6-mm-Innendurchmesser.
 
 **Ursprung:** [preThesis/03-recherche/R07-bruststueck-mems.md:67-105](../preThesis/03-recherche/R07-bruststueck-mems.md#L67)
-**Belege:** [Alanazi, A., Atcherson, S., Franklin, C., & Bryan, M 2020 · frequency_response_stethoscopes](https://doi.org/10.4103/sjmms.sjmms_118_19) — Seite prüfen; [Weiss, D 2019 · invitro_stethoscopes](https://pmc.ncbi.nlm.nih.gov/articles/PMC6339642/) — Seite prüfen; [Goh, R 2023 · goh_chestpiece](https://staffprofiles.bournemouth.ac.uk/display/journal-article/388323) — Fundstelle: pp. 137–140 (aus Stage 1; am Original prüfen) · 🔒 Volltext kostenpflichtig
+**Belege:** [Alanazi, A., Atcherson, S., Franklin, C., & Bryan, M 2020 · frequency_response_stethoscopes](https://doi.org/10.4103/sjmms.sjmms_118_19) — Seite prüfen; [Weiss, D 2019 · invitro_stethoscopes](https://pmc.ncbi.nlm.nih.gov/articles/PMC6339642/) — Seite prüfen; [Goh, R 2023 · goh_chestpiece](https://doi.org/10.1109/SENNANO57767.2023.10352567) — Fundstelle: pp. 137–140 (aus Stage 1; am Original prüfen) · 🔒 Volltext kostenpflichtig
 
 ### Folgerungen, Entwurfsentscheidungen und Grenzen
 

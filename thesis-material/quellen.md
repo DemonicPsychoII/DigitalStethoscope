@@ -2,9 +2,9 @@
 
 [Zum Einstieg](README.md) · [Linkkorrekturen](linkkorrekturen.md) · [BibTeX](quellen.bib)
 
-103 Quellenschlüssel aus Stage 1. Doppelte Werke unter verschiedenen Schlüsseln bleiben für die Rückverfolgung erhalten. Die Zuordnung ist thematisch; alle zitierenden IDs werden genannt, auch ersetzte. „ok“ bezeichnet Linkzugang, nicht die Tragfähigkeit jeder Aussage. Seitenangaben sind getrennt zu prüfen.
+103 Quellenschlüssel aus Stage 1, nach Stage-2-Aufteilung 105. Doppelte Werke unter verschiedenen Schlüsseln bleiben für die Rückverfolgung erhalten. Die Zuordnung ist thematisch; alle zitierenden IDs werden genannt, auch ersetzte. „ok“ bezeichnet Linkzugang, nicht die Tragfähigkeit jeder Aussage. Seitenangaben sind getrennt zu prüfen.
 
-**BibTeX:** Für vier neu geprüfte Einträge stehen belegte Metadaten bereit. Die übrigen Minimal-Einträge enthalten nur die in Stage 1 überprüfte URL, wenn sie dort als erreichbar markiert ist, und eine als unsicher gekennzeichnete Arbeitsnotiz. Autoren, Titel, Jahre und DOIs werden dort nicht aus Freitext erraten. Vor der finalen Abgabe Originalmetadaten importieren.
+**BibTeX:** Für 7 neu geprüfte Einträge stehen belegte Metadaten bereit. Die übrigen Minimal-Einträge enthalten nur die in Stage 1 überprüfte URL, wenn sie dort als erreichbar markiert ist, und eine als unsicher gekennzeichnete Arbeitsnotiz. Autoren, Titel, Jahre und DOIs werden dort nicht aus Freitext erraten. Vor der finalen Abgabe Originalmetadaten importieren.
 
 ## Akustik, Bruststück und Messmethoden
 
@@ -65,13 +65,15 @@ Alanazi, A., Atcherson, S., Franklin, C., & Bryan, M. (2020). Frequency response
 <a id="goh_chestpiece"></a>
 ### goh_chestpiece
 
-Goh, R. X. et al. (2023). Design optimization of 3D printed digital stethoscope for low-cost telemedicine. IEEE International Conference on Sensors and Nanotechnology, 137–140. DOI: 10.1109/SENNANO57767.2023.
+Goh, R. X. et al. (2023). Design optimization of 3D printed digital stethoscope for low-cost telemedicine. IEEE International Conference on Sensors and Nanotechnology (SENNANO), 137–140. DOI: 10.1109/SENNANO57767.2023.10352567.
 
-**Linkstatus:** reachable-blocked-by-bot-protection · 🔒 Volltext kostenpflichtig
+**Linkstatus:** ok — DOI am 2026-10-12 aufgelöst (HTTP 302 zu IEEE Xplore 10352567); Crossref nennt Titel, Goh als Erstautor, S. 137–140 · 🔒 Volltext kostenpflichtig
 
-**Fundstelle:** [Quelle öffnen](https://staffprofiles.bournemouth.ac.uk/display/journal-article/388323) · DOI aus Arbeitsdatensatz: [https://doi.org/10.1109/SENNANO57767.2023](https://doi.org/10.1109/SENNANO57767.2023)
+**Fundstelle:** [Quelle öffnen](https://doi.org/10.1109/SENNANO57767.2023.10352567) · DOI aus Arbeitsdatensatz: [https://doi.org/10.1109/SENNANO57767.2023.10352567](https://doi.org/10.1109/SENNANO57767.2023.10352567)
 
 **Prüfnachweis Stage 1:** Institutional record opened; authors, title, venue, pages, DOI and abstract verified.
+
+**Korrektur Stage 2:** Ausgangs-DOI 10.1109/SENNANO57767.2023 bezeichnet den Tagungsband, nicht den Artikel. Artikel-DOI per Crossref-Datensatz und doi.org-Auflösung geprüft. Bisherige Institutions-URL: https://staffprofiles.bournemouth.ac.uk/display/journal-article/388323.
 
 **Zitiert von:** [B036](06-systemarchitektur.md#b036), [B037](06-systemarchitektur.md#b037), [B038](06-systemarchitektur.md#b038), [B040](04-stand-der-technik.md#b040), [B041](04-stand-der-technik.md#b041), [B045](03-grundlagen-technisch/01-akustik-bruststueck.md#b045), [B056](08-evaluation/06-akustische-kette.md#b056)
 
@@ -233,7 +235,7 @@ U.S. Food and Drug Administration. (1998). Cardiac Monitor Guidance (including C
 
 **Prüfnachweis Stage 1:** FDA primary guidance PDF listing found; numerical page location not verified.
 
-**Korrektur Stage 2:** Defekten PDF-Link durch offizielle HTML-Fassung desselben Dokuments ersetzt. FDA nennt Ausgabedatum 5. November 1998; das im Ausgangseintrag genannte Jahr 2023 ist nicht das Publikationsjahr. HTML enthält den Leitlinientext. Diese Leitlinie bezieht sich auf EC13-1992, nicht automatisch auf EC13:2002.
+**Korrektur Stage 2:** Defekten PDF-Link durch die von der FDA-Guidance-Suche gelistete HTML-Seite desselben Dokuments ersetzt. FDA nennt dort laut Stage-2-Notiz das Ausgabedatum 5. November 1998; das im Ausgangseintrag genannte Jahr 2023 ist nicht das Publikationsjahr. Dass die HTML-Fassung den vollständigen Leitlinientext enthält, ist nicht unabhängig belegt: Die Öffnung wurde nur gemeldet, ein unabhängiger Abruf am 2026-10-05 und erneut am 2026-10-12 lieferte HTTP 404, und link-probes.json enthält keinen FDA-Abruf. Diese Leitlinie bezieht sich auf EC13-1992, nicht automatisch auf EC13:2002.
 
 **Zitiert von:** [U048](08-evaluation/04-bpm-validierung.md#a052) (ersetzt), [A052](08-evaluation/04-bpm-validierung.md#a052), [A053](08-evaluation/04-bpm-validierung.md#a053), [A054](08-evaluation/04-bpm-validierung.md#a054), [A055](08-evaluation/04-bpm-validierung.md#a055), [A056](08-evaluation/04-bpm-validierung.md#a056), [A057](08-evaluation/04-bpm-validierung.md#a057)
 
@@ -289,7 +291,7 @@ Oliveira, J. et al. (2022). The CirCor DigiScope Phonocardiogram Dataset (versio
 
 **Prüfnachweis Stage 1:** PhysioNet dataset page opened; citation/metadata visible.
 
-**Zitiert von:** [U044](08-evaluation/02-datensaetze-referenz.md#a021) (ersetzt), [U046](04-stand-der-technik.md#u046), [A021](08-evaluation/02-datensaetze-referenz.md#a021), [A022](08-evaluation/02-datensaetze-referenz.md#a022), [A023](08-evaluation/02-datensaetze-referenz.md#a023), [A024](08-evaluation/02-datensaetze-referenz.md#a024), [A025](08-evaluation/02-datensaetze-referenz.md#a025), [A026](08-evaluation/02-datensaetze-referenz.md#a026), [A027](08-evaluation/02-datensaetze-referenz.md#a027), [A029](08-evaluation/02-datensaetze-referenz.md#a029), [A031](08-evaluation/02-datensaetze-referenz.md#a031), [A044](08-evaluation/02-datensaetze-referenz.md#a044)
+**Zitiert von:** [U044](08-evaluation/02-datensaetze-referenz.md#a021) (ersetzt), [A021](08-evaluation/02-datensaetze-referenz.md#a021), [A022](08-evaluation/02-datensaetze-referenz.md#a022), [A023](08-evaluation/02-datensaetze-referenz.md#a023), [A024](08-evaluation/02-datensaetze-referenz.md#a024), [A025](08-evaluation/02-datensaetze-referenz.md#a025), [A026](08-evaluation/02-datensaetze-referenz.md#a026), [A027](08-evaluation/02-datensaetze-referenz.md#a027), [A029](08-evaluation/02-datensaetze-referenz.md#a029), [A031](08-evaluation/02-datensaetze-referenz.md#a031), [A044](08-evaluation/02-datensaetze-referenz.md#a044)
 
 <a id="circor_paper"></a>
 ### circor_paper
@@ -387,13 +389,15 @@ Espressif Systems. ESP-DSP Library API Reference.
 <a id="esp_dsp_benchmarks"></a>
 ### esp_dsp_benchmarks
 
-Espressif Systems. ESP-DSP Benchmarks.
+Espressif Systems. ESP-DSP Library Benchmarks, ESP32S3 column.
 
 **Linkstatus:** ok
 
 **Fundstelle:** [Quelle öffnen](https://docs.espressif.com/projects/esp-dsp/en/latest/esp32/esp-dsp-benchmarks.html)
 
-**Prüfnachweis Stage 1:** Manufacturer benchmark page located; does not benchmark WSOLA/whole application.
+**Prüfnachweis Stage 1:** Official Espressif ESP-DSP benchmark table opened; cycle-count method and S3 FIR, FFT, and biquad entries inspected.
+
+**Korrektur Stage 2:** Schlüssel kam in round2/C-sources.json und round2/D-sources.json mit unterschiedlichen Metadaten vor; sources-merged.json behielt den allgemeineren D-Eintrag. Spezifischere C-Metadaten (ESP32-S3-Spalte, geprüfte Tabellen) übernommen; dieselbe Espressif-Seite.
 
 **Zitiert von:** [U052](08-evaluation/07-firmware-funktion-ressourcen.md#a074) (ersetzt), [U066](06-systemarchitektur.md#c025) (ersetzt), [C016](03-grundlagen-technisch/04-dsp-filter.md#c016), [C017](03-grundlagen-technisch/04-dsp-filter.md#c017), [C018](06-systemarchitektur.md#c018), [C019](03-grundlagen-technisch/04-dsp-filter.md#c019), [C023](04-stand-der-technik.md#c023), [C024](08-evaluation/07-firmware-funktion-ressourcen.md#c024), [C025](06-systemarchitektur.md#c025), [C028](06-systemarchitektur.md#c028)
 
@@ -778,7 +782,7 @@ Technische Hochschule Augsburg. FAQs zur Bachelorarbeit, version 02.26.
 
 **Prüfnachweis Stage 1:** Official THA FAQ PDF opened; DMS workflow, required initial fields, four-month period, August restriction, and submission sections inspected.
 
-**Zitiert von:** [C032](03-grundlagen-technisch/08-fhir-tls.md#c032), [C044](11-formales-projektmanagement.md#c044), [C045](11-formales-projektmanagement.md#c045), [C046](11-formales-projektmanagement.md#c046), [C048](11-formales-projektmanagement.md#c048), [C050](11-formales-projektmanagement.md#c050), [C051](11-formales-projektmanagement.md#c051)
+**Zitiert von:** [C044](11-formales-projektmanagement.md#c044), [C045](11-formales-projektmanagement.md#c045), [C046](11-formales-projektmanagement.md#c046), [C048](11-formales-projektmanagement.md#c048), [C050](11-formales-projektmanagement.md#c050), [C051](11-formales-projektmanagement.md#c051)
 
 <a id="tha_gestaltung_ba"></a>
 ### tha_gestaltung_ba
@@ -995,15 +999,15 @@ Eldridge, S. M. et al. (2016). Defining Feasibility and Pilot Studies in Prepara
 <a id="pilot_guidelines"></a>
 ### pilot_guidelines
 
-Leon, A. C. et al. (2011). Guidelines for designing and evaluating feasibility pilot studies. Evaluation & the Health Professions, 34(4), 452–476.
+Teresi, J. A., Yu, X., Stewart, A. L., & Hays, R. D. (2022). Guidelines for designing and evaluating feasibility pilot studies. Medical Care, 60(1), 95–103.
 
-**Linkstatus:** broken (HTTP 404) on 2026-10-05 check · **LINK DEFEKT**
+**Linkstatus:** ok — PMC-Seite am 2026-10-12 HTTP 200; citation_author-Metadaten nennen Teresi, Yu, Stewart, Hays
 
-**Fundstelle:** [Quelle öffnen](https://pmc.ncbi.nlm.nih.gov/articles/PMC8849521/) · DOI aus Arbeitsdatensatz: [https://doi.org/10.1177/0163278711410553](https://doi.org/10.1177/0163278711410553)
+**Fundstelle:** [Quelle öffnen](https://pmc.ncbi.nlm.nih.gov/articles/PMC8849521/) · DOI aus Arbeitsdatensatz: [https://doi.org/10.1097/MLR.0000000000001664](https://doi.org/10.1097/MLR.0000000000001664)
 
 **Prüfnachweis Stage 1:** PMC full text opened; study aim, statistics, sample size and limitations verified in Sections 1–2.
 
-**METADATENKONFLIKT:** Der verlinkte PMC-Text gehört zu Teresi et al. (2022), Medical Care 60(1), 95–103, DOI 10.1097/MLR.0000000000001664. Der Ausgangseintrag nennt Leon (2011). Keine automatische Ersetzung: erst klären, welches Werk die Aussagen tatsächlich belegt.
+**Korrektur Stage 2:** Titel und PMC-URL gehören zu Teresi et al. (2022); Referenz und DOI des Ausgangseintrags (Leon et al. 2011, 10.1177/0163278711410553) bezeichneten ein anderes Werk, dessen DOI am 2026-10-12 bei doi.org nicht auflöste (HTTP 404). Stage 1 hat den Inhalt am PMC-Volltext geprüft, daher wird das PMC-Werk übernommen. Ausgangsreferenz: Leon, A. C. et al. (2011). Evaluation & the Health Professions, 34(4), 452–476.
 
 **Zitiert von:** [U050](08-evaluation/03-filtervergleich-statistik.md#u050), [U053](08-evaluation/05-hoerstudie.md#b001) (ersetzt), [U054](08-evaluation/05-hoerstudie.md#u054), [U055](08-evaluation/05-hoerstudie.md#b016) (ersetzt)
 
@@ -1018,7 +1022,39 @@ Hertzog, M. A. (2008). Considerations in determining sample size for pilot studi
 
 **Prüfnachweis Stage 1:** PubMed bibliographic record searched; full text/page details not verified.
 
-**Zitiert von:** [U055](08-evaluation/05-hoerstudie.md#b016) (ersetzt), [B001](08-evaluation/05-hoerstudie.md#b001), [B002](08-evaluation/05-hoerstudie.md#b002), [B005](08-evaluation/05-hoerstudie.md#b005), [B009](08-evaluation/05-hoerstudie.md#b009), [B011](08-evaluation/05-hoerstudie.md#b011), [B016](08-evaluation/05-hoerstudie.md#b016), [B018](08-evaluation/05-hoerstudie.md#b018), [B019](08-evaluation/05-hoerstudie.md#b019), [B020](08-evaluation/05-hoerstudie.md#b020), [B021](08-evaluation/05-hoerstudie.md#b021), [B076](08-evaluation/05-hoerstudie.md#b076), [B077](08-evaluation/05-hoerstudie.md#b077), [B081](08-evaluation/05-hoerstudie.md#b081), [B083](08-evaluation/05-hoerstudie.md#b083), [B084](08-evaluation/05-hoerstudie.md#b084)
+**Korrektur Stage 2:** Schlüssel aufgeteilt in [pilot_sample_size_sim_lewis](quellen.md#pilot_sample_size_sim_lewis), [pilot_sample_size_hertzog](quellen.md#pilot_sample_size_hertzog); zitierende Einheiten verweisen jetzt dorthin.
+
+**Zitiert von:** Keine Einheit im Inventar.
+
+<a id="pilot_sample_size_hertzog"></a>
+### pilot_sample_size_hertzog
+
+Hertzog, M. A. (2008). Considerations in determining sample size for pilot studies. Research in Nursing & Health, 31(2), 180–191.
+
+**Linkstatus:** reachable-blocked-by-bot-protection · 🔒 Volltextzugang prüfen: May be paywalled.
+
+**Fundstelle:** [Quelle öffnen](https://pubmed.ncbi.nlm.nih.gov/18183564/) · DOI aus Arbeitsdatensatz: [https://doi.org/10.1002/nur.20247](https://doi.org/10.1002/nur.20247)
+
+**Prüfnachweis Stage 1:** PubMed bibliographic record searched; full text/page details not verified. (round2/D-sources.json)
+
+**Korrektur Stage 2 (2026-10-12):** Aus Schlüssel [pilot_sample_size](quellen.md#pilot_sample_size) aufgeteilt. Der Schlüssel bezeichnete in round2/B-sources.json Sim & Lewis (2012), in round2/D-sources.json Hertzog (2008); sources-merged.json behielt nur Hertzog, obwohl die B-Einheiten auf den Sim-&-Lewis-PubMed-Eintrag verlinken. Aufgeteilt nach Herkunftsrunde.
+
+**Zitiert von:** [U055](08-evaluation/05-hoerstudie.md#b016) (ersetzt)
+
+<a id="pilot_sample_size_sim_lewis"></a>
+### pilot_sample_size_sim_lewis
+
+Sim, J. & Lewis, M. (2012). The size of a pilot study for a clinical trial should be calculated in relation to considerations of precision and efficiency. Journal of Clinical Epidemiology 65(3), 301–308. DOI: 10.1016/j.jclinepi.2011.07.011.
+
+**Linkstatus:** reachable-blocked-by-bot-protection (PubMed, 2026-10-12) · 🔒 Volltext kostenpflichtig
+
+**Fundstelle:** [Quelle öffnen](https://pubmed.ncbi.nlm.nih.gov/22169081/) · DOI aus Arbeitsdatensatz: [https://doi.org/10.1016/j.jclinepi.2011.07.011](https://doi.org/10.1016/j.jclinepi.2011.07.011)
+
+**Prüfnachweis Stage 1:** PubMed record verified; title and metadata confirmed. (round2/B-sources.json)
+
+**Korrektur Stage 2 (2026-10-12):** Aus Schlüssel [pilot_sample_size](quellen.md#pilot_sample_size) aufgeteilt. Der Schlüssel bezeichnete in round2/B-sources.json Sim & Lewis (2012), in round2/D-sources.json Hertzog (2008); sources-merged.json behielt nur Hertzog, obwohl die B-Einheiten auf den Sim-&-Lewis-PubMed-Eintrag verlinken. Aufgeteilt nach Herkunftsrunde.
+
+**Zitiert von:** [B001](08-evaluation/05-hoerstudie.md#b001), [B002](08-evaluation/05-hoerstudie.md#b002), [B005](08-evaluation/05-hoerstudie.md#b005), [B009](08-evaluation/05-hoerstudie.md#b009), [B011](08-evaluation/05-hoerstudie.md#b011), [B016](08-evaluation/05-hoerstudie.md#b016), [B018](08-evaluation/05-hoerstudie.md#b018), [B019](08-evaluation/05-hoerstudie.md#b019), [B020](08-evaluation/05-hoerstudie.md#b020), [B021](08-evaluation/05-hoerstudie.md#b021), [B076](08-evaluation/05-hoerstudie.md#b076), [B077](08-evaluation/05-hoerstudie.md#b077), [B081](08-evaluation/05-hoerstudie.md#b081), [B083](08-evaluation/05-hoerstudie.md#b083), [B084](08-evaluation/05-hoerstudie.md#b084)
 
 <a id="pilot_studies"></a>
 ### pilot_studies

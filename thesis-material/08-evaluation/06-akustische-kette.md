@@ -60,7 +60,7 @@ R02 skizziert einen Selbstbau-Prüfstand aus WAV-Quelle, Lautsprecher/Exciter, T
 R07 empfiehlt für Prototypvergleich direkte Kammerankopplung und 5-cm-Schlauchankopplung mit demselben Mikrofon zu messen.
 
 **Ursprung:** [preThesis/03-recherche/R07-bruststueck-mems.md:283-319](../../preThesis/03-recherche/R07-bruststueck-mems.md#L283)
-**Belege:** [Alanazi, A., Atcherson, S., Franklin, C., & Bryan, M 2020 · frequency_response_stethoscopes](https://doi.org/10.4103/sjmms.sjmms_118_19) — Seite prüfen; [Weiss, D 2019 · invitro_stethoscopes](https://pmc.ncbi.nlm.nih.gov/articles/PMC6339642/) — Seite prüfen; [Goh, R 2023 · goh_chestpiece](https://staffprofiles.bournemouth.ac.uk/display/journal-article/388323) — Fundstelle: pp. 137–140 (aus Stage 1; am Original prüfen) · 🔒 Volltext kostenpflichtig
+**Belege:** [Alanazi, A., Atcherson, S., Franklin, C., & Bryan, M 2020 · frequency_response_stethoscopes](https://doi.org/10.4103/sjmms.sjmms_118_19) — Seite prüfen; [Weiss, D 2019 · invitro_stethoscopes](https://pmc.ncbi.nlm.nih.gov/articles/PMC6339642/) — Seite prüfen; [Goh, R 2023 · goh_chestpiece](https://doi.org/10.1109/SENNANO57767.2023.10352567) — Fundstelle: pp. 137–140 (aus Stage 1; am Original prüfen) · 🔒 Volltext kostenpflichtig
 
 <a id="b060"></a>
 **B060 · METHODE / PRÜFVERFAHREN**

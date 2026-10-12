@@ -22,7 +22,7 @@
   "url": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/cardiac-monitor-guidance-including-cardiotachometer-and-rate-alarm-guidance-industry",
   "reference": "U.S. Food and Drug Administration. (1998). Cardiac Monitor Guidance (including Cardiotachometer and Rate Alarm) — Guidance for Industry.",
   "link_check": "broken (HTTP 404) bei Nachprüfung am 2026-10-05 — Sol meldete die HTML-Fassung als geöffnet, ein unabhängiger Abruf lieferte 404; Dokument über FDA-Guidance-Suche manuell finden",
-  "fix_reason": "Defekten PDF-Link durch offizielle HTML-Fassung desselben Dokuments ersetzt. FDA nennt Ausgabedatum 5. November 1998; das im Ausgangseintrag genannte Jahr 2023 ist nicht das Publikationsjahr. HTML enthält den Leitlinientext. Diese Leitlinie bezieht sich auf EC13-1992, nicht automatisch auf EC13:2002.",
+  "fix_reason": "Defekten PDF-Link durch die von der FDA-Guidance-Suche gelistete HTML-Seite desselben Dokuments ersetzt. FDA nennt dort laut Stage-2-Notiz das Ausgabedatum 5. November 1998; das im Ausgangseintrag genannte Jahr 2023 ist nicht das Publikationsjahr. Dass die HTML-Fassung den vollständigen Leitlinientext enthält, ist nicht unabhängig belegt: Die Öffnung wurde nur gemeldet, ein unabhängiger Abruf am 2026-10-05 und erneut am 2026-10-12 lieferte HTTP 404, und link-probes.json enthält keinen FDA-Abruf. Diese Leitlinie bezieht sich auf EC13-1992, nicht automatisch auf EC13:2002.",
   "evidence": [
    "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/cardiac-monitor-guidance-including-cardiotachometer-and-rate-alarm-guidance-industry"
   ],
@@ -57,6 +57,64 @@
    "author": "{Infineon Technologies}",
    "title": "IM68A130V01: High performance analog XENSIV MEMS microphone",
    "year": "2024"
+  }
+ },
+ "goh_chestpiece": {
+  "checked": "2026-10-12",
+  "reference": "Goh, R. X. et al. (2023). Design optimization of 3D printed digital stethoscope for low-cost telemedicine. IEEE International Conference on Sensors and Nanotechnology (SENNANO), 137–140. DOI: 10.1109/SENNANO57767.2023.10352567.",
+  "doi": "https://doi.org/10.1109/SENNANO57767.2023.10352567",
+  "url": "https://doi.org/10.1109/SENNANO57767.2023.10352567",
+  "link_check": "ok — DOI am 2026-10-12 aufgelöst (HTTP 302 zu IEEE Xplore 10352567); Crossref nennt Titel, Goh als Erstautor, S. 137–140",
+  "fix_reason": "Ausgangs-DOI 10.1109/SENNANO57767.2023 bezeichnet den Tagungsband, nicht den Artikel. Artikel-DOI per Crossref-Datensatz und doi.org-Auflösung geprüft. Bisherige Institutions-URL: https://staffprofiles.bournemouth.ac.uk/display/journal-article/388323.",
+  "evidence": [
+   "https://api.crossref.org/works/10.1109/SENNANO57767.2023.10352567",
+   "https://ieeexplore.ieee.org/document/10352567/"
+  ],
+  "bib": {
+   "author": "Goh, Rou Xuan and others",
+   "title": "Design Optimization of 3D Printed Digital Stethoscope for Low-Cost Telemedicine",
+   "year": "2023",
+   "booktitle": "IEEE International Conference on Sensors and Nanotechnology (SENNANO)",
+   "pages": "137--140",
+   "doi": "10.1109/SENNANO57767.2023.10352567"
+  }
+ },
+ "pilot_guidelines": {
+  "checked": "2026-10-12",
+  "reference": "Teresi, J. A., Yu, X., Stewart, A. L., & Hays, R. D. (2022). Guidelines for designing and evaluating feasibility pilot studies. Medical Care, 60(1), 95–103.",
+  "doi": "https://doi.org/10.1097/MLR.0000000000001664",
+  "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8849521/",
+  "link_check": "ok — PMC-Seite am 2026-10-12 HTTP 200; citation_author-Metadaten nennen Teresi, Yu, Stewart, Hays",
+  "fix_reason": "Titel und PMC-URL gehören zu Teresi et al. (2022); Referenz und DOI des Ausgangseintrags (Leon et al. 2011, 10.1177/0163278711410553) bezeichneten ein anderes Werk, dessen DOI am 2026-10-12 bei doi.org nicht auflöste (HTTP 404). Stage 1 hat den Inhalt am PMC-Volltext geprüft, daher wird das PMC-Werk übernommen. Ausgangsreferenz: Leon, A. C. et al. (2011). Evaluation & the Health Professions, 34(4), 452–476.",
+  "evidence": [
+   "https://pmc.ncbi.nlm.nih.gov/tools/idconv/api/v1/articles/?ids=PMC8849521&format=json",
+   "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pmc&id=8849521&retmode=json"
+  ],
+  "bib": {
+   "author": "Teresi, Jeanne A. and Yu, Xiaoying and Stewart, Anita L. and Hays, Ron D.",
+   "title": "Guidelines for Designing and Evaluating Feasibility Pilot Studies",
+   "journal": "Medical Care",
+   "year": "2022",
+   "volume": "60",
+   "number": "1",
+   "pages": "95--103",
+   "doi": "10.1097/MLR.0000000000001664"
+  }
+ },
+ "esp_dsp_benchmarks": {
+  "checked": "2026-10-12",
+  "reference": "Espressif Systems. ESP-DSP Library Benchmarks, ESP32S3 column.",
+  "url": "https://docs.espressif.com/projects/esp-dsp/en/latest/esp32/esp-dsp-benchmarks.html",
+  "verified": "Official Espressif ESP-DSP benchmark table opened; cycle-count method and S3 FIR, FFT, and biquad entries inspected.",
+  "page": "Benchmark table: FIR Filters, FFTs Radix-2, IIR Filters",
+  "link_check": "ok",
+  "fix_reason": "Schlüssel kam in round2/C-sources.json und round2/D-sources.json mit unterschiedlichen Metadaten vor; sources-merged.json behielt den allgemeineren D-Eintrag. Spezifischere C-Metadaten (ESP32-S3-Spalte, geprüfte Tabellen) übernommen; dieselbe Espressif-Seite.",
+  "evidence": [
+   "https://docs.espressif.com/projects/esp-dsp/en/latest/esp32/esp-dsp-benchmarks.html"
+  ],
+  "bib": {
+   "author": "{Espressif Systems}",
+   "title": "ESP-DSP Library Benchmarks"
   }
  }
 }

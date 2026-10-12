@@ -111,7 +111,8 @@ Testing-README unterscheidet QC-Score von funktionaler Evaluation; CI-Hosttests 
 
 THA-baseline-traceability.json bindet den institutionalisierten Vergleich an Revision 4698995f203f73f4b264e4355ca30e2712163729 und drei SHA-256-Einträge.
 
-**Ursprung:** [preThesis/02-entscheidungen/widersprueche.md:1-4](../../preThesis/02-entscheidungen/widersprueche.md#L1); [preThesis/02-entscheidungen/open-questions.md:7-11](../../preThesis/02-entscheidungen/open-questions.md#L7); [preThesis/05-hardware/hardware.md:32-34](../../preThesis/05-hardware/hardware.md#L32); [Development/system/coding/bringup-zephyr/README.md:1-160](../../Development/system/coding/bringup-zephyr/README.md#L1)
+**Ursprung:** [Development/system/testing/tha-baseline-traceability.json:1-10](../../Development/system/testing/tha-baseline-traceability.json#L1)
+**Korrektur Stage 2 (2026-10-12):** Ursprungsliste in inventory-merged.json/inventory.json war eine Kopie der U100-Ursprünge; inventory.md nennt die Traceability-JSON, die die Aussage tatsächlich belegt. Ursprüngliche Liste: preThesis/02-entscheidungen/widersprueche.md:1-4; preThesis/02-entscheidungen/open-questions.md:7-11; preThesis/05-hardware/hardware.md:32-34; Development/system/coding/bringup-zephyr/README.md:1-160. Quelle: [_build/stage2-corrections.json](../_build/stage2-corrections.json).
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
 
 <a id="u126"></a>

@@ -69,6 +69,8 @@ R04 beschreibt PSOLA als perioden-/grundtonsynchrone Segmentierung und bewertet 
 
 Bei 0,5× verdoppelt sich Dauer und Frequenzlage sinkt auf 50 %; bei 0,75× wird Dauer 1,333-fach und Frequenzlage sinkt auf 75 %.
 
+> **Vorbehalt (2026-10-12):** Die Frequenzverschiebung auf 50 % bzw. 75 % gilt nur für Resampling (Wiedergabe mit veränderter Abtastrate). Tonhöhenerhaltende Time-Scale Modification wie WSOLA verlängert die Dauer ohne diese Verschiebung. Bezug: [A058](06-time-stretch.md#a058).
+
 **Ursprung:** [preThesis/03-recherche/R04-time-stretch.md:48-60](../../preThesis/03-recherche/R04-time-stretch.md#L48)
 **Belege:** [Driedger, J., & Müller, M 2016 · tsm_review](https://www.mdpi.com/2076-3417/6/2/57) — Seite prüfen (übernommene Angabe: Abstract and review overview; article section/page unverified); [Roelands, M., & Verhelst, W 1993 · wsola_roelands](https://www.isca-archive.org/eurospeech_1993/roelands93_eurospeech.html) — Fundstelle: Abstract and bibliographic record (aus Stage 1; am Original prüfen); [Prusa, Z 2022 · phase_vocoder](https://ltfat.org/notes/ltfatnote050.pdf) — Seite prüfen (übernommene Angabe: Abstract and Introduction (PDF; document pages unverified))
 
