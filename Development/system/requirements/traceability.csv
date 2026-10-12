@@ -50,7 +50,7 @@ UI-007,UI,UC-10,"SR-10,SR-12","S05,S06",Derived security constraint,P21,"VT-14,V
 NET-001,NET,"UC-06,UC-09",SR-06,S04,Source-backed + derived lease,P19,VT-08,components/net.md#net-001
 NET-002,NET,UC-06,"SR-06,SR-08","S03,S04",Source-backed,P18,VT-07,components/net.md#net-002
 NET-003,NET,UC-06,SR-06,S03,Source-backed,P18,VT-07,components/net.md#net-003
-NET-004,NET,UC-06,SR-06,"S02,S03",Source-backed + derived idempotent PUT,—,"VT-07,VT-08",components/net.md#net-004
+NET-004,NET,UC-06,SR-06,"S02,S03",Source-backed; conditional create decided 12 October,—,"VT-07,VT-08",components/net.md#net-004
 NET-005,NET,UC-06,SR-06,"S03,S06",Source-backed,P18,VT-08,components/net.md#net-005
 NET-006,NET,UC-06,"SR-06,SR-09",S03,Source-backed,P13,"VT-07,VT-08",components/net.md#net-006
 NET-007,NET,"UC-06,UC-09","SR-06,SR-10","S03,S06",Derived privacy constraint,P18,"VT-08,VT-11",components/net.md#net-007
