@@ -1,6 +1,6 @@
 # NET — FHIR/TLS delivery
 
-Current owner decisions and numeric proposals: [11 October MVP decisions](../../planning/mvp-decisions-2026-10-11.md). Older source snapshots and evaluation behavior remain historical evidence.
+Current owner decisions and numeric proposals: [11 October MVP decisions](../../planning/mvp-decisions-2026-10-11.md) and [12 October decisions](../../planning/mvp-decisions-2026-10-12.md) (patient assignment, FHIR write contract D08). Older source snapshots and evaluation behavior remain historical evidence.
 
 **Status: current owner behavior decisions with proposed numeric acceptance.** “Source-backed” identifies origin, not formal approval. Acceptance with open parameters remains conditional. Interface names are proposed contracts, not existing APIs.
 
@@ -38,11 +38,11 @@ FHIR serialization shall encode a final R4 heart-rate Observation with LOINC 886
 
 The MVP delivery service shall schedule at most one attempt per completed result/error job with a stable logical identifier and frozen payload, written as a conditional create (`POST` + `If-None-Exist` on that identifier) and never as an update; failed/unverified delivery is terminal and has no automatic or manual retry queue.
 
-- **Derivation:** UC-06 → SR-06; sources S02,S03.
+- **Derivation:** UC-06 → SR-06; sources S02,S03; [12 October decisions](../../planning/mvp-decisions-2026-10-12.md).
 - **Status:** Source-backed; conditional create decided 12 October (D08).
 - **Parameters:** —.
 - **Verification:** VT-07,VT-08.
-- **Acceptance:** Timeout after server commit remains Unverified; no retry or new resource is created. An identifier collision returns the existing resource and never overwrites it; readback mismatch then yields Unverified. Retain redacted outcome evidence, not a sendable failed payload; no mutable patient/value.
+- **Acceptance:** Timeout after server commit remains Unverified; no retry or new resource is created. An identifier collision returns the existing resource and never overwrites it. Sent requires a full payload match (identifier, subject, device, code, unit, numeric value, `effectiveDateTime`) for 201 and 200 alike; any difference yields Unverified. Retain redacted outcome evidence, not a sendable failed payload; no mutable patient/value.
 
 ## NET-005
 

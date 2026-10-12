@@ -47,7 +47,7 @@ dev -> fhir : GET /Device/{id} (pre-send check,\nrecord meta.versionId)
 note right of dev : missing or different patient →\nno send + normal fault
 dev -> fhir : POST /Observation\nIf-None-Exist: identifier=…|device-boot-session\nsubject + device, LOINC 8867-4, /min,\neffectiveDateTime = interval end
 fhir --> dev : 201 created / 200 existing, Location
-dev -> fhir : GET /Observation/{id from Location} (readback,\nnumeric comparison)
+dev -> fhir : GET /Observation/{id from Location} (readback: full payload\nmatch, numeric value)
 dev -> fhir : GET /Device/{id} (post-readback recheck)
 note right of dev : mismatch, failure or Device\nversionId changed since check →\nUnverified, normal fault, no retry
 @enduml

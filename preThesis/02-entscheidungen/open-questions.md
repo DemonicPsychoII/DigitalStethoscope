@@ -98,8 +98,9 @@
 
 ## 4. FHIR und Sicherheit
 
-- [x] **FHIR/TLS-Funktionsnachweis bleibt Pflicht:** Der Architekturentwurf sieht geräteinitiiertes
-  PUT mit stabiler Identität und Readback für einen eingefrorenen abgeschlossenen Messwert vor.
+- [x] **FHIR/TLS-Funktionsnachweis bleibt Pflicht:** Der Architekturentwurf sieht ein geräteinitiiertes
+  bedingtes Create (`POST` + `If-None-Exist`) mit stabiler Kennung und Readback für einen
+  eingefrorenen abgeschlossenen Messwert vor, nie ein Update (D08, 12.10.).
   Validiertes TLS, vertrauenswürdige Zeit, Provenienz und ausgeschlossene Test-/Lung-/ungültige
   Ergebnisse gehören zur Verifikation, nicht nur erfolgreicher JSON-Versand.
 - [ ] **Konfiguration und Profil (D08/VT-07/VT-08):** HAPI R4, Patient, Authentifizierung,

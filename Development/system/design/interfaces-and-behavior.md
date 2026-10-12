@@ -88,7 +88,7 @@ Candidate memory accounting:
 | Measurement Acquiring | freeze context/config/ID and clear aggregation | original-rate windows; independent filter; valid estimates | Stop <15 s cancels; Stop ≥15 s → Finalizing; identity change rejected; DA invalidates session |
 | Finalizing | stop accepting windows for that interval | aggregate and union valid temporal coverage | freeze valid/invalid result once; late blocks cannot mutate result |
 | Delivery Pending | retain completed result and unsent identity | wait for Idle/prerequisites; do not force stop | grant job once; full slot leaves visible Pending |
-| Sending | acquire exclusive Idle lease; snapshot payload | bounded connect/TLS/PUT/readback | outcome event + release lease; Start is Busy, never queued |
+| Sending | acquire exclusive Idle lease; snapshot payload | bounded connect/TLS/conditional POST/readback | outcome event + release lease; Start is Busy, never queued |
 | Fault | mute and invalidate active acquisition | expose latched DA cause | full device restart to Boot only |
 
 Changing Heart/Lung, source, patient or point during a session is rejected with a normal fault and leaves the frozen context unchanged. Outside a session the controller may accept configuration changes and reset source-dependent histories. Generation checks reject stale completions. Separate acknowledgement clears normal-fault indication without starting, retrying or changing an active workflow. Device Alarm remains latched until full restart.
