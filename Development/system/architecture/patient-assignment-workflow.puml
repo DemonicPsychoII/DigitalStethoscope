@@ -8,7 +8,14 @@ participant "Digital stethoscope\n(no display)" as dev
 database "HAPI FHIR server\n(KIS)" as fhir
 
 == 1 · Boot and register ==
-dev -> dev : startup checks → Idle, join stored Wi-Fi\n(none stored → Idle enters Portal, Wi-Fi page)
+dev -> dev : startup checks → Idle
+alt no stored Wi-Fi credentials
+  dev -> dev : Idle enters Portal, open hotspot
+  op -> dev : phone enters Wi-Fi credentials
+  dev -> dev : save, close hotspot
+end
+dev -> dev : join hospital Wi-Fi
+note right of dev : connection fails →\nIdle + normal Wi-Fi fault,\noffline listening, no registration
 dev -> dev : SNTP time sync
 dev -> fhir : GET /Device/{stetho-id}
 alt Device absent
@@ -36,10 +43,10 @@ op -> dev : Start (no network work)
 dev -> dev : freeze local assignment,\nlog assignment present + Device version\n(no patient data)
 dev -> dev : listen → BPM (device only)
 op -> dev : Stop
-dev -> fhir : GET /Device/{id} (pre-send check)
+dev -> fhir : GET /Device/{id} (pre-send check,\nrecord meta.versionId)
 note right of dev : missing or different patient →\nno send + normal fault
 dev -> fhir : PUT /Observation/{id}\nsubject + device, LOINC 8867-4, /min
 dev -> fhir : GET /Observation/{id} (readback)
 dev -> fhir : GET /Device/{id} (post-readback recheck)
-note right of dev : mismatch, failure or assignment\nchanged since check → Unverified,\nnormal fault, no retry
+note right of dev : mismatch, failure or Device\nversionId changed since check →\nUnverified, normal fault, no retry
 @enduml
