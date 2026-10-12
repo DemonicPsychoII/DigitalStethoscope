@@ -42,4 +42,16 @@ When the control queue is full, input adapters shall preserve the latest stable 
 - **Verification:** VT-04,VT-09.
 - **Acceptance:** Queue saturation recovers effective stable settings; no duplicate capture; rejected actions visible.
 
+## INP-005
+
+The button adapter shall emit a distinct long-press event once the button has been held stably for at least the configured long-press time, and shall then suppress the ordinary press for that actuation.
+
+- **Derivation:** UC-10 → SR-12; sources S05; [12 October decisions](../../planning/mvp-decisions-2026-10-12.md).
+- **Status:** Owner decision 12 October; time proposed.
+- **Parameters:** P10,P21.
+- **Verification:** VT-04,VT-14.
+- **Acceptance:** Press durations just below/above the threshold, bounce at release and queue saturation produce exactly one press or one long-press event, never both.
+
 Created by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.
+
+Updated by Claude-Opus-5.5 on behalf of Nico running in T3 Code through Claude Code.

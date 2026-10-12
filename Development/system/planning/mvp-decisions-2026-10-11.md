@@ -1,6 +1,6 @@
 # MVP decisions and evaluation proposals — 11 October 2026
 
-Nico's answers in T3 thread `58a691a9-4492-46b4-b65e-39cde5d8e3fc` supersede older workflow proposals. This records decisions and planned evidence, not firmware behavior or completed hardware validation. Numeric values below are proposals requested by Nico, not approved thresholds or medical claims.
+Nico's answers in T3 thread `58a691a9-4492-46b4-b65e-39cde5d8e3fc` supersede older workflow proposals. This records decisions and planned evidence, not firmware behavior or completed hardware validation. Numeric values below are proposals requested by Nico, not approved thresholds or medical claims. [12 October decisions](mvp-decisions-2026-10-12.md) add the hotspot portal and patient assignment to the MVP.
 
 ## Confirmed scope and behavior
 
@@ -55,3 +55,5 @@ The server contract for invalid BPM is not supplied yet. Proposed interoperable 
 ## Implementation timeline
 
 See [component timeline](mvp-implementation-timeline.md). Existing Jira deadlines were re-read on 11 October: preparation 14 October, implementation 18 November, refinement 25 November, verification 2 December and validated milestone 3 December. Dates below are a provisional single-person schedule at 4 focused hours per weekday, 96 h total including 8 h correction reserve; holidays, meetings and actual availability are not modelled. Remaining capacity through 3 December is for refinement/verification, not a reason to add optional scope. Update remaining estimates and successor dates as soon as evidence changes; Jira links express real blockers, calendar sequencing also reflects one implementer.
+
+Updated by Claude-Opus-5.5 on behalf of Nico running in T3 Code through Claude Code.
