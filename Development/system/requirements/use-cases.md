@@ -78,7 +78,7 @@ Playback, measurement and delivery have independent state. “Record audio” in
 
 ## UC-10 — Assign patient and Wi-Fi through the device hotspot
 
-- **Actors and trigger:** Operator with phone browser, FHIR server; long press ≥2 s in Idle, or boot without stored Wi-Fi credentials
+- **Actors and trigger:** Operator with phone browser, FHIR server; long press ≥2 s in Idle, or entering Idle after startup checks with no stored Wi-Fi credentials
 - **Preconditions:** Idle (no listening, measurement, analysis or sending). Patient selection additionally needs working hospital Wi-Fi, trusted time and the registered Device.
 - **Postconditions:** A confirmed patient assignment stored in `Device.patient` and matched by readback, stored Wi-Fi credentials, or no change. Hospital Wi-Fi is rejoined when configured.
 - **Normal flow:** Load in-progress Encounters with their patients; switch to a WPA2 hotspot with timeout; operator opens the page, sees name, birth date, ID and the list load time, and confirms one patient; close hotspot, rejoin Wi-Fi; `PATCH Device.patient`; matching readback becomes the local assignment. The Wi-Fi page stores credentials without echoing them.

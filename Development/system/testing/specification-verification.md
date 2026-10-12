@@ -17,7 +17,7 @@
 | VT-11 | Evidence and privacy | Inspection + completed evaluation report | Check identity/setup/reference/actual results/reviewer/anomalies, separate readiness from physical proof, configuration provenance, secret-free logs and rerun evidence after changes. |
 | VT-12 | Electrical/hardware interface checks | Inspection + owner-authorized bench | Carrier/overlay pin map, grounds/supplies/straps, 24-bit I2S alignment, amplifier DAC load/output level, reserved pins, speed switch and SD wiring confirmation. |
 | VT-13 | Shared SPI scheduling | Target bus trace + fault injection | Concurrent partial display/touch/SD requests, operation chunk sizes, prefetch starvation/queue behavior, no filesystem wait in audio; transfer lower bound does not serve as measured bus WCET. |
-| VT-14 | Patient assignment and hotspot portal | Host controller/NET model + authorized DevKit and lab HAPI | Long press in every state, timeout/cancel, Wi-Fi page, list load failure, confirmation, PATCH/readback mismatch, Device registration without erasing an assignment, reassignment/clearing between freeze and send (zero Observation requests), WPA2-only join, no secrets or patient data in logs. Seeded synthetic Encounter/Patient only. |
+| VT-14 | Patient assignment and hotspot portal | Host controller/NET model + authorized DevKit and lab HAPI | Long press in every state, timeout/cancel, Wi-Fi page, list load failure, confirmation, PATCH/readback mismatch, Device registration without erasing an assignment, reassignment/clearing between freeze and pre-send check (zero Observation requests) and between check and `PUT` (Unverified, not Sent), WPA2-only join, no secrets or patient data in logs. Seeded synthetic Encounter/Patient only. |
 
 ## Evidence record template
 

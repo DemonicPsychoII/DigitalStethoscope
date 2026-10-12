@@ -8,7 +8,7 @@ The MVP has no display or touch. The operator therefore assigns the patient thro
 
 - **Hotspot portal is MVP scope.** It provides patient selection and Wi-Fi setup. The serial shell remains a diagnostic fallback for both.
 - **Gesture:** a long press of at least 2 s while Idle opens the hotspot. The long press is a documented, separate gesture; ordinary Start/Stop and normal-error acknowledgement keep their meaning. Outside Idle the long press is rejected and nothing changes.
-- **No stored Wi-Fi credentials at boot** opens the hotspot automatically with the Wi-Fi setup page. Credentials are entered in the portal and never echoed back.
+- **No stored Wi-Fi credentials at boot:** startup checks complete and the device enters Idle as usual; Idle then enters Portal automatically with the Wi-Fi setup page, under the same Idle-only network lease as the long press. Credentials are entered in the portal and never echoed back.
 - **The FHIR server holds the assignment.** The device registers its own `Device` resource; the selected patient is stored in R4 `Device.patient`. The KIS can also set or clear it, for example via curl or the HAPI web UI during the MVP.
 - **Patient list loading:** the device loads the list on the hospital Wi-Fi immediately before switching to hotspot mode, then shows it with its load time. Hospital Wi-Fi is down while the hotspot is open.
 
@@ -18,12 +18,12 @@ The MVP has no display or touch. The operator therefore assigns the patient thro
 2. **Open portal (Idle only).** Long press → `GET /Encounter?status=in-progress&_include=Encounter:subject` (bounded result count) → leave hospital Wi-Fi → start WPA2 hotspot with timeout.
 3. **Select.** The page lists name, birth date and patient ID only, plus the list load time. The operator confirms one patient explicitly. Nothing is assigned without confirmation.
 4. **Assign.** Close the hotspot, rejoin hospital Wi-Fi, `PATCH /Device/{id}` with `patient`, then read back. Only a matching readback becomes the local assignment; failure leaves the device unassigned and latches a normal fault.
-5. **Measure.** Start does no network work (network exclusion stays). The controller freezes the local assignment into the session and prints the patient reference to the serial log. No assignment → listening and measurement still work, but nothing is sent.
-6. **Send.** Under the Idle network lease, NET re-reads `Device.patient` before the Observation `PUT`. A different or cleared assignment means no send and a normal fault, so a reassignment in the KIS can never relabel a frozen result. Otherwise `PUT /Observation/{id}` with `subject` and `device`, then matching readback, as before.
+5. **Measure.** Start does no network work (network exclusion stays). The controller freezes the local assignment into the session. The serial log only states whether an assignment is present and its `Device` version, never the patient reference. No assignment → listening and measurement still work, but nothing is sent.
+6. **Send.** Under the Idle network lease, NET re-reads `Device.patient` before the Observation `PUT`. A different or cleared assignment means no send and a normal fault. Otherwise `PUT /Observation/{id}` with the frozen `subject` and `device`, then matching readback, as before. The result is never relabelled: the subject stays the patient confirmed when the session started. FHIR offers no atomic condition across `Device` and `Observation`, so a KIS change between the check and the `PUT` is a residual race. To expose it, NET re-reads `Device.patient` after the readback; a change marks the delivery Unverified with a normal fault for review instead of Sent.
 
 ## Wrong-patient risk (not a completed ISO 14971 analysis)
 
-Without a display, the operator cannot see the active patient on the device. Proposed controls: explicit confirmation on the phone with name and birth date; readback before the assignment is accepted; freeze at session start; patient reference in the serial log; pre-send comparison with the server assignment; no assignment, no send. Stale lists are limited by loading immediately before the hotspot opens and showing the load time.
+Without a display, the operator cannot see the active patient on the device. Proposed controls: explicit confirmation on the phone with name and birth date; readback before the assignment is accepted; freeze at session start; assignment presence and Device version in the serial log; pre-send comparison with the server assignment; no assignment, no send. Stale lists are limited by loading immediately before the hotspot opens and showing the load time.
 
 A remaining hazard is that the assignment persists: a measurement on the next patient goes to the previous one if nobody reassigns the device. Proposed control, **pending owner decision:** clear the assignment after a verified delivery, so every new patient needs a fresh selection. Alternative: a maximum assignment age.
 

@@ -7,8 +7,7 @@ title MVP session and alarm transitions — owner decisions 11/12 October
 Boot --> Idle : software-observable startup checks pass
 Boot --> DA : essential functionality fails
 Idle --> Listening : Start / Heart or Lung
-Boot --> Portal : no stored Wi-Fi credentials
-Idle --> Portal : long press >= 2 s / load patient list, open hotspot
+Idle --> Portal : long press >= 2 s, or automatically when no Wi-Fi credentials are stored / Idle network lease, open hotspot
 Portal --> Idle : confirm / PATCH Device.patient + readback
 Portal --> Idle : cancel or timeout / no change
 Listening --> Measuring : Heart session begins / freeze context
