@@ -156,3 +156,11 @@ Created by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.
 ## Current MVP baseline — 11 October
 
 [Owner decisions and numeric proposals](../planning/mvp-decisions-2026-10-11.md) supersede older clip/retry/recovery proposals here. Raw capture/REC/replay is optional; BPM retains bounded streaming analysis state and window estimates. Session identity changes are rejected with normal fault, never applied. Invalid BPM sends no numeric value and uses a separately validated error-report contract. Current session state transitions are in [the state diagram](../architecture/mvp-session-state.puml).
+
+## Patient assignment and hotspot portal — 12 October
+
+[Owner decisions](../planning/mvp-decisions-2026-10-12.md) make the hotspot portal MVP scope; the [sequence diagram](../architecture/patient-assignment-workflow.puml) shows the flow. The FHIR server holds the assignment in `Device.patient`; CTL keeps a local copy that is set only from a matching readback (CTL-007). NET registers the Device at boot without erasing an assignment (NET-008), loads the list before the hotspot opens and re-reads the assignment before each Observation `PUT` (NET-009).
+
+Portal is an Idle-only controller state with the exclusive network lease: station Wi-Fi is down, Start and session commands are rejected, and the state ends on confirmation, cancel or timeout. Start does no network work; the session freezes the local assignment. `MeasurementResult` and `NetworkJob` therefore carry the frozen patient reference and the Device ID; a missing local assignment makes the result ineligible for sending. The portal HTTP handler runs outside audio and controller threads and submits typed control events like the shell (UI-003); it never writes state directly.
+
+Updated by Claude-Opus-5.5 on behalf of Nico running in T3 Code through Claude Code.
