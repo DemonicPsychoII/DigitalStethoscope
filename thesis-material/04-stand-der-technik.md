@@ -126,4 +126,3 @@ Der Bericht fand keine belastbar publizierten offiziellen Latenzwerte für 3M Li
 
 **Ursprung:** [preThesis/03-recherche/R09-latenz.md:32-35](../preThesis/03-recherche/R09-latenz.md#L32)
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
-

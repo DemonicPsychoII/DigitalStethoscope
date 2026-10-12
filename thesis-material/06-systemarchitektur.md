@@ -211,6 +211,8 @@ README-Update 2026-10-02 meldet Rev A-Verdrahtung für Geschwindigkeits-Schalter
 
 Bedienvorschlag: Potentiometer für Lautstärke, Schalter für Wiedergabegeschwindigkeit und Filter; optional Touchdisplay zur Konfiguration.
 
+> **Überholt (Stand integration, 2026-10-12):** Das MVP hat weder Display noch Touch; Geschwindigkeitsschalter/Speed-Presets sind optional. Aktuell: Bedienung über Taster (Start/Stop, Quittierung, langer Druck ≥2 s im Idle öffnet das Hotspot-Portal), Filterschalter und Potentiometer; Patientenzuordnung und WLAN-Einrichtung über eine Handy-Browserseite im Geräte-Hotspot. – siehe [MVP-Entscheidungen 12.10.](../Development/system/planning/mvp-decisions-2026-10-12.md#confirmed-decisions), [MVP-Entscheidungen 11.10.](../Development/system/planning/mvp-decisions-2026-10-11.md#confirmed-scope-and-behavior).
+
 **Ursprung:** [preThesis/01-aufgabenbeschreibung/Aufgabenbeschreibung-Intern.md:53](../preThesis/01-aufgabenbeschreibung/Aufgabenbeschreibung-Intern.md#L53)
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
 
@@ -256,6 +258,8 @@ Bestandsliste: ESP32-S3 N16R8 DevKitC-1 mit 16 MB Flash und 8 MB PSRAM.
 
 R10 nennt 10–40-ms-DMA-Blöcke und zwei bis vier DMA-Puffer lediglich als Startwerte; die endgültige Audiolatenz und Robustheit sind vom gewählten Blockformat und Scheduling abhängig.
 
+> **Überholt (Stand integration, 2026-10-12):** Die 10–40-ms-DMA-Startwerte sind durch die gewählte Blockgröße ersetzt. Aktuell: 128 Frames bei 16 kHz (8 ms) je Block; Vorschlag ≤4 ms kritische Ausführung pro Block, Scheduling- und Wartezeiten getrennt messen. – siehe [Latenzbudgets 11.10.](../Development/system/planning/mvp-decisions-2026-10-11.md#latency-research-and-proposed-budgets), [Entscheidungsregister D10](../Development/system/planning/implementation-readiness.md#decision-register).
+
 **Ursprung:** [preThesis/03-recherche/R10-esp32-plattform.md:334-344](../preThesis/03-recherche/R10-esp32-plattform.md#L334)
 **Belege:** [Espressif Systems · esp_i2s_s3](https://docs.espressif.com/projects/esp-idf/en/stable/esp32s3/api-reference/peripherals/i2s.html) — Fundstelle: Data Transport (aus Stage 1; am Original prüfen); [Espressif Systems · esp_s3_datasheet](https://documentation.espressif.com/esp32-s3_datasheet_en.pdf) — Seite prüfen
 
@@ -266,6 +270,8 @@ R10 nennt 10–40-ms-DMA-Blöcke und zwei bis vier DMA-Puffer lediglich als Star
 
 Interne Programmiersprachen-/Framework-Auswahl: C/ESP-IDF oder C/Zephyr nach Hands-on-Phase; Kriterium ist schnellste tragfähige Echtzeit-Audio-Umsetzung.
 
+> **Überholt (Stand integration, 2026-10-12):** Die Auswahl zwischen C/ESP-IDF und C/Zephyr ist getroffen. Aktuell: C/Zephyr für das MVP; ein Frameworkwechsel würde Gerätekonfiguration, Synchronisation, Netzwerk und Verifikation erneut erfordern. – siehe [Framework- und Transportbewertung](../Development/system/planning/framework-and-transport-evaluation.md#recommendation-for-the-next-discussion).
+
 **Ursprung:** [preThesis/01-aufgabenbeschreibung/Aufgabenbeschreibung-Intern.md:62](../preThesis/01-aufgabenbeschreibung/Aufgabenbeschreibung-Intern.md#L62)
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
 
@@ -273,6 +279,8 @@ Interne Programmiersprachen-/Framework-Auswahl: C/ESP-IDF oder C/Zephyr nach Han
 **U028 · EIGENE ENTSCHEIDUNG / ENTWURFSEMPFEHLUNG · OFFEN**
 
 Plattformentscheidung intern zunächst offen: ESP-IDF (C/FreeRTOS) Favorit; Zephyr-Probeläufe vor Thesis-Start, finale Entscheidung zu Thesis-Beginn.
+
+> **Überholt (Stand integration, 2026-10-12):** Die Plattformentscheidung ist nicht mehr offen; die ESP-IDF-Präferenz der internen Fassung ist durch S04 ersetzt. Aktuell: Zephyr wird für das MVP beibehalten, solange die On-Target-Prüfungen keinen konkreten Blocker zeigen. – siehe [Framework- und Transportbewertung](../Development/system/planning/framework-and-transport-evaluation.md#recommendation-for-the-next-discussion), [Quellenregister S04/S06](../Development/system/spec/product-scope.md#source-register-and-precedence).
 
 **Ursprung:** [preThesis/01-aufgabenbeschreibung/Aufgabenbeschreibung-Intern.md:49](../preThesis/01-aufgabenbeschreibung/Aufgabenbeschreibung-Intern.md#L49)
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
@@ -285,6 +293,8 @@ Plattformentscheidung intern zunächst offen: ESP-IDF (C/FreeRTOS) Favorit; Zeph
 **C043 · METHODENVORSCHLAG · ANNAHME**
 
 Der in R11 vorgeschlagene Übertragungspfad lautet: BPM-Observation mit Zeitstempel erzeugen, Uhrzeit synchronisieren, verifiziertes HTTPS aufbauen, FHIR-JSON per POST senden, HTTP-/FHIR-Antworten prüfen und transiente Fehler mit Backoff erneut versuchen.
+
+> **Überholt (Stand integration, 2026-10-12):** Übertragung per `POST` mit Backoff-Wiederholung ist nicht der Projektpfad. Aktuell: `PUT /Observation/{id}` mit stabiler Ressourcen-ID und anschließendem Readback, ohne Wiederholungswarteschlange; vor dem `PUT` wird `Device.patient` erneut gelesen. – siehe [Design: Delivery](../Development/system/design/interfaces-and-behavior.md#delivery-clock-and-configuration), [MVP-Entscheidungen 12.10.](../Development/system/planning/mvp-decisions-2026-10-12.md#proposed-behavior).
 
 **Ursprung:** [preThesis/03-recherche/R11-fhir-tls.md:220-233](../preThesis/03-recherche/R11-fhir-tls.md#L220)
 **Belege:** [HL7 · fhir_r4_vitals_official](https://hl7.org/fhir/R4/observation-vitalsigns.html) — Fundstelle: Vital Signs Profile (aus Stage 1; am Original prüfen); [Espressif Systems · esp_tls_s3](https://docs.espressif.com/projects/esp-idf/en/stable/esp32s3/api-reference/protocols/esp_tls.html) — Fundstelle: TLS Server Verification (aus Stage 1; am Original prüfen); [Espressif Systems · esp_tls_faq](https://docs.espressif.com/projects/esp-faq/en/latest/software-framework/protocols/esp-tls.html) — Fundstelle: Question on certificate expiry (aus Stage 1; am Original prüfen)
@@ -317,6 +327,8 @@ R10 bewertet das Rechenbudget als voraussichtlich ausreichend, sofern Filter blo
 **C013 · EIGENE ENTSCHEIDUNG / ENTWURFSEMPFEHLUNG · ANNAHME · ersetzt U065**
 
 R10 bewertet ESP-IDF mit FreeRTOS als risikoärmere Basis für die konkrete Kombination aus ESP32-S3-PDM/I²S, DMA, Wi-Fi, TLS und Espressif-DSP-Bibliothek; Zephyr wird als grundsätzlich nutzbar, aber integrationsintensiver eingeordnet.
+
+> **Überholt (Stand integration, 2026-10-12):** Die R10-Empfehlung für ESP-IDF ist historischer Recherchekontext, keine Projektentscheidung. Aktuell: Zephyr bleibt Plattform des MVP; ESP-IDF-Komponenten sind keine Drop-in-Bibliotheken unter Zephyr. – siehe [Framework- und Transportbewertung](../Development/system/planning/framework-and-transport-evaluation.md#recommendation-for-the-next-discussion), [Quellenregister S06](../Development/system/spec/product-scope.md#source-register-and-precedence).
 
 **Ursprung:** [preThesis/03-recherche/R10-esp32-plattform.md:20-57,363-395](../preThesis/03-recherche/R10-esp32-plattform.md#L20)
 **Belege:** [Espressif Systems · esp_i2s_s3](https://docs.espressif.com/projects/esp-idf/en/stable/esp32s3/api-reference/peripherals/i2s.html) — Fundstelle: Overview of All Modes; Application Example (aus Stage 1; am Original prüfen); [Zephyr Project · zephyr_s3_board](https://docs.zephyrproject.org/latest/boards/espressif/esp32s3_devkitc/doc/index.html) — Fundstelle: Board Support Package; Supported Features (aus Stage 1; am Original prüfen); [Zephyr Project · zephyr_i2s_binding](https://docs.zephyrproject.org/latest/build/dts/api/bindings/i2s/espressif,esp32-i2s.html) — Fundstelle: Binding properties (aus Stage 1; am Original prüfen)
@@ -353,4 +365,3 @@ Wenn mbedTLS die X.509-Gültigkeitszeiträume validiert, benötigt es eine zutre
 **Ursprung:** [preThesis/03-recherche/R11-fhir-tls.md:160-184](../preThesis/03-recherche/R11-fhir-tls.md#L160)
 **Weiterer Kapitelbezug:** Ethik/Datenschutz/Regulatorik
 **Belege:** [Espressif Systems · esp_tls_s3](https://docs.espressif.com/projects/esp-idf/en/stable/esp32s3/api-reference/protocols/esp_tls.html) — Fundstelle: TLS Server Verification (aus Stage 1; am Original prüfen); [Espressif Systems · esp_mbedtls_s3](https://docs.espressif.com/projects/esp-idf/en/stable/esp32s3/api-reference/protocols/mbedtls.html) — Seite prüfen; [Espressif Systems · esp_tls_faq](https://docs.espressif.com/projects/esp-faq/en/latest/software-framework/protocols/esp-tls.html) — Fundstelle: Questions on certificate verification and expiry (aus Stage 1; am Original prüfen)
-

@@ -143,4 +143,3 @@ R01 schlägt vor, eine primäre Metrik vorab festzulegen, gepaarte Wilcoxon-Test
 
 **Ursprung:** [preThesis/02-entscheidungen/open-questions.md:79-86](../../preThesis/02-entscheidungen/open-questions.md#L79)
 **Belege:** [Leon, A 2011 · pilot_guidelines](https://pmc.ncbi.nlm.nih.gov/articles/PMC8849521/) — Fundstelle: Sections 1–2 (aus Stage 1; am Original prüfen) · **LINK DEFEKT**; [Bland, J 1986 · bland_altman](https://doi.org/10.1016/S0140-6736(86)90837-8) — Seite prüfen (Hinweis: Relevant article section/table not verified in full text during this pass.) · 🔒 Volltextzugang prüfen: Publisher full text may be paywalled.; [Liu, C 2016 · open_heart_sound_database](https://pmc.ncbi.nlm.nih.gov/articles/PMC7199391/) — Seite prüfen (Hinweis: Relevant article section/table not verified in full text during this pass.)
-

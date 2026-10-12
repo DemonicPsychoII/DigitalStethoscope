@@ -174,4 +174,3 @@ runs.json enthält die Suchprompts und Fragestellungen für alle zwölf R01–R1
 
 **Ursprung:** [preThesis/03-recherche/runs.json:1-74](../preThesis/03-recherche/runs.json#L1)
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
-

@@ -125,6 +125,8 @@ R03 schlägt als ambitioniertes Ziel MAE ≤3 bpm, MAPE ≤5 % und mindestens 95
 
 R03 schlägt MAE ≤5 bpm, MAPE ≤10 % und mindestens 90 % der Fenster innerhalb definierter Toleranz als Entwicklungsziel vor.
 
+> **Überholt (Stand integration, 2026-10-12):** Das R03-Entwicklungsziel (MAE ≤5 bpm, MAPE ≤10 %, ≥90 % der Fenster) ist nicht mehr der Projektvorschlag. Aktuell: Vorschlag (nicht freigegeben): Sitzungs-MAE ≤5 BPM und ≥95 % gültiger Sitzungsergebnisse innerhalb max(5 BPM, 10 % Referenz); ungültige Läufe getrennt berichten; Bereich 30–200 BPM. – siehe [BPM-Akzeptanztabelle 11.10.](../../Development/system/planning/mvp-decisions-2026-10-11.md#proposed-bpm-acceptance-table).
+
 **Ursprung:** [preThesis/03-recherche/R03-bpm-referenz.md:113-143](../../preThesis/03-recherche/R03-bpm-referenz.md#L113)
 **Belege:** [ANSI/AAMI EC13:2002 · ec13](https://webstore.ansi.org/standards/aami/ansiaamiec132002) — Fundstelle: Clause 4.2.7 (accessible copy; official publication status not verified) (aus Stage 1; am Original prüfen) · 🔒 Volltext kostenpflichtig; [IEC 60601-2-27:2011 · iec60601](https://webstore.iec.ch/en/publication/2638) — Fundstelle: Scope / standard description; accuracy clause not inspected (aus Stage 1; am Original prüfen) · 🔒 Volltext kostenpflichtig; [U.S 1998 · fda_ec13_guidance](https://www.fda.gov/regulatory-information/search-fda-guidance-documents/cardiac-monitor-guidance-including-cardiotachometer-and-rate-alarm-guidance-industry) — Seite prüfen · **LINK DEFEKT**
 
@@ -143,4 +145,3 @@ R10 schlägt für BPM eine gefilterte Amplituden-/Energiehüllkurve, Tiefpass, R
 
 **Ursprung:** [preThesis/03-recherche/R10-esp32-plattform.md:258-281](../../preThesis/03-recherche/R10-esp32-plattform.md#L258)
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
-

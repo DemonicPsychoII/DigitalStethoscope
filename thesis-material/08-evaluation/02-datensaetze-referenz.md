@@ -166,4 +166,3 @@ Simulierte EKG-Pulse eignen sich laut R03 für technische Funktions- und Grenzbe
 
 **Ursprung:** [preThesis/03-recherche/R03-bpm-referenz.md:32-39](../../preThesis/03-recherche/R03-bpm-referenz.md#L32)
 **Belege:** [ANSI/AAMI EC13:2002 · ec13](https://webstore.ansi.org/standards/aami/ansiaamiec132002) — Fundstelle: Clause 4.2.7 (accessible copy; official publication status not verified) (aus Stage 1; am Original prüfen) · 🔒 Volltext kostenpflichtig; [IEC 60601-2-27:2011 · iec60601](https://webstore.iec.ch/en/publication/2638) — Fundstelle: Scope / standard description; accuracy clause not inspected (aus Stage 1; am Original prüfen) · 🔒 Volltext kostenpflichtig; [Reyna, M 2022 · physionet_challenge_2022](https://physionet.org/content/challenge-2022/1.0.0/papers/) — Fundstelle: Data Variables, lines 92–97 (aus Stage 1; am Original prüfen)
-

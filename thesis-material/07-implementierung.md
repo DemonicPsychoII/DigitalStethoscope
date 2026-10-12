@@ -31,6 +31,8 @@ Firmware README states BPM analysis uses newly captured samples at the original 
 
 Firmware README states configuration and tokens remain in RAM, FHIR sending requires valid recent BPM and a low-priority worker issues TLS PUT to HAPI-FHIR; server readback is used as evidence.
 
+> **Überholt (Stand integration, 2026-10-12):** Beschreibt das Sendeverhalten der Bring-up-Firmware (gültiger aktueller BPM, Low-Priority-Worker). Das MVP-Zielverhalten ist anders festgelegt. Aktuell: Nur eine abgeschlossene Messsitzung (≥15 s, Aggregation nach Stop) ist sendefähig; Netzwerkarbeit nur im Idle unter exklusivem Netzwerk-Lease; ungültiger BPM sendet keinen Zahlenwert, sondern eine getrennte Fehlermeldung; Patient aus `Device.patient` mit Prüfung vor dem `PUT`. – siehe [MVP-Entscheidungen 11.10.](../Development/system/planning/mvp-decisions-2026-10-11.md#confirmed-scope-and-behavior), [MVP-Entscheidungen 12.10.](../Development/system/planning/mvp-decisions-2026-10-12.md#proposed-behavior).
+
 **Ursprung:** [Development/system/coding/bringup-zephyr/README.md:227-262](../Development/system/coding/bringup-zephyr/README.md#L227)
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
 
@@ -67,4 +69,3 @@ README-Update 2026-09-16 meldet bestätigte Eval-Verdrahtung; historischer Hardw
 
 **Ursprung:** [preThesis/05-hardware/hardware.md:32-34](../preThesis/05-hardware/hardware.md#L32)
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
-

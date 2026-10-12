@@ -107,4 +107,3 @@ R07 bewertet Leckagen an Membran, Bruststück und Mikrofonkammer als potenzielle
 
 **Ursprung:** [preThesis/03-recherche/R07-bruststueck-mems.md:138-147](../../preThesis/03-recherche/R07-bruststueck-mems.md#L138)
 **Belege:** [Alanazi, A., Atcherson, S., Franklin, C., & Bryan, M 2020 · frequency_response_stethoscopes](https://doi.org/10.4103/sjmms.sjmms_118_19) — Seite prüfen; [Weiss, D 2019 · invitro_stethoscopes](https://pmc.ncbi.nlm.nih.gov/articles/PMC6339642/) — Seite prüfen; [Goh, R 2023 · goh_chestpiece](https://staffprofiles.bournemouth.ac.uk/display/journal-article/388323) — Fundstelle: pp. 137–140 (aus Stage 1; am Original prüfen) · 🔒 Volltext kostenpflichtig
-

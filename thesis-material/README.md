@@ -22,6 +22,32 @@ Pro Absatz eine Kernaussage wählen, Originalbeleg öffnen und die genaue Fundst
 - **Quellenstand des Audits:** 230 zitierbedürftige Einheiten, 211 davon mit mindestens drei Quellen, 46 unvollständige Quellensets. 328 von 676 Quellenverweisen haben exakt `page: unverified`. Nico muss diese Seiten prüfen.
 - **Defekte Links:** ursprünglich 15 Einträge, betroffen 72 Einheiten. Vier verifiziert repariert, elf sichtbar defekt; weiterhin betroffen: 32 Audit-Einheiten. [Korrekturprotokoll](linkkorrekturen.md). Die Pilotstudienquelle enthält zusätzlich einen ungelösten Metadatenkonflikt.
 - Build-/Host-/QC-Erfolg belegt keine integrierte physische Funktion. Historische Messungen nur mit Datum und Firmwarestand verwenden.
+- **Stand integration 2026-10-12:** W1 ist im Entwurf zugunsten der Abgabefassung ohne Kettenmessung behandelt (D09), die Bestätigung steht aus. W2 betrifft auch den im MVP optionalen Geschwindigkeitsschalter und die neue Trägerplatine. Für Latenz- und BPM-Ziele gibt es eine gemeinsame, noch nicht freigegebene Vorschlagsfassung vom 11.10. Details: [Abgleich mit integration](#abgleich-mit-integration).
+
+## Abgleich mit integration
+
+Die Bausteine entstanden vor neueren Projektentscheidungen auf `integration` (Stand 2026-10-12, Commit e2cd6e8). Überholte Aussagen bleiben unverändert stehen; direkt darunter steht ein Hinweis „Überholt“ bzw. „Neuerer Stand“ mit Link auf das maßgebliche Dokument. Die Hinweise kommen aus [_build/integration-notes.json](_build/integration-notes.json) und überstehen jede Regenerierung. Nicht eindeutig entschiedene Punkte stehen unter [Offene Punkte](offene-punkte.md#integration-abgleich).
+
+| ID | Hinweis | Was sich geändert hat |
+|---|---|---|
+| [U002](05-anforderungen.md#u002) | Überholt | Verlangsamte Wiedergabe gehört nicht mehr zum MVP-Umfang; gespeichertes Audio, Replay, Display/Touch, SD und Geschwindigkeitsstufen sind optional (Feedback 2026-10-07, Entscheidung 2026-10-11). |
+| [U005](08-evaluation/01-fragen-kriterien.md#u005) | Überholt | Reduzierte Wiedergabegeschwindigkeit ist kein MVP-Prüfgegenstand mehr; Speed-Presets und Replay sind optional. |
+| [U020](05-anforderungen.md#u020) | Überholt | WSOLA-Stufen 1,0×/0,75×/0,5× sind kein MVP-Bestandteil mehr. |
+| [U032](06-systemarchitektur.md#u032) | Überholt | Das MVP hat weder Display noch Touch; Geschwindigkeitsschalter/Speed-Presets sind optional. |
+| [U028](06-systemarchitektur.md#u028) | Überholt | Die Plattformentscheidung ist nicht mehr offen; die ESP-IDF-Präferenz der internen Fassung ist durch S04 ersetzt. |
+| [U035](06-systemarchitektur.md#u035) | Überholt | Die Auswahl zwischen C/ESP-IDF und C/Zephyr ist getroffen. |
+| [C013](06-systemarchitektur.md#c013) | Überholt | Die R10-Empfehlung für ESP-IDF ist historischer Recherchekontext, keine Projektentscheidung. |
+| [C001](03-grundlagen-technisch/09-latenz.md#c001) | Überholt | ≤10 ms bzw. ≤5 ms End-to-End sind nicht mehr das Projektziel; die R09-Aussage einer universellen 10–15-ms-Grenze ist laut neuerer Literaturprüfung nur eingeschränkt belastbar. |
+| [C027](06-systemarchitektur.md#c027) | Überholt | Die 10–40-ms-DMA-Startwerte sind durch die gewählte Blockgröße ersetzt. |
+| [U110](08-evaluation/01-fragen-kriterien.md#u110) | Überholt | Mehrere EVAL-GUIDE-Zielwerte sind ersetzt: BPM „≥90 % gültige Fenster“, physische Eingabereaktion ≤35 ms und Tonhöhe ±2 % bei 440 Hz. Unverändert bleibt das Live-Latenzziel <30 ms. |
+| [U111](08-evaluation/01-fragen-kriterien.md#u111) | Überholt | Die Dauerlaufprüfung von ≥10 Minuten ist ersetzt; ≥25 % Stack-/Heap-Reserve bleibt. |
+| [A056](08-evaluation/04-bpm-validierung.md#a056) | Überholt | Das R03-Entwicklungsziel (MAE ≤5 bpm, MAPE ≤10 %, ≥90 % der Fenster) ist nicht mehr der Projektvorschlag. |
+| [U107](07-implementierung.md#u107) | Überholt | Beschreibt das Sendeverhalten der Bring-up-Firmware (gültiger aktueller BPM, Low-Priority-Worker). Das MVP-Zielverhalten ist anders festgelegt. |
+| [U126](08-evaluation/07-firmware-funktion-ressourcen.md#u126) | Überholt | „Retry is explicit“ gilt für das MVP nicht mehr. |
+| [C039](09-ethik-datenschutz-regulatorik.md#c039) | Überholt | Nur der Teil „bei Bedarf später erneut versuchen“ ist überholt; Zertifikats-/Hostnamenprüfung und kein HTTP-Fallback gelten weiter. |
+| [C043](06-systemarchitektur.md#c043) | Überholt | Übertragung per `POST` mit Backoff-Wiederholung ist nicht der Projektpfad. |
+| [U037](10-diskussion-ausblick.md#u037) | Neuerer Stand | Der Entwurf folgt inzwischen der Abgabefassung (S05): Komponenteneignung über Datenblätter/Literatur und funktionaler Audiotest, keine gemessene Aussage zur Übertragungskette; die ältere Messabsicht bleibt als ersetzter Vorschlag erhalten. Die Bestätigung ist laut D09 noch ausstehend. |
+| [U038](10-diskussion-ausblick.md#u038) | Neuerer Stand | Von den drei W1-Optionen ist im Entwurf die Herausnahme der Kettenmessung gewählt (S05); die Abstimmung mit dem Betreuer ist laut D09 weiterhin ausstehend. |
 
 ## Kapitelkarte
 

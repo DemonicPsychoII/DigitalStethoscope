@@ -89,4 +89,3 @@ R11 nennt ungefähre Mbed-TLS-Heapwerte von 42 kB in der Standardkonfiguration, 
 
 **Ursprung:** [preThesis/03-recherche/R11-fhir-tls.md:201-218](../../preThesis/03-recherche/R11-fhir-tls.md#L201)
 **Belege:** [Espressif Systems · esp_mbedtls_s3](https://docs.espressif.com/projects/esp-idf/en/stable/esp32s3/api-reference/protocols/mbedtls.html) — Seite prüfen; [Espressif Systems · esp_tls_faq](https://docs.espressif.com/projects/esp-faq/en/latest/software-framework/protocols/esp-tls.html) — Fundstelle: Question on handshake memory (aus Stage 1; am Original prüfen)
-

@@ -97,4 +97,3 @@ R07 empfiehlt IM69D130 als praktisch verfügbare digitale Alternative; ein Shiel
 
 **Ursprung:** [preThesis/03-recherche/R07-bruststueck-mems.md:204-216](../../preThesis/03-recherche/R07-bruststueck-mems.md#L204)
 **Belege:** [Infineon Technologies · ecm_datasheet_im69d130](https://www.infineon.com/assets/row/public/documents/24/49/infineon-im69d130-datasheet-en.pdf) — Fundstelle: Table 1, Acoustic specifications; datasheet p. 4 (aus Stage 1; am Original prüfen) · **LINK DEFEKT**; [Infineon Technologies · ecm_product_im69d130](https://www.infineon.com/cms/de/product/sensor/mems-microphones/mems-microphones-for-consumer/im69d130/) — Fundstelle: Features/product specification (aus Stage 1; am Original prüfen); [MEMS and ECM Sensor Technologies for Cardiorespirato 2024 · mems_cardiorespiratory_review](https://arxiv.org/abs/2406.12432) — Seite prüfen
-

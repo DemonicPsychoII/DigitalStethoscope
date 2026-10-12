@@ -27,4 +27,3 @@ Ziel ist ein eingebetteter digitaler Stethoskop-Prototyp auf Basis eines vorhand
 
 **Ursprung:** [preThesis/01-aufgabenbeschreibung/Aufgabenbeschreibung-Abgabe.md:5](../preThesis/01-aufgabenbeschreibung/Aufgabenbeschreibung-Abgabe.md#L5)
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
-

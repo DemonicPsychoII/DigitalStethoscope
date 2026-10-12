@@ -67,6 +67,8 @@ README distinguishes wiring confirmation dated 2026-09-16 from later speed-switc
 
 W1 ist noch offen; dokumentierte Optionen sind Q1/AP 2.2 qualitativ umformulieren, Q1 streichen/Arbeitszeit umverteilen oder R08-Minimalmessung ausführen; Abstimmung mit Betreuer steht aus.
 
+> **Neuerer Stand (Stand integration, 2026-10-12):** Von den drei W1-Optionen ist im Entwurf die Herausnahme der Kettenmessung gewählt (S05); die Abstimmung mit dem Betreuer ist laut D09 weiterhin ausstehend. Aktuell: keine Kettenmessung; Q1/AP 2.2 entsprechend qualitativ behandeln, sobald bestätigt. – siehe [Entscheidungsregister D09](../Development/system/planning/implementation-readiness.md#decision-register), [Produktumfang](../Development/system/spec/product-scope.md#goal-and-boundary).
+
 **Ursprung:** [preThesis/02-entscheidungen/widersprueche.md:23-32](../preThesis/02-entscheidungen/widersprueche.md#L23)
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
 
@@ -75,7 +77,8 @@ W1 ist noch offen; dokumentierte Optionen sind Q1/AP 2.2 qualitativ umformuliere
 
 W1: Aufgabenbeschreibungen führen Q1, Kettencharakterisierung und AP 2.2 auf, die interne Entscheidung verwirft gleichzeitig die formale Messung; die vorgesehenen Playback-Signale durchlaufen die reale Bruststückkopplung nicht.
 
+> **Neuerer Stand (Stand integration, 2026-10-12):** Der Entwurf folgt inzwischen der Abgabefassung (S05): Komponenteneignung über Datenblätter/Literatur und funktionaler Audiotest, keine gemessene Aussage zur Übertragungskette; die ältere Messabsicht bleibt als ersetzter Vorschlag erhalten. Die Bestätigung ist laut D09 noch ausstehend. Aktuell: keine Kettenmessung im aktuellen Umfang; zusätzlich ist laut 11.10. keine Messausrüstung/kein zweites Mikrofon verfügbar. – siehe [Entscheidungsregister D09](../Development/system/planning/implementation-readiness.md#decision-register), [Produktumfang](../Development/system/spec/product-scope.md#goal-and-boundary).
+
 **Ursprung:** [preThesis/02-entscheidungen/widersprueche.md:5-21](../preThesis/02-entscheidungen/widersprueche.md#L5)
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
 **Vor Verwendung klären:** [Widersprüche](offene-punkte.md#widersprueche).
-

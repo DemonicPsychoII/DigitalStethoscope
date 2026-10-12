@@ -163,6 +163,7 @@ ESP-TLS dokumentiert das Überspringen der Serverzertifikatsprüfung als unsiche
 
 R11 empfiehlt, die TLS-Zertifikats- und Hostnamenprüfung aktiviert zu lassen, TLS-Fehler zu protokollieren, bei Bedarf später erneut zu versuchen und niemals stillschweigend auf unverschlüsseltes HTTP zurückzufallen.
 
+> **Überholt (Stand integration, 2026-10-12):** Nur der Teil „bei Bedarf später erneut versuchen“ ist überholt; Zertifikats-/Hostnamenprüfung und kein HTTP-Fallback gelten weiter. Aktuell: Im MVP keine Wiederholung: fehlgeschlagene Sendung anzeigen und abbrechen. – siehe [MVP-Entscheidungen 11.10.](../Development/system/planning/mvp-decisions-2026-10-11.md#confirmed-scope-and-behavior), [Framework- und Transportbewertung](../Development/system/planning/framework-and-transport-evaluation.md#recommendation-for-the-next-discussion).
+
 **Ursprung:** [preThesis/03-recherche/R11-fhir-tls.md:186-195](../preThesis/03-recherche/R11-fhir-tls.md#L186)
 **Belege:** [Espressif Systems · esp_tls_s3](https://docs.espressif.com/projects/esp-idf/en/stable/esp32s3/api-reference/protocols/esp_tls.html) — Fundstelle: TLS Server Verification (aus Stage 1; am Original prüfen); [Espressif Systems · esp_tls_faq](https://docs.espressif.com/projects/esp-faq/en/latest/software-framework/protocols/esp-tls.html) — Fundstelle: Questions on verification and expired certificates (aus Stage 1; am Original prüfen); [Espressif Systems · esp_mbedtls_s3](https://docs.espressif.com/projects/esp-idf/en/stable/esp32s3/api-reference/protocols/mbedtls.html) — Seite prüfen
-

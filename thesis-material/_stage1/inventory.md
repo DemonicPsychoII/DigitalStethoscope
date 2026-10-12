@@ -371,7 +371,7 @@
 - **Ursprung:** preThesis/02-entscheidungen/open-questions.md:79-86
 - **Status:** confirmed
 - **Zitat nötig:** ja
-- **Quellen:** 
+- **Quellen:**
 - **Quellen unvollständig:** ja; bitte ergänzen/verifizieren.
 
 ## U051 — method / Grundlagen (technisch: Akustik, MEMS, I2S, DSP/Filter, BPM, Time-Stretch, Embedded/RTOS, FHIR/TLS)
@@ -398,7 +398,7 @@
 - **Ursprung:** preThesis/02-entscheidungen/open-questions.md:112-120
 - **Status:** confirmed
 - **Zitat nötig:** ja
-- **Quellen:** 
+- **Quellen:**
 - **Quellen unvollständig:** ja; bitte ergänzen/verifizieren.
 
 ## U054 — method / Evaluation/Methodik
@@ -407,7 +407,7 @@
 - **Ursprung:** preThesis/02-entscheidungen/open-questions.md:142-146
 - **Status:** confirmed
 - **Zitat nötig:** ja
-- **Quellen:** 
+- **Quellen:**
 - **Quellen unvollständig:** ja; bitte ergänzen/verifizieren.
 
 ## U055 — method / Evaluation/Methodik
@@ -416,7 +416,7 @@
 - **Ursprung:** preThesis/02-entscheidungen/open-questions.md:148-155
 - **Status:** confirmed
 - **Zitat nötig:** ja
-- **Quellen:** 
+- **Quellen:**
 - **Quellen unvollständig:** ja; bitte ergänzen/verifizieren.
 
 ## U056 — risk / Ethik/Datenschutz/Regulatorik
@@ -425,7 +425,7 @@
 - **Ursprung:** preThesis/02-entscheidungen/open-questions.md:126-129
 - **Status:** assumption
 - **Zitat nötig:** ja
-- **Quellen:** 
+- **Quellen:**
 - **Quellen unvollständig:** ja; bitte ergänzen/verifizieren.
 
 ## U057 — definition / Ethik/Datenschutz/Regulatorik
@@ -468,7 +468,7 @@
 - **Ursprung:** preThesis/02-entscheidungen/open-questions.md:192-204
 - **Status:** confirmed
 - **Zitat nötig:** ja
-- **Quellen:** 
+- **Quellen:**
 - **Quellen unvollständig:** ja; bitte ergänzen/verifizieren.
 
 ## U062 — risk / Systemarchitektur
@@ -477,7 +477,7 @@
 - **Ursprung:** preThesis/02-entscheidungen/open-questions.md:206-209
 - **Status:** confirmed
 - **Zitat nötig:** ja
-- **Quellen:** 
+- **Quellen:**
 - **Quellen unvollständig:** ja; bitte ergänzen/verifizieren.
 
 ## U063 — method / Evaluation/Methodik
@@ -503,7 +503,7 @@
 - **Ursprung:** preThesis/02-entscheidungen/open-questions.md:249-253
 - **Status:** confirmed
 - **Zitat nötig:** ja
-- **Quellen:** 
+- **Quellen:**
 - **Quellen unvollständig:** ja; bitte ergänzen/verifizieren.
 
 ## U066 — fact / Systemarchitektur
@@ -512,7 +512,7 @@
 - **Ursprung:** preThesis/02-entscheidungen/open-questions.md:259-267
 - **Status:** confirmed
 - **Zitat nötig:** ja
-- **Quellen:** 
+- **Quellen:**
 - **Quellen unvollständig:** ja; bitte ergänzen/verifizieren.
 
 ## U067 — risk / Systemarchitektur
@@ -521,7 +521,7 @@
 - **Ursprung:** preThesis/02-entscheidungen/open-questions.md:264-269
 - **Status:** confirmed
 - **Zitat nötig:** ja
-- **Quellen:** 
+- **Quellen:**
 - **Quellen unvollständig:** ja; bitte ergänzen/verifizieren.
 
 ## U068 — definition / Grundlagen (technisch: Akustik, MEMS, I2S, DSP/Filter, BPM, Time-Stretch, Embedded/RTOS, FHIR/TLS)
@@ -538,7 +538,7 @@
 - **Ursprung:** preThesis/02-entscheidungen/open-questions.md:280-288
 - **Status:** confirmed
 - **Zitat nötig:** ja
-- **Quellen:** 
+- **Quellen:**
 - **Quellen unvollständig:** ja; bitte ergänzen/verifizieren.
 
 ## U070 — formal-rule / Projektmanagement/Formales
@@ -554,7 +554,7 @@
 - **Ursprung:** preThesis/03-recherche/R12-tha-formales.md:33-40
 - **Status:** confirmed
 - **Zitat nötig:** ja
-- **Quellen:** 
+- **Quellen:**
 - **Quellen unvollständig:** ja; bitte ergänzen/verifizieren.
 
 ## U072 — formal-rule / Projektmanagement/Formales
@@ -563,7 +563,7 @@
 - **Ursprung:** preThesis/03-recherche/R12-tha-formales.md:39-47
 - **Status:** confirmed
 - **Zitat nötig:** ja
-- **Quellen:** 
+- **Quellen:**
 - **Quellen unvollständig:** ja; bitte ergänzen/verifizieren.
 
 ## U073 — definition / Grundlagen (medizinisch: Herztöne, Murmurs, Auskultation)

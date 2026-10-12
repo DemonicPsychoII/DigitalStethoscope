@@ -51,4 +51,3 @@ PDM-zu-PCM-Konvertierung erfolgt per Hardware auf ESP32-S3-I²S0; an einem Port 
 
 **Ursprung:** [preThesis/03-recherche/R10-esp32-plattform.md:85-92](../../preThesis/03-recherche/R10-esp32-plattform.md#L85)
 **Belege:** [Espressif Systems · esp_i2s_s3](https://docs.espressif.com/projects/esp-idf/en/stable/esp32s3/api-reference/peripherals/i2s.html) — Fundstelle: Overview of All Modes; PDM RX Mode in PCM Format (aus Stage 1; am Original prüfen); [Espressif Systems · esp_s3_datasheet](https://documentation.espressif.com/esp32-s3_datasheet_en.pdf) — Seite prüfen; [Espressif Systems · esp_dsp_api](https://docs.espressif.com/projects/esp-dsp/en/latest/esp32/esp-dsp-apis.html) — Seite prüfen
-

@@ -129,4 +129,3 @@ R04 ordnet verlangsamte Wiedergabe als zusätzliche Hörhilfe, nicht als diagnos
 
 **Ursprung:** [preThesis/03-recherche/R04-time-stretch.md:22-60](../../preThesis/03-recherche/R04-time-stretch.md#L22)
 **Belege:** [Driedger, J., & Müller, M 2016 · tsm_review](https://www.mdpi.com/2076-3417/6/2/57) — Seite prüfen (übernommene Angabe: Abstract and review overview; article section/page unverified); [Roelands, M., & Verhelst, W 1993 · wsola_roelands](https://www.isca-archive.org/eurospeech_1993/roelands93_eurospeech.html) — Fundstelle: Abstract and bibliographic record (aus Stage 1; am Original prüfen); [Prusa, Z 2022 · phase_vocoder](https://ltfat.org/notes/ltfatnote050.pdf) — Seite prüfen (übernommene Angabe: Abstract and Introduction (PDF; document pages unverified))
-

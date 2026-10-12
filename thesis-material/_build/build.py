@@ -10,10 +10,13 @@ from urllib.parse import quote
 
 ROOT = Path(__file__).resolve().parents[1]
 AUDIT = ROOT / '_stage1'
+LF = '\n'  # Zeilenenden unabhängig vom Betriebssystem
 WATERMARK = 'Created by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.'
-units = json.loads((AUDIT / 'inventory-merged.json').read_text())['units']
-original_sources = json.loads((AUDIT / 'sources-merged.json').read_text())
-overrides = json.loads((ROOT / '_build/source-overrides.json').read_text())
+units = json.loads((AUDIT / 'inventory-merged.json').read_text(encoding='utf-8'))['units']
+original_sources = json.loads((AUDIT / 'sources-merged.json').read_text(encoding='utf-8'))
+overrides = json.loads((ROOT / '_build/source-overrides.json').read_text(encoding='utf-8'))
+# Abgleich mit neueren integration-Entscheidungen: Notizen ergänzen die Aussagen, ersetzen sie nicht.
+notes = json.loads((ROOT / '_build/integration-notes.json').read_text(encoding='utf-8'))
 sources = {k: dict(v, **overrides.get(k, {})) for k, v in original_sources.items()}
 by_id = {u['id']: u for u in units}
 assert len(by_id) == len(units) == 350
@@ -27,6 +30,8 @@ for u in units:
         assert old in by_id and old != u['id']
         replaced[old].append(u['id'])
 active = [u for u in units if u['id'] not in replaced]
+# Notizen nur an sichtbaren Schreibbausteinen; ersetzte IDs erscheinen nicht in den Kapiteln.
+assert set(notes['units']) <= {u['id'] for u in active}, set(notes['units']) - {u['id'] for u in active}
 
 # Explizite Themenfolge; die Dateinummern entsprechen dem Schreibpfad.
 chapters = [
@@ -153,8 +158,34 @@ def marker(u):
         return 'LITERATUR- / HERSTELLERWERT'
     return 'LITERATURFAKT / REGEL' if u['needs_citation'] else 'PROJEKTDOKUMENTATION'
 
+# Markdown-Links immer mit '/' erzeugen, damit Windows- und Linux-Läufe identische Dateien schreiben.
+def posix_relpath(target, start):
+    return os.path.relpath(target, start).replace(os.sep, '/')
+
 def relative(src, dest):
-    return quote(os.path.relpath(ROOT / dest, (ROOT / src).parent), safe='/.-_')
+    return quote(posix_relpath(ROOT / dest, (ROOT / src).parent), safe='/.-_')
+
+def heading_anchors(text):
+    # Gleiche Slug-Regel wie Development/system/testing/ci/validate_docs.py.
+    found, counts = set(), {}
+    for heading in re.findall(r'^#{1,6}\s+(.+?)\s*#*\s*$', re.sub(r'```.*?```', '', text, flags=re.DOTALL), re.MULTILINE):
+        slug = re.sub(r'[^\w\- ]', '', heading.lower()).replace(' ', '-')
+        found.add(slug if not counts.get(slug) else f'{slug}-{counts[slug]}')
+        counts[slug] = counts.get(slug, 0) + 1
+    return found
+
+checked_refs = set()
+def repo_link(title, path, anchor, src):
+    target = ROOT.parent / path
+    assert target.is_file(), f'integration-Verweis fehlt: {path}'
+    if anchor:
+        assert anchor in heading_anchors(target.read_text(encoding='utf-8')), f'Anker fehlt: {path}#{anchor}'
+    checked_refs.add(path + ('#' + anchor if anchor else ''))
+    return f'[{title}]({quote(posix_relpath(target, (ROOT / src).parent), safe="/.-_")}' + (f'#{anchor}' if anchor else '') + ')'
+
+def render_note(note, src):
+    refs = ', '.join(repo_link(t, p, a, src) for t, p, a in note['refs'])
+    return f'> **{note["label"]} (Stand integration, {notes["stand"]}):** {note["changed"]} Aktuell: {note["current"]} – siehe {refs}.'
 
 def unit_link(uid, src):
     target = replaced.get(uid, [uid])[0]
@@ -162,14 +193,25 @@ def unit_link(uid, src):
 
 def source_link(key, src): return f'[{key}]({relative(src,"quellen.md")}#{key})'
 
+missing_origins=set()
 def origins(u, src):
     result=[]
     for origin in [part.strip() for raw in u['origin'] for part in raw.split(';')]:
         m=re.match(r'^(.*?):([\d,\-]+)$',origin)
         path,line=(m[1],m[2]) if m else (origin,None)
-        href=quote(os.path.relpath(ROOT.parent/path,(ROOT/src).parent),safe='/.-_')
-        if line: href += '#L'+re.split(r'[-,]',line)[0]
-        result.append(f'[{origin}]({href})')
+        anchor='#L'+re.split(r'[-,]',line)[0] if line else ''
+        if not (ROOT.parent/path).exists():
+            # Herkunftsdatei existiert auf integration nicht mehr: historische Fassung verlinken statt abzubrechen.
+            moved=notes['relocated_origins'].get(path)
+            if moved:
+                cur=moved['current']
+                result.append(f'[{origin}]({notes["repository_url"]}/blob/{moved["commit"]}/{quote(path,safe="/.-_")}{"?plain=1" if anchor and path.endswith(".md") else ""}{anchor}) (**Herkunft verschoben:** {moved["note"]} Aktuell: {repo_link(cur[0],cur[1],cur[2],src)})')
+            else:
+                missing_origins.add(path)
+                result.append(f'`{origin}` (**Herkunft nicht mehr im Repository**; in Git-Historie suchen)')
+            continue
+        href=quote(posix_relpath(ROOT.parent/path,(ROOT/src).parent),safe='/.-_')
+        result.append(f'[{origin}]({href}{anchor})')
     return '; '.join(result)
 
 def flags(s):
@@ -205,7 +247,9 @@ def render_unit(u, src):
     olds=u.get('supersedes',[])
     if isinstance(olds,str): olds=[olds]
     tail=' · ersetzt '+', '.join(olds) if olds else ''
-    lines=[f'<a id="{uid.lower()}"></a>',f'**{uid} · {" · ".join(tags)}{tail}**', '',u['statement'],'',f'**Ursprung:** {origins(u,src)}']
+    lines=[f'<a id="{uid.lower()}"></a>',f'**{uid} · {" · ".join(tags)}{tail}**', '',u['statement'],'']
+    if uid in notes['units']: lines+=[render_note(notes['units'][uid],src),'']
+    lines.append(f'**Ursprung:** {origins(u,src)}')
     if u.get('chapter_secondary'): lines.append('**Weiterer Kapitelbezug:** '+str(u['chapter_secondary']))
     lines.append('**Belege:** '+('; '.join(citation(c,src) for c in u.get('sources',[])) or 'Keine externen Belege im Inventar; Projektursprung verwenden.'))
     if u.get('removed'):lines.append('**Audit:** verworfene Quellen siehe '+relative(src,'_stage1/inventory-merged.json')+' (Feld `removed`).')
@@ -231,7 +275,7 @@ for path,title,intro in chapters:
         if role(u)!=last_role:
             text+=f'### {role_labels[role(u)]}\n\n';last_role=role(u)
         text+=render_unit(u,path)
-    outputs[path]=text
+    outputs[path]=text.rstrip('\n')+'\n'
 
 # Themenweise Bibliografie, Quellen-Verwendungsnachweis auch für ersetzte Einheiten.
 usage=collections.defaultdict(list)
@@ -265,7 +309,7 @@ for category in sorted({source_topic(k) for k in sources}):
         if key in overrides:bib_text+='**Korrektur Stage 2:** '+overrides[key]['fix_reason']+'\n\n'
         if key=='pilot_guidelines':bib_text+='**METADATENKONFLIKT:** Der verlinkte PMC-Text gehört zu Teresi et al. (2022), Medical Care 60(1), 95–103, DOI 10.1097/MLR.0000000000001664. Der Ausgangseintrag nennt Leon (2011). Keine automatische Ersetzung: erst klären, welches Werk die Aussagen tatsächlich belegt.\n\n'
         bib_text+='**Zitiert von:** '+(', '.join(unit_link(uid,'quellen.md')+(' (ersetzt)' if uid in replaced else '') for uid in usage[key]) or 'Keine Einheit im Inventar.')+'\n\n'
-outputs['quellen.md']=bib_text
+outputs['quellen.md']=bib_text.rstrip('\n')+'\n'
 
 def bib_escape(value):
     return str(value).replace('\\',r'\textbackslash{}').replace('&',r'\&').replace('%',r'\%').replace('#',r'\#').replace('_',r'\_')
@@ -315,17 +359,24 @@ actions={
 }
 for u in units:
     if u['status']=='contradicted':
-        open_text+=f'### {u["id"]}\n\n{u["statement"]}\n\n**Nico:** {actions.get(u["id"],"Originaldokumente abgleichen und eine begründete Fassung festlegen.")}\n\n**Schreibstelle:** {unit_link(u["id"],"offene-punkte.md")}\n\n'
+        note=render_note(notes['units'][u['id']],'offene-punkte.md')+'\n\n' if u['id'] in notes['units'] else ''
+        open_text+=f'### {u["id"]}\n\n{u["statement"]}\n\n{note}**Nico:** {actions.get(u["id"],"Originaldokumente abgleichen und eine begründete Fassung festlegen.")}\n\n**Schreibstelle:** {unit_link(u["id"],"offene-punkte.md")}\n\n'
 open_text+='## Weitere Konflikte und Nachweisgrenzen\n\n'
-for text,ids in [
+for text,ids,*conflict in [
  ('Abgabe laut Nico: **11.01.2027**. „Ende Januar“ und verschiedene fakultätsspezifische Bearbeitungsfristen bleiben historischer Kontext. Verbindlichen DMS-Termin und zuständige SPO/APO abgleichen.', ['U033','C045','C049','C051']),
- ('Prototyp nutzt ESP32/Zephyr; ESP-IDF-Favorisierung ist ein historischer Recherchevorschlag. Die tatsächlich getroffene Frameworkentscheidung und deren Begründung dokumentieren.', ['U028','U035','C013','U085']),
- ('Filter 40–800 Hz / 25–150 Hz, Live-Latenz <30 ms bzw. ≤10/≤5 ms und BPM-Grenzen sind vorläufige Entwicklungsziele. Eine gemeinsame Anforderungsversion und Messmethode festlegen.', ['U027','U102','U110','C001','A056','A057']),
- ('10–40-ms-DMA-Startwerte passen nicht ohne Prüfung zum ≤10-ms-End-to-End-Ziel. Tatsächliche Blocklatenz, Wandler- und Schedulinganteile am Prototyp messen.', ['C027','C001','U101']),
+ ('Prototyp nutzt ESP32/Zephyr; ESP-IDF-Favorisierung ist ein historischer Recherchevorschlag. Die tatsächlich getroffene Frameworkentscheidung und deren Begründung dokumentieren.', ['U028','U035','C013','U085'], 'framework'),
+ ('Filter 40–800 Hz / 25–150 Hz, Live-Latenz <30 ms bzw. ≤10/≤5 ms und BPM-Grenzen sind vorläufige Entwicklungsziele. Eine gemeinsame Anforderungsversion und Messmethode festlegen.', ['U027','U102','U110','C001','A056','A057'], 'targets'),
+ ('10–40-ms-DMA-Startwerte passen nicht ohne Prüfung zum ≤10-ms-End-to-End-Ziel. Tatsächliche Blocklatenz, Wandler- und Schedulinganteile am Prototyp messen.', ['C027','C001','U101'], 'dma'),
  ('Builds und Hosttests ersetzen keine integrierte Hardwareevaluation. Physische Tests am dokumentierten Firmware-Commit nachholen; Verdrahtungsbestätigung separat ausweisen.', ['U119','U125','U129','U130','U131']),
  ('Pilotstudienquelle: Leon-/Teresi-Metadatenkonflikt klären. Zusätzlich FDA-Publikationsjahr 1998 statt 2023 und EC13-1992-Bezug in der reparierten FDA-Fassung beachten.', ['B001','B016','A052']),
 ]:
     open_text+='- **Nico:** '+text+' Bezüge: '+', '.join(unit_link(i,'offene-punkte.md') for i in ids)+'.\n'
+    if conflict:open_text+='\n  '+render_note(notes['conflicts'][conflict[0]],'offene-punkte.md')+'\n\n'
+open_text+='\n<a id="integration-abgleich"></a>\n## Abgleich mit integration — nicht eindeutig entschieden\n\n'
+open_text+=f'Stand integration {notes["stand"]} ({notes["integration_commit"]}). Diese Punkte wurden nicht als überholt markiert, weil kein neueres Dokument sie eindeutig entscheidet. Eindeutig überholte Aussagen tragen in den Kapiteldateien einen „Überholt“-Hinweis; Übersicht in [README](README.md#abgleich-mit-integration).\n\n'
+for q in notes['open_questions']:
+    open_text+='- **Nico:** '+q['text']+' Bezüge: '+', '.join(unit_link(i,'offene-punkte.md') for i in q['ids'])+'; '+', '.join(repo_link(t,p,a,'offene-punkte.md') for t,p,a in q['refs'])+'.\n'
+open_text+='- **Nico:** Zitierte QC-Berichte (`QC-EVALUATION.md`, `qc-eval-results.json`) sind seit 89ca8b1 nicht mehr eingecheckt, sondern werden nach `artifacts/qc/` erzeugt. Die Herkunftslinks zeigen auf die historische Fassung in Git; für die Thesis entscheiden, ob der historische Bericht vom 24.09. oder ein neu erzeugter, datierter Bericht zitiert wird. Bezüge: '+', '.join(unit_link(i,'offene-punkte.md') for i in ('U091','U092','U097'))+'.\n'
 open_text+='\n## Offene Fragen, Annahmen und Risiken\n\n'
 for u in active:
     if u['type'] not in ('open-question','risk') and u['status'] not in ('open','assumption'):continue
@@ -380,7 +431,17 @@ Pro Absatz eine Kernaussage wählen, Originalbeleg öffnen und die genaue Fundst
 - **Quellenstand des Audits:** {stats['citation_units']} zitierbedürftige Einheiten, {stats['citation_units_with_at_least_three_sources']} davon mit mindestens drei Quellen, {stats['incomplete_source_sets']} unvollständige Quellensets. {stats['unverified_pages_exact']} von {stats['source_references']} Quellenverweisen haben exakt `page: unverified`. Nico muss diese Seiten prüfen.
 - **Defekte Links:** ursprünglich 15 Einträge, betroffen 72 Einheiten. Vier verifiziert repariert, elf sichtbar defekt; weiterhin betroffen: {stats['broken_affected_units_after']} Audit-Einheiten. [Korrekturprotokoll](linkkorrekturen.md). Die Pilotstudienquelle enthält zusätzlich einen ungelösten Metadatenkonflikt.
 - Build-/Host-/QC-Erfolg belegt keine integrierte physische Funktion. Historische Messungen nur mit Datum und Firmwarestand verwenden.
+- **Stand integration {notes['stand']}:** W1 ist im Entwurf zugunsten der Abgabefassung ohne Kettenmessung behandelt (D09), die Bestätigung steht aus. W2 betrifft auch den im MVP optionalen Geschwindigkeitsschalter und die neue Trägerplatine. Für Latenz- und BPM-Ziele gibt es eine gemeinsame, noch nicht freigegebene Vorschlagsfassung vom 11.10. Details: [Abgleich mit integration](#abgleich-mit-integration).
 
+## Abgleich mit integration
+
+Die Bausteine entstanden vor neueren Projektentscheidungen auf `integration` (Stand {notes['stand']}, Commit {notes['integration_commit']}). Überholte Aussagen bleiben unverändert stehen; direkt darunter steht ein Hinweis „Überholt“ bzw. „Neuerer Stand“ mit Link auf das maßgebliche Dokument. Die Hinweise kommen aus [_build/integration-notes.json](_build/integration-notes.json) und überstehen jede Regenerierung. Nicht eindeutig entschiedene Punkte stehen unter [Offene Punkte](offene-punkte.md#integration-abgleich).
+
+| ID | Hinweis | Was sich geändert hat |
+|---|---|---|
+'''
+for uid,note in notes['units'].items():readme+=f'| {unit_link(uid,"README.md")} | {note["label"]} | {note["changed"]} |\n'
+readme+=f'''
 ## Kapitelkarte
 
 Die Zahlen zählen aktive Aussagen, nicht ersetzte IDs, Querverweise oder Quellen.
@@ -430,7 +491,7 @@ for u in active:assert chapter_text.count(f'<a id="{u["id"].lower()}"></a>')==1
 for old in replaced:assert not re.search(f'<a id="{old.lower()}"></a>',chapter_text)
 assert all(stage1_before[str(p.relative_to(ROOT))]==hashlib.sha256(p.read_bytes()).hexdigest() for p in AUDIT.rglob('*') if p.is_file())
 for path,content in outputs.items():
-    dest=ROOT/path;dest.parent.mkdir(parents=True,exist_ok=True);dest.write_text(content,encoding='utf-8')
+    dest=ROOT/path;dest.parent.mkdir(parents=True,exist_ok=True);dest.write_text(content,encoding='utf-8',newline=LF)
 # Lokale Markdownziele prüfen (Line-Fragmente sind Herkunftshinweise, keine neue Zeilenprüfung).
 missing=[]
 for path,content in outputs.items():
@@ -442,8 +503,10 @@ for path,content in outputs.items():
         if target and not ((ROOT/path).parent/unquote(target)).exists() and ((ROOT/path).parent/unquote(target)).resolve() not in {ROOT/'vollstaendigkeit.md', ROOT/'_build/check.json'}:missing.append((path,href))
 assert not missing, f'Defekte lokale Ziele: {missing}'
 stats.update({'coverage':'350/350', 'missing_ids':[], 'active_statements_once':True,
- 'stage1_unchanged_during_build':True,'local_link_targets':'ok'})
-(ROOT/'_build/check.json').write_text(json.dumps(stats,ensure_ascii=False,indent=2)+'\n')
+ 'stage1_unchanged_during_build':True,'local_link_targets':'ok',
+ 'integration_notes':len(notes['units']),'integration_refs_checked':sorted(checked_refs),
+ 'relocated_origins':sorted(notes['relocated_origins']),'missing_origins':sorted(missing_origins)})
+(ROOT/'_build/check.json').write_text(json.dumps(stats,ensure_ascii=False,indent=2)+'\n',encoding='utf-8',newline=LF)
 report=f'''# Vollständigkeitsprüfung
 
 **PASS: 350/350 Audit-IDs in den Kapiteldateien vorhanden.**
@@ -454,11 +517,13 @@ report=f'''# Vollständigkeitsprüfung
 - Alle lokalen Markdown-Linkziele vorhanden.
 - `_stage1/` während des Generatorlaufs unverändert (SHA-256-Vergleich).
 - Fehlende IDs: keine. Unbekannte IDs: keine.
+- {len(notes['units'])} Abgleichshinweise gegen integration; alle {len(checked_refs)} verlinkten integration-Dokumente/Anker vorhanden.
+- Verschobene Herkunftsdateien mit historischem Git-Link: {len(notes['relocated_origins'])}; nicht auflösbare Herkunftsdateien: {len(missing_origins)}.
 
 Audit-Zählung: {stats['citation_units']} zitierbedürftige Einheiten; {stats['citation_units_with_at_least_three_sources']} mit mindestens drei Quellen; {stats['incomplete_source_sets']} unvollständige Quellensets; {stats['unverified_pages_exact']}/{stats['source_references']} explizit ungeprüfte Seiten. Defekte Quellen: {len(broken_before)} → {len(broken_after)}; betroffene Audit-Einheiten: {stats['broken_affected_units_before']} → {stats['broken_affected_units_after']}.
 
 Die Prüfung belegt Vollständigkeit und Verlinkung des Baukastens, keine wissenschaftliche Richtigkeit oder fertige Grundlagenabdeckung. [Maschinenlesbarer Bericht](_build/check.json).
 
 '''+WATERMARK+'\n'
-(ROOT/'vollstaendigkeit.md').write_text(report)
+(ROOT/'vollstaendigkeit.md').write_text(report,encoding='utf-8',newline=LF)
 print(json.dumps(stats,ensure_ascii=False,indent=2))

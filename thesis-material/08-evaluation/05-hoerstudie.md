@@ -293,4 +293,3 @@ Trials sind innerhalb von Personen und Stimuli verschachtelt und dürfen nicht a
 
 **Ursprung:** [preThesis/03-recherche/R05-hoerstudie-design.md:309-325](../../preThesis/03-recherche/R05-hoerstudie-design.md#L309)
 **Belege:** [Eldridge, S 2016 · pilot_consort_extension](https://www.bmj.com/content/355/bmj.i5239) — Seite prüfen; [Eldridge, S 2016 · pilot_feasibility_guidelines](https://pmc.ncbi.nlm.nih.gov/articles/PMC4775223/) — Seite prüfen; [Hertzog, M 2008 · pilot_sample_size](https://pubmed.ncbi.nlm.nih.gov/22169081/) — Seite prüfen · 🔒 Volltextzugang prüfen: May be paywalled.
-

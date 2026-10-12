@@ -21,4 +21,3 @@ Die Zephyr-Dokumentation enthält ein ESP32-S3-DevKitC-Boardziel und einen Espre
 
 **Ursprung:** [preThesis/03-recherche/R10-esp32-plattform.md:94-118](../../preThesis/03-recherche/R10-esp32-plattform.md#L94)
 **Belege:** [Zephyr Project · zephyr_s3_board](https://docs.zephyrproject.org/latest/boards/espressif/esp32s3_devkitc/doc/index.html) — Fundstelle: Board Support Package (aus Stage 1; am Original prüfen); [Zephyr Project · zephyr_i2s_binding](https://docs.zephyrproject.org/latest/build/dts/api/bindings/i2s/espressif,esp32-i2s.html) — Fundstelle: Binding properties (aus Stage 1; am Original prüfen); [Espressif Systems · esp_i2s_s3](https://docs.espressif.com/projects/esp-idf/en/stable/esp32s3/api-reference/peripherals/i2s.html) — Fundstelle: Introduction (aus Stage 1; am Original prüfen)
-

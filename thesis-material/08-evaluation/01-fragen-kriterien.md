@@ -33,6 +33,8 @@ Wiring-confirmation JSON records a user statement dated 2026-09-16 about the exi
 
 Der Echtzeit-Audiopfad, Filterwahl, reduzierte Wiedergabegeschwindigkeit und sichere FHIR-Übertragung werden anhand definierter Funktionskriterien geprüft.
 
+> **Überholt (Stand integration, 2026-10-12):** Reduzierte Wiedergabegeschwindigkeit ist kein MVP-Prüfgegenstand mehr; Speed-Presets und Replay sind optional. Aktuell: MVP-Funktionsprüfung umfasst Audiopfad, Filterwahl und HTTPS/FHIR-Übertragung; Replay nur als optionale Erweiterung. – siehe [MVP-Entscheidungen 11.10.](../../Development/system/planning/mvp-decisions-2026-10-11.md#confirmed-scope-and-behavior), [Produktumfang](../../Development/system/spec/product-scope.md#goal-and-boundary).
+
 **Ursprung:** [preThesis/01-aufgabenbeschreibung/Aufgabenbeschreibung-Abgabe.md:9](../../preThesis/01-aufgabenbeschreibung/Aufgabenbeschreibung-Abgabe.md#L9)
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
 
@@ -73,6 +75,8 @@ EVAL-GUIDE notes host timing is not MCU CPU-load evidence and static memory-fit/
 
 EVAL-GUIDE requires >=10 minutes of combined operation, zero audio processing deadline misses and >=25% stack headroom in every thread/ISR; TLS included if configured.
 
+> **Überholt (Stand integration, 2026-10-12):** Die Dauerlaufprüfung von ≥10 Minuten ist ersetzt; ≥25 % Stack-/Heap-Reserve bleibt. Aktuell: Vorschlag: 30-Minuten-Soak mit Wasserständen während TLS und BPM, DMA-SRAM und PSRAM getrennt, zusätzlich kleinster größter freier Block und Allokationsfehlerpfade. – siehe [Latenzbudgets 11.10. (Resources)](../../Development/system/planning/mvp-decisions-2026-10-11.md#latency-research-and-proposed-budgets), [Entscheidungsregister D10](../../Development/system/planning/implementation-readiness.md#decision-register).
+
 **Ursprung:** [Development/system/coding/bringup-zephyr/EVAL-GUIDE.md:81-98](../../Development/system/coding/bringup-zephyr/EVAL-GUIDE.md#L81)
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
 
@@ -96,6 +100,8 @@ EVAL-GUIDE says the INMP441 usable low-frequency band is a hardware constraint; 
 **U110 · EIGENE ANFORDERUNG · ANNAHME**
 
 EVAL-GUIDE sets engineering acceptance targets: measured live latency <30 ms; provisional BPM MAE ≤5 BPM with ≥90% valid windows on defined clean fixtures; playback retained pitch within 2% at 440 Hz; physical input response ≤35 ms.
+
+> **Überholt (Stand integration, 2026-10-12):** Mehrere EVAL-GUIDE-Zielwerte sind ersetzt: BPM „≥90 % gültige Fenster“, physische Eingabereaktion ≤35 ms und Tonhöhe ±2 % bei 440 Hz. Unverändert bleibt das Live-Latenzziel <30 ms. Aktuell: Vorschläge (nicht freigegeben): BPM-MAE ≤5 BPM und ≥95 % gültiger Sitzungsergebnisse innerhalb max(5 BPM, 10 % Referenz) sowie ≥95 % gültige abgeschlossene Sitzungen; wirksame Bedienreaktion ≤100 ms, sichtbarer Status ≤500 ms; Replay (optional) Tonhöhenänderung <1 % (P14). – siehe [BPM-Akzeptanztabelle 11.10.](../../Development/system/planning/mvp-decisions-2026-10-11.md#proposed-bpm-acceptance-table), [Latenzbudgets 11.10.](../../Development/system/planning/mvp-decisions-2026-10-11.md#latency-research-and-proposed-budgets), [Parameterregister P10/P14](../../Development/system/requirements/parameters.md#parameter-and-acceptance-register).
 
 **Ursprung:** [Development/system/coding/bringup-zephyr/EVAL-GUIDE.md:67-79](../../Development/system/coding/bringup-zephyr/EVAL-GUIDE.md#L67)
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
@@ -139,4 +145,3 @@ Q3 fragt, ob reduzierte Wiedergabegeschwindigkeit die menschliche Murmur-Detekti
 
 **Ursprung:** [preThesis/01-aufgabenbeschreibung/Aufgabenbeschreibung-Intern.md:23](../../preThesis/01-aufgabenbeschreibung/Aufgabenbeschreibung-Intern.md#L23)
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
-

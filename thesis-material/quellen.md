@@ -1378,4 +1378,3 @@ Verhelst, W., & Roelands, M. (1993). An overlap-add technique based on waveform 
 **Prüfnachweis Stage 1:** IEEE Xplore title/record search result verified; full text not opened.
 
 **Zitiert von:** [U051](03-grundlagen-technisch/06-time-stretch.md#a062) (ersetzt), [U052](08-evaluation/07-firmware-funktion-ressourcen.md#a074) (ersetzt), [C023](04-stand-der-technik.md#c023), [C024](08-evaluation/07-firmware-funktion-ressourcen.md#c024)
-

@@ -25,6 +25,8 @@ Der Bericht nennt pro A/D- und D/A-Wandlung typischerweise rund 1–1,5 ms; die 
 
 Für das geplante digitale Stethoskop wird als Literatur-basiertes Entwicklungsziel eine End-to-End-Latenz ≤10 ms empfohlen; ≤5 ms wird als bevorzugtes Ziel genannt.
 
+> **Überholt (Stand integration, 2026-10-12):** ≤10 ms bzw. ≤5 ms End-to-End sind nicht mehr das Projektziel; die R09-Aussage einer universellen 10–15-ms-Grenze ist laut neuerer Literaturprüfung nur eingeschränkt belastbar. Aktuell: Vorschlag (nicht freigegeben): Live-Hören <30 ms als Basisziel, <10 ms als Stretch-Ziel, stabile Verzögerung; Messung mit gemeinsamem Takt inklusive Mikrofon, Puffern, DSP, DAC und Verstärker. – siehe [Latenzbudgets 11.10.](../../Development/system/planning/mvp-decisions-2026-10-11.md#latency-research-and-proposed-budgets).
+
 **Ursprung:** [preThesis/03-recherche/R09-latenz.md:22,35](../../preThesis/03-recherche/R09-latenz.md#L22)
 **Belege:** [Lester, M 2007 · aes_lester_boley_2007](https://secure.aes.org/forum/pubs/conventions/?elib=14256) — Fundstelle: Abstract; AES Convention 123, Paper 7198 (aus Stage 1; am Original prüfen) · **LINK DEFEKT** · 🔒 Volltextzugang prüfen: unverified; [Wang, Y 2018 · wang_low_latency_thesis](https://qmro.qmul.ac.uk/xmlui/bitstream/handle/123456789/44697/WANG_Yonghao_Final_PhD_070918.pdf?sequence=1) — Seite prüfen; [The influence of rhythm on detection of auditory and 2020 · rhythm_audio_vibrotactile_2020](https://pmc.ncbi.nlm.nih.gov/articles/PMC7181424/) — Seite prüfen (übernommene Angabe: Abstract; exact page unverified)
 
@@ -37,4 +39,3 @@ R09 fordert, „Echtzeit“ für die Live-Auskultation über eine messbare End-t
 
 **Ursprung:** [preThesis/03-recherche/R09-latenz.md:10-17](../../preThesis/03-recherche/R09-latenz.md#L10)
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
-

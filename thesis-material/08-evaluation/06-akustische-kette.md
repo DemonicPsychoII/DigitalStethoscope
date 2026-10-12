@@ -157,4 +157,3 @@ Simulatoraufnahmen ersetzen keine klinischen Patientendaten; ihre Übertragbarke
 
 **Ursprung:** [preThesis/03-recherche/R02-ground-truth.md:22-31,154-169](../../preThesis/03-recherche/R02-ground-truth.md#L22)
 **Belege:** [Oliveira, J 2022 · circor_paper](https://arxiv.org/abs/2108.00813) — Seite prüfen (übernommene Angabe: Abstract, arXiv text lines 3–6; journal pages unverified) · 🔒 Volltextzugang prüfen: IEEE version may be paywalled; arXiv preprint is open.; [Reyna, M 2022 · physionet_challenge_2022](https://physionet.org/content/challenge-2022/1.0.0/papers/) — Fundstelle: Data Variables, lines 92–97 (aus Stage 1; am Original prüfen); [Noponen, A.-L., Lukkarinen, S., & Sepponen, R · murmur_text](https://accesscardiology.mhmedical.com/content.aspx?bookid=382&sectionid=40663653) — Fundstelle: Chapter 2, Clinical Auscultation and Conventional Phonocardiography (web lines 144–150) (aus Stage 1; am Original prüfen) · 🔒 Volltext kostenpflichtig
-

@@ -95,7 +95,7 @@ hardware-results.schema.json requires schema_version and records_by_firmware_com
 
 QC-EVALUATION nennt als offene Aktionen: I²S/LEDC-Pinmux und XPT2046-Kalibrierung validieren, Touch-Callback-Zustand absichern, Eingabepolling ≤20 ms dokumentieren, Laufzeitfehlerbehandlung prüfen sowie Ergebnisse an Firmware-Commit binden.
 
-**Ursprung:** [Development/system/testing/QC-EVALUATION.md:26-40](../../Development/system/testing/QC-EVALUATION.md#L26)
+**Ursprung:** [Development/system/testing/QC-EVALUATION.md:26-40](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/23c1ea492270b897532896179e35f873eee823be/Development/system/testing/QC-EVALUATION.md?plain=1#L26) (**Herkunft verschoben:** seit 89ca8b1 nicht mehr eingecheckt; wird von `qc_eval.py` nach `artifacts/qc/` erzeugt. Link zeigt die zitierte historische Fassung. Aktuell: [Testing-README: Source-level QC](../../Development/system/testing/README.md#source-level-qc))
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
 
 <a id="u095"></a>
@@ -118,6 +118,8 @@ THA-baseline-traceability.json bindet den institutionalisierten Vergleich an Rev
 **U126 · EIGENE ANFORDERUNG**
 
 The evaluation protocol requires server readback to match Patient, LOINC, quantity, unit, timestamp and resource ID; TLS negative cases must not transfer successfully, audio must continue, and retry is explicit.
+
+> **Überholt (Stand integration, 2026-10-12):** „Retry is explicit“ gilt für das MVP nicht mehr. Aktuell: Fehlgeschlagene Sendungen werden angezeigt und abgebrochen; keine automatische oder manuelle Wiederholungswarteschlange; Zeitüberschreitung nach Server-Commit gilt als „Unverified“. Readback-Abgleich bleibt. – siehe [MVP-Entscheidungen 11.10.](../../Development/system/planning/mvp-decisions-2026-10-11.md#confirmed-scope-and-behavior).
 
 **Ursprung:** [Development/system/coding/bringup-zephyr/EVAL-GUIDE.md:84-85](../../Development/system/coding/bringup-zephyr/EVAL-GUIDE.md#L84)
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
@@ -199,7 +201,7 @@ logic-tests.txt records 10 passing app_logic cases covering audio recovery, brig
 
 QC-Ergebnis JSON dokumentiert 10 Kontrollen mit Score je 10 und Gate PASS; Verifikation basiert teils auf Heuristiken, und erforderliche Maßnahmen bleiben trotz PASS ausgewiesen.
 
-**Ursprung:** [Development/system/testing/qc-eval-results.json:1-92](../../Development/system/testing/qc-eval-results.json#L1)
+**Ursprung:** [Development/system/testing/qc-eval-results.json:1-92](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/23c1ea492270b897532896179e35f873eee823be/Development/system/testing/qc-eval-results.json#L1) (**Herkunft verschoben:** seit 89ca8b1 nicht mehr eingecheckt; wird von `qc_eval.py` nach `artifacts/qc/` erzeugt. Link zeigt die zitierte historische Fassung. Aktuell: [Testing-README: Source-level QC](../../Development/system/testing/README.md#source-level-qc))
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
 
 <a id="u091"></a>
@@ -207,7 +209,7 @@ QC-Ergebnis JSON dokumentiert 10 Kontrollen mit Score je 10 und Gate PASS; Verif
 
 QC-EVALUATION meldet 100/100 PASS für statischen THA-baseline-Vergleich, datiert 2026-09-24; der Bericht sagt ausdrücklich, dass dies keine Compilation, Instrumentierung, Elektroprüfung, Audiomessung oder manuelle Hardwareprüfung ersetzt.
 
-**Ursprung:** [Development/system/testing/QC-EVALUATION.md:1-9](../../Development/system/testing/QC-EVALUATION.md#L1)
+**Ursprung:** [Development/system/testing/QC-EVALUATION.md:1-9](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/23c1ea492270b897532896179e35f873eee823be/Development/system/testing/QC-EVALUATION.md?plain=1#L1) (**Herkunft verschoben:** seit 89ca8b1 nicht mehr eingecheckt; wird von `qc_eval.py` nach `artifacts/qc/` erzeugt. Link zeigt die zitierte historische Fassung. Aktuell: [Testing-README: Source-level QC](../../Development/system/testing/README.md#source-level-qc))
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
 
 <a id="u118"></a>
@@ -257,4 +259,3 @@ TEST-PROTOCOL marked full assembly skipped because of the then-existing display/
 
 **Ursprung:** [Development/system/coding/bringup-zephyr/TEST-PROTOCOL.md:1442,1499-1513](../../Development/system/coding/bringup-zephyr/TEST-PROTOCOL.md#L1442)
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
-

@@ -43,5 +43,27 @@
   "missing_ids": [],
   "active_statements_once": true,
   "stage1_unchanged_during_build": true,
-  "local_link_targets": "ok"
+  "local_link_targets": "ok",
+  "integration_notes": 18,
+  "integration_refs_checked": [
+    "Development/system/design/interfaces-and-behavior.md#current-mvp-baseline--11-october",
+    "Development/system/design/interfaces-and-behavior.md#delivery-clock-and-configuration",
+    "Development/system/planning/framework-and-transport-evaluation.md#recommendation-for-the-next-discussion",
+    "Development/system/planning/implementation-readiness.md#decision-register",
+    "Development/system/planning/mvp-decisions-2026-10-11.md#confirmed-scope-and-behavior",
+    "Development/system/planning/mvp-decisions-2026-10-11.md#latency-research-and-proposed-budgets",
+    "Development/system/planning/mvp-decisions-2026-10-11.md#proposed-bpm-acceptance-table",
+    "Development/system/planning/mvp-decisions-2026-10-12.md#confirmed-decisions",
+    "Development/system/planning/mvp-decisions-2026-10-12.md#proposed-behavior",
+    "Development/system/planning/mvp-implementation-timeline.md#board--verify-latest-evaluation-carrier-and-component-wiring",
+    "Development/system/requirements/parameters.md#parameter-and-acceptance-register",
+    "Development/system/spec/product-scope.md#goal-and-boundary",
+    "Development/system/spec/product-scope.md#source-register-and-precedence",
+    "Development/system/testing/README.md#source-level-qc"
+  ],
+  "relocated_origins": [
+    "Development/system/testing/QC-EVALUATION.md",
+    "Development/system/testing/qc-eval-results.json"
+  ],
+  "missing_origins": []
 }

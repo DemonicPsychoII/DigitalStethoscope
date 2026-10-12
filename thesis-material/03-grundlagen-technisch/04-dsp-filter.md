@@ -69,4 +69,3 @@ Spektraler Schwerpunkt und Roll-off beschreiben spektrale Form, belegen aber all
 
 **Ursprung:** [preThesis/03-recherche/R01-murmur-metrik.md:51](../../preThesis/03-recherche/R01-murmur-metrik.md#L51)
 **Belege:** [Noponen, A.-L., Lukkarinen, S., & Sepponen, R · murmur_text](https://accesscardiology.mhmedical.com/content.aspx?bookid=382&sectionid=40663653) — Fundstelle: Chapter 2, Clinical Auscultation and Conventional Phonocardiography (web lines 144–150) (aus Stage 1; am Original prüfen) · 🔒 Volltext kostenpflichtig; [Delgado-Trejos, E., Quiceno-Manrique, A 2009 · digital_auscultation_murmur](https://link.springer.com/article/10.1007/s10439-008-9611-z) — Fundstelle: Introduction, murmur and heart cycle description (existing registry reports web lines 71–85) (aus Stage 1; am Original prüfen); [Wen, H 2023 · murmur_filter](https://arxiv.org/abs/2303.02988) — Fundstelle: Section 2.1, preprocessing pipeline (arXiv text lines 13–26) (aus Stage 1; am Original prüfen)
-
