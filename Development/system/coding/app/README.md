@@ -30,7 +30,8 @@ Display/UI, touch, SD storage and replay (WSOLA) are optional and not part of th
 This directory is a standalone Zephyr application. `main.c` returns to the idle
 thread; the component `.c` / `.h` files reserve places for implementation and
 declare no APIs yet. `common/types.h` reserves the shared data types.
-The board overlay is intentionally empty, so no application peripherals are
+The board overlay and `prj.conf` only set the fitted N16R8 module (16 MB flash,
+8 MB octal PSRAM; GPIO33–37 stay reserved), so no application peripherals are
 configured. No audio processing, networking, storage, UI or monitoring is active.
 
 ### Manual build
