@@ -35,17 +35,20 @@ behavior is implemented.
   Doxygen group, fixed section blocks). Doxygen groups and include guards carry the layer prefix
   without underscore: `L1I2S` / `L1I2S_H`, `L2CONTROL` / `L2CONTROL_H`. Modules outside the
   layers use `MONITOR`, `COMMONTYPES` and `COMMONMAIN`.
+- **Alarm indication.** LEDs are mandatory, not part of the optional UI. `L1_PHYSICALINTERFACE`
+  drives them; CONTROL decides what they show, including the latched Device Alarm.
+- **Entry point.** The root `main.c` stays the built entry point until startup is implemented.
+  `common/main.c` is reserved for startup; only one of them may define `main()`.
 - **Manual builds.** [`coding/tools/build-firmware.ps1`](../coding/tools/build-firmware.ps1) builds
   the app (default) or the bring-up firmware with the pinned toolchain. It never flashes.
 
 ## Proposed, pending confirmation
 
-- **BPM worker.** BPM runs in its own worker thread owned by `L2_AUDIO`, fed by copies in a fixed
-  analysis pool, so a stalled BPM worker cannot pin I2S RX buffers.
-- **Alarm indication.** LEDs are mandatory, not part of the optional UI. `L1_PHYSICALINTERFACE`
-  drives them; CONTROL decides what they show, including the latched Device Alarm.
-- **Entry point.** `common/main.c` is reserved for startup. The built entry point remains the root
-  `main.c` until startup is implemented; only one of them may define `main()`.
+- **BPM worker.** BPM runs in its own worker thread owned by `L2_AUDIO`, below audio priority,
+  fed by copies in a fixed analysis pool. A slow analysis then delays only the BPM result; pool
+  overflow marks a gap instead of pinning I2S RX buffers or eating into the ≤4 ms block target
+  (D10). Whether the envelope is computed inline per block and only autocorrelation and
+  aggregation run in the worker is decided after measuring on target.
 
 ## Consequences
 
