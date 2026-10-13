@@ -7,7 +7,7 @@ A complete specification draft is not the same as permission to implement unagre
 
 ## Decision register
 
-The original register below is historical preparation context. [11 October owner decisions](mvp-decisions-2026-10-11.md) supersede D02/D03/D08/D12/D14 workflow and scope proposals. Numeric criteria remain proposals; [the component timeline](mvp-implementation-timeline.md) replaces the old audio-first implementation sequence.
+The original register below is historical preparation context. [11 October owner decisions](mvp-decisions-2026-10-11.md) supersede D02/D03/D08/D12/D14 workflow and scope proposals; [13 October decisions](mvp-decisions-2026-10-13.md) settle the D11 layer layout. Numeric criteria remain proposals; [the component timeline](mvp-implementation-timeline.md) replaces the old audio-first implementation sequence.
 
 | ID | Decision / conflict | Proposed draft treatment | Blocks |
 |---|---|---|---|
@@ -21,7 +21,7 @@ The original register below is historical preparation context. [11 October owner
 | D08 | FHIR server/patient/profile/auth/point/time | R4 HAPI candidate; `effectiveDateTime` = interval end and conditional create/readback (decided 12 October); approve point coding, precision and trusted-clock assumptions. Patient: decided 12 October via hotspot portal and `Device.patient` ([decisions](mvp-decisions-2026-10-12.md)). | NET serialization/deployment |
 | D09 | S03 acoustic characterization vs current S05 exclusion | Scope draft follows S05: datasheets/literature plus functional audio only. No measured transfer-chain claim; retain older intention as superseded proposal pending confirmation. | Thesis scope reconciliation |
 | D10 | Timing/resource/queue/response margins and soak length | Keep 8 ms/≤4 ms board targets; review P10–P15 capacities/thresholds; candidate 30 min soak. Measure first; priority alone insufficient. | Scheduling and acceptance budgets |
-| D11 | Thesis folder/skeleton migration | Separate `coding/thesis-zephyr/` proposed. S04 says old skeleton replaced via PR #15, but this local tree still has it; do not migrate/delete in drafting task. | Implementation placement |
+| D11 | Thesis folder/skeleton migration | Layer layout decided 13 October: L0 = Zephyr, L1 = hardware adapters and pure C libraries, L2 = orchestration ([decisions](mvp-decisions-2026-10-13.md)). The skeleton lives in `coding/app/`; a move to a separate `coding/thesis-zephyr/` folder remains open. | Implementation placement |
 | D12 | MON watchdog and risk-control scope | Class B/SOUP is recorded intent; develop hazards, detection/mute timing and watchdog obligations before claiming safety controls implemented. | Supervision design / standards argument |
 | D13 | SD/host fixture formats, maximum size and clock normalization | Candidate mono PCM WAV 16/32-bit 16 kHz, explicit sign/alignment and no hidden resampling; prefetch buffer sizing open. | Fixture adapter API |
 | D14 | Continuous BPM vs explicit session | Draft allows independent estimator updates while listening and explicit bounded session aggregation; only completed sessions eligible for send. Confirm heart/listening behavior. | BPM/controller interaction |

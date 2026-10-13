@@ -6,9 +6,8 @@ architecture decision. Firmware placement/migration remains open under
 [evaluation firmware](../bringup-zephyr/README.md) remains separate.
 
 The table uses the existing skeleton folder names. L1 holds thin hardware adapters
-over Zephyr drivers and pure C libraries; L2 orchestrates them. Detailed design still
-describes the earlier capability-based service split and must be updated to match.
-D11 leaves placement and naming open.
+over Zephyr drivers and pure C libraries; L2 orchestrates them, as decided on
+[13 October](../../planning/mvp-decisions-2026-10-13.md). D11 leaves the folder placement open.
 
 | Folder | Contents | May depend on |
 |---|---|---|

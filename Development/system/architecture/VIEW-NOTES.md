@@ -7,12 +7,12 @@ a proposed thesis product, except for the separate evaluation implementation vie
 
 | View | Source | Review boundary |
 |---|---|---|
-| Architecture | [architecture-choice.puml](architecture-choice.puml) | Chosen layers, RTOS workers and events; task isolation is optional protection. A/B firmware is an update/rollback concept, not a selected feature. |
+| Architecture | [architecture-choice.puml](architecture-choice.puml) | Chosen layers (13 October: L2 orchestrates, L1 adapts hardware or holds pure C libraries, L0 is Zephyr), RTOS workers and events; task isolation is optional protection. A/B firmware is an update/rollback concept, not a selected feature. |
 | System context | [system-context.puml](system-context.puml) | Device as a black box; the device initiates FHIR requests and receives status/readback responses. Test tooling is outside the normal-use view. |
 | System components | [system-components.puml](system-components.puml) | Hardware and external connections; ESP32 remains a black box. Networking is Wi-Fi plus HTTPS. |
 | Electrical interfaces | [electrical-interfaces.puml](electrical-interfaces.puml) | Connection types and chip roles; pin assignments and speeds remain in the maintained overlay and hardware requirements. |
-| Software components | [software-components.puml](software-components.puml) | Individual components in Application, Services and Zephyr/adapters. DSP belongs inside Services; MON observes across layers. |
-| Threads | [runtime-ownership.puml](runtime-ownership.puml) | Proposed workers and data/communication methods. Touch belongs to Input; original-rate blocks reach BPM before listening filter/gain. |
+| Software components | [software-components.puml](software-components.puml) | Firmware modules per [13 October decisions](../planning/mvp-decisions-2026-10-13.md): L2 orchestration, L1 hardware adapters and pure C libraries, L0 Zephyr. Libraries include no Zephyr headers; MONITOR observes across layers. |
+| Threads | [runtime-ownership.puml](runtime-ownership.puml) | Proposed workers, the modules they run and data/communication methods. Touch belongs to Input; the BPM worker belongs to `L2_AUDIO`; original-rate blocks reach BPM before listening filter/gain. |
 | Listening | [listening-workflow.puml](listening-workflow.puml) | Selected filter or Raw bypass, volume, playback and optional bounded capture/replay. Lung is Raw; Heart can also select Raw. |
 | BPM measurement | [measurement-workflow.puml](measurement-workflow.puml) | Freeze measurement settings and acquire until Stop; cancel without sending before 15 s, or finalize at or after 15 s subject to quality/coverage. Aggregate after listening stops, then deliver the result or validated error report. |
 
@@ -37,7 +37,7 @@ and SHA-256 hashes. Snapshots are provenance, not editable diagram baselines.
 The reviewed views reconcile S01-S04; presentation simplifications and the A/B
 explanation come from the subsequent review rather than additions to the old boards.
 
-- DSP algorithms are pure C within Services so the same code can run in host tests.
+- DSP algorithms are pure C libraries in L1 (`L1_FILTER`, `L1_BPM`) so the same code can run in host tests.
 - Queues carry bounded events or buffer handles. BPM collects successive original-rate
   blocks into its own analysis window; it never waits for an entire replay clip.
 - During replay, BPM continues receiving original-rate microphone audio.
@@ -69,7 +69,7 @@ The current control settings have multiple mutex-protected callers; BPM and repl
 run in the audio module, rather than in all of the proposed separate workers.
 This reference describes the evaluation implementation, not the proposed worker layout.
 
-Updated by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.
+Updated by Claude-Opus-5.5 on behalf of Nico running in T3 Code through Claude Code.
 
 ## Feedback preparation (2026-10-07)
 
