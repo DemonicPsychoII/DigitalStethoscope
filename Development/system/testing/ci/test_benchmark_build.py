@@ -102,6 +102,10 @@ class BenchmarkTests(unittest.TestCase):
 
             with (
                 patch.object(benchmark, "ROOT", root),
+                # The Windows CPU probe uses subprocess, which is mocked below.
+                patch.object(
+                    benchmark, "machine_info", return_value={"label": "cache"}
+                ),
                 patch.object(benchmark, "tool_info", return_value={"modules": {}}),
                 patch.object(
                     benchmark, "source_info", return_value={"input_sha256": "abc"}
