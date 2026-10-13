@@ -31,10 +31,15 @@ def main() -> None:
         "toolchain": json.loads(
             (root / "Development/system/testing/ci/toolchain.json").read_text()
         ),
+        "compiler_cache": json.loads(
+            (root / "Development/system/testing/ci/compiler_cache.json").read_text()
+        ),
+        "cache_disabled": os.environ.get("CACHE_DISABLED"),
         "selection": {
             key: os.environ.get(key)
             for key in (
                 "FIRMWARE",
+                "APPLICATION",
                 "NATIVE",
                 "HOST",
                 "TOOLING",

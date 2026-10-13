@@ -5,21 +5,21 @@ import subprocess
 from pathlib import Path
 
 
-def needs_firmware(paths: list[str]) -> bool:
+def needs_build(paths: list[str], component: str) -> bool:
     app = "Development/system/coding/bringup-zephyr/"
     ci = "Development/system/testing/ci/"
     thesis_app = "Development/system/coding/app/"
     for path in paths:
         if path == ".github/workflows/quality-gates.yml":
             return True
-        if path.startswith(thesis_app):
+        if path.startswith(thesis_app) and component == thesis_app:
             relative = path[len(thesis_app) :]
             if relative.startswith("tests/host/") or relative.endswith(
                 (".md", ".png", ".svg", ".puml", ".gitkeep")
             ):
                 continue
             return True
-        if path.startswith(app):
+        if path.startswith(app) and component == app:
             relative = path[len(app) :]
             if relative.startswith(("tools/", "tests/", "evidence/")):
                 continue
@@ -52,11 +52,23 @@ def needs_firmware(paths: list[str]) -> bool:
     return False
 
 
+def needs_firmware(paths: list[str]) -> bool:
+    return any(
+        needs_build(paths, component)
+        for component in (
+            "Development/system/coding/app/",
+            "Development/system/coding/bringup-zephyr/",
+        )
+    )
+
+
 def suites(paths: list[str]) -> dict[str, bool]:
     workflow = ".github/workflows/quality-gates.yml" in paths
-    firmware = needs_firmware(paths)
+    firmware = needs_build(paths, "Development/system/coding/bringup-zephyr/")
+    application = needs_build(paths, "Development/system/coding/app/")
     return {
         "firmware": firmware,
+        "application": application,
         "native": firmware
         or any(
             p.startswith("Development/system/coding/bringup-zephyr/tests/logic/")
@@ -76,12 +88,28 @@ def suites(paths: list[str]) -> dict[str, bool]:
         or "Development/system/testing/qc_eval.py" in paths,
         "gate": workflow or any(p.startswith(".github/agent-gate/") for p in paths),
         "qc": firmware
+        or application
         or any(
             p.startswith("Development/system/testing/")
             or p.startswith("Development/system/requirements/")
             for p in paths
         ),
     }
+
+
+def select(
+    paths: list[str], *, full: bool, daily: bool, reuse: bool
+) -> dict[str, bool]:
+    if full:
+        return dict.fromkeys(suites([]), True)
+    selected = suites(paths)
+    if daily:
+        # Publication verifies bring-up binaries; the weekly run also compiles the app.
+        selected = dict.fromkeys(selected, False)
+        selected["qc"] = True
+        if not reuse:
+            selected.update(firmware=True, native=True, host=True)
+    return selected
 
 
 def main() -> None:
@@ -98,10 +126,12 @@ def main() -> None:
         ]
     )
     paths = changed.decode("utf-8", errors="surrogateescape").split("\0")
-    if os.environ.get("CI_FULL") == "true":
-        selected = dict.fromkeys(suites([]), True)
-    else:
-        selected = suites(paths)
+    selected = select(
+        paths,
+        full=os.environ.get("CI_FULL") == "true",
+        daily=os.environ.get("CI_DAILY") == "true",
+        reuse=bool(os.environ.get("REUSE")),
+    )
     with Path(os.environ["GITHUB_OUTPUT"]).open("a", encoding="utf-8") as output:
         for name, needed in selected.items():
             output.write(f"{name}={str(needed).lower()}\n")

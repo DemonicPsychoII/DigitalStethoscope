@@ -28,8 +28,8 @@ name: Agent Gate
 #
 # Every run reads LIVE PR state, never the event payload, and judges the PR as it is now.
 #
-# Two jobs: `resolve` names the PR(s) an event concerns (workflow_run carries only a head SHA), so
-# `evaluate` can key its concurrency group on the PR number for EVERY trigger. Evaluations of one
+# Known PR events evaluate directly. `resolve` maps CI/review completion or dispatch to PRs, so
+# `evaluate` still keys its concurrency group on the PR number for EVERY trigger. Evaluations of one
 # PR therefore never overlap, and an older run can never publish over a newer one.
 
 on:
@@ -53,16 +53,12 @@ permissions:
 jobs:
   resolve:
     name: agent-gate-resolve
-    # issue_comment fires for every issue and PR comment: only PR comments that can change the
-    # verdict are worth a runner. Dispatch only from the default branch, so a branch copy of this
+    # Completion events need a live PR lookup; known PR events evaluate directly below.
+    # Dispatch only from the default branch, so a branch copy of this
     # workflow cannot be dispatched to publish a verdict.
     if: >-
       vars.CI_NATIVE_REVIEW != 'true' && (
-      (github.event_name == 'pull_request_target')
-      || (github.event_name == 'issue_comment' && github.event.issue.pull_request
-          && (contains(github.event.comment.body, 'agent-review') || contains(github.event.comment.body, 'review-fallback') || contains(github.event.comment.body, 'owner-')
-              || contains(github.event.comment.body, '/agent-gate')))
-      || (github.event_name == 'workflow_run'
+      (github.event_name == 'workflow_run'
           && (github.event.workflow_run.event == 'pull_request' || github.event.workflow_run.event == 'workflow_dispatch' || github.event.workflow_run.event == 'pull_request_review'))
       || (github.event_name == 'workflow_dispatch' && github.ref_name == github.event.repository.default_branch))
     runs-on: ubuntu-latest
@@ -88,11 +84,17 @@ jobs:
   evaluate:
     name: agent-gate-evaluate
     needs: resolve
-    if: needs.resolve.outputs.prs != '[]' && needs.resolve.outputs.prs != ''
+    if: >-
+      always() && !cancelled() && vars.CI_NATIVE_REVIEW != 'true' && (
+      github.event_name == 'pull_request_target'
+      || (github.event_name == 'issue_comment' && github.event.issue.pull_request
+          && (contains(github.event.comment.body, 'agent-review') || contains(github.event.comment.body, 'review-fallback') || contains(github.event.comment.body, 'owner-')
+              || contains(github.event.comment.body, '/agent-gate')))
+      || (needs.resolve.result == 'success' && needs.resolve.outputs.prs != '[]' && needs.resolve.outputs.prs != ''))
     strategy:
       fail-fast: false
       matrix:
-        pr: ${{ fromJSON(needs.resolve.outputs.prs) }}
+        pr: ${{ fromJSON(github.event_name == 'pull_request_target' && format('[{0}]', github.event.pull_request.number) || (github.event_name == 'issue_comment' && github.event.issue.pull_request) && format('[{0}]', github.event.issue.number) || needs.resolve.outputs.prs || '[]') }}
     # One evaluation per PR at a time, whatever the trigger; a queued newer run supersedes an older
     # queued one, and because every run reads live state, the newest is always the right one to keep.
     concurrency:
