@@ -6,17 +6,15 @@ project(stetho_app)
 target_include_directories(app PRIVATE common)
 target_sources(app PRIVATE
     main.c
-    L0_platform/platform.c
-    L1_services/audio/audio.c
-    L1_services/bpm/bpm.c
-    L1_services/storage/storage.c
-    L1_services/network/network.c
-    L1_services/dsp_core/filter.c
-    L1_services/dsp_core/envelope.c
-    L1_services/dsp_core/autocorrelation.c
-    L1_services/dsp_core/wsola.c
-    L2_application/controller/controller.c
-    L2_application/ui/ui.c
-    L2_application/shell/shell.c
-    MON/monitor.c
+    L1_services/L1_I2S/i2s.c
+    L1_services/L1_WIFI/wifi.c
+    L1_services/L1_PHYSICALINTERFACE/physicalinterface.c
+    L1_services/L1_FILTER/filter.c
+    L1_services/L1_BPM/bpm.c
+    L1_services/L1_FHIR/fhir.c
+    L2_application/L2_CONTROL/control.c
+    L2_application/L2_AUDIO/audio.c
+    L2_application/L2_COMMUNICATION/communication.c
+    L2_application/L2_SHELL/shell.c
+    MONITOR/monitor.c
 )
