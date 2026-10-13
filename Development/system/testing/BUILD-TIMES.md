@@ -41,9 +41,25 @@ Each clean run measures pristine CMake configuration and the full compile/link
 as separate phases. Total is their sum; metadata checks, downloads and copying
 the binary are outside the timer. `--include-noop` also records a subsequent
 unchanged build separately. This does **not** measure rebuilding after a source
-edit. The compiler cache is disabled. The OS filesystem cache stays in place;
+edit. The compiler cache is disabled by default. The OS filesystem cache stays in place;
 these are warm-filesystem clean builds, not cold-boot measurements. Keep power
 mode and concurrent load consistent and record environmental differences.
+
+## Compiler-cache comparison
+
+On Linux x86-64, install the pinned cache and add `.ci-compiler-tools` to PATH:
+
+```sh
+python Development/system/testing/ci/compiler_cache.py
+PATH="$PWD/.ci-compiler-tools:$PATH" .ci-workspace/.venv/bin/python Development/system/testing/ci/benchmark_build.py run --device homelab-cache --profiles offline qc network-qc --jobs 2 --runs 1 --warmups 1 --cache-modes disabled cold warm
+```
+
+`cold` clears its isolated cache before each build; `warm` retains its own cache
+through the excluded warm-up and subsequent pristine builds. Cached modes record
+ccache statistics beside timing and binary evidence. Cache directories remain
+under ignored `.ci-ccache-benchmark`, outside retained artifacts. Use two jobs to
+match the bounded CI VM. The workflow's optional `cache_benchmark` dispatch input
+runs this comparison; ordinary weekly/full runs disable caching.
 
 ## Results and comparison
 
@@ -54,7 +70,7 @@ Each invocation writes under `artifacts/build-times/DEVICE-UTC_TIMESTAMP/`:
 - `results.csv`: one row per warm-up, clean build or no-op build.
 - Per-phase logs and per-run firmware binaries.
 
-Build trees remain in `build-benchmark/DEVICE-UTC_TIMESTAMP/PROFILE-jJOBS/` for
+Build trees remain in `build-benchmark/DEVICE-UTC_TIMESTAMP/CACHE_MODE-PROFILE-jJOBS/` for
 inspection or manual flashing. Failure stops the run and retains the logs and
 result row; a failed build never counts as a successful timing sample.
 

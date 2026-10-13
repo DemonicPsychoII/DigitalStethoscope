@@ -110,6 +110,18 @@ class CloudPublishTests(unittest.TestCase):
                 run_ci.build()
         publish.assert_not_called()
 
+    def test_application_only_build_never_stages_a_bringup_release(self):
+        with (
+            patch.object(run_ci, "build_application") as application,
+            patch.object(run_ci.firmware_release, "identity") as identity,
+            patch.object(run_ci.firmware_release, "stage") as release,
+            patch.object(run_ci, "summary"),
+        ):
+            run_ci.build(application=True, firmware=False)
+        application.assert_called_once()
+        identity.assert_not_called()
+        release.assert_not_called()
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -13,12 +13,16 @@ def problems(
     publish: str,
     daily: str,
     reuse: str = "",
+    application: str = "false",
 ) -> list[str]:
     if plan != "success":
         return [f"check selection did not succeed: {plan}"]
     if daily not in {"true", "false"}:
         return ["daily decision is missing or invalid"]
-    if any(value not in {"true", "false"} for value in (firmware, native, publish)):
+    if any(
+        value not in {"true", "false"}
+        for value in (firmware, application, native, publish)
+    ):
         return ["suite selection is missing or invalid"]
     if daily == "false":
         return (
@@ -30,7 +34,10 @@ def problems(
     if static != "success":
         errors.append(f"static verification did not succeed: {static}")
     required = (
-        firmware == "true" or native == "true" or (publish == "true" and not reuse)
+        firmware == "true"
+        or application == "true"
+        or native == "true"
+        or (publish == "true" and not reuse)
     )
     if heavy != ("success" if required else "skipped"):
         errors.append(
@@ -54,6 +61,7 @@ def main() -> None:
         os.environ.get("PUBLISH", ""),
         os.environ.get("DAILY", ""),
         os.environ.get("REUSE", ""),
+        os.environ.get("APPLICATION", ""),
     )
     if errors:
         raise SystemExit("; ".join(errors))

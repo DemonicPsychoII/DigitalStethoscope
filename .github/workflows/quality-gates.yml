@@ -20,6 +20,10 @@ on:
         description: Run every verification suite with pristine builds
         type: boolean
         default: true
+      cache_benchmark:
+        description: Compare cold and warm pristine compiler-cache builds
+        type: boolean
+        default: false
 
 concurrency:
   # An unrelated label event gets its own group so it cannot cancel a real run.
@@ -47,6 +51,7 @@ jobs:
       contents: read
       actions: read
     outputs:
+      application: ${{ steps.changes.outputs.application }}
       firmware: ${{ steps.changes.outputs.firmware }}
       native: ${{ steps.changes.outputs.native }}
       docs: ${{ steps.changes.outputs.docs }}
@@ -78,7 +83,8 @@ jobs:
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-          CI_FULL: ${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.full) }}
+          CI_FULL: ${{ (github.event_name == 'schedule' && github.event.schedule == '47 4 * * 0') || (github.event_name == 'workflow_dispatch' && (inputs.full || inputs.cache_benchmark)) }}
+          CI_DAILY: ${{ github.event_name == 'schedule' && github.event.schedule == '17 3 * * *' }}
           REUSE: ${{ steps.reuse.outputs.run }}
         run: |
           if [[ "$GITHUB_EVENT_NAME" == schedule || "$GITHUB_EVENT_NAME" == workflow_dispatch ]]; then
@@ -86,11 +92,6 @@ jobs:
             export BASE_SHA
           fi
           python3 Development/system/testing/ci/firmware_changes.py
-          if [[ -n "$REUSE" ]]; then
-            # Static verification still runs; already tested exact binaries are promoted.
-            echo 'firmware=false' >> "$GITHUB_OUTPUT"
-            echo 'native=false' >> "$GITHUB_OUTPUT"
-          fi
   static:
     name: ${{ github.event.action == 'labeled' && github.event.label.name != 'firmware' && 'Quality / Static Checks (label ignored)' || 'Quality / Static Checks' }}
     needs: plan
@@ -98,6 +99,7 @@ jobs:
     runs-on: homelab-stethoscope-static-${{ github.run_id }}-${{ github.run_attempt }}
     timeout-minutes: 10
     env:
+      APPLICATION: ${{ needs.plan.outputs.application }}
       FIRMWARE: ${{ needs.plan.outputs.firmware }}
       NATIVE: ${{ needs.plan.outputs.native }}
       HOST: ${{ needs.plan.outputs.host }}
@@ -174,13 +176,14 @@ jobs:
     name: ${{ github.event.action == 'labeled' && github.event.label.name != 'firmware' && 'Zephyr / Firmware Build (label ignored)' || 'Zephyr / Firmware Build' }}
     needs: [plan, static]
     if: always() && !cancelled() && needs.plan.result != 'skipped'
-    runs-on: ${{ needs.static.result == 'success' && (needs.plan.outputs.daily != 'false' && (needs.plan.outputs.firmware == 'true' || needs.plan.outputs.native == 'true' || (needs.plan.outputs.publish == 'true' && needs.plan.outputs.reuse == ''))) && format('homelab-zephyr-{0}-{1}', github.run_id, github.run_attempt) || 'ubuntu-24.04' }}
+    runs-on: ${{ needs.static.result == 'success' && (needs.plan.outputs.daily != 'false' && (needs.plan.outputs.application == 'true' || needs.plan.outputs.firmware == 'true' || needs.plan.outputs.native == 'true' || (needs.plan.outputs.publish == 'true' && needs.plan.outputs.reuse == ''))) && format('homelab-zephyr-{0}-{1}', github.run_id, github.run_attempt) || 'ubuntu-24.04' }}
     timeout-minutes: 60
     permissions:
       contents: read
       actions: read
     env:
-      HEAVY_REQUIRED: ${{ needs.static.result == 'success' && (needs.plan.outputs.daily != 'false' && (needs.plan.outputs.firmware == 'true' || needs.plan.outputs.native == 'true' || (needs.plan.outputs.publish == 'true' && needs.plan.outputs.reuse == ''))) }}
+      HEAVY_REQUIRED: ${{ needs.static.result == 'success' && (needs.plan.outputs.daily != 'false' && (needs.plan.outputs.application == 'true' || needs.plan.outputs.firmware == 'true' || needs.plan.outputs.native == 'true' || (needs.plan.outputs.publish == 'true' && needs.plan.outputs.reuse == ''))) }}
+      APPLICATION: ${{ needs.plan.outputs.application }}
       FIRMWARE: ${{ needs.plan.outputs.firmware }}
       NATIVE: ${{ needs.plan.outputs.native }}
       HOST: ${{ needs.plan.outputs.host }}
@@ -192,6 +195,7 @@ jobs:
       PUBLISH: ${{ needs.plan.outputs.publish }}
       REUSE: ${{ needs.plan.outputs.reuse }}
       CMAKE_BUILD_PARALLEL_LEVEL: '2'
+      CACHE_DISABLED: ${{ (github.event_name == 'schedule' && github.event.schedule == '47 4 * * 0') || (github.event_name == 'workflow_dispatch' && inputs.full) }}
       STETHO_BUILD_CHANNEL: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || github.ref_name == 'integration' && 'integration' || format('branch/{0}', github.ref_name) }}
       STETHO_BUILD_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
@@ -221,15 +225,51 @@ jobs:
       - name: Provision pinned Zephyr workspace
         if: env.HEAVY_REQUIRED == 'true' && (steps.prepared.outputs.ready != 'true')
         run: bash Development/system/testing/ci/setup_zephyr.sh
+      - name: Install the pinned compiler cache
+        if: env.HEAVY_REQUIRED == 'true'
+        run: |
+          python3 Development/system/testing/ci/compiler_cache.py
+          # ccache treats even an empty CCACHE_DISABLE value as enabled.
+          if [[ "$CACHE_DISABLED" == true ]]; then echo 'CCACHE_DISABLE=1' >> "$GITHUB_ENV"; fi
+      - name: Restore previously verified compiler outputs
+        id: compiler-cache
+        if: env.HEAVY_REQUIRED == 'true' && env.CACHE_DISABLED != 'true'
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .ci-ccache
+          key: ccache-${{ runner.os }}-${{ hashFiles('Development/system/testing/ci/toolchain.json', 'Development/system/testing/ci/compiler_cache.json') }}-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            ccache-${{ runner.os }}-${{ hashFiles('Development/system/testing/ci/toolchain.json', 'Development/system/testing/ci/compiler_cache.json') }}-
+      - name: Reset compiler-cache statistics
+        if: env.HEAVY_REQUIRED == 'true'
+        run: ccache --zero-stats
       - name: Record verification identity
         if: env.HEAVY_REQUIRED == 'true'
         run: .ci-workspace/.venv/bin/python Development/system/testing/ci/ci_evidence.py
       - name: Pristine firmware build
-        if: env.HEAVY_REQUIRED == 'true' && (needs.plan.outputs.firmware == 'true' || needs.plan.outputs.publish == 'true')
-        run: .ci-workspace/.venv/bin/python Development/system/testing/ci/run_ci.py build
+        if: env.HEAVY_REQUIRED == 'true' && (needs.plan.outputs.application == 'true' || needs.plan.outputs.firmware == 'true' || needs.plan.outputs.publish == 'true')
+        run: |
+          components=()
+          if [[ "$APPLICATION" == true ]]; then components+=(--application); fi
+          if [[ "$FIRMWARE" == true || "$PUBLISH" == true ]]; then components+=(--firmware); fi
+          .ci-workspace/.venv/bin/python Development/system/testing/ci/run_ci.py build "${components[@]}"
       - name: Test audio recovery and application logic
         if: env.HEAVY_REQUIRED == 'true' && (needs.plan.outputs.native == 'true' || needs.plan.outputs.publish == 'true')
         run: .ci-workspace/.venv/bin/python Development/system/testing/ci/native_tests.py
+      - name: Benchmark cold and warm pristine compiler-cache builds
+        if: env.HEAVY_REQUIRED == 'true' && github.event_name == 'workflow_dispatch' && inputs.cache_benchmark
+        run: .ci-workspace/.venv/bin/python Development/system/testing/ci/benchmark_build.py run --profiles offline qc network-qc --jobs 2 --runs 1 --warmups 1 --cache-modes disabled cold warm
+      - name: Retain compiler-cache statistics
+        if: env.HEAVY_REQUIRED == 'true' && always()
+        run: |
+          mkdir -p artifacts/ci
+          ccache --show-stats > artifacts/ci/ccache.txt
+      - name: Save verified integration compiler outputs
+        if: env.HEAVY_REQUIRED == 'true' && success() && github.event_name == 'push' && github.ref_name == 'integration' && env.CACHE_DISABLED != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .ci-ccache
+          key: ${{ steps.compiler-cache.outputs.cache-primary-key }}
       - name: Retain build and native evidence
         if: env.HEAVY_REQUIRED == 'true' && (always())
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -239,6 +279,7 @@ jobs:
           path: |
             artifacts/ci/
             artifacts/native/
+            artifacts/build-times/
             artifacts/firmware/
             artifacts/firmware-release/manifest.json
             build-*/CMakeCache.txt
@@ -250,7 +291,7 @@ jobs:
         with:
           name: verified-firmware-${{ github.run_attempt }}
           path: artifacts/firmware-release/
-          retention-days: 3
+          retention-days: 8
           if-no-files-found: error
       - name: Verify source run, identity, complete profiles and checksums
         if: needs.static.result == 'success' && env.HEAVY_REQUIRED != 'true' && needs.plan.outputs.publish == 'true' && needs.plan.outputs.reuse != '' && needs.plan.outputs.daily == 'true'
@@ -264,7 +305,7 @@ jobs:
         with:
           name: firmware-build-${{ github.run_attempt }}
           path: artifacts/firmware-release/
-          retention-days: 3
+          retention-days: 8
           if-no-files-found: error
       - name: Account for every selected verification result
         if: always() && !cancelled()

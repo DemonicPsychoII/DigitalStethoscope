@@ -69,6 +69,43 @@ class OverhaulTests(unittest.TestCase):
         self.assertFalse(selected["host"])
 
     def test_accounting_rejects_missing_failed_cancelled_and_unexpected_work(self):
+        for heavy in ("skipped", "cancelled", "failure"):
+            self.assertTrue(
+                problems(
+                    "success",
+                    "success",
+                    heavy,
+                    "false",
+                    "false",
+                    "false",
+                    "true",
+                    application="true",
+                )
+            )
+        self.assertFalse(
+            problems(
+                "success",
+                "success",
+                "success",
+                "false",
+                "false",
+                "false",
+                "true",
+                application="true",
+            )
+        )
+        self.assertTrue(
+            problems(
+                "success",
+                "success",
+                "skipped",
+                "false",
+                "false",
+                "false",
+                "true",
+                application="",
+            )
+        )
         self.assertFalse(
             problems("success", "success", "skipped", "false", "false", "false", "true")
         )

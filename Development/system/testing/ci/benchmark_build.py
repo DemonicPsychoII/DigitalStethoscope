@@ -203,9 +203,22 @@ def run_benchmark(args: argparse.Namespace) -> None:
     env = build_env(ws)
     # Never use another host's exported package, compiler launcher or module set.
     env["CCACHE_DISABLE"] = "1"
+    cache_modes = getattr(args, "cache_modes", ["disabled"])
+    if "warm" in cache_modes and args.warmups < 1:
+        raise RuntimeError(
+            "Warm-cache measurements require at least one excluded warm-up"
+        )
+    ccache = shutil.which("ccache", path=env["PATH"])
+    if any(mode != "disabled" for mode in cache_modes) and not ccache:
+        raise RuntimeError("Install the pinned compiler cache before benchmarking it")
     for key in ("CC", "CXX", "CFLAGS", "CXXFLAGS", "LDFLAGS", "CMAKE_GENERATOR"):
         env.pop(key, None)
     toolchain = tool_info(ws, env)
+    if any(mode != "disabled" for mode in cache_modes):
+        toolchain["ccache"] = capture([ccache, "--version"], ws, env).splitlines()[0]
+        toolchain["compiler_cache_pins"] = json.loads(
+            Path(__file__).with_name("compiler_cache.json").read_text()
+        )
     source = source_info(env)
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
     label = re.sub(r"[^A-Za-z0-9_.-]", "-", args.device)
@@ -218,7 +231,7 @@ def run_benchmark(args: argparse.Namespace) -> None:
         "machine": machine_info(args.device),
         "source": source,
         "toolchain": toolchain,
-        "policy": "pristine configure + compile; compiler cache disabled; OS filesystem cache retained",
+        "policy": "pristine configure + compile; isolated compiler cache; OS filesystem cache retained",
         "workspace": str(ws),
         "measurements": [],
         "status": "running",
@@ -233,93 +246,121 @@ def run_benchmark(args: argparse.Namespace) -> None:
         "-DZEPHYR_MODULES="
         + ";".join(item["path"] for item in toolchain["modules"].values()),
     ]
-    for profile in args.profiles:
-        for jobs in args.jobs:
-            # Reuse only this invocation's isolated directory; west prunes it.
-            build = ROOT / "build-benchmark" / out.name / f"{profile}-j{jobs}"
-            for iteration in range(args.warmups + args.runs):
-                warmup = iteration < args.warmups
-                number = iteration + 1 if warmup else iteration + 1 - args.warmups
-                prefix = f"{profile}-j{jobs}-{'warmup' if warmup else 'run'}{number}"
-                row = {
-                    "profile": profile,
-                    "jobs": jobs,
-                    "run": number,
-                    "warmup": warmup,
-                    "mode": "clean",
-                }
-                configure = [
-                    *west,
-                    "build",
-                    "--pristine=always",
-                    "--cmake-only",
-                    "-b",
-                    BOARD,
-                    str(APP),
-                    "-d",
-                    str(build),
-                    "--",
-                    "-GNinja",
-                    *cmake_args,
-                    *PROFILES[profile],
-                ]
-                row["configure_seconds"], code = timed(
-                    configure, ws, env, out / f"{prefix}-configure.log"
+    for cache_mode in cache_modes:
+        if cache_mode == "disabled":
+            env["CCACHE_DISABLE"] = "1"
+            cmake_args[3] = "-DUSE_CCACHE=0"
+        else:
+            env.pop("CCACHE_DISABLE", None)
+            env["CCACHE_DIR"] = str(
+                ROOT / ".ci-ccache-benchmark" / out.name / cache_mode
+            )
+            env["CCACHE_BASEDIR"] = str(ROOT)
+            env["CCACHE_COMPILERCHECK"] = "content"
+            env["CCACHE_MAXSIZE"] = "512M"
+            cmake_args[3] = "-DUSE_CCACHE=1"
+        for profile in args.profiles:
+            for jobs in args.jobs:
+                # Reuse only this invocation's isolated directory; west prunes it.
+                build = (
+                    ROOT
+                    / "build-benchmark"
+                    / out.name
+                    / f"{cache_mode}-{profile}-j{jobs}"
                 )
-                row["compile_seconds"] = 0.0
-                if code == 0:
-                    row["compile_seconds"], code = timed(
-                        ["cmake", "--build", str(build), "--parallel", str(jobs)],
-                        ws,
-                        env,
-                        out / f"{prefix}-compile.log",
+                for iteration in range(args.warmups + args.runs):
+                    warmup = iteration < args.warmups
+                    number = iteration + 1 if warmup else iteration + 1 - args.warmups
+                    prefix = f"{cache_mode}-{profile}-j{jobs}-{'warmup' if warmup else 'run'}{number}"
+                    row = {
+                        "profile": profile,
+                        "jobs": jobs,
+                        "run": number,
+                        "warmup": warmup,
+                        "mode": "clean"
+                        if cache_mode == "disabled"
+                        else f"cache-{cache_mode}",
+                    }
+                    if cache_mode == "cold":
+                        subprocess.run([ccache, "--clear"], env=env, check=True)
+                    if cache_mode != "disabled":
+                        subprocess.run([ccache, "--zero-stats"], env=env, check=True)
+                    configure = [
+                        *west,
+                        "build",
+                        "--pristine=always",
+                        "--cmake-only",
+                        "-b",
+                        BOARD,
+                        str(APP),
+                        "-d",
+                        str(build),
+                        "--",
+                        "-GNinja",
+                        *cmake_args,
+                        *PROFILES[profile],
+                    ]
+                    row["configure_seconds"], code = timed(
+                        configure, ws, env, out / f"{prefix}-configure.log"
                     )
-                row["total_seconds"] = row["configure_seconds"] + row["compile_seconds"]
-                row["exit_code"] = code
-                row["build_directory"] = str(build)
-                if code == 0:
-                    binary = build / "zephyr/zephyr.bin"
-                    if not binary.is_file():
-                        row["exit_code"] = code = 1
-                        row["error"] = (
-                            "Build returned success but zephyr.bin is missing"
+                    row["compile_seconds"] = 0.0
+                    if code == 0:
+                        row["compile_seconds"], code = timed(
+                            ["cmake", "--build", str(build), "--parallel", str(jobs)],
+                            ws,
+                            env,
+                            out / f"{prefix}-compile.log",
                         )
-                    else:
-                        row["firmware_sha256"] = hashlib.sha256(
-                            binary.read_bytes()
-                        ).hexdigest()
-                        row["firmware_bytes"] = binary.stat().st_size
-                        shutil.copy2(binary, out / f"{prefix}-zephyr.bin")
-                report["measurements"].append(row)
-                save(report, out)
-                if code:
-                    report["status"] = "failed"
-                    save(report, out)
-                    raise RuntimeError(
-                        f"Build failed; results and logs retained at {out}"
+                    row["total_seconds"] = (
+                        row["configure_seconds"] + row["compile_seconds"]
                     )
-                if args.include_noop:
-                    seconds, code = timed(
-                        ["cmake", "--build", str(build), "--parallel", str(jobs)],
-                        ws,
-                        env,
-                        out / f"{prefix}-noop.log",
-                    )
-                    report["measurements"].append(
-                        {
-                            **row,
-                            "mode": "noop",
-                            "configure_seconds": 0.0,
-                            "compile_seconds": seconds,
-                            "total_seconds": seconds,
-                            "exit_code": code,
-                        }
-                    )
+                    row["exit_code"] = code
+                    row["build_directory"] = str(build)
+                    if code == 0:
+                        binary = build / "zephyr/zephyr.bin"
+                        if not binary.is_file():
+                            row["exit_code"] = code = 1
+                            row["error"] = (
+                                "Build returned success but zephyr.bin is missing"
+                            )
+                        else:
+                            row["firmware_sha256"] = hashlib.sha256(
+                                binary.read_bytes()
+                            ).hexdigest()
+                            row["firmware_bytes"] = binary.stat().st_size
+                            shutil.copy2(binary, out / f"{prefix}-zephyr.bin")
+                    if cache_mode != "disabled":
+                        row["cache_stats"] = capture([ccache, "--print-stats"], ws, env)
+                    report["measurements"].append(row)
                     save(report, out)
                     if code:
                         report["status"] = "failed"
                         save(report, out)
-                        raise RuntimeError(f"No-op build failed; see {out}")
+                        raise RuntimeError(
+                            f"Build failed; results and logs retained at {out}"
+                        )
+                    if args.include_noop:
+                        seconds, code = timed(
+                            ["cmake", "--build", str(build), "--parallel", str(jobs)],
+                            ws,
+                            env,
+                            out / f"{prefix}-noop.log",
+                        )
+                        report["measurements"].append(
+                            {
+                                **row,
+                                "mode": row["mode"] + "-noop",
+                                "configure_seconds": 0.0,
+                                "compile_seconds": seconds,
+                                "total_seconds": seconds,
+                                "exit_code": code,
+                            }
+                        )
+                        save(report, out)
+                        if code:
+                            report["status"] = "failed"
+                            save(report, out)
+                            raise RuntimeError(f"No-op build failed; see {out}")
     if source_info(env)["input_sha256"] != source["input_sha256"]:
         report["error"] = (
             "Firmware source changed during measurement; discard this report"
@@ -353,8 +394,10 @@ def compare(paths: list[Path]) -> None:
                 "pins": tc["pins"],
                 "compiler": tc["compiler"].replace("gcc.exe ", "gcc "),
                 "versions": {
-                    name: tc.get(name) for name in ("west", "cmake", "ninja", "esptool")
+                    name: tc.get(name)
+                    for name in ("west", "cmake", "ninja", "esptool", "ccache")
                 },
+                "compiler_cache_pins": tc.get("compiler_cache_pins"),
                 "policy": report["policy"],
                 "board": report["board"],
             },
@@ -411,6 +454,12 @@ def main() -> None:
     run.add_argument("--runs", type=positive, default=3)
     run.add_argument("--warmups", type=int, default=1)
     run.add_argument("--include-noop", action="store_true")
+    run.add_argument(
+        "--cache-modes",
+        nargs="+",
+        choices=("disabled", "cold", "warm"),
+        default=["disabled"],
+    )
     comparison = commands.add_parser(
         "compare", help="Print median/min/max for reports copied from each device"
     )

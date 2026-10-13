@@ -18,6 +18,7 @@ policy lives in the repository's [AGENTS.md](../../../../AGENTS.md).
 | `firmware_changes.py` | Select affected firmware, host, tooling and merge-gate suites. |
 | `daily_build.py` | Skip unchanged successful daily integration builds. |
 | `firmware_release.py` | Boot identity and release manifest/staging. |
+| `validation_tools.py`, `compiler_cache.py` | Reuse prepared checksum-verified validators and compiler-cache binaries. |
 | `benchmark_build.py` | Controlled build timing and comparison. |
 | `test_*.py` | Regression coverage for tooling, publication and QC failures. |
 

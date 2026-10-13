@@ -2,13 +2,42 @@
 
 import unittest
 
-from firmware_changes import needs_firmware, suites
+from firmware_changes import needs_firmware, select, suites
 
 APP = "Development/system/coding/bringup-zephyr/"
 CI = "Development/system/testing/ci/"
 
 
 class SelectionTests(unittest.TestCase):
+    def test_component_changes_do_not_build_the_other_application(self):
+        application = suites(["Development/system/coding/app/main.c"])
+        self.assertTrue(application["application"])
+        self.assertFalse(
+            application["firmware"] or application["native"] or application["host"]
+        )
+        bringup = suites([APP + "src/main.c"])
+        self.assertTrue(bringup["firmware"] and bringup["native"] and bringup["host"])
+        self.assertFalse(bringup["application"])
+        mixed = suites(["Development/system/coding/app/main.c", APP + "src/main.c"])
+        self.assertTrue(mixed["application"] and mixed["firmware"])
+        for path in (
+            CI + "toolchain.json",
+            CI + "build_support.py",
+            ".github/workflows/quality-gates.yml",
+        ):
+            selected = suites([path])
+            self.assertTrue(selected["application"] and selected["firmware"])
+
+    def test_daily_promotion_keeps_qc_without_repeating_verified_suites(self):
+        promoted = select([], full=False, daily=True, reuse=True)
+        self.assertEqual([key for key, value in promoted.items() if value], ["qc"])
+        rebuilt = select([], full=False, daily=True, reuse=False)
+        self.assertTrue(rebuilt["firmware"] and rebuilt["native"] and rebuilt["host"])
+        self.assertFalse(
+            rebuilt["application"] or rebuilt["tooling"] or rebuilt["gate"]
+        )
+        self.assertTrue(all(select([], full=True, daily=False, reuse=False).values()))
+
     def test_thesis_application_inputs_compile_firmware(self):
         app = "Development/system/coding/app/"
         for path in (
@@ -51,6 +80,7 @@ class SelectionTests(unittest.TestCase):
             suites([".github/agent-gate/agent_gate.py"]),
             {
                 "firmware": False,
+                "application": False,
                 "native": False,
                 "docs": False,
                 "host": False,
@@ -76,6 +106,7 @@ class SelectionTests(unittest.TestCase):
             suites(["Development/system/testing/qc_eval.py"]),
             {
                 "firmware": False,
+                "application": False,
                 "native": False,
                 "docs": False,
                 "qc": True,

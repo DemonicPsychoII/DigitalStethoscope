@@ -18,7 +18,6 @@ flowchart LR
     PR --> Review[CodeRabbit automatic review]
     Review --> Gate[Active review protection]
     Result --> Gate
-    Gate --> Owner[Nico reviews this overhaul manually]
 ```
 
 | Change | Static VM | Heavy VM |
@@ -26,7 +25,11 @@ flowchart LR
 | Markdown / PlantUML | Lint, local links / diagram envelopes, QC | None |
 | Host DSP tests or tools | Lint, ASan + UBSan host tests, QC | None |
 | Native logic tests | Lint, QC | ASan + UBSan native ztests only |
-| Firmware / toolchain / quality workflow | Lint, tooling and host tests, QC | Three pristine ESP32 profiles + native ztests |
+| Application source | Lint, QC | Application compile only |
+| Bring-up firmware | Lint, host tests, QC | Three pristine ESP32 profiles + native ztests |
+| Shared toolchain / quality workflow | Lint, tooling and host tests, QC | Application compile, three ESP32 profiles + native ztests |
+| Daily publication with exact-SHA artifact | Lint, QC | None; validate and promote verified profiles |
+| Daily publication without artifact | Lint, host tests, QC | Three ESP32 profiles + native ztests |
 | Agent gate | Lint, gate unit tests, QC | None |
 | Weekly schedule / full manual run | Every suite | Every pristine build and native test |
 
@@ -44,8 +47,18 @@ state and both hash-locked requirements match the preparation manifest. Otherwis
 they install the checked-out pins. Heavy jobs validate `/opt/zephyr-workspace`
 against the Zephyr/module revisions, packages, compiler and Espressif blob hashes;
 missing or changed state runs canonical setup. Every selected build stays pristine.
-Compiler caching and static/heavy overlap remain deferred pending measurements on
-the two-core host.
+Pinned actionlint and ShellCheck binaries are copied from the prepared image only
+when their pin records and binary SHA-256 match the checkout. Missing or changed
+binaries use checksum-verified downloads.
+
+PR and integration builds use pinned ccache with pristine CMake build trees. The
+512 MiB cache is partitioned by toolchain/cache pins. PRs restore previous outputs;
+only successful integration push verification saves new outputs. Disposable guest
+writes are discarded. Compiler contents are hashed, and source paths are normalized
+relative to the checkout. Weekly and full manual verification disable cache reuse.
+Use the optional `cache_benchmark` dispatch input to retain disabled/cold/warm
+measurements, cache statistics and binaries; see [build timing](../BUILD-TIMES.md).
+Static/heavy overlap remains deferred pending measurements on the two-core host.
 
 The host setup and rollback procedure remains in HomelabServer's
 `scripts/ci-runner/STETHOSCOPE.md`. These are read-only base images for disposable
@@ -57,7 +70,7 @@ Each executing VM retains commit/tree identity, run/attempt metadata and toolcha
 pins. Host/native tests produce JUnit; native logs and firmware logs, RAM/ROM
 reports, configuration, ELF/map and manifest are retained for 14 days. These
 artifacts are diagnostics, not release approval. Firmware binaries live for
-3 days. Static failure prevents heavy work and publication.
+8 days, covering the weekly verification interval. Static failure prevents heavy work and publication.
 
 Integration push builds retain `verified-firmware-<attempt>` only after all heavy
 verification passes. A daily run can promote that artifact only from a successful
@@ -74,7 +87,9 @@ cloud credentials.
 
 | Reduction | Why it saves work | Limit |
 | --- | --- | --- |
-| Native approval instead of custom gate | Removes two short gate jobs and the review-signal job after verified migration | Native approval needs eligible separate reviewer credentials |
+| Direct gate evaluation for known PR events | Avoids the resolve runner for PR updates and relevant comments | CI/review completion still resolves live PR state |
+| Independent application selection | Avoids unrelated application or bring-up compilation | Shared inputs and full verification build both |
+| Prepared validators and compiler caching | Avoids validator downloads and repeated compiler work | Pin/hash checks and uncached weekly verification remain |
 | Native-test-only routing | Runs the native tests without three ESP32 compilations | Firmware and toolchain edits still build all profiles |
 | Exact-SHA artifact promotion | Publishes already tested binaries instead of rebuilding for publication | Only complete, clean, successful integration artifacts qualify |
 | Skip unchanged daily publication | Avoids starting the verification VMs again | Weekly full verification remains |
@@ -84,8 +99,8 @@ cloud credentials.
 The planning sample measured roughly **13–14 seconds total across the two gate jobs per evaluation**, **454 seconds
 for three firmware profiles**, and **32 seconds for native logic**. These are small
 sample timings, not guaranteed savings. Native-only routing avoids about 7.6 VM
-minutes per such run. Retiring both gate jobs avoids about 13–14 runner seconds
-per evaluation, plus review-signal executions. Recovery removes the old polling
+minutes per such run. Direct evaluation removes only the resolve job for known PR
+events; the required evaluation and review-signal workflows remain. Recovery removes the old polling
 wait of up to 85 minutes. Compare actual run durations and counts after rollout.
 For this public repository, standard GitHub-hosted runners have no billed Actions
 minutes; homelab VM time is also separate from billed GitHub minutes. The benefit
@@ -95,9 +110,16 @@ for minute and artifact-storage accounting.
 The final required accounting step deliberately remains: it catches missing outputs,
 skipped selected work, failed dependencies and cancellations.
 
-## Native approval migration (after manual review and merge)
+## Native approval migration (requires a separate reviewer identity)
 
-No live ruleset is changed by this PR. The migration helper is dry-run by default.
+Native migration is deferred: Nico confirmed that fallback reviews run through
+his PR-author GitHub account. Independent sessions from a second provider satisfy
+the legacy gate policy, but cannot supply a native approval of their own author's
+PR. Keep `agent-gate` required and `CI_NATIVE_REVIEW` unset until a separate App
+or account exists and both approval probes below pass. Do not create reviewer
+credentials or enable paid reviews merely to retire the gate.
+
+No live ruleset is changed by this optimization. The migration helper is dry-run by default.
 It preserves existing rules, required-check App pins and bypass actors. Use an
 admin-capable `gh` login; do not commit credentials.
 

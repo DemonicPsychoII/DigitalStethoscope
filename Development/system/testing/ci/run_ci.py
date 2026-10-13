@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import py_compile
@@ -188,7 +189,7 @@ def publish_local_firmware(
     run([publisher, "--retire", "local", "--keep", build_id])
 
 
-def build() -> None:
+def build_application() -> None:
     # Compile the future application without adding it to the bring-up release.
     run(
         [
@@ -203,6 +204,14 @@ def build() -> None:
         ],
         log=ARTIFACTS / "firmware" / "app-build.log",
     )
+
+
+def build(*, application: bool = True, firmware: bool = True) -> None:
+    if application:
+        build_application()
+    if not firmware:
+        summary("### Application build: PASS")
+        return
     identity = firmware_release.identity(ROOT)
     print(f"Firmware build identity: {identity.version('<profile>')}", flush=True)
     out = ROOT / "build-ci"
@@ -323,7 +332,14 @@ def qc() -> None:
 
 def main() -> None:
     stages = {"static": static, "build": build, "qc": qc}
-    requested = sys.argv[1] if len(sys.argv) == 2 else "all"
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("stage", nargs="?", choices=("all", *stages), default="all")
+    parser.add_argument("--application", action="store_true")
+    parser.add_argument("--firmware", action="store_true")
+    args = parser.parse_args()
+    if (args.application or args.firmware) and args.stage != "build":
+        parser.error("component selection is supported only for build")
+    requested = args.stage
     selected = list(stages) if requested == "all" else [requested]
     for name in selected:
         if name not in stages:
@@ -331,7 +347,10 @@ def main() -> None:
                 f"usage: {Path(sys.argv[0]).name} [all|{'|'.join(stages)}]"
             )
         print(f"\n== {name} ==", flush=True)
-        stages[name]()
+        if name == "build" and (args.application or args.firmware):
+            build(application=args.application, firmware=args.firmware)
+        else:
+            stages[name]()
 
 
 if __name__ == "__main__":

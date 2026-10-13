@@ -46,7 +46,9 @@ python Development/system/testing/ci/setup_zephyr.py
 .ci-workspace/.venv/Scripts/python.exe Development/system/testing/ci/run_ci.py qc
 ```
 
-For firmware compilation, run `run_ci.py build` with that same Python.
+For firmware compilation, run `run_ci.py build` with that same Python. Use
+`build --application` or `build --firmware` to compile just the selected component;
+the default still builds both.
 `run_ci.py all` runs static, build and QC; it does not run the independent
 host, tooling, merge-gate or native simulation suites. A local build publishes
 only after all firmware profiles succeed, if `cloud-publish` is installed.
@@ -87,7 +89,8 @@ module revisions, package versions, compiler and Espressif blob hashes.
 Matching images skip setup; incomplete images use canonical provisioning.
 Images are read-only bases for disposable guests, not persistent writable
 runners. Every firmware profile and native test still builds pristine;
-compiler caching is disabled. Host image preparation/rollback is documented
+pristine build trees use the pinned compiler cache except during weekly/full
+verification. Only successful integration pushes save cache entries. Host image preparation/rollback is documented
 in HomelabServer's `scripts/ci-runner/STETHOSCOPE.md`. Timing improvements
 require measured prepared-image runs.
 
@@ -101,7 +104,7 @@ records the score in the run summary. HOLD fails the quality check. These
 source heuristics are separate from functional evaluation and physical proof;
 see the [testing index](README.md#source-level-qc).
 
-Publishing builds upload `firmware-build-<attempt>` for three days, containing
+Publishing builds upload `firmware-build-<attempt>` for eight days, containing
 each profile binary and a manifest with commit/merged-tree identity, UTC time,
 board, profile, boot-banner version and SHA-256. The homelab firmware sync
 validates the GitHub run before publishing to Personal Cloud; the build guest
