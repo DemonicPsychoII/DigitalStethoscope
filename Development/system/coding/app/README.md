@@ -5,45 +5,70 @@ architecture decision. Firmware placement/migration remains open under
 [D11](../../planning/implementation-readiness.md#decision-register); the
 [evaluation firmware](../bringup-zephyr/README.md) remains separate.
 
-The table uses the existing skeleton folder names. Detailed design proposes
-`application/`, `services/` and `platform/` for `L2_application/`, `L1_services/`
-and `L0_platform/`, respectively; D11 leaves migration and naming open.
+The table uses the existing skeleton folder names. L1 holds thin hardware adapters
+over Zephyr drivers and pure C libraries; L2 orchestrates them. Detailed design still
+describes the earlier capability-based service split and must be updated to match.
+D11 leaves placement and naming open.
 
 | Folder | Contents | May depend on |
 |---|---|---|
-| `L2_application/` | Controller (single writer of mode state), UI, shell | L1, L0, `common` |
-| `L1_services/` | Audio, BPM, storage, network/FHIR; pre-send source check | L0, `dsp_core`, `common` |
-| `L1_services/dsp_core/` | Pure C filters, envelope, autocorrelation, WSOLA | `common` |
-| `L0_platform/` | Thin Zephyr driver/devicetree adapters | Zephyr, `common` |
-| `MON/` | Runtime supervision | All layers, read-only |
+| `L2_application/L2_CONTROL/` | Single writer of mode state; grants the network lease | L1, `common` |
+| `L2_application/L2_AUDIO/` | Audio path and BPM worker, driven by control commands | L1, `common` |
+| `L2_application/L2_COMMUNICATION/` | Builds via FHIR, sends via WIFI under the lease; pre-send source check; hotspot portal | L1, `common` |
+| `L2_application/L2_SHELL/` | Shell commands and read-back through CONTROL | L2_CONTROL, `common` |
+| `L1_services/` adapters | `L1_I2S` (mic RX, DAC TX), `L1_WIFI`, `L1_PHYSICALINTERFACE` (buttons, LEDs) | Zephyr, `common` |
+| `L1_services/` libraries | `L1_FILTER`, `L1_BPM` (envelope, autocorrelation, aggregation), `L1_FHIR` (serialization); pure C | `common` |
+| `L0_platform/` | Empty: Zephyr drivers and the board overlay | — |
+| `MONITOR/` | Runtime supervision | All layers, read-only |
 | `common/` | Shared audio/event/result types | Nothing |
-| `tests/host/` | DSP tests on recorded WAVs | `dsp_core`, `common` |
+| `tests/host/` | Library tests on recorded WAVs | L1 libraries, `common` |
+
+Display/UI, touch, SD storage and replay (WSOLA) are optional and not part of the skeleton yet.
 
 ## Building the skeleton
 
 This directory is a standalone Zephyr application. `main.c` returns to the idle
 thread; the component `.c` / `.h` files reserve places for implementation and
-declare no APIs yet. `common/shared_types.h` reserves the shared data types.
-The board overlay is intentionally empty, so no application peripherals are
+declare no APIs yet. `common/types.h` reserves the shared data types.
+The board overlay and `prj.conf` only set the fitted N16R8 module (16 MB flash,
+8 MB octal PSRAM; GPIO33–37 stay reserved), so no application peripherals are
 configured. No audio processing, networking, storage, UI or monitoring is active.
 
-With the repository's pinned Zephyr environment activated, build from the repository root:
+### Manual build
+
+Provision the pinned toolchain once with
+[`setup-toolchain.ps1`](../tools/setup-toolchain.ps1), then build from PowerShell:
+
+```powershell
+Development/system/coding/tools/build-firmware.ps1             # this app -> build-app/
+Development/system/coding/tools/build-firmware.ps1 -Pristine   # clean rebuild
+Development/system/coding/tools/build-firmware.ps1 -Target bringup   # evaluation firmware -> build-eval/
+```
+
+The script uses the board pinned in `toolchain.json` and leaves the shell environment
+unchanged. It only builds; it never flashes or publishes. Without PowerShell, activate
+the pinned Zephyr environment and run from the repository root:
 
 ```sh
 west build --pristine=always -b esp32s3_devkitc/esp32s3/procpu Development/system/coding/app -d build-app
 ```
 
-`python Development/system/testing/ci/run_ci.py build` also compiles this skeleton
-to `build-ci-app`, before building and packaging the bring-up firmware. The skeleton
-is not packaged or published as the bring-up firmware. The pure C DSP placeholders
+CI runs the same application build with
+`python Development/system/testing/ci/run_ci.py build --application`.
+
+Without `--application`, `run_ci.py build` also compiles this skeleton to
+`build-ci-app`, before building and packaging the bring-up firmware. The skeleton
+is not packaged or published as the bring-up firmware. The pure C library placeholders
 will gain host tests in `tests/host` when their behavior is implemented.
 
 ## Layer rules
 
 Calls go downward; upward notifications use events/message queues. Zephyr owns
-drivers, DMA and interrupts. DSP includes no Zephyr headers. Listening and BPM
-analysis filters are independent; Services enforce the test-source send prohibition,
-while MON observes it. Start on one core and measure before adding another.
+drivers, DMA and interrupts. L1 libraries include no Zephyr headers; each caller owns
+its own filter instance, so listening and BPM analysis filters stay independent.
+Only L2_CONTROL writes mode state; SHELL commands go through it. L2_COMMUNICATION is
+the only path to a WIFI send and enforces the test-source send prohibition, while
+MON observes it. Start on one core and measure before adding another.
 
 [Detailed design](../../design/interfaces-and-behavior.md) defines contracts and
 ownership. [Product scope](../../spec/product-scope.md) and the
@@ -51,4 +76,4 @@ ownership. [Product scope](../../spec/product-scope.md) and the
 class B/SOUP intentions and monitoring controls; classification and hazards require
 substantiation.
 
-Updated by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.
+Updated by Claude-Opus-5.5 on behalf of Nico running in T3 Code through Claude Code.

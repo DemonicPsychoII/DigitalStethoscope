@@ -102,6 +102,10 @@ class BenchmarkTests(unittest.TestCase):
 
             with (
                 patch.object(benchmark, "ROOT", root),
+                # Stub machine_info to avoid the host-dependent Windows CPU probe.
+                patch.object(
+                    benchmark, "machine_info", return_value={"label": "cache"}
+                ),
                 patch.object(benchmark, "tool_info", return_value={"modules": {}}),
                 patch.object(
                     benchmark, "source_info", return_value={"input_sha256": "abc"}
