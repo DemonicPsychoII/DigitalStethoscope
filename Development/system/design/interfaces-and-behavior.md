@@ -7,14 +7,16 @@ in host tests and adapters on target. No implementation or firmware migration is
 
 ## Static dependency and module map
 
-Proposed thesis folder: `coding/thesis-zephyr/` (name open D11), with `application/` (controller,
-dashboard), `services/` (audio, input, storage, measurement, delivery, pure-C `dsp/` algorithms),
-`platform/` (thin Zephyr adapters), `monitoring/`, `include/` and `tests/`. Keep `bringup-zephyr/` as evaluation
-evidence. Do not reuse the unused custom HAL skeleton as a second driver stack.
+The thesis firmware lives in [`coding/app/`](../coding/app/README.md) (D11, decided 14 October); its README is the
+authoritative folder and layer map. L1 holds thin hardware adapters over Zephyr drivers and pure-C libraries;
+L2 orchestrates them. The earlier capability-based split (`application/`, `services/`, `platform/` in
+`coding/thesis-zephyr/`) is superseded. Keep `bringup-zephyr/` as evaluation evidence.
 
-Application depends on service contracts; services own the pure-C DSP algorithms and depend on
-platform contracts; adapters depend on Zephyr. DSP is part of Services, not a fourth layer,
-and has no RTOS/filesystem/UI/network includes. Worker completion and
+The components below are logical responsibilities, not folders. They map to `coding/app/` as follows:
+INP → `L1_PHYSICALINTERFACE` + `L2_CONTROL`; CTL → `L2_CONTROL`; AUD → `L1_I2S` + `L2_AUDIO`;
+LIS → `L1_FILTER` + `L2_AUDIO`; BPM → `L1_BPM` + `L2_AUDIO`; NET → `L1_WIFI` + `L1_FHIR` + `L2_COMMUNICATION`;
+UI → LEDs in `L1_PHYSICALINTERFACE`, shell in `L2_SHELL`; MON → `MONITOR`. REC, STO and the display are optional
+and not part of the MVP. Pure-C libraries have no RTOS/filesystem/UI/network includes. Worker completion and
 health notifications are events to the controller, not direct writes into application state.
 MON observes bounded counters/events; it must not become an unrestricted caller of every API.
 
@@ -24,9 +26,7 @@ MON observes bounded counters/events; it must not become an unrestricted caller 
 | CTL | settings, workflow state, generation, patient/point | control/completion/health events | `dispatch(event)`, `snapshot()`, session-tagged commands, network lease |
 | AUD | DMA pool, source generation, transport progress | mic/fixture blocks, source/stop commands | normalized `AudioBlock`, capture/analysis fan-out, TX submission |
 | LIS | listening coefficients and filter/ramp history | block, command snapshot | saturating mono output, levels/clipping |
-| REC | clip buffer, valid length, replay cursor/WSOLA history | raw capture blocks, capture/replay/cancel | clip metadata, replay blocks, completion event |
 | BPM | analysis window, estimates, coverage, aggregation | original-rate blocks, session configuration | validity updates and immutable `MeasurementResult` |
-| STO | file handle, prefetch pool, fixture metadata | select/read/cancel fixture | validated normalized blocks; EOF/error |
 | UI | redraw progress/display model/shell state | `StateSnapshot` | bounded SPI redraw, LED state, control requests |
 | NET | frozen job, connection, outcome | result/config + Idle lease | serialized Observation, outcome, lease-release acknowledgement |
 | MON | anomaly counters, health evidence | worker checkpoints/counters | fault events, evidence snapshots |

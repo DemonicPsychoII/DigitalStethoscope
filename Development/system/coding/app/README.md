@@ -6,8 +6,8 @@ architecture decision. The thesis firmware lives here (decided 14 October,
 [evaluation firmware](../bringup-zephyr/README.md) remains separate.
 
 The table uses the existing skeleton folder names. L1 holds thin hardware adapters
-over Zephyr drivers and pure C libraries; L2 orchestrates them. Detailed design still
-describes the earlier capability-based service split and must be updated to match.
+over Zephyr drivers and pure C libraries; L2 orchestrates them. [Detailed design](../../design/interfaces-and-behavior.md#static-dependency-and-module-map)
+maps its logical components to these folders.
 
 | Folder | Contents | May depend on |
 |---|---|---|
