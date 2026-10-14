@@ -6,6 +6,12 @@ Baseline proposal: one implementer (Nico), 4 focused hours per weekday from 16 O
 
 Tasks are direct children of TICKET-98 so the existing Jira timeline can display their dates and dependency links. TICKET-143 remains the implementation umbrella; do not double-count its aggregate estimate. No task is marked implemented by creating this plan.
 
+## Timeline submitted for implementation-start approval
+
+![Digital Stethoscope implementation timeline, 11 October 2026 snapshot](implementation-timeline-2026-10-11.png)
+
+The chart is an 11 October snapshot of the Jira timeline (TICKET-178 to TICKET-196): 271 h planned effort (200 h base + 71 h allowance), scheduled at up to 8 h per weekday from 16 October to 2 December. It is a different plan from the 4 h/day table below and does not update itself; Jira remains the source of truth for task dates.
+
 | ID | Component task | Effort | Start → due | Functional blockers | Jira |
 |---|---|---|---|---|---|
 | BASE | Pin Zephyr and establish MVP contracts | 4 h | 2026-10-16 → 2026-10-16 | — | [TICKET-166](https://nfrie.atlassian.net/browse/TICKET-166) |
