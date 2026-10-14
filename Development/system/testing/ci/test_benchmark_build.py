@@ -102,7 +102,7 @@ class BenchmarkTests(unittest.TestCase):
 
             with (
                 patch.object(benchmark, "ROOT", root),
-                # The Windows CPU probe uses subprocess, which is mocked below.
+                # Stub machine_info to avoid the host-dependent Windows CPU probe.
                 patch.object(
                     benchmark, "machine_info", return_value={"label": "cache"}
                 ),
