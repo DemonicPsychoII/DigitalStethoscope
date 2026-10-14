@@ -1,6 +1,6 @@
 # Architecture decisions — firmware layer structure, 13 October 2026
 
-> **Superseded in part (14 October 2026):** see the [14 October decisions](mvp-decisions-2026-10-14.md). D11 is closed (firmware stays in `coding/app/`), the separate test-source send rule is dropped, and component requirement IDs are retired in favour of REQ-01…REQ-14.
+> **Superseded in part (14 October 2026):** see the [14 October decisions](mvp-decisions-2026-10-14.md). D11 is closed (firmware stays in `coding/app/`). This record is aligned with it: there is no separate test-source send rule, and component requirement IDs are retired in favour of REQ-01…REQ-14.
 
 Nico's answers in T3 thread `d5e44f69-2ecc-4a3e-917b-31a7b084c12b` settle the thesis
 firmware layer structure in [`coding/app/`](../coding/app/README.md) and close the layout part of
@@ -26,8 +26,8 @@ behavior is implemented.
   - `L2_AUDIO` runs the audio path through `L1_I2S` and `L1_FILTER`. It executes `AudioCommand`s
     from CONTROL and never writes mode state.
   - `L2_COMMUNICATION` orchestrates delivery: `L1_FHIR` builds the message and `L1_WIFI` sends it.
-    It is the only path to a send, acts only under the CONTROL lease, and enforces the
-    test-source send prohibition. The hotspot portal handler belongs here.
+    It is the only path to a send, acts only under the CONTROL lease, and runs the pre-send
+    assignment check. The hotspot portal handler belongs here.
   - `L2_SHELL` reads back data and sends commands only through CONTROL: typed control events in,
     `StateSnapshot` copies out. It never calls services directly.
 - **Optional parts are not in the skeleton yet:** display/UI, touch, SD storage, an SPI service and
@@ -51,12 +51,13 @@ behavior is implemented.
 
 ## Consequences
 
-- The send-ban control moves from Services to `L2_COMMUNICATION`; MON still observes it. The
+- The pre-send check moves from Services to `L2_COMMUNICATION`; MON still observes it. The
   [risk row](implementation-readiness.md#risks-and-proposed-controls-not-a-completed-iso-14971-analysis)
-  "Wrong patient/test source/time transmitted" keeps its NET requirement trace; NET is now
-  realized by `L2_COMMUNICATION` with `L1_FHIR` and `L1_WIFI`.
-- Logical components in detailed design (INP, CTL, AUD, LIS, REC, BPM, STO, UI, NET, MON) and
-  their requirement IDs stay valid. Detailed design maps them to the new modules.
+  "Wrong patient or time transmitted" traces to REQ-09 and REQ-12; NET is realized by
+  `L2_COMMUNICATION` with `L1_FHIR` and `L1_WIFI`.
+- Logical components in detailed design (INP, CTL, AUD, LIS, BPM, UI, NET, MON) stay valid as
+  responsibilities; detailed design maps them to the new modules. Their component requirement IDs
+  are retired in favour of REQ-01…REQ-14.
 - Host tests in `tests/host/` target the L1 libraries only.
 
 Created by Claude-Opus-5.5 on behalf of Nico running in T3 Code through Claude Code.
