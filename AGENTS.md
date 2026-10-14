@@ -1,5 +1,19 @@
 # AGENTS.md — DigitalStethoscope
 
+## Thesis sources
+
+Applies to bachelor-thesis work: `thesis-material/`, `preThesis/`, requirements/design/planning
+rationale under `Development/system/`, and weekly slides or reports that feed the thesis.
+
+- Back every factual or technical claim with a verifiable source and a full citation: authors,
+  title, venue/publisher or standard number, year/version, DOI/URL where available, and access
+  date for web sources. Own measurements cite their evidence with date and firmware revision.
+- Prefer peer-reviewed literature, primary standards and vendor documentation. Record sources in
+  `thesis-material/quellen.bib` and `thesis-material/quellen.md`, following their existing format.
+- If no adequate source exists, say so explicitly and mark the claim as unsupported or as a
+  project decision; never present it as established.
+- Never invent or approximate citations, metadata or page numbers; mark unverified fields as such.
+
 ## Merge policy
 
 Heavy CI runs only in disposable VMs on the home-lab runner pool. Static/QC suites use
