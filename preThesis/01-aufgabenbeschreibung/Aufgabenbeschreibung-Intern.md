@@ -125,7 +125,8 @@ Die **Kernarbeitspakete** umfassen **mindestens 320 h ≈ 8,0 PW** (1 PW = 40 h)
 | ab 20. Okt. | offizieller Bearbeitungsstart (4 Monate) |
 | Okt.–Nov. | Phase 1 + Start Phase 2 (Audiopfad, Kopplung) |
 | Nov.–Dez. | Phase 2 (Filter, BPM, UX, FHIR/TLS) |
-| Dez.–Jan. | Phase 3 (Evaluation, Hörstudie, Schreiben) |
-| Ende Jan. | Abgabe + Vortrag |
+| Dez. | Phase 3 (Evaluation, Hörstudie, Schreiben) |
+| bis 04.01. (ideal 28.12.) | Schreiben und Korrektur abgeschlossen |
+| 11.01.2027 | Abgabe (Stand 14.10.2026; Vortrag nach Termin) |
 
 > Titeländerung bis spätestens 2 Wochen vor Abgabetermin eintragbar. Fristen fakultätsabhängig — SPO Elektrotechnik/Informatik prüfen.

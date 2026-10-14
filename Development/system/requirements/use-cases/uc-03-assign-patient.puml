@@ -8,7 +8,11 @@ start
 :Operator connects with a phone and opens the page;
 if (Patient chosen and confirmed?) then (yes)
  :Device stores the patient on the FHIR server;
- :Later results go to this patient;
+ if (Stored and read back correctly?) then (yes)
+  :Later results go to this patient;
+ else (no)
+  :Device stays unassigned and shows error;
+ endif
 else (cancel or timeout)
  :No change;
 endif
