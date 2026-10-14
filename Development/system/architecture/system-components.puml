@@ -19,7 +19,7 @@ component "Chestpiece" as chest
 component "INMP441\nMicrophone" as mic
 node "ESP32-S3" as cpu
 component "PCM5102A\nDAC" as dac
-component "Headphone amplifier" as amp
+component "Headphone amplifier\n(outside project scope)" as amp <<external>>
 component "Headphones" as hp
 component "ILI9341 / XPT2046\nDisplay / touch" as ui <<optional>>
 component "Buttons / switches\nPotentiometer / LED" as controls

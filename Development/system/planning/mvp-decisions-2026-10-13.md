@@ -1,5 +1,7 @@
 # Architecture decisions — firmware layer structure, 13 October 2026
 
+> **Superseded in part (14 October 2026):** see the [14 October decisions](mvp-decisions-2026-10-14.md). D11 is closed (firmware stays in `coding/app/`), the separate test-source send rule is dropped, and component requirement IDs are retired in favour of REQ-01…REQ-14.
+
 Nico's answers in T3 thread `d5e44f69-2ecc-4a3e-917b-31a7b084c12b` settle the thesis
 firmware layer structure in [`coding/app/`](../coding/app/README.md) and close the layout part of
 D11 in the [decision register](implementation-readiness.md#decision-register). They replace the

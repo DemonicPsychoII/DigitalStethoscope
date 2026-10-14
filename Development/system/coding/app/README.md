@@ -1,13 +1,14 @@
 # Thesis firmware — layer structure
 
 This directory records the Zephyr/ESP32-S3 layer structure from the saved
-architecture decision. Firmware placement/migration remains open under
-[D11](../../planning/implementation-readiness.md#decision-register); the
+architecture decision. The thesis firmware lives here (decided 14 October,
+[D11](../../planning/implementation-readiness.md#decision-register)); the
 [evaluation firmware](../bringup-zephyr/README.md) remains separate.
 
 The table uses the existing skeleton folder names. L1 holds thin hardware adapters
 over Zephyr drivers and pure C libraries; L2 orchestrates them, as decided on
-[13 October](../../planning/mvp-decisions-2026-10-13.md). D11 leaves the folder placement open.
+[13 October](../../planning/mvp-decisions-2026-10-13.md). [Detailed design](../../design/interfaces-and-behavior.md#static-dependency-and-module-map)
+maps its logical components to these folders.
 
 | Folder | Contents | May depend on |
 |---|---|---|
@@ -66,7 +67,7 @@ Calls go downward; upward notifications use events/message queues. Zephyr owns
 drivers, DMA and interrupts. L1 libraries include no Zephyr headers; each caller owns
 its own filter instance, so listening and BPM analysis filters stay independent.
 Only L2_CONTROL writes mode state; SHELL commands go through it. L2_COMMUNICATION is
-the only path to a WIFI send and enforces the test-source send prohibition, while
+the only path to a WIFI send and runs the pre-send assignment check, while
 MON observes it. Start on one core and measure before adding another.
 
 [Detailed design](../../design/interfaces-and-behavior.md) defines contracts and

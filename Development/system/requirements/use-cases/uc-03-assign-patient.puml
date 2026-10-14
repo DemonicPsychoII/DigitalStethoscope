@@ -1,0 +1,21 @@
+@startuml uc_03_assign_patient
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+title F3 Assign a patient through the hotspot (REQ-11, REQ-12)
+start
+:Operator long-presses the button (at least 2 s) while idle;
+:Device opens a password-protected hotspot;
+:Operator connects with a phone and opens the page;
+if (Patient chosen and confirmed?) then (yes)
+ :Device stores the patient on the FHIR server;
+ if (Stored and read back correctly?) then (yes)
+  :Later results go to this patient;
+ else (no)
+  :Device stays unassigned and shows error;
+ endif
+else (cancel or timeout)
+ :No change;
+endif
+:Device closes the hotspot and rejoins Wi-Fi;
+stop
+@enduml

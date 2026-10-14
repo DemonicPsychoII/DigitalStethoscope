@@ -7,9 +7,10 @@ in host tests and adapters on target. No implementation or firmware migration is
 
 ## Static dependency and module map
 
-The [13 October decisions](../planning/mvp-decisions-2026-10-13.md) fix the layer layout in
-[`coding/app/`](../coding/app/README.md); a move to a separate folder remains open (D11). Keep
-`bringup-zephyr/` as evaluation evidence. Do not reuse the unused custom HAL skeleton as a second
+The thesis firmware lives in [`coding/app/`](../coding/app/README.md) (D11, decided 14 October); its README is the
+authoritative folder and layer map. The [13 October decisions](../planning/mvp-decisions-2026-10-13.md) fix the layer
+layout. The earlier capability-based split (`application/`, `services/`, `platform/` in `coding/thesis-zephyr/`) is
+superseded. Keep `bringup-zephyr/` as evaluation evidence. Do not reuse the unused custom HAL skeleton as a second
 driver stack.
 
 - **L0 is Zephyr:** drivers, DMA, interrupts and the devicetree overlay. No project code.
@@ -25,8 +26,8 @@ Calls go downward; worker completion and health notifications are events to the 
 direct writes into application state. MON observes bounded counters/events; it must not become an
 unrestricted caller of every API.
 
-The components below are logical; their requirement IDs stay valid. The module column shows where
-each one is realized. Optional components have no module in the skeleton yet.
+The components below are logical responsibilities, not folders; the module column shows where each one is realized.
+REC, STO and the display are optional and not part of the MVP.
 
 | Component | Module | Owns / writes | Inputs | Outputs / proposed operations |
 |---|---|---|---|---|
@@ -34,10 +35,8 @@ each one is realized. Optional components have no module in the skeleton yet.
 | CTL | `L2_CONTROL` | settings, workflow state, generation, patient/point | control/completion/health events | `dispatch(event)`, `snapshot()`, session-tagged commands, network lease |
 | AUD | `L2_AUDIO` over `L1_I2S` | DMA pool, source generation, transport progress | mic/fixture blocks, source/stop commands | normalized `AudioBlock`, capture/analysis fan-out, TX submission |
 | LIS | `L2_AUDIO` with `L1_FILTER` | listening coefficients and filter/ramp history | block, command snapshot | saturating mono output, levels/clipping |
-| REC | optional; not in skeleton | clip buffer, valid length, replay cursor/WSOLA history | raw capture blocks, capture/replay/cancel | clip metadata, replay blocks, completion event |
 | BPM | `L2_AUDIO` worker with `L1_FILTER`, `L1_BPM` | analysis window, estimates, coverage, aggregation | original-rate blocks, session configuration | validity updates and immutable `MeasurementResult` |
-| STO | optional; not in skeleton | file handle, prefetch pool, fixture metadata | select/read/cancel fixture | validated normalized blocks; EOF/error |
-| UI | display optional; shell in `L2_SHELL`; LEDs via `L1_PHYSICALINTERFACE` | redraw progress/display model/shell state | `StateSnapshot` | bounded SPI redraw, LED state, control requests |
+| UI | shell in `L2_SHELL`; LEDs via `L1_PHYSICALINTERFACE` | redraw progress/display model/shell state | `StateSnapshot` | bounded SPI redraw, LED state, control requests |
 | NET | `L2_COMMUNICATION` with `L1_FHIR`, `L1_WIFI` | frozen job, connection, outcome | result/config + Idle lease | serialized Observation, outcome, lease-release acknowledgement |
 | MON | `MONITOR` | anomaly counters, health evidence | worker checkpoints/counters | fault events, evidence snapshots |
 
@@ -56,7 +55,7 @@ worker placement and ISR wake-up primitives remain proposed implementation choic
 | `StateSnapshot` | snapshot revision, effective and requested settings, source/provenance, playback/measurement/delivery states, active IDs, capabilities, BPM validity/time, clip progress, pending replay speed, error/outcome counters. Read as a coherent copy; UI never edits it. |
 | `Clip` | ID/generation, source, raw format/rate, allocated capacity and valid length, capture sample interval, evaluation metadata. Ownership REC; immutable after finalization until discarded. Never patient-persisted. |
 | `MeasurementResult` | result/session ID, source/generation, valid flag/reason, BPM value and declared precision, quality definition/value, coverage, first/last sample index, measurement monotonic interval and UTC mapping, frozen patient/point/config/filter IDs, completion status. Invalid results carry no sendable numeric value. |
-| `NetworkJob` | stable Observation identifier (device, random boot ID, session counter), immutable result/payload, frozen endpoint/profile/auth-config reference, attempt count (one in MVP), lease ID. Secrets stay outside evidence. Result patient/time/value never resnapshotted from live state. |
+| `NetworkJob` | stable Observation identifier (device, random boot ID, session counter), immutable result/payload, frozen endpoint/profile/auth-config reference, attempt count (up to 4: 1 attempt + 3 retries, all within 10 s), lease ID. Secrets stay outside evidence. Result patient/time/value never resnapshotted from live state. |
 | `HealthEvent` | component, error class, time/generation, severity, evidence level and counter reference. Hardware physical proof references explicit test evidence. |
 
 ## Ownership, memory and queues
@@ -132,8 +131,8 @@ stage at the current source cursor without pretending the duration was constant-
 A completed measurement has separate identity from a replay clip. Use a boot-unique identifier
 plus session counter as the Observation `identifier` and create it with `POST` plus `If-None-Exist`
 on that identifier; never update an Observation. The server assigns the resource ID (from `Location`).
-A retry or collision returns the existing resource instead of overwriting it (D08, 12 October). One initial attempt may be queued automatically when a valid result and Idle/config
-prerequisites coincide; failure aborts without any retry queue. Eligibility in Lung is denied.
+A retry or collision returns the existing resource instead of overwriting it (D08, 12 October). One delivery job is queued automatically when a result and Idle/config
+prerequisites coincide. A failed attempt is retried up to 3 times (4 attempts, about 2 s apart, all within 10 s); then the job ends with a visible error ([14 October](../planning/mvp-decisions-2026-10-14.md)).
 
 Map sample/monotonic measurement interval to UTC from an approved clock anchor. Use measurement
 time, not send time; clock loss/skew makes the result ineligible until its mapping is resolved,
@@ -143,8 +142,8 @@ evaluation-only metadata), value, interval and analysis settings in the immutabl
 The local profile/metadata mapping and decimal precision require agreement.
 
 NET verifies CA/name/time, checks bounded status/body parsing, and GETs the resource to compare
-ID/subject/code/unit/value/interval. Accepted without successful readback = Unverified, not Sent.
-An uncertain response terminates as Unverified; no retry is offered in MVP. Configuration/auth errors and server failures remain visible; no automatic retry loop.
+identifier/subject/device/code/unit/value/`effectiveDateTime` (D08, 12 October). Accepted without successful readback = Unverified, not Sent.
+An uncertain response is retried within the same bounded job; conditional create returns the existing resource instead of a duplicate. Configuration/auth errors and server failures remain visible after the last attempt.
 SNTP is a clock synchronization mechanism, not inherently authenticated trusted time; approve the
 local network/clock trust assumptions. Credentials are private deployment configuration.
 
@@ -169,17 +168,36 @@ Created by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.
 
 ## Patient assignment and hotspot portal — 12 October
 
-[Owner decisions](../planning/mvp-decisions-2026-10-12.md) make the hotspot portal MVP scope; the [sequence diagram](../architecture/patient-assignment-workflow.puml) shows the flow. The FHIR server holds the assignment in `Device.patient`; CTL keeps a local copy that is set only from a matching readback (CTL-007). NET registers the Device at boot without erasing an assignment (NET-008), loads the list before the hotspot opens and re-reads the assignment before each Observation create (NET-009).
+[Owner decisions](../planning/mvp-decisions-2026-10-12.md) make the hotspot portal MVP scope; the [sequence diagram](../architecture/patient-assignment-workflow.puml) shows the flow. The FHIR server holds the assignment in `Device.patient`; CTL keeps a local copy that is set only from a matching readback. NET registers the Device at boot without erasing an assignment, loads the list before the hotspot opens and re-reads the assignment before each Observation create (see [Design constraints](#design-constraints)).
 
-Portal is an Idle-only controller state with the exclusive network lease: station Wi-Fi is down, Start and session commands are rejected, and the state ends on confirmation, cancel or timeout. Start does no network work; the session freezes the local assignment. `MeasurementResult` and `NetworkJob` therefore carry the frozen patient reference and the Device ID; a missing local assignment makes the result ineligible for sending. The portal HTTP handler runs outside audio and controller threads and submits typed control events like the shell (UI-003); it never writes state directly.
+Portal is an Idle-only controller state with the exclusive network lease: station Wi-Fi is down, Start and session commands are rejected, and the state ends on confirmation, cancel or timeout. Start does no network work; the session freezes the local assignment. `MeasurementResult` and `NetworkJob` therefore carry the frozen patient reference and the Device ID; a missing local assignment makes the result ineligible for sending. The portal HTTP handler runs outside audio and controller threads and submits typed control events like the shell; it never writes state directly.
+
+## Design constraints
+
+Former component requirements that stay valid as design decisions after the [14 October review](../planning/mvp-decisions-2026-10-14.md).
+They are checked by design review and developer tests, not by the [system requirements](../requirements/system-requirements.md).
+Values are in [design parameters](parameters.md). Optional parts (replay, Lung, display, touch, SD) are not listed.
+
+| Area | Constraint |
+|---|---|
+| Hardware | ESP32-S3 N16R8, INMP441 on I2S0, PCM5102A on I2S1, maintained carrier pin map, potentiometer on ADC1. The device ends at the DAC line output; the amplifier is outside the project scope. Document chestpiece coupling and the microphone low-frequency limit. |
+| Audio | Convert INMP441 signed 24-bit left-channel data into normalized mono blocks with sequence numbers. DMA buffers in internal RAM, TX primed with silence, mono duplicated to both DAC channels. Listening continues when analysis cannot accept a block; the gap invalidates the affected BPM window. On microphone/DAC failure: silence, cancel the session, Device Alarm until restart. |
+| Input | Debounced, timestamped events, one per stable transition. Interrupt handlers only signal deferred work. Volume clamped to 0–100 % with a safe value on ADC failure. A long press (≥2 s) is a distinct event and suppresses the ordinary press. |
+| Controller | Only writer of mode, patient, filter and workflow state; others send events and read snapshots. Context changes during a session are rejected with a normal fault. Network work only in Idle; Start during analysis or sending is Busy. Start/Stop and acknowledgement are separate. Portal only from Idle. |
+| Listening | Raw, Murmur and BPM listening filters; Raw applies no band filter. Output saturates before integer conversion. Listening filter and volume never change the analysis input. DSP core in pure C without Zephyr headers or heap use per block. |
+| BPM | BPM analysis gets audio before the volume control. Which filter it uses (own analysis filter or a listening filter) is decided by the filter study (TICKET-189). Whole-cycle periodicity, not single S1/S2 peaks. Invalid windows carry a reason; an old BPM is never reused. Aggregation counts overlapping windows once and freezes value, interval, patient and settings. Cancel discards the aggregation. No fixed numeric quality threshold. |
+| Network | Connection, time sync, TLS and HTTP only under the Idle lease. FHIR R4 Observation (LOINC 8867-4, UCUM /min, `effectiveDateTime` = interval end), conditional create with up to 3 retries, then matching readback. HTTPS verifies chain, hostname and validity against the lab CA; no plain-HTTP fallback. Credentials stay out of source and logs. Device registration and patient assignment follow the [12 October decisions](../planning/mvp-decisions-2026-10-12.md). |
+| Indication | Activity LED on during measurement and pulsing while Busy; distinct pattern while the hotspot is open. Errors shown by LED pattern and serial log. Hotspot: WPA2 with a per-device passphrase outside source, Portal state only, timeout, bounded clients; no credentials or patient data in logs. |
+| Monitoring | Count stalls, dropped blocks, deadline misses, clipping, analysis gaps and queue saturation. Report stack/heap watermarks. A stalled required worker raises a Device Alarm. Initialization alone never counts as verified operation. |
 
 ## Firmware layer structure — 13 October
 
 [Owner decisions](../planning/mvp-decisions-2026-10-13.md) move orchestration into L2 and keep L1
 thin. `L2_COMMUNICATION` is the only path to a send: it has `L1_FHIR` serialize the frozen
-`MeasurementResult`, checks the source and assignment guards, and passes the payload to `L1_WIFI`
-under the CONTROL lease. The test-source send prohibition therefore sits in `L2_COMMUNICATION`,
-not in a service; MON still observes it. `L2_AUDIO` owns the real-time audio thread and executes
+`MeasurementResult`, checks the assignment guard, and passes the payload to `L1_WIFI` under the CONTROL lease. The pre-send
+check therefore sits in `L2_COMMUNICATION`, not in a service; MON still observes it. The
+[14 October decisions](../planning/mvp-decisions-2026-10-14.md) drop the separate test-source send rule:
+test recordings are handled like patient data. `L2_AUDIO` owns the real-time audio thread and executes
 `AudioCommand`s; CONTROL remains the single writer of mode state.
 
 Updated by Claude-Opus-5.5 on behalf of Nico running in T3 Code through Claude Code.

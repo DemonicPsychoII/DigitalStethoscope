@@ -1,6 +1,6 @@
 # Product scope and specification basis
 
-Current owner decisions and numeric proposals: [11 October MVP decisions](../planning/mvp-decisions-2026-10-11.md). Older source snapshots and evaluation behavior remain historical evidence.
+Current owner decisions: [14 October](../planning/mvp-decisions-2026-10-14.md), [12 October](../planning/mvp-decisions-2026-10-12.md) and [11 October](../planning/mvp-decisions-2026-10-11.md); newer records supersede older ones. Older source snapshots and evaluation behavior remain historical evidence.
 
 ## Goal and boundary
 
@@ -11,14 +11,14 @@ heart-rate result to a local FHIR server over validated TLS. Compare filter vari
 licensed recordings against a defined reference. Filter superiority is a research question,
 not an assumed product property. Listening and measurement are independent workflows.
 
-The MVP device boundary includes chestpiece coupling, microphone, MCU, physical controls,
-DAC and external headphone amplifier. Display, touch, SD-card fixture storage and bounded
+The MVP device boundary includes chestpiece coupling, microphone, MCU, physical controls
+and the DAC line output; the headphone amplifier is outside the project scope (14 October). Display, touch, SD-card fixture storage and bounded
 capture / slower replay are optional extensions beyond the MVP, per the 2026-10-07 feedback.
 Existing requirements and evaluation code for these features describe extension behavior;
 their presence does not make them MVP acceptance criteria. The listener, signal source,
 evaluation computer, network/time services and FHIR server are external actors/services.
 
-Lung mode provides Raw live listening at 1× only. It excludes BPM, replay and FHIR sending.
+The MVP is Heart only. Lung mode is optional and needs the display (14 October).
 The prototype excludes diagnosis, ML classification, durable patient audio storage, enclosure
 development and proof of clinical benefit or regulatory conformity. The latest submitted thesis
 description excludes measurement of the acoustic transfer chain; older boards propose it.

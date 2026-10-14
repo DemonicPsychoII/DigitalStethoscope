@@ -51,7 +51,7 @@ Die R07-Angabe von 30 Hz LFRO für SPH18R1LM4H-1 weicht von der Knowles/SELTECH-
 
 ## Weitere Konflikte und Nachweisgrenzen
 
-- **Nico:** Abgabe laut Nico: **11.01.2027**. „Ende Januar“ und verschiedene fakultätsspezifische Bearbeitungsfristen bleiben historischer Kontext. Verbindlichen DMS-Termin und zuständige SPO/APO abgleichen. Bezüge: [U033](11-formales-projektmanagement.md#u033), [C045](11-formales-projektmanagement.md#c045), [C049](11-formales-projektmanagement.md#c049), [C051](11-formales-projektmanagement.md#c051).
+- **Nico:** Abgabe laut Nico: **11.01.2027** (bestätigt 14.10.2026); Schreiben und Korrektur fertig spätestens 04.01., ideal 28.12. „Ende Januar“ und verschiedene fakultätsspezifische Bearbeitungsfristen bleiben historischer Kontext. Verbindlichen DMS-Termin und zuständige SPO/APO abgleichen. Bezüge: [U033](11-formales-projektmanagement.md#u033), [C045](11-formales-projektmanagement.md#c045), [C049](11-formales-projektmanagement.md#c049), [C051](11-formales-projektmanagement.md#c051).
 - **Nico:** Prototyp nutzt ESP32/Zephyr; ESP-IDF-Favorisierung ist ein historischer Recherchevorschlag. Die tatsächlich getroffene Frameworkentscheidung und deren Begründung dokumentieren. Bezüge: [U028](06-systemarchitektur.md#u028), [U035](06-systemarchitektur.md#u035), [C013](06-systemarchitektur.md#c013), [U085](06-systemarchitektur.md#u085).
 
   > **Neuerer Stand (Stand integration, 2026-10-12):** Die Frameworkentscheidung ist dokumentiert. Aktuell: Zephyr für das MVP beibehalten; Begründung in der Framework- und Transportbewertung. – siehe [Framework- und Transportbewertung](../Development/system/planning/framework-and-transport-evaluation.md#recommendation-for-the-next-discussion).

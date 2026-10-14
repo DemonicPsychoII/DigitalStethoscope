@@ -20,10 +20,10 @@ not establish that the evaluation firmware implements the proposed contracts.
 [View notes](VIEW-NOTES.md) record review boundaries, I2S presentation-name mapping,
 provenance, runtime assumptions and the separate evaluation implementation view.
 The [overlay](../coding/bringup-zephyr/boards/esp32s3_devkitc_procpu.overlay) is the
-wiring baseline; DAC line output requires a suitable headphone amplifier.
+wiring baseline; the device ends at the DAC line output and the headphone amplifier is outside the project scope (14 October).
 
 For behavior and open choices, use [detailed design](../design/interfaces-and-behavior.md),
-[parameters](../requirements/parameters.md) and [implementation readiness](../planning/implementation-readiness.md).
+[design parameters](../design/parameters.md) and [implementation readiness](../planning/implementation-readiness.md).
 Original board [snapshots](sources/manifest.json) are immutable provenance.
 
 ## Render
