@@ -1,14 +1,13 @@
 # Thesis firmware — layer structure
 
 This directory records the Zephyr/ESP32-S3 layer structure from the saved
-architecture decision. Firmware placement/migration remains open under
-[D11](../../planning/implementation-readiness.md#decision-register); the
+architecture decision. The thesis firmware lives here (decided 14 October,
+[D11](../../planning/implementation-readiness.md#decision-register)); the
 [evaluation firmware](../bringup-zephyr/README.md) remains separate.
 
 The table uses the existing skeleton folder names. L1 holds thin hardware adapters
 over Zephyr drivers and pure C libraries; L2 orchestrates them. Detailed design still
 describes the earlier capability-based service split and must be updated to match.
-D11 leaves placement and naming open.
 
 | Folder | Contents | May depend on |
 |---|---|---|
