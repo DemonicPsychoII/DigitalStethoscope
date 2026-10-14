@@ -14,7 +14,7 @@ maps its logical components to these folders.
 |---|---|---|
 | `L2_application/L2_CONTROL/` | Single writer of mode state; grants the network lease | L1, `common` |
 | `L2_application/L2_AUDIO/` | Audio path and BPM worker, driven by control commands | L1, `common` |
-| `L2_application/L2_COMMUNICATION/` | Builds via FHIR, sends via WIFI under the lease; pre-send source check; hotspot portal | L1, `common` |
+| `L2_application/L2_COMMUNICATION/` | Builds via FHIR, sends via WIFI under the lease; pre-send assignment check; hotspot portal | L1, `common` |
 | `L2_application/L2_SHELL/` | Shell commands and read-back through CONTROL | L2_CONTROL, `common` |
 | `L1_services/` adapters | `L1_I2S` (mic RX, DAC TX), `L1_WIFI`, `L1_PHYSICALINTERFACE` (buttons, LEDs) | Zephyr, `common` |
 | `L1_services/` libraries | `L1_FILTER`, `L1_BPM` (envelope, autocorrelation, aggregation), `L1_FHIR` (serialization); pure C | `common` |
