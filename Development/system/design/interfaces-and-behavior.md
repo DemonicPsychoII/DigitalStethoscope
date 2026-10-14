@@ -122,8 +122,8 @@ stage at the current source cursor without pretending the duration was constant-
 A completed measurement has separate identity from a replay clip. Use a boot-unique identifier
 plus session counter as the Observation `identifier` and create it with `POST` plus `If-None-Exist`
 on that identifier; never update an Observation. The server assigns the resource ID (from `Location`).
-A retry or collision returns the existing resource instead of overwriting it (D08, 12 October). One initial attempt may be queued automatically when a valid result and Idle/config
-prerequisites coincide; failure aborts without any retry queue. Eligibility in Lung is denied.
+A retry or collision returns the existing resource instead of overwriting it (D08, 12 October). One delivery job is queued automatically when a result and Idle/config
+prerequisites coincide. A failed attempt is retried up to 3 times (4 attempts, about 2 s apart, all within 10 s); then the job ends with a visible error ([14 October](../planning/mvp-decisions-2026-10-14.md)).
 
 Map sample/monotonic measurement interval to UTC from an approved clock anchor. Use measurement
 time, not send time; clock loss/skew makes the result ineligible until its mapping is resolved,
@@ -133,8 +133,8 @@ evaluation-only metadata), value, interval and analysis settings in the immutabl
 The local profile/metadata mapping and decimal precision require agreement.
 
 NET verifies CA/name/time, checks bounded status/body parsing, and GETs the resource to compare
-ID/subject/code/unit/value/interval. Accepted without successful readback = Unverified, not Sent.
-An uncertain response terminates as Unverified; no retry is offered in MVP. Configuration/auth errors and server failures remain visible; no automatic retry loop.
+identifier/subject/device/code/unit/value/`effectiveDateTime` (D08, 12 October). Accepted without successful readback = Unverified, not Sent.
+An uncertain response is retried within the same bounded job; conditional create returns the existing resource instead of a duplicate. Configuration/auth errors and server failures remain visible after the last attempt.
 SNTP is a clock synchronization mechanism, not inherently authenticated trusted time; approve the
 local network/clock trust assumptions. Credentials are private deployment configuration.
 
@@ -159,8 +159,26 @@ Created by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.
 
 ## Patient assignment and hotspot portal — 12 October
 
-[Owner decisions](../planning/mvp-decisions-2026-10-12.md) make the hotspot portal MVP scope; the [sequence diagram](../architecture/patient-assignment-workflow.puml) shows the flow. The FHIR server holds the assignment in `Device.patient`; CTL keeps a local copy that is set only from a matching readback (CTL-007). NET registers the Device at boot without erasing an assignment (NET-008), loads the list before the hotspot opens and re-reads the assignment before each Observation create (NET-009).
+[Owner decisions](../planning/mvp-decisions-2026-10-12.md) make the hotspot portal MVP scope; the [sequence diagram](../architecture/patient-assignment-workflow.puml) shows the flow. The FHIR server holds the assignment in `Device.patient`; CTL keeps a local copy that is set only from a matching readback. NET registers the Device at boot without erasing an assignment, loads the list before the hotspot opens and re-reads the assignment before each Observation create (see [Design constraints](#design-constraints)).
 
-Portal is an Idle-only controller state with the exclusive network lease: station Wi-Fi is down, Start and session commands are rejected, and the state ends on confirmation, cancel or timeout. Start does no network work; the session freezes the local assignment. `MeasurementResult` and `NetworkJob` therefore carry the frozen patient reference and the Device ID; a missing local assignment makes the result ineligible for sending. The portal HTTP handler runs outside audio and controller threads and submits typed control events like the shell (UI-003); it never writes state directly.
+Portal is an Idle-only controller state with the exclusive network lease: station Wi-Fi is down, Start and session commands are rejected, and the state ends on confirmation, cancel or timeout. Start does no network work; the session freezes the local assignment. `MeasurementResult` and `NetworkJob` therefore carry the frozen patient reference and the Device ID; a missing local assignment makes the result ineligible for sending. The portal HTTP handler runs outside audio and controller threads and submits typed control events like the shell; it never writes state directly.
+
+## Design constraints
+
+Former component requirements that stay valid as design decisions after the [14 October review](../planning/mvp-decisions-2026-10-14.md).
+They are checked by design review and developer tests, not by the [system requirements](../requirements/system-requirements.md).
+Values are in [design parameters](parameters.md). Optional parts (replay, Lung, display, touch, SD) are not listed.
+
+| Area | Constraint |
+|---|---|
+| Hardware | ESP32-S3 N16R8, INMP441 on I2S0, PCM5102A on I2S1, maintained carrier pin map, potentiometer on ADC1. The device ends at the DAC line output; the amplifier is outside the project scope. Document chestpiece coupling and the microphone low-frequency limit. |
+| Audio | Convert INMP441 signed 24-bit left-channel data into normalized mono blocks with sequence numbers. DMA buffers in internal RAM, TX primed with silence, mono duplicated to both DAC channels. Listening continues when analysis cannot accept a block; the gap invalidates the affected BPM window. On microphone/DAC failure: silence, cancel the session, Device Alarm until restart. |
+| Input | Debounced, timestamped events, one per stable transition. Interrupt handlers only signal deferred work. Volume clamped to 0–100 % with a safe value on ADC failure. A long press (≥2 s) is a distinct event and suppresses the ordinary press. |
+| Controller | Only writer of mode, patient, filter and workflow state; others send events and read snapshots. Context changes during a session are rejected with a normal fault. Network work only in Idle; Start during analysis or sending is Busy. Start/Stop and acknowledgement are separate. Portal only from Idle. |
+| Listening | Raw, Murmur and BPM listening filters; Raw applies no band filter. Output saturates before integer conversion. Listening filter and volume never change the analysis input. DSP core in pure C without Zephyr headers or heap use per block. |
+| BPM | BPM analysis gets audio before the volume control. Which filter it uses (own analysis filter or a listening filter) is decided by the filter study (TICKET-189). Whole-cycle periodicity, not single S1/S2 peaks. Invalid windows carry a reason; an old BPM is never reused. Aggregation counts overlapping windows once and freezes value, interval, patient and settings. Cancel discards the aggregation. No fixed numeric quality threshold. |
+| Network | Connection, time sync, TLS and HTTP only under the Idle lease. FHIR R4 Observation (LOINC 8867-4, UCUM /min, `effectiveDateTime` = interval end), conditional create with up to 3 retries, then matching readback. HTTPS verifies chain, hostname and validity against the lab CA; no plain-HTTP fallback. Credentials stay out of source and logs. Device registration and patient assignment follow the [12 October decisions](../planning/mvp-decisions-2026-10-12.md). |
+| Indication | Activity LED on during measurement and pulsing while Busy; distinct pattern while the hotspot is open. Errors shown by LED pattern and serial log. Hotspot: WPA2 with a per-device passphrase outside source, Portal state only, timeout, bounded clients; no credentials or patient data in logs. |
+| Monitoring | Count stalls, dropped blocks, deadline misses, clipping, analysis gaps and queue saturation. Report stack/heap watermarks. A stalled required worker raises a Device Alarm. Initialization alone never counts as verified operation. |
 
 Updated by Claude-Opus-5.5 on behalf of Nico running in T3 Code through Claude Code.

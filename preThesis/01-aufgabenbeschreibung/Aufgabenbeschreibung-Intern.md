@@ -51,7 +51,7 @@ Den wissenschaftlichen Kern bildet ein messbarer Zielkonflikt der Filterauslegun
 - **FHIR/TLS:** `Observation` (Vital Signs, LOINC 8867-4, UCUM `/min`). SNTP vor Handshake, gepinntes Root-CA. Authentifizierung darf für den Prototyp vereinfacht werden; echte Zugangsdaten werden lokal konfiguriert und niemals in Quellcode, Git-Historie oder Beispielen veröffentlicht. JSON-Erzeugung + Versand des gemessenen BPM bleiben vollständig.
 - **Lungenmodus:** Nur Interface/Symbole + Live-Wiedergabe. Keine BPM, keine Filter, kein Time-Stretch, kein FHIR.
 - **Bedienkonzept:** Poti = Lautstärke, Schalter 1 = Wiedergabegeschwindigkeit, Schalter 2 = Filter. Optional Touch-Display für Konfiguration, um physisches Interface zu minimieren. Bauteile (Potis, 3-Positions-Schalter, LED-Knöpfe) vorhanden.
-- **Formales:** Anmeldung Ende September angestrebt → Bearbeitungszeit 4 Monate ab **20. Oktober** → Abgabe **Ende Januar**. Bestätigung eingegangen; nächster Schritt Prüfer + Titel + Firmendokumente.
+- **Formales:** Anmeldung Ende September angestrebt → Bearbeitungszeit 4 Monate ab **20. Oktober** → Abgabe ursprünglich **Ende Januar**; **Stand 14.10.2026: Abgabe 11.01.2027**, Schreiben und Korrektur fertig spätestens 04.01., ideal 28.12. Bestätigung eingegangen; nächster Schritt Prüfer + Titel + Firmendokumente.
 
 ## Scope
 

@@ -85,9 +85,9 @@
   Funktionsnamen statt uneinheitlicher Schalter-Nummern verwenden; Overlay ist die Pin-Baseline.
 - [ ] **Hardwarebestätigung (D07/VT-12):** Nicos Bestätigung vom 2026-09-16 umfasst die damalige
   Verdrahtung, nicht die später ergänzten Speed-/SD-Verbindungen oder die aktuelle Firmware.
-  Schalter-Kontakttabelle, Carrier-Revision und Kopfhörerverstärker/Gain/Ausgangslimit prüfen.
-  PCM5102A ist ein Line-DAC und ersetzt keinen Kopfhörerverstärker
-  (siehe [HW-002: Kopfhörerausgang und Last](../../Development/system/requirements/components/hw.md#hw-002)).
+  Schalter-Kontakttabelle und Carrier-Revision prüfen. PCM5102A ist ein Line-DAC; der
+  Kopfhörerverstärker liegt seit 14.10. außerhalb des Projektumfangs
+  (siehe [Entscheidungen 14.10.](../../Development/system/planning/mvp-decisions-2026-10-14.md#scope)).
 - [ ] **Filter-/BPM-/Replay-Parameter (D03–D06):** Bring-up nutzt 40–800 Hz bzw. 25–150 Hz,
   20 ms Crossfade, 8 s BPM-Fenster/1 s Update, 30–200 BPM und 5 s Clip mit WSOLA.
   Diese Werte sind Kandidaten, keine akzeptierten Thesis-Grenzen. Vorgeschlagene 30 s Sitzung,

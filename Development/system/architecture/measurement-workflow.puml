@@ -36,7 +36,8 @@ if (Heart + microphone + audio ready?) then (yes)
    if (Accepted + matching readback?) then (yes)
     :Delivery verified;
    else (no)
-    :Latch normal fault; abort, no retry;
+    :Retry up to 3 times within 10 s;
+    :If still failing: latch normal fault;
    endif
   else (no)
    :Latch configured-delivery normal fault;

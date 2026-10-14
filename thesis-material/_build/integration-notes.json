@@ -89,7 +89,7 @@
       "refs": [
         ["BPM-Akzeptanztabelle 11.10.", "Development/system/planning/mvp-decisions-2026-10-11.md", "proposed-bpm-acceptance-table"],
         ["Latenzbudgets 11.10.", "Development/system/planning/mvp-decisions-2026-10-11.md", "latency-research-and-proposed-budgets"],
-        ["Parameterregister P10/P14", "Development/system/requirements/parameters.md", "parameter-and-acceptance-register"]
+        ["Parameterregister P10/P14", "Development/system/design/parameters.md", "design-parameters-internal"]
       ]
     },
     "U111": {

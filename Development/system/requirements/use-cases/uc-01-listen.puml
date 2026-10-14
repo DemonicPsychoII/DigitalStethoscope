@@ -1,0 +1,15 @@
+@startuml uc_01_listen
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+title F1 Power up and listen (REQ-01..REQ-05)
+start
+:Operator powers on the device;
+:Device starts silent;
+:Operator presses Start;
+repeat
+ :Operator hears heart sounds;
+ :Operator may change filter switch or volume;
+repeat while (Stop pressed?) is (no) not (yes)
+:Device goes silent;
+stop
+@enduml
