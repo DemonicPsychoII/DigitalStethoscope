@@ -6,14 +6,15 @@ architecture decision. The thesis firmware lives here (decided 14 October,
 [evaluation firmware](../bringup-zephyr/README.md) remains separate.
 
 The table uses the existing skeleton folder names. L1 holds thin hardware adapters
-over Zephyr drivers and pure C libraries; L2 orchestrates them. [Detailed design](../../design/interfaces-and-behavior.md#static-dependency-and-module-map)
+over Zephyr drivers and pure C libraries; L2 orchestrates them, as decided on
+[13 October](../../planning/mvp-decisions-2026-10-13.md). [Detailed design](../../design/interfaces-and-behavior.md#static-dependency-and-module-map)
 maps its logical components to these folders.
 
 | Folder | Contents | May depend on |
 |---|---|---|
 | `L2_application/L2_CONTROL/` | Single writer of mode state; grants the network lease | L1, `common` |
 | `L2_application/L2_AUDIO/` | Audio path and BPM worker, driven by control commands | L1, `common` |
-| `L2_application/L2_COMMUNICATION/` | Builds via FHIR, sends via WIFI under the lease; pre-send source check; hotspot portal | L1, `common` |
+| `L2_application/L2_COMMUNICATION/` | Builds via FHIR, sends via WIFI under the lease; pre-send assignment check; hotspot portal | L1, `common` |
 | `L2_application/L2_SHELL/` | Shell commands and read-back through CONTROL | L2_CONTROL, `common` |
 | `L1_services/` adapters | `L1_I2S` (mic RX, DAC TX), `L1_WIFI`, `L1_PHYSICALINTERFACE` (buttons, LEDs) | Zephyr, `common` |
 | `L1_services/` libraries | `L1_FILTER`, `L1_BPM` (envelope, autocorrelation, aggregation), `L1_FHIR` (serialization); pure C | `common` |
@@ -66,7 +67,7 @@ Calls go downward; upward notifications use events/message queues. Zephyr owns
 drivers, DMA and interrupts. L1 libraries include no Zephyr headers; each caller owns
 its own filter instance, so listening and BPM analysis filters stay independent.
 Only L2_CONTROL writes mode state; SHELL commands go through it. L2_COMMUNICATION is
-the only path to a WIFI send and enforces the test-source send prohibition, while
+the only path to a WIFI send and runs the pre-send assignment check, while
 MON observes it. Start on one core and measure before adding another.
 
 [Detailed design](../../design/interfaces-and-behavior.md) defines contracts and

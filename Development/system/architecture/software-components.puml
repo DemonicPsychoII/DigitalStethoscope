@@ -15,42 +15,53 @@ skinparam componentStyle rectangle
 skinparam defaultFontName SansSerif
 title Software components
 top to bottom direction
-component "MON Monitor" as mon
-package "L2 Application" as app {
- component "CTL Controller" as ctl
- component "UI Dashboard" as ui <<optional>>
+component "MONITOR" as mon
+package "L2 Application (orchestration)" as app {
+ component "L2_SHELL" as shell
+ component "L2_CONTROL\nsingle writer of mode state" as ctl
+ component "L2_AUDIO\naudio path / BPM worker" as aud
+ component "L2_COMMUNICATION\nsend path / portal" as com
+ component "UI dashboard" as ui <<optional>>
+ shell -[hidden]right-> ctl
  ctl -[hidden]right-> ui
 }
 package "L1 Services" as services {
- component "INP Input" as inp
- component "AUD Audio" as aud
- component "LIS Apply filter" as lis
- component "REC Capture / replay" as rec <<optional>>
- component "BPM Analysis" as bpm
- component "STO Storage" as sto <<optional>>
- component "NET Delivery" as net
- inp -[hidden]right-> aud
- aud -[hidden]right-> lis
- lis -[hidden]right-> rec
- inp -[hidden]down-> bpm
- bpm -[hidden]right-> sto
- sto -[hidden]right-> net
+ package "Hardware adapters" as adapters {
+  component "L1_PHYSICALINTERFACE\nbuttons / LEDs" as phy
+  component "L1_I2S\nmic RX / DAC TX" as i2s
+  component "L1_WIFI\nWi-Fi / TLS / time" as wifi
+  component "Display / touch / SD" as spi <<optional>>
+  phy -[hidden]right-> i2s
+  i2s -[hidden]right-> wifi
+  wifi -[hidden]right-> spi
+ }
+ package "Pure C libraries" as libs {
+  component "L1_FILTER" as filter
+  component "L1_BPM" as bpm
+  component "L1_FHIR" as fhir
+  component "Replay (WSOLA)" as wsola <<optional>>
+  filter -[hidden]right-> bpm
+  bpm -[hidden]right-> fhir
+  fhir -[hidden]right-> wsola
+ }
 }
-package "L0 Zephyr / adapters" as platform {
- component "Audio / GPIO / ADC" as io
- component "Display / touch / SD" as spi <<optional>>
- component "Wi-Fi / time / TLS" as wifi
- io -[hidden]right-> spi
- spi -[hidden]right-> wifi
+package "L0 Zephyr" as platform {
+ component "Drivers / DMA / interrupts\nDevicetree overlay" as zephyr
 }
-mon -down-> ctl : health events
+shell -right-> ctl : control events
+phy -up-> ctl : control events
 ctl -down-> aud : commands
-sto -[hidden]down-> spi
-services -down-> platform : driver calls
+ctl -down-> com : network lease
+aud -down-> i2s
+aud -down-> filter
+aud -down-> bpm
+com -down-> fhir
+com -down-> wifi
+adapters -down-> zephyr : driver calls
+mon -down-> ctl : health events
 mon ..> services : monitoring
-mon ..> platform : monitoring
 legend bottom
-  Grey / optional = beyond MVP.
-  Display, touch, SD and capture / slower replay are optional.
+  Grey / optional = beyond MVP; not in the skeleton.
+  Libraries include no Zephyr headers.
 endlegend
 @enduml

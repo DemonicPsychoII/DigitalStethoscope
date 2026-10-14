@@ -15,7 +15,7 @@ skinparam componentStyle rectangle
 skinparam defaultFontName SansSerif
 title Architecture
 top to bottom direction
-component "Layers (chosen)\n• Application chooses behaviour\n• Services do the work\n• Zephyr connects to hardware" as layers #CCEECC
+component "Layers (chosen)\n• Application orchestrates the work\n• Services: hardware adapters, C libraries\n• Zephyr drivers are the bottom layer" as layers #CCEECC
 component "RTOS threads (chosen)\n• Workers run separately\n• Audio keeps moving\n• Messages coordinate work" as rt #CCEECC
 component "Events (chosen)\n• Inputs become commands\n• Controller owns settings\n• Workers return results" as events #CCEECC
 component "Superloop\n• One loop runs every task\n• Simple setup\n• Slow tasks delay audio" as loop #FFDDDD

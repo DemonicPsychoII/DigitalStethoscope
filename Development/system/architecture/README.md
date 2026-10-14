@@ -56,3 +56,5 @@ for ESP32-S3 drivers, external C/C++ library integration and HTTP/HTTPS effort.
 Current workflows follow [11 October owner decisions](../planning/mvp-decisions-2026-10-11.md): Busy blocks Start, failed sends abort, context changes are rejected and DA requires full restart. Numeric targets remain proposals. [Component timeline](../planning/mvp-implementation-timeline.md) puts Wi-Fi/FHIR before carrier-dependent audio.
 
 [12 October decisions](../planning/mvp-decisions-2026-10-12.md) add the hotspot portal and patient assignment to the MVP. The patient-assignment view is a sequence diagram; the session state view gains the Portal state and the context view the phone browser.
+
+[13 October decisions](../planning/mvp-decisions-2026-10-13.md) fix the firmware layer structure. The software components view shows the [`coding/app/`](../coding/app/README.md) modules: L2 orchestrates (CONTROL, AUDIO, COMMUNICATION, SHELL), L1 holds hardware adapters and pure C libraries, and L0 is Zephyr. The threads view names the module behind each worker.
