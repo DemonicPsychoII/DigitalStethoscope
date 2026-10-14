@@ -1,24 +1,33 @@
-# System requirements
+# System requirements (MVP)
 
-Current owner decisions and numeric proposals: [11 October MVP decisions](../planning/mvp-decisions-2026-10-11.md). Older source snapshots and evaluation behavior remain historical evidence.
+Decided on 14 October 2026 ([decisions](../planning/mvp-decisions-2026-10-14.md)). Every requirement is checked by Nico on
+the finished device with available equipment: headphones, phone, laptop, the HAPI web page, a pulse oximeter or
+smartwatch and test-tone audio. How the device achieves it is design ([detailed design](../design/interfaces-and-behavior.md),
+[design parameters](../design/parameters.md)). Flows are shown in the [use-case diagrams](use-cases.md).
 
-**Status: source-backed draft.** Exact numeric acceptance is supplied by the linked component requirements and [parameter register](parameters.md). Source backing does not constitute approval.
+Methods: **T** test (measured), **D** demonstration (shown working).
 
-| ID | Use cases | Sources | Requirement | Verification |
+| ID | Requirement | How it is tested | Method | Pass |
 |---|---|---|---|---|
-| SR-01 | UC-01,UC-08 | S03,S04 | The system shall initialize output at zero gain and silence, report capabilities, and prevent listening when essential audio is unavailable. | VT-01,VT-09 |
-| SR-02 | UC-02 | S03,S04 | The system shall provide continuous original-rate live audio with selectable Raw/Murmur/BPM listening filters, smoothed volume and bounded latency/resources. | VT-02,VT-03 |
-| SR-03 | UC-02,UC-09 | S03,S04 | The system shall serialize operator commands through one state owner and expose the effective state consistently across physical, touch and shell controls. | VT-04 |
-| SR-04 (optional) | UC-03 | S03 | The system shall capture a bounded volatile raw clip in heart mode, replay it at 1×/0.75×/0.5× with approximate pitch preservation, and return to live on completion or cancellation. | VT-05 |
-| SR-05 | UC-05 | S03,S04 | The system shall derive heart-rate results from an independent original-rate analysis path, reject invalid windows, and freeze one result per completed session including context and validity. | VT-06 |
-| SR-06 | UC-06 | S02,S03,S04 | The system shall attempt one initial delivery of each eligible completed microphone result using FHIR R4 over verified TLS only while listening is stopped, and abort failed/unverified sends without a retry queue in the MVP. Invalid BPM sends no numeric value; a separately validated error-report contract is required. | VT-07,VT-08 |
-| SR-07 | UC-07 | S03,S05 | The system shall restrict lung mode to Raw live listening at 1× and reject BPM, clip replay and health-data sending. | VT-04,VT-06,VT-07 |
-| SR-08 | UC-04 | S03,S04,S05 | The system shall run identical licensed test recordings through the same DSP on host/device and preserve test provenance so no synthetic or fixture result becomes a patient transmission. | VT-10,VT-07 |
-| SR-09 | UC-01,UC-08 | S03,S04 | The system shall isolate optional-component failures, latch and mute Device Alarms until full restart, reject in-session identity changes, and expose manually acknowledged normal faults. | VT-01,VT-09 |
-| SR-10 | UC-09 | S03,S04 | The system shall retain build/configuration, timing/resource and anomaly evidence sufficient to reproduce evaluation without exposing credentials or claiming unperformed physical verification. | VT-11 |
-| SR-11 | UC-04,UC-09 | S01,S03,S07 | The system shall use the selected hardware interfaces and serialized shared SPI bus with bounded fixture/display transfers and no filesystem operation in the audio deadline path. | VT-12,VT-13 |
-| SR-12 | UC-05,UC-06,UC-10 | S05 | The system shall register its own FHIR Device, let the operator assign the patient and Wi-Fi through an Idle-only device hotspot with explicit confirmation, store the assignment on the server with matching readback, freeze it per session, and send nothing when the assignment is missing or no longer matches before delivery. | VT-14,VT-07 |
+| REQ-01 | After power-on the device stays silent until Start is pressed. | Power on with volume at maximum and headphones on. | D | Silence until Start. |
+| REQ-02 | After Start the operator hears heart sounds. | Chestpiece on own chest, Raw filter, press Start. | D | Heartbeat audible within 2 s of Start. |
+| REQ-03 | The 3-position switch selects the Raw, Murmur or BPM listening filter. | Play 100 Hz, 400 Hz and 2 kHz tones from a laptop through an earbud held on the chestpiece diaphragm, at one fixed laptop volume and device volume for all positions. First confirm each tone is clearly audible in Raw; Raw is the reference. Tones follow the bands chosen in the filter study; these fit the current candidates (Murmur 40–800 Hz, BPM 25–150 Hz). | D | Compared with Raw: Murmur keeps 100 Hz and 400 Hz, 2 kHz clearly quieter. BPM keeps 100 Hz, 400 Hz and 2 kHz clearly quieter. |
+| REQ-04 | The potentiometer sets the volume from silent to maximum. | Turn through the full range while listening. | D | Silent at minimum, no crackling. |
+| REQ-05 | Listening has no noticeable delay. | Tap the chestpiece and listen. | D | Tap heard together with the touch; no echo or lag noticeable. |
+| REQ-06 | A heart session of at least 15 s gives a heart rate. | 10 sessions of 30 s on own chest, pulse oximeter or smartwatch at the same time. | T | Each result within ±5 BPM or ±10 % of the reference. |
+| REQ-07 | Stopping before 15 s gives no result. | Stop after 10 s. | T | Nothing sent to the server; nothing in the serial log as a result. |
+| REQ-08 | A poor signal gives an error instead of a number. | Chestpiece in open air or rubbed during the session. | T | Error on the server and on the device (LED and serial log); no BPM value. |
+| REQ-09 | A valid result reaches the assigned patient on the FHIR server. | Run a session, then open the HAPI web page. | T | Observation under the right patient with correct value and time, within 10 s of Stop. |
+| REQ-10 | A failed delivery is retried up to 3 times, then the device shows an error. | Stop the HAPI container before or during sending; repeat with the server restarted during the retries. | T | At most 4 attempts within 10 s; error shown if all fail; never a duplicate Observation. |
+| REQ-11 | Wi-Fi needs a password and the server certificate is checked. | Use a wrong Wi-Fi password; point the device at a server with a different certificate. | T | No connection; nothing sent; error shown. |
+| REQ-12 | A long press (≥2 s) opens a hotspot where the operator picks the patient. | Connect a phone, enter the hotspot password, choose a patient, run a session. | T | The result is stored under the chosen patient. |
+| REQ-13 | A serious fault mutes the device until it is restarted. | Unplug the microphone while listening. | T | Muted plus alarm indication; only a restart clears it. |
+| REQ-14 | A minor fault is shown and cleared with the button. | Stop the HAPI container, run a valid session and stop it so delivery fails; press the button, then press Start. | T | Error shown after the failed delivery; the button clears it; listening works after Start. |
 
-Created by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.
+## Retired requirements
+
+SR-01…SR-12 and the component requirements AUD, BPM, CTL, HW, INP, LIS, MON, NET, REC, STO and UI were retired on
+14 October 2026. Their IDs are not reused. Content that is still valid moved to [detailed design](../design/interfaces-and-behavior.md#design-constraints).
+Optional requirements (replay, Lung, display, touch, SD, on-device test playback) are removed for now.
 
 Updated by Claude-Opus-5.5 on behalf of Nico running in T3 Code through Claude Code.

@@ -12,7 +12,7 @@ a proposed thesis product, except for the separate evaluation implementation vie
 | System components | [system-components.puml](system-components.puml) | Hardware and external connections; ESP32 remains a black box. Networking is Wi-Fi plus HTTPS. |
 | Electrical interfaces | [electrical-interfaces.puml](electrical-interfaces.puml) | Connection types and chip roles; pin assignments and speeds remain in the maintained overlay and hardware requirements. |
 | Software components | [software-components.puml](software-components.puml) | Individual components in Application, Services and Zephyr/adapters. DSP belongs inside Services; MON observes across layers. |
-| Threads | [runtime-ownership.puml](runtime-ownership.puml) | Proposed workers and data/communication methods. Touch belongs to Input; original-rate blocks reach BPM before listening filter/gain. |
+| Threads | [runtime-ownership.puml](runtime-ownership.puml) | Proposed workers and data/communication methods. Touch belongs to Input; original-rate blocks reach BPM before the volume control; whether BPM uses its own filter or a listening filter is decided by the filter study (14 October). |
 | Listening | [listening-workflow.puml](listening-workflow.puml) | Selected filter or Raw bypass, volume, playback and optional bounded capture/replay. Lung is Raw; Heart can also select Raw. |
 | BPM measurement | [measurement-workflow.puml](measurement-workflow.puml) | Freeze measurement settings and acquire until Stop; cancel without sending before 15 s, or finalize at or after 15 s subject to quality/coverage. Aggregate after listening stops, then deliver the result or validated error report. |
 
@@ -27,8 +27,8 @@ These are presentation names, not register/devicetree identifiers:
 | I2S2 | PCM5102A DAC output | `i2s1` / alias `i2s-dac` |
 
 The [overlay](../coding/bringup-zephyr/boards/esp32s3_devkitc_procpu.overlay)
-remains the wiring baseline. DAC line output needs a suitable headphone amplifier.
-The diagram simplification does not approve amplifier gain, output limits or wiring.
+remains the wiring baseline. The device ends at the DAC line output; the headphone
+amplifier is outside the project scope (14 October).
 
 ## Scope and provenance
 
@@ -45,7 +45,7 @@ explanation come from the subsequent review rather than additions to the old boa
   wake-up mechanisms remain implementation choices subject to measured timing.
 - Measurement/session timing remains configurable. The 8 s window, 1 s update and
   30 s session in the parameter register are candidates, not approved thresholds.
-- FHIR is device-initiated PUT/readback; the server responds rather than polling or
+- FHIR is a device-initiated conditional create (`POST`) with up to 3 retries and readback (14 October); the server responds rather than polling or
   commanding the device. Network work waits until listening stops.
 - Start on one core; measure before assigning work to a second core. AMP can run
   separate images concurrently on separate cores; SMP shares one OS across cores.

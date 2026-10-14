@@ -6,8 +6,8 @@ documentation evidence. Behavioral DSP/FHIR tests live beside the firmware in
 native simulation tests are in
 [`../coding/bringup-zephyr/tests/logic`](../coding/bringup-zephyr/tests/logic).
 
-- [Planned verification and acceptance](specification-verification.md): VT-01–VT-13,
-  requirement traceability and the evidence record template. These procedures
+- [Planned verification and acceptance](specification-verification.md): acceptance tests
+  (REQ-01–REQ-14), internal developer checks and the evidence record template. These procedures
   do not claim executed product acceptance.
 - [CI quality gates](CI-QUALITY-GATES.md): setup, suite selection, prepared
   environments, required checks and publication boundaries.

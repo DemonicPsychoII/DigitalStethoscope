@@ -19,9 +19,9 @@ Analysing --> ReportingError : invalid BPM + validated error contract + prerequi
 Analysing --> Idle : Wi-Fi unconfigured / no send or Wi-Fi error
 Analysing --> Idle : delivery prerequisites fail / latch normal fault
 Sending --> Idle : accepted + matching readback
-Sending --> Idle : failed or unverified / abort, latch normal fault, no retry
+Sending --> Idle : failed or unverified after 3 retries / latch normal fault
 ReportingError --> Idle : error report verified / no numeric BPM
-ReportingError --> Idle : report failed / abort, latch normal fault, no retry
+ReportingError --> Idle : report failed after 3 retries / latch normal fault
 note as NormalFaultIndication
   Normal-fault latch is independent of workflow state.
   Separate manual acknowledgement clears only the indication.

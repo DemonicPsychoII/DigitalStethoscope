@@ -1,0 +1,17 @@
+@startuml uc_04_faults
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+title F4 Handle faults (REQ-13, REQ-14)
+start
+:Fault occurs;
+if (Serious fault, e.g. microphone lost?) then (yes)
+ :Device mutes and shows alarm;
+ :Operator restarts the device;
+ stop
+else (minor, e.g. server unreachable)
+ :Device shows error; listening still works;
+ :Operator presses the button;
+ :Error cleared;
+ stop
+endif
+@enduml
