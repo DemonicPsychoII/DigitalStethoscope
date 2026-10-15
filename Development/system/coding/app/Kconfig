@@ -7,6 +7,6 @@ config STETHO_DEVKIT_LED_TEST
 	depends on DT_HAS_WORLDSEMI_WS2812_SPI_ENABLED
 	select LED_STRIP
 	help
-	  Blink one green LED with one second on and one second off.
+	  Blink one green LED at 1 Hz with 500 ms on and 500 ms off.
 	  Select the matching devkit LED overlay and disconnect the carrier
 	  and external peripherals before this test.

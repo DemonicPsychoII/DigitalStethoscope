@@ -21,6 +21,8 @@
 
 &spi3 {
 	status = "okay";
+	/* WS2812 latches each update while its data input stays low. */
+	line-idle-low;
 	pinctrl-0 = <&devkit_led_pins>;
 	pinctrl-names = "default";
 

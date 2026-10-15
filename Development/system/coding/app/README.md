@@ -67,7 +67,7 @@ stetho-build -LedPin 48 -Pristine
 stetho-flash 4
 ```
 
-The LED should be dim green for one second, then off for one second, repeatedly.
+The LED should blink at 1 Hz: dim green for 500 ms, then off for 500 ms.
 If it stays off, try `stetho-build -LedPin 38 -Pristine`, then `stetho-flash 4`.
 An LED that stays off does not prove that the pin is wrong; check the boot and
 error logs on uart0 at 115200 baud too. Record which pin works on the actual board.

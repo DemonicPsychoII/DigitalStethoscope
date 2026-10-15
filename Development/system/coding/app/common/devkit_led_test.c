@@ -17,7 +17,7 @@ int devkit_led_test_run(void)
 		return -ENODEV;
 	}
 
-	LOG_INF("Devkit LED test: one second green, one second off");
+	LOG_INF("Devkit LED test: 1 Hz (500 ms green, 500 ms off)");
 	while (true) {
 		struct led_rgb pixel = {.g = on ? 16 : 0};
 		int err = led_strip_update_rgb(led, &pixel, 1);
@@ -27,6 +27,6 @@ int devkit_led_test_run(void)
 			return err;
 		}
 		on = !on;
-		k_sleep(K_SECONDS(1));
+		k_sleep(K_MSEC(500));
 	}
 }
