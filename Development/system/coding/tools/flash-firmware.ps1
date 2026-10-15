@@ -36,16 +36,20 @@ $device = "COM$Port"
 if ($PSCmdlet.ShouldProcess($device, "Flash firmware from $BuildDir")) {
     # west discovers its Zephyr commands from the pinned workspace.
     Push-Location -LiteralPath $workspace
+    $previousPath = $env:PATH
     try {
+        # The ESP32 runner starts esptool by name, so its pinned launcher must be on PATH.
+        $env:PATH = "$(Join-Path $workspace '.venv\Scripts');$previousPath"
         Write-Host "Flashing $BuildDir to $device"
         # Match the build helper: west writes progress to stderr on PowerShell 5.1.
         $ErrorActionPreference = 'Continue'
-        & $west flash -d $BuildDir --skip-rebuild --esp-device $device
+        & $west flash -d $BuildDir --no-rebuild --esp-device $device
         $ErrorActionPreference = 'Stop'
         if ($LASTEXITCODE -ne 0) { throw "Flash failed (exit $LASTEXITCODE)." }
         Write-Host "Flash succeeded: $device"
     }
     finally {
+        $env:PATH = $previousPath
         Pop-Location
     }
 }
