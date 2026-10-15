@@ -30,9 +30,28 @@ Display/UI, touch, SD storage and replay (WSOLA) are optional and not part of th
 This directory is a standalone Zephyr application. `main.c` returns to the idle
 thread; the component `.c` / `.h` files reserve places for implementation and
 declare no APIs yet. `common/types.h` reserves the shared data types.
-The board overlay and `prj.conf` only set the fitted N16R8 module (16 MB flash,
-8 MB octal PSRAM; GPIO33–37 stay reserved), so no application peripherals are
-configured. No audio processing, networking, storage, UI or monitoring is active.
+The board overlay and `prj.conf` set the fitted N16R8 module (16 MB flash,
+8 MB octal PSRAM; GPIO33–37 stay reserved). The serial shell and deferred logging
+are enabled; no audio processing, networking, storage, UI or monitoring is active.
+
+### Shell and configuration
+
+The shell uses the board's `zephyr,shell-uart` (`uart0`, 115200 baud). Built-in
+commands provide help, tab completion, device information and kernel diagnostics,
+including thread lists and stack usage. Run `help`, `device list`,
+`kernel version`, `kernel uptime`, `kernel thread list`, `kernel thread stacks`
+or `log status`. The `log` commands can adjust runtime log filters within the
+levels compiled into the firmware.
+Application commands in `L2_SHELL` are not implemented yet. Logs use the shell
+backend with deferred processing. Command history is disabled because future
+provisioning commands can contain credentials; raw memory access is disabled.
+
+`prj.conf` selects values for options already defined by Zephyr and its modules.
+A project-local `Kconfig` is only needed when the application defines its own
+options. There are no application-specific options yet, so no local `Kconfig`
+is required. When adding one, include `source "Kconfig.zephyr"` to retain Zephyr's
+configuration tree, then define application options there and select their
+values in `prj.conf`.
 
 ### Manual build
 
@@ -72,6 +91,11 @@ and does not rebuild. `-BuildDir` selects an existing custom build directory;
 relative paths resolve from the caller's current directory. Flashing replaces the
 firmware on the selected device. If connection fails, hold BOOT, press and release
 RESET, release BOOT, check the port again and retry.
+
+For local PowerShell shortcuts, add aliases to your profile using absolute paths
+to `build-firmware.ps1` and `flash-firmware.ps1`, for example `stetho-build` and
+`stetho-flash`. Arguments pass through: `stetho-build -Target app -Pristine` and
+`stetho-flash 5`.
 
 Without `--application`, `run_ci.py build` also compiles this skeleton to
 `build-ci-app`, before building and packaging the bring-up firmware. The skeleton
