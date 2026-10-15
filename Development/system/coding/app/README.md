@@ -27,7 +27,7 @@ Display/UI, touch, SD storage and replay (WSOLA) are optional and not part of th
 
 ## Building the skeleton
 
-This directory is a standalone Zephyr application. `main.c` returns to the idle
+This directory is a standalone Zephyr application. `common/main.c` returns to the idle
 thread; the component `.c` / `.h` files reserve places for implementation and
 declare no APIs yet. `common/types.h` reserves the shared data types.
 The board overlay and `prj.conf` set the fitted N16R8 module (16 MB flash,
@@ -47,11 +47,35 @@ backend with deferred processing. Command history is disabled because future
 provisioning commands can contain credentials; raw memory access is disabled.
 
 `prj.conf` selects values for options already defined by Zephyr and its modules.
-A project-local `Kconfig` is only needed when the application defines its own
-options. There are no application-specific options yet, so no local `Kconfig`
-is required. When adding one, include `source "Kconfig.zephyr"` to retain Zephyr's
-configuration tree, then define application options there and select their
-values in `prj.conf`.
+The application `Kconfig` includes `Kconfig.zephyr` and defines the optional
+`STETHO_DEVKIT_LED_TEST` bench test. This is why a local `Kconfig` is now needed:
+it defines an application option, while `prj.conf` and `devkit-led.conf` select
+option values. The LED test is disabled in normal builds.
+
+### Devkit LED bench test
+
+Use the bare devkit with the carrier and external peripherals disconnected.
+The evaluation carrier uses GPIO38 for a switch and GPIO48 for SD chip select;
+this test must not drive those connections. The N16R8 marking identifies module
+memory, not the devkit revision or LED pin. DevKitC-1 revisions use GPIO48 or
+GPIO38 for the onboard WS2812-compatible RGB LED.
+
+Select one candidate at build time, then flash using your actual COM port:
+
+```powershell
+stetho-build -LedPin 48 -Pristine
+stetho-flash 4
+```
+
+The LED should be dim green for one second, then off for one second, repeatedly.
+If it stays off, try `stetho-build -LedPin 38 -Pristine`, then `stetho-flash 4`.
+An LED that stays off does not prove that the pin is wrong; check the boot and
+error logs on uart0 at 115200 baud too. Record which pin works on the actual board.
+
+The test uses Zephyr's LED strip driver over SPI3, with only the selected data
+pin routed. It does not use a GPIO on/off signal to drive the addressable LED.
+The shell remains available while the main thread sleeps between updates.
+`stetho-build -Pristine` restores the normal app configuration without the test.
 
 ### Manual build
 

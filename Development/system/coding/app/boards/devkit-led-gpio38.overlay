@@ -1,0 +1,5 @@
+#include "devkit-led.dtsi"
+
+&devkit_led_output {
+	pinmux = <SPIM3_MOSI_GPIO38>;
+};

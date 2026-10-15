@@ -3,7 +3,7 @@
  * Project: DigitalStethoscope
  ***********************************************************************/
 
-/** @addtogroup COMMONMAIN
+/** @addtogroup COMMON_MAIN
  * @{
  * @file
  * Main file that will run first and boot the device. It will initialize
@@ -13,6 +13,10 @@
 /***********************************************************************/
 /* INCLUDES                                                            */
 /***********************************************************************/
+
+#ifdef CONFIG_STETHO_DEVKIT_LED_TEST
+#include "devkit_led_test.h"
+#endif
 
 /***********************************************************************/
 /* DEFINES                                                             */
@@ -45,6 +49,16 @@
 /***********************************************************************/
 /* GLOBAL FUNCTIONS                                                    */
 /***********************************************************************/
+
+int main(void)
+{
+#ifdef CONFIG_STETHO_DEVKIT_LED_TEST
+	return devkit_led_test_run();
+#else
+	/* Return to Zephyr's idle thread until application startup is implemented. */
+	return 0;
+#endif
+}
 
 /***********************************************************************/
 /* LOCAL FUNCTIONS                                                     */
