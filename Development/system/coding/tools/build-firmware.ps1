@@ -11,8 +11,6 @@ app (default) builds Development/system/coding/app; bringup builds the evaluatio
 Delete the previous build state first.
 .PARAMETER BuildDir
 Build directory; defaults to build-app or build-eval in the repository root.
-.PARAMETER LedPin
-Enable the isolated app LED bench test on GPIO38 or GPIO48.
 .EXAMPLE
     .\build-firmware.ps1
 .EXAMPLE
@@ -23,15 +21,10 @@ param(
     [ValidateSet('app', 'bringup')]
     [string]$Target = 'app',
     [switch]$Pristine,
-    [string]$BuildDir,
-    [ValidateSet(38, 48)]
-    [int]$LedPin
+    [string]$BuildDir
 )
 
 $ErrorActionPreference = 'Stop'
-if ($PSBoundParameters.ContainsKey('LedPin') -and $Target -ne 'app') {
-    throw '-LedPin is only supported for -Target app.'
-}
 $repo = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..\..\..'))
 $workspace = Join-Path $repo '.ci-workspace'
 $pins = Get-Content (Join-Path $repo 'Development\system\testing\ci\toolchain.json') -Raw | ConvertFrom-Json
@@ -65,14 +58,6 @@ foreach ($name in $toolEnv.Keys) {
 
 $arguments = @('build', '-b', $pins.board, $source, '-d', $BuildDir)
 if ($Pristine) { $arguments += '--pristine=always' }
-# Set both explicitly so a normal build clears a previous LED test selection.
-$ledOverlay = ''
-$ledConfig = ''
-if ($PSBoundParameters.ContainsKey('LedPin')) {
-    $ledOverlay = (Join-Path $source "boards/devkit-led-gpio$LedPin.overlay").Replace('\', '/')
-    $ledConfig = (Join-Path $source 'devkit-led.conf').Replace('\', '/')
-}
-$arguments += @('--', "-DEXTRA_DTC_OVERLAY_FILE=$ledOverlay", "-DEXTRA_CONF_FILE=$ledConfig")
 
 try {
     Write-Host "Building $Target for $($pins.board) into $BuildDir"

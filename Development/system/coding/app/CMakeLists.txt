@@ -3,8 +3,6 @@ cmake_minimum_required(VERSION 3.20.0)
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(stetho_app)
 
-target_sources_ifdef(CONFIG_STETHO_DEVKIT_LED_TEST app PRIVATE common/devkit_led_test.c)
-
 target_include_directories(app PRIVATE common)
 target_sources(app PRIVATE
     common/main.c
