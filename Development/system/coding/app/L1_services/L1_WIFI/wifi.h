@@ -3,14 +3,14 @@
  * Project: DigitalStethoscope
  ***********************************************************************/
 
-/** @defgroup L1WIFI WIFI
+/** @defgroup L1_WIFI WIFI
  * @{
  * @file
  * L1 adapter over the Zephyr Wi-Fi and TLS drivers.
  */
 
-#ifndef L1WIFI_H
-#define L1WIFI_H
+#ifndef L1_WIFI_H
+#define L1_WIFI_H
 
 /***********************************************************************/
 /* INCLUDES                                                            */
@@ -36,6 +36,6 @@
 /* GLOBAL FUNCTION PROTOTYPES                                          */
 /***********************************************************************/
 
-#endif /* L1WIFI_H */
+#endif /* L1_WIFI_H */
 
 /** @} */

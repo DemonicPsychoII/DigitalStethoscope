@@ -3,7 +3,7 @@
  * Project: DigitalStethoscope
  ***********************************************************************/
 
-/** @addtogroup L1PHYSICALINTERFACE
+/** @addtogroup L1_PHYSICALINTERFACE
  * @{
  * @file
  * Implementation of the PHYSICALINTERFACE module.

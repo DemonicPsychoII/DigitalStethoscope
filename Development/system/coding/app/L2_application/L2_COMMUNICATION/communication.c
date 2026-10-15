@@ -3,7 +3,7 @@
  * Project: DigitalStethoscope
  ***********************************************************************/
 
-/** @addtogroup L2COMMUNICATION
+/** @addtogroup L2_COMMUNICATION
  * @{
  * @file
  * Implementation of the COMMUNICATION module.

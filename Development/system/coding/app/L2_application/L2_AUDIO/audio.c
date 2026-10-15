@@ -3,7 +3,7 @@
  * Project: DigitalStethoscope
  ***********************************************************************/
 
-/** @addtogroup L2AUDIO
+/** @addtogroup L2_AUDIO
  * @{
  * @file
  * Implementation of the AUDIO module.

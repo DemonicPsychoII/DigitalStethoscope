@@ -3,7 +3,7 @@
  * Project: DigitalStethoscope
  ***********************************************************************/
 
-/** @addtogroup COMMONMAIN
+/** @addtogroup COMMON_MAIN
  * @{
  * @file
  * Main file that will run first and boot the device. It will initialize

@@ -3,7 +3,7 @@
  * Project: DigitalStethoscope
  ***********************************************************************/
 
-/** @addtogroup L1WIFI
+/** @addtogroup L1_WIFI
  * @{
  * @file
  * Implementation of the WIFI module.
