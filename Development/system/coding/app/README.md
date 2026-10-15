@@ -56,6 +56,23 @@ west build --pristine=always -b esp32s3_devkitc/esp32s3/procpu Development/syste
 CI runs the same application build with
 `python Development/system/testing/ci/run_ci.py build --application`.
 
+### Manual flash
+
+Connect the board with a USB data cable and find its COM port in Device Manager.
+Close any serial monitor, then flash the existing build from PowerShell:
+
+```powershell
+Development/system/coding/tools/flash-firmware.ps1 5   # app firmware -> COM5
+Development/system/coding/tools/flash-firmware.ps1 5 -WhatIf   # show the action only
+Development/system/coding/tools/flash-firmware.ps1 5 -Target bringup
+```
+
+The positional number selects the COM port. The script uses the pinned toolchain
+and does not rebuild. `-BuildDir` selects an existing custom build directory;
+relative paths resolve from the caller's current directory. Flashing replaces the
+firmware on the selected device. If connection fails, hold BOOT, press and release
+RESET, release BOOT, check the port again and retry.
+
 Without `--application`, `run_ci.py build` also compiles this skeleton to
 `build-ci-app`, before building and packaging the bring-up firmware. The skeleton
 is not packaged or published as the bring-up firmware. The pure C library placeholders
