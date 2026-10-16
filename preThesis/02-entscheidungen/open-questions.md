@@ -4,6 +4,8 @@
 > Dieser aktuelle Registerteil ersetzt die Statusbewertung der historischen Notizen unten.
 > Nachträge vom 2026-10-12 (Patientenzuordnung, FHIR-Schreibvertrag D08) sind im Text mit
 > „12.10.“ gekennzeichnet; der übrige Abgleich bleibt auf dem Stand vom 2026-10-07.
+> **Überholt (2026-10-15):** Die Patientenzuordnung auf dem Gerät und das Readback entfallen; siehe
+> [Entscheidungen 15. Oktober](../../Development/system/planning/mvp-decisions-2026-10-15.md).
 > **[x]** = durch aktuelle Quellen festgelegt; **[ ]** = noch zu entscheiden oder nachzuweisen.
 > Eine dokumentierte Architekturentscheidung ist weder eine freigegebene Implementierungsbaseline
 > noch ein bestandener Gerätetest. Die ursprünglichen Rechercheberichte wurden nicht neu recherchiert.
@@ -101,8 +103,9 @@
 ## 4. FHIR und Sicherheit
 
 - [x] **FHIR/TLS-Funktionsnachweis bleibt Pflicht:** Der Architekturentwurf sieht ein geräteinitiiertes
-  bedingtes Create (`POST` + `If-None-Exist`) mit stabiler Kennung und Readback für einen
+  bedingtes Create (`POST` + `If-None-Exist`) mit stabiler Kennung für einen
   eingefrorenen abgeschlossenen Messwert vor, nie ein Update (D08, 12.10.).
+  Seit 15.10. ohne Readback: `201`/`200` ist die Empfangsbestätigung.
   Validiertes TLS, vertrauenswürdige Zeit, Provenienz und ausgeschlossene Test-/Lung-/ungültige
   Ergebnisse gehören zur Verifikation, nicht nur erfolgreicher JSON-Versand.
 - [ ] **Konfiguration und Profil (D08/VT-07/VT-08):** HAPI R4, Patient, Authentifizierung,
@@ -110,9 +113,10 @@
   = Ende des Messintervalls (`effectivePeriod` scheiterte an der R4-Herzfrequenz-Validierung);
   Schreiben per bedingtem Create (`POST` + `If-None-Exist`), nie per Update.
   LOINC 8867-4 und UCUM `/min` bleiben die Herzfrequenz-Basis.
-  **Patient entschieden (12.10.):** Auswahl über das Hotspot-Portal des Geräts, gespeichert in
-  `Device.patient` auf dem FHIR-Server; siehe
-  [Entscheidungen 12. Oktober](../../Development/system/planning/mvp-decisions-2026-10-12.md).
+  ~~**Patient entschieden (12.10.):** Auswahl über das Hotspot-Portal des Geräts, gespeichert in
+  `Device.patient` auf dem FHIR-Server.~~ **Überholt (15.10.):** Das Gerät sendet nur mit seiner
+  gespeicherten Device-ID und ohne Patient. Ein getrennter Server-Workflow außerhalb des MVP ordnet
+  Gerät und Messdaten dem Patienten zu; siehe [Entscheidungen 15. Oktober](../../Development/system/planning/mvp-decisions-2026-10-15.md).
 - [x] **Secrets außerhalb Git:** Echte Zugangsdaten ausschließlich lokal konfigurieren;
   Beispiele verwenden nicht geheime Platzhalter. Die frühere Hardcoding-Notiz ist überholt.
 - [x] **Bring-up offline als Default:** Optionaler Network-Build startet ohne automatische

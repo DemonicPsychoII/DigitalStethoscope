@@ -8,7 +8,7 @@ but they are not requirements.
 
 ## Acceptance tests
 
-Run REQ-01…REQ-14 as written in the [requirement table](../requirements/system-requirements.md). Record each run with
+Run REQ-01…REQ-15 as written in the [requirement table](../requirements/system-requirements.md). Record each run with
 the evidence template below.
 
 ## Developer checks (internal)
@@ -20,13 +20,13 @@ the evidence template below.
 | VT-03 | Listening DSP | Host production core + target listening | Raw identity before gain, impulse/sweep response, extremes and saturation, transition artifacts. |
 | VT-04 | Control and input | Host model/adapter injection + target | Every allowed/rejected transition; bounce, queue saturation, Busy, LED patterns and snapshot consistency. |
 | VT-06 | BPM sessions | Host recordings/reference + target | Supported range, S1/S2 and harmonics, silence/noise/clipping/gaps, aggregation, cancel/finalize races. Recordings, reference and resampling decided during the Wi-Fi/FHIR phase. |
-| VT-07 | FHIR delivery | Host serializer / mock server + authorized local HAPI | Profile/code/unit/subject/`effectiveDateTime`; conditional create; up to 3 retries within 10 s with no duplicate; full-payload readback with numeric comparison; invalid BPM sends only the error report. |
+| VT-07 | FHIR delivery | Host serializer / mock server + authorized local HAPI | Profile/code/unit/`effectiveDateTime`, `device` reference, no `subject`; conditional create; up to 3 retries within 10 s with no duplicate; `201`/`200` receipt, no readback (15 October); invalid BPM sends only the error report. |
 | VT-08 | TLS and network failures | Mock TLS/socket transport + authorized target/server | Wrong CA/name/expired cert/unset time, server failures, partial responses, bounded waits; no lease overlap with listening; secrets redacted. |
 | VT-09 | Fault containment | Host injection + target | Stalled workers/queues, transport errors, in-session context changes; Device Alarm latched until restart; normal fault cleared by the button; Busy Start never queued. |
 | VT-10 | Filter study on host | Host, identical recordings | Same input through each listening filter and the analysis filter into BPM detection; hash-identical inputs and configurations recorded. |
 | VT-11 | Evidence and privacy | Inspection | Identity/setup/reference/results/anomalies recorded; logs free of secrets and patient data. |
 | VT-12 | Electrical interfaces | Inspection + owner-authorized bench | Carrier pin map, grounds/supplies/straps, 24-bit I2S alignment, DAC line output. |
-| VT-14 | Patient assignment and hotspot | Host controller/NET model + authorized DevKit and lab HAPI | Long press in every state, timeout/cancel, Wi-Fi page, list load failure, confirmation, PATCH/readback mismatch, Device registration without erasing an assignment, pre-send assignment check, WPA2-only join, no secrets or patient data in logs. Synthetic Encounter/Patient only. |
+| VT-14 | Wi-Fi setup hotspot and Device registration | Host controller/NET model + authorized DevKit and lab HAPI | Boot without credentials, long press in every state, timeout/cancel, SSID scan list, wrong password, credentials and device-id kept across restarts, exactly one Device after several restarts, WPA2-only join, no secrets in logs. No patient selection on the device ([15 October](../planning/mvp-decisions-2026-10-15.md)). |
 
 VT-05 (replay) and VT-13 (shared SPI) were removed with the optional features on 14 October 2026.
 
@@ -58,7 +58,7 @@ functional demonstration under one configuration does not establish acceptance f
 5. Evaluate filter variants on identical approved material and reference; report outcome even if no
    filter wins. Optional exploratory hearing study is separate and does not replace functional checks.
 6. After review-driven arithmetic, interface or configuration changes, rerun affected tests.
-7. Run the acceptance tests REQ-01…REQ-14 on the finished device. Formal acceptance requires reviewed results; this draft supplies no acceptance claim.
+7. Run the acceptance tests REQ-01…REQ-15 on the finished device. Formal acceptance requires reviewed results; this draft supplies no acceptance claim.
 
 Created by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.
 

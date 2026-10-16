@@ -18,10 +18,10 @@
 | P13 | Network timeout / retry | Candidate 10 s connect/TLS; 1 attempt + 3 retries about 2 s apart, all within 10 s; ≤1 s cancellation/lease release | Retry decided 14 October; platform cancellation behavior must be proven | NET,CTL |
 | P15 | Resource margin | 16 MB flash / 8 MB PSRAM; DMA internal; candidate ≥25% free measured stack/internal-heap headroom | Board capacity, derived open margin; no inherited ≤80% flash rule | MON |
 | P17 | Test recording format | Host-side mono PCM WAV; resampling of 2–4 kHz datasets to be decided | Decided during the Wi-Fi/FHIR phase (14 October) | BPM |
-| P18 | Patient / FHIR / time | FHIR R4; local HAPI over HTTPS with lab CA; patient from `Device.patient`; `effectiveDateTime` = interval end; approved clock source and skew | Decided 12 October; clock skew open | CTL,NET |
+| P18 | Device / FHIR / time | FHIR R4; local HAPI over HTTPS with lab CA; Observation references the server-assigned Device id (stored in flash), no patient; `effectiveDateTime` = interval end; approved clock source and skew | Decided 12 October, Device/patient changed 15 October; clock skew open | CTL,NET |
 | P19 | Network exclusion | No Wi-Fi connection/time-sync/TLS/HTTP work in Live/Capture/Replay or active measurement | Saved S04 decision; lease mechanism derived | NET,CTL |
 | P20 | Startup mode | Idle at zero gain; explicit Start listening | Decided (REQ-01) | CTL,AUD |
-| P21 | Hotspot portal | Proposed long press ≥2 s (decided); hotspot timeout 5 min; ≤20 listed patients; 1 client; assignment lifetime open | 12 October decision; timeout, list size and lifetime proposed | INP,CTL,UI,NET |
+| P21 | Hotspot Wi-Fi setup | Long press ≥2 s (decided); hotspot timeout 5 min; 1 client; SSID scan list; credentials in flash settings partition | 12 October gesture, 15 October scope; timeout proposed | INP,CTL,UI,NET |
 
 Created by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.
 

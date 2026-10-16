@@ -1,5 +1,7 @@
 # MVP decisions and evaluation proposals — 11 October 2026
 
+> **Superseded in part (15 October 2026):** results carry the Device, not a patient; patient context is no longer frozen on the device — see the [15 October decisions](mvp-decisions-2026-10-15.md).
+>
 > **Superseded in part (14 October 2026):** see the [14 October decisions](mvp-decisions-2026-10-14.md) for retries, requirements, scope and schedule.
 
 Nico's answers in T3 thread `58a691a9-4492-46b4-b65e-39cde5d8e3fc` supersede older workflow proposals. This records decisions and planned evidence, not firmware behavior or completed hardware validation. Numeric values below are proposals requested by Nico, not approved thresholds or medical claims. [12 October decisions](mvp-decisions-2026-10-12.md) add the hotspot portal and patient assignment to the MVP.

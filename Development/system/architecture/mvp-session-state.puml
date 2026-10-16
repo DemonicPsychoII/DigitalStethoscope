@@ -2,13 +2,13 @@
 !pragma layout smetana
 skinparam shadowing false
 skinparam defaultFontName SansSerif
-title MVP session and alarm transitions — owner decisions 11/12 October
+title MVP session and alarm transitions — owner decisions 11/12/15 October
 [*] --> Boot
 Boot --> Idle : software-observable startup checks pass
 Boot --> DA : essential functionality fails
 Idle --> Listening : Start / Heart or Lung
 Idle --> Portal : long press >= 2 s, or automatically when no Wi-Fi credentials are stored / Idle network lease, open hotspot
-Portal --> Idle : confirm / PATCH Device.patient + readback
+Portal --> Idle : save / store SSID + password in flash, join Wi-Fi
 Portal --> Idle : cancel or timeout / no change
 Listening --> Measuring : Heart session begins / freeze context
 Listening --> Idle : Stop in Lung / mute, no BPM or send
@@ -18,9 +18,9 @@ Analysing --> Sending : valid BPM + configured prerequisites
 Analysing --> ReportingError : invalid BPM + validated error contract + prerequisites
 Analysing --> Idle : Wi-Fi unconfigured / no send or Wi-Fi error
 Analysing --> Idle : delivery prerequisites fail / latch normal fault
-Sending --> Idle : accepted + matching readback
-Sending --> Idle : failed or unverified after 3 retries / latch normal fault
-ReportingError --> Idle : error report verified / no numeric BPM
+Sending --> Idle : receipt 201 / 200
+Sending --> Idle : failed after 3 retries / latch normal fault
+ReportingError --> Idle : error report received / no numeric BPM
 ReportingError --> Idle : report failed after 3 retries / latch normal fault
 note as NormalFaultIndication
   Normal-fault latch is independent of workflow state.
@@ -37,7 +37,7 @@ note right of Sending
   Exclusive network lease; audio stopped.
 end note
 note bottom of Measuring
-  Reject mode/patient/context changes with a normal fault.
+  Reject mode/context changes with a normal fault.
   Keep frozen session identity and current session.
   Normal Wi-Fi/BPM faults preserve functioning audio.
   Normal-fault indication is latched separately from workflow;

@@ -1,21 +1,29 @@
 @startuml uc_03_assign_patient
 skinparam shadowing false
 skinparam defaultFontName SansSerif
-title F3 Assign a patient through the hotspot (REQ-11, REQ-12)
+title F3 Set up Wi-Fi and register the device (REQ-11, REQ-12, REQ-15)
 start
-:Operator long-presses the button (at least 2 s) while idle;
-:Device opens a password-protected hotspot;
-:Operator connects with a phone and opens the page;
-if (Patient chosen and confirmed?) then (yes)
- :Device stores the patient on the FHIR server;
- if (Stored and read back correctly?) then (yes)
-  :Later results go to this patient;
- else (no)
-  :Device stays unassigned and shows error;
- endif
-else (cancel or timeout)
- :No change;
+if (Wi-Fi credentials stored?) then (no)
+ :Device opens a password-protected hotspot;
+ :Operator connects with a phone and opens the page;
+ :Operator selects the network and enters its password;
+ :Device saves the credentials and closes the hotspot;
+else (yes)
 endif
-:Device closes the hotspot and rejoins Wi-Fi;
+:Device joins the Wi-Fi;
+if (Joined?) then (yes)
+ if (Device registered before?) then (no)
+  :Device registers on the FHIR server\nand saves its device-id;
+ else (yes)
+  :Device reuses its saved device-id;
+ endif
+else (no)
+ :Device shows error; listening still works;
+ note right: long press (at least 2 s) in Idle\nopens the hotspot page again
+endif
 stop
+floating note
+ Patient assignment is a separate
+ server workflow outside the MVP.
+end note
 @enduml

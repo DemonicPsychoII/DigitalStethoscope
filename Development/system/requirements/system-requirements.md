@@ -1,6 +1,6 @@
 # System requirements (MVP)
 
-Decided on 14 October 2026 ([decisions](../planning/mvp-decisions-2026-10-14.md)). Every requirement is checked by Nico on
+Decided on 14 October 2026 ([decisions](../planning/mvp-decisions-2026-10-14.md)); REQ-09 and REQ-12 changed and REQ-15 added on 15 October ([decisions](../planning/mvp-decisions-2026-10-15.md)). Every requirement is checked by Nico on
 the finished device with available equipment: headphones, phone, laptop, the HAPI web page, a pulse oximeter or
 smartwatch and test-tone audio. How the device achieves it is design ([detailed design](../design/interfaces-and-behavior.md),
 [design parameters](../design/parameters.md)). Flows are shown in the [use-case diagrams](use-cases.md).
@@ -17,12 +17,13 @@ Methods: **T** test (measured), **D** demonstration (shown working).
 | REQ-06 | A heart session of at least 15 s gives a heart rate. | 10 sessions of 30 s on own chest, pulse oximeter or smartwatch at the same time. | T | Each result within ±5 BPM or ±10 % of the reference. |
 | REQ-07 | Stopping before 15 s gives no result. | Stop after 10 s. | T | Nothing sent to the server; nothing in the serial log as a result. |
 | REQ-08 | A poor signal gives an error instead of a number. | Chestpiece in open air or rubbed during the session. | T | Error on the server and on the device (LED and serial log); no BPM value. |
-| REQ-09 | A valid result reaches the assigned patient on the FHIR server. | Run a session, then open the HAPI web page. | T | Observation under the right patient with correct value and time, within 10 s of Stop. |
+| REQ-09 | A valid result reaches the FHIR server, linked to this device. | Run a session, then open the HAPI web page. | T | Observation referencing this device's Device, with correct value and time, within 10 s of Stop. |
 | REQ-10 | A failed delivery is retried up to 3 times, then the device shows an error. | Stop the HAPI container before or during sending; repeat with the server restarted during the retries. | T | At most 4 attempts within 10 s; error shown if all fail; never a duplicate Observation. |
 | REQ-11 | Wi-Fi needs a password and the server certificate is checked. | Use a wrong Wi-Fi password; point the device at a server with a different certificate. | T | No connection; nothing sent; error shown. |
-| REQ-12 | A long press (≥2 s) opens a hotspot where the operator picks the patient. | Connect a phone, enter the hotspot password, choose a patient, run a session. | T | The result is stored under the chosen patient. |
+| REQ-12 | Without stored Wi-Fi credentials, or after a long press (≥2 s) in Idle, the device opens a hotspot page to select the network and enter its password. | Erase the credentials and power on; connect a phone, enter the hotspot password, select the network and enter its password; restart the device. | T | The device joins the selected network, and joins it again after the restart without the page. |
 | REQ-13 | A serious fault mutes the device until it is restarted. | Unplug the microphone while listening. | T | Muted plus alarm indication; only a restart clears it. |
 | REQ-14 | A minor fault is shown and cleared with the button. | Stop the HAPI container, run a valid session and stop it so delivery fails; press the button, then press Start. | T | Error shown after the failed delivery; the button clears it; listening works after Start. |
+| REQ-15 | The device keeps its server registration across restarts. | Run a session, restart the device three times, run a session after each restart. | T | One Device for this device on the HAPI page; all Observations reference it. |
 
 ## Retired requirements
 

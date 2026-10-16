@@ -1,5 +1,7 @@
 # MVP decisions — patient assignment and device hotspot, 12 October 2026
 
+> **Superseded (15 October 2026):** patient selection on the device is removed. Wi-Fi setup, Device registration with a stored server-assigned id and minimal delivery without readback replace this record — see the [15 October decisions](mvp-decisions-2026-10-15.md). The D08 create-only contract, `If-None-Exist` and `effectiveDateTime` stay; the full-payload readback does not.
+>
 > **Superseded in part (14 October 2026):** see the [14 October decisions](mvp-decisions-2026-10-14.md) for retries, requirements, scope and schedule.
 
 Nico's answers in T3 thread `d5e44f69-2ecc-4a3e-917b-31a7b084c12b` extend the [11 October decisions](mvp-decisions-2026-10-11.md). They replace the 11 October treatment of the captive portal as an optional follow-up and the "client, not embedded web server" statement in the [framework evaluation](framework-and-transport-evaluation.md). Everything else from 11 October stands. This records decisions and proposals, not implemented firmware behavior. Numeric values are proposals.

@@ -5,7 +5,7 @@ title MVP BPM session
 start
 :Start Heart session;
 if (Heart + microphone + audio ready?) then (yes)
- :Freeze patient / point / analysis settings;
+ :Freeze point / analysis settings;
  repeat
   :Stream independent BPM analysis while listening;
   :Reject identity changes with normal fault;
@@ -26,15 +26,15 @@ if (Heart + microphone + audio ready?) then (yes)
   :Latch normal BPM fault; no numeric value;
  endif
  if (Wi-Fi configured?) then (yes)
-  if (Patient / clock / trust / endpoint ready?) then (yes)
+  if (Device id / clock / trust / endpoint ready?) then (yes)
    if (Valid BPM?) then (yes)
     :One HTTPS/FHIR numeric result attempt;
    else (no)
     :One error report using validated server contract;
     :Never transmit numeric BPM;
    endif
-   if (Accepted + matching readback?) then (yes)
-    :Delivery verified;
+   if (Receipt 201 / 200?) then (yes)
+    :Delivery received;
    else (no)
     :Retry up to 3 times within 10 s;
     :If still failing: latch normal fault;

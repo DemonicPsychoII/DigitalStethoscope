@@ -15,7 +15,7 @@ else (no)
  :Error result;
  :Device shows error;
 endif
-:Send result to the assigned patient on the FHIR server;
+:Send result with the device-id to the FHIR server;
 if (Delivered?) then (yes)
  :Result visible on the server;
  stop

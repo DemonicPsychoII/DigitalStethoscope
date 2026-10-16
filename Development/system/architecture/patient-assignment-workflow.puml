@@ -2,52 +2,47 @@
 skinparam shadowing false
 skinparam defaultFontName SansSerif
 skinparam sequenceMessageAlign center
-title MVP patient assignment and delivery — owner decisions 12 October
+title MVP Wi-Fi setup, registration and delivery — decisions 15 October
 actor "Operator\n(button / phone browser)" as op
 participant "Digital stethoscope\n(no display)" as dev
+database "Flash\n(settings partition)" as flash
 database "HAPI FHIR server\n(KIS)" as fhir
+actor "Clinical staff\n(server workflow)" as staff #lightgrey
 
-== 1 · Boot and register ==
-dev -> dev : startup checks → Idle
-alt no stored Wi-Fi credentials
-  dev -> dev : Idle enters Portal, open hotspot
-  op -> dev : phone enters Wi-Fi credentials
-  dev -> dev : save, close hotspot
-end
-dev -> dev : join hospital Wi-Fi
-note right of dev : connection fails →\nIdle + normal Wi-Fi fault,\noffline listening, no registration
+== 1 · Wi-Fi setup (no stored credentials) ==
+dev -> flash : read Wi-Fi credentials
+flash --> dev : none
+dev -> dev : scan networks (SSID list)
+dev -> dev : open hotspot (access point)\nwith setup page
+op -> dev : phone joins hotspot, opens page
+dev --> op : SSID list + password field
+op -> dev : select network, enter password
+dev -> flash : save SSID + password
+dev -> dev : close hotspot
+note right of dev : credentials survive restarts;\nlong press >= 2 s in Idle\nopens the setup page again
+
+== 2 · Join Wi-Fi and register (every boot) ==
+dev -> dev : join Wi-Fi with stored credentials
+note right of dev : join fails →\nIdle + normal Wi-Fi fault,\noffline listening only
 dev -> dev : SNTP time sync
-dev -> fhir : GET /Device/{stetho-id}
-alt Device absent (404 or 410)
-  dev -> fhir : PUT /Device/{stetho-id} (no patient)
-else Device present
-  fhir --> dev : Device (adopt patient as local assignment)
-  dev -> fhir : PATCH metadata only, never patient
+dev -> flash : read device-id
+alt no stored device-id (first boot)
+  dev -> fhir : POST /Device\n(identifier = hardware serial, no patient)
+  fhir --> dev : 201 Created, Location: Device/{id}
+  dev -> flash : save device-id
+else device-id stored
+  note right of dev : reuse device-id,\nno new Device per restart
 end
-
-== 2 · Assign patient (Idle only) ==
-op -> dev : long press >= 2 s
-dev -> fhir : GET /Patient?_has:Encounter:patient:status=in-progress\n&_elements=name,birthDate,identifier&_count=20
-fhir --> dev : Bundle: admitted patients, minimal fields
-dev -> dev : leave hospital Wi-Fi,\nopen WPA2 hotspot with timeout
-op -> dev : phone joins hotspot, opens portal
-dev --> op : name / birth date / ID + list load time
-op -> dev : pick and confirm patient
-dev -> dev : close hotspot, rejoin hospital Wi-Fi
-dev -> fhir : PATCH /Device/{id} patient\nIf-Match: W/"n" (409 → no change)
-dev -> fhir : GET /Device/{id} (readback)
-note right of dev : mismatch or failure →\nunassigned + normal fault
 
 == 3 · Measure and send ==
-op -> dev : Start (no network work)
-dev -> dev : freeze local assignment,\nlog assignment present + Device version\n(no patient data)
-dev -> dev : listen → BPM (device only)
+op -> dev : Start
+dev -> dev : listen → BPM\n(no network traffic while measuring)
 op -> dev : Stop
-dev -> fhir : GET /Device/{id} (pre-send check,\nrecord meta.versionId)
-note right of dev : missing or different patient →\nno send + normal fault
-dev -> fhir : POST /Observation\nIf-None-Exist: identifier=…|device-boot-session\nsubject + device, LOINC 8867-4, /min,\neffectiveDateTime = interval end
-fhir --> dev : 201 created / 200 existing, Location
-dev -> fhir : GET /Observation/{id from Location} (readback: full payload\nmatch, numeric value)
-dev -> fhir : GET /Device/{id} (post-readback recheck)
-note right of dev : mismatch, failure or Device\nversionId changed since check →\nUnverified, normal fault, no retry
+dev -> fhir : POST /Observation\nIf-None-Exist: identifier=…|device-boot-session\ndevice = Device/{id}, no subject,\nLOINC 8867-4, /min,\neffectiveDateTime = interval end
+fhir --> dev : 201 Created / 200 existing (receipt)
+note right of dev : no receipt → up to 3 retries\nwithin 10 s (14 October),\nthen normal send fault;\nno readback
+
+== Outside MVP · patient assignment on the server ==
+staff -> fhir : select Device + its recent Observations,\nlink them to a patient
+note over fhir, staff #lightgrey : separate server workflow;\nthe device never handles patient data
 @enduml

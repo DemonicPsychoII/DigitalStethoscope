@@ -8,7 +8,7 @@ a proposed thesis product, except for the separate evaluation implementation vie
 | View | Source | Review boundary |
 |---|---|---|
 | Architecture | [architecture-choice.puml](architecture-choice.puml) | Chosen layers (13 October: L2 orchestrates, L1 adapts hardware or holds pure C libraries, L0 is Zephyr), RTOS workers and events; task isolation is optional protection. A/B firmware is an update/rollback concept, not a selected feature. |
-| System context | [system-context.puml](system-context.puml) | Device as a black box; the device initiates FHIR requests and receives status/readback responses. Test tooling is outside the normal-use view. |
+| System context | [system-context.puml](system-context.puml) | Device as a black box; the device initiates FHIR requests and receives status responses as the receipt. Test tooling is outside the normal-use view. |
 | System components | [system-components.puml](system-components.puml) | Hardware and external connections; ESP32 remains a black box. Networking is Wi-Fi plus HTTPS. |
 | Electrical interfaces | [electrical-interfaces.puml](electrical-interfaces.puml) | Connection types and chip roles; pin assignments and speeds remain in the maintained overlay and hardware requirements. |
 | Software components | [software-components.puml](software-components.puml) | Firmware modules per [13 October decisions](../planning/mvp-decisions-2026-10-13.md): L2 orchestration, L1 hardware adapters and pure C libraries, L0 Zephyr. Libraries include no Zephyr headers; MONITOR observes across layers. |
@@ -45,7 +45,7 @@ explanation come from the subsequent review rather than additions to the old boa
   wake-up mechanisms remain implementation choices subject to measured timing.
 - Measurement/session timing remains configurable. The 8 s window, 1 s update and
   30 s session in the parameter register are candidates, not approved thresholds.
-- FHIR is a device-initiated conditional create (`POST`) with up to 3 retries and readback (14 October); the server responds rather than polling or
+- FHIR is a device-initiated conditional create (`POST`) with up to 3 retries (14 October) and a `201`/`200` receipt without readback (15 October); the server responds rather than polling or
   commanding the device. Network work waits until listening stops.
 - Start on one core; measure before assigning work to a second core. AMP can run
   separate images concurrently on separate cores; SMP shares one OS across cores.

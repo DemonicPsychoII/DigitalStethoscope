@@ -32,7 +32,7 @@ REC, STO and the display are optional and not part of the MVP.
 | Component | Module | Owns / writes | Inputs | Outputs / proposed operations |
 |---|---|---|---|---|
 | INP | `L1_PHYSICALINTERFACE`; events to `L2_CONTROL` | debounce/contact/calibration state | ISR notice, GPIO/ADC/touch samples | `publish_control(event)`; stable-state reconciliation |
-| CTL | `L2_CONTROL` | settings, workflow state, generation, patient/point | control/completion/health events | `dispatch(event)`, `snapshot()`, session-tagged commands, network lease |
+| CTL | `L2_CONTROL` | settings, workflow state, generation, point | control/completion/health events | `dispatch(event)`, `snapshot()`, session-tagged commands, network lease |
 | AUD | `L2_AUDIO` over `L1_I2S` | DMA pool, source generation, transport progress | mic/fixture blocks, source/stop commands | normalized `AudioBlock`, capture/analysis fan-out, TX submission |
 | LIS | `L2_AUDIO` with `L1_FILTER` | listening coefficients and filter/ramp history | block, command snapshot | saturating mono output, levels/clipping |
 | BPM | `L2_AUDIO` worker with `L1_FILTER`, `L1_BPM` | analysis window, estimates, coverage, aggregation | original-rate blocks, session configuration | validity updates and immutable `MeasurementResult` |
@@ -54,7 +54,7 @@ worker placement and ISR wake-up primitives remain proposed implementation choic
 | `AudioCommand` | unique command ID, controller generation, desired settings, action/session ID. Audio acknowledges applied block boundary or explicit rejection; stale generations are discarded. |
 | `StateSnapshot` | snapshot revision, effective and requested settings, source/provenance, playback/measurement/delivery states, active IDs, capabilities, BPM validity/time, clip progress, pending replay speed, error/outcome counters. Read as a coherent copy; UI never edits it. |
 | `Clip` | ID/generation, source, raw format/rate, allocated capacity and valid length, capture sample interval, evaluation metadata. Ownership REC; immutable after finalization until discarded. Never patient-persisted. |
-| `MeasurementResult` | result/session ID, source/generation, valid flag/reason, BPM value and declared precision, quality definition/value, coverage, first/last sample index, measurement monotonic interval and UTC mapping, frozen patient/point/config/filter IDs, completion status. Invalid results carry no sendable numeric value. |
+| `MeasurementResult` | result/session ID, source/generation, valid flag/reason, BPM value and declared precision, quality definition/value, coverage, first/last sample index, measurement monotonic interval and UTC mapping, frozen Device id/point/config/filter IDs, completion status. Invalid results carry no sendable numeric value. |
 | `NetworkJob` | stable Observation identifier (device, random boot ID, session counter), immutable result/payload, frozen endpoint/profile/auth-config reference, attempt count (up to 4: 1 attempt + 3 retries, all within 10 s), lease ID. Secrets stay outside evidence. Result patient/time/value never resnapshotted from live state. |
 | `HealthEvent` | component, error class, time/generation, severity, evidence level and counter reference. Hardware physical proof references explicit test evidence. |
 
@@ -97,10 +97,10 @@ Candidate memory accounting:
 | Measurement Acquiring | freeze context/config/ID and clear aggregation | original-rate windows; independent filter; valid estimates | Stop <15 s cancels; Stop ≥15 s → Finalizing; identity change rejected; DA invalidates session |
 | Finalizing | stop accepting windows for that interval | aggregate and union valid temporal coverage | freeze valid/invalid result once; late blocks cannot mutate result |
 | Delivery Pending | retain completed result and unsent identity | wait for Idle/prerequisites; do not force stop | grant job once; full slot leaves visible Pending |
-| Sending | acquire exclusive Idle lease; snapshot payload | bounded connect/TLS/conditional POST/readback | outcome event + release lease; Start is Busy, never queued |
+| Sending | acquire exclusive Idle lease; snapshot payload | bounded connect/TLS/conditional POST, receipt | outcome event + release lease; Start is Busy, never queued |
 | Fault | mute and invalidate active acquisition | expose latched DA cause | full device restart to Boot only |
 
-Changing Heart/Lung, source, patient or point during a session is rejected with a normal fault and leaves the frozen context unchanged. Outside a session the controller may accept configuration changes and reset source-dependent histories. Generation checks reject stale completions. Separate acknowledgement clears normal-fault indication without starting, retrying or changing an active workflow. Device Alarm remains latched until full restart.
+Changing Heart/Lung, source or point during a session is rejected with a normal fault and leaves the frozen context unchanged. Outside a session the controller may accept configuration changes and reset source-dependent histories. Generation checks reject stale completions. Separate acknowledgement clears normal-fault indication without starting, retrying or changing an active workflow. Device Alarm remains latched until full restart.
 
 ## DSP and measurement design
 
@@ -137,12 +137,11 @@ prerequisites coincide. A failed attempt is retried up to 3 times (4 attempts, a
 Map sample/monotonic measurement interval to UTC from an approved clock anchor. Use measurement
 time, not send time; clock loss/skew makes the result ineligible until its mapping is resolved,
 not rewritten. FHIR `effectiveDateTime` carries the end of the aggregate interval (D08, 12 October):
-`effectivePeriod` failed the R4 heart-rate profile in validation. The interval stays in the local result. Preserve subject, point (approved coding or
+`effectivePeriod` failed the R4 heart-rate profile in validation. The interval stays in the local result. Preserve the Device id, point (approved coding or
 evaluation-only metadata), value, interval and analysis settings in the immutable local result.
 The local profile/metadata mapping and decimal precision require agreement.
 
-NET verifies CA/name/time, checks bounded status/body parsing, and GETs the resource to compare
-identifier/subject/device/code/unit/value/`effectiveDateTime` (D08, 12 October). Accepted without successful readback = Unverified, not Sent.
+NET verifies CA/name/time and checks bounded status/body parsing. `201 Created` or `200` (existing conditional create) is the receipt and marks the result Sent; there is no readback ([15 October](../planning/mvp-decisions-2026-10-15.md)).
 An uncertain response is retried within the same bounded job; conditional create returns the existing resource instead of a duplicate. Configuration/auth errors and server failures remain visible after the last attempt.
 SNTP is a clock synchronization mechanism, not inherently authenticated trusted time; approve the
 local network/clock trust assumptions. Credentials are private deployment configuration.
@@ -166,11 +165,11 @@ Created by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.
 
 [Owner decisions and numeric proposals](../planning/mvp-decisions-2026-10-11.md) supersede older clip/retry/recovery proposals here. Raw capture/REC/replay is optional; BPM retains bounded streaming analysis state and window estimates. Session identity changes are rejected with normal fault, never applied. Invalid BPM sends no numeric value and uses a separately validated error-report contract. Current session state transitions are in [the state diagram](../architecture/mvp-session-state.puml).
 
-## Patient assignment and hotspot portal — 12 October
+## Wi-Fi setup, Device registration and delivery — 15 October
 
-[Owner decisions](../planning/mvp-decisions-2026-10-12.md) make the hotspot portal MVP scope; the [sequence diagram](../architecture/patient-assignment-workflow.puml) shows the flow. The FHIR server holds the assignment in `Device.patient`; CTL keeps a local copy that is set only from a matching readback. NET registers the Device at boot without erasing an assignment, loads the list before the hotspot opens and re-reads the assignment before each Observation create (see [Design constraints](#design-constraints)).
+[Owner decisions](../planning/mvp-decisions-2026-10-15.md) replace the 12 October patient assignment; the [sequence diagram](../architecture/patient-assignment-workflow.puml) shows the flow. The device does not load, store or check patient data. A separate server workflow, outside the MVP, links the Device and its recent Observations to a patient.
 
-Portal is an Idle-only controller state with the exclusive network lease: station Wi-Fi is down, Start and session commands are rejected, and the state ends on confirmation, cancel or timeout. Start does no network work; the session freezes the local assignment. `MeasurementResult` and `NetworkJob` therefore carry the frozen patient reference and the Device ID; a missing local assignment makes the result ineligible for sending. The portal HTTP handler runs outside audio and controller threads and submits typed control events like the shell; it never writes state directly.
+Without stored Wi-Fi credentials, or after a long press in Idle, the controller enters Portal: an Idle-only state with the exclusive network lease. Station Wi-Fi is down, Start and session commands are rejected, and the state ends on save, cancel or timeout. The page shows a scanned SSID list and a write-only password field. SSID and password are saved in the flash settings partition. On the first successful join NET registers the Device (`POST /Device`, hardware serial as identifier, no patient) and saves the server-assigned id in flash; later boots reuse it. `MeasurementResult` and `NetworkJob` carry the Device id, not a patient. The portal HTTP handler runs outside audio and controller threads and submits typed control events like the shell; it never writes state directly.
 
 ## Design constraints
 
@@ -183,19 +182,19 @@ Values are in [design parameters](parameters.md). Optional parts (replay, Lung, 
 | Hardware | ESP32-S3 N16R8, INMP441 on I2S0, PCM5102A on I2S1, maintained carrier pin map, potentiometer on ADC1. The device ends at the DAC line output; the amplifier is outside the project scope. Document chestpiece coupling and the microphone low-frequency limit. |
 | Audio | Convert INMP441 signed 24-bit left-channel data into normalized mono blocks with sequence numbers. DMA buffers in internal RAM, TX primed with silence, mono duplicated to both DAC channels. Listening continues when analysis cannot accept a block; the gap invalidates the affected BPM window. On microphone/DAC failure: silence, cancel the session, Device Alarm until restart. |
 | Input | Debounced, timestamped events, one per stable transition. Interrupt handlers only signal deferred work. Volume clamped to 0–100 % with a safe value on ADC failure. A long press (≥2 s) is a distinct event and suppresses the ordinary press. |
-| Controller | Only writer of mode, patient, filter and workflow state; others send events and read snapshots. Context changes during a session are rejected with a normal fault. Network work only in Idle; Start during analysis or sending is Busy. Start/Stop and acknowledgement are separate. Portal only from Idle. |
+| Controller | Only writer of mode, filter and workflow state; others send events and read snapshots. Context changes during a session are rejected with a normal fault. Network work only in Idle; Start during analysis or sending is Busy. Start/Stop and acknowledgement are separate. Portal only from Idle. |
 | Listening | Raw, Murmur and BPM listening filters; Raw applies no band filter. Output saturates before integer conversion. Listening filter and volume never change the analysis input. DSP core in pure C without Zephyr headers or heap use per block. |
-| BPM | BPM analysis gets audio before the volume control. Which filter it uses (own analysis filter or a listening filter) is decided by the filter study (TICKET-189). Whole-cycle periodicity, not single S1/S2 peaks. Invalid windows carry a reason; an old BPM is never reused. Aggregation counts overlapping windows once and freezes value, interval, patient and settings. Cancel discards the aggregation. No fixed numeric quality threshold. |
-| Network | Connection, time sync, TLS and HTTP only under the Idle lease. FHIR R4 Observation (LOINC 8867-4, UCUM /min, `effectiveDateTime` = interval end), conditional create with up to 3 retries, then matching readback. HTTPS verifies chain, hostname and validity against the lab CA; no plain-HTTP fallback. Credentials stay out of source and logs. Device registration and patient assignment follow the [12 October decisions](../planning/mvp-decisions-2026-10-12.md). |
-| Indication | Activity LED on during measurement and pulsing while Busy; distinct pattern while the hotspot is open. Errors shown by LED pattern and serial log. Hotspot: WPA2 with a per-device passphrase outside source, Portal state only, timeout, bounded clients; no credentials or patient data in logs. |
+| BPM | BPM analysis gets audio before the volume control. Which filter it uses (own analysis filter or a listening filter) is decided by the filter study (TICKET-189). Whole-cycle periodicity, not single S1/S2 peaks. Invalid windows carry a reason; an old BPM is never reused. Aggregation counts overlapping windows once and freezes value, interval and settings. Cancel discards the aggregation. No fixed numeric quality threshold. |
+| Network | Connection, time sync, TLS and HTTP only under the Idle lease. FHIR R4 Observation (LOINC 8867-4, UCUM /min, `effectiveDateTime` = interval end), conditional create with `device` reference and no `subject`, up to 3 retries, `201`/`200` as receipt, no readback. HTTPS verifies chain, hostname and validity against the lab CA; no plain-HTTP fallback. Credentials stay out of source and logs. Wi-Fi credentials and the server-assigned Device id persist in the flash settings partition; Device registration follows the [15 October decisions](../planning/mvp-decisions-2026-10-15.md). |
+| Indication | Activity LED on during measurement and pulsing while Busy; distinct pattern while the hotspot is open. Errors shown by LED pattern and serial log. Hotspot: WPA2 with a per-device passphrase outside source, Portal state only, timeout, bounded clients; no credentials in logs. |
 | Monitoring | Count stalls, dropped blocks, deadline misses, clipping, analysis gaps and queue saturation. Report stack/heap watermarks. A stalled required worker raises a Device Alarm. Initialization alone never counts as verified operation. |
 
 ## Firmware layer structure — 13 October
 
 [Owner decisions](../planning/mvp-decisions-2026-10-13.md) move orchestration into L2 and keep L1
 thin. `L2_COMMUNICATION` is the only path to a send: it has `L1_FHIR` serialize the frozen
-`MeasurementResult`, checks the assignment guard, and passes the payload to `L1_WIFI` under the CONTROL lease. The pre-send
-check therefore sits in `L2_COMMUNICATION`, not in a service; MON still observes it. The
+`MeasurementResult` and passes the payload to `L1_WIFI` under the CONTROL lease. The 13 October pre-send
+assignment check was dropped on [15 October](../planning/mvp-decisions-2026-10-15.md); MON still observes delivery. The
 [14 October decisions](../planning/mvp-decisions-2026-10-14.md) drop the separate test-source send rule:
 test recordings are handled like patient data. `L2_AUDIO` owns the real-time audio thread and executes
 `AudioCommand`s; CONTROL remains the single writer of mode state.
