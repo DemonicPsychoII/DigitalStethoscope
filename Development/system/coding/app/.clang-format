@@ -1,0 +1,17 @@
+# Thesis firmware style; the bring-up firmware keeps the repository root style.
+BasedOnStyle: LLVM
+ColumnLimit: 100
+IndentWidth: 4
+ContinuationIndentWidth: 4
+UseTab: Never
+BreakBeforeBraces: Allman
+# if(x), for(;;), while(x) and function calls without a space before "(".
+SpaceBeforeParens: Never
+# A call that does not fit on one line gets one argument per line.
+BinPackArguments: false
+BinPackParameters: false
+AlignConsecutiveMacros: Consecutive
+AllowShortFunctionsOnASingleLine: None
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+SortIncludes: Never
