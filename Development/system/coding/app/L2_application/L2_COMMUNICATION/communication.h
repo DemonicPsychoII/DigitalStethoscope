@@ -37,6 +37,13 @@
 /* GLOBAL FUNCTION PROTOTYPES                                          */
 /***********************************************************************/
 
+/**
+ * @brief Initialize the communication module.
+ *
+ * This includes the on-board WIFI module.
+ */
+void communication_init(void);
+
 #endif /* L2_COMMUNICATION_H */
 
 /** @} */

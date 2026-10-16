@@ -36,6 +36,13 @@
 /* GLOBAL FUNCTION PROTOTYPES                                          */
 /***********************************************************************/
 
+/**
+ * @brief Initialize the Wi-Fi module.
+ *
+ * @return 0 Success.
+ */
+int wifi_init(void);
+
 #endif /* L1_WIFI_H */
 
 /** @} */
