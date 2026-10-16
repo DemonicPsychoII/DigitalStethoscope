@@ -51,7 +51,7 @@ All dates are 2026. The carrier board (around 25 October) and the external equip
 
 **Inputs:** Frozen result/error contracts, endpoint https://nglegion:8443/fhir, ca.pem, registered Device id.
 
-**Output and acceptance evidence:** Conditional create (`POST` + `If-None-Exist` on the stable identifier) with `device` reference and no `subject`; `201`/`200` is the receipt, no readback ([15 October](mvp-decisions-2026-10-15.md)); CA, hostname and clock verification. Up to 3 retries within 10 s, then a visible error ([14 October](mvp-decisions-2026-10-14.md)). Invalid BPM has no numeric value; agree and validate missing-value error representation with server. Production fixture provenance guard remains intact.
+**Output and acceptance evidence:** Conditional create (`POST` + `If-None-Exist` on the stable identifier) with `device` reference, `subject` only when the server has linked a patient ([16 October](mvp-decisions-2026-10-16.md)); `201`/`200` is the receipt, no readback ([15 October](mvp-decisions-2026-10-15.md)); CA, hostname and clock verification. Up to 3 retries within 10 s, then a visible error ([14 October](mvp-decisions-2026-10-14.md)). Invalid BPM has no numeric value; agree and validate missing-value error representation with server. Production fixture provenance guard remains intact.
 
 ## NETTEST — Verify one device-originated FHIR integration run
 
@@ -69,7 +69,7 @@ All dates are 2026. The carrier board (around 25 October) and the external equip
 
 **Inputs:** Confirmed Start/Stop/session decisions and network completion events.
 
-**Output and acceptance evidence:** Start blocked with busy indication during analysis/sending. Reject mode/context changes in session without mutation; normal fault. Separate acknowledgement click clears normal Wi-Fi latch only manually; no implicit Start. DA mutes and latches until full restart, no button recovery. Stop <15 s cancels; Lung no BPM/FHIR. Portal state: long press accepted only in Idle; Start and session commands rejected while the hotspot is open. Host race/state matrix passes.
+**Output and acceptance evidence:** Start blocked with busy indication during analysis/sending. Reject mode/context changes in session without mutation; normal fault. Separate acknowledgement click clears normal Wi-Fi latch only manually; no implicit Start. An Error that affects audio mutes and latches until a short press finds the cause gone ([16 October](mvp-decisions-2026-10-16.md)). Stop <15 s cancels; Lung no BPM/FHIR. Portal state: long press accepted only in Idle; Start and session commands rejected while the hotspot is open. Host race/state matrix passes.
 
 ## BOARD — Verify latest evaluation carrier and component wiring
 
@@ -81,7 +81,7 @@ All dates are 2026. The carrier board (around 25 October) and the external equip
 
 **Inputs:** INMP441, PCM5102A line output and verified carrier.
 
-**Output and acceptance evidence:** Signed 24-bit normalization, bounded internal DMA pools, DAC output, volume and controls. Record physical input/output proof and timing. No replay or full-session audio storage in MVP. DA injection and full-restart recovery verified.
+**Output and acceptance evidence:** Signed 24-bit normalization, bounded internal DMA pools, DAC output, volume and controls. Record physical input/output proof and timing. No replay or full-session audio storage in MVP. Audio-fault injection and short-press recovery verified.
 
 ## DSP — Implement independent listening and analysis filters
 
@@ -99,7 +99,7 @@ All dates are 2026. The carrier board (around 25 October) and the external equip
 
 **Inputs:** Verified streaming result and network/controller contracts.
 
-**Output and acceptance evidence:** Real microphone Heart session produces one frozen result with measured interval/time; stop, analysis and send block Start. Server receipt (`201`/`200`) for the result; invalid BPM generates only agreed error report. The Observation references the stored Device id and carries no patient ([15 October](mvp-decisions-2026-10-15.md)). Failed sends abort, Lung/offline/cancel and DA paths verified. Remove rolling-estimate 2.5 s age gate from completed-result eligibility; retain provenance/time guards.
+**Output and acceptance evidence:** Real microphone Heart session produces one frozen result with measured interval/time; stop, analysis and send block Start. Server receipt (`201`/`200`) for the result; invalid BPM generates only agreed error report. The Observation references the stored Device id, and the patient only if the server has linked one ([16 October](mvp-decisions-2026-10-16.md)). Failed sends abort, Lung/offline/cancel and muted-Error paths verified. Remove rolling-estimate 2.5 s age gate from completed-result eligibility; retain provenance/time guards.
 
 ## VERIFY — Verify MVP timing, resources and fault containment
 

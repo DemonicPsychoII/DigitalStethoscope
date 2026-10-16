@@ -33,11 +33,11 @@ The original register below is historical preparation context. [11 October owner
 | Loud output or transient at startup or on changes | Silent startup, smooth transitions, saturation | REQ-01, REQ-04; VT-03 |
 | Misleading BPM from S1/S2, noise, stale/missing audio | Whole-cycle estimator, coverage/gap rules, error instead of a number | REQ-06, REQ-08; VT-06/VT-09 |
 | Wrong time or wrong device transmitted | Validated clock, Device id stored in flash and reused, frozen result | REQ-09, REQ-15; VT-07 |
-| Result linked to the wrong patient | Moved to the server workflow outside the MVP (15 October); the device sends no patient data. The server workflow must show device, time and value before linking. | — (server workflow) |
-| Credentials exposed through the hotspot | WPA2 with per-device passphrase, Idle-only with timeout, write-only password, no logs; no patient data on the device | REQ-11, REQ-12; VT-14/VT-11 |
+| Result linked to the wrong patient | Moved to the server workflow outside the MVP (15 October); the device never selects a patient and passes on only a patient that the server has linked (16 October). The server workflow must show device, time and value before linking. | — (server workflow) |
+| Credentials exposed through the hotspot | WPA2 with per-device passphrase, Idle-only with timeout, write-only password, no logs; no patient selection on the device | REQ-11, REQ-12; VT-14/VT-11 |
 | Duplicate or lost result after a lost response | Conditional create with stable identifier, up to 3 retries | REQ-10; VT-07 |
 | Audio stalls due to TLS or memory pressure | Bounded workers, internal DMA, network lease, monitored deadlines | REQ-02, REQ-05; VT-02/VT-08 |
-| Peripheral absent or failed | Startup checks; essential faults mute until restart | REQ-13; VT-01/VT-12 |
+| Peripheral absent or failed | Startup checks; faults that affect audio mute until a short press finds the cause gone (16 October) | REQ-13; VT-01/VT-12 |
 
 ## Work packages to reach implementation
 

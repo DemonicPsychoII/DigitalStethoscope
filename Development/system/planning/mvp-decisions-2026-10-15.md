@@ -1,5 +1,7 @@
 # MVP decisions — Wi-Fi setup, registration and delivery, 15 October 2026
 
+> **Superseded in part (16 October 2026):** item 5 changes: the device still never selects a patient, but it passes on a patient that the server has linked to the Device — see the [16 October decisions](mvp-decisions-2026-10-16.md).
+
 Team discussion on 15 October, given by Nico in T3 Code. These decisions supersede the patient-assignment parts of the
 [12 October decisions](mvp-decisions-2026-10-12.md) and the related parts of the [13 October](mvp-decisions-2026-10-13.md)
 and [14 October](mvp-decisions-2026-10-14.md) records. Everything else from 14 October stands, including the retry rule.

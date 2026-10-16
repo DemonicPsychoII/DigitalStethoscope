@@ -14,11 +14,11 @@
 | P09 | Transition smoothing | Candidate 20 ms exponential crossfade / gain smoothing | Open: perceptual/transient bounds require evaluation | LIS |
 | P10 | Input / UI response | Candidate debounce 30 ms; effective setting ≤100 ms; status ≤500 ms | Derived open budgets; shared SPI must be bounded | INP,CTL,UI |
 | P11 | Queue / pool capacities | Candidate 16 control events, 4 analysis blocks, 1 pending network job; 4 RX + 4 TX DMA blocks | Derived open sizing; measure resource pressure | AUD,CTL,NET |
-| P12 | Fault response / recovery | Proposed mute within 1 audio block after detection; DA latched until full restart | Restart-only DA recovery confirmed 11 October; detection/mute budget proposed | MON,AUD |
+| P12 | Fault response / recovery | Proposed mute within 1 audio block after detection; Error latched until a short press finds the cause gone | Single error type 16 October (replaces restart-only recovery of 11 October); detection/mute budget proposed | MON,AUD |
 | P13 | Network timeout / retry | Candidate 10 s connect/TLS; 1 attempt + 3 retries about 2 s apart, all within 10 s; ≤1 s cancellation/lease release | Retry decided 14 October; platform cancellation behavior must be proven | NET,CTL |
 | P15 | Resource margin | 16 MB flash / 8 MB PSRAM; DMA internal; candidate ≥25% free measured stack/internal-heap headroom | Board capacity, derived open margin; no inherited ≤80% flash rule | MON |
 | P17 | Test recording format | Host-side mono PCM WAV; resampling of 2–4 kHz datasets to be decided | Decided during the Wi-Fi/FHIR phase (14 October) | BPM |
-| P18 | Device / FHIR / time | FHIR R4; local HAPI over HTTPS with lab CA; Observation references the server-assigned Device id (stored in flash), no patient; `effectiveDateTime` = interval end; approved clock source and skew | Decided 12 October, Device/patient changed 15 October; clock skew open | CTL,NET |
+| P18 | Device / FHIR / time | FHIR R4; local HAPI over HTTPS with lab CA; Observation references the server-assigned Device id (stored in flash), and the patient only when the server has linked one; `effectiveDateTime` = interval end; approved clock source and skew | Decided 12 October, Device/patient changed 15 and 16 October; clock skew open | CTL,NET |
 | P19 | Network exclusion | No Wi-Fi connection/time-sync/TLS/HTTP work in Live/Capture/Replay or active measurement | Saved S04 decision; lease mechanism derived | NET,CTL |
 | P20 | Startup mode | Idle at zero gain; explicit Start listening | Decided (REQ-01) | CTL,AUD |
 | P21 | Hotspot Wi-Fi setup | Long press ≥2 s (decided); hotspot timeout 5 min; 1 client; SSID scan list; credentials in flash settings partition | 12 October gesture, 15 October scope; timeout proposed | INP,CTL,UI,NET |

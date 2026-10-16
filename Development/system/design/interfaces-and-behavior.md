@@ -94,13 +94,13 @@ Candidate memory accounting:
 | Live | reset source-dependent state on source generation change | 128-frame normalized fan-out; selected listening filter; gain/saturation; TX | stop/fault mute; capture keeps live path |
 | Capture | allocate/claim bounded clip and ID; LED active | copy raw prefilter/pregain; normal live listening continues | full → Replay; cancel → Live; stop/fault → Idle/Fault, incomplete clip invalid |
 | Replay | freeze valid clip; initialize speed stage; LED active | raw clip → filter → WSOLA → gain/saturation; fresh mic still feeds analysis | end/cancel → Live; release clip cursor; stop/fault mutes |
-| Measurement Acquiring | freeze context/config/ID and clear aggregation | original-rate windows; independent filter; valid estimates | Stop <15 s cancels; Stop ≥15 s → Finalizing; identity change rejected; DA invalidates session |
+| Measurement Acquiring | freeze context/config/ID and clear aggregation | original-rate windows; independent filter; valid estimates | Stop <15 s cancels; Stop ≥15 s → Finalizing; identity change rejected; an Error with audio muted invalidates the session |
 | Finalizing | stop accepting windows for that interval | aggregate and union valid temporal coverage | freeze valid/invalid result once; late blocks cannot mutate result |
 | Delivery Pending | retain completed result and unsent identity | wait for Idle/prerequisites; do not force stop | grant job once; full slot leaves visible Pending |
 | Sending | acquire exclusive Idle lease; snapshot payload | bounded connect/TLS/conditional POST, receipt | outcome event + release lease; Start is Busy, never queued |
-| Fault | mute and invalidate active acquisition | expose latched DA cause | full device restart to Boot only |
+| Error, audio affected | mute and invalidate active acquisition; block Start | expose latched cause on the red LED and serial log | short press in Idle reruns the check; Idle when the cause is gone ([16 October](../planning/mvp-decisions-2026-10-16.md)) |
 
-Changing Heart/Lung, source or point during a session is rejected with a normal fault and leaves the frozen context unchanged. Outside a session the controller may accept configuration changes and reset source-dependent histories. Generation checks reject stale completions. Separate acknowledgement clears normal-fault indication without starting, retrying or changing an active workflow. Device Alarm remains latched until full restart.
+Changing Heart/Lung, source or point during a session is rejected with a normal fault and leaves the frozen context unchanged. Outside a session the controller may accept configuration changes and reset source-dependent histories. Generation checks reject stale completions. Separate acknowledgement clears normal-fault indication without starting, retrying or changing an active workflow. An Error with audio muted stays latched until a short press finds its cause gone.
 
 ## DSP and measurement design
 
@@ -156,7 +156,7 @@ must be measured; disabling application jobs alone is not proof of interference 
 Service operations return Accepted / Rejected(reason) / Busy for commands and emit one terminal
 outcome per accepted action ID. Essential audio faults mute; optional display/touch/SD failure
 degrades capability. Analysis gaps invalidate analysis, not all listening. No component formats SD
-or persists captured patient audio. No old result is relabelled with a new ID. DA requires complete restart; normal Wi-Fi indication clears manually only. Watchdog
+or persists captured patient audio. No old result is relabelled with a new ID. An Error clears only by a short press in Idle, and only when its cause is gone ([16 October](../planning/mvp-decisions-2026-10-16.md)). Watchdog
 detection thresholds and diagnostic cost are open; a bounded request is preferable to an implicit retry loop.
 
 Created by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.
@@ -167,9 +167,44 @@ Created by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.
 
 ## Wi-Fi setup, Device registration and delivery — 15 October
 
-[Owner decisions](../planning/mvp-decisions-2026-10-15.md) replace the 12 October patient assignment; the [sequence diagram](../architecture/patient-assignment-workflow.puml) shows the flow. The device does not load, store or check patient data. A separate server workflow, outside the MVP, links the Device and its recent Observations to a patient.
+[Owner decisions](../planning/mvp-decisions-2026-10-15.md) replace the 12 October patient assignment; the [sequence diagram](../architecture/patient-assignment-workflow.puml) shows the flow. The device does not load a patient list or select a patient. A separate server workflow, outside the MVP, links the Device and its recent Observations to a patient; if that link already exists, the device passes it on ([16 October](../planning/mvp-decisions-2026-10-16.md)).
 
-Without stored Wi-Fi credentials, or after a long press in Idle, the controller enters Portal: an Idle-only state with the exclusive network lease. Station Wi-Fi is down, Start and session commands are rejected, and the state ends on save, cancel or timeout. The page shows a scanned SSID list and a write-only password field. SSID and password are saved in the flash settings partition. On the first successful join NET registers the Device (`POST /Device`, hardware serial as identifier, no patient) and saves the server-assigned id in flash; later boots reuse it. `MeasurementResult` and `NetworkJob` carry the Device id, not a patient. The portal HTTP handler runs outside audio and controller threads and submits typed control events like the shell; it never writes state directly.
+Without stored Wi-Fi credentials, or after a long press in Idle, the controller enters Portal: an Idle-only state with the exclusive network lease. Station Wi-Fi is down, Start and session commands are rejected, and the state ends on save, cancel or timeout. The page shows a scanned SSID list and a write-only password field. SSID and password are saved in the flash settings partition. On the first successful join NET registers the Device (`POST /Device`, hardware serial as identifier, no patient) and saves the server-assigned id in flash; later boots reuse it. `MeasurementResult` and `NetworkJob` carry the Device id, and the patient reference only when the server has linked one. The portal HTTP handler runs outside audio and controller threads and submits typed control events like the shell; it never writes state directly.
+
+## LED indication and single error type — 16 October
+
+[Owner decisions](../planning/mvp-decisions-2026-10-16.md); the GPIO14 move below is a proposal. Two LEDs: the on-board RGB LED (WS2812) shows the
+workflow status, and the red LED in the pushbutton shows errors. Red is never used on the RGB LED, so red always means
+"error, press the button". The serial log records every cause. LED hardware failure is out of MVP scope; the
+software only does what it can detect.
+
+The MVP has no display and no SD card. The RGB LED data pin is GPIO48 on DevKitC-1 v1.0 and GPIO38 on v1.1.
+GPIO38 is the BPM contact of the filter switch. Proposal: move that contact to GPIO14 (the former display DC pin,
+not a strapping pin), so that both revisions work and one overlay line selects the LED pin. The fitted board
+revision is still to be confirmed.
+
+**One error type** replaces the split between Device Alarm and normal fault. Any detected fault latches an Error:
+the red LED blinks and the serial log records the cause. If audio is affected (microphone, DAC, stalled worker,
+failed startup check, potentiometer ADC), the device also mutes and blocks Start. A short press in Idle acknowledges
+the Error and runs the check again; if the cause is still present, the Error returns at once. An Error does not stop
+the active workflow unless audio is affected. Offline listening without Wi-Fi is not an Error; a Heart result that
+cannot be sent is. Stop before 15 s cancels without an Error. "Normal fault" in older text means an Error
+while audio still works; there is no Device Alarm any more.
+
+| State / event | RGB LED (status) | Red button LED (error) | Cleared by |
+|---|---|---|---|
+| Boot / startup checks | White, steady (lamp test) | On, steady (lamp test) | Checks pass |
+| Idle | Green, dim steady | Off | — |
+| Portal / hotspot open | Magenta, slow blink (0.5 Hz) | Off | Save, cancel, 5 min timeout |
+| Listening | Blue, steady | Off | Stop |
+| Measuring, < 15 s | Cyan, blink 1 Hz | Off | 15 s reached, or Stop (cancel) |
+| Measuring, ≥ 15 s | Cyan, steady | Off | Stop |
+| Busy: Analysing / Sending | White, slow breathing | Off | Done |
+| Delivery received (201/200) | Green, 3 quick flashes | Off | Automatic |
+| Input rejected (Start while Busy, switch moved during a session, long press outside Idle) | Short dark flicker | Off | Automatic |
+| Error, audio still works (Wi-Fi join, time sync, registration, send after 3 retries, invalid BPM, rejected context change) | Shows the workflow state | Blink, 2 Hz | Short press in Idle |
+| Error, audio affected (microphone, DAC, worker stall, startup check, potentiometer ADC) | Off (muted) | Blink, 2 Hz | Short press, then the check passes |
+| Error acknowledged | No change | One short flash, then off | Automatic |
 
 ## Design constraints
 
@@ -180,14 +215,14 @@ Values are in [design parameters](parameters.md). Optional parts (replay, Lung, 
 | Area | Constraint |
 |---|---|
 | Hardware | ESP32-S3 N16R8, INMP441 on I2S0, PCM5102A on I2S1, maintained carrier pin map, potentiometer on ADC1. The device ends at the DAC line output; the amplifier is outside the project scope. Document chestpiece coupling and the microphone low-frequency limit. |
-| Audio | Convert INMP441 signed 24-bit left-channel data into normalized mono blocks with sequence numbers. DMA buffers in internal RAM, TX primed with silence, mono duplicated to both DAC channels. Listening continues when analysis cannot accept a block; the gap invalidates the affected BPM window. On microphone/DAC failure: silence, cancel the session, Device Alarm until restart. |
+| Audio | Convert INMP441 signed 24-bit left-channel data into normalized mono blocks with sequence numbers. DMA buffers in internal RAM, TX primed with silence, mono duplicated to both DAC channels. Listening continues when analysis cannot accept a block; the gap invalidates the affected BPM window. On microphone/DAC failure: silence, cancel the session, Error with audio muted until the cause is gone. |
 | Input | Debounced, timestamped events, one per stable transition. Interrupt handlers only signal deferred work. Volume clamped to 0–100 % with a safe value on ADC failure. A long press (≥2 s) is a distinct event and suppresses the ordinary press. |
 | Controller | Only writer of mode, filter and workflow state; others send events and read snapshots. Context changes during a session are rejected with a normal fault. Network work only in Idle; Start during analysis or sending is Busy. Start/Stop and acknowledgement are separate. Portal only from Idle. |
 | Listening | Raw, Murmur and BPM listening filters; Raw applies no band filter. Output saturates before integer conversion. Listening filter and volume never change the analysis input. DSP core in pure C without Zephyr headers or heap use per block. |
 | BPM | BPM analysis gets audio before the volume control. Which filter it uses (own analysis filter or a listening filter) is decided by the filter study (TICKET-189). Whole-cycle periodicity, not single S1/S2 peaks. Invalid windows carry a reason; an old BPM is never reused. Aggregation counts overlapping windows once and freezes value, interval and settings. Cancel discards the aggregation. No fixed numeric quality threshold. |
-| Network | Connection, time sync, TLS and HTTP only under the Idle lease. FHIR R4 Observation (LOINC 8867-4, UCUM /min, `effectiveDateTime` = interval end), conditional create with `device` reference and no `subject`, up to 3 retries, `201`/`200` as receipt, no readback. HTTPS verifies chain, hostname and validity against the lab CA; no plain-HTTP fallback. Credentials stay out of source and logs. Wi-Fi credentials and the server-assigned Device id persist in the flash settings partition; Device registration follows the [15 October decisions](../planning/mvp-decisions-2026-10-15.md). |
-| Indication | Activity LED on during measurement and pulsing while Busy; distinct pattern while the hotspot is open. Errors shown by LED pattern and serial log. Hotspot: WPA2 with a per-device passphrase outside source, Portal state only, timeout, bounded clients; no credentials in logs. |
-| Monitoring | Count stalls, dropped blocks, deadline misses, clipping, analysis gaps and queue saturation. Report stack/heap watermarks. A stalled required worker raises a Device Alarm. Initialization alone never counts as verified operation. |
+| Network | Connection, time sync, TLS and HTTP only under the Idle lease. FHIR R4 Observation (LOINC 8867-4, UCUM /min, `effectiveDateTime` = interval end), conditional create with `device` reference, `subject` only when the server has linked a patient, up to 3 retries, `201`/`200` as receipt, no readback. HTTPS verifies chain, hostname and validity against the lab CA; no plain-HTTP fallback. Credentials stay out of source and logs. Wi-Fi credentials and the server-assigned Device id persist in the flash settings partition; Device registration follows the [15 October decisions](../planning/mvp-decisions-2026-10-15.md). |
+| Indication | RGB LED shows the workflow status; the red button LED shows errors (see [LED indication](#led-indication-and-single-error-type--16-october)). Errors also go to the serial log. Hotspot: WPA2 with a per-device passphrase outside source, Portal state only, timeout, bounded clients; no credentials in logs. |
+| Monitoring | Count stalls, dropped blocks, deadline misses, clipping, analysis gaps and queue saturation. Report stack/heap watermarks. A stalled required worker raises an Error with audio muted. Initialization alone never counts as verified operation. |
 
 ## Firmware layer structure — 13 October
 

@@ -10,8 +10,8 @@ if (Heart + microphone + audio ready?) then (yes)
   :Stream independent BPM analysis while listening;
   :Reject identity changes with normal fault;
   if (Essential audio fault?) then (yes)
-   :Mute and latch Device Alarm;
-   :Require full device restart;
+   :Mute and latch Error;
+   :Short press clears it once the cause is gone;
    stop
   endif
  repeat while (Stop pressed?) is (no) not (yes)

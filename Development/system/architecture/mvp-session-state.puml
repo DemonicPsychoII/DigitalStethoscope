@@ -2,10 +2,10 @@
 !pragma layout smetana
 skinparam shadowing false
 skinparam defaultFontName SansSerif
-title MVP session and alarm transitions — owner decisions 11/12/15 October
+title MVP session and error transitions — owner decisions 11/12/15/16 October
 [*] --> Boot
 Boot --> Idle : software-observable startup checks pass
-Boot --> DA : essential functionality fails
+Boot --> Muted : startup check fails / Error, mute
 Idle --> Listening : Start / Heart or Lung
 Idle --> Portal : long press >= 2 s, or automatically when no Wi-Fi credentials are stored / Idle network lease, open hotspot
 Portal --> Idle : save / store SSID + password in flash, join Wi-Fi
@@ -23,11 +23,11 @@ Sending --> Idle : failed after 3 retries / latch normal fault
 ReportingError --> Idle : error report received / no numeric BPM
 ReportingError --> Idle : report failed after 3 retries / latch normal fault
 note as NormalFaultIndication
-  Normal-fault latch is independent of workflow state.
-  Separate manual acknowledgement clears only the indication.
+  Error latch (red LED) is independent of workflow state.
+  Short press in Idle acknowledges it and reruns the check.
   Preserve the current workflow; no implicit Start.
 end note
-DA --> Boot : full device restart only
+Muted --> Idle : short press, check passes
 note right of Analysing
   Start = Busy, visible activity.
   No cancellation or queued Start.
@@ -43,9 +43,9 @@ note bottom of Measuring
   Normal-fault indication is latched separately from workflow;
   acknowledgement does not change an active workflow.
 end note
-note bottom of DA
-  Any detected dangerous/essential-function fault -> DA.
-  Mute; invalidate incomplete work; latch until restart.
-  A button cannot restore operation.
+note bottom of Muted
+  Any detected fault that affects audio -> Muted (16 October).
+  Mute; invalidate incomplete work; block Start.
+  The Error returns at once while the cause is present.
 end note
 @enduml

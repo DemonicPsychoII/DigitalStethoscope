@@ -2,7 +2,7 @@
 skinparam shadowing false
 skinparam defaultFontName SansSerif
 skinparam sequenceMessageAlign center
-title MVP Wi-Fi setup, registration and delivery — decisions 15 October
+title MVP Wi-Fi setup, registration and delivery — decisions 15/16 October
 actor "Operator\n(button / phone browser)" as op
 participant "Digital stethoscope\n(no display)" as dev
 database "Flash\n(settings partition)" as flash
@@ -33,16 +33,18 @@ alt no stored device-id (first boot)
 else device-id stored
   note right of dev : reuse device-id,\nno new Device per restart
 end
+dev -> fhir : GET /Device/{id} (proposal, 16 October)
+fhir --> dev : Device, with patient if the server linked one
 
 == 3 · Measure and send ==
 op -> dev : Start
 dev -> dev : listen → BPM\n(no network traffic while measuring)
 op -> dev : Stop
-dev -> fhir : POST /Observation\nIf-None-Exist: identifier=…|device-boot-session\ndevice = Device/{id}, no subject,\nLOINC 8867-4, /min,\neffectiveDateTime = interval end
+dev -> fhir : POST /Observation\nIf-None-Exist: identifier=…|device-boot-session\ndevice = Device/{id},\nsubject = linked patient (only if set),\nLOINC 8867-4, /min,\neffectiveDateTime = interval end
 fhir --> dev : 201 Created / 200 existing (receipt)
 note right of dev : no receipt → up to 3 retries\nwithin 10 s (14 October),\nthen normal send fault;\nno readback
 
 == Outside MVP · patient assignment on the server ==
 staff -> fhir : select Device + its recent Observations,\nlink them to a patient
-note over fhir, staff #lightgrey : separate server workflow;\nthe device never handles patient data
+note over fhir, staff #lightgrey : separate server workflow;\nthe device never selects a patient,\nit only passes on a linked one
 @enduml

@@ -117,6 +117,9 @@
   `Device.patient` auf dem FHIR-Server.~~ **Überholt (15.10.):** Das Gerät sendet nur mit seiner
   gespeicherten Device-ID und ohne Patient. Ein getrennter Server-Workflow außerhalb des MVP ordnet
   Gerät und Messdaten dem Patienten zu; siehe [Entscheidungen 15. Oktober](../../Development/system/planning/mvp-decisions-2026-10-15.md).
+  **Ergänzt (16.10.):** Hat der Server dem Gerät schon einen Patienten zugeordnet, übernimmt das Gerät
+  ihn in die Observation. Das Gerät wählt nie selbst einen Patienten aus; siehe
+  [Entscheidungen 16. Oktober](../../Development/system/planning/mvp-decisions-2026-10-16.md).
 - [x] **Secrets außerhalb Git:** Echte Zugangsdaten ausschließlich lokal konfigurieren;
   Beispiele verwenden nicht geheime Platzhalter. Die frühere Hardcoding-Notiz ist überholt.
 - [x] **Bring-up offline als Default:** Optionaler Network-Build startet ohne automatische
