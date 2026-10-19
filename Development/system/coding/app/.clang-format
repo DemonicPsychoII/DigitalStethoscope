@@ -1,6 +1,8 @@
 # Thesis firmware style; the bring-up firmware keeps the repository root style.
 BasedOnStyle: LLVM
-ColumnLimit: 100
+# No limit: statements stay on one line. A call with more than 2 arguments may be
+# split by hand, one argument per line; clang-format keeps that layout.
+ColumnLimit: 0
 IndentWidth: 4
 ContinuationIndentWidth: 4
 UseTab: Never

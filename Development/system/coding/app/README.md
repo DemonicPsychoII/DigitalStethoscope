@@ -16,7 +16,7 @@ maps its logical components to these folders.
 | `L2_application/L2_AUDIO/` | Audio path and BPM worker, driven by control commands | L1, `common` |
 | `L2_application/L2_COMMUNICATION/` | Builds via FHIR, sends via WIFI under the lease; Device registration; hotspot Wi-Fi setup page | L1, `common` |
 | `L2_application/L2_SHELL/` | Shell commands and read-back through CONTROL | L2_CONTROL, `common` |
-| `L1_services/` adapters | `L1_I2S` (mic RX, DAC TX), `L1_WIFI`, `L1_PHYSICALINTERFACE` (buttons, LEDs) | Zephyr, `common` |
+| `L1_services/` adapters | `L1_I2S` (mic RX, DAC TX), `L1_WIFI`, `L1_PORTAL` (Wi-Fi setup page), `L1_PHYSICALINTERFACE` (buttons, LEDs) | Zephyr, `common` |
 | `L1_services/` libraries | `L1_FILTER`, `L1_BPM` (envelope, autocorrelation, aggregation), `L1_FHIR` (serialization); pure C | `common` |
 | `L0_platform/` | Empty: Zephyr drivers and the board overlay | — |
 | `MONITOR/` | Runtime supervision | All layers, read-only |
@@ -28,8 +28,9 @@ Display/UI, touch, SD storage and replay (WSOLA) are optional and not part of th
 ## Building the skeleton
 
 This directory is a standalone Zephyr application. `common/main.c` returns to the idle
-thread; the component `.c` / `.h` files reserve places for implementation and
-declare no APIs yet. `common/types.h` reserves the shared data types.
+thread; most component `.c` / `.h` files reserve places for implementation.
+`L1_WIFI` and `L1_PORTAL` declare their APIs with placeholder bodies.
+`L2_COMMUNICATION` remains a thread skeleton in this service-contract step. `common/types.h` reserves the shared data types.
 The board overlay and `prj.conf` set the fitted N16R8 module (16 MB flash,
 8 MB octal PSRAM; GPIO33–37 stay reserved). The serial shell and deferred logging
 are enabled; no audio processing, networking, storage, UI or monitoring is active.
@@ -174,5 +175,30 @@ ownership. [Product scope](../../spec/product-scope.md) and the
 [risk/readiness register](../../planning/implementation-readiness.md) qualify
 class B/SOUP intentions and monitoring controls; classification and hazards require
 substantiation.
+
+## Coding conventions
+
+`.clang-format` in this folder sets the layout (Allman braces, 4 spaces, `if(x)`,
+`for(;;)` for the one intended endless loop); CI checks it. It has no column limit,
+so statements stay on one line. Only a call with more than 2 arguments may be split,
+by hand, with one argument per line; clang-format keeps and aligns that layout.
+
+| Item | Rule | Example |
+|---|---|---|
+| Function | `module_camelCase`, verb first | `wifi_readSettings()`, `communication_waitForEvents()` |
+| Waiting function | starts with `waitFor` and names what it waits for | `wifi_waitForConnection()` |
+| File-scope variable | `module_PascalCase` | `communication_ScanList` |
+| Flag (`bool`) | states what is true when set | `communication_StoredNetworkIsValid` |
+| Local variable, parameter, struct field | `camelCase` | `idleDeadline`, `listSize`, `needsPassword` |
+| Macro, enum constant | `MODULE_UPPER_CASE` | `COMMUNICATION_STORED_CONNECT_ATTEMPTS` |
+| Type | `module_snake_case` | `struct wifi_network` |
+
+Names are written out, without abbreviations; units use their symbols as suffix
+(`_MS`, `_S`, for example `COMMUNICATION_RETRY_DELAY_S`); protocol names such as DHCP or SSID
+stay and keep their capitals inside camelCase, for example `wifi_startDHCPServer()`
+and `communication_waitForWiFiStop()`. Every function has one `return` at its end and loops end through their
+condition (MISRA C:2012 Rules 15.4 and 15.5; no `continue`, MISRA C:2004 Rule 14.5).
+Every `if … else if` chain ends with `else` (Rule 15.7), and unused return values are
+cast to `void` (Rule 17.7). Doxygen comments use one short `@return` line.
 
 Updated by Claude-Opus-5.5 on behalf of Nico running in T3 Code through Claude Code.
