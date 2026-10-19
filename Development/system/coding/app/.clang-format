@@ -17,3 +17,6 @@ AllowShortFunctionsOnASingleLine: None
 AllowShortIfStatementsOnASingleLine: Never
 AllowShortLoopsOnASingleLine: false
 SortIncludes: Never
+
+# Keep blank lines between function definitions; preserve manual statement groups.
+SeparateDefinitionBlocks: Always

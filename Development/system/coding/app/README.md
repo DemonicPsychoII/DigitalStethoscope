@@ -207,6 +207,13 @@ The static quality job runs these tests when application code or tests change.
 so statements stay on one line. Only a call with more than 2 arguments may be split,
 by hand, with one argument per line; clang-format keeps and aligns that layout.
 
+Add one blank line after a completed braced block before the next statement.
+Add one blank line before `if` statements and loops after preceding statements.
+Keep `else`, `else if`, a do/while tail and enclosing closing braces attached.
+Separate local variable declarations from executable statements with a blank line.
+Separate variable assignments from standalone function calls with a blank line.
+Keep related declarations, assignments or calls together in their own groups.
+
 | Item | Rule | Example |
 |---|---|---|
 | Function | `module_camelCase`, verb first | `wifi_readSettings()`, `communication_waitForEvents()` |
