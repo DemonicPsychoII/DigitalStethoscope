@@ -20,13 +20,14 @@ Measuring --> Analysing : Stop at or after 15 s / mute, finalize
 Analysing --> Sending : valid BPM + configured prerequisites
 Analysing --> ReportingError : invalid BPM + validated error contract + prerequisites
 Analysing --> Idle : Wi-Fi unconfigured / no send or Wi-Fi error
-Analysing --> Idle : delivery prerequisites fail / latch normal fault
+Analysing --> Idle : delivery prerequisites fail / latch DELIVERY_NOT_POSSIBLE
 Sending --> Idle : receipt 201 / 200
-Sending --> Idle : failed after 3 retries / latch normal fault
+Sending --> Idle : failed after 3 retries / latch DELIVERY_FAILURE
 ReportingError --> Idle : error report received / no numeric BPM
-ReportingError --> Idle : report failed after 3 retries / latch normal fault
+ReportingError --> Idle : report failed after 3 retries / latch DELIVERY_FAILURE
 note as NormalFaultIndication
   Error latch (red LED) is independent of workflow state.
+  Several errors: LEDs show the highest priority, then the first latched.
   Short press acknowledges where catalogue permits; no implicit retry.
   Wi-Fi recovery does not require acknowledgement.
   Preserve the current workflow; no implicit Start.

@@ -38,10 +38,10 @@ if (Heart + microphone + audio ready?) then (yes)
     :Delivery received;
    else (no)
     :Retry up to 3 times within 10 s;
-    :If still failing: latch normal fault;
+    :If still failing: latch DELIVERY_FAILURE;
    endif
   else (no)
-   :Latch configured-delivery normal fault;
+   :Latch DELIVERY_NOT_POSSIBLE;
   endif
  else (no)
   :No send attempt or Wi-Fi error;

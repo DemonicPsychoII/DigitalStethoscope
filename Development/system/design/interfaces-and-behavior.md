@@ -100,7 +100,7 @@ Candidate memory accounting:
 | Sending | acquire exclusive Idle lease; snapshot payload | bounded connect/TLS/conditional POST, receipt | outcome event + release lease; Start is Busy, never queued |
 | Error, audio affected | mute and invalidate active acquisition; block Start | expose latched cause on the red LED and serial log | use the catalogue clear rule; restart-required faults remain halted until restart |
 
-Changing Heart/Lung, source or point during a session leaves the frozen context unchanged and raises SESSION_CONTEXT_CHANGE with the catalogue halt/restart rule. Outside a session the controller may accept configuration changes and reset source-dependent histories. Generation checks reject stale completions. Separate acknowledgement clears normal-fault indication without starting, retrying or changing an active workflow. A halted Error follows the catalogue clear rule; a short press cannot clear a restart-required fault.
+Changing Heart/Lung, source or point during a session leaves the frozen context unchanged and raises SESSION_CONTEXT_CHANGE with the catalogue halt/restart rule. Outside a session the controller may accept configuration changes and reset source-dependent histories. Generation checks reject stale completions. Separate acknowledgement clears the indication of an Error that the catalogue allows to clear, without starting, retrying or changing an active workflow. A halted Error follows the catalogue clear rule; a short press cannot clear a restart-required fault.
 
 ## DSP and measurement design
 
@@ -219,8 +219,9 @@ The [19 October owner resolutions](../planning/mvp-decisions-2026-10-19.md) adop
 the catalogue below as the current project design. It replaces the earlier light table.
 The RGB status light never shows red; the separate red button light shows error codes.
 Serial logs retain the detailed cause. Timing is in [P22](parameters.md).
-The fitted RGB pin/board revision and GPIO14 filter-switch proposal remain hardware
-configuration work, not established by these feedback decisions.
+No hardware revision is planned: the GPIO14 filter-switch move is dropped and the pin map stays as it
+is (19 October). On DevKitC-1 v1.1 the RGB LED data pin (GPIO38) is also the BPM switch contact, so
+confirm the fitted board revision before the RGB LED driver is enabled.
 
 ### Status and error catalogue
 
@@ -235,9 +236,13 @@ conformity or implemented firmware. Recovery and acknowledgement are separate.
 - **RGB LED = context.** The colour shows the context in which a status or error occurs, not the module that
   detects it. CONTROL decides what can run, so each context has one colour: white = device (startup,
   settings, session input), green = Idle, cyan = audio, violet = Wi-Fi, blue = FHIR.
-- **Timing is a project selection.** Codes and quick flashes use 2 Hz; slow blink
-  uses 0.5 Hz. P22 defines pauses, breathing and dimming. No standards conformity is
-  established by adopting this catalogue.
+- **Standards basis.** Colours follow IEC 60601-1 7.8.1 (green only for Idle, no red, yellow or orange on
+  the RGB LED). Flash rates follow IEC 60073: codes and quick flashes 2 Hz, slow blink 0.5 Hz. P22 defines
+  pauses, breathing, dimming and visibility. Priorities follow the IEC 60601-1-8 approach. The research,
+  sources and remaining gaps are in [LED indication standards](led-indication-standards.md). This design
+  is aligned with these standards; it is not a conformity claim.
+- **Priority** (column): Medium for audio-path faults that can make the user misjudge heart sounds at
+  once; Low for all other errors; Information for statuses. No error is High.
 - **Red button LED = error code.** The red LED shows the error code as a number of blinks. The code is
   unique only together with the RGB colour, so the RGB LED stays on in the context colour during an error.
   Muting is an audio action and does not switch the RGB LED off.
@@ -248,8 +253,8 @@ conformity or implemented firmware. Recovery and acknowledgement are separate.
 - **RGB behaviour** is the light pattern of the colour: steady, blink, breathing or flashes. Timing is in
   [design parameters](parameters.md) P22.
 - **Statuses** end when the next status replaces them; the change of state is the visible clear.
-- **More than one error.** The LEDs show the error of the context in which the device failed. The serial log
-  lists all other errors.
+- **More than one error.** The LEDs show only the error with the highest priority. If priorities are equal,
+  they show the error that latched first. The serial log lists all errors.
 - **Where the error occurred.** An error does not change the RGB context: it keeps the colour of the context in
   which the error occurred, so the user sees where it happened. The red LED shows the code.
 - **Clear and retry are separate.** A short press only clears errors whose catalogue row permits acknowledgement. It does not repeat the failed
@@ -266,42 +271,42 @@ conformity or implemented firmware. Recovery and acknowledgement are separate.
   failed check). The LED interface only receives the code. The `HealthEvent` error class uses the same
   enumerator.
 
-| Kind   | Status / error                                               | Detected by       | Code                         | RGB LED   | RGB behaviour                            | Red button LED                  | Cleared by          |
-|--------|--------------------------------------------------------------|-------------------|------------------------------|-----------|------------------------------------------|---------------------------------|---------------------|
-| Status | Boot / startup checks                                        | CONTROL           | STARTUP_RUNNING              | white     | steady                                   | on, steady (lamp test)          |                     |
-| Error  | Settings read failed (flash)                                 | CONTROL           | SETTINGS_READ_FAILURE        | white     | steady                                   | 1 blink, pause                  | Restart             |
-| Error  | Startup check failed                                         | CONTROL           | STARTUP_FAILURE              | white     | steady                                   | 2 blinks, pause                 | Restart             |
-| Error  | Unexpected reset (watchdog, crash, brown-out)                | CONTROL           | RESET_UNEXPECTED             | white     | steady                                   | 3 blinks, pause                 | Short press         |
-| Error  | Settings save failed (flash)                                 | CONTROL           | SETTINGS_SAVE_FAILURE        | white     | steady                                   | 4 blinks, pause                 | Restart             |
-| Error  | Context change during a session                              | CONTROL           | SESSION_CONTEXT_CHANGE       | white     | steady                                   | 5 blinks, pause                 | Restart             |
-| Status | Idle                                                         | CONTROL           | IDLE                         | green     | steady, dim                              | off                             |                     |
-| Status | Listening                                                    | CONTROL           | LISTENING                    | cyan      | steady                                   | off                             |                     |
-| Status | Measuring, < 15 s                                            | CONTROL           | MEASUREMENT_RUNNING          | cyan      | blink, slow                              | off                             |                     |
-| Status | Measuring, ≥ 15 s                                            | CONTROL           | MEASUREMENT_MINIMUM_REACHED  | cyan      | steady                                   | off                             |                     |
-| Status | Analysing                                                    | CONTROL           | ANALYSIS_RUNNING             | cyan      | breathing, slow                          | off                             |                     |
-| Error  | Audio worker stall                                           | MONITOR           | AUDIO_WORKER_STALL           | cyan      | steady                                   | 1 blink, pause                  | Restart             |
-| Error  | BPM worker stall                                             | MONITOR           | HEART_RATE_WORKER_STALL      | cyan      | steady                                   | 2 blinks, pause                 | Restart             |
-| Error  | BPM result invalid                                           | AUDIO             | MEASUREMENT_INVALID          | cyan      | steady                                   | 3 blinks, pause                 | Short press         |
-| Error  | Microphone: no data or I2S RX error                          | AUDIO             | MICROPHONE_FAILURE           | cyan      | steady                                   | 4 blinks, pause                 | Restart             |
-| Error  | DAC: I2S TX error                                            | AUDIO             | AUDIO_OUTPUT_FAILURE         | cyan      | steady                                   | 5 blinks, pause                 | Restart             |
-| Error  | Control input failure (potentiometer ADC or switch position) | PHYSICALINTERFACE | CONTROL_INPUT_FAILURE        | cyan      | steady                                   | 6 blinks, pause                 | Restart             |
-| Status | Portal / hotspot open                                        | CONTROL           | PORTAL_OPEN                  | violet    | steady                                   | off                             |                     |
-| Status | Wi-Fi scanning, connecting or reconnecting                   | COMMUNICATION     | WIFI_CONNECTING              | violet    | breathing, slow                          | off                             |                     |
-| Status | Wi-Fi connected                                              | COMMUNICATION     | WIFI_CONNECTED               | violet    | 3 quick flashes                          | off                             |                     |
-| Error | Wi-Fi credentials save failed after 2 attempts | COMMUNICATION | WIFI_SETTINGS_SAVE_FAILURE | violet | steady | 2 blinks, pause | Short press |
-| Error  | Wi-Fi scan: 4 attempts used                                  | COMMUNICATION     | SCAN_FAILURE                 | violet    | steady                                   | 3 blinks, pause                 | Short press         |
-| Error  | Wi-Fi boot join: 4 attempts used                             | COMMUNICATION     | JOIN_FAILURE                 | violet    | steady                                   | 4 blinks, pause                 | Short press         |
-| Error  | Wi-Fi link loss: 4 attempts used                             | COMMUNICATION     | RECONNECT_FAILURE            | violet    | steady                                   | 5 blinks, pause                 | Short press         |
-| Error  | Hotspot (AP) start failed                                    | COMMUNICATION     | HOTSPOT_START_FAILURE        | violet    | steady                                   | 6 blinks, pause                 | Short press         |
-| Status | Sending                                                      | CONTROL           | DELIVERY_SENDING             | blue      | breathing, slow                          | off                             |                     |
-| Status | Delivery pending                                             | CONTROL           | DELIVERY_PENDING             | blue      |                                          | off                             |                     |
-| Status | Delivery received (201/200)                                  | COMMUNICATION     | DELIVERY_RECEIVED            | blue      | 3 quick flashes                          | off                             |                     |
-| Error  | Time sync failed                                             | COMMUNICATION     | TIME_SYNCHRONIZATION_FAILURE | blue      | steady                                   | 2 blinks, pause                 | Short press         |
-| Error  | Device registration failed                                   | COMMUNICATION     | DEVICE_REGISTRATION_FAILURE  | blue      | steady                                   | 3 blinks, pause                 | Short press         |
-| Error  | Send failed after 3 retries                                  | COMMUNICATION     | DELIVERY_FAILURE             | blue      | steady                                   | 4 blinks, pause                 | Short press         |
-| Error  | Result cannot be sent (offline or no clock)                  | CONTROL           | DELIVERY_NOT_POSSIBLE        | blue      | steady                                   | 5 blinks, pause                 | Short press         |
-| Status | Input rejected                                               | CONTROL           | INPUT_REJECTED               | no change | a 50% dimming of the current colour      | off                             |                     |
-| Status | Error acknowledged                                           | CONTROL           | ERROR_ACKNOWLEDGED           | no change | no change                                | 4 blinks, pause, 4 blinks, once |                     |
+| Kind   | Status / error                                               | Detected by       | Code                         | Priority    | RGB LED   | RGB behaviour                        | Red button LED         | Cleared by  |
+|--------|--------------------------------------------------------------|-------------------|------------------------------|-------------|-----------|--------------------------------------|------------------------|-------------|
+| Status | Boot / startup checks                                        | CONTROL           | STARTUP_RUNNING              | Information | white     | steady                               | on, steady (lamp test) |             |
+| Error  | Settings read failed (flash)                                 | CONTROL           | SETTINGS_READ_FAILURE        | Low         | white     | steady                               | 1 blink, pause         | Restart     |
+| Error  | Startup check failed                                         | CONTROL           | STARTUP_FAILURE              | Low         | white     | steady                               | 2 blinks, pause        | Restart     |
+| Error  | Unexpected reset (watchdog, crash, brown-out)                | CONTROL           | RESET_UNEXPECTED             | Low         | white     | steady                               | 3 blinks, pause        | Short press |
+| Error  | Settings save failed (flash)                                 | CONTROL           | SETTINGS_SAVE_FAILURE        | Low         | white     | steady                               | 4 blinks, pause        | Restart     |
+| Error  | Context change during a session                              | CONTROL           | SESSION_CONTEXT_CHANGE       | Low         | white     | steady                               | 5 blinks, pause        | Restart     |
+| Status | Idle                                                         | CONTROL           | IDLE                         | Information | green     | steady, dim                          | off                    |             |
+| Status | Listening                                                    | CONTROL           | LISTENING                    | Information | cyan      | steady                               | off                    |             |
+| Status | Measuring, < 15 s                                            | CONTROL           | MEASUREMENT_RUNNING          | Information | cyan      | blink, slow                          | off                    |             |
+| Status | Measuring, ≥ 15 s                                            | CONTROL           | MEASUREMENT_MINIMUM_REACHED  | Information | cyan      | steady                               | off                    |             |
+| Status | Analysing                                                    | CONTROL           | ANALYSIS_RUNNING             | Information | cyan      | breathing, slow                      | off                    |             |
+| Error  | Audio worker stall                                           | MONITOR           | AUDIO_WORKER_STALL           | Medium      | cyan      | steady                               | 1 blink, pause         | Restart     |
+| Error  | BPM worker stall                                             | MONITOR           | HEART_RATE_WORKER_STALL      | Low         | cyan      | steady                               | 2 blinks, pause        | Restart     |
+| Error  | BPM result invalid                                           | AUDIO             | MEASUREMENT_INVALID          | Low         | cyan      | steady                               | 3 blinks, pause        | Short press |
+| Error  | Microphone: no data or I2S RX error                          | AUDIO             | MICROPHONE_FAILURE           | Medium      | cyan      | steady                               | 4 blinks, pause        | Restart     |
+| Error  | DAC: I2S TX error                                            | AUDIO             | AUDIO_OUTPUT_FAILURE         | Medium      | cyan      | steady                               | 5 blinks, pause        | Restart     |
+| Error  | Control input failure (potentiometer ADC or switch position) | PHYSICALINTERFACE | CONTROL_INPUT_FAILURE        | Medium      | cyan      | steady                               | 6 blinks, pause        | Restart     |
+| Status | Portal / hotspot open                                        | CONTROL           | PORTAL_OPEN                  | Information | violet    | steady                               | off                    |             |
+| Status | Wi-Fi scanning, connecting or reconnecting                   | COMMUNICATION     | WIFI_CONNECTING              | Information | violet    | breathing, slow                      | off                    |             |
+| Status | Wi-Fi connected                                              | COMMUNICATION     | WIFI_CONNECTED               | Information | violet    | 3 quick flashes                      | off                    |             |
+| Error  | Wi-Fi credentials save failed after 2 attempts               | COMMUNICATION     | WIFI_SETTINGS_SAVE_FAILURE   | Low         | violet    | steady                               | 1 blink, pause         | Short press |
+| Error  | Wi-Fi scan: 4 attempts used                                  | COMMUNICATION     | SCAN_FAILURE                 | Low         | violet    | steady                               | 2 blinks, pause        | Short press |
+| Error  | Wi-Fi boot join: 4 attempts used                             | COMMUNICATION     | JOIN_FAILURE                 | Low         | violet    | steady                               | 3 blinks, pause        | Short press |
+| Error  | Wi-Fi link loss: 4 attempts used                             | COMMUNICATION     | RECONNECT_FAILURE            | Low         | violet    | steady                               | 4 blinks, pause        | Short press |
+| Error  | Hotspot (AP) start failed                                    | COMMUNICATION     | HOTSPOT_START_FAILURE        | Low         | violet    | steady                               | 5 blinks, pause        | Short press |
+| Status | Sending                                                      | CONTROL           | DELIVERY_SENDING             | Information | blue      | breathing, slow                      | off                    |             |
+| Status | Delivery pending                                             | CONTROL           | DELIVERY_PENDING             | Information | blue      | blink, slow                          | off                    |             |
+| Status | Delivery received (201/200)                                  | COMMUNICATION     | DELIVERY_RECEIVED            | Information | blue      | 3 quick flashes                      | off                    |             |
+| Error  | Time sync failed                                             | COMMUNICATION     | TIME_SYNCHRONIZATION_FAILURE | Low         | blue      | steady                               | 1 blink, pause         | Short press |
+| Error  | Device registration failed                                   | COMMUNICATION     | DEVICE_REGISTRATION_FAILURE  | Low         | blue      | steady                               | 2 blinks, pause        | Short press |
+| Error  | Send failed after 3 retries                                  | COMMUNICATION     | DELIVERY_FAILURE             | Low         | blue      | steady                               | 3 blinks, pause        | Short press |
+| Error  | Result cannot be sent (offline or no clock)                  | CONTROL           | DELIVERY_NOT_POSSIBLE        | Low         | blue      | steady                               | 4 blinks, pause        | Short press |
+| Status | Input rejected                                               | CONTROL           | INPUT_REJECTED               | Information | no change | short dimming by at least 50 %, once | off                    |             |
+| Status | Error acknowledged                                           | CONTROL           | ERROR_ACKNOWLEDGED           | Information | no change | no change                            | 1 long flash, once     |             |
 
 ## Design constraints
 
@@ -313,12 +318,12 @@ Values are in [design parameters](parameters.md). Optional parts (replay, Lung, 
 |---|---|
 | Hardware | ESP32-S3 N16R8, INMP441 on I2S0, PCM5102A on I2S1, maintained carrier pin map, potentiometer on ADC1. The device ends at the DAC line output; the amplifier is outside the project scope. Document chestpiece coupling and the microphone low-frequency limit. |
 | Audio | Convert INMP441 signed 24-bit left-channel data into normalized mono blocks with sequence numbers. DMA buffers in internal RAM, TX primed with silence, mono duplicated to both DAC channels. Listening continues when analysis cannot accept a block; the gap invalidates the affected BPM window. On microphone/DAC failure: silence, cancel the session, Error with audio muted; restore the cause and restart as required by the catalogue. |
-| Input | Debounced, timestamped events, one per stable transition. Interrupt handlers only signal deferred work. Volume clamped to 0–100 % with a safe value on ADC failure. A long press (≥2 s) is a distinct event and suppresses the ordinary press. |
+| Input | Debounced, timestamped events, one per stable transition. Interrupt handlers only signal deferred work. Volume clamped to 0–100 %. On potentiometer ADC failure or an invalid switch position: safe value, then CONTROL_INPUT_FAILURE (restart). A long press (≥2 s) is a distinct event and suppresses the ordinary press. |
 | Controller | Only writer of mode, filter and workflow state; others send events and read snapshots. Context changes during a session are rejected with SESSION_CONTEXT_CHANGE halt/restart handling. Active network work only at boot/Idle; Start cancels Wi-Fi setup safely; Start during analysis or sending is Busy. Start/Stop and acknowledgement are separate. Portal only from Idle. |
 | Listening | Raw, Murmur and BPM listening filters; Raw applies no band filter. Output saturates before integer conversion. Listening filter and volume never change the analysis input. DSP core in pure C without Zephyr headers or heap use per block. |
 | BPM | BPM analysis gets audio before the volume control. Which filter it uses (own analysis filter or a listening filter) is decided by the filter study (TICKET-189). Whole-cycle periodicity, not single S1/S2 peaks. Invalid windows carry a reason; an old BPM is never reused. Aggregation counts overlapping windows once and freezes value, interval and settings. Cancel discards the aggregation. No fixed numeric quality threshold. |
 | Network | Connection, time sync, TLS and HTTP only under the Idle lease. FHIR R4 Observation (LOINC 8867-4, UCUM /min, `effectiveDateTime` = interval end), conditional create with `device` reference, `subject` only when the server has linked a patient, up to 3 retries, `201`/`200` as receipt, no readback. HTTPS verifies chain, hostname and validity against the lab CA; no plain-HTTP fallback. Credentials stay out of source and logs. Wi-Fi credentials and the server-assigned Device id persist in the flash settings partition; Device registration follows the [15 October decisions](../planning/mvp-decisions-2026-10-15.md). |
-| Indication | RGB LED shows the workflow status; the red button LED shows errors (see [LED indication](#status-and-error-catalogue)). Errors also go to the serial log. Hotspot: open AP, setup at boot/Idle only, inactivity timeout, bounded clients; no credentials in logs. |
+| Indication | RGB LED shows the context colour and status pattern; during an error it keeps the colour of the context where the error occurred. The red button LED shows the blink code of the highest-priority error (see [status and error catalogue](#status-and-error-catalogue)). The catalogue is one append-only `FEEDBACK_` enum. Errors also go to the serial log, written by the component that detects them. Hotspot: open AP, setup at boot/Idle only, inactivity timeout, bounded clients; no credentials in logs. |
 | Monitoring | Count stalls, dropped blocks, deadline misses, clipping, analysis gaps and queue saturation. Report stack/heap watermarks. A stalled required worker raises an Error with audio muted. Initialization alone never counts as verified operation. |
 
 ## Firmware layer structure — 13 October
