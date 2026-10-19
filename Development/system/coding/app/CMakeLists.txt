@@ -35,3 +35,7 @@ target_sources(app PRIVATE
     L2_application/L2_SHELL/shell.c
     MONITOR/monitor.c
 )
+
+# The setup page resources live in an iterable section named after its HTTP service.
+# Follows Zephyr's samples/net/sockets/http_server/CMakeLists.txt and sections-rom.ld.
+zephyr_linker_sources(SECTIONS L1_services/L1_PORTAL/portal-sections.ld)
