@@ -8,10 +8,11 @@ if (Heart + microphone + audio ready?) then (yes)
  :Freeze point / analysis settings;
  repeat
   :Stream independent BPM analysis while listening;
-  :Reject identity changes with normal fault;
+  :Reject identity changes;
+  :If SESSION_CONTEXT_CHANGE: halt, restart required;
   if (Essential audio fault?) then (yes)
    :Mute and latch Error;
-   :Short press clears it once the cause is gone;
+   :Follow catalogue clear rule; restart for microphone/DAC faults;
    stop
   endif
  repeat while (Stop pressed?) is (no) not (yes)
@@ -52,6 +53,7 @@ endif
 :Idle; separate manual error acknowledgement;
 stop
 legend bottom
+  Wi-Fi-only failures preserve functioning audio.
   Streaming BPM requires no saved raw-session audio.
   Duration/windows/filter/quality targets remain proposals.
   Lung = listening only; no measurement/FHIR/error report.

@@ -1,5 +1,9 @@
 # MVP decisions — LED indication, single error type and patient pass-through, 16 October 2026
 
+> **Superseded in part (19 October 2026):** current Wi-Fi setup, recovery and feedback
+> follow the [19 October resolutions](mvp-decisions-2026-10-19.md). Earlier text below
+> is historical where it conflicts; unrelated delivery decisions remain separate.
+
 Decisions given by Nico in T3 Code on 16 October. They supersede the Device Alarm / normal fault split of the
 [11 October decisions](mvp-decisions-2026-10-11.md) and item 5 ("no patient data on the device") of the
 [15 October decisions](mvp-decisions-2026-10-15.md). Everything else from 15 October stands.

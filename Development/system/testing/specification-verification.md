@@ -15,18 +15,19 @@ the evidence template below.
 
 | ID | Check | Level / method | Exercise and evidence |
 |---|---|---|---|
-| VT-01 | Startup | Host fault injection + target | Power-on with missing microphone/DAC; silent initialization and a muted Error (16 October). Physical tests only with owner authorization. |
+| VT-01 | Startup | Host fault injection + target | Power-on with missing microphone/DAC; silent initialization and a restart-required muted Error per current catalogue. Physical tests only with owner authorization. |
 | VT-02 | Audio timing and resources | Target instrumented load/soak | Critical CPU time and block waits per audio block, queue/memory watermarks, drift. Latency is judged by ear (REQ-05); no two-channel measurement setup is available. |
 | VT-03 | Listening DSP | Host production core + target listening | Raw identity before gain, impulse/sweep response, extremes and saturation, transition artifacts. |
 | VT-04 | Control and input | Host model/adapter injection + target | Every allowed/rejected transition; bounce, queue saturation, Busy, LED patterns and snapshot consistency. |
 | VT-06 | BPM sessions | Host recordings/reference + target | Supported range, S1/S2 and harmonics, silence/noise/clipping/gaps, aggregation, cancel/finalize races. Recordings, reference and resampling decided during the Wi-Fi/FHIR phase. |
 | VT-07 | FHIR delivery | Host serializer / mock server + authorized local HAPI | Profile/code/unit/`effectiveDateTime`, `device` reference, `subject` only when the server has linked a patient (16 October); conditional create; up to 3 retries within 10 s with no duplicate; `201`/`200` receipt, no readback (15 October); invalid BPM sends only the error report. |
-| VT-08 | TLS and network failures | Mock TLS/socket transport + authorized target/server | Wrong CA/name/expired cert/unset time, server failures, partial responses, bounded waits; no lease overlap with listening; secrets redacted. |
-| VT-09 | Fault containment | Host injection + target | Stalled workers/queues, transport errors, in-session context changes; an Error that affects audio stays muted until a short press finds the cause gone; other Errors cleared by the button (16 October); Busy Start never queued. |
+| VT-08 | TLS and network failures | Mock TLS/socket transport + authorized target/server | Wrong CA/name/expired cert/unset time, server failures, partial responses, bounded waits; no active network jobs during listening; retained station association tested separately; secrets redacted. |
+| VT-09 | Fault containment | Host injection + target | Wi-Fi-only failures preserve audio; other faults halt per catalogue. Verify counted code/context, short-press acknowledgement without retry, and restart-required microphone/DAC faults. Start during setup safely tears down; Start during analysis/sending stays Busy. |
 | VT-10 | Filter study on host | Host, identical recordings | Same input through each listening filter and the analysis filter into BPM detection; hash-identical inputs and configurations recorded. |
 | VT-11 | Evidence and privacy | Inspection | Identity/setup/reference/results/anomalies recorded; logs free of secrets and patient data. |
 | VT-12 | Electrical interfaces | Inspection + owner-authorized bench | Carrier pin map, grounds/supplies/straps, 24-bit I2S alignment, DAC line output. |
-| VT-14 | Wi-Fi setup hotspot and Device registration | Host controller/NET model + authorized DevKit and lab HAPI | Boot without credentials, long press in every state, timeout/cancel, SSID scan list, wrong password, credentials and device-id kept across restarts, exactly one Device after several restarts, WPA2-only join, no secrets in logs. No patient selection on the device ([15 October](../planning/mvp-decisions-2026-10-15.md)). |
+| VT-14 | Wi-Fi and portal | Host controller/NET model + authorized DevKit/phone | Scan-before-AP initial entry; open hotspot/QR; open and protected joins; address before save; all operation retry budgets; boot manual vs reconnect automatic recovery; explicit/implicit rescan and scan-finished; polling; both Cancel levels; paused inactivity timer; save failure retains connection/old settings; 10 s result closure; Start teardown and late callbacks; retained association audio interference; offline fallback; restart persistence; no secrets in logs. See 19 October decisions. |
+| VT-15 | Persistent Device registration (later FHIR phase) | Authorized DevKit and lab HAPI | First registration stores server id; subsequent restarts reuse it; one Device; missing-server-id recovery separately validated. Not a Wi-Fi/portal completion gate. |
 
 VT-05 (replay) and VT-13 (shared SPI) were removed with the optional features on 14 October 2026.
 

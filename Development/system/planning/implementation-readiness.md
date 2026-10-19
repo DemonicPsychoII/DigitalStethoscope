@@ -11,7 +11,7 @@ The original register below is historical preparation context. [11 October owner
 
 | ID | Decision / conflict | Proposed draft treatment | Blocks |
 |---|---|---|---|
-| D01 | S04 network outside live vs S03 stress with simultaneous encrypted sending | Follow saved S04; Idle lease, test accidental overlap and radio interference. Mechanism needs review. | NET/CTL handoff and target timing |
+| D01 | S04 network outside live vs S03 stress with simultaneous encrypted sending | No active network jobs while listening; retain station association; Start tears down setup first. Test radio interference and cancellation (19 October). | NET/CTL handoff and target timing |
 | D02 | Startup Idle vs ready/live; button for clip vs BPM-session start | **Decided:** silent Idle, explicit Start (REQ-01); clip/replay and touch removed from the MVP. | — |
 | D03 | Raw int32 capture vs bring-up filtered int16; clip length, replay speed changes | **Removed:** capture/replay optional and out of the MVP (14 October). | — |
 | D04 | S02 3 s window/15–30 s vs bring-up 8 s rolling estimate | Candidate 8 s window/1 s update/30 s session; whole-cycle estimator; median accepted estimates with overlap-aware coverage. Warm-up/weighting open. | BPM session and estimator acceptance |
@@ -34,10 +34,10 @@ The original register below is historical preparation context. [11 October owner
 | Misleading BPM from S1/S2, noise, stale/missing audio | Whole-cycle estimator, coverage/gap rules, error instead of a number | REQ-06, REQ-08; VT-06/VT-09 |
 | Wrong time or wrong device transmitted | Validated clock, Device id stored in flash and reused, frozen result | REQ-09, REQ-15; VT-07 |
 | Result linked to the wrong patient | Moved to the server workflow outside the MVP (15 October); the device never selects a patient and passes on only a patient that the server has linked (16 October). The server workflow must show device, time and value before linking. | — (server workflow) |
-| Credentials exposed through the hotspot | WPA2 with per-device passphrase, Idle-only with timeout, write-only password, no logs; no patient selection on the device | REQ-11, REQ-12; VT-14/VT-11 |
+| Credentials exposed through the hotspot | Open hotspot (owner decision), boot/Idle setup with inactivity timeout, write-only credential field, no credential logs; no patient selection on the device | REQ-11, REQ-12; VT-14/VT-11 |
 | Duplicate or lost result after a lost response | Conditional create with stable identifier, up to 3 retries | REQ-10; VT-07 |
 | Audio stalls due to TLS or memory pressure | Bounded workers, internal DMA, network lease, monitored deadlines | REQ-02, REQ-05; VT-02/VT-08 |
-| Peripheral absent or failed | Startup checks; faults that affect audio mute until a short press finds the cause gone (16 October) | REQ-13; VT-01/VT-12 |
+| Peripheral absent or failed | Startup checks; mute/restart and acknowledgement per current feedback catalogue (19 October) | REQ-13; VT-01/VT-12 |
 
 ## Work packages to reach implementation
 

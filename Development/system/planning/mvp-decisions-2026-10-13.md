@@ -1,5 +1,9 @@
 # Architecture decisions — firmware layer structure, 13 October 2026
 
+> **Superseded in part (19 October 2026):** current Wi-Fi setup, recovery and feedback
+> follow the [19 October resolutions](mvp-decisions-2026-10-19.md). Earlier text below
+> is historical where it conflicts; unrelated delivery decisions remain separate.
+
 > **Superseded in part (15 October 2026):** `L2_COMMUNICATION` no longer runs a pre-send assignment check; the portal handler only does Wi-Fi setup — see the [15 October decisions](mvp-decisions-2026-10-15.md).
 >
 > **Superseded in part (14 October 2026):** see the [14 October decisions](mvp-decisions-2026-10-14.md). D11 is closed (firmware stays in `coding/app/`). This record is aligned with it: there is no separate test-source send rule, and component requirement IDs are retired in favour of REQ-01…REQ-14.

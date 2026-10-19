@@ -1414,3 +1414,12 @@ Verhelst, W., & Roelands, M. (1993). An overlap-add technique based on waveform 
 **Prüfnachweis Stage 1:** IEEE Xplore title/record search result verified; full text not opened.
 
 **Zitiert von:** [U051](03-grundlagen-technisch/06-time-stretch.md#a062) (ersetzt), [U052](08-evaluation/07-firmware-funktion-ressourcen.md#a074) (ersetzt), [C023](04-stand-der-technik.md#c023), [C024](08-evaluation/07-firmware-funktion-ressourcen.md#c024)
+
+<a id="nico_wifi_decisions_20261019"></a>
+### nico_wifi_decisions_20261019
+
+Nico (full surname not supplied). *Wi-Fi, portal and feedback alignment: owner decisions*. Personal communication, T3 Code, 19 October 2026. [Conversation](t3-thread://v1/d5e44f69-2ecc-4a3e-917b-31a7b084c12b), accessed 19 October 2026. [Local decision record](../Development/system/planning/mvp-decisions-2026-10-19.md).
+
+**Source type:** Project decisions. No claim of implementation, measurement or standards conformity.
+
+**Cited by:** [System architecture](06-systemarchitektur.md), current Wi-Fi design and decision record.

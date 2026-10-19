@@ -1,5 +1,9 @@
 # MVP decisions — 14 October 2026 (TICKET-125)
 
+> **Superseded in part (19 October 2026):** current Wi-Fi setup, recovery and feedback
+> follow the [19 October resolutions](mvp-decisions-2026-10-19.md). Earlier text below
+> is historical where it conflicts; unrelated delivery decisions remain separate.
+
 > **Superseded in part (15 October 2026):** patient assignment moves to a server workflow outside the MVP; the device sends without a patient — see the [15 October decisions](mvp-decisions-2026-10-15.md). The retry rule stays.
 
 Nico's review of the requirements and architecture in this T3 thread. These decisions supersede the

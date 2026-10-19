@@ -2,49 +2,44 @@
 skinparam shadowing false
 skinparam defaultFontName SansSerif
 skinparam sequenceMessageAlign center
-title MVP Wi-Fi setup, registration and delivery — decisions 15/16 October
-actor "Operator\n(button / phone browser)" as op
-participant "Digital stethoscope\n(no display)" as dev
-database "Flash\n(settings partition)" as flash
-database "HAPI FHIR server\n(KIS)" as fhir
-actor "Clinical staff\n(server workflow)" as staff #lightgrey
-
-== 1 · Wi-Fi setup (no stored credentials) ==
-dev -> flash : read Wi-Fi credentials
-flash --> dev : none
-dev -> dev : scan networks (SSID list)
-dev -> dev : open hotspot (access point)\nwith setup page
-op -> dev : phone joins hotspot, opens page
-dev --> op : SSID list + password field
-op -> dev : select network, enter password
-dev -> flash : save SSID + password
-dev -> dev : close hotspot
-note right of dev : credentials survive restarts;\nlong press >= 2 s in Idle\nopens the setup page again
-
-== 2 · Join Wi-Fi and register (every boot) ==
-dev -> dev : join Wi-Fi with stored credentials
-note right of dev : join fails →\nIdle + normal Wi-Fi fault,\noffline listening only
-dev -> dev : SNTP time sync
-dev -> flash : read device-id
-alt no stored device-id (first boot)
-  dev -> fhir : POST /Device\n(identifier = hardware serial, no patient)
-  fhir --> dev : 201 Created, Location: Device/{id}
-  dev -> flash : save device-id
-else device-id stored
-  note right of dev : reuse device-id,\nno new Device per restart
+title Wi-Fi setup — current sequence
+actor "Operator / phone" as op
+participant "Controller / communication" as dev
+participant "L1 Wi-Fi adapter" as wifi
+database "Flash settings" as flash
+dev -> flash : read saved credentials
+alt saved credentials
+ dev -> wifi : join; wait for selected network address\n4 attempts total; 5 s between failures
+ note right of dev : Boot exhaustion: error; 2 s hold in Idle.\nLink-loss exhaustion: automatic setup in Idle.
 end
-dev -> fhir : GET /Device/{id} (proposal, 16 October)
-fhir --> dev : Device, with patient if the server linked one
-
-== 3 · Measure and send ==
-op -> dev : Start
-dev -> dev : listen → BPM\n(no network traffic while measuring)
-op -> dev : Stop
-dev -> fhir : POST /Observation\nIf-None-Exist: identifier=…|device-boot-session\ndevice = Device/{id},\nsubject = linked patient (only if set),\nLOINC 8867-4, /min,\neffectiveDateTime = interval end
-fhir --> dev : 201 Created / 200 existing (receipt)
-note right of dev : no receipt → up to 3 retries\nwithin 10 s (14 October),\nthen normal send fault;\nno readback
-
-== Outside MVP · patient assignment on the server ==
-staff -> fhir : select Device + its recent Observations,\nlink them to a patient
-note over fhir, staff #lightgrey : separate server workflow;\nthe device never selects a patient,\nit only passes on a linked one
+opt no credentials or setup requested in Idle
+ dev -> wifi : scan/cache (4 attempts total)
+ dev -> wifi : open AP; start portal
+ op -> dev : join open hotspot; QR opens portal URL
+ dev --> op : selection; password only if protected
+ op -> dev : Connect
+ dev --> op : request queued; poll status
+ dev -> wifi : one join; confirm selected network + address
+ alt join failed
+  dev --> op : show failure
+  dev -> wifi : rescan with AP open
+  dev --> op : new list after scan-finished
+ else joined
+  dev -> flash : store credentials; retry once
+  alt both saves failed
+   dev --> op : save warning; connection retained
+  else saved
+   dev --> op : success
+  end
+  dev -> dev : 10 s result display
+  dev -> wifi : stop portal/AP; retain station
+ end
+end
+note over op, flash
+ Cancel/timeout: notice then cleanup, keep an established station.
+ Start: safely stop setup before audio; keep existing association.
+ Wi-Fi-only failures preserve working audio; counted feedback follows catalogue.
+ Time, secure server transport and Device registration are later FHIR work.
+ See wifi-state / wifi-flow for complete recovery and global rules.
+end note
 @enduml

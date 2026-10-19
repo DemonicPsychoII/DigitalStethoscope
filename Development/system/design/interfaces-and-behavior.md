@@ -98,9 +98,9 @@ Candidate memory accounting:
 | Finalizing | stop accepting windows for that interval | aggregate and union valid temporal coverage | freeze valid/invalid result once; late blocks cannot mutate result |
 | Delivery Pending | retain completed result and unsent identity | wait for Idle/prerequisites; do not force stop | grant job once; full slot leaves visible Pending |
 | Sending | acquire exclusive Idle lease; snapshot payload | bounded connect/TLS/conditional POST, receipt | outcome event + release lease; Start is Busy, never queued |
-| Error, audio affected | mute and invalidate active acquisition; block Start | expose latched cause on the red LED and serial log | short press in Idle reruns the check; Idle when the cause is gone ([16 October](../planning/mvp-decisions-2026-10-16.md)) |
+| Error, audio affected | mute and invalidate active acquisition; block Start | expose latched cause on the red LED and serial log | use the catalogue clear rule; restart-required faults remain halted until restart |
 
-Changing Heart/Lung, source or point during a session is rejected with a normal fault and leaves the frozen context unchanged. Outside a session the controller may accept configuration changes and reset source-dependent histories. Generation checks reject stale completions. Separate acknowledgement clears normal-fault indication without starting, retrying or changing an active workflow. An Error with audio muted stays latched until a short press finds its cause gone.
+Changing Heart/Lung, source or point during a session leaves the frozen context unchanged and raises SESSION_CONTEXT_CHANGE with the catalogue halt/restart rule. Outside a session the controller may accept configuration changes and reset source-dependent histories. Generation checks reject stale completions. Separate acknowledgement clears normal-fault indication without starting, retrying or changing an active workflow. A halted Error follows the catalogue clear rule; a short press cannot clear a restart-required fault.
 
 ## DSP and measurement design
 
@@ -146,7 +146,9 @@ An uncertain response is retried within the same bounded job; conditional create
 SNTP is a clock synchronization mechanism, not inherently authenticated trusted time; approve the
 local network/clock trust assumptions. Credentials are private deployment configuration.
 
-Network and live listening use an exclusive controller lease. Stop audio before granting network;
+Active network work and live listening use an exclusive controller lease. Retain an
+established station association during listening; do not run setup/reconnect/delivery jobs.
+Start during Wi-Fi setup requests safe teardown before audio; stop audio before granting network;
 Start during analysis/sending is rejected Busy, with no cancellation or queued start. A fresh Start after release primes/starts audio.
 If release cannot be proven, remain stopped and show the reason. Radio/driver background behavior
 must be measured; disabling application jobs alone is not proof of interference isolation.
@@ -156,55 +158,150 @@ must be measured; disabling application jobs alone is not proof of interference 
 Service operations return Accepted / Rejected(reason) / Busy for commands and emit one terminal
 outcome per accepted action ID. Essential audio faults mute; optional display/touch/SD failure
 degrades capability. Analysis gaps invalidate analysis, not all listening. No component formats SD
-or persists captured patient audio. No old result is relabelled with a new ID. An Error clears only by a short press in Idle, and only when its cause is gone ([16 October](../planning/mvp-decisions-2026-10-16.md)). Watchdog
+or persists captured patient audio. No old result is relabelled with a new ID. Error indication and recovery follow the current [catalogue](#status-and-error-catalogue), including its Wi-Fi-only audio exception and restart rules. Watchdog
 detection thresholds and diagnostic cost are open; a bounded request is preferable to an implicit retry loop.
 
 Created by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.
 
-## Current MVP baseline — 11 October
+## MVP session baseline
 
-[Owner decisions and numeric proposals](../planning/mvp-decisions-2026-10-11.md) supersede older clip/retry/recovery proposals here. Raw capture/REC/replay is optional; BPM retains bounded streaming analysis state and window estimates. Session identity changes are rejected with normal fault, never applied. Invalid BPM sends no numeric value and uses a separately validated error-report contract. Current session state transitions are in [the state diagram](../architecture/mvp-session-state.puml).
+[Owner decisions and numeric proposals](../planning/mvp-decisions-2026-10-11.md) supersede older clip/retry/recovery proposals here. Raw capture/REC/replay is optional; BPM retains bounded streaming analysis state and window estimates. Session identity changes are never applied and follow SESSION_CONTEXT_CHANGE halt/restart handling in the current catalogue. Invalid BPM sends no numeric value and uses a separately validated error-report contract. Current session state transitions are in [the state diagram](../architecture/mvp-session-state.puml).
 
-## Wi-Fi setup, Device registration and delivery — 15 October
+## Wi-Fi setup and recovery — 19 October
 
-[Owner decisions](../planning/mvp-decisions-2026-10-15.md) replace the 12 October patient assignment; the [sequence diagram](../architecture/patient-assignment-workflow.puml) shows the flow. The device does not load a patient list or select a patient. A separate server workflow, outside the MVP, links the Device and its recent Observations to a patient; if that link already exists, the device passes it on ([16 October](../planning/mvp-decisions-2026-10-16.md)).
+The [18 October discussion](../planning/mvp-decisions-2026-10-18.md) and
+[19 October resolutions](../planning/mvp-decisions-2026-10-19.md) define this project design.
+The [state diagram](../architecture/wifi-state.puml),
+[setup flow](../architecture/wifi-flow.puml) and
+[recovery flow](../architecture/wifi-recovery.puml) share the rules below.
 
-Without stored Wi-Fi credentials, or after a long press in Idle, the controller enters Portal: an Idle-only state with the exclusive network lease. Station Wi-Fi is down, Start and session commands are rejected, and the state ends on save, cancel or timeout. The page shows a scanned SSID list and a write-only password field. SSID and password are saved in the flash settings partition. On the first successful join NET registers the Device (`POST /Device`, hardware serial as identifier, no patient) and saves the server-assigned id in flash; later boots reuse it. `MeasurementResult` and `NetworkJob` carry the Device id, and the patient reference only when the server has linked one. The portal HTTP handler runs outside audio and controller threads and submits typed control events like the shell; it never writes state directly.
+Read settings through L1. At boot, join a stored network with four attempts total,
+5 s between failures. Exhaustion shows an error and waits for a 2 s hold in Idle.
+Without credentials, or on a 2 s hold in Idle, scan/cache first, then open the AP
+and serve one HTML document. Rescan explicitly or after a failed portal join;
+keep AP/server open for these rescans and publish the cache only after scan-finished.
+Scan has four attempts total, 5 s between failures. Exhausted scan or AP-start failure
+permits a manual 2 s setup retry. Link loss has four reconnect attempts, 5 s apart;
+exhaustion starts setup automatically in Idle. Defer all active recovery during listening.
 
-## LED indication and single error type — 16 October
+The hotspot is open. The phone joins it manually, then a QR code opens the portal URL;
+manual rejoin is accepted. Hide the password field for open selected networks. The
+HTTP handler submits typed events through CONTROL, outside controller/audio threads;
+the browser polls status. One portal join attempt waits for the selected network's
+address. A stale existing link is not a successful new join. On failure show the
+cause, rescan and return to selection. On success use `wifi_storeSettings()` in L1;
+retry saving once. Preserve the old valid record on failure. Show success or save
+warning for 10 s, close AP/server and keep the station, including with unsaved credentials.
+L1 also owns `wifi_readSettings()`; L2 owns workflow policy.
 
-[Owner decisions](../planning/mvp-decisions-2026-10-16.md); the GPIO14 move below is a proposal. Two LEDs: the on-board RGB LED (WS2812) shows the
-workflow status, and the red LED in the pushbutton shows errors. Red is never used on the RGB LED, so red always means
-"error, press the button". The serial log records every cause. LED hardware failure is out of MVP scope; the
-software only does what it can detect.
+Form Back/Cancel returns to selection; setup Cancel closes setup. No user cancellation
+is accepted after Connect submission through saving/automatic closure. Timeout is
+five minutes without selection, password input or Rescan; polling does not reset it.
+Pause during operations. Send the closing notice before teardown, with no extra 10 s
+Cancel/timeout delay. Retain an established station; otherwise cancel attempts and
+release Wi-Fi services. Software errors that prevent continuing setup log/show the
+cause, clean up and return to offline operation. Later 2 s holds can retry.
 
-The MVP has no display and no SD card. The RGB LED data pin is GPIO48 on DevKitC-1 v1.0 and GPIO38 on v1.1.
-GPIO38 is the BPM contact of the filter switch. Proposal: move that contact to GPIO14 (the former display DC pin,
-not a strapping pin), so that both revisions work and one overlay line selects the LED pin. The fitted board
-revision is still to be confirmed.
+A Start request during setup cancels active setup, waits for safe teardown and then
+starts audio. Preserve an established station association. Serialize cancellation
+against join completion, reject stale callbacks and finish an atomic settings write
+safely. Setup/reconnect/delivery work is prohibited during listening; retained radio
+association and background traffic still require interference measurements.
 
-**One error type** replaces the split between Device Alarm and normal fault. Any detected fault latches an Error:
-the red LED blinks and the serial log records the cause. If audio is affected (microphone, DAC, stalled worker,
-failed startup check, potentiometer ADC), the device also mutes and blocks Start. A short press in Idle acknowledges
-the Error and runs the check again; if the cause is still present, the Error returns at once. An Error does not stop
-the active workflow unless audio is affected. Offline listening without Wi-Fi is not an Error; a Heart result that
-cannot be sent is. Stop before 15 s cancels without an Error. "Normal fault" in older text means an Error
-while audio still works; there is no Device Alarm any more.
+Time synchronization, secure server transport and Device registration are later FHIR
+work, not Wi-Fi setup completion conditions. The device does not select patients;
+it passes on only server-linked patient references. Existing persistent registration
+and delivery requirements remain for that later phase.
 
-| State / event | RGB LED (status) | Red button LED (error) | Cleared by |
-|---|---|---|---|
-| Boot / startup checks | White, steady (lamp test) | On, steady (lamp test) | Checks pass |
-| Idle | Green, dim steady | Off | — |
-| Portal / hotspot open | Magenta, slow blink (0.5 Hz) | Off | Save, cancel, 5 min timeout |
-| Listening | Blue, steady | Off | Stop |
-| Measuring, < 15 s | Cyan, blink 1 Hz | Off | 15 s reached, or Stop (cancel) |
-| Measuring, ≥ 15 s | Cyan, steady | Off | Stop |
-| Busy: Analysing / Sending | White, slow breathing | Off | Done |
-| Delivery received (201/200) | Green, 3 quick flashes | Off | Automatic |
-| Input rejected (Start while Busy, switch moved during a session, long press outside Idle) | Short dark flicker | Off | Automatic |
-| Error, audio still works (Wi-Fi join, time sync, registration, send after 3 retries, invalid BPM, rejected context change) | Shows the workflow state | Blink, 2 Hz | Short press in Idle |
-| Error, audio affected (microphone, DAC, worker stall, startup check, potentiometer ADC) | Off (muted) | Blink, 2 Hz | Short press, then the check passes |
-| Error acknowledged | No change | One short flash, then off | Automatic |
+## LED indication and error handling — 19 October
+
+The [19 October owner resolutions](../planning/mvp-decisions-2026-10-19.md) adopt
+the catalogue below as the current project design. It replaces the earlier light table.
+The RGB status light never shows red; the separate red button light shows error codes.
+Serial logs retain the detailed cause. Timing is in [P22](parameters.md).
+The fitted RGB pin/board revision and GPIO14 filter-switch proposal remain hardware
+configuration work, not established by these feedback decisions.
+
+### Status and error catalogue
+
+This table is authoritative for feedback. It records project decisions, not standards
+conformity or implemented firmware. Recovery and acknowledgement are separate.
+
+- **One feedback catalogue.** Wi-Fi-only failures preserve working audio and permit
+  offline Start. Recovery follows the Wi-Fi rules above and need not wait for error
+  acknowledgement. Other errors stop the active workflow, mute/cancel active audio
+  and block Start until the catalogue clear rule is met. Restart means reset/power cycle.
+  Generic device settings failures are distinct from Wi-Fi credential-save failures.
+- **RGB LED = context.** The colour shows the context in which a status or error occurs, not the module that
+  detects it. CONTROL decides what can run, so each context has one colour: white = device (startup,
+  settings, session input), green = Idle, cyan = audio, violet = Wi-Fi, blue = FHIR.
+- **Timing is a project selection.** Codes and quick flashes use 2 Hz; slow blink
+  uses 0.5 Hz. P22 defines pauses, breathing and dimming. No standards conformity is
+  established by adopting this catalogue.
+- **Red button LED = error code.** The red LED shows the error code as a number of blinks. The code is
+  unique only together with the RGB colour, so the RGB LED stays on in the context colour during an error.
+  Muting is an audio action and does not switch the RGB LED off.
+- **Blink notation.** "N blinks, pause" repeats until the error is cleared. A pattern runs a limited number
+  of times only when the table says so ("once").
+- **Sort order.** Sort rows by RGB colour, then by number of blinks ("off" first). "No change" rows are
+  overlays on the current colour and come last.
+- **RGB behaviour** is the light pattern of the colour: steady, blink, breathing or flashes. Timing is in
+  [design parameters](parameters.md) P22.
+- **Statuses** end when the next status replaces them; the change of state is the visible clear.
+- **More than one error.** The LEDs show the error of the context in which the device failed. The serial log
+  lists all other errors.
+- **Where the error occurred.** An error does not change the RGB context: it keeps the colour of the context in
+  which the error occurred, so the user sees where it happened. The red LED shows the code.
+- **Clear and retry are separate.** A short press only clears errors whose catalogue row permits acknowledgement. It does not repeat the failed
+  workflow. A separate 2 s hold in Idle starts Wi-Fi setup again, even with a Wi-Fi error latched.
+  Automatic reconnect/portal recovery remains automatic; acknowledgement is not its gate.
+- **Restart** means the reset button or a power off/on cycle.
+- **Code naming.** `<SUBJECT>_<OUTCOME>` in upper case with underscores and no abbreviations, for example
+  `SCAN_FAILURE`. Outcome words: no suffix, `RUNNING`, `OPEN` or `PENDING` for a normal status;
+  `SUCCESSFUL`, `RECEIVED` or `VALID` for a positive result; `REJECTED`, `FAILURE`, `STALL` or `INVALID`.
+  The C enumerator adds the prefix `FEEDBACK_` (for example `FEEDBACK_SCAN_FAILURE`) to keep the global
+  namespace clean. The catalogue is one enum. After the first implementation, new codes are only appended,
+  so existing values never change.
+- **Logging is separate.** The component that detects the fault logs the details (sub-cause, HTTP status,
+  failed check). The LED interface only receives the code. The `HealthEvent` error class uses the same
+  enumerator.
+
+| Kind   | Status / error                                               | Detected by       | Code                         | RGB LED   | RGB behaviour                            | Red button LED                  | Cleared by          |
+|--------|--------------------------------------------------------------|-------------------|------------------------------|-----------|------------------------------------------|---------------------------------|---------------------|
+| Status | Boot / startup checks                                        | CONTROL           | STARTUP_RUNNING              | white     | steady                                   | on, steady (lamp test)          |                     |
+| Error  | Settings read failed (flash)                                 | CONTROL           | SETTINGS_READ_FAILURE        | white     | steady                                   | 1 blink, pause                  | Restart             |
+| Error  | Startup check failed                                         | CONTROL           | STARTUP_FAILURE              | white     | steady                                   | 2 blinks, pause                 | Restart             |
+| Error  | Unexpected reset (watchdog, crash, brown-out)                | CONTROL           | RESET_UNEXPECTED             | white     | steady                                   | 3 blinks, pause                 | Short press         |
+| Error  | Settings save failed (flash)                                 | CONTROL           | SETTINGS_SAVE_FAILURE        | white     | steady                                   | 4 blinks, pause                 | Restart             |
+| Error  | Context change during a session                              | CONTROL           | SESSION_CONTEXT_CHANGE       | white     | steady                                   | 5 blinks, pause                 | Restart             |
+| Status | Idle                                                         | CONTROL           | IDLE                         | green     | steady, dim                              | off                             |                     |
+| Status | Listening                                                    | CONTROL           | LISTENING                    | cyan      | steady                                   | off                             |                     |
+| Status | Measuring, < 15 s                                            | CONTROL           | MEASUREMENT_RUNNING          | cyan      | blink, slow                              | off                             |                     |
+| Status | Measuring, ≥ 15 s                                            | CONTROL           | MEASUREMENT_MINIMUM_REACHED  | cyan      | steady                                   | off                             |                     |
+| Status | Analysing                                                    | CONTROL           | ANALYSIS_RUNNING             | cyan      | breathing, slow                          | off                             |                     |
+| Error  | Audio worker stall                                           | MONITOR           | AUDIO_WORKER_STALL           | cyan      | steady                                   | 1 blink, pause                  | Restart             |
+| Error  | BPM worker stall                                             | MONITOR           | HEART_RATE_WORKER_STALL      | cyan      | steady                                   | 2 blinks, pause                 | Restart             |
+| Error  | BPM result invalid                                           | AUDIO             | MEASUREMENT_INVALID          | cyan      | steady                                   | 3 blinks, pause                 | Short press         |
+| Error  | Microphone: no data or I2S RX error                          | AUDIO             | MICROPHONE_FAILURE           | cyan      | steady                                   | 4 blinks, pause                 | Restart             |
+| Error  | DAC: I2S TX error                                            | AUDIO             | AUDIO_OUTPUT_FAILURE         | cyan      | steady                                   | 5 blinks, pause                 | Restart             |
+| Error  | Control input failure (potentiometer ADC or switch position) | PHYSICALINTERFACE | CONTROL_INPUT_FAILURE        | cyan      | steady                                   | 6 blinks, pause                 | Restart             |
+| Status | Portal / hotspot open                                        | CONTROL           | PORTAL_OPEN                  | violet    | steady                                   | off                             |                     |
+| Status | Wi-Fi scanning, connecting or reconnecting                   | COMMUNICATION     | WIFI_CONNECTING              | violet    | breathing, slow                          | off                             |                     |
+| Status | Wi-Fi connected                                              | COMMUNICATION     | WIFI_CONNECTED               | violet    | 3 quick flashes                          | off                             |                     |
+| Error | Wi-Fi credentials save failed after 2 attempts | COMMUNICATION | WIFI_SETTINGS_SAVE_FAILURE | violet | steady | 2 blinks, pause | Short press |
+| Error  | Wi-Fi scan: 4 attempts used                                  | COMMUNICATION     | SCAN_FAILURE                 | violet    | steady                                   | 3 blinks, pause                 | Short press         |
+| Error  | Wi-Fi boot join: 4 attempts used                             | COMMUNICATION     | JOIN_FAILURE                 | violet    | steady                                   | 4 blinks, pause                 | Short press         |
+| Error  | Wi-Fi link loss: 4 attempts used                             | COMMUNICATION     | RECONNECT_FAILURE            | violet    | steady                                   | 5 blinks, pause                 | Short press         |
+| Error  | Hotspot (AP) start failed                                    | COMMUNICATION     | HOTSPOT_START_FAILURE        | violet    | steady                                   | 6 blinks, pause                 | Short press         |
+| Status | Sending                                                      | CONTROL           | DELIVERY_SENDING             | blue      | breathing, slow                          | off                             |                     |
+| Status | Delivery pending                                             | CONTROL           | DELIVERY_PENDING             | blue      |                                          | off                             |                     |
+| Status | Delivery received (201/200)                                  | COMMUNICATION     | DELIVERY_RECEIVED            | blue      | 3 quick flashes                          | off                             |                     |
+| Error  | Time sync failed                                             | COMMUNICATION     | TIME_SYNCHRONIZATION_FAILURE | blue      | steady                                   | 2 blinks, pause                 | Short press         |
+| Error  | Device registration failed                                   | COMMUNICATION     | DEVICE_REGISTRATION_FAILURE  | blue      | steady                                   | 3 blinks, pause                 | Short press         |
+| Error  | Send failed after 3 retries                                  | COMMUNICATION     | DELIVERY_FAILURE             | blue      | steady                                   | 4 blinks, pause                 | Short press         |
+| Error  | Result cannot be sent (offline or no clock)                  | CONTROL           | DELIVERY_NOT_POSSIBLE        | blue      | steady                                   | 5 blinks, pause                 | Short press         |
+| Status | Input rejected                                               | CONTROL           | INPUT_REJECTED               | no change | a 50% dimming of the current colour      | off                             |                     |
+| Status | Error acknowledged                                           | CONTROL           | ERROR_ACKNOWLEDGED           | no change | no change                                | 4 blinks, pause, 4 blinks, once |                     |
 
 ## Design constraints
 
@@ -215,13 +312,13 @@ Values are in [design parameters](parameters.md). Optional parts (replay, Lung, 
 | Area | Constraint |
 |---|---|
 | Hardware | ESP32-S3 N16R8, INMP441 on I2S0, PCM5102A on I2S1, maintained carrier pin map, potentiometer on ADC1. The device ends at the DAC line output; the amplifier is outside the project scope. Document chestpiece coupling and the microphone low-frequency limit. |
-| Audio | Convert INMP441 signed 24-bit left-channel data into normalized mono blocks with sequence numbers. DMA buffers in internal RAM, TX primed with silence, mono duplicated to both DAC channels. Listening continues when analysis cannot accept a block; the gap invalidates the affected BPM window. On microphone/DAC failure: silence, cancel the session, Error with audio muted until the cause is gone. |
+| Audio | Convert INMP441 signed 24-bit left-channel data into normalized mono blocks with sequence numbers. DMA buffers in internal RAM, TX primed with silence, mono duplicated to both DAC channels. Listening continues when analysis cannot accept a block; the gap invalidates the affected BPM window. On microphone/DAC failure: silence, cancel the session, Error with audio muted; restore the cause and restart as required by the catalogue. |
 | Input | Debounced, timestamped events, one per stable transition. Interrupt handlers only signal deferred work. Volume clamped to 0–100 % with a safe value on ADC failure. A long press (≥2 s) is a distinct event and suppresses the ordinary press. |
-| Controller | Only writer of mode, filter and workflow state; others send events and read snapshots. Context changes during a session are rejected with a normal fault. Network work only in Idle; Start during analysis or sending is Busy. Start/Stop and acknowledgement are separate. Portal only from Idle. |
+| Controller | Only writer of mode, filter and workflow state; others send events and read snapshots. Context changes during a session are rejected with SESSION_CONTEXT_CHANGE halt/restart handling. Active network work only at boot/Idle; Start cancels Wi-Fi setup safely; Start during analysis or sending is Busy. Start/Stop and acknowledgement are separate. Portal only from Idle. |
 | Listening | Raw, Murmur and BPM listening filters; Raw applies no band filter. Output saturates before integer conversion. Listening filter and volume never change the analysis input. DSP core in pure C without Zephyr headers or heap use per block. |
 | BPM | BPM analysis gets audio before the volume control. Which filter it uses (own analysis filter or a listening filter) is decided by the filter study (TICKET-189). Whole-cycle periodicity, not single S1/S2 peaks. Invalid windows carry a reason; an old BPM is never reused. Aggregation counts overlapping windows once and freezes value, interval and settings. Cancel discards the aggregation. No fixed numeric quality threshold. |
 | Network | Connection, time sync, TLS and HTTP only under the Idle lease. FHIR R4 Observation (LOINC 8867-4, UCUM /min, `effectiveDateTime` = interval end), conditional create with `device` reference, `subject` only when the server has linked a patient, up to 3 retries, `201`/`200` as receipt, no readback. HTTPS verifies chain, hostname and validity against the lab CA; no plain-HTTP fallback. Credentials stay out of source and logs. Wi-Fi credentials and the server-assigned Device id persist in the flash settings partition; Device registration follows the [15 October decisions](../planning/mvp-decisions-2026-10-15.md). |
-| Indication | RGB LED shows the workflow status; the red button LED shows errors (see [LED indication](#led-indication-and-single-error-type--16-october)). Errors also go to the serial log. Hotspot: WPA2 with a per-device passphrase outside source, Portal state only, timeout, bounded clients; no credentials in logs. |
+| Indication | RGB LED shows the workflow status; the red button LED shows errors (see [LED indication](#status-and-error-catalogue)). Errors also go to the serial log. Hotspot: open AP, setup at boot/Idle only, inactivity timeout, bounded clients; no credentials in logs. |
 | Monitoring | Count stalls, dropped blocks, deadline misses, clipping, analysis gaps and queue saturation. Report stack/heap watermarks. A stalled required worker raises an Error with audio muted. Initialization alone never counts as verified operation. |
 
 ## Firmware layer structure — 13 October
@@ -235,3 +332,5 @@ test recordings are handled like patient data. `L2_AUDIO` owns the real-time aud
 `AudioCommand`s; CONTROL remains the single writer of mode state.
 
 Updated by Claude-Opus-5.5 on behalf of Nico running in T3 Code through Claude Code.
+
+Updated by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.

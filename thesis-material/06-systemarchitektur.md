@@ -215,6 +215,8 @@ Bedienvorschlag: Potentiometer für Lautstärke, Schalter für Wiedergabegeschwi
 
 > **Überholt (2026-10-15):** Das Gerät wählt keinen Patienten mehr aus. Die Handy-Browserseite im Geräte-Hotspot dient nur der WLAN-Einrichtung (Netz aus Scanliste, Passwort); die Zugangsdaten bleiben im Flash gespeichert. Das Gerät registriert sich einmal am Server und speichert die Device-ID im Flash. Die Zuordnung von Gerät und Messdaten zum Patienten ist ein getrennter Server-Workflow außerhalb des MVP. – siehe [MVP-Entscheidungen 15.10.](../Development/system/planning/mvp-decisions-2026-10-15.md).
 >
+> **Aktueller WLAN-Ablauf (2026-10-19):** Offener Geräte-Hotspot, Erstscan vor dem Öffnen, Verbindung und IP-Adresse vor dem Speichern, bestehende Verbindung beim Hören beibehalten. Einrichtung vor Hörbeginn sicher beenden. Zeitabgleich, sichere Serververbindung und Registrierung folgen in der FHIR-Phase. Maßgeblich: [Entscheidungen 19. Oktober](../Development/system/planning/mvp-decisions-2026-10-19.md).
+>
 > **Ergänzt (2026-10-16):** Hat der Server dem Gerät schon einen Patienten zugeordnet, übernimmt das Gerät ihn als `subject` in die Observation. Das Gerät wählt nie selbst einen Patienten aus; siehe [Entscheidungen 16. Oktober](../Development/system/planning/mvp-decisions-2026-10-16.md).
 
 **Ursprung:** [preThesis/01-aufgabenbeschreibung/Aufgabenbeschreibung-Intern.md:53](../preThesis/01-aufgabenbeschreibung/Aufgabenbeschreibung-Intern.md#L53)

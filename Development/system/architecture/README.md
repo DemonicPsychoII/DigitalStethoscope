@@ -1,5 +1,7 @@
 # Architecture
 
+Current Wi-Fi/portal and feedback behaviour follows the [19 October resolutions](../planning/mvp-decisions-2026-10-19.md); earlier dated notes remain history.
+
 Open the [local viewer](review.html) for the proposed thesis-product views.
 PlantUML sources are editable; the SVG previews are generated. These views do
 not establish that the evaluation firmware implements the proposed contracts.
@@ -13,9 +15,13 @@ not establish that the evaluation firmware implements the proposed contracts.
 | Software components | [software-components.puml](software-components.puml) |
 | Threads | [runtime-ownership.puml](runtime-ownership.puml) |
 | Listening | [listening-workflow.puml](listening-workflow.puml) |
+| Wi-Fi states | [wifi-state.puml](wifi-state.puml) |
+| Wi-Fi setup flow | [wifi-flow.puml](wifi-flow.puml) |
+| Wi-Fi recovery flow | [wifi-recovery.puml](wifi-recovery.puml) |
+| Current Wi-Fi snapshot | [wifi-workflows.html](wifi-workflows.html) |
 | MVP session / alarms | [mvp-session-state.puml](mvp-session-state.puml) |
 | BPM measurement | [measurement-workflow.puml](measurement-workflow.puml) |
-| Wi-Fi setup and delivery | [patient-assignment-workflow.puml](patient-assignment-workflow.puml) |
+| Wi-Fi setup sequence | [patient-assignment-workflow.puml](patient-assignment-workflow.puml) |
 
 [View notes](VIEW-NOTES.md) record review boundaries, I2S presentation-name mapping,
 provenance, runtime assumptions and the separate evaluation implementation view.
@@ -53,12 +59,12 @@ the output and is not a diagram-type declaration.
 See [framework and transport evaluation](../planning/framework-and-transport-evaluation.md)
 for ESP32-S3 drivers, external C/C++ library integration and HTTP/HTTPS effort.
 
-Current workflows follow [11 October owner decisions](../planning/mvp-decisions-2026-10-11.md): Busy blocks Start, failed sends abort, context changes are rejected and DA requires full restart (replaced by a single error type on 16 October). Numeric targets remain proposals. [Component timeline](../planning/mvp-implementation-timeline.md) puts Wi-Fi/FHIR before carrier-dependent audio.
+Session baseline follows [11 October owner decisions](../planning/mvp-decisions-2026-10-11.md): Busy blocks Start, failed sends abort, context changes are rejected. Current halt/clear rules follow the 19 October catalogue adoption. Numeric targets remain proposals. [Component timeline](../planning/mvp-implementation-timeline.md) puts Wi-Fi/FHIR before carrier-dependent audio.
 
 [12 October decisions](../planning/mvp-decisions-2026-10-12.md) add the hotspot portal and patient assignment to the MVP. The patient-assignment view is a sequence diagram; the session state view gains the Portal state and the context view the phone browser.
 
-[15 October decisions](../planning/mvp-decisions-2026-10-15.md) remove patient selection from the device. The sequence view (file name kept for links) now shows Wi-Fi setup, persistent Device registration and minimal delivery; the session state and context views follow.
+[15 October decisions](../planning/mvp-decisions-2026-10-15.md) remove patient selection from the device. The sequence view (file name kept for links) now shows current Wi-Fi setup; Device registration and delivery are later FHIR work.
 
-[16 October decisions](../planning/mvp-decisions-2026-10-16.md) replace the Device Alarm with a single error type that a short press clears once the cause is gone, and let the device pass on a patient that the server has linked. The session state view shows the Muted state; the sequence and context views show the optional patient.
+Historically, [16 October decisions](../planning/mvp-decisions-2026-10-16.md) replaced the Device Alarm with a single error type that a short press clears once the cause is gone, and let the device pass on a patient that the server has linked. The current catalogue supersedes those indication and clear rules. The session state view shows the Muted state.
 
 [13 October decisions](../planning/mvp-decisions-2026-10-13.md) fix the firmware layer structure. The software components view shows the [`coding/app/`](../coding/app/README.md) modules: L2 orchestrates (CONTROL, AUDIO, COMMUNICATION, SHELL), L1 holds hardware adapters and pure C libraries, and L0 is Zephyr. The threads view names the module behind each worker.

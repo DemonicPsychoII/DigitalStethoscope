@@ -1,5 +1,7 @@
 # Use cases (MVP)
 
+Current Wi-Fi/portal and feedback behaviour follows the [19 October resolutions](../planning/mvp-decisions-2026-10-19.md); earlier dated notes remain history.
+
 Abstract operator flows for the [system requirements](system-requirements.md), decided on 14 October 2026
 ([decisions](../planning/mvp-decisions-2026-10-14.md)). Detailed internal behavior is in the
 [architecture workflows](../architecture/README.md) and [detailed design](../design/interfaces-and-behavior.md).
@@ -13,11 +15,11 @@ Sources are in [`use-cases/`](use-cases/); render them as described in the [arch
 
 ![F2 Measure heart rate and deliver it](use-cases/rendered/uc_02_measure_and_deliver.svg)
 
-## F3 — Set up Wi-Fi and register the device
+## F3 — Set up Wi-Fi
 
 Changed on 15 October 2026 ([decisions](../planning/mvp-decisions-2026-10-15.md)): patient selection is no longer on the device.
 
-![F3 Set up Wi-Fi and register the device](use-cases/rendered/uc_03_assign_patient.svg)
+![F3 Set up Wi-Fi](use-cases/rendered/uc_03_assign_patient.svg)
 
 ## F4 — Handle faults
 

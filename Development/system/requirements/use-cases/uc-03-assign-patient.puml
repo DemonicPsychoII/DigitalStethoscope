@@ -1,29 +1,36 @@
 @startuml uc_03_assign_patient
 skinparam shadowing false
 skinparam defaultFontName SansSerif
-title F3 Set up Wi-Fi and register the device (REQ-11, REQ-12, REQ-15)
+title F3 Set up Wi-Fi (REQ-11, REQ-12)
 start
-if (Wi-Fi credentials stored?) then (no)
- :Device opens a password-protected hotspot;
- :Operator connects with a phone and opens the page;
- :Operator selects the network and enters its password;
- :Device saves the credentials and closes the hotspot;
-else (yes)
-endif
-:Device joins the Wi-Fi;
-if (Joined?) then (yes)
- if (Device registered before?) then (no)
-  :Device registers on the FHIR server\nand saves its device-id;
- else (yes)
-  :Device reuses its saved device-id;
+if (Boot with saved network?) then (yes)
+ :Join; 4 attempts total, 5 s between failures;
+ if (Address assigned?) then (yes)
+  :Keep station connected;
+  stop
  endif
+ :Show error; wait for 2 s hold in Idle;
+endif
+:Scan/cache, then open hotspot and portal;
+:Phone joins open hotspot; QR opens page;
+:Select network; password only if protected;
+:Queue join; browser polls;
+if (Selected network address assigned?) then (yes)
+ :Store credentials; retry once;
+ if (Saved?) then (yes)
+  :Show success;
+ else (no)
+  :Show save error; remain connected;
+ endif
+ :Show result 10 s; close hotspot/server;\nKeep station connected;
 else (no)
- :Device shows error; listening still works;
- note right: long press (at least 2 s) in Idle\nopens the hotspot page again
+ :Show join error; rescan with AP open;\nReturn to selection;
 endif
 stop
 floating note
- Patient assignment is a separate
- server workflow outside the MVP.
+ Cancel/timeout: notice then cleanup; retain an established station.
+ Start takes priority: stop setup safely before audio.
+ Wi-Fi-only errors preserve audio. Detailed retries/recovery: wifi-flow.
+ Time, secure transport and Device registration are later FHIR acceptance.
 end note
 @enduml
