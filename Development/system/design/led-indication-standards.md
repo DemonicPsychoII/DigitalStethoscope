@@ -26,7 +26,7 @@ Which colours, flash rates and patterns do the relevant standards require or rec
 - Usability guidance (IEC 60601-1-6) names green as a warning indicator as an example of a
   "controversial mapping". [S2]
 - Particular standards can replace Table 2 (example: IEC 60601-2-2 for HF surgical equipment). [S2]
-- Applies only if the device is ME (medical electrical) equipment under IEC 60601-1. This is not decided.
+- Applies only if the device is ME (medical electrical) equipment under IEC 60601-1. Applicability is not formally established; the working design assumption is recorded below.
 
 ### IEC 60073: coding principles for indicators
 
@@ -76,20 +76,18 @@ Which colours, flash rates and patterns do the relevant standards require or rec
   potential harm if the operator does not respond and from how fast that harm can occur. The priority
   definitions: high = immediate operator response required, medium = prompt operator response required.
   [S11] [S16]
-- The cell values below are from memory of the standard and are **not confirmed** by a source:
-
-  | Harm if no response | Immediate onset | Prompt onset | Delayed onset |
-  |---|---|---|---|
-  | Death or irreversible injury | High | High | Medium |
-  | Reversible injury | High | Medium | Low |
-  | Minor discomfort or injury | Medium | Low | Low or none |
+- Table 1 cell values have not been verified against the standard. No matrix is
+  reproduced here. The adopted priority labels below are provisional project
+  assignments pending hazard analysis and primary-source review.
 
 - Assessment for this device. The device does not monitor or treat; the clinician is present and can use
-  another stethoscope. No condition can cause death or irreversible injury.
+  another stethoscope. These are project assumptions, not a completed hazard analysis.
+  Harm severity and onset have not been established; serious harm cannot be excluded
+  by this desk research.
   - Audio-path faults (audio worker stall, microphone, DAC, control input): the clinician can misjudge or
-    miss heart sounds at once, which can delay a finding (reversible) with prompt onset: **Medium**.
+    miss heart sounds at once, which can delay a finding (reversible) with prompt onset: **Medium (provisional project assignment)**.
   - All other errors (startup, settings, reset, measurement, Wi-Fi, FHIR): the device or the record is not
-    available; the clinician sees it before relying on it; the effect is delayed or minor: **Low**.
+    available; the clinician sees it before relying on it; the effect is delayed or minor: **Low (provisional project assignment)**.
   - Statuses are information signals, not alarm signals.
 - Simultaneous errors: the LEDs show only the highest-priority error. IEC 60601-1-8 permits this only as an
   intelligent alarm system that suppresses lower-priority signals [S12]. Between errors of the same
@@ -137,11 +135,17 @@ Which colours, flash rates and patterns do the relevant standards require or rec
 3. Decided 19 October, not open: visibility on the device is assumed adequate; no reset-cause tests and no
    colour-vision checks are planned for the MVP.
 5. Clause checks done on 19 October: IEC 60601-1 7.8.1 Table 2 [S1]; IEC 60073 clause 4.2.3 [S4] [S6];
-   IEC 60601-1-8 6.3.2.2 and Table 2 [S12] [S13]. Only the duty-cycle value is still unconfirmed.
+   IEC 60601-1-8 6.3.2.2 and Table 2 [S12] [S13]. The priority matrix, applicability and harm assessment also remain unverified; secondary-source clause summaries do not resolve them.
 
 ## Sources
 
-All accessed 19 October 2026. Secondary sources and standard previews; the full standard texts were not
+Source records are also registered as `led_source_01` through `led_source_16` in
+[quellen.bib](../../../thesis-material/quellen.bib) and
+[quellen.md](../../../thesis-material/quellen.md). The inherited metadata and content
+have not been independently verified by this implementation review. Missing fields
+remain explicitly unverified.
+
+Original desk note access date: 19 October 2026. Secondary sources and standard previews; the full standard texts were not
 read.
 
 - [S1] NKK Switches, "IEC 60601-1, Edition 3.1 (JIS T 0601-1:2017) compliant", Table 2 quoted:

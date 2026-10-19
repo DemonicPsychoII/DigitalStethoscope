@@ -37,7 +37,7 @@ endif
 repeat
  :Scan/cache; 4 attempts;\n5 s between failures;
  if (Scan failed?) then (yes)
-  :ERROR; return to controller;\n2 s hold in Idle restarts setup;
+  :ERROR; show cause; close AP/server if open;\nreturn to controller; 2 s hold in Idle restarts setup;
   stop
  endif
  if (AP already open?) then (no)
@@ -48,14 +48,14 @@ repeat
   endif
  endif
  :Publish list; serve portal;
- :Selection / password view;\nBack returns to selection;
+ :Selection / password view;\nBack returns to selection;\nselection and typing send activity;
  if (Cancel or inactivity?) then (yes)
-  :Send closing notice; close setup;\nKeep established station, otherwise stop Wi-Fi;
+  :Send closing notice (short); close setup;\nKeep established station, otherwise stop Wi-Fi;
   stop
  elseif (Rescan?) then (yes)
   :Keep AP/server; refresh requested;
  else (Connect)
-  :Lock user cancellation;\nQueue one join; browser polls;
+  :Lock user cancellation;\nQueue one join; browser polls;\nrequests sent meanwhile are dropped;
   if (Selected network IP ready?) then (yes)
    :Save; retry once;
    if (Save failed twice?) then (yes)
@@ -73,19 +73,20 @@ repeat while (Rescan requested or join failed) is (yes)
 legend bottom
  Entry: no credentials, 2 s hold in Idle, or exhausted link recovery.
  Global listening/error rules apply at every step; Wi-Fi-only errors preserve audio.
+ Start is checked in 200 ms wait slices; audio waits for confirmed driver cancellation and teardown.
  Manual retry and later re-entry start at scanning. Final nodes return to controller.
 endlegend
 /'
 Shared workflow contract:
 Entry: setup at boot or Idle. Initial scan/cache -> open AP -> serve portal. Rescans retain AP/server. A 2 s hold in Idle re-enters after exit.
 Retry: boot/reconnect/scan 4 attempts total, 5 s between failures; portal join 1; save 2; AP start manual. Reset each operation budget.
-Recovery: boot/AP/exhausted scan -> manual 2 s hold; reconnect exhaustion -> automatic setup in Idle; portal join failure -> show error then rescan/selection; save failure -> connected with unsaved credentials, old valid record preserved.
+Recovery: boot/AP/exhausted scan -> manual 2 s hold; an exhausted rescan closes setup with its cause; reconnect exhaustion -> automatic setup in Idle, once, then only a 2 s hold; portal join failure -> show error then rescan/selection; save failure -> connected with unsaved credentials, old valid record preserved.
 Global setup failure: software error that prevents continuing -> ERROR, log/show cause, release setup resources, offline. A later 2 s hold can retry.
 Portal: open hotspot; QR portal URL after manual hotspot join; manual phone rejoin accepted. One document, password only for protected selection. Queue Connect; browser polls; confirm selected network and assigned address, not an old link. Publish cache only after scan-finished.
-Cancel/timer: form Back returns to selection. Setup Cancel closes setup. User cancel is locked from Connect submission through save/automatic closure. Timeout is 5 min inactivity; selection/password input/Rescan reset it; polling does not. Pause during actions.
-Closure: success or save warning 10 s, then AP/server off, station retained. Cancel/timeout notice before shutdown, no extra delay. Keep established station; otherwise stop attempts and release Wi-Fi services. Final nodes return to controller, not device shutdown.
-Global listening interrupt: stop setup/reconnect work before audio starts; keep established station. Serialize join completion vs teardown, reject late callbacks, finish atomic settings writes safely. Defer reconnection until Idle.
-Feedback: newest status/error catalogue applies. Violet: steady portal, breathing scan/join/reconnect, 3 quick flashes on connection. Red counted code at 2 Hz: Wi-Fi save=2, scan=3, boot join=4, reconnect=5, AP start=6. Serial log carries cause. Short press clears indication only; recovery/2 s setup hold does not require acknowledgement.
+Cancel/timer: form Back returns to selection. Setup Cancel closes setup. User cancel is locked from Connect submission through save/automatic closure; requests sent meanwhile are dropped. Timeout is 5 min inactivity; selection/password input (page activity request)/Rescan reset it; polling does not. Pause during actions.
+Closure: success or save warning 10 s, then AP/server off, station retained. Cancel/timeout/failure notice before shutdown, short (candidate 2 s), no extra 10 s delay. Keep established station; otherwise stop attempts and release Wi-Fi services. Final nodes return to controller, not device shutdown.
+Global listening interrupt: stop setup/reconnect work before audio starts; keep established station. Waits check Start in 200 ms slices; control waits for confirmed cancellation and teardown before audio starts. Total release latency is unverified. Serialize join completion vs teardown, reject late callbacks, finish atomic settings writes safely. Defer reconnection until Idle; an Idle link check (candidate every 2 min) detects link loss.
+Feedback: newest status/error catalogue applies. Violet: steady portal, breathing scan/join/reconnect, 3 quick flashes on connection. Red counted code at 2 Hz: Wi-Fi save=1, scan=2, boot join=3, reconnect=4, AP start=5. Serial log carries cause. Short press clears indication only; recovery/2 s setup hold does not require acknowledgement.
 Wi-Fi-only failures preserve functioning audio, allow offline Start and retain selected recovery paths. Other faults use the catalogue halt/clear rules. Generic settings failure is not Wi-Fi credential-save failure.
 Time/secure server transport/registration belong to later FHIR, not Wi-Fi setup completion. Hardware timing and radio/audio interference are not verified.
 '/

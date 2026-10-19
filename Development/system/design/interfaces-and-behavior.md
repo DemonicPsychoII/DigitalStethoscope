@@ -15,12 +15,15 @@ driver stack.
 
 - **L0 is Zephyr:** drivers, DMA, interrupts and the devicetree overlay. No project code.
 - **L1 adapters** call Zephyr driver APIs directly: `L1_I2S` (microphone RX and DAC TX),
-  `L1_WIFI` (Wi-Fi, TLS, time), `L1_PHYSICALINTERFACE` (buttons, switches, potentiometer, LEDs).
+  `L1_WIFI` (Wi-Fi, TLS, time), `L1_PORTAL` (HTTP server of the Wi-Fi setup page),
+  `L1_PHYSICALINTERFACE` (buttons, switches, potentiometer, LEDs).
 - **L1 libraries** are pure C with no RTOS, filesystem, UI or network includes: `L1_FILTER`,
   `L1_BPM`, `L1_FHIR`. They hold no shared state; each caller owns its instances.
 - **L2 orchestrates:** `L2_CONTROL`, `L2_AUDIO`, `L2_COMMUNICATION`, `L2_SHELL`. Only CONTROL
   writes mode state. The other L2 modules receive commands or snapshots from CONTROL and report
-  back through events; SHELL and the portal reach services only through CONTROL.
+  back through events; SHELL reaches services only through CONTROL. The setup page is the
+  exception: COMMUNICATION owns the setup workflow and reads the page requests itself, while
+  CONTROL sends it the 2 s hold and listening start/stop.
 
 Calls go downward; worker completion and health notifications are events to the controller, not
 direct writes into application state. MON observes bounded counters/events; it must not become an
@@ -186,8 +189,9 @@ exhaustion starts setup automatically in Idle. Defer all active recovery during 
 
 The hotspot is open. The phone joins it manually, then a QR code opens the portal URL;
 manual rejoin is accepted. Hide the password field for open selected networks. The
-HTTP handler submits typed events through CONTROL, outside controller/audio threads;
-the browser polls status. One portal join attempt waits for the selected network's
+HTTP handler queues typed requests (Connect, Rescan, Cancel, activity) for
+COMMUNICATION, which reads them with `portal_waitForRequest()`, outside controller/audio
+threads; the browser polls status. One portal join attempt waits for the selected network's
 address. A stale existing link is not a successful new join. On failure show the
 cause, rescan and return to selection. On success use `wifi_storeSettings()` in L1;
 retry saving once. Preserve the old valid record on failure. Show success or save
@@ -205,13 +209,22 @@ cause, clean up and return to offline operation. Later 2 s holds can retry.
 A Start request during setup cancels active setup, waits for safe teardown and then
 starts audio. Preserve an established station association. Serialize cancellation
 against join completion, reject stale callbacks and finish an atomic settings write
-safely. Setup/reconnect/delivery work is prohibited during listening; retained radio
+safely. The implementation uses a spinlock-protected requested listening state
+and a semaphore wakeup, so coalesced events cannot lose the final Start/Stop state.
+CONTROL serializes its commands with the release wait. No acknowledgement is
+valid until L1 confirms scan/connect cancellation and portal/DHCP/AP shutdown;
+failed cleanup keeps audio stopped and is retried. A new Start invalidates the
+previous acknowledgement. The 200 ms wait slice is a candidate event-check
+interval, not a measured bound on total teardown or settings-write latency.
+Setup/reconnect/delivery work is prohibited during listening; retained radio
 association and background traffic still require interference measurements.
 
 Time synchronization, secure server transport and Device registration are later FHIR
 work, not Wi-Fi setup completion conditions. The device does not select patients;
 it passes on only server-linked patient references. Existing persistent registration
 and delivery requirements remain for that later phase.
+
+<a id="led-indication-and-single-error-type--16-october"></a>
 
 ## LED indication and error handling — 19 October
 
@@ -240,7 +253,7 @@ conformity or implemented firmware. Recovery and acknowledgement are separate.
   the RGB LED). Flash rates follow IEC 60073: codes and quick flashes 2 Hz, slow blink 0.5 Hz. P22 defines
   pauses, breathing, dimming and visibility. Priorities follow the IEC 60601-1-8 approach. The research,
   sources and remaining gaps are in [LED indication standards](led-indication-standards.md). This design
-  is aligned with these standards; it is not a conformity claim.
+  records the adopted design and its deviations; it is not a conformity claim.
 - **Priority** (column): Medium for audio-path faults that can make the user misjudge heart sounds at
   once; Low for all other errors; Information for statuses. No error is High.
 - **Red button LED = error code.** The red LED shows the error code as a number of blinks. The code is

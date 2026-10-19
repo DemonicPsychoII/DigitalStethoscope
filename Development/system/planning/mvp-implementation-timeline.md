@@ -59,6 +59,8 @@ All dates are 2026. The carrier board (around 25 October) and the external equip
 
 **Output and acceptance evidence:** Record hash/config, device request/status, the stored Observation (Device/value/unit/time) checked on the HAPI page, and validator output. Explicit diagnostic harness sends only synthetic fixtures; do not bypass production source guards. Wrong CA/name, unset clock, unknown Device and lost response tested. This proves transport, not acoustic measurement accuracy; repeat with actual microphone session at INTEGRATE.
 
+<a id="portal--implement-hotspot-portal-and-patient-assignment"></a>
+
 ## PORTAL — Implement hotspot Wi-Fi setup
 
 **Inputs:** Working WIFI adapter on the DevKit and [19 October resolutions](mvp-decisions-2026-10-19.md); no FHIR server required for portal acceptance.

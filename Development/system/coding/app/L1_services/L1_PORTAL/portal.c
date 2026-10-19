@@ -126,7 +126,7 @@ int portal_waitForRequest(struct portal_request *request, k_timeout_t timeout)
 {
     ARG_UNUSED(request);
     /* Keep the contract: the caller relies on the wait, not a busy loop. */
-    k_sleep(timeout);
+    (void)k_sleep(timeout);
     return -EAGAIN;
 }
 

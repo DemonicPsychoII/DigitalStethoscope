@@ -78,8 +78,14 @@ def suites(paths: list[str]) -> dict[str, bool]:
         "docs": any(p.endswith((".md", ".puml")) for p in paths),
         "host": workflow
         or firmware
+        or application
         or any(
-            p.startswith("Development/system/coding/bringup-zephyr/")
+            p.startswith(
+                (
+                    "Development/system/coding/bringup-zephyr/",
+                    "Development/system/coding/app/",
+                )
+            )
             and ("/tools/" in p or "/tests/host/" in p)
             for p in paths
         ),

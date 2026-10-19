@@ -12,9 +12,8 @@ class SelectionTests(unittest.TestCase):
     def test_component_changes_do_not_build_the_other_application(self):
         application = suites(["Development/system/coding/app/main.c"])
         self.assertTrue(application["application"])
-        self.assertFalse(
-            application["firmware"] or application["native"] or application["host"]
-        )
+        self.assertFalse(application["firmware"] or application["native"])
+        self.assertTrue(application["host"])
         bringup = suites([APP + "src/main.c"])
         self.assertTrue(bringup["firmware"] and bringup["native"] and bringup["host"])
         self.assertFalse(bringup["application"])
@@ -27,6 +26,15 @@ class SelectionTests(unittest.TestCase):
         ):
             selected = suites([path])
             self.assertTrue(selected["application"] and selected["firmware"])
+
+    def test_application_host_tests_select_host_without_firmware(self):
+        selected = suites(
+            ["Development/system/coding/app/tests/host/test_communication.py"]
+        )
+        self.assertTrue(selected["host"])
+        self.assertFalse(
+            selected["application"] or selected["firmware"] or selected["native"]
+        )
 
     def test_daily_promotion_keeps_qc_without_repeating_verified_suites(self):
         promoted = select([], full=False, daily=True, reuse=True)

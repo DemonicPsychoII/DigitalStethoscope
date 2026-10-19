@@ -66,3 +66,32 @@ Created by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.
 The [14 October decisions](../planning/mvp-decisions-2026-10-14.md) and the [implementation timeline](../planning/mvp-implementation-timeline.md) define the remaining evidence.
 
 Updated by Claude-Opus-5.5 on behalf of Nico running in T3 Code through Claude Code.
+
+## Wi-Fi workflow host evidence — 19 October 2026
+
+Source: local implementation based on `10fde50`, with the workflow, service
+contracts and tests committed with this record. No target firmware revision or
+hardware measurement is claimed.
+
+- `python -m pytest -q Development/system/coding/app/tests/host`: 17 passed using
+  Zig 0.16.0 as a C11 host compiler through `CC`. The production communication
+  source is compiled with deterministic kernel and L1 substitutes. Cases cover
+  control bursts, stale acknowledgement, exact retry/result deadlines, Start
+  during scan/result display, cancellation and teardown failures, scan timeout,
+  two failed saves, scan-before-AP, one-time recovery, inactivity, retained station,
+  setup holds, partial startup failure and offline release after init failure.
+- ESP32-S3 application build: passed with the pinned Zephyr workspace. This builds
+  the service placeholders and orchestration, not a functioning radio or HTTP server.
+- Agent-gate tests: 90 passed. Build-tooling tests: 57 passed, including selection of
+  the workflow host tests for application changes. Documentation links, changed
+  PlantUML renders, Python lint and C formatting: passed. The Wi-Fi page was checked
+  in desktop and phone-width previews; no console errors were reported.
+- Full static verification stops at missing Windows `actionlint`; later workflow
+  and shell checks were not run. The combined bring-up/application host run had
+  4 failures and 69 fixture errors in the existing bring-up suite because a usable
+  `gcc` executable was unavailable; its 15 then-existing communication cases passed.
+  The final 17-case communication suite was run separately and passed.
+- Target cancellation latency, atomic flash behaviour, radio/audio interference,
+  HTTP request handling, visibility and the CONTROL integration remain unverified.
+
+Recorded by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.
