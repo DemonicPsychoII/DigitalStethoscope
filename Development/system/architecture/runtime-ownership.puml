@@ -29,7 +29,7 @@ component "Audio · L2_AUDIO\nL1_I2S RX / TX, L1_FILTER\nCapture / slow replay (
 component "BPM worker · L2_AUDIO\nL1_FILTER, L1_BPM\nWindow / aggregation" as bpm <<thread>>
 component "Storage\nOptional thread" as storage <<optional>>
 component "Display\nOptional thread" as display <<optional>>
-component "Communication\nL2_COMMUNICATION\nL1_FHIR, L1_WIFI" as net <<thread>>
+component "Communication\nL2_COMMUNICATION\nL1_FHIR, L1_WIFI, L1_PORTAL" as net <<thread>>
 irq --> inp : wake-up · semaphore
 adapters --> inp : input samples · driver reads
 inp --> ctl : control events · k_msgq
@@ -42,8 +42,8 @@ audio --> ctl : completion / fault · k_msgq
 ctl --> storage : file request · k_msgq
 storage --> audio : file audio · block handles / k_msgq
 ctl --> display : UI state · snapshot copy
-ctl --> net : BPM result + network lease · k_msgq
-net --> ctl : send outcome · k_msgq
+ctl --> net : Wi-Fi requested state · spinlock + semaphore\nLater: BPM result + network lease · k_msgq
+net --> ctl : confirmed Wi-Fi release · synchronized flag\nLater: send outcome · k_msgq
 legend bottom
   Grey / optional = beyond MVP.
   Display, touch, SD and capture / slower replay are optional.

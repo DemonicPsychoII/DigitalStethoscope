@@ -3,14 +3,14 @@
  * Project: DigitalStethoscope
  ***********************************************************************/
 
-/** @defgroup L2AUDIO AUDIO
+/** @defgroup L2_AUDIO AUDIO
  * @{
  * @file
  * L2 audio path and BPM worker, driven by control commands.
  */
 
-#ifndef L2AUDIO_H
-#define L2AUDIO_H
+#ifndef L2_AUDIO_H
+#define L2_AUDIO_H
 
 /***********************************************************************/
 /* INCLUDES                                                            */
@@ -36,6 +36,6 @@
 /* GLOBAL FUNCTION PROTOTYPES                                          */
 /***********************************************************************/
 
-#endif /* L2AUDIO_H */
+#endif /* L2_AUDIO_H */
 
 /** @} */

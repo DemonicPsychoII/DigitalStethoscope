@@ -3,14 +3,14 @@
  * Project: DigitalStethoscope
  ***********************************************************************/
 
-/** @defgroup L2SHELL SHELL
+/** @defgroup L2_SHELL SHELL
  * @{
  * @file
  * L2 shell commands and read-back through CONTROL.
  */
 
-#ifndef L2SHELL_H
-#define L2SHELL_H
+#ifndef L2_SHELL_H
+#define L2_SHELL_H
 
 /***********************************************************************/
 /* INCLUDES                                                            */
@@ -36,6 +36,6 @@
 /* GLOBAL FUNCTION PROTOTYPES                                          */
 /***********************************************************************/
 
-#endif /* L2SHELL_H */
+#endif /* L2_SHELL_H */
 
 /** @} */

@@ -10,8 +10,8 @@
  * lease.
  */
 
-#ifndef L2COMMUNICATION_H
-#define L2COMMUNICATION_H
+#ifndef L2_COMMUNICATION_H
+#define L2_COMMUNICATION_H
 
 /***********************************************************************/
 /* INCLUDES                                                            */
@@ -37,6 +37,13 @@
 /* GLOBAL FUNCTION PROTOTYPES                                          */
 /***********************************************************************/
 
-#endif /* L2COMMUNICATION_H */
+/**
+ * @brief Initialize the communication module.
+ *
+ * This includes the on-board WIFI module.
+ */
+void communication_init(void);
+
+#endif /* L2_COMMUNICATION_H */
 
 /** @} */
