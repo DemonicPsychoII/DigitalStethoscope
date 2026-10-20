@@ -3,7 +3,7 @@
  * Project: DigitalStethoscope
  ***********************************************************************/
 
-/** @addtogroup L1FHIR
+/** @addtogroup L1_FHIR
  * @{
  * @file
  * Implementation of the FHIR module.

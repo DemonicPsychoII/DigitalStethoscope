@@ -9,8 +9,8 @@
  * L1 adapter for buttons and LEDs over the Zephyr GPIO/ADC drivers.
  */
 
-#ifndef L1PHYSICALINTERFACE_H
-#define L1PHYSICALINTERFACE_H
+#ifndef L1_PHYSICALINTERFACE_H
+#define L1_PHYSICALINTERFACE_H
 
 /***********************************************************************/
 /* INCLUDES                                                            */
@@ -36,6 +36,6 @@
 /* GLOBAL FUNCTION PROTOTYPES                                          */
 /***********************************************************************/
 
-#endif /* L1PHYSICALINTERFACE_H */
+#endif /* L1_PHYSICALINTERFACE_H */
 
 /** @} */

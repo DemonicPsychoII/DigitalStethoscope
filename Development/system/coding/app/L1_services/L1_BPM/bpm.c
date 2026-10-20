@@ -3,7 +3,7 @@
  * Project: DigitalStethoscope
  ***********************************************************************/
 
-/** @addtogroup L1BPM
+/** @addtogroup L1_BPM
  * @{
  * @file
  * Implementation of the BPM module.

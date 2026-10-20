@@ -65,4 +65,10 @@ IEC 62304 class B and Zephyr as SOUP are recorded architecture intentions from S
 hazard analysis and the applicability of standards require separate substantiation; this package
 is not a compliance certificate. Candidate risks and controls are listed in the readiness plan.
 
+Working assumption (19 October): the device is designed as if it were ME (medical electrical) equipment
+under IEC 60601-1, with the chestpiece as applied part, as comparable electronic stethoscopes are. Errors
+are treated as technical alarm conditions with priorities under IEC 60601-1-8. This aligns the design;
+it is not a conformity claim. Basis and documented deviations:
+[LED indication standards](../design/led-indication-standards.md).
+
 Created by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.

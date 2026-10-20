@@ -3,7 +3,7 @@
  * Project: DigitalStethoscope
  ***********************************************************************/
 
-/** @addtogroup L2SHELL
+/** @addtogroup L2_SHELL
  * @{
  * @file
  * Implementation of the SHELL module.

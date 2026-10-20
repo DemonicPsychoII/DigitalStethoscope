@@ -5,13 +5,14 @@ title MVP BPM session
 start
 :Start Heart session;
 if (Heart + microphone + audio ready?) then (yes)
- :Freeze patient / point / analysis settings;
+ :Freeze point / analysis settings;
  repeat
   :Stream independent BPM analysis while listening;
-  :Reject identity changes with normal fault;
+  :Reject identity changes;
+  :If SESSION_CONTEXT_CHANGE: halt, restart required;
   if (Essential audio fault?) then (yes)
-   :Mute and latch Device Alarm;
-   :Require full device restart;
+   :Mute and latch Error;
+   :Follow catalogue clear rule; restart for microphone/DAC faults;
    stop
   endif
  repeat while (Stop pressed?) is (no) not (yes)
@@ -26,21 +27,21 @@ if (Heart + microphone + audio ready?) then (yes)
   :Latch normal BPM fault; no numeric value;
  endif
  if (Wi-Fi configured?) then (yes)
-  if (Patient / clock / trust / endpoint ready?) then (yes)
+  if (Device id / clock / trust / endpoint ready?) then (yes)
    if (Valid BPM?) then (yes)
     :One HTTPS/FHIR numeric result attempt;
    else (no)
     :One error report using validated server contract;
     :Never transmit numeric BPM;
    endif
-   if (Accepted + matching readback?) then (yes)
-    :Delivery verified;
+   if (Receipt 201 / 200?) then (yes)
+    :Delivery received;
    else (no)
     :Retry up to 3 times within 10 s;
-    :If still failing: latch normal fault;
+    :If still failing: latch DELIVERY_FAILURE;
    endif
   else (no)
-   :Latch configured-delivery normal fault;
+   :Latch DELIVERY_NOT_POSSIBLE;
   endif
  else (no)
   :No send attempt or Wi-Fi error;
@@ -52,6 +53,7 @@ endif
 :Idle; separate manual error acknowledgement;
 stop
 legend bottom
+  Wi-Fi-only failures preserve functioning audio.
   Streaming BPM requires no saved raw-session audio.
   Duration/windows/filter/quality targets remain proposals.
   Lung = listening only; no measurement/FHIR/error report.

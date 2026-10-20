@@ -24,11 +24,11 @@ cloud "Network / time" as net
 source --> device : sound
 operator --> device : controls
 device --> operator : audio / optional display
-device --> fhir : BPM Observation / readback request\nWi-Fi / HTTPS
-fhir --> device : status / readback
+device --> fhir : BPM Observation (Device;\npatient only if server-linked)\nWi-Fi / HTTPS
+fhir --> device : status (receipt)
 net --> device : connectivity / time
-phone --> device : patient / Wi-Fi selection\nhotspot portal (Idle only)
-device --> fhir : Device registration /\npatient list / Device.patient
+phone --> device : Wi-Fi network + password\nhotspot page (Idle only)
+device --> fhir : Device registration\n(once, id kept in flash)
 legend bottom
   Grey / optional = beyond MVP.
   Display, touch, SD and capture / slower replay are optional.

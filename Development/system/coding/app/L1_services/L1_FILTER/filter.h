@@ -3,14 +3,14 @@
  * Project: DigitalStethoscope
  ***********************************************************************/
 
-/** @defgroup L1FILTER FILTER
+/** @defgroup L1_FILTER FILTER
  * @{
  * @file
  * L1 pure C filter library; each caller owns its own instance.
  */
 
-#ifndef L1FILTER_H
-#define L1FILTER_H
+#ifndef L1_FILTER_H
+#define L1_FILTER_H
 
 /***********************************************************************/
 /* INCLUDES                                                            */
@@ -36,6 +36,6 @@
 /* GLOBAL FUNCTION PROTOTYPES                                          */
 /***********************************************************************/
 
-#endif /* L1FILTER_H */
+#endif /* L1_FILTER_H */
 
 /** @} */

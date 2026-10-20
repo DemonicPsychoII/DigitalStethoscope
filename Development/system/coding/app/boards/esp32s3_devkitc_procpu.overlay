@@ -5,5 +5,14 @@
  */
 
 /* The board default describes the WROOM-N8 module; match the fitted N16R8. */
-&flash0 { reg = <0x0 DT_SIZE_M(16)>; ranges = <0x0 0x0 DT_SIZE_M(16)>; };
-&psram0 { status = "okay"; size = <DT_SIZE_M(8)>; };
+&flash0 
+{ 
+    reg = <0x0 DT_SIZE_M(16)>; 
+    ranges = <0x0 0x0 DT_SIZE_M(16)>; 
+};
+
+&psram0 
+{ 
+    status = "okay"; 
+    size = <DT_SIZE_M(8)>; 
+};

@@ -1,6 +1,6 @@
 # MVP component implementation timeline
 
-**Current plan (Jira, decided 14 October 2026):** TICKET-178…TICKET-197 under [TICKET-129](https://nfrie.atlassian.net/browse/TICKET-129), one implementer (Nico), up to 8 h per weekday from 16 October to 2 December. 271 h planned effort (200 h base + 71 h allowance) plus 12 h for patient assignment ([TICKET-197](https://nfrie.atlassian.net/browse/TICKET-197)) on Saturdays and the slack before the carrier board arrives. Jira is the source of truth for dates; [14 October decisions](mvp-decisions-2026-10-14.md) define scope. Acceptance is the [system requirements](../requirements/system-requirements.md).
+**Current plan (Jira, decided 14 October 2026):** TICKET-178…TICKET-197 under [TICKET-129](https://nfrie.atlassian.net/browse/TICKET-129), one implementer (Nico), up to 8 h per weekday from 16 October to 2 December. 271 h planned effort (200 h base + 71 h allowance) plus 12 h for the hotspot page and Device registration ([TICKET-197](https://nfrie.atlassian.net/browse/TICKET-197)) on Saturdays and the slack before the carrier board arrives. Jira is the source of truth for dates; [14 October decisions](mvp-decisions-2026-10-14.md) define scope, with the [15 October changes](mvp-decisions-2026-10-15.md) (no patient selection on the device, minimal delivery). Acceptance is the [system requirements](../requirements/system-requirements.md).
 
 **Realism (14 October):** the weekday plan has about 1 h of slack. It holds only if Saturdays cover TICKET-197 and meetings, documentation and illness stay small. Hours exceed the registered software, hardware and integration budget (156 h) by more than the 64 h buffer. Writing runs 3–30 December; submission is 11 January 2027, with writing and proofreading finished by 4 January at the latest, ideally 28 December.
 
@@ -14,9 +14,9 @@ The chart is an 11 October snapshot of the Jira timeline (TICKET-178 to TICKET-1
 |---|---|---|---|---|
 | [TICKET-178](https://nfrie.atlassian.net/browse/TICKET-178) | Zephyr project structure, board configuration, reproducible build | 5 h | 10-16 → 10-16 | BASE |
 | [TICKET-179](https://nfrie.atlassian.net/browse/TICKET-179) | Wi-Fi connection, hotspot page and saved credentials | 24 h | 10-16 → 10-21 | WIFI |
-| [TICKET-197](https://nfrie.atlassian.net/browse/TICKET-197) | Patient assignment portal and Device registration | 12 h | 10-17 → 10-27 (Saturdays) | PORTAL |
+| [TICKET-197](https://nfrie.atlassian.net/browse/TICKET-197) | Wi-Fi setup portal (19 October: registration moved to FHIR; Jira title not updated here) | 12 h | 10-17 → 10-27 (Saturdays) | PORTAL |
 | [TICKET-180](https://nfrie.atlassian.net/browse/TICKET-180) | Clock synchronization and HTTPS certificate validation | 5 h | 10-21 → 10-22 | WIFI |
-| [TICKET-181](https://nfrie.atlassian.net/browse/TICKET-181) | FHIR delivery with retries, error reporting, matching readback | 20 h | 10-22 → 10-26 | FHIR |
+| [TICKET-181](https://nfrie.atlassian.net/browse/TICKET-181) | FHIR delivery with retries, error reporting, matching readback (readback dropped 15 October) | 20 h | 10-22 → 10-26 | FHIR |
 | [TICKET-182](https://nfrie.atlassian.net/browse/TICKET-182) | Verify Wi-Fi/FHIR communication on the ESP32-S3 | 10 h | 10-26 → 10-27 | NETTEST |
 | [TICKET-183](https://nfrie.atlassian.net/browse/TICKET-183) | Threads, message queues and audio buffer ownership | 5 h | 10-28 → 10-28 | CTL |
 | [TICKET-184](https://nfrie.atlassian.net/browse/TICKET-184) | I2S drivers and microphone/DAC pin assignments | 6 h | 10-28 → 10-29 | AUDIO |
@@ -41,35 +41,37 @@ All dates are 2026. The carrier board (around 25 October) and the external equip
 
 **Output and acceptance evidence:** Pin release tag/SHA and SDK; build ESP32-S3 baseline; define frozen result, error event and network lease contracts. No physical peripheral qualification implied.
 
-## WIFI — Implement Wi-Fi configuration and clock mapping
+## WIFI — Implement Wi-Fi configuration and recovery
 
 **Inputs:** ESP32-S3 DevKit, lab AP and private deployment configuration. Carrier PCB not required.
 
-**Output and acceptance evidence:** Serial/shell provisioning as the first and diagnostic path; the operator path is the PORTAL Wi-Fi page. Credentials stored outside source and never logged. DHCP/DNS, finite connection timeout, SNTP on configured lab network before measurement; freeze UTC/monotonic anchor. Unset time forbids patient send; unconfigured Wi-Fi causes no send error; configured connection failure leaves offline listening available.
+**Output and acceptance evidence:** Serial/shell provisioning as the first and diagnostic path; the operator path is the PORTAL Wi-Fi page. Credentials stored outside source and never logged. DHCP/DNS, finite operation timeouts and current retry/recovery rules. Clock mapping/SNTP belongs to the later FHIR phase. Unset time forbids a later send; unconfigured Wi-Fi causes no send error; configured connection failure leaves offline listening available.
 
 ## FHIR — Implement HTTPS/FHIR delivery and invalid-result reporting
 
-**Inputs:** Frozen result/error contracts, endpoint https://nglegion:8443/fhir, ca.pem, synthetic Patient/stetho-test-01.
+**Inputs:** Frozen result/error contracts, endpoint https://nglegion:8443/fhir, ca.pem, registered Device id.
 
-**Output and acceptance evidence:** Conditional create (`POST` + `If-None-Exist` on the stable identifier) plus matching GET, numeric value comparison; CA, hostname and clock verification. Up to 3 retries within 10 s, then a visible error ([14 October](mvp-decisions-2026-10-14.md)). Invalid BPM has no numeric value; agree and validate missing-value error representation with server. Production fixture provenance guard remains intact.
+**Output and acceptance evidence:** Time synchronization/clock mapping, secure transport and persistent Device registration now belong to this phase (19 October). Conditional create (`POST` + `If-None-Exist` on the stable identifier) with `device` reference, `subject` only when the server has linked a patient ([16 October](mvp-decisions-2026-10-16.md)); `201`/`200` is the receipt, no readback ([15 October](mvp-decisions-2026-10-15.md)); CA, hostname and clock verification. Up to 3 retries within 10 s, then a visible error ([14 October](mvp-decisions-2026-10-14.md)). Invalid BPM has no numeric value; agree and validate missing-value error representation with server. Production fixture provenance guard remains intact.
 
 ## NETTEST — Verify one device-originated FHIR integration run
 
 **Inputs:** Flashed DevKit, configured lab network/server and diagnostic test payload; owner executes device operations.
 
-**Output and acceptance evidence:** Record hash/config, device request/status, ID/patient/value/unit/time matching readback and validator output. Explicit diagnostic harness sends only synthetic-patient fixtures; do not bypass production source guards. Wrong CA/name, unset clock, missing Patient, lost response and failed readback tested. This proves transport, not acoustic measurement accuracy; repeat with actual microphone session at INTEGRATE.
+**Output and acceptance evidence:** Record hash/config, device request/status, the stored Observation (Device/value/unit/time) checked on the HAPI page, and validator output. Explicit diagnostic harness sends only synthetic fixtures; do not bypass production source guards. Wrong CA/name, unset clock, unknown Device and lost response tested. This proves transport, not acoustic measurement accuracy; repeat with actual microphone session at INTEGRATE.
 
-## PORTAL — Implement hotspot portal and patient assignment
+<a id="portal--implement-hotspot-portal-and-patient-assignment"></a>
 
-**Inputs:** Working WIFI/FHIR client on the DevKit, [12 October decisions](mvp-decisions-2026-10-12.md), lab server with synthetic Patient/stetho-test-01 and a seeded in-progress Encounter.
+## PORTAL — Implement hotspot Wi-Fi setup
 
-**Output and acceptance evidence:** Plain HTML pages. Boot `GET`/create-only `PUT` of the own Device without erasing an assignment. Long press ≥2 s in Idle and the no-credentials boot path open a WPA2 hotspot with timeout. Patient list loaded before the switch and shown with load time; explicit confirmation; `PATCH Device.patient` plus matching readback. Wi-Fi page stores credentials write-only. Tested: rejected long press outside Idle, timeout, cancel, empty/failed list, failed PATCH/readback, wrong Wi-Fi credentials, no secrets or patient data in logs. Verify SoftAP/HTTP server/station switching on target first; a failed spike is reported immediately because it changes the plan.
+**Inputs:** Working WIFI adapter on the DevKit and [19 October resolutions](mvp-decisions-2026-10-19.md); no FHIR server required for portal acceptance.
+
+**Output and acceptance evidence:** One document with queued join/status polling; initial scan/cache before open AP, explicit/implicit rescan with AP open; password field only for protected selected networks; open hotspot and QR portal URL. Address assignment precedes saving; save retries once and failure retains connection/old settings. Verify inactivity pause/reset, both Cancel levels, 10 s results, Start-driven teardown, manual phone rejoin and retry paths. No patient selection. Time/secure transport/Device registration belongs to FHIR, not portal acceptance. No secrets in logs. See current workflow and feedback catalogue.
 
 ## CTL — Implement session controller and alarm states
 
 **Inputs:** Confirmed Start/Stop/session decisions and network completion events.
 
-**Output and acceptance evidence:** Start blocked with busy indication during analysis/sending. Reject mode/patient/context changes in session without mutation; normal fault. Separate acknowledgement click clears normal Wi-Fi latch only manually; no implicit Start. DA mutes and latches until full restart, no button recovery. Stop <15 s cancels; Lung no BPM/FHIR. Portal state: long press accepted only in Idle; Start and session commands rejected while the hotspot is open. Host race/state matrix passes.
+**Output and acceptance evidence:** Start blocked with busy indication during analysis/sending. Reject mode/context changes in session without mutation; SESSION_CONTEXT_CHANGE halts and requires restart. Separate acknowledgement click clears normal Wi-Fi latch only manually; no implicit Start. Fault clear/restart behaviour follows the current feedback catalogue ([19 October](mvp-decisions-2026-10-19.md)). Stop <15 s cancels; Lung no BPM/FHIR. Setup: long press accepted only in Idle; Start safely terminates setup before audio. Retain established station association; Wi-Fi-only errors do not mute working audio. Host race/state matrix passes.
 
 ## BOARD — Verify latest evaluation carrier and component wiring
 
@@ -81,7 +83,7 @@ All dates are 2026. The carrier board (around 25 October) and the external equip
 
 **Inputs:** INMP441, PCM5102A line output and verified carrier.
 
-**Output and acceptance evidence:** Signed 24-bit normalization, bounded internal DMA pools, DAC output, volume and controls. Record physical input/output proof and timing. No replay or full-session audio storage in MVP. DA injection and full-restart recovery verified.
+**Output and acceptance evidence:** Signed 24-bit normalization, bounded internal DMA pools, DAC output, volume and controls. Record physical input/output proof and timing. No replay or full-session audio storage in MVP. Audio-fault injection and short-press recovery verified.
 
 ## DSP — Implement independent listening and analysis filters
 
@@ -99,7 +101,7 @@ All dates are 2026. The carrier board (around 25 October) and the external equip
 
 **Inputs:** Verified streaming result and network/controller contracts.
 
-**Output and acceptance evidence:** Real microphone Heart session produces one frozen result with measured interval/time; stop, analysis and send block Start. Readback matches; invalid BPM generates only agreed error report. Session subject is the frozen local assignment; pre-send Device.patient mismatch or missing assignment sends nothing. Failed sends abort, Lung/offline/cancel and DA paths verified. Remove rolling-estimate 2.5 s age gate from completed-result eligibility; retain provenance/time guards.
+**Output and acceptance evidence:** Real microphone Heart session produces one frozen result with measured interval/time; stop, analysis and send block Start. Server receipt (`201`/`200`) for the result; invalid BPM generates only agreed error report. The Observation references the stored Device id, and the patient only if the server has linked one ([16 October](mvp-decisions-2026-10-16.md)). Failed sends abort, Lung/offline/cancel and muted-Error paths verified. Remove rolling-estimate 2.5 s age gate from completed-result eligibility; retain provenance/time guards.
 
 ## VERIFY — Verify MVP timing, resources and fault containment
 

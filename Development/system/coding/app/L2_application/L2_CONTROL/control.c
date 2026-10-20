@@ -3,7 +3,7 @@
  * Project: DigitalStethoscope
  ***********************************************************************/
 
-/** @addtogroup L2CONTROL
+/** @addtogroup L2_CONTROL
  * @{
  * @file
  * Implementation of the CONTROL module.

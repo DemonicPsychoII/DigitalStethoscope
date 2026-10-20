@@ -2,52 +2,44 @@
 skinparam shadowing false
 skinparam defaultFontName SansSerif
 skinparam sequenceMessageAlign center
-title MVP patient assignment and delivery — owner decisions 12 October
-actor "Operator\n(button / phone browser)" as op
-participant "Digital stethoscope\n(no display)" as dev
-database "HAPI FHIR server\n(KIS)" as fhir
-
-== 1 · Boot and register ==
-dev -> dev : startup checks → Idle
-alt no stored Wi-Fi credentials
-  dev -> dev : Idle enters Portal, open hotspot
-  op -> dev : phone enters Wi-Fi credentials
-  dev -> dev : save, close hotspot
+title Wi-Fi setup — current sequence
+actor "Operator / phone" as op
+participant "Controller / communication" as dev
+participant "L1 Wi-Fi adapter" as wifi
+database "Flash settings" as flash
+dev -> flash : read saved credentials
+alt saved credentials
+ dev -> wifi : join; wait for selected network address\n4 attempts total; 5 s between failures
+ note right of dev : Boot exhaustion: error; 2 s hold in Idle.\nLink-loss exhaustion: automatic setup in Idle.
 end
-dev -> dev : join hospital Wi-Fi
-note right of dev : connection fails →\nIdle + normal Wi-Fi fault,\noffline listening, no registration
-dev -> dev : SNTP time sync
-dev -> fhir : GET /Device/{stetho-id}
-alt Device absent (404 or 410)
-  dev -> fhir : PUT /Device/{stetho-id} (no patient)
-else Device present
-  fhir --> dev : Device (adopt patient as local assignment)
-  dev -> fhir : PATCH metadata only, never patient
+opt no credentials or setup requested in Idle
+ dev -> wifi : scan/cache (4 attempts total)
+ dev -> wifi : open AP; start portal
+ op -> dev : join open hotspot; QR opens portal URL
+ dev --> op : selection; password only if protected
+ op -> dev : Connect
+ dev --> op : request queued; poll status
+ dev -> wifi : one join; confirm selected network + address
+ alt join failed
+  dev --> op : show failure
+  dev -> wifi : rescan with AP open
+  dev --> op : new list after scan-finished
+ else joined
+  dev -> flash : store credentials; retry once
+  alt both saves failed
+   dev --> op : save warning; connection retained
+  else saved
+   dev --> op : success
+  end
+  dev -> dev : 10 s result display
+  dev -> wifi : stop portal/AP; retain station
+ end
 end
-
-== 2 · Assign patient (Idle only) ==
-op -> dev : long press >= 2 s
-dev -> fhir : GET /Patient?_has:Encounter:patient:status=in-progress\n&_elements=name,birthDate,identifier&_count=20
-fhir --> dev : Bundle: admitted patients, minimal fields
-dev -> dev : leave hospital Wi-Fi,\nopen WPA2 hotspot with timeout
-op -> dev : phone joins hotspot, opens portal
-dev --> op : name / birth date / ID + list load time
-op -> dev : pick and confirm patient
-dev -> dev : close hotspot, rejoin hospital Wi-Fi
-dev -> fhir : PATCH /Device/{id} patient\nIf-Match: W/"n" (409 → no change)
-dev -> fhir : GET /Device/{id} (readback)
-note right of dev : mismatch or failure →\nunassigned + normal fault
-
-== 3 · Measure and send ==
-op -> dev : Start (no network work)
-dev -> dev : freeze local assignment,\nlog assignment present + Device version\n(no patient data)
-dev -> dev : listen → BPM (device only)
-op -> dev : Stop
-dev -> fhir : GET /Device/{id} (pre-send check,\nrecord meta.versionId)
-note right of dev : missing or different patient →\nno send + normal fault
-dev -> fhir : POST /Observation\nIf-None-Exist: identifier=…|device-boot-session\nsubject + device, LOINC 8867-4, /min,\neffectiveDateTime = interval end
-fhir --> dev : 201 created / 200 existing, Location
-dev -> fhir : GET /Observation/{id from Location} (readback: full payload\nmatch, numeric value)
-dev -> fhir : GET /Device/{id} (post-readback recheck)
-note right of dev : mismatch, failure or Device\nversionId changed since check →\nUnverified, normal fault, no retry
+note over op, flash
+ Cancel/timeout: notice then cleanup, keep an established station.
+ Start: safely stop setup before audio; keep existing association.
+ Wi-Fi-only failures preserve working audio; counted feedback follows catalogue.
+ Time, secure server transport and Device registration are later FHIR work.
+ See wifi-state / wifi-flow for complete recovery and global rules.
+end note
 @enduml

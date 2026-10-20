@@ -33,6 +33,10 @@ Firmware README states configuration and tokens remain in RAM, FHIR sending requ
 
 > **Überholt (Stand integration, 2026-10-12):** Beschreibt das Sendeverhalten der Bring-up-Firmware (gültiger aktueller BPM, Low-Priority-Worker). Das MVP-Zielverhalten ist anders festgelegt. Aktuell: Nur eine abgeschlossene Messsitzung (≥15 s, Aggregation nach Stop) ist sendefähig; Netzwerkarbeit nur im Idle unter exklusivem Netzwerk-Lease; ungültiger BPM sendet keinen Zahlenwert, sondern eine getrennte Fehlermeldung; Patient aus `Device.patient` mit Prüfung vor dem `PUT`. Vorgeschlagen: NET merkt sich dabei `Device.meta.versionId` und liest das Device nach dem Observation-Readback erneut; jede Versionsänderung ergibt „Unverified“ mit normalem Fehler statt „Sent“. FHIR bietet keine atomare Bedingung über `Device` und `Observation`, eine KIS-Änderung zwischen Prüfung und `PUT` bleibt daher ein Restrisiko, das nur sichtbar gemacht wird. – siehe [MVP-Entscheidungen 11.10.](../Development/system/planning/mvp-decisions-2026-10-11.md#confirmed-scope-and-behavior), [MVP-Entscheidungen 12.10.](../Development/system/planning/mvp-decisions-2026-10-12.md#proposed-behavior).
 
+> **Überholt (2026-10-15):** Die Observation enthält keinen Patienten mehr, nur die gespeicherte Device-ID. Es gibt keine Prüfung von `Device.patient`, kein Readback und keine Device-Versionsprüfung. `201`/`200` ist die Empfangsbestätigung; bis zu 3 Wiederholungen bleiben (14.10.). Die Patientenzuordnung ist ein getrennter Server-Workflow außerhalb des MVP. – siehe [MVP-Entscheidungen 15.10.](../Development/system/planning/mvp-decisions-2026-10-15.md).
+>
+> **Ergänzt (2026-10-16):** Hat der Server dem Gerät schon einen Patienten zugeordnet, übernimmt das Gerät ihn als `subject` in die Observation. Das Gerät wählt nie selbst einen Patienten aus; siehe [Entscheidungen 16. Oktober](../Development/system/planning/mvp-decisions-2026-10-16.md).
+
 **Ursprung:** [Development/system/coding/bringup-zephyr/README.md:227-262](../Development/system/coding/bringup-zephyr/README.md#L227)
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
 

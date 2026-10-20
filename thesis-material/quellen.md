@@ -1414,3 +1414,156 @@ Verhelst, W., & Roelands, M. (1993). An overlap-add technique based on waveform 
 **Prüfnachweis Stage 1:** IEEE Xplore title/record search result verified; full text not opened.
 
 **Zitiert von:** [U051](03-grundlagen-technisch/06-time-stretch.md#a062) (ersetzt), [U052](08-evaluation/07-firmware-funktion-ressourcen.md#a074) (ersetzt), [C023](04-stand-der-technik.md#c023), [C024](08-evaluation/07-firmware-funktion-ressourcen.md#c024)
+
+<a id="nico_wifi_decisions_20261019"></a>
+### nico_wifi_decisions_20261019
+
+Nico (full surname not supplied). *Wi-Fi, portal and feedback alignment: owner decisions*. Personal communication, T3 Code, 19 October 2026. [Conversation](t3-thread://v1/d5e44f69-2ecc-4a3e-917b-31a7b084c12b), accessed 19 October 2026. [Local decision record](../Development/system/planning/mvp-decisions-2026-10-19.md).
+
+**Source type:** Project decisions. No claim of implementation, measurement or standards conformity.
+
+**Cited by:** [System architecture](06-systemarchitektur.md), current Wi-Fi design and decision record.
+
+<a id="led_source_01"></a>
+### led_source_01
+
+NKK Switches, "IEC 60601-1, Edition 3.1 (JIS T 0601-1:2017) compliant", Table 2 quoted. [Source](https://www.nkkswitches.com/pdf/NKKMedTech%20Ref.pdf).
+
+**Verification:** Inherited LED desk-research reference S1. Author, full publication title, venue/publisher, year/version and clause metadata remain unverified. Original reported access: 19 October 2026; not independently re-accessed in this implementation review.
+
+**Cited by:** [LED indication standards](../Development/system/design/led-indication-standards.md). Secondary evidence; no conformity or completed hazard-analysis claim.
+
+<a id="led_source_02"></a>
+### led_source_02
+
+Elsmar Cove forum, "Medical device warning lights colors" (P. Selvey). [Source](https://elsmar.com/elsmarqualityforum/threads/medical-device-warning-lights-colors.63082/).
+
+**Verification:** Inherited LED desk-research reference S2. Author, full publication title, venue/publisher, year/version and clause metadata remain unverified. Original reported access: 19 October 2026; not independently re-accessed in this implementation review.
+
+**Cited by:** [LED indication standards](../Development/system/design/led-indication-standards.md). Secondary evidence; no conformity or completed hazard-analysis claim.
+
+<a id="led_source_03"></a>
+### led_source_03
+
+MECA, "Alarm standards cross-reference" (2015). [Source](https://60601-1.com/wp-content/uploads/2019/04/meca-alarm-standards-cross-reference-2015-04-01.pdf).
+
+**Verification:** Inherited LED desk-research reference S3. Author, full publication title, venue/publisher, year/version and clause metadata remain unverified. Original reported access: 19 October 2026; not independently re-accessed in this implementation review.
+
+**Cited by:** [LED indication standards](../Development/system/design/led-indication-standards.md). Secondary evidence; no conformity or completed hazard-analysis claim.
+
+<a id="led_source_04"></a>
+### led_source_04
+
+PLCtalk forum, EN 60073 clause 4.2.3 quoted. [Source](https://www.plctalk.net/forums/threads/e-stop-manual-reset-button.86446/page-2).
+
+**Verification:** Inherited LED desk-research reference S4. Author, full publication title, venue/publisher, year/version and clause metadata remain unverified. Original reported access: 19 October 2026; not independently re-accessed in this implementation review.
+
+**Cited by:** [LED indication standards](../Development/system/design/led-indication-standards.md). Secondary evidence; no conformity or completed hazard-analysis claim.
+
+<a id="led_source_05"></a>
+### led_source_05
+
+IEEE P1621 draft standard for user interface elements (December 2002). [Source](https://ea-controls.lbl.gov/1621/docs/1621dec1502.pdf).
+
+**Verification:** Inherited LED desk-research reference S5. Author, full publication title, venue/publisher, year/version and clause metadata remain unverified. Original reported access: 19 October 2026; not independently re-accessed in this implementation review.
+
+**Cited by:** [LED indication standards](../Development/system/design/led-indication-standards.md). Secondary evidence; no conformity or completed hazard-analysis claim.
+
+<a id="led_source_06"></a>
+### led_source_06
+
+Rockwell Automation, document 140G-IN067 (LED signalling per IEC 60073). [Source](https://literature.rockwellautomation.com/idc/groups/literature/documents/in/140g-in067_-mu-p.pdf).
+
+**Verification:** Inherited LED desk-research reference S6. Author, full publication title, venue/publisher, year/version and clause metadata remain unverified. Original reported access: 19 October 2026; not independently re-accessed in this implementation review.
+
+**Cited by:** [LED indication standards](../Development/system/design/led-indication-standards.md). Secondary evidence; no conformity or completed hazard-analysis claim.
+
+<a id="led_source_07"></a>
+### led_source_07
+
+IDEC, LD6A signal tower datasheet. [Source](https://us.idec.com/idec-us/en/USD/medias/LD6ASeries.pdf).
+
+**Verification:** Inherited LED desk-research reference S7. Author, full publication title, venue/publisher, year/version and clause metadata remain unverified. Original reported access: 19 October 2026; not independently re-accessed in this implementation review.
+
+**Cited by:** [LED indication standards](../Development/system/design/led-indication-standards.md). Secondary evidence; no conformity or completed hazard-analysis claim.
+
+<a id="led_source_08"></a>
+### led_source_08
+
+Norstat, signalling catalogue 2019. [Source](https://norstat.com/wp-content/uploads/2019/08/2019-Signaling-Catalog-Complete.pdf).
+
+**Verification:** Inherited LED desk-research reference S8. Author, full publication title, venue/publisher, year/version and clause metadata remain unverified. Original reported access: 19 October 2026; not independently re-accessed in this implementation review.
+
+**Cited by:** [LED indication standards](../Development/system/design/led-indication-standards.md). Secondary evidence; no conformity or completed hazard-analysis claim.
+
+<a id="led_source_09"></a>
+### led_source_09
+
+JBTH article (received September 2023), table after NBR IEC 60601-1-8:2022. [Source](https://jbth.com.br/index.php/JBTH/article/download/322/259/).
+
+**Verification:** Inherited LED desk-research reference S9. Author, full publication title, venue/publisher, year/version and clause metadata remain unverified. Original reported access: 19 October 2026; not independently re-accessed in this implementation review.
+
+**Cited by:** [LED indication standards](../Development/system/design/led-indication-standards.md). Secondary evidence; no conformity or completed hazard-analysis claim.
+
+<a id="led_source_10"></a>
+### led_source_10
+
+Elsmar Cove forum, "Light indication". [Source](https://elsmar.com/elsmarqualityforum/threads/light-indication.89977/).
+
+**Verification:** Inherited LED desk-research reference S10. Author, full publication title, venue/publisher, year/version and clause metadata remain unverified. Original reported access: 19 October 2026; not independently re-accessed in this implementation review.
+
+**Cited by:** [LED indication standards](../Development/system/design/led-indication-standards.md). Secondary evidence; no conformity or completed hazard-analysis claim.
+
+<a id="led_source_11"></a>
+### led_source_11
+
+IEC 60601-1-8:2006/Amd 1:2012 preview (iTeh). [Source](https://cdn.standards.iteh.ai/samples/59935/58e3f4a16b774421af85d948685a6ae9/IEC-60601-1-8-2006-Amd-1-2012.pdf).
+
+**Verification:** Inherited LED desk-research reference S11. Author, full publication title, venue/publisher, year/version and clause metadata remain unverified. Original reported access: 19 October 2026; not independently re-accessed in this implementation review.
+
+**Cited by:** [LED indication standards](../Development/system/design/led-indication-standards.md). Secondary evidence; no conformity or completed hazard-analysis claim.
+
+<a id="led_source_12"></a>
+### led_source_12
+
+Har-El standards notes, IEC 60601-1-8 clause 6.3.2 "Visual alarm signals". [Source](https://standards.har-el.com/Projects/181701/60601-1-8/html/6-3-2-Visual-Generation.htm).
+
+**Verification:** Inherited LED desk-research reference S12. Author, full publication title, venue/publisher, year/version and clause metadata remain unverified. Original reported access: 19 October 2026; not independently re-accessed in this implementation review.
+
+**Cited by:** [LED indication standards](../Development/system/design/led-indication-standards.md). Secondary evidence; no conformity or completed hazard-analysis claim.
+
+<a id="led_source_13"></a>
+### led_source_13
+
+Elsmar Cove forum, "About the intelligent alarm system in IEC 60601-1-8" (Table 2 duty-cycle testing; Table 202 in the 2003 edition). [Source](https://elsmar.com/elsmarqualityforum/threads/about-the-intelligent-alarm-system-in-iec60601-1-8-anaesthetic-systems.46779/).
+
+**Verification:** Inherited LED desk-research reference S13. Author, full publication title, venue/publisher, year/version and clause metadata remain unverified. Original reported access: 19 October 2026; not independently re-accessed in this implementation review.
+
+**Cited by:** [LED indication standards](../Development/system/design/led-indication-standards.md). Secondary evidence; no conformity or completed hazard-analysis claim.
+
+<a id="led_source_14"></a>
+### led_source_14
+
+3M, Littmann Electronic Stethoscope Model 3200 user manual. [Source](https://multimedia.3m.com/mws/media/612830O/electronic-stethoscope.pdf).
+
+**Verification:** Inherited LED desk-research reference S14. Author, full publication title, venue/publisher, year/version and clause metadata remain unverified. Original reported access: 19 October 2026; not independently re-accessed in this implementation review.
+
+**Cited by:** [LED indication standards](../Development/system/design/led-indication-standards.md). Secondary evidence; no conformity or completed hazard-analysis claim.
+
+<a id="led_source_15"></a>
+### led_source_15
+
+Eko Devices, Eko CORE Digital Attachment and Eko Digital Stethoscope Model E6 manual (FCC filing). [Source](https://fcc.report/FCC-ID/2ANB3-E6/4527557.pdf).
+
+**Verification:** Inherited LED desk-research reference S15. Author, full publication title, venue/publisher, year/version and clause metadata remain unverified. Original reported access: 19 October 2026; not independently re-accessed in this implementation review.
+
+**Cited by:** [LED indication standards](../Development/system/design/led-indication-standards.md). Secondary evidence; no conformity or completed hazard-analysis claim.
+
+<a id="led_source_16"></a>
+### led_source_16
+
+iTeh catalogue entry, EN 60601-1-8:2007 (priority definitions, Table 1). [Source](https://standards.iteh.ai/catalog/standards/clc/d6083c2c-a4a2-4a0d-95dd-da54d0593012/en-60601-1-8-2007).
+
+**Verification:** Inherited LED desk-research reference S16. Author, full publication title, venue/publisher, year/version and clause metadata remain unverified. Original reported access: 19 October 2026; not independently re-accessed in this implementation review.
+
+**Cited by:** [LED indication standards](../Development/system/design/led-indication-standards.md). Secondary evidence; no conformity or completed hazard-analysis claim.
