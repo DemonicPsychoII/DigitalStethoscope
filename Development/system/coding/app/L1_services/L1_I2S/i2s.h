@@ -3,14 +3,14 @@
  * Project: DigitalStethoscope
  ***********************************************************************/
 
-/** @defgroup L1I2S I2S
+/** @defgroup L1_I2S I2S
  * @{
  * @file
  * L1 adapter over the Zephyr I2S drivers for microphone RX and DAC TX.
  */
 
-#ifndef L1I2S_H
-#define L1I2S_H
+#ifndef L1_I2S_H
+#define L1_I2S_H
 
 /***********************************************************************/
 /* INCLUDES                                                            */
@@ -36,6 +36,6 @@
 /* GLOBAL FUNCTION PROTOTYPES                                          */
 /***********************************************************************/
 
-#endif /* L1I2S_H */
+#endif /* L1_I2S_H */
 
 /** @} */

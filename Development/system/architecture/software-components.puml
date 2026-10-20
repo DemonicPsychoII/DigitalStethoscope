@@ -30,6 +30,7 @@ package "L1 Services" as services {
   component "L1_PHYSICALINTERFACE\nbuttons / LEDs" as phy
   component "L1_I2S\nmic RX / DAC TX" as i2s
   component "L1_WIFI\nWi-Fi / TLS / time" as wifi
+  component "L1_PORTAL\nsetup HTTP server" as portal
   component "Display / touch / SD" as spi <<optional>>
   phy -[hidden]right-> i2s
   i2s -[hidden]right-> wifi
@@ -56,6 +57,7 @@ aud -down-> i2s
 aud -down-> filter
 aud -down-> bpm
 com -down-> fhir
+com -down-> portal : requests / page status
 com -down-> wifi
 adapters -down-> zephyr : driver calls
 mon -down-> ctl : health events

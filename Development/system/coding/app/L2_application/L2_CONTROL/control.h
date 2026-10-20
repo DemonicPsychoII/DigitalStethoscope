@@ -3,15 +3,15 @@
  * Project: DigitalStethoscope
  ***********************************************************************/
 
-/** @defgroup L2CONTROL CONTROL
+/** @defgroup L2_CONTROL CONTROL
  * @{
  * @file
  * L2 controller; single writer of mode state and owner of the network
  * lease.
  */
 
-#ifndef L2CONTROL_H
-#define L2CONTROL_H
+#ifndef L2_CONTROL_H
+#define L2_CONTROL_H
 
 /***********************************************************************/
 /* INCLUDES                                                            */
@@ -37,6 +37,6 @@
 /* GLOBAL FUNCTION PROTOTYPES                                          */
 /***********************************************************************/
 
-#endif /* L2CONTROL_H */
+#endif /* L2_CONTROL_H */
 
 /** @} */

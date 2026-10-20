@@ -1,5 +1,13 @@
 # MVP decisions and evaluation proposals — 11 October 2026
 
+> **Superseded in part (19 October 2026):** current Wi-Fi setup, recovery and feedback
+> follow the [19 October resolutions](mvp-decisions-2026-10-19.md). Earlier text below
+> is historical where it conflicts; unrelated delivery decisions remain separate.
+
+> **Superseded in part (16 October 2026):** a single error type replaces the Device Alarm; no fault needs a restart — see the [16 October decisions](mvp-decisions-2026-10-16.md).
+>
+> **Superseded in part (15 October 2026):** results carry the Device, not a patient; patient context is no longer frozen on the device — see the [15 October decisions](mvp-decisions-2026-10-15.md).
+>
 > **Superseded in part (14 October 2026):** see the [14 October decisions](mvp-decisions-2026-10-14.md) for retries, requirements, scope and schedule.
 
 Nico's answers in T3 thread `58a691a9-4492-46b4-b65e-39cde5d8e3fc` supersede older workflow proposals. This records decisions and planned evidence, not firmware behavior or completed hardware validation. Numeric values below are proposals requested by Nico, not approved thresholds or medical claims. [12 October decisions](mvp-decisions-2026-10-12.md) add the hotspot portal and patient assignment to the MVP.

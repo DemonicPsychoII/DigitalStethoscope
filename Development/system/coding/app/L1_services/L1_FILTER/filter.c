@@ -3,7 +3,7 @@
  * Project: DigitalStethoscope
  ***********************************************************************/
 
-/** @addtogroup L1FILTER
+/** @addtogroup L1_FILTER
  * @{
  * @file
  * Implementation of the FILTER module.

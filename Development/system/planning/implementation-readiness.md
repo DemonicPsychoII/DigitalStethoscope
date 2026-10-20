@@ -11,14 +11,14 @@ The original register below is historical preparation context. [11 October owner
 
 | ID | Decision / conflict | Proposed draft treatment | Blocks |
 |---|---|---|---|
-| D01 | S04 network outside live vs S03 stress with simultaneous encrypted sending | Follow saved S04; Idle lease, test accidental overlap and radio interference. Mechanism needs review. | NET/CTL handoff and target timing |
+| D01 | S04 network outside live vs S03 stress with simultaneous encrypted sending | No active network jobs while listening; retain station association; Start tears down setup first. Test radio interference and cancellation (19 October). | NET/CTL handoff and target timing |
 | D02 | Startup Idle vs ready/live; button for clip vs BPM-session start | **Decided:** silent Idle, explicit Start (REQ-01); clip/replay and touch removed from the MVP. | — |
 | D03 | Raw int32 capture vs bring-up filtered int16; clip length, replay speed changes | **Removed:** capture/replay optional and out of the MVP (14 October). | — |
 | D04 | S02 3 s window/15–30 s vs bring-up 8 s rolling estimate | Candidate 8 s window/1 s update/30 s session; whole-cycle estimator; median accepted estimates with overlap-aware coverage. Warm-up/weighting open. | BPM session and estimator acceptance |
 | D05 | Supported range, error, reference and quality | **Decided 14 October:** ±5 BPM or ±10 % against pulse oximeter/smartwatch (REQ-06); no fixed quality threshold. Host recordings/reference decided during the Wi-Fi/FHIR phase. | BPM validation; not diagnostic claim |
 | D06 | Murmur/BPM bands and smooth changes | Bring-up 40–800/25–150 Hz are candidates; chosen after the device works in the filter study (TICKET-189), which also feeds each listening filter into BPM detection. | DSP coefficient baseline / scientific evaluation |
 | D07 | External amplifier/headphone output | **Closed 14 October:** the device ends at the DAC line output; the amplifier is outside the project scope. | — |
-| D08 | FHIR server/patient/profile/auth/point/time | R4 HAPI candidate; `effectiveDateTime` = interval end and conditional create/readback (decided 12 October); approve point coding, precision and trusted-clock assumptions. Patient: decided 12 October via hotspot portal and `Device.patient` ([decisions](mvp-decisions-2026-10-12.md)). | NET serialization/deployment |
+| D08 | FHIR server/patient/profile/auth/point/time | R4 HAPI candidate; `effectiveDateTime` = interval end and conditional create (decided 12 October); no readback, `201`/`200` is the receipt (15 October); approve point coding, precision and trusted-clock assumptions. Patient: **decided 15 October** — the Observation references only the registered Device; a separate server workflow links Device and data to the patient, outside the MVP ([decisions](mvp-decisions-2026-10-15.md)). | NET serialization/deployment |
 | D09 | S03 acoustic characterization vs current S05 exclusion | **Closed:** follows S05; no acoustic transfer-chain measurement. | — |
 | D10 | Timing/resource/queue/response margins and soak length | Keep 8 ms/≤4 ms board targets; review P10–P15 capacities/thresholds; candidate 30 min soak. Measure first; priority alone insufficient. | Scheduling and acceptance budgets |
 | D11 | Thesis folder/skeleton migration | **Decided 14 October:** new firmware lives in [`coding/app/`](../coding/app/README.md); the evaluation firmware stays separate. Layer layout per [13 October](mvp-decisions-2026-10-13.md): L0 = Zephyr, L1 = hardware adapters and pure C libraries, L2 = orchestration. | — |
@@ -32,12 +32,12 @@ The original register below is historical preparation context. [11 October owner
 |---|---|---|
 | Loud output or transient at startup or on changes | Silent startup, smooth transitions, saturation | REQ-01, REQ-04; VT-03 |
 | Misleading BPM from S1/S2, noise, stale/missing audio | Whole-cycle estimator, coverage/gap rules, error instead of a number | REQ-06, REQ-08; VT-06/VT-09 |
-| Wrong patient or time transmitted | Frozen session context, assignment readback and pre-send check, validated clock | REQ-09, REQ-12; VT-07/VT-14 |
-| Wrong patient assigned without a device display, or assignment left from the previous patient | Explicit phone confirmation with name/birth date, readback before use, session freeze, pre-send server comparison, no assignment → no send; assignment lifetime open | REQ-12; VT-14 |
-| Patient data or credentials exposed through the hotspot | WPA2 with per-device passphrase, Idle-only with timeout, minimal fields, write-only password, no logs | REQ-11, REQ-12; VT-14/VT-11 |
-| Duplicate or lost result after a lost response | Conditional create with stable identifier, up to 3 retries, readback | REQ-10; VT-07 |
+| Wrong time or wrong device transmitted | Validated clock, Device id stored in flash and reused, frozen result | REQ-09, REQ-15; VT-07 |
+| Result linked to the wrong patient | Moved to the server workflow outside the MVP (15 October); the device never selects a patient and passes on only a patient that the server has linked (16 October). The server workflow must show device, time and value before linking. | — (server workflow) |
+| Credentials exposed through the hotspot | Open hotspot (owner decision), boot/Idle setup with inactivity timeout, write-only credential field, no credential logs; no patient selection on the device | REQ-11, REQ-12; VT-14/VT-11 |
+| Duplicate or lost result after a lost response | Conditional create with stable identifier, up to 3 retries | REQ-10; VT-07 |
 | Audio stalls due to TLS or memory pressure | Bounded workers, internal DMA, network lease, monitored deadlines | REQ-02, REQ-05; VT-02/VT-08 |
-| Peripheral absent or failed | Startup checks; essential faults mute until restart | REQ-13; VT-01/VT-12 |
+| Peripheral absent or failed | Startup checks; mute/restart and acknowledgement per current feedback catalogue (19 October) | REQ-13; VT-01/VT-12 |
 
 ## Work packages to reach implementation
 
@@ -66,7 +66,7 @@ Follow the [component timeline](mvp-implementation-timeline.md): release/contrac
 - [ ] Each P row has an approved value or explicitly deferred dependency with no invented pass criterion.
 - [ ] Unconfirmed carrier wiring has an authorized verification plan.
 - [ ] Interfaces, ownership, failure outcomes and timing/resource budgets reviewed.
-- [ ] Every system requirement (REQ-01…REQ-14) has a test Nico can run and a pass criterion.
+- [ ] Every system requirement (REQ-01…REQ-15) has a test Nico can run and a pass criterion.
 - [ ] Classification/SOUP/risk claims are separated from demonstrated compliance and device safety.
 - [ ] Estimate includes familiarization, meetings, documentation, reviews and correction/test iterations.
 - [ ] Specification, diagrams and detailed design agree after review edits.

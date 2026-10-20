@@ -3,14 +3,14 @@
  * Project: DigitalStethoscope
  ***********************************************************************/
 
-/** @defgroup L1BPM BPM
+/** @defgroup L1_BPM BPM
  * @{
  * @file
  * L1 pure C BPM library: envelope, autocorrelation and aggregation.
  */
 
-#ifndef L1BPM_H
-#define L1BPM_H
+#ifndef L1_BPM_H
+#define L1_BPM_H
 
 /***********************************************************************/
 /* INCLUDES                                                            */
@@ -36,6 +36,6 @@
 /* GLOBAL FUNCTION PROTOTYPES                                          */
 /***********************************************************************/
 
-#endif /* L1BPM_H */
+#endif /* L1_BPM_H */
 
 /** @} */

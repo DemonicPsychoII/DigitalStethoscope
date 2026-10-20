@@ -9,8 +9,8 @@
  * L1 pure C library that serializes results into FHIR Observations.
  */
 
-#ifndef L1FHIR_H
-#define L1FHIR_H
+#ifndef L1_FHIR_H
+#define L1_FHIR_H
 
 /***********************************************************************/
 /* INCLUDES                                                            */
@@ -36,6 +36,6 @@
 /* GLOBAL FUNCTION PROTOTYPES                                          */
 /***********************************************************************/
 
-#endif /* L1FHIR_H */
+#endif /* L1_FHIR_H */
 
 /** @} */

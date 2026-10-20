@@ -67,8 +67,8 @@ into `app`. Avoid introducing a second owner for peripherals already used by Zep
 ## HTTP versus HTTPS effort
 
 HTTPS carries the same HTTP request/response semantics inside TLS. Wi-Fi, DHCP,
-DNS, request serialization, response parsing, timeouts and FHIR acknowledgement/
-readback verification are needed for both. HTTPS adds the following work:
+DNS, request serialization, response parsing, timeouts and the FHIR acknowledgement
+(`201`/`200` receipt; readback dropped on 15 October) are needed for both. HTTPS adds the following work:
 
 | Area | HTTP | HTTPS addition / current project state |
 |---|---|---|
@@ -85,15 +85,15 @@ Incremental implementation effort is smaller here than in a blank project becaus
 The largest remaining uncertainty is provisioning and on-target interoperability,
 not the existence of S3 HTTPS support. Network work stays outside live listening;
 measure handshake resource use and recovery before accepting that separation.
-TLS protects transport; server authorization and correct patient/result association
-remain application responsibilities. The current sender's success logging must not
-be confused with the proposed acknowledgement-plus-matching-readback contract.
+TLS protects transport; server authorization and the patient/result association
+(a server workflow since 15 October) remain application responsibilities. The current
+sender's success logging must not be confused with the checked `201`/`200` receipt.
 
 ## Preparation checklist
 
 - Present the component table with historical evidence and current verification gaps.
 - Demonstrate a pinned network-enabled build; with owner-authorized target access,
-  exercise Wi-Fi, DNS, SNTP, valid TLS, certificate rejection and FHIR delivery/readback.
+  exercise Wi-Fi, DNS, SNTP, valid TLS, certificate rejection and FHIR delivery.
 - Record flash, RAM, TLS peak heap/stack and handshake duration on the S3.
 - Choose an actual external library only if needed, then demonstrate its dependency
   audit and minimal C/C++ integration rather than promising generic compatibility.

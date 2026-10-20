@@ -3,7 +3,7 @@
  * Project: DigitalStethoscope
  ***********************************************************************/
 
-/** @addtogroup L1I2S
+/** @addtogroup L1_I2S
  * @{
  * @file
  * Implementation of the I2S module.

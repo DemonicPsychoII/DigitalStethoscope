@@ -36,7 +36,7 @@ ui --> cpu : touch
 cpu --> ui : display
 sd --> cpu : SPI
 cpu --> server : Wi-Fi / HTTPS
-server --> cpu : status / readback
+server --> cpu : status (receipt)
 legend bottom
   Grey / optional = beyond MVP.
   Display, touch, SD and capture / slower replay are optional.

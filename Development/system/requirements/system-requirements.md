@@ -1,9 +1,11 @@
 # System requirements (MVP)
 
-Decided on 14 October 2026 ([decisions](../planning/mvp-decisions-2026-10-14.md)). Every requirement is checked by Nico on
+Decided on 14 October 2026 ([decisions](../planning/mvp-decisions-2026-10-14.md)); REQ-09 and REQ-12 changed and REQ-15 added on 15 October ([decisions](../planning/mvp-decisions-2026-10-15.md)); REQ-09 and REQ-13 changed on 16 October ([decisions](../planning/mvp-decisions-2026-10-16.md)). Every requirement is checked by Nico on
 the finished device with available equipment: headphones, phone, laptop, the HAPI web page, a pulse oximeter or
 smartwatch and test-tone audio. How the device achieves it is design ([detailed design](../design/interfaces-and-behavior.md),
 [design parameters](../design/parameters.md)). Flows are shown in the [use-case diagrams](use-cases.md).
+
+Wi-Fi and feedback requirements follow the [19 October resolutions](../planning/mvp-decisions-2026-10-19.md). Registration and certificate tests remain later FHIR acceptance, not Wi-Fi setup prerequisites.
 
 Methods: **T** test (measured), **D** demonstration (shown working).
 
@@ -17,12 +19,13 @@ Methods: **T** test (measured), **D** demonstration (shown working).
 | REQ-06 | A heart session of at least 15 s gives a heart rate. | 10 sessions of 30 s on own chest, pulse oximeter or smartwatch at the same time. | T | Each result within ±5 BPM or ±10 % of the reference. |
 | REQ-07 | Stopping before 15 s gives no result. | Stop after 10 s. | T | Nothing sent to the server; nothing in the serial log as a result. |
 | REQ-08 | A poor signal gives an error instead of a number. | Chestpiece in open air or rubbed during the session. | T | Error on the server and on the device (LED and serial log); no BPM value. |
-| REQ-09 | A valid result reaches the assigned patient on the FHIR server. | Run a session, then open the HAPI web page. | T | Observation under the right patient with correct value and time, within 10 s of Stop. |
+| REQ-09 | A valid result reaches the FHIR server, linked to this device, and to its patient if the server has linked one. | Run a session without a server-side patient link, then link a synthetic patient to the Device on the server, restart and run a second session; open the HAPI web page. | T | Both Observations reference this device's Device, with correct value and time, within 10 s of Stop; only the second one references the linked patient. |
 | REQ-10 | A failed delivery is retried up to 3 times, then the device shows an error. | Stop the HAPI container before or during sending; repeat with the server restarted during the retries. | T | At most 4 attempts within 10 s; error shown if all fail; never a duplicate Observation. |
-| REQ-11 | Wi-Fi needs a password and the server certificate is checked. | Use a wrong Wi-Fi password; point the device at a server with a different certificate. | T | No connection; nothing sent; error shown. |
-| REQ-12 | A long press (≥2 s) opens a hotspot where the operator picks the patient. | Connect a phone, enter the hotspot password, choose a patient, run a session. | T | The result is stored under the chosen patient. |
-| REQ-13 | A serious fault mutes the device until it is restarted. | Unplug the microphone while listening. | T | Muted plus alarm indication; only a restart clears it. |
-| REQ-14 | A minor fault is shown and cleared with the button. | Stop the HAPI container, run a valid session and stop it so delivery fails; press the button, then press Start. | T | Error shown after the failed delivery; the button clears it; listening works after Start. |
+| REQ-11 | Selected open networks need no password; protected networks require valid credentials. Secure server transport checks the server certificate. | Test an open network, wrong/correct protected-network password, then a different server certificate in the FHIR phase. | T | Open/correct joins work; wrong credentials fail; invalid server certificate prevents sending. |
+| REQ-12 | Without credentials or after a 2 s hold in Idle, the device provides an open hotspot portal to select Wi-Fi. Saved credentials survive restart. | Join hotspot without a password; use QR portal URL; select open/protected networks; verify address before saving, restart and rejoin; inject save failure. | T | Selected network joins; saved credentials persist; failed saving shows an error while retaining the connection and old valid settings. |
+| REQ-13 | Faults follow the current feedback catalogue; Wi-Fi-only faults preserve working audio. Restart-required faults mute and block Start until restart. | Inject a Wi-Fi-only fault during listening, then a microphone fault; test short press and restart after restoring the microphone. | T | Wi-Fi fault does not interrupt audio; microphone fault mutes, short press does not restore it, restart/checks restore operation. |
+| REQ-14 | Errors show the catalogue context colour and counted red code; short-press-clearable errors can be acknowledged without implicit Start/retry. | Inject Wi-Fi join, credential-save and delivery failures; compare code/context, acknowledge and separately request Start or setup. | T | Correct code and serial cause; acknowledgement follows catalogue; no implicit Start or manual retry. |
+| REQ-15 | The device keeps its server registration across restarts. | Run a session, restart the device three times, run a session after each restart. | T | One Device for this device on the HAPI page; all Observations reference it. |
 
 ## Retired requirements
 

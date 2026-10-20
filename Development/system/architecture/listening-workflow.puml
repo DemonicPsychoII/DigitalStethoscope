@@ -4,6 +4,7 @@ skinparam defaultFontName SansSerif
 title Listening
 start
 :Idle;
+:Safely stop setup work; retain established station;
 :Start listening;
 repeat
  if (Lung mode or Raw selected?) then (yes)
@@ -23,12 +24,15 @@ repeat
   endif
  endif
  :Update listening filter / volume;
- :Reject session identity changes with normal fault;
-repeat while (Stop / fault?) is (no) not (yes)
+ :Reject session identity changes;
+ :If SESSION_CONTEXT_CHANGE: halt, restart required;
+repeat while (Stop / halting fault?) is (no) not (yes)
 :Mute;
 :Idle / Fault;
 stop
 legend bottom
+  Wi-Fi-only faults preserve functioning audio.
+  Other faults follow catalogue halt/clear rules.
   Grey / optional = beyond MVP.
   Display, touch, SD and capture / slower replay are optional.
 endlegend
