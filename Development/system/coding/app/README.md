@@ -29,8 +29,9 @@ Display/UI, touch, SD storage and replay (WSOLA) are optional and not part of th
 
 This directory is a standalone Zephyr application. `common/main.c` returns to the idle
 thread; most component `.c` / `.h` files reserve places for implementation.
-`L1_WIFI` and `L1_PORTAL` declare their APIs with placeholder bodies, and
-`L2_COMMUNICATION` implements the Wi-Fi workflow on top of them. `common/types.h` reserves the shared data types.
+`L1_WIFI` and `L1_PORTAL` declare their APIs with placeholder bodies.
+`L2_COMMUNICATION` starts its thread and calls `wifi_init()`; the Wi-Fi workflow on
+top of these APIs is not implemented yet. `common/types.h` reserves the shared data types.
 The board overlay and `prj.conf` set the fitted N16R8 module (16 MB flash,
 8 MB octal PSRAM; GPIO33–37 stay reserved). The serial shell and deferred logging
 are enabled; no audio processing, networking, storage, UI or monitoring is active.

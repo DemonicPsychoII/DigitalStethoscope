@@ -50,8 +50,9 @@ if (-not $pc.Success) { throw 'No " **  PC 0x..." line found in the crash output
 $addresses = @($pc.Groups[1].Value)
 if ($a0.Success) {
     # Windowed calls store the call size in the top two bits of A0; code addresses
-    # on the ESP32-S3 start with 0b01, so restore those bits.
-    $value = ([Convert]::ToUInt32($a0.Groups[1].Value.Substring(2), 16) -band 0x3FFFFFFF) -bor 0x40000000
+    # on the ESP32-S3 start with 0b01, so restore those bits. A0 is the return
+    # address; subtract the 3-byte CALLn/CALLXn size to decode the call line itself.
+    $value = (([Convert]::ToUInt32($a0.Groups[1].Value.Substring(2), 16) -band 0x3FFFFFFF) -bor 0x40000000) - 3
     $addresses += ('0x{0:x8}' -f $value)
 }
 

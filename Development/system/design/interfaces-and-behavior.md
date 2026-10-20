@@ -209,7 +209,7 @@ cause, clean up and return to offline operation. Later 2 s holds can retry.
 A Start request during setup cancels active setup, waits for safe teardown and then
 starts audio. Preserve an established station association. Serialize cancellation
 against join completion, reject stale callbacks and finish an atomic settings write
-safely. The implementation uses a spinlock-protected requested listening state
+safely. The planned implementation uses a spinlock-protected requested listening state
 and a semaphore wakeup, so coalesced events cannot lose the final Start/Stop state.
 CONTROL serializes its commands with the release wait. No acknowledgement is
 valid until L1 confirms scan/connect cancellation and portal/DHCP/AP shutdown;

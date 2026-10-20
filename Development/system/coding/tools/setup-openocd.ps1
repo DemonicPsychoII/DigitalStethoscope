@@ -30,7 +30,8 @@ if (-not (Test-Path -LiteralPath $FwWorkspace)) {
     throw "Pinned toolchain missing in $FwWorkspace. Run setup-toolchain.ps1 first."
 }
 
-$temp = Join-Path ([System.IO.Path]::GetTempPath()) "openocd-esp32-$([guid]::NewGuid())"
+# Stage on the workspace volume: Move-Item cannot move a directory across volumes.
+$temp = Join-Path $FwWorkspace "openocd-esp32-download-$([guid]::NewGuid())"
 New-Item -ItemType Directory -Path $temp | Out-Null
 try {
     $zip = Join-Path $temp $archive

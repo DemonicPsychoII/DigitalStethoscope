@@ -69,8 +69,9 @@ Updated by Claude-Opus-5.5 on behalf of Nico running in T3 Code through Claude C
 
 ## Wi-Fi workflow host evidence — 19 October 2026
 
-Source: local implementation based on `10fde50`, with the workflow, service
-contracts and tests committed with this record. No target firmware revision or
+Source: local implementation based on `10fde50`. This branch holds only the
+service contracts; the workflow and the host tests are in the stacked PR #50
+(`feature/implement-wifi-service`). No target firmware revision or
 hardware measurement is claimed.
 
 - `python -m pytest -q Development/system/coding/app/tests/host`: 17 passed using
