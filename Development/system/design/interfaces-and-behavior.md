@@ -8,28 +8,37 @@ in host tests and adapters on target. No implementation or firmware migration is
 ## Static dependency and module map
 
 The thesis firmware lives in [`coding/app/`](../coding/app/README.md) (D11, decided 14 October); its README is the
-authoritative folder and layer map. L1 holds thin hardware adapters over Zephyr drivers and pure-C libraries;
-L2 orchestrates them. The earlier capability-based split (`application/`, `services/`, `platform/` in
-`coding/thesis-zephyr/`) is superseded. Keep `bringup-zephyr/` as evaluation evidence.
+authoritative folder and layer map. The [13 October decisions](../planning/mvp-decisions-2026-10-13.md) fix the layer
+layout. The earlier capability-based split (`application/`, `services/`, `platform/` in `coding/thesis-zephyr/`) is
+superseded. Keep `bringup-zephyr/` as evaluation evidence. Do not reuse the unused custom HAL skeleton as a second
+driver stack.
 
-The components below are logical responsibilities, not folders. They map to `coding/app/` as follows:
-INP → `L1_PHYSICALINTERFACE` + `L2_CONTROL`; CTL → `L2_CONTROL`; AUD → `L1_I2S` + `L2_AUDIO`;
-LIS → `L1_FILTER` + `L2_AUDIO`; BPM → `L1_BPM` + `L2_AUDIO`; NET → `L1_WIFI` + `L1_FHIR` + `L2_COMMUNICATION`;
-UI → LEDs in `L1_PHYSICALINTERFACE`, shell in `L2_SHELL`; MON → `MONITOR`. REC, STO and the display are optional
-and not part of the MVP. Pure-C libraries have no RTOS/filesystem/UI/network includes. Worker completion and
-health notifications are events to the controller, not direct writes into application state.
-MON observes bounded counters/events; it must not become an unrestricted caller of every API.
+- **L0 is Zephyr:** drivers, DMA, interrupts and the devicetree overlay. No project code.
+- **L1 adapters** call Zephyr driver APIs directly: `L1_I2S` (microphone RX and DAC TX),
+  `L1_WIFI` (Wi-Fi, TLS, time), `L1_PHYSICALINTERFACE` (buttons, switches, potentiometer, LEDs).
+- **L1 libraries** are pure C with no RTOS, filesystem, UI or network includes: `L1_FILTER`,
+  `L1_BPM`, `L1_FHIR`. They hold no shared state; each caller owns its instances.
+- **L2 orchestrates:** `L2_CONTROL`, `L2_AUDIO`, `L2_COMMUNICATION`, `L2_SHELL`. Only CONTROL
+  writes mode state. The other L2 modules receive commands or snapshots from CONTROL and report
+  back through events; SHELL and the portal reach services only through CONTROL.
 
-| Component | Owns / writes | Inputs | Outputs / proposed operations |
-|---|---|---|---|
-| INP | debounce/contact/calibration state | ISR notice, GPIO/ADC/touch samples | `publish_control(event)`; stable-state reconciliation |
-| CTL | settings, workflow state, generation, patient/point | control/completion/health events | `dispatch(event)`, `snapshot()`, session-tagged commands, network lease |
-| AUD | DMA pool, source generation, transport progress | mic/fixture blocks, source/stop commands | normalized `AudioBlock`, capture/analysis fan-out, TX submission |
-| LIS | listening coefficients and filter/ramp history | block, command snapshot | saturating mono output, levels/clipping |
-| BPM | analysis window, estimates, coverage, aggregation | original-rate blocks, session configuration | validity updates and immutable `MeasurementResult` |
-| UI | redraw progress/display model/shell state | `StateSnapshot` | bounded SPI redraw, LED state, control requests |
-| NET | frozen job, connection, outcome | result/config + Idle lease | serialized Observation, outcome, lease-release acknowledgement |
-| MON | anomaly counters, health evidence | worker checkpoints/counters | fault events, evidence snapshots |
+Calls go downward; worker completion and health notifications are events to the controller, not
+direct writes into application state. MON observes bounded counters/events; it must not become an
+unrestricted caller of every API.
+
+The components below are logical responsibilities, not folders; the module column shows where each one is realized.
+REC, STO and the display are optional and not part of the MVP.
+
+| Component | Module | Owns / writes | Inputs | Outputs / proposed operations |
+|---|---|---|---|---|
+| INP | `L1_PHYSICALINTERFACE`; events to `L2_CONTROL` | debounce/contact/calibration state | ISR notice, GPIO/ADC/touch samples | `publish_control(event)`; stable-state reconciliation |
+| CTL | `L2_CONTROL` | settings, workflow state, generation, patient/point | control/completion/health events | `dispatch(event)`, `snapshot()`, session-tagged commands, network lease |
+| AUD | `L2_AUDIO` over `L1_I2S` | DMA pool, source generation, transport progress | mic/fixture blocks, source/stop commands | normalized `AudioBlock`, capture/analysis fan-out, TX submission |
+| LIS | `L2_AUDIO` with `L1_FILTER` | listening coefficients and filter/ramp history | block, command snapshot | saturating mono output, levels/clipping |
+| BPM | `L2_AUDIO` worker with `L1_FILTER`, `L1_BPM` | analysis window, estimates, coverage, aggregation | original-rate blocks, session configuration | validity updates and immutable `MeasurementResult` |
+| UI | shell in `L2_SHELL`; LEDs via `L1_PHYSICALINTERFACE` | redraw progress/display model/shell state | `StateSnapshot` | bounded SPI redraw, LED state, control requests |
+| NET | `L2_COMMUNICATION` with `L1_FHIR`, `L1_WIFI` | frozen job, connection, outcome | result/config + Idle lease | serialized Observation, outcome, lease-release acknowledgement |
+| MON | `MONITOR` | anomaly counters, health evidence | worker checkpoints/counters | fault events, evidence snapshots |
 
 Touch acquisition, calibration and physical input normalization belong to INP. UI renders the
 snapshot; there is no Display-thread-to-Input-thread dependency. Shell commands and decoded
@@ -180,5 +189,15 @@ Values are in [design parameters](parameters.md). Optional parts (replay, Lung, 
 | Network | Connection, time sync, TLS and HTTP only under the Idle lease. FHIR R4 Observation (LOINC 8867-4, UCUM /min, `effectiveDateTime` = interval end), conditional create with up to 3 retries, then matching readback. HTTPS verifies chain, hostname and validity against the lab CA; no plain-HTTP fallback. Credentials stay out of source and logs. Device registration and patient assignment follow the [12 October decisions](../planning/mvp-decisions-2026-10-12.md). |
 | Indication | Activity LED on during measurement and pulsing while Busy; distinct pattern while the hotspot is open. Errors shown by LED pattern and serial log. Hotspot: WPA2 with a per-device passphrase outside source, Portal state only, timeout, bounded clients; no credentials or patient data in logs. |
 | Monitoring | Count stalls, dropped blocks, deadline misses, clipping, analysis gaps and queue saturation. Report stack/heap watermarks. A stalled required worker raises a Device Alarm. Initialization alone never counts as verified operation. |
+
+## Firmware layer structure — 13 October
+
+[Owner decisions](../planning/mvp-decisions-2026-10-13.md) move orchestration into L2 and keep L1
+thin. `L2_COMMUNICATION` is the only path to a send: it has `L1_FHIR` serialize the frozen
+`MeasurementResult`, checks the assignment guard, and passes the payload to `L1_WIFI` under the CONTROL lease. The pre-send
+check therefore sits in `L2_COMMUNICATION`, not in a service; MON still observes it. The
+[14 October decisions](../planning/mvp-decisions-2026-10-14.md) drop the separate test-source send rule:
+test recordings are handled like patient data. `L2_AUDIO` owns the real-time audio thread and executes
+`AudioCommand`s; CONTROL remains the single writer of mode state.
 
 Updated by Claude-Opus-5.5 on behalf of Nico running in T3 Code through Claude Code.

@@ -7,7 +7,7 @@ A complete specification draft is not the same as permission to implement unagre
 
 ## Decision register
 
-The original register below is historical preparation context. [11 October owner decisions](mvp-decisions-2026-10-11.md) supersede D02/D03/D08/D12/D14 workflow and scope proposals; the [14 October decisions](mvp-decisions-2026-10-14.md) close D05, D07, D09, D11 and D13 as marked. Numeric criteria remain proposals; [the component timeline](mvp-implementation-timeline.md) replaces the old audio-first implementation sequence.
+The original register below is historical preparation context. [11 October owner decisions](mvp-decisions-2026-10-11.md) supersede D02/D03/D08/D12/D14 workflow and scope proposals; [13 October decisions](mvp-decisions-2026-10-13.md) settle the firmware layer layout; the [14 October decisions](mvp-decisions-2026-10-14.md) close D05, D07, D09, D11 and D13 as marked. Numeric criteria remain proposals; [the component timeline](mvp-implementation-timeline.md) replaces the old audio-first implementation sequence.
 
 | ID | Decision / conflict | Proposed draft treatment | Blocks |
 |---|---|---|---|
@@ -21,7 +21,7 @@ The original register below is historical preparation context. [11 October owner
 | D08 | FHIR server/patient/profile/auth/point/time | R4 HAPI candidate; `effectiveDateTime` = interval end and conditional create/readback (decided 12 October); approve point coding, precision and trusted-clock assumptions. Patient: decided 12 October via hotspot portal and `Device.patient` ([decisions](mvp-decisions-2026-10-12.md)). | NET serialization/deployment |
 | D09 | S03 acoustic characterization vs current S05 exclusion | **Closed:** follows S05; no acoustic transfer-chain measurement. | — |
 | D10 | Timing/resource/queue/response margins and soak length | Keep 8 ms/≤4 ms board targets; review P10–P15 capacities/thresholds; candidate 30 min soak. Measure first; priority alone insufficient. | Scheduling and acceptance budgets |
-| D11 | Thesis folder/skeleton migration | **Decided 14 October:** new firmware lives in [`coding/app/`](../coding/app/README.md); the evaluation firmware stays separate. | — |
+| D11 | Thesis folder/skeleton migration | **Decided 14 October:** new firmware lives in [`coding/app/`](../coding/app/README.md); the evaluation firmware stays separate. Layer layout per [13 October](mvp-decisions-2026-10-13.md): L0 = Zephyr, L1 = hardware adapters and pure C libraries, L2 = orchestration. | — |
 | D12 | MON watchdog and risk-control scope | Class B/SOUP is recorded intent; develop hazards, detection/mute timing and watchdog obligations before claiming safety controls implemented. | Supervision design / standards argument |
 | D13 | Host test-recording formats and resampling | **Decided 14 October:** chosen during the Wi-Fi/FHIR phase; on-device SD fixtures removed from the MVP. | Host BPM tests |
 | D14 | Continuous BPM vs explicit session | Draft allows independent estimator updates while listening and explicit bounded session aggregation; only completed sessions eligible for send. Confirm heart/listening behavior. | BPM/controller interaction |
