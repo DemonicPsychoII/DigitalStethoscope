@@ -4,7 +4,7 @@
 
 - 328 aktive Aussagen jeweils genau einmal mit eigenem Anker.
 - 22 ersetzte IDs ausdrücklich als „ersetzt …“ erhalten; 26 Ersatz-Einheiten.
-- 105 Quellenschlüssel; alle Quellenverweise auf bekannte Einträge.
+- 105 Audit-Quellenschlüssel und 17 Zusatzquellen; alle Quellenverweise auf bekannte Einträge.
 - Alle lokalen Markdown-Linkziele vorhanden.
 - `_stage1/` während des Generatorlaufs unverändert (SHA-256-Vergleich).
 - Fehlende IDs: keine. Unbekannte IDs: keine.

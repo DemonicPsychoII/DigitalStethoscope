@@ -144,6 +144,18 @@ class SupplementalSourceTests(unittest.TestCase):
             write(root, "thesis-material/quellen.md", "")
             self.assertEqual(len(supplemental_sources(root)), 1)
 
+    def test_undeclared_supplemental_entry_is_checked(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write(
+                root,
+                "thesis-material/_build/supplemental-sources.json",
+                json.dumps({"keys": [], "bib": "@misc{hidden,\n}\n", "md": ""}),
+            )
+            write(root, "thesis-material/quellen.bib", "")
+            write(root, "thesis-material/quellen.md", "")
+            self.assertIn("hidden", supplemental_sources(root)[0])
+
 
 if __name__ == "__main__":
     unittest.main()

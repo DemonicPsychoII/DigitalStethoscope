@@ -238,15 +238,20 @@ def thesis(root: Path = ROOT) -> list[str]:
 def supplemental_sources(root: Path = ROOT) -> list[str]:
     """Sources outside the audit live in generator input and must reach both registers."""
     area = root / "thesis-material"
-    keys = json.loads(
+    data = json.loads(
         (area / "_build/supplemental-sources.json").read_text(encoding="utf-8")
-    )["keys"]
+    )
+    # Keys come from the declared list and from the entries, so an undeclared entry is checked too.
+    keys = set(data["keys"])
+    keys |= set(re.findall(r"^@\w+\{([^,\s]+),", data.get("bib", ""), re.MULTILINE))
+    keys |= set(re.findall(r'^<a id="([^"]+)"></a>', data.get("md", ""), re.MULTILINE))
     bib = (area / "quellen.bib").read_text(encoding="utf-8")
     register = (area / "quellen.md").read_text(encoding="utf-8")
     return [
         f"thesis-material: supplemental source {key} missing from quellen.bib/quellen.md"
-        for key in keys
-        if "@misc{" + key + "," not in bib or f'<a id="{key}"></a>' not in register
+        for key in sorted(keys)
+        if not re.search(r"^@\w+\{" + re.escape(key) + ",", bib, re.MULTILINE)
+        or f'<a id="{key}"></a>' not in register
     ]
 
 

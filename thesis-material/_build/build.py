@@ -20,9 +20,14 @@ notes = json.loads((ROOT / '_build/integration-notes.json').read_text(encoding='
 corrections = json.loads((ROOT / '_build/stage2-corrections.json').read_text(encoding='utf-8'))
 # Zusatzquellen außerhalb des Audits; erzeugte Register dürfen sie bei Regeneration nicht verlieren.
 supplemental = json.loads((ROOT / '_build/supplemental-sources.json').read_text(encoding='utf-8'))
+# Schlüssel aus den Einträgen selbst ableiten, damit kein einseitiger oder doppelter Eintrag durchrutscht.
+supplemental_bib_keys = re.findall(r'^@\w+\{([^,\s]+),', supplemental['bib'], re.M)
+supplemental_md_keys = re.findall(r'^<a id="([^"]+)"></a>', supplemental['md'], re.M)
+assert supplemental_bib_keys == supplemental_md_keys == supplemental['keys'], 'Zusatzquellen: keys, BibTeX- und Markdown-Einträge stimmen nicht überein'
+assert len(set(supplemental['keys'])) == len(supplemental['keys']), 'Zusatzquellen: doppelter Schlüssel'
+split_keys = {k for split in corrections['split_sources'].values() for k in split['into']}
 for key in supplemental['keys']:
-    assert key not in original_sources, f'Zusatzquelle {key} existiert bereits im Audit'
-    assert '@misc{'+key+',' in supplemental['bib'] and f'<a id="{key}"></a>' in supplemental['md'], f'Zusatzquelle {key} unvollständig'
+    assert key not in original_sources and key not in split_keys, f'Zusatzquelle {key} existiert bereits im Audit'
 sources = {k: dict(v, **overrides.get(k, {})) for k, v in original_sources.items()}
 
 # Die Stage-1-Quellendateien wurden außerhalb dieses Generators zusammengeführt. Gleiche Schlüssel mit
@@ -544,7 +549,7 @@ readme+=f'''
 
 `confirmed` wird nicht eigens angezeigt: Es bedeutet im Inventar dokumentiert, nicht unabhängig wahrheitsgeprüft. Auch vorhandene Abschnitts-/Tabellenverweise sind aus Stage 1 übernommen. Alle Aussagen behalten exakt ihre Quellsprache; einzelne englische Firmwareeinheiten sind deshalb weiterhin Englisch.
 
-[Quellenverzeichnis](quellen.md) führt alle {len(sources)} Schlüssel mit zitierenden IDs. [quellen.bib](quellen.bib) enthält konservative Minimal-Einträge und kennzeichnet fehlende Metadaten; es ist noch kein abgabefertiges Literaturverzeichnis. [Einheitenindex](einheitenindex.md) führt jede Audit-ID zur Schreibstelle. [Offene Punkte](offene-punkte.md) sind die Arbeitsliste für Entscheidungen, Seiten und Quellenlücken.
+[Quellenverzeichnis](quellen.md) führt alle {len(sources)} Audit-Schlüssel mit zitierenden IDs sowie {len(supplemental['keys'])} Zusatzquellen außerhalb des Audits (Projektentscheidungen, LED-Recherche) ohne Audit-IDs. [quellen.bib](quellen.bib) enthält konservative Minimal-Einträge und kennzeichnet fehlende Metadaten; es ist noch kein abgabefertiges Literaturverzeichnis. [Einheitenindex](einheitenindex.md) führt jede Audit-ID zur Schreibstelle. [Offene Punkte](offene-punkte.md) sind die Arbeitsliste für Entscheidungen, Seiten und Quellenlücken.
 
 ## Regenerieren und prüfen
 
@@ -588,7 +593,7 @@ report=f'''# Vollständigkeitsprüfung
 
 - {len(active)} aktive Aussagen jeweils genau einmal mit eigenem Anker.
 - {len(replaced)} ersetzte IDs ausdrücklich als „ersetzt …“ erhalten; {stats['superseding_units']} Ersatz-Einheiten.
-- {len(sources)} Quellenschlüssel; alle Quellenverweise auf bekannte Einträge.
+- {len(sources)} Audit-Quellenschlüssel und {len(supplemental['keys'])} Zusatzquellen; alle Quellenverweise auf bekannte Einträge.
 - Alle lokalen Markdown-Linkziele vorhanden.
 - `_stage1/` während des Generatorlaufs unverändert (SHA-256-Vergleich).
 - Fehlende IDs: keine. Unbekannte IDs: keine.
