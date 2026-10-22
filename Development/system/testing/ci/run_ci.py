@@ -92,7 +92,11 @@ def generated_output(relative: str) -> bool:
     # These maintained headers substitute the Zephyr API in host scenarios.
     host_headers = "/Development/system/coding/app/tests/host/include/zephyr/"
     return (
-        any(token in path for token in ("/build/", "/.west/", "twister-out"))
+        any(
+            part == "build" or part.startswith("build-")
+            for part in path.split("/")[:-1]
+        )
+        or any(token in path for token in ("/.west/", "twister-out"))
         or ("/zephyr/" in path and not path.startswith(host_headers))
         or path.endswith((".elf", ".bin", ".map"))
     )

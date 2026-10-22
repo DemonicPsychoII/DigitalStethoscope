@@ -51,12 +51,20 @@ class CoverageTests(unittest.TestCase):
         self.assertEqual(len(errors), 1)
 
     def test_gap_needs_a_reason_and_does_not_match_another_id(self):
-        errors = self.check("VT-01 VT-02\n- VT-01: Not yet covered ", {})
-        self.assertEqual(len(errors), 2)
+        for whitespace in (" ", "  ", " \t "):
+            with self.subTest(whitespace=whitespace):
+                errors = self.check(
+                    f"VT-01 VT-02\n- VT-01: Not yet covered{whitespace}\n", {}
+                )
+                self.assertEqual(len(errors), 2)
 
     def test_retired_cases_need_a_reason_and_are_separate_from_gaps(self):
         self.assertEqual(self.check("VT-05\n- VT-05: Retired — replay removed", {}), [])
-        self.assertEqual(len(self.check("VT-05\n- VT-05: Retired — ", {})), 1)
+        for whitespace in (" ", "  ", " \t "):
+            with self.subTest(whitespace=whitespace):
+                self.assertEqual(
+                    len(self.check(f"VT-05\n- VT-05: Retired —{whitespace}\n", {})), 1
+                )
 
     def test_covered_case_with_stale_gap_is_reported(self):
         for source in (

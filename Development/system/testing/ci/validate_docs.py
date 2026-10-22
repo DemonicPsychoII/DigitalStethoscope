@@ -50,8 +50,8 @@ def verification_coverage(root: Path = ROOT) -> list[str]:
     catalogue = root / "Development/system/testing/specification-verification.md"
     text = catalogue.read_text(encoding="utf-8")
     cases = set(re.findall(r"\bVT-\d{2}\b", text))
-    gaps = set(re.findall(r"^- (VT-\d{2}): Not yet covered .+", text, re.MULTILINE))
-    retired = set(re.findall(r"^- (VT-\d{2}): Retired — .+", text, re.MULTILINE))
+    gaps = set(re.findall(r"^- (VT-\d{2}): Not yet covered .*\S", text, re.MULTILINE))
+    retired = set(re.findall(r"^- (VT-\d{2}): Retired — .*\S", text, re.MULTILINE))
     referenced = set()
     coding = root / "Development/system/coding"
     testing = root / "Development/system/testing"

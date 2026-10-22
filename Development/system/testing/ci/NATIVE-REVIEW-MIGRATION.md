@@ -4,7 +4,11 @@ Native approval migration is deferred because fallback reviews currently use the
 
 Until that identity exists and both probes below pass, `agent-gate` remains required and `CI_NATIVE_REVIEW` remains unset. This guide does not authorize credential creation or paid reviews for the migration.
 
-The migration helper previews changes by default. Applying them requires an authorized administrator login. Existing rules, check identities and bypass actors are preserved; credentials remain outside the repository. Migration has three stages:
+The migration helper previews changes by default. Applying them requires an authorized administrator login. Existing rules, check identities and bypass actors are preserved; credentials remain outside the repository.
+
+Run the helper from the checkout root. Its first apply saves `artifacts/ci/native-review-before-<owner>_<repo>-<ruleset>.json` inside the checkout. Copy that snapshot to an external location before continuing with the migration. Keep the external copy for rollback.
+
+Migration has three stages:
 
 1. **Add native protection.** The custom `agent-gate` remains required during the transition.
 
@@ -28,7 +32,7 @@ The migration helper previews changes by default. Applying them requires an auth
    # Inspect the JSON and probes, then repeat with --apply.
    ```
 
-   The helper removes only `agent-gate` from required statuses, then sets `CI_NATIVE_REVIEW=true` to stop custom gate and review-signal jobs. Its first apply saves `artifacts/ci/native-review-before-<owner>_<repo>-<ruleset>.json`. That snapshot is retained outside the checkout for rollback.
+   The helper removes only `agent-gate` from required statuses, then sets `CI_NATIVE_REVIEW=true` to stop custom gate and review-signal jobs.
 
    Native reviews do not enforce session markers, owner-question markers or a CodeRabbit-only reviewer identity. PRs with unanswered owner questions remain draft with auto-merge disabled. Reverts also require approval in native mode.
 

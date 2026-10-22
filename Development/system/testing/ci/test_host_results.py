@@ -44,6 +44,22 @@ class HostResultTests(unittest.TestCase):
                 source.write_text(text)
                 self.assertFalse(report(source)[1])
 
+    def test_empty_and_whitespace_vt_ids_are_unmapped(self):
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory) / "results.xml"
+            for vt_id in ("", " ", "  ", "\t\n"):
+                with self.subTest(vt_id=vt_id):
+                    source.write_text(
+                        '<testsuite><testcase name="flow"><properties>'
+                        f'<property name="vt_id" value="{vt_id}"/>'
+                        "</properties></testcase></testsuite>"
+                    )
+                    markdown, passed = report(source)
+                    self.assertFalse(passed)
+                    self.assertIn(
+                        "| unmapped | PASS (missing VT reference) |", markdown
+                    )
+
     def test_missing_static_suite_selector_cannot_pass_accounting(self):
         self.assertTrue(
             problems(
@@ -70,6 +86,27 @@ class HostResultTests(unittest.TestCase):
             "Development/system/coding/app/tests/host/include/zephyr/test.bin",
         ):
             self.assertTrue(run_ci.generated_output(path))
+
+    def test_build_directories_are_generated_output(self):
+        directories = (
+            "build",
+            "build-ci-app",
+            "build-local",
+            *(directory for _, directory in run_ci.PROFILES),
+        )
+        for directory in directories:
+            for path in (
+                f"{directory}/CMakeCache.txt",
+                f"nested/{directory}/CMakeCache.txt",
+                f"{directory}\\CMakeCache.txt",
+            ):
+                with self.subTest(path=path):
+                    self.assertTrue(run_ci.generated_output(path))
+        self.assertFalse(
+            run_ci.generated_output(
+                "Development/system/coding/tools/build-firmware.ps1"
+            )
+        )
 
     def test_missing_validators_skip_only_on_local_windows(self):
         with patch.object(run_ci.shutil, "which", return_value=None):

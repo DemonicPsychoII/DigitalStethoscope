@@ -22,7 +22,7 @@ def report(source: Path) -> tuple[str, bool]:
             for item in case.findall("./properties/property")
         }
         scenario = properties.get("scenario") or case.get("name", "unknown")
-        vt = properties.get("vt_id", "unmapped")
+        vt = properties.get("vt_id", "").strip() or "unmapped"
         result = "PASS"
         for tag, label in (
             ("failure", "FAIL"),
