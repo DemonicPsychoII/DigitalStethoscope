@@ -1,8 +1,7 @@
 # MVP decisions — patient assignment and device hotspot, 12 October 2026
 
-> **Superseded in part (19 October 2026):** current Wi-Fi setup, recovery and feedback
-> follow the [19 October resolutions](mvp-decisions-2026-10-19.md). Earlier text below
-> is historical where it conflicts; unrelated delivery decisions remain separate.
+> **Superseded in part:** the [current baseline](README.md#current-baseline) names the
+> decision in force for each topic. Text below is historical where it conflicts.
 
 > **Superseded (15 October 2026):** patient selection on the device is removed. Wi-Fi setup, Device registration with a stored server-assigned id and minimal delivery without readback replace this record — see the [15 October decisions](mvp-decisions-2026-10-15.md). The D08 create-only contract, `If-None-Exist` and `effectiveDateTime` stay; the full-payload readback does not.
 >

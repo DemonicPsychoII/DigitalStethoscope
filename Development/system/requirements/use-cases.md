@@ -1,6 +1,6 @@
 # Use cases (MVP)
 
-Current Wi-Fi/portal and feedback behaviour follows the [19 October resolutions](../planning/mvp-decisions-2026-10-19.md); earlier dated notes remain history.
+Decisions in force for each topic: [current baseline](../planning/README.md#current-baseline).
 
 Abstract operator flows for the [system requirements](system-requirements.md), decided on 14 October 2026
 ([decisions](../planning/mvp-decisions-2026-10-14.md)). Detailed internal behavior is in the

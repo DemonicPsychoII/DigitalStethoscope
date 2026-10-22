@@ -1,8 +1,7 @@
 # MVP decisions — 14 October 2026 (TICKET-125)
 
-> **Superseded in part (19 October 2026):** current Wi-Fi setup, recovery and feedback
-> follow the [19 October resolutions](mvp-decisions-2026-10-19.md). Earlier text below
-> is historical where it conflicts; unrelated delivery decisions remain separate.
+> **Superseded in part:** the [current baseline](README.md#current-baseline) names the
+> decision in force for each topic. Text below is historical where it conflicts.
 
 > **Superseded in part (15 October 2026):** patient assignment moves to a server workflow outside the MVP; the device sends without a patient — see the [15 October decisions](mvp-decisions-2026-10-15.md). The retry rule stays.
 
@@ -55,3 +54,5 @@ Nico's review of the requirements and architecture in this T3 thread. These deci
   (around 25 October), which goes to Wi-Fi, FHIR and the hotspot page.
 - Submission is **11 January 2027**. Writing and proofreading finish at least one week before (4 January),
   ideally two weeks before (28 December).
+
+Updated by Claude-Opus-5.5 on behalf of Nico running in T3 Code through Claude Code.

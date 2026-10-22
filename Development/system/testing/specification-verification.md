@@ -8,7 +8,7 @@ but they are not requirements.
 
 ## Acceptance tests
 
-Run REQ-01…REQ-15 as written in the [requirement table](../requirements/system-requirements.md). Record each run with
+Run every requirement as written in the [requirement table](../requirements/system-requirements.md). Record each run with
 the evidence template below.
 
 ## Developer checks (internal)
@@ -59,7 +59,7 @@ functional demonstration under one configuration does not establish acceptance f
 5. Evaluate filter variants on identical approved material and reference; report outcome even if no
    filter wins. Optional exploratory hearing study is separate and does not replace functional checks.
 6. After review-driven arithmetic, interface or configuration changes, rerun affected tests.
-7. Run the acceptance tests REQ-01…REQ-15 on the finished device. Formal acceptance requires reviewed results; this draft supplies no acceptance claim.
+7. Run the acceptance test of every system requirement on the finished device. Formal acceptance requires reviewed results; this draft supplies no acceptance claim.
 
 Created by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.
 

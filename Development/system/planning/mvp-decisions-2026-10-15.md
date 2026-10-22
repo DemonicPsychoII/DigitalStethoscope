@@ -1,8 +1,7 @@
 # MVP decisions — Wi-Fi setup, registration and delivery, 15 October 2026
 
-> **Superseded in part (19 October 2026):** current Wi-Fi setup, recovery and feedback
-> follow the [19 October resolutions](mvp-decisions-2026-10-19.md). Earlier text below
-> is historical where it conflicts; unrelated delivery decisions remain separate.
+> **Superseded in part:** the [current baseline](README.md#current-baseline) names the
+> decision in force for each topic. Text below is historical where it conflicts.
 
 > **Superseded in part (16 October 2026):** item 5 changes: the device still never selects a patient, but it passes on a patient that the server has linked to the Device — see the [16 October decisions](mvp-decisions-2026-10-16.md).
 

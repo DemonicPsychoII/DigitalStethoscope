@@ -15,7 +15,7 @@ Widersprüche und Einschränkungen → Übertragbarkeit → begründete nächste
 
 widersprueche.md Stand 2026-08-15; offene Punkte zuletzt als Recherche-Stand 2026-08-11 ausgewiesen; die Arbeitskopie enthält spätere Updates (u. a. 2026-09-16/10-02) in Hardware-/README-Material.
 
-**Ursprung:** [preThesis/02-entscheidungen/widersprueche.md:1-4](../preThesis/02-entscheidungen/widersprueche.md#L1); [preThesis/02-entscheidungen/open-questions.md:7-11](../preThesis/02-entscheidungen/open-questions.md#L7); [preThesis/05-hardware/hardware.md:32-34](../preThesis/05-hardware/hardware.md#L32); [Development/system/coding/bringup-zephyr/README.md:1-160](../Development/system/coding/bringup-zephyr/README.md#L1)
+**Ursprung:** [preThesis/02-entscheidungen/widersprueche.md:1-4](../preThesis/02-entscheidungen/widersprueche.md#L1); [preThesis/02-entscheidungen/open-questions.md:7-11](../preThesis/02-entscheidungen/open-questions.md#L7); [preThesis/05-hardware/hardware.md:32-34](../preThesis/05-hardware/hardware.md#L32); [Development/system/coding/bringup-zephyr/README.md:1-160](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/23c1ea492270b897532896179e35f873eee823be/Development/system/coding/bringup-zephyr/README.md?plain=1#L1) (**Herkunft verschoben:** seit b2c3dde zu einem kurzen Einstiegs-README verdichtet; die Zeilenangaben gelten nur für die zitierte Fassung. Link zeigt diese historische Fassung. Aktuell: [Bring-up-README](../Development/system/coding/bringup-zephyr/README.md))
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
 
 ### Folgerungen, Entwurfsentscheidungen und Grenzen
@@ -59,7 +59,7 @@ R07 behandelt die Kavität näherungsweise als Helmholtz-Resonator; Nussbaumer u
 
 README distinguishes wiring confirmation dated 2026-09-16 from later speed-switch and SD-card mapping; Rev A speed switch GPIO2/39/47 is in default build but not covered by that wiring confirmation.
 
-**Ursprung:** [Development/system/coding/bringup-zephyr/README.md:3-8,64-83](../Development/system/coding/bringup-zephyr/README.md#L3)
+**Ursprung:** [Development/system/coding/bringup-zephyr/README.md:3-8,64-83](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/23c1ea492270b897532896179e35f873eee823be/Development/system/coding/bringup-zephyr/README.md?plain=1#L3) (**Herkunft verschoben:** seit b2c3dde zu einem kurzen Einstiegs-README verdichtet; die Zeilenangaben gelten nur für die zitierte Fassung. Link zeigt diese historische Fassung. Aktuell: [Bring-up-README](../Development/system/coding/bringup-zephyr/README.md))
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
 
 <a id="u038"></a>
@@ -67,7 +67,7 @@ README distinguishes wiring confirmation dated 2026-09-16 from later speed-switc
 
 W1 ist noch offen; dokumentierte Optionen sind Q1/AP 2.2 qualitativ umformulieren, Q1 streichen/Arbeitszeit umverteilen oder R08-Minimalmessung ausführen; Abstimmung mit Betreuer steht aus.
 
-> **Neuerer Stand (Stand integration, 2026-10-12):** Von den drei W1-Optionen ist im Entwurf die Herausnahme der Kettenmessung gewählt (S05); die Abstimmung mit dem Betreuer ist laut D09 weiterhin ausstehend. Aktuell: keine Kettenmessung; Q1/AP 2.2 entsprechend qualitativ behandeln, sobald bestätigt. – siehe [Entscheidungsregister D09](../Development/system/planning/implementation-readiness.md#decision-register), [Produktumfang](../Development/system/spec/product-scope.md#goal-and-boundary).
+> **Neuerer Stand (Stand integration, 2026-10-22):** Von den drei W1-Optionen gilt die Herausnahme der Kettenmessung (S05); D09 ist seit 14.10. geschlossen. Aktuell: keine Kettenmessung; Q1/AP 2.2 qualitativ behandeln. Ob die Abstimmung mit dem Betreuer erfolgt ist, nennt D09 nicht, siehe offene Punkte. – siehe [Entscheidungsregister D09](../Development/system/planning/implementation-readiness.md#decision-register), [Produktumfang](../Development/system/spec/product-scope.md#goal-and-boundary).
 
 **Ursprung:** [preThesis/02-entscheidungen/widersprueche.md:23-32](../preThesis/02-entscheidungen/widersprueche.md#L23)
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
@@ -77,7 +77,7 @@ W1 ist noch offen; dokumentierte Optionen sind Q1/AP 2.2 qualitativ umformuliere
 
 W1: Aufgabenbeschreibungen führen Q1, Kettencharakterisierung und AP 2.2 auf, die interne Entscheidung verwirft gleichzeitig die formale Messung; die vorgesehenen Playback-Signale durchlaufen die reale Bruststückkopplung nicht.
 
-> **Neuerer Stand (Stand integration, 2026-10-12):** Der Entwurf folgt inzwischen der Abgabefassung (S05): Komponenteneignung über Datenblätter/Literatur und funktionaler Audiotest, keine gemessene Aussage zur Übertragungskette; die ältere Messabsicht bleibt als ersetzter Vorschlag erhalten. Die Bestätigung ist laut D09 noch ausstehend. Aktuell: keine Kettenmessung im aktuellen Umfang; zusätzlich ist laut 11.10. keine Messausrüstung/kein zweites Mikrofon verfügbar. – siehe [Entscheidungsregister D09](../Development/system/planning/implementation-readiness.md#decision-register), [Produktumfang](../Development/system/spec/product-scope.md#goal-and-boundary).
+> **Neuerer Stand (Stand integration, 2026-10-22):** Der Entwurf folgt der Abgabefassung (S05): Komponenteneignung über Datenblätter/Literatur und funktionaler Audiotest, keine gemessene Aussage zur Übertragungskette. D09 ist seit 14.10. geschlossen. Aktuell: keine Messung der akustischen Übertragungskette; laut 11.10. ist keine Messausrüstung/kein zweites Mikrofon verfügbar, laut 14.10. auch kein Zweikanal-Aufnahmeaufbau. – siehe [Entscheidungsregister D09](../Development/system/planning/implementation-readiness.md#decision-register), [MVP-Entscheidungen 14.10. (Umfang)](../Development/system/planning/mvp-decisions-2026-10-14.md#scope), [Produktumfang](../Development/system/spec/product-scope.md#goal-and-boundary).
 
 **Ursprung:** [preThesis/02-entscheidungen/widersprueche.md:5-21](../preThesis/02-entscheidungen/widersprueche.md#L5)
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.

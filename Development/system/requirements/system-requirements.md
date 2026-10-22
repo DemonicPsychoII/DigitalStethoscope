@@ -1,11 +1,12 @@
 # System requirements (MVP)
 
-Decided on 14 October 2026 ([decisions](../planning/mvp-decisions-2026-10-14.md)); REQ-09 and REQ-12 changed and REQ-15 added on 15 October ([decisions](../planning/mvp-decisions-2026-10-15.md)); REQ-09 and REQ-13 changed on 16 October ([decisions](../planning/mvp-decisions-2026-10-16.md)). Every requirement is checked by Nico on
+The [current baseline](../planning/README.md#current-baseline) names the decisions behind this table;
+the [decision log](../planning/README.md#decision-log) records each change. Every requirement is checked by Nico on
 the finished device with available equipment: headphones, phone, laptop, the HAPI web page, a pulse oximeter or
 smartwatch and test-tone audio. How the device achieves it is design ([detailed design](../design/interfaces-and-behavior.md),
 [design parameters](../design/parameters.md)). Flows are shown in the [use-case diagrams](use-cases.md).
 
-Wi-Fi and feedback requirements follow the [19 October resolutions](../planning/mvp-decisions-2026-10-19.md). Registration and certificate tests remain later FHIR acceptance, not Wi-Fi setup prerequisites.
+Registration and certificate tests remain later FHIR acceptance, not Wi-Fi setup prerequisites.
 
 Methods: **T** test (measured), **D** demonstration (shown working).
 

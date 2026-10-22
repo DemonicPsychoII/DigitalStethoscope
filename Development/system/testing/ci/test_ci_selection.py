@@ -76,6 +76,12 @@ class SelectionTests(unittest.TestCase):
 
     def test_docs_and_gate_changes_select_only_needed_suites(self):
         self.assertTrue(suites(["Development/architecture/design.md"])["docs"])
+        for path in (
+            "Development/system/architecture/rendered/view.svg",
+            "thesis-material/_build/integration-notes.json",
+            "Development/system/testing/ci/toolchain.json",
+        ):
+            self.assertTrue(suites([path])["docs"], path)
         self.assertEqual(
             suites([".github/agent-gate/agent_gate.py"]),
             {
@@ -92,11 +98,7 @@ class SelectionTests(unittest.TestCase):
 
     def test_mixed_changes_and_workflow_changes_select_all_affected_suites(self):
         self.assertTrue(
-            all(
-                v
-                for k, v in suites([".github/workflows/quality-gates.yml"]).items()
-                if k != "docs"
-            )
+            all(v for v in suites([".github/workflows/quality-gates.yml"]).values())
         )
         selected = suites([APP + "src/main.c", ".github/agent-gate/config.json"])
         self.assertTrue(selected["firmware"] and selected["host"] and selected["gate"])

@@ -10,6 +10,8 @@ rationale under `Development/system/`, and weekly slides or reports that feed th
   date for web sources. Own measurements cite their evidence with date and firmware revision.
 - Prefer peer-reviewed literature, primary standards and vendor documentation. Record sources in
   `thesis-material/quellen.bib` and `thesis-material/quellen.md`, following their existing format.
+  Both files are generated: add new records to `thesis-material/_build/supplemental-sources.json`
+  (or the other `_build/` inputs) and run `python thesis-material/_build/build.py`.
 - If no adequate source exists, say so explicitly and mark the claim as unsupported or as a
   project decision; never present it as established.
 - Never invent or approximate citations, metadata or page numbers; mark unverified fields as such.
@@ -77,9 +79,9 @@ workflows may remain hosted. Preserve required check names and existing gate pol
   corrective PR instead and close the revert. Never merge a revert for an unconfirmed failure.
   By hand: `bash .github/agent-gate/revert-last-merge.sh <pr|sha|last>...` (`--deploy` is not
   supported in this repository).
-- Before pushing, run the smallest relevant checks: `python Development/system/testing/ci/run_ci.py
-  static`, `python -m pytest -q Development/system/coding/bringup-zephyr/tests/host`,
-  `python -m unittest discover -s .github/agent-gate`, and for firmware changes `run_ci.py build`.
+- Before pushing, run `python Development/system/testing/ci/run_ci.py static`, the relevant
+  [local checks](Development/system/testing/CI-QUALITY-GATES.md#setup-and-local-checks), and
+  for firmware changes `run_ci.py build`.
   Hardware flashing, serial and device-network operations still need the owner.
 
 See [CI operations](Development/system/testing/ci/README.md) for suite selection, artifacts,

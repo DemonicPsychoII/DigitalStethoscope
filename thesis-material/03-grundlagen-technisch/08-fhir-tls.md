@@ -25,6 +25,8 @@ FHIR-Semantik und Profilierung liegen auf Anwendungsebene; TLS sichert die darun
 
 Für Herzfrequenz empfiehlt der Bericht eine FHIR-`Observation` mit vital-signs-Kategorie, LOINC 8867-4, `subject`, Messzeitpunkt und numerischem `valueQuantity` mit UCUM-System und Code `/min`.
 
+> **Überholt (Stand integration, 2026-10-22):** Nur `subject` als feste Angabe ist überholt; Vital-Signs-Kategorie, LOINC 8867-4 und UCUM `/min` gelten weiter. Aktuell: Observation mit `device = Device/{id}` (vom Server vergebene ID); `subject` nur, wenn der Server einen Patienten mit dem Device verknüpft hat (16.10.); `effectiveDateTime` = Ende des Messintervalls (D08). Das Gerät wählt nie einen Patienten aus. – siehe [MVP-Entscheidungen 16.10.](../../Development/system/planning/mvp-decisions-2026-10-16.md#confirmed-decisions), [MVP-Entscheidungen 15.10.](../../Development/system/planning/mvp-decisions-2026-10-15.md#resulting-behavior).
+
 **Ursprung:** [preThesis/03-recherche/R11-fhir-tls.md:22-49](../../preThesis/03-recherche/R11-fhir-tls.md#L22)
 **Weiterer Kapitelbezug:** Ethik/Datenschutz/Regulatorik
 **Belege:** [HL7 · fhir_r4_vitals_official](https://hl7.org/fhir/R4/observation-vitalsigns.html) — Fundstelle: Vital Signs Profile; Heart rate row (aus Stage 1; am Original prüfen); [Regenstrief Institute · loinc_8867_official](https://loinc.org/8867-4) — Fundstelle: Term details; Example Units (aus Stage 1; am Original prüfen); [HL7 · fhir_observation_r4](https://hl7.org/fhir/R4/observation.html) — Seite prüfen
@@ -33,6 +35,8 @@ Für Herzfrequenz empfiehlt der Bericht eine FHIR-`Observation` mit vital-signs-
 **U068 · LITERATURFAKT / REGEL**
 
 R11 beschreibt Heart Rate Observation mit vital-signs, LOINC 8867-4, Patient-Referenz, effectiveDateTime, valueQuantity, UCUM /min.
+
+> **Neuerer Stand (Stand integration, 2026-10-22):** Die Patient-Referenz ist im Projekt nicht immer vorhanden. Aktuell: `subject` nur, wenn der Server einen Patienten mit dem Device verknüpft hat (16.10.); sonst ohne Patientendaten. `effectiveDateTime` = Ende des Messintervalls (D08). – siehe [MVP-Entscheidungen 16.10.](../../Development/system/planning/mvp-decisions-2026-10-16.md#confirmed-decisions), [Entscheidungsregister D08](../../Development/system/planning/implementation-readiness.md#decision-register).
 
 **Ursprung:** [preThesis/02-entscheidungen/open-questions.md:275-278](../../preThesis/02-entscheidungen/open-questions.md#L275)
 **Belege:** [HL7 · fhir_r4_vitals](https://www.hl7.org/fhir/R4/observation-vitalsigns.html) — Fundstelle: Vital Signs table, Heart rate row (aus Stage 1; am Original prüfen); [Regenstrief Institute · loinc_8867](https://loinc.org/8867-4/) — Seite prüfen (Hinweis: Relevant article section/table not verified in full text during this pass.); [HL7 · fhir_hr_example](https://www.hl7.org/fhir/R4/observation-example-heart-rate.json.html) — Seite prüfen (Hinweis: Relevant article section/table not verified in full text during this pass.)

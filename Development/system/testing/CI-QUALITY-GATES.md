@@ -71,7 +71,12 @@ in `bringup-zephyr/tools/requirements.txt`. CI uses GCC. Run separate suites:
 python -m unittest discover -s Development/system/testing/ci -p 'test_*.py'
 python -m pytest -q Development/system/coding/bringup-zephyr/tests/host
 python -m unittest discover -s .github/agent-gate
+python Development/system/testing/ci/validate_docs.py
 ```
+
+This list is the canonical set of local checks. `validate_docs.py` fails when CI
+runs a test suite that this list or [CI operations](ci/OPERATIONS.md#failures-and-local-checks) omits.
+`validate_docs.py` also reruns the thesis generator; commit any files it regenerates.
 
 Commands fail on the first failed stage. Zephyr 4.4's Windows Kconfig generator
 cannot configure firmware in paths containing parentheses; use a checkout
@@ -104,7 +109,7 @@ records the score in the run summary. HOLD fails the quality check. These
 source heuristics are separate from functional evaluation and physical proof;
 see the [testing index](README.md#source-level-qc).
 
-Publishing builds upload `firmware-build-<attempt>` for eight days, containing
+Publishing builds upload `firmware-build-<attempt>` for 8 days, containing
 each profile binary and a manifest with commit/merged-tree identity, UTC time,
 board, profile, boot-banner version and SHA-256. The homelab firmware sync
 validates the GitHub run before publishing to Personal Cloud; the build guest
@@ -124,3 +129,5 @@ PASS/FAIL/BLOCKED outcomes and instrument evidence. Flashing, serial and
 device-network operations require owner authorization.
 
 Updated by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.
+
+Updated by Claude-Opus-5.5 on behalf of Nico running in T3 Code through Claude Code.

@@ -33,9 +33,13 @@ flowchart LR
 | Agent gate | Lint, gate unit tests, QC | None |
 | Weekly schedule / full manual run | Every suite | Every pristine build and native test |
 
+[`firmware_changes.py`](firmware_changes.py) is the authoritative selection; this table summarizes it.
+
 Static lint always validates Actions with pinned actionlint and both CI shell
 scripts with pinned ShellCheck. Documentation checks validate local Markdown
-links and heading anchors plus PlantUML start/end envelopes; they do **not** render
+links and heading anchors, PlantUML start/end envelopes, that each committed SVG embeds
+the current `.puml` text, the hand-written file indexes, values repeated from pins and
+the workflow, and that the generated thesis kit is current. They do **not** render
 PlantUML or claim complete diagram syntax validation. QC is always evaluated.
 Native and host sanitizers improve software fault detection; simulated execution
 and a QC score are not hardware or medical-device validation.
@@ -185,3 +189,5 @@ GITHUB_ACTIONS=true python Development/system/testing/ci/run_ci.py build
 ```
 
 Created by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.
+
+Updated by Claude-Opus-5.5 on behalf of Nico running in T3 Code through Claude Code.

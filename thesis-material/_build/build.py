@@ -18,6 +18,16 @@ overrides = json.loads((ROOT / '_build/source-overrides.json').read_text(encodin
 # Abgleich mit neueren integration-Entscheidungen: Notizen ergänzen die Aussagen, ersetzen sie nicht.
 notes = json.loads((ROOT / '_build/integration-notes.json').read_text(encoding='utf-8'))
 corrections = json.loads((ROOT / '_build/stage2-corrections.json').read_text(encoding='utf-8'))
+# Zusatzquellen außerhalb des Audits; erzeugte Register dürfen sie bei Regeneration nicht verlieren.
+supplemental = json.loads((ROOT / '_build/supplemental-sources.json').read_text(encoding='utf-8'))
+# Schlüssel aus den Einträgen selbst ableiten, damit kein einseitiger oder doppelter Eintrag durchrutscht.
+supplemental_bib_keys = re.findall(r'^@\w+\{([^,\s]+),', supplemental['bib'], re.M)
+supplemental_md_keys = re.findall(r'^<a id="([^"]+)"></a>', supplemental['md'], re.M)
+assert supplemental_bib_keys == supplemental_md_keys == supplemental['keys'], 'Zusatzquellen: keys, BibTeX- und Markdown-Einträge stimmen nicht überein'
+assert len(set(supplemental['keys'])) == len(supplemental['keys']), 'Zusatzquellen: doppelter Schlüssel'
+split_keys = {k for split in corrections['split_sources'].values() for k in split['into']}
+for key in supplemental['keys']:
+    assert key not in original_sources and key not in split_keys, f'Zusatzquelle {key} existiert bereits im Audit'
 sources = {k: dict(v, **overrides.get(k, {})) for k, v in original_sources.items()}
 
 # Die Stage-1-Quellendateien wurden außerhalb dieses Generators zusammengeführt. Gleiche Schlüssel mit
@@ -237,8 +247,8 @@ def origins(u, src):
         m=re.match(r'^(.*?):([\d,\-]+)$',origin)
         path,line=(m[1],m[2]) if m else (origin,None)
         anchor='#L'+re.split(r'[-,]',line)[0] if line else ''
-        if not (ROOT.parent/path).exists():
-            # Herkunftsdatei existiert auf integration nicht mehr: historische Fassung verlinken statt abzubrechen.
+        if not (ROOT.parent/path).exists() or path in notes['relocated_origins']:
+            # Herkunftsdatei fehlt oder wurde umgeschrieben, Zeilenangaben passen nicht mehr: historische Fassung verlinken.
             moved=notes['relocated_origins'].get(path)
             if moved:
                 cur=moved['current']
@@ -373,7 +383,7 @@ for category in sorted({source_topic(k) for k in sources}):
         if key in corrections['split_sources']:bib_text+='**Korrektur Stage 2:** Schlüssel aufgeteilt in '+', '.join(source_link(k,'quellen.md') for k in corrections['split_sources'][key]['into'])+'; zitierende Einheiten verweisen jetzt dorthin.\n\n'
         if key=='pilot_guidelines' and key not in overrides:bib_text+='**METADATENKONFLIKT:** Der verlinkte PMC-Text gehört zu Teresi et al. (2022), Medical Care 60(1), 95–103, DOI 10.1097/MLR.0000000000001664. Der Ausgangseintrag nennt Leon (2011). Keine automatische Ersetzung: erst klären, welches Werk die Aussagen tatsächlich belegt.\n\n'
         bib_text+='**Zitiert von:** '+(', '.join(unit_link(uid,'quellen.md')+(' (ersetzt)' if uid in replaced else '') for uid in usage[key]) or 'Keine Einheit im Inventar.')+'\n\n'
-outputs['quellen.md']=bib_text.rstrip('\n')+'\n'
+outputs['quellen.md']=bib_text.rstrip('\n')+'\n\n'+supplemental['md']
 
 def bib_escape(value):
     return str(value).replace('\\',r'\textbackslash{}').replace('&',r'\&').replace('%',r'\%').replace('#',r'\#').replace('_',r'\_')
@@ -387,7 +397,7 @@ for key,s in sources.items():
     else:
         fields['note']='UNSICHERER MINIMALEINTRAG. Bibliografische Felder vor Verwendung am Original ergänzen. Referenztext aus Stage 1, nicht als Feldmetadaten verifiziert: '+s['reference']+' Linkstatus: '+s.get('link_check','nicht geprüft')
     bib.append('@misc{'+key+',\n'+',\n'.join('  '+k+' = {'+(str(v) if k in ('url','doi','author') else bib_escape(v))+'}' for k,v in fields.items())+'\n}\n')
-outputs['quellen.bib']='\n'.join(bib)
+outputs['quellen.bib']='\n'.join(bib)+'\n'+supplemental['bib']
 
 fixes='# Linkkorrekturen und Suchprotokoll\n\n[Zum Einstieg](README.md)\n\nPrüfdatum: 05.10.2026; spätere Prüfungen tragen ihr eigenes Datum. Änderungen liegen ausschließlich in [_build/source-overrides.json](_build/source-overrides.json) und [_build/stage2-corrections.json](_build/stage2-corrections.json); Stage 1 bleibt unverändert. Direkte HTTP-Proben: [_build/link-probes.json](_build/link-probes.json). Ein Suchtreffer allein genügt nicht zum Reparieren eines Links. Keine Seitenzahlen wurden neu festgelegt.\n\n## Verifiziert korrigiert\n\n'
 def fix_entry(key,v):
@@ -443,7 +453,7 @@ open_text+='## Weitere Konflikte und Nachweisgrenzen\n\n'
 for text,ids,*conflict in [
  ('Abgabe laut Nico: **11.01.2027**. „Ende Januar“ und verschiedene fakultätsspezifische Bearbeitungsfristen bleiben historischer Kontext. Verbindlichen DMS-Termin und zuständige SPO/APO abgleichen.', ['U033','C045','C049','C051']),
  ('Prototyp nutzt ESP32/Zephyr; ESP-IDF-Favorisierung ist ein historischer Recherchevorschlag. Die tatsächlich getroffene Frameworkentscheidung und deren Begründung dokumentieren.', ['U028','U035','C013','U085'], 'framework'),
- ('Filter 40–800 Hz / 25–150 Hz, Live-Latenz <30 ms bzw. ≤10/≤5 ms und BPM-Grenzen sind vorläufige Entwicklungsziele. Eine gemeinsame Anforderungsversion und Messmethode festlegen.', ['U027','U102','U110','C001','A056','A057'], 'targets'),
+ ('Filter 40–800 Hz / 25–150 Hz und Live-Latenz <30 ms sind vorläufige Entwicklungsziele. Seit 14.10. gilt: BPM ±5 BPM oder ±10 % gegen Pulsoximeter/Smartwatch (REQ-06), Latenz nur nach Gehör geprüft (REQ-05). Ältere Werte ≤10/≤5 ms nicht übernehmen.', ['U027','U102','U110','C001','A056','A057'], 'targets'),
  ('10–40-ms-DMA-Startwerte passen nicht ohne Prüfung zum ≤10-ms-End-to-End-Ziel. Tatsächliche Blocklatenz, Wandler- und Schedulinganteile am Prototyp messen.', ['C027','C001','U101'], 'dma'),
  ('Builds und Hosttests ersetzen keine integrierte Hardwareevaluation. Physische Tests am dokumentierten Firmware-Commit nachholen; Verdrahtungsbestätigung separat ausweisen.', ['U119','U125','U129','U130','U131']),
  (('FDA-Leitlinie: Link bleibt defekt; Publikationsjahr 1998 statt 2023 und EC13-1992-Bezug beachten, Volltext beschaffen. Der Leon-/Teresi-Konflikt der Pilotstudienquelle ist zugunsten Teresi et al. (2022) aufgelöst, siehe [Linkkorrekturen](linkkorrekturen.md#pilot_guidelines).' if 'pilot_guidelines' in repaired else 'Pilotstudienquelle: Leon-/Teresi-Metadatenkonflikt klären. Zusätzlich FDA-Publikationsjahr 1998 statt 2023 und EC13-1992-Bezug in der reparierten FDA-Fassung beachten.'), ['B001','B016','A052']),
@@ -501,7 +511,7 @@ Pro Absatz eine Kernaussage wählen, Originalbeleg öffnen und die genaue Fundst
 - **Quellenstand des Audits:** {stats['citation_units']} zitierbedürftige Einheiten, {stats['citation_units_with_at_least_three_sources']} davon mit mindestens drei Quellen, {stats['incomplete_source_sets']} unvollständige Quellensets. {stats['unverified_pages_exact']} von {stats['source_references']} Quellenverweisen haben exakt `page: unverified`. Nico muss diese Seiten prüfen.
 - **Defekte Links:** ursprünglich {len(broken_before)} Einträge, betroffen {stats['broken_affected_units_before']} Einheiten. {len(repaired)} verifiziert repariert, {len(broken_after)} sichtbar defekt, {len(metadata_only)} weitere Einträge nur in den Metadaten korrigiert; weiterhin betroffen: {stats['broken_affected_units_after']} Audit-Einheiten. [Korrekturprotokoll](linkkorrekturen.md). {'Der Leon-/Teresi-Metadatenkonflikt der Pilotstudienquelle ist in Stage 2 aufgelöst.' if 'pilot_guidelines' in repaired else 'Die Pilotstudienquelle enthält zusätzlich einen ungelösten Metadatenkonflikt.'}
 - Build-/Host-/QC-Erfolg belegt keine integrierte physische Funktion. Historische Messungen nur mit Datum und Firmwarestand verwenden.
-- **Stand integration {notes['stand']}:** W1 ist im Entwurf zugunsten der Abgabefassung ohne Kettenmessung behandelt (D09), die Bestätigung steht aus. W2 betrifft auch den im MVP optionalen Geschwindigkeitsschalter und die neue Trägerplatine. Für Latenz- und BPM-Ziele gibt es eine gemeinsame, noch nicht freigegebene Vorschlagsfassung vom 11.10. Details: [Abgleich mit integration](#abgleich-mit-integration).
+- **Stand integration {notes['stand']}:** W1 ist im Projekt entschieden: Abgabefassung ohne Kettenmessung (D09, 14.10.); die Abstimmung mit dem Betreuer ist offen. W2 betrifft den im MVP nicht geforderten Geschwindigkeitsschalter und die Trägerplatine. Latenz- und BPM-Ziele gelten seit 14.10. (REQ-05, REQ-06). Details: [Abgleich mit integration](#abgleich-mit-integration).
 
 ## Abgleich mit integration
 
@@ -539,7 +549,7 @@ readme+=f'''
 
 `confirmed` wird nicht eigens angezeigt: Es bedeutet im Inventar dokumentiert, nicht unabhängig wahrheitsgeprüft. Auch vorhandene Abschnitts-/Tabellenverweise sind aus Stage 1 übernommen. Alle Aussagen behalten exakt ihre Quellsprache; einzelne englische Firmwareeinheiten sind deshalb weiterhin Englisch.
 
-[Quellenverzeichnis](quellen.md) führt alle {len(sources)} Schlüssel mit zitierenden IDs. [quellen.bib](quellen.bib) enthält konservative Minimal-Einträge und kennzeichnet fehlende Metadaten; es ist noch kein abgabefertiges Literaturverzeichnis. [Einheitenindex](einheitenindex.md) führt jede Audit-ID zur Schreibstelle. [Offene Punkte](offene-punkte.md) sind die Arbeitsliste für Entscheidungen, Seiten und Quellenlücken.
+[Quellenverzeichnis](quellen.md) führt alle {len(sources)} Audit-Schlüssel mit zitierenden IDs sowie {len(supplemental['keys'])} Zusatzquellen außerhalb des Audits (Projektentscheidungen, LED-Recherche) ohne Audit-IDs. [quellen.bib](quellen.bib) enthält konservative Minimal-Einträge und kennzeichnet fehlende Metadaten; es ist noch kein abgabefertiges Literaturverzeichnis. [Einheitenindex](einheitenindex.md) führt jede Audit-ID zur Schreibstelle. [Offene Punkte](offene-punkte.md) sind die Arbeitsliste für Entscheidungen, Seiten und Quellenlücken.
 
 ## Regenerieren und prüfen
 
@@ -547,7 +557,7 @@ readme+=f'''
 python thesis-material/_build/build.py
 ```
 
-Der Generator benötigt nur die Python-Standardbibliothek und keinen Netzwerkzugang. Redaktionelle Änderungen im Generator bzw. in `_build/source-overrides.json` pflegen; erzeugte Dateien werden überschrieben. `_stage1/` wird ausschließlich gelesen. Die Vollständigkeitsprüfung kontrolliert alle 350 IDs in den Kapiteldateien, jede aktive Aussage genau einmal, alle Quellenreferenzen und lokale Linkziele. Ergebnis: [vollstaendigkeit.md](vollstaendigkeit.md); maschinenlesbar: [_build/check.json](_build/check.json).
+Der Generator benötigt nur die Python-Standardbibliothek und keinen Netzwerkzugang. Redaktionelle Änderungen im Generator bzw. in `_build/source-overrides.json` pflegen, Quellen außerhalb des Audits in `_build/supplemental-sources.json`; erzeugte Dateien werden überschrieben. `_stage1/` wird ausschließlich gelesen. Die Vollständigkeitsprüfung kontrolliert alle 350 IDs in den Kapiteldateien, jede aktive Aussage genau einmal, alle Quellenreferenzen und lokale Linkziele. Ergebnis: [vollstaendigkeit.md](vollstaendigkeit.md); maschinenlesbar: [_build/check.json](_build/check.json).
 
 '''+WATERMARK+'\n'
 outputs['README.md']=readme
@@ -567,7 +577,7 @@ missing=[]
 for path,content in outputs.items():
     if not path.endswith('.md'):continue
     for href in re.findall(r'\]\(([^)]+)\)',content):
-        if href.startswith(('http://','https://')):continue
+        if re.match(r'[a-z][a-z0-9+.-]*://',href):continue  # Externe Ziele (auch t3-thread://) nicht lokal prüfen.
         from urllib.parse import unquote
         target=href.split('#')[0]
         if target and not ((ROOT/path).parent/unquote(target)).exists() and ((ROOT/path).parent/unquote(target)).resolve() not in {ROOT/'vollstaendigkeit.md', ROOT/'_build/check.json'}:missing.append((path,href))
@@ -583,7 +593,7 @@ report=f'''# Vollständigkeitsprüfung
 
 - {len(active)} aktive Aussagen jeweils genau einmal mit eigenem Anker.
 - {len(replaced)} ersetzte IDs ausdrücklich als „ersetzt …“ erhalten; {stats['superseding_units']} Ersatz-Einheiten.
-- {len(sources)} Quellenschlüssel; alle Quellenverweise auf bekannte Einträge.
+- {len(sources)} Audit-Quellenschlüssel und {len(supplemental['keys'])} Zusatzquellen; alle Quellenverweise auf bekannte Einträge.
 - Alle lokalen Markdown-Linkziele vorhanden.
 - `_stage1/` während des Generatorlaufs unverändert (SHA-256-Vergleich).
 - Fehlende IDs: keine. Unbekannte IDs: keine.
