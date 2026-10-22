@@ -18,6 +18,11 @@ overrides = json.loads((ROOT / '_build/source-overrides.json').read_text(encodin
 # Abgleich mit neueren integration-Entscheidungen: Notizen ergänzen die Aussagen, ersetzen sie nicht.
 notes = json.loads((ROOT / '_build/integration-notes.json').read_text(encoding='utf-8'))
 corrections = json.loads((ROOT / '_build/stage2-corrections.json').read_text(encoding='utf-8'))
+# Zusatzquellen außerhalb des Audits; erzeugte Register dürfen sie bei Regeneration nicht verlieren.
+supplemental = json.loads((ROOT / '_build/supplemental-sources.json').read_text(encoding='utf-8'))
+for key in supplemental['keys']:
+    assert key not in original_sources, f'Zusatzquelle {key} existiert bereits im Audit'
+    assert '@misc{'+key+',' in supplemental['bib'] and f'<a id="{key}"></a>' in supplemental['md'], f'Zusatzquelle {key} unvollständig'
 sources = {k: dict(v, **overrides.get(k, {})) for k, v in original_sources.items()}
 
 # Die Stage-1-Quellendateien wurden außerhalb dieses Generators zusammengeführt. Gleiche Schlüssel mit
@@ -373,7 +378,7 @@ for category in sorted({source_topic(k) for k in sources}):
         if key in corrections['split_sources']:bib_text+='**Korrektur Stage 2:** Schlüssel aufgeteilt in '+', '.join(source_link(k,'quellen.md') for k in corrections['split_sources'][key]['into'])+'; zitierende Einheiten verweisen jetzt dorthin.\n\n'
         if key=='pilot_guidelines' and key not in overrides:bib_text+='**METADATENKONFLIKT:** Der verlinkte PMC-Text gehört zu Teresi et al. (2022), Medical Care 60(1), 95–103, DOI 10.1097/MLR.0000000000001664. Der Ausgangseintrag nennt Leon (2011). Keine automatische Ersetzung: erst klären, welches Werk die Aussagen tatsächlich belegt.\n\n'
         bib_text+='**Zitiert von:** '+(', '.join(unit_link(uid,'quellen.md')+(' (ersetzt)' if uid in replaced else '') for uid in usage[key]) or 'Keine Einheit im Inventar.')+'\n\n'
-outputs['quellen.md']=bib_text.rstrip('\n')+'\n'
+outputs['quellen.md']=bib_text.rstrip('\n')+'\n\n'+supplemental['md']
 
 def bib_escape(value):
     return str(value).replace('\\',r'\textbackslash{}').replace('&',r'\&').replace('%',r'\%').replace('#',r'\#').replace('_',r'\_')
@@ -387,7 +392,7 @@ for key,s in sources.items():
     else:
         fields['note']='UNSICHERER MINIMALEINTRAG. Bibliografische Felder vor Verwendung am Original ergänzen. Referenztext aus Stage 1, nicht als Feldmetadaten verifiziert: '+s['reference']+' Linkstatus: '+s.get('link_check','nicht geprüft')
     bib.append('@misc{'+key+',\n'+',\n'.join('  '+k+' = {'+(str(v) if k in ('url','doi','author') else bib_escape(v))+'}' for k,v in fields.items())+'\n}\n')
-outputs['quellen.bib']='\n'.join(bib)
+outputs['quellen.bib']='\n'.join(bib)+'\n'+supplemental['bib']
 
 fixes='# Linkkorrekturen und Suchprotokoll\n\n[Zum Einstieg](README.md)\n\nPrüfdatum: 05.10.2026; spätere Prüfungen tragen ihr eigenes Datum. Änderungen liegen ausschließlich in [_build/source-overrides.json](_build/source-overrides.json) und [_build/stage2-corrections.json](_build/stage2-corrections.json); Stage 1 bleibt unverändert. Direkte HTTP-Proben: [_build/link-probes.json](_build/link-probes.json). Ein Suchtreffer allein genügt nicht zum Reparieren eines Links. Keine Seitenzahlen wurden neu festgelegt.\n\n## Verifiziert korrigiert\n\n'
 def fix_entry(key,v):
@@ -547,7 +552,7 @@ readme+=f'''
 python thesis-material/_build/build.py
 ```
 
-Der Generator benötigt nur die Python-Standardbibliothek und keinen Netzwerkzugang. Redaktionelle Änderungen im Generator bzw. in `_build/source-overrides.json` pflegen; erzeugte Dateien werden überschrieben. `_stage1/` wird ausschließlich gelesen. Die Vollständigkeitsprüfung kontrolliert alle 350 IDs in den Kapiteldateien, jede aktive Aussage genau einmal, alle Quellenreferenzen und lokale Linkziele. Ergebnis: [vollstaendigkeit.md](vollstaendigkeit.md); maschinenlesbar: [_build/check.json](_build/check.json).
+Der Generator benötigt nur die Python-Standardbibliothek und keinen Netzwerkzugang. Redaktionelle Änderungen im Generator bzw. in `_build/source-overrides.json` pflegen, Quellen außerhalb des Audits in `_build/supplemental-sources.json`; erzeugte Dateien werden überschrieben. `_stage1/` wird ausschließlich gelesen. Die Vollständigkeitsprüfung kontrolliert alle 350 IDs in den Kapiteldateien, jede aktive Aussage genau einmal, alle Quellenreferenzen und lokale Linkziele. Ergebnis: [vollstaendigkeit.md](vollstaendigkeit.md); maschinenlesbar: [_build/check.json](_build/check.json).
 
 '''+WATERMARK+'\n'
 outputs['README.md']=readme
@@ -567,7 +572,7 @@ missing=[]
 for path,content in outputs.items():
     if not path.endswith('.md'):continue
     for href in re.findall(r'\]\(([^)]+)\)',content):
-        if href.startswith(('http://','https://')):continue
+        if re.match(r'[a-z][a-z0-9+.-]*://',href):continue  # Externe Ziele (auch t3-thread://) nicht lokal prüfen.
         from urllib.parse import unquote
         target=href.split('#')[0]
         if target and not ((ROOT/path).parent/unquote(target)).exists() and ((ROOT/path).parent/unquote(target)).resolve() not in {ROOT/'vollstaendigkeit.md', ROOT/'_build/check.json'}:missing.append((path,href))

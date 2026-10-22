@@ -13,6 +13,7 @@ from validate_docs import (
     line_anchor,
     listed,
     renders,
+    supplemental_sources,
 )
 
 ENCODE = {v: k for k, v in PLANTUML_ALPHABET.items()}
@@ -126,6 +127,22 @@ class LineAnchorTests(unittest.TestCase):
             self.assertTrue(line_anchor("L1-L2", target))
             self.assertFalse(line_anchor("L4", target))
             self.assertFalse(line_anchor("heading", target))
+
+
+class SupplementalSourceTests(unittest.TestCase):
+    def test_supplemental_source_must_reach_both_registers(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write(
+                root,
+                "thesis-material/_build/supplemental-sources.json",
+                json.dumps({"keys": ["extra"]}),
+            )
+            write(root, "thesis-material/quellen.bib", "@misc{extra,\n}\n")
+            write(root, "thesis-material/quellen.md", '<a id="extra"></a>\n')
+            self.assertEqual(supplemental_sources(root), [])
+            write(root, "thesis-material/quellen.md", "")
+            self.assertEqual(len(supplemental_sources(root)), 1)
 
 
 if __name__ == "__main__":

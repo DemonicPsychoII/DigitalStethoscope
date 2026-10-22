@@ -10,6 +10,8 @@ rationale under `Development/system/`, and weekly slides or reports that feed th
   date for web sources. Own measurements cite their evidence with date and firmware revision.
 - Prefer peer-reviewed literature, primary standards and vendor documentation. Record sources in
   `thesis-material/quellen.bib` and `thesis-material/quellen.md`, following their existing format.
+  Both files are generated: add new records to `thesis-material/_build/supplemental-sources.json`
+  (or the other `_build/` inputs) and run `python thesis-material/_build/build.py`.
 - If no adequate source exists, say so explicitly and mark the claim as unsupported or as a
   project decision; never present it as established.
 - Never invent or approximate citations, metadata or page numbers; mark unverified fields as such.

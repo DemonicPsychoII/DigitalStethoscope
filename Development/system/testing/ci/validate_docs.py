@@ -227,11 +227,27 @@ def thesis(root: Path = ROOT) -> list[str]:
         tail = (run.stderr or run.stdout).strip().splitlines()[-1:]
         return [f"thesis-material/_build/build.py failed: {' '.join(tail)}"]
     after = subprocess.check_output(["git", "diff", "--", area], cwd=root)
+    errors = supplemental_sources(root)
     if after != before:
-        return [
+        errors.append(
             "thesis-material: generated files were stale; commit the regenerated output"
-        ]
-    return []
+        )
+    return errors
+
+
+def supplemental_sources(root: Path = ROOT) -> list[str]:
+    """Sources outside the audit live in generator input and must reach both registers."""
+    area = root / "thesis-material"
+    keys = json.loads(
+        (area / "_build/supplemental-sources.json").read_text(encoding="utf-8")
+    )["keys"]
+    bib = (area / "quellen.bib").read_text(encoding="utf-8")
+    register = (area / "quellen.md").read_text(encoding="utf-8")
+    return [
+        f"thesis-material: supplemental source {key} missing from quellen.bib/quellen.md"
+        for key in keys
+        if "@misc{" + key + "," not in bib or f'<a id="{key}"></a>' not in register
+    ]
 
 
 def main() -> None:
