@@ -177,6 +177,30 @@ ownership. [Product scope](../../spec/product-scope.md) and the
 class B/SOUP intentions and monitoring controls; classification and hazards require
 substantiation.
 
+## Wi-Fi workflow verification
+
+CONTROL posts `COMMUNICATION_EVENT_LISTENING_STARTED`, then waits for
+`communication_waitForWiFiStop()` before it starts audio. Start/Stop state is
+protected by a short spinlock because the posting interface permits interrupt
+callers. A semaphore wakes the worker; repeated wakeups cannot fill a queue.
+CONTROL must serialize its commands with the wait. A timeout keeps audio stopped.
+
+Waits check Start in 200 ms slices. Total release latency also includes atomic
+settings writes, driver cancellation and confirmed portal/hotspot shutdown; it is
+not yet measured. Failed cleanup withholds release and is retried by the worker.
+An established station is retained. L1 drivers and CONTROL integration remain
+placeholders; this does not establish functioning Wi-Fi or portal acceptance.
+
+Run the production workflow with deterministic kernel and service substitutes:
+
+```sh
+python -m pytest -q Development/system/coding/app/tests/host
+```
+
+The host tests need a C11 compiler (`gcc` by default; override with `CC`). They
+check orchestration and injected failures, not target radio or scheduler timing.
+The static quality job runs these tests when application code or tests change.
+
 ## Coding conventions
 
 `.clang-format` in this folder sets the layout (Allman braces, 4 spaces, `if(x)`,

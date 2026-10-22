@@ -284,7 +284,42 @@ conformity or implemented firmware. Recovery and acknowledgement are separate.
   failed check). The LED interface only receives the code. The `HealthEvent` error class uses the same
   enumerator.
 
-The catalogue table is reviewed together with the Wi-Fi implementation.
+| Kind   | Status / error                                               | Detected by       | Code                         | Priority    | RGB LED   | RGB behaviour                        | Red button LED         | Cleared by  |
+|--------|--------------------------------------------------------------|-------------------|------------------------------|-------------|-----------|--------------------------------------|------------------------|-------------|
+| Status | Boot / startup checks                                        | CONTROL           | STARTUP_RUNNING              | Information | white     | steady                               | on, steady (lamp test) |             |
+| Error  | Settings read failed (flash)                                 | CONTROL           | SETTINGS_READ_FAILURE        | Low         | white     | steady                               | 1 blink, pause         | Restart     |
+| Error  | Startup check failed                                         | CONTROL           | STARTUP_FAILURE              | Low         | white     | steady                               | 2 blinks, pause        | Restart     |
+| Error  | Unexpected reset (watchdog, crash, brown-out)                | CONTROL           | RESET_UNEXPECTED             | Low         | white     | steady                               | 3 blinks, pause        | Short press |
+| Error  | Settings save failed (flash)                                 | CONTROL           | SETTINGS_SAVE_FAILURE        | Low         | white     | steady                               | 4 blinks, pause        | Restart     |
+| Error  | Context change during a session                              | CONTROL           | SESSION_CONTEXT_CHANGE       | Low         | white     | steady                               | 5 blinks, pause        | Restart     |
+| Status | Idle                                                         | CONTROL           | IDLE                         | Information | green     | steady, dim                          | off                    |             |
+| Status | Listening                                                    | CONTROL           | LISTENING                    | Information | cyan      | steady                               | off                    |             |
+| Status | Measuring, < 15 s                                            | CONTROL           | MEASUREMENT_RUNNING          | Information | cyan      | blink, slow                          | off                    |             |
+| Status | Measuring, ≥ 15 s                                            | CONTROL           | MEASUREMENT_MINIMUM_REACHED  | Information | cyan      | steady                               | off                    |             |
+| Status | Analysing                                                    | CONTROL           | ANALYSIS_RUNNING             | Information | cyan      | breathing, slow                      | off                    |             |
+| Error  | Audio worker stall                                           | MONITOR           | AUDIO_WORKER_STALL           | Medium      | cyan      | steady                               | 1 blink, pause         | Restart     |
+| Error  | BPM worker stall                                             | MONITOR           | HEART_RATE_WORKER_STALL      | Low         | cyan      | steady                               | 2 blinks, pause        | Restart     |
+| Error  | BPM result invalid                                           | AUDIO             | MEASUREMENT_INVALID          | Low         | cyan      | steady                               | 3 blinks, pause        | Short press |
+| Error  | Microphone: no data or I2S RX error                          | AUDIO             | MICROPHONE_FAILURE           | Medium      | cyan      | steady                               | 4 blinks, pause        | Restart     |
+| Error  | DAC: I2S TX error                                            | AUDIO             | AUDIO_OUTPUT_FAILURE         | Medium      | cyan      | steady                               | 5 blinks, pause        | Restart     |
+| Error  | Control input failure (potentiometer ADC or switch position) | PHYSICALINTERFACE | CONTROL_INPUT_FAILURE        | Medium      | cyan      | steady                               | 6 blinks, pause        | Restart     |
+| Status | Portal / hotspot open                                        | CONTROL           | PORTAL_OPEN                  | Information | violet    | steady                               | off                    |             |
+| Status | Wi-Fi scanning, connecting or reconnecting                   | COMMUNICATION     | WIFI_CONNECTING              | Information | violet    | breathing, slow                      | off                    |             |
+| Status | Wi-Fi connected                                              | COMMUNICATION     | WIFI_CONNECTED               | Information | violet    | 3 quick flashes                      | off                    |             |
+| Error  | Wi-Fi credentials save failed after 2 attempts               | COMMUNICATION     | WIFI_SETTINGS_SAVE_FAILURE   | Low         | violet    | steady                               | 1 blink, pause         | Short press |
+| Error  | Wi-Fi scan: 4 attempts used                                  | COMMUNICATION     | SCAN_FAILURE                 | Low         | violet    | steady                               | 2 blinks, pause        | Short press |
+| Error  | Wi-Fi boot join: 4 attempts used                             | COMMUNICATION     | JOIN_FAILURE                 | Low         | violet    | steady                               | 3 blinks, pause        | Short press |
+| Error  | Wi-Fi link loss: 4 attempts used                             | COMMUNICATION     | RECONNECT_FAILURE            | Low         | violet    | steady                               | 4 blinks, pause        | Short press |
+| Error  | Hotspot (AP) start failed                                    | COMMUNICATION     | HOTSPOT_START_FAILURE        | Low         | violet    | steady                               | 5 blinks, pause        | Short press |
+| Status | Sending                                                      | CONTROL           | DELIVERY_SENDING             | Information | blue      | breathing, slow                      | off                    |             |
+| Status | Delivery pending                                             | CONTROL           | DELIVERY_PENDING             | Information | blue      | blink, slow                          | off                    |             |
+| Status | Delivery received (201/200)                                  | COMMUNICATION     | DELIVERY_RECEIVED            | Information | blue      | 3 quick flashes                      | off                    |             |
+| Error  | Time sync failed                                             | COMMUNICATION     | TIME_SYNCHRONIZATION_FAILURE | Low         | blue      | steady                               | 1 blink, pause         | Short press |
+| Error  | Device registration failed                                   | COMMUNICATION     | DEVICE_REGISTRATION_FAILURE  | Low         | blue      | steady                               | 2 blinks, pause        | Short press |
+| Error  | Send failed after 3 retries                                  | COMMUNICATION     | DELIVERY_FAILURE             | Low         | blue      | steady                               | 3 blinks, pause        | Short press |
+| Error  | Result cannot be sent (offline or no clock)                  | CONTROL           | DELIVERY_NOT_POSSIBLE        | Low         | blue      | steady                               | 4 blinks, pause        | Short press |
+| Status | Input rejected                                               | CONTROL           | INPUT_REJECTED               | Information | no change | short dimming by at least 50 %, once | off                    |             |
+| Status | Error acknowledged                                           | CONTROL           | ERROR_ACKNOWLEDGED           | Information | no change | no change                            | 1 long flash, once     |             |
 
 ## Design constraints
 
