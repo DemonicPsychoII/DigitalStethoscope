@@ -6,6 +6,7 @@ reviews:
   # Authors must not manufacture the bot approval trusted by the review gate.
   allow_author_approval: false
   auto_review:
+    base_branches: [integration, test/visibility-workflow]
     enabled: true
     drafts: false
   path_instructions:

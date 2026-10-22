@@ -2,13 +2,13 @@ name: Mandatory quality gates
 
 on:
   pull_request:
-    branches: [integration]
+    branches: [integration, test/visibility-workflow]
     # `labeled` exists for the `firmware` label; jobs skip every other label below.
     types: [opened, synchronize, reopened, labeled]
   # Post-merge: re-run the gates on the merged result. A red run here makes
   # post-merge-revert.yml open a revert PR for the merge.
   push:
-    branches: [integration]
+    branches: [integration, test/visibility-workflow]
   schedule:
     # Daily integration firmware for Personal Cloud, off the hour.
     - cron: '17 3 * * *'
@@ -60,7 +60,7 @@ jobs:
       tooling: ${{ steps.changes.outputs.tooling }}
       gate: ${{ steps.changes.outputs.gate }}
       daily: ${{ steps.daily.outputs.build || 'true' }}
-      publish: ${{ ((github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && github.ref_name == 'integration' && steps.daily.outputs.build != 'false') || (github.event.pull_request.head.repo.full_name == github.repository && contains(github.event.pull_request.labels.*.name, 'firmware')) }}
+      publish: ${{ ((github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && github.ref_name == 'integration' && steps.daily.outputs.build != 'false') || (github.event.pull_request.base.ref == 'integration' && github.event.pull_request.head.repo.full_name == github.repository && contains(github.event.pull_request.labels.*.name, 'firmware')) }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -88,7 +88,7 @@ jobs:
           REUSE: ${{ steps.reuse.outputs.run }}
         run: |
           if [[ "$GITHUB_EVENT_NAME" == schedule || "$GITHUB_EVENT_NAME" == workflow_dispatch ]]; then
-            BASE_SHA="$(git merge-base origin/integration "$HEAD_SHA")"
+            BASE_SHA="$(git merge-base "origin/${GITHUB_REF_NAME}" "$HEAD_SHA")"
             export BASE_SHA
           fi
           python3 Development/system/testing/ci/firmware_changes.py
