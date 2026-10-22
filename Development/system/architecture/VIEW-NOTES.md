@@ -1,6 +1,6 @@
 # Architecture view boundaries and provenance
 
-Current Wi-Fi/portal and feedback behaviour follows the [19 October resolutions](../planning/mvp-decisions-2026-10-19.md); earlier dated notes remain history.
+Decisions in force for each topic: [current baseline](../planning/README.md#current-baseline).
 
 Earlier session decisions and numeric proposals: [11 October MVP decisions](../planning/mvp-decisions-2026-10-11.md). Older source snapshots and evaluation behavior remain historical evidence.
 
@@ -71,9 +71,7 @@ The current control settings have multiple mutex-protected callers; BPM and repl
 run in the audio module, rather than in all of the proposed separate workers.
 This reference describes the evaluation implementation, not the proposed worker layout.
 
-Updated by Claude-Opus-5.5 on behalf of Nico running in T3 Code through Claude Code.
-
-## Feedback preparation (2026-10-07)
+## Diagram conventions
 
 Display, touch, SD-card storage and capture / slower replay are optional beyond the MVP.
 Grey elements carry an explicit `optional` stereotype; mixed core/extension boxes
@@ -85,3 +83,5 @@ the output and is not a diagram-type declaration.
 
 See [framework and transport evaluation](../planning/framework-and-transport-evaluation.md)
 for ESP32-S3 drivers, external C/C++ library integration and HTTP/HTTPS effort.
+
+Updated by Claude-Opus-5.5 on behalf of Nico running in T3 Code through Claude Code.

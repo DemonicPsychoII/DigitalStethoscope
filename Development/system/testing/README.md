@@ -7,7 +7,7 @@ native simulation tests are in
 [`../coding/bringup-zephyr/tests/logic`](../coding/bringup-zephyr/tests/logic).
 
 - [Planned verification and acceptance](specification-verification.md): acceptance tests
-  (REQ-01–REQ-14), internal developer checks and the evidence record template. These procedures
+  (one per system requirement), internal developer checks and the evidence record template. These procedures
   do not claim executed product acceptance.
 - [CI quality gates](CI-QUALITY-GATES.md): setup, suite selection, prepared
   environments, required checks and publication boundaries.
@@ -47,3 +47,5 @@ and three source hashes. A local THA checkout must match those hashes when
 present; CI validates the metadata without copying institutional source files.
 
 Updated by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.
+
+Updated by Claude-Opus-5.5 on behalf of Nico running in T3 Code through Claude Code.

@@ -2,6 +2,9 @@
 
 **Internal design values, not requirements.** They are left to implementation and design ([14 October decisions](../planning/mvp-decisions-2026-10-14.md)); acceptance is defined only by the [system requirements](../requirements/system-requirements.md). Values are proposals until measured. Keep parameter IDs in implementation configuration and evidence. P04 (clip format), P14 (replay fidelity) and P16 (amplifier) were removed on 14 October 2026.
 
+Owners are the logical components in the [module map](interfaces-and-behavior.md#static-dependency-and-module-map),
+not the component requirement IDs retired on 14 October.
+
 | ID | Parameter | Value / candidate | Status and basis | Owners |
 |---|---|---|---|---|
 | P01 | Sample rate / block | 16,000 Hz / 128 frames; 8 ms | Board baseline S03/S04/S07 | AUD |

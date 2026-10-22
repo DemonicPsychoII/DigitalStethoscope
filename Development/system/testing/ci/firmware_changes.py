@@ -75,7 +75,13 @@ def suites(paths: list[str]) -> dict[str, bool]:
             or p.endswith("/native_tests.py")
             for p in paths
         ),
-        "docs": any(p.endswith((".md", ".puml")) for p in paths),
+        # Documentation checks compare docs with renders, pins, scripts and the thesis kit.
+        "docs": workflow
+        or any(
+            p.endswith((".md", ".puml", ".svg"))
+            or p.startswith(("thesis-material/", "Development/system/testing/ci/"))
+            for p in paths
+        ),
         "host": workflow
         or firmware
         or any(

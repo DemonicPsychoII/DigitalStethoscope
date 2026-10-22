@@ -237,8 +237,8 @@ def origins(u, src):
         m=re.match(r'^(.*?):([\d,\-]+)$',origin)
         path,line=(m[1],m[2]) if m else (origin,None)
         anchor='#L'+re.split(r'[-,]',line)[0] if line else ''
-        if not (ROOT.parent/path).exists():
-            # Herkunftsdatei existiert auf integration nicht mehr: historische Fassung verlinken statt abzubrechen.
+        if not (ROOT.parent/path).exists() or path in notes['relocated_origins']:
+            # Herkunftsdatei fehlt oder wurde umgeschrieben, Zeilenangaben passen nicht mehr: historische Fassung verlinken.
             moved=notes['relocated_origins'].get(path)
             if moved:
                 cur=moved['current']
@@ -443,7 +443,7 @@ open_text+='## Weitere Konflikte und Nachweisgrenzen\n\n'
 for text,ids,*conflict in [
  ('Abgabe laut Nico: **11.01.2027**. „Ende Januar“ und verschiedene fakultätsspezifische Bearbeitungsfristen bleiben historischer Kontext. Verbindlichen DMS-Termin und zuständige SPO/APO abgleichen.', ['U033','C045','C049','C051']),
  ('Prototyp nutzt ESP32/Zephyr; ESP-IDF-Favorisierung ist ein historischer Recherchevorschlag. Die tatsächlich getroffene Frameworkentscheidung und deren Begründung dokumentieren.', ['U028','U035','C013','U085'], 'framework'),
- ('Filter 40–800 Hz / 25–150 Hz, Live-Latenz <30 ms bzw. ≤10/≤5 ms und BPM-Grenzen sind vorläufige Entwicklungsziele. Eine gemeinsame Anforderungsversion und Messmethode festlegen.', ['U027','U102','U110','C001','A056','A057'], 'targets'),
+ ('Filter 40–800 Hz / 25–150 Hz und Live-Latenz <30 ms sind vorläufige Entwicklungsziele. Seit 14.10. gilt: BPM ±5 BPM oder ±10 % gegen Pulsoximeter/Smartwatch (REQ-06), Latenz nur nach Gehör geprüft (REQ-05). Ältere Werte ≤10/≤5 ms nicht übernehmen.', ['U027','U102','U110','C001','A056','A057'], 'targets'),
  ('10–40-ms-DMA-Startwerte passen nicht ohne Prüfung zum ≤10-ms-End-to-End-Ziel. Tatsächliche Blocklatenz, Wandler- und Schedulinganteile am Prototyp messen.', ['C027','C001','U101'], 'dma'),
  ('Builds und Hosttests ersetzen keine integrierte Hardwareevaluation. Physische Tests am dokumentierten Firmware-Commit nachholen; Verdrahtungsbestätigung separat ausweisen.', ['U119','U125','U129','U130','U131']),
  (('FDA-Leitlinie: Link bleibt defekt; Publikationsjahr 1998 statt 2023 und EC13-1992-Bezug beachten, Volltext beschaffen. Der Leon-/Teresi-Konflikt der Pilotstudienquelle ist zugunsten Teresi et al. (2022) aufgelöst, siehe [Linkkorrekturen](linkkorrekturen.md#pilot_guidelines).' if 'pilot_guidelines' in repaired else 'Pilotstudienquelle: Leon-/Teresi-Metadatenkonflikt klären. Zusätzlich FDA-Publikationsjahr 1998 statt 2023 und EC13-1992-Bezug in der reparierten FDA-Fassung beachten.'), ['B001','B016','A052']),
@@ -501,7 +501,7 @@ Pro Absatz eine Kernaussage wählen, Originalbeleg öffnen und die genaue Fundst
 - **Quellenstand des Audits:** {stats['citation_units']} zitierbedürftige Einheiten, {stats['citation_units_with_at_least_three_sources']} davon mit mindestens drei Quellen, {stats['incomplete_source_sets']} unvollständige Quellensets. {stats['unverified_pages_exact']} von {stats['source_references']} Quellenverweisen haben exakt `page: unverified`. Nico muss diese Seiten prüfen.
 - **Defekte Links:** ursprünglich {len(broken_before)} Einträge, betroffen {stats['broken_affected_units_before']} Einheiten. {len(repaired)} verifiziert repariert, {len(broken_after)} sichtbar defekt, {len(metadata_only)} weitere Einträge nur in den Metadaten korrigiert; weiterhin betroffen: {stats['broken_affected_units_after']} Audit-Einheiten. [Korrekturprotokoll](linkkorrekturen.md). {'Der Leon-/Teresi-Metadatenkonflikt der Pilotstudienquelle ist in Stage 2 aufgelöst.' if 'pilot_guidelines' in repaired else 'Die Pilotstudienquelle enthält zusätzlich einen ungelösten Metadatenkonflikt.'}
 - Build-/Host-/QC-Erfolg belegt keine integrierte physische Funktion. Historische Messungen nur mit Datum und Firmwarestand verwenden.
-- **Stand integration {notes['stand']}:** W1 ist im Entwurf zugunsten der Abgabefassung ohne Kettenmessung behandelt (D09), die Bestätigung steht aus. W2 betrifft auch den im MVP optionalen Geschwindigkeitsschalter und die neue Trägerplatine. Für Latenz- und BPM-Ziele gibt es eine gemeinsame, noch nicht freigegebene Vorschlagsfassung vom 11.10. Details: [Abgleich mit integration](#abgleich-mit-integration).
+- **Stand integration {notes['stand']}:** W1 ist im Projekt entschieden: Abgabefassung ohne Kettenmessung (D09, 14.10.); die Abstimmung mit dem Betreuer ist offen. W2 betrifft den im MVP nicht geforderten Geschwindigkeitsschalter und die Trägerplatine. Latenz- und BPM-Ziele gelten seit 14.10. (REQ-05, REQ-06). Details: [Abgleich mit integration](#abgleich-mit-integration).
 
 ## Abgleich mit integration
 

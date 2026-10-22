@@ -87,7 +87,7 @@ R07 empfiehlt, die Bruststückmembran beizubehalten und das Mikrofon in einer kl
 
 README dokumentiert INMP441 als Audioeingang und PCM5102A als externen Audioausgang; die Verkabelung/Pinbelegung wird im README als Eval-Träger-Rev A geführt.
 
-**Ursprung:** [Development/system/coding/bringup-zephyr/README.md:1-160](../Development/system/coding/bringup-zephyr/README.md#L1)
+**Ursprung:** [Development/system/coding/bringup-zephyr/README.md:1-160](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/23c1ea492270b897532896179e35f873eee823be/Development/system/coding/bringup-zephyr/README.md?plain=1#L1) (**Herkunft verschoben:** seit b2c3dde zu einem kurzen Einstiegs-README verdichtet; die Zeilenangaben gelten nur für die zitierte Fassung. Link zeigt diese historische Fassung. Aktuell: [Bring-up-README](../Development/system/coding/bringup-zephyr/README.md))
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
 
 ### Werte und dokumentierte Befunde
@@ -159,7 +159,9 @@ R07 nennt beim IM69D130 ein einfach erhältliches Shield2Go mit ADAU7002, bei Kn
 
 Firmware README separates display, audio and optional network work into threads; input events do not wait for full-screen redraw, and failed GPIO event delivery retries.
 
-**Ursprung:** [Development/system/coding/bringup-zephyr/README.md:48-49](../Development/system/coding/bringup-zephyr/README.md#L48)
+> **Neuerer Stand (Stand integration, 2026-10-22):** Beschreibt die Thread-Aufteilung der Bring-up-Firmware mit Display. Aktuell: `L2_AUDIO` führt den Audiopfad aus; BPM läuft in einem eigenen Worker unterhalb der Audio-Priorität. `L2_CONTROL` ist einziger Schreiber des Modus-Zustands; Netzwerkarbeit nur unter dessen exklusivem Lease. Display ist nicht im MVP. – siehe [Architekturentscheidungen 13.10.](../Development/system/planning/mvp-decisions-2026-10-13.md#confirmed-decisions), [Design: Firmware-Schichten](../Development/system/design/interfaces-and-behavior.md#firmware-layer-structure).
+
+**Ursprung:** [Development/system/coding/bringup-zephyr/README.md:48-49](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/23c1ea492270b897532896179e35f873eee823be/Development/system/coding/bringup-zephyr/README.md?plain=1#L48) (**Herkunft verschoben:** seit b2c3dde zu einem kurzen Einstiegs-README verdichtet; die Zeilenangaben gelten nur für die zitierte Fassung. Link zeigt diese historische Fassung. Aktuell: [Bring-up-README](../Development/system/coding/bringup-zephyr/README.md))
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
 
 <a id="u085"></a>
@@ -167,7 +169,9 @@ Firmware README separates display, audio and optional network work into threads;
 
 README beschreibt die Bring-up-Firmware als ESP32-S3-Zephyr-Anwendung mit Audio-, DSP-, FHIR/Netzwerk-, Display-/Touch-, GPIO- und SD-Speichermodulen; konkrete Datenflussdetails sind der README-Architektursektion zu entnehmen.
 
-**Ursprung:** [Development/system/coding/bringup-zephyr/README.md:1-120](../Development/system/coding/bringup-zephyr/README.md#L1)
+> **Neuerer Stand (Stand integration, 2026-10-22):** Beschreibt die Bring-up-Firmware. Die neue Firmware hat eine andere Modulstruktur (13.10.). Aktuell: Neue Firmware in `coding/app/` (D11, 14.10.). L0 = Zephyr; L1 = dünne Hardware-Adapter (`L1_I2S`, `L1_WIFI`, `L1_PHYSICALINTERFACE`) und reine C-Bibliotheken (`L1_FILTER`, `L1_BPM`, `L1_FHIR`); L2 = Orchestrierung (`L2_CONTROL`, `L2_AUDIO`, `L2_COMMUNICATION`, `L2_SHELL`). Display/Touch, SD und Replay sind nicht im Gerüst. – siehe [Architekturentscheidungen 13.10.](../Development/system/planning/mvp-decisions-2026-10-13.md#confirmed-decisions), [Design: Firmware-Schichten](../Development/system/design/interfaces-and-behavior.md#firmware-layer-structure).
+
+**Ursprung:** [Development/system/coding/bringup-zephyr/README.md:1-120](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/23c1ea492270b897532896179e35f873eee823be/Development/system/coding/bringup-zephyr/README.md?plain=1#L1) (**Herkunft verschoben:** seit b2c3dde zu einem kurzen Einstiegs-README verdichtet; die Zeilenangaben gelten nur für die zitierte Fassung. Link zeigt diese historische Fassung. Aktuell: [Bring-up-README](../Development/system/coding/bringup-zephyr/README.md))
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
 
 ### Werte und dokumentierte Befunde
@@ -185,7 +189,7 @@ Bestandsliste: 10-kΩ-Potentiometer am ADC für Lautstärke; Fasizi ILI9341 240�
 
 Firmware README gives default GPIO mapping for the filter switch as positions Raw/Murmur/BPM on GPIO 18/21/38; mapping is explicitly tied to evaluation carrier wiring.
 
-**Ursprung:** [Development/system/coding/bringup-zephyr/README.md:64-83](../Development/system/coding/bringup-zephyr/README.md#L64)
+**Ursprung:** [Development/system/coding/bringup-zephyr/README.md:64-83](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/23c1ea492270b897532896179e35f873eee823be/Development/system/coding/bringup-zephyr/README.md?plain=1#L64) (**Herkunft verschoben:** seit b2c3dde zu einem kurzen Einstiegs-README verdichtet; die Zeilenangaben gelten nur für die zitierte Fassung. Link zeigt diese historische Fassung. Aktuell: [Bring-up-README](../Development/system/coding/bringup-zephyr/README.md))
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
 
 <a id="u078"></a>
@@ -201,7 +205,7 @@ Hardwaredokumentation führt zwei SP3T-THT-Schalter auf: Filterwahl Raw/Murmur/B
 
 README-Update 2026-10-02 meldet Rev A-Verdrahtung für Geschwindigkeits-Schalter (GPIO2/39/47) und LCD-SD am geteilten SPI2 (CS GPIO48); Standard-Firmware bildet beides ab.
 
-**Ursprung:** [Development/system/coding/bringup-zephyr/README.md:1-160](../Development/system/coding/bringup-zephyr/README.md#L1)
+**Ursprung:** [Development/system/coding/bringup-zephyr/README.md:1-160](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/23c1ea492270b897532896179e35f873eee823be/Development/system/coding/bringup-zephyr/README.md?plain=1#L1) (**Herkunft verschoben:** seit b2c3dde zu einem kurzen Einstiegs-README verdichtet; die Zeilenangaben gelten nur für die zitierte Fassung. Link zeigt diese historische Fassung. Aktuell: [Bring-up-README](../Development/system/coding/bringup-zephyr/README.md))
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
 
 ### Folgerungen, Entwurfsentscheidungen und Grenzen
@@ -211,13 +215,7 @@ README-Update 2026-10-02 meldet Rev A-Verdrahtung für Geschwindigkeits-Schalter
 
 Bedienvorschlag: Potentiometer für Lautstärke, Schalter für Wiedergabegeschwindigkeit und Filter; optional Touchdisplay zur Konfiguration.
 
-> **Überholt (Stand integration, 2026-10-12):** Das MVP hat weder Display noch Touch; Geschwindigkeitsschalter/Speed-Presets sind optional. Aktuell: Bedienung über Taster (Start/Stop, Quittierung, langer Druck ≥2 s im Idle öffnet das Hotspot-Portal), Filterschalter und Potentiometer; Patientenzuordnung und WLAN-Einrichtung über eine Handy-Browserseite im Geräte-Hotspot. – siehe [MVP-Entscheidungen 12.10.](../Development/system/planning/mvp-decisions-2026-10-12.md#confirmed-decisions), [MVP-Entscheidungen 11.10.](../Development/system/planning/mvp-decisions-2026-10-11.md#confirmed-scope-and-behavior).
-
-> **Überholt (2026-10-15):** Das Gerät wählt keinen Patienten mehr aus. Die Handy-Browserseite im Geräte-Hotspot dient nur der WLAN-Einrichtung (Netz aus Scanliste, Passwort); die Zugangsdaten bleiben im Flash gespeichert. Das Gerät registriert sich einmal am Server und speichert die Device-ID im Flash. Die Zuordnung von Gerät und Messdaten zum Patienten ist ein getrennter Server-Workflow außerhalb des MVP. – siehe [MVP-Entscheidungen 15.10.](../Development/system/planning/mvp-decisions-2026-10-15.md).
->
-> **Aktueller WLAN-Ablauf (2026-10-19):** Offener Geräte-Hotspot, Erstscan vor dem Öffnen, Verbindung und IP-Adresse vor dem Speichern, bestehende Verbindung beim Hören beibehalten. Einrichtung vor Hörbeginn sicher beenden. Zeitabgleich, sichere Serververbindung und Registrierung folgen in der FHIR-Phase. Maßgeblich: [Entscheidungen 19. Oktober](../Development/system/planning/mvp-decisions-2026-10-19.md).
->
-> **Ergänzt (2026-10-16):** Hat der Server dem Gerät schon einen Patienten zugeordnet, übernimmt das Gerät ihn als `subject` in die Observation. Das Gerät wählt nie selbst einen Patienten aus; siehe [Entscheidungen 16. Oktober](../Development/system/planning/mvp-decisions-2026-10-16.md).
+> **Überholt (Stand integration, 2026-10-22):** Das MVP hat weder Display noch Touch; Geschwindigkeitsschalter und Replay sind seit 14.10. keine Anforderung mehr. Die Patientenauswahl über die Handyseite (12.10.) ist am 15.10. entfallen. Aktuell: Start/Stop über Taster, Filterschalter, Potentiometer. Kurzer Druck quittiert einen Fehler, wiederholt aber nichts und startet nie die Einrichtung; Halten ≥2 s im Idle öffnet die WLAN-Einrichtung. Der Geräte-Hotspot ist offen, ein QR-Code öffnet die Portalseite im Handy-Browser. Das Gerät wählt keinen Patienten aus. – siehe [MVP-Entscheidungen 19.10.](../Development/system/planning/mvp-decisions-2026-10-19.md#current-rules-and-amendments), [MVP-Entscheidungen 15.10.](../Development/system/planning/mvp-decisions-2026-10-15.md#confirmed-decisions), [Design: WLAN-Einrichtung](../Development/system/design/interfaces-and-behavior.md#wi-fi-setup-and-recovery).
 
 **Ursprung:** [preThesis/01-aufgabenbeschreibung/Aufgabenbeschreibung-Intern.md:53](../preThesis/01-aufgabenbeschreibung/Aufgabenbeschreibung-Intern.md#L53)
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
@@ -264,7 +262,7 @@ Bestandsliste: ESP32-S3 N16R8 DevKitC-1 mit 16 MB Flash und 8 MB PSRAM.
 
 R10 nennt 10–40-ms-DMA-Blöcke und zwei bis vier DMA-Puffer lediglich als Startwerte; die endgültige Audiolatenz und Robustheit sind vom gewählten Blockformat und Scheduling abhängig.
 
-> **Überholt (Stand integration, 2026-10-12):** Die 10–40-ms-DMA-Startwerte sind durch die gewählte Blockgröße ersetzt. Aktuell: 128 Frames bei 16 kHz (8 ms) je Block; Vorschlag ≤4 ms kritische Ausführung pro Block, Scheduling- und Wartezeiten getrennt messen. – siehe [Latenzbudgets 11.10.](../Development/system/planning/mvp-decisions-2026-10-11.md#latency-research-and-proposed-budgets), [Entscheidungsregister D10](../Development/system/planning/implementation-readiness.md#decision-register).
+> **Überholt (Stand integration, 2026-10-22):** Die 10–40-ms-DMA-Startwerte sind durch die gewählte Blockgröße ersetzt. Aktuell: 128 Frames bei 16 kHz (8 ms) je Block; Vorschlag ≤4 ms kritische Ausführung pro Block, Scheduling- und Wartezeiten getrennt messen. – siehe [Latenzbudgets 11.10.](../Development/system/planning/mvp-decisions-2026-10-11.md#latency-research-and-proposed-budgets), [Entscheidungsregister D10](../Development/system/planning/implementation-readiness.md#decision-register).
 
 **Ursprung:** [preThesis/03-recherche/R10-esp32-plattform.md:334-344](../preThesis/03-recherche/R10-esp32-plattform.md#L334)
 **Belege:** [Espressif Systems · esp_i2s_s3](https://docs.espressif.com/projects/esp-idf/en/stable/esp32s3/api-reference/peripherals/i2s.html) — Fundstelle: Data Transport (aus Stage 1; am Original prüfen); [Espressif Systems · esp_s3_datasheet](https://documentation.espressif.com/esp32-s3_datasheet_en.pdf) — Seite prüfen
@@ -276,7 +274,7 @@ R10 nennt 10–40-ms-DMA-Blöcke und zwei bis vier DMA-Puffer lediglich als Star
 
 Interne Programmiersprachen-/Framework-Auswahl: C/ESP-IDF oder C/Zephyr nach Hands-on-Phase; Kriterium ist schnellste tragfähige Echtzeit-Audio-Umsetzung.
 
-> **Überholt (Stand integration, 2026-10-12):** Die Auswahl zwischen C/ESP-IDF und C/Zephyr ist getroffen. Aktuell: C/Zephyr für das MVP; ein Frameworkwechsel würde Gerätekonfiguration, Synchronisation, Netzwerk und Verifikation erneut erfordern. – siehe [Framework- und Transportbewertung](../Development/system/planning/framework-and-transport-evaluation.md#recommendation-for-the-next-discussion).
+> **Überholt (Stand integration, 2026-10-22):** Die Auswahl zwischen C/ESP-IDF und C/Zephyr ist getroffen. Aktuell: C/Zephyr für das MVP; ein Frameworkwechsel würde Gerätekonfiguration, Synchronisation, Netzwerk und Verifikation erneut erfordern. – siehe [Framework- und Transportbewertung](../Development/system/planning/framework-and-transport-evaluation.md#recommendation-for-the-next-discussion).
 
 **Ursprung:** [preThesis/01-aufgabenbeschreibung/Aufgabenbeschreibung-Intern.md:62](../preThesis/01-aufgabenbeschreibung/Aufgabenbeschreibung-Intern.md#L62)
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
@@ -286,7 +284,7 @@ Interne Programmiersprachen-/Framework-Auswahl: C/ESP-IDF oder C/Zephyr nach Han
 
 Plattformentscheidung intern zunächst offen: ESP-IDF (C/FreeRTOS) Favorit; Zephyr-Probeläufe vor Thesis-Start, finale Entscheidung zu Thesis-Beginn.
 
-> **Überholt (Stand integration, 2026-10-12):** Die Plattformentscheidung ist nicht mehr offen; die ESP-IDF-Präferenz der internen Fassung ist durch S04 ersetzt. Aktuell: Zephyr wird für das MVP beibehalten, solange die On-Target-Prüfungen keinen konkreten Blocker zeigen. – siehe [Framework- und Transportbewertung](../Development/system/planning/framework-and-transport-evaluation.md#recommendation-for-the-next-discussion), [Quellenregister S04/S06](../Development/system/spec/product-scope.md#source-register-and-precedence).
+> **Überholt (Stand integration, 2026-10-22):** Die Plattformentscheidung ist nicht mehr offen; die ESP-IDF-Präferenz der internen Fassung ist durch S04 ersetzt. Aktuell: Zephyr wird für das MVP beibehalten, solange die On-Target-Prüfungen keinen konkreten Blocker zeigen. – siehe [Framework- und Transportbewertung](../Development/system/planning/framework-and-transport-evaluation.md#recommendation-for-the-next-discussion), [Quellenregister S04/S06](../Development/system/spec/product-scope.md#source-register-and-precedence).
 
 **Ursprung:** [preThesis/01-aufgabenbeschreibung/Aufgabenbeschreibung-Intern.md:49](../preThesis/01-aufgabenbeschreibung/Aufgabenbeschreibung-Intern.md#L49)
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
@@ -300,11 +298,7 @@ Plattformentscheidung intern zunächst offen: ESP-IDF (C/FreeRTOS) Favorit; Zeph
 
 Der in R11 vorgeschlagene Übertragungspfad lautet: BPM-Observation mit Zeitstempel erzeugen, Uhrzeit synchronisieren, verifiziertes HTTPS aufbauen, FHIR-JSON per POST senden, HTTP-/FHIR-Antworten prüfen und transiente Fehler mit Backoff erneut versuchen.
 
-> **Überholt (Stand integration, 2026-10-12):** Übertragung per `POST` mit Backoff-Wiederholung ist nicht der Projektpfad. Aktuell: `PUT /Observation/{id}` mit stabiler Ressourcen-ID und anschließendem Readback, ohne Wiederholungswarteschlange; vor dem `PUT` wird `Device.patient` erneut gelesen und `Device.meta.versionId` festgehalten. Vorgeschlagen: Nach dem Observation-Readback wird das Device erneut gelesen; jede Versionsänderung ergibt „Unverified“ mit normalem Fehler statt „Sent“ (fängt auch A→B→A-Umzuordnungen, kann falsch-positiv sein). Ohne atomare Bedingung über `Device` und `Observation` bleibt eine Umzuordnung zwischen Prüfung und `PUT` ein sichtbar gemachtes Restrisiko. – siehe [Design: Delivery](../Development/system/design/interfaces-and-behavior.md#delivery-clock-and-configuration), [MVP-Entscheidungen 12.10.](../Development/system/planning/mvp-decisions-2026-10-12.md#proposed-behavior).
-
-> **Überholt (2026-10-15):** Auch der Stand vom 12.10. gilt nicht mehr. Aktuell: bedingtes Create (`POST /Observation` + `If-None-Exist`) mit `device`-Referenz und ohne `subject`; bis zu 3 Wiederholungen innerhalb von 10 s (14.10.). Die Antwort `201`/`200` ist die Empfangsbestätigung. Es gibt kein Readback, keine Prüfung von `Device.patient` und keinen Zustand „Unverified“ aus einer Device-Versionsänderung. – siehe [MVP-Entscheidungen 15.10.](../Development/system/planning/mvp-decisions-2026-10-15.md).
->
-> **Ergänzt (2026-10-16):** Hat der Server dem Gerät schon einen Patienten zugeordnet, übernimmt das Gerät ihn als `subject` in die Observation. Das Gerät wählt nie selbst einen Patienten aus; siehe [Entscheidungen 16. Oktober](../Development/system/planning/mvp-decisions-2026-10-16.md).
+> **Neuerer Stand (Stand integration, 2026-10-22):** Der Pfad ist konkretisiert: bedingtes Anlegen statt einfachem `POST`, feste Wiederholungsgrenze statt Backoff. Der `PUT`-/Readback-Pfad vom 12.10. ist am 15.10. entfallen. Aktuell: `POST /Observation` mit `If-None-Exist` auf der Geräte-/Boot-/Sitzungskennung, `device = Device/{id}`, `201`/`200` als Quittung, kein Readback (15.10.); bis zu 3 Wiederholungen etwa 2 s auseinander innerhalb 10 s (14.10.). Zeitsynchronisierung und gesicherter Servertransport gehören zur späteren FHIR-Phase (19.10.). – siehe [MVP-Entscheidungen 15.10.](../Development/system/planning/mvp-decisions-2026-10-15.md#resulting-behavior), [MVP-Entscheidungen 14.10.](../Development/system/planning/mvp-decisions-2026-10-14.md#behavior), [MVP-Entscheidungen 19.10.](../Development/system/planning/mvp-decisions-2026-10-19.md#current-rules-and-amendments).
 
 **Ursprung:** [preThesis/03-recherche/R11-fhir-tls.md:220-233](../preThesis/03-recherche/R11-fhir-tls.md#L220)
 **Belege:** [HL7 · fhir_r4_vitals_official](https://hl7.org/fhir/R4/observation-vitalsigns.html) — Fundstelle: Vital Signs Profile (aus Stage 1; am Original prüfen); [Espressif Systems · esp_tls_s3](https://docs.espressif.com/projects/esp-idf/en/stable/esp32s3/api-reference/protocols/esp_tls.html) — Fundstelle: TLS Server Verification (aus Stage 1; am Original prüfen); [Espressif Systems · esp_tls_faq](https://docs.espressif.com/projects/esp-faq/en/latest/software-framework/protocols/esp-tls.html) — Fundstelle: Question on certificate expiry (aus Stage 1; am Original prüfen)
@@ -338,7 +332,7 @@ R10 bewertet das Rechenbudget als voraussichtlich ausreichend, sofern Filter blo
 
 R10 bewertet ESP-IDF mit FreeRTOS als risikoärmere Basis für die konkrete Kombination aus ESP32-S3-PDM/I²S, DMA, Wi-Fi, TLS und Espressif-DSP-Bibliothek; Zephyr wird als grundsätzlich nutzbar, aber integrationsintensiver eingeordnet.
 
-> **Überholt (Stand integration, 2026-10-12):** Die R10-Empfehlung für ESP-IDF ist historischer Recherchekontext, keine Projektentscheidung. Aktuell: Zephyr bleibt Plattform des MVP; ESP-IDF-Komponenten sind keine Drop-in-Bibliotheken unter Zephyr. – siehe [Framework- und Transportbewertung](../Development/system/planning/framework-and-transport-evaluation.md#recommendation-for-the-next-discussion), [Quellenregister S06](../Development/system/spec/product-scope.md#source-register-and-precedence).
+> **Überholt (Stand integration, 2026-10-22):** Die R10-Empfehlung für ESP-IDF ist historischer Recherchekontext, keine Projektentscheidung. Aktuell: Zephyr bleibt Plattform des MVP; ESP-IDF-Komponenten sind keine Drop-in-Bibliotheken unter Zephyr. – siehe [Framework- und Transportbewertung](../Development/system/planning/framework-and-transport-evaluation.md#recommendation-for-the-next-discussion), [Quellenregister S06](../Development/system/spec/product-scope.md#source-register-and-precedence).
 
 **Ursprung:** [preThesis/03-recherche/R10-esp32-plattform.md:20-57,363-395](../preThesis/03-recherche/R10-esp32-plattform.md#L20)
 **Belege:** [Espressif Systems · esp_i2s_s3](https://docs.espressif.com/projects/esp-idf/en/stable/esp32s3/api-reference/peripherals/i2s.html) — Fundstelle: Overview of All Modes; Application Example (aus Stage 1; am Original prüfen); [Zephyr Project · zephyr_s3_board](https://docs.zephyrproject.org/latest/boards/espressif/esp32s3_devkitc/doc/index.html) — Fundstelle: Board Support Package; Supported Features (aus Stage 1; am Original prüfen); [Zephyr Project · zephyr_i2s_binding](https://docs.zephyrproject.org/latest/build/dts/api/bindings/i2s/espressif,esp32-i2s.html) — Fundstelle: Binding properties (aus Stage 1; am Original prüfen)

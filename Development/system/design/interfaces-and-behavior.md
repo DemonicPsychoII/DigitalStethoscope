@@ -170,7 +170,7 @@ Created by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.
 
 [Owner decisions and numeric proposals](../planning/mvp-decisions-2026-10-11.md) supersede older clip/retry/recovery proposals here. Raw capture/REC/replay is optional; BPM retains bounded streaming analysis state and window estimates. Session identity changes are never applied and follow SESSION_CONTEXT_CHANGE halt/restart handling in the current catalogue. Invalid BPM sends no numeric value and uses a separately validated error-report contract. Current session state transitions are in [the state diagram](../architecture/mvp-session-state.puml).
 
-## Wi-Fi setup and recovery — 19 October
+## Wi-Fi setup and recovery
 
 The [18 October discussion](../planning/mvp-decisions-2026-10-18.md) and
 [19 October resolutions](../planning/mvp-decisions-2026-10-19.md) define this project design.
@@ -226,7 +226,7 @@ and delivery requirements remain for that later phase.
 
 <a id="led-indication-and-single-error-type--16-october"></a>
 
-## LED indication and error handling — 19 October
+## LED indication and error handling
 
 The [19 October owner resolutions](../planning/mvp-decisions-2026-10-19.md) adopt
 the catalogue below as the current project design. It replaces the earlier light table.
@@ -304,7 +304,7 @@ Values are in [design parameters](parameters.md). Optional parts (replay, Lung, 
 | Indication | RGB LED shows the context colour and status pattern; during an error it keeps the colour of the context where the error occurred. The red button LED shows the blink code of the highest-priority error (see [status and error catalogue](#status-and-error-catalogue)). The catalogue is one append-only `FEEDBACK_` enum. Errors also go to the serial log, written by the component that detects them. Hotspot: open AP, setup at boot/Idle only, inactivity timeout, bounded clients; no credentials in logs. |
 | Monitoring | Count stalls, dropped blocks, deadline misses, clipping, analysis gaps and queue saturation. Report stack/heap watermarks. A stalled required worker raises an Error with audio muted. Initialization alone never counts as verified operation. |
 
-## Firmware layer structure — 13 October
+## Firmware layer structure
 
 [Owner decisions](../planning/mvp-decisions-2026-10-13.md) move orchestration into L2 and keep L1
 thin. `L2_COMMUNICATION` is the only path to a send: it has `L1_FHIR` serialize the frozen

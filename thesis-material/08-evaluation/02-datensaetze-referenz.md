@@ -148,6 +148,8 @@ R02 gibt 5.272 CirCor-Aufnahmen an, während die zitierte Originalpublikation 5.
 
 R03 empfiehlt synchron aufgezeichnetes EKG als primäre BPM-Referenz; Herzfrequenz wird aus R-Zacken bzw. R-R-Intervallen abgeleitet.
 
+> **Überholt (Stand integration, 2026-10-22):** Synchron aufgezeichnetes EKG als primäre BPM-Referenz ist nicht der Abnahmeweg des Projekts; die R03-Empfehlung bleibt Recherchekontext. Aktuell: Abnahme gegen gleichzeitig gemessenes Pulsoximeter oder Smartwatch, innerhalb ±5 BPM oder ±10 % (14.10., REQ-06). Anforderungen gelten nur, wenn Nico sie mit verfügbarer Ausrüstung am Gerät prüfen kann. – siehe [MVP-Entscheidungen 14.10.](../../Development/system/planning/mvp-decisions-2026-10-14.md#behavior), [Systemanforderungen](../../Development/system/requirements/system-requirements.md#system-requirements-mvp).
+
 **Ursprung:** [preThesis/03-recherche/R03-bpm-referenz.md:30-60](../../preThesis/03-recherche/R03-bpm-referenz.md#L30)
 **Belege:** [ANSI/AAMI EC13:2002 · ec13](https://webstore.ansi.org/standards/aami/ansiaamiec132002) — Fundstelle: Clause 4.2.7 (accessible copy; official publication status not verified) (aus Stage 1; am Original prüfen) · 🔒 Volltext kostenpflichtig; [IEC 60601-2-27:2011 · iec60601](https://webstore.iec.ch/en/publication/2638) — Fundstelle: Scope / standard description; accuracy clause not inspected (aus Stage 1; am Original prüfen) · 🔒 Volltext kostenpflichtig; [Bland, J 1986 · bland_altman](https://doi.org/10.1016/S0140-6736(86)90837-8) — Fundstelle: Abstract and bibliographic metadata; full text paywalled (aus Stage 1; am Original prüfen) · 🔒 Volltextzugang prüfen: Publisher full text may be paywalled.
 
@@ -155,6 +157,8 @@ R03 empfiehlt synchron aufgezeichnetes EKG als primäre BPM-Referenz; Herzfreque
 **A045 · METHODENVORSCHLAG · ANNAHME**
 
 R03 schlägt synchrone PCG-/EKG-Aufnahme, R-Zacken-Detektion mit visueller Stichprobenkontrolle und identische Auswertefenster vor.
+
+> **Überholt (Stand integration, 2026-10-22):** Synchrone PCG-/EKG-Aufnahme mit R-Zacken-Detektion ist nicht der Abnahmeweg des Projekts. Aktuell: Abnahme gegen gleichzeitig gemessenes Pulsoximeter oder Smartwatch (REQ-06). Aufnahmen und Referenz für Host-Tests werden in der WLAN/FHIR-Phase entschieden (P06, P17). – siehe [MVP-Entscheidungen 14.10.](../../Development/system/planning/mvp-decisions-2026-10-14.md#behavior), [Designparameter P06/P17](../../Development/system/design/parameters.md#design-parameters-internal).
 
 **Ursprung:** [preThesis/03-recherche/R03-bpm-referenz.md:45-60](../../preThesis/03-recherche/R03-bpm-referenz.md#L45)
 **Belege:** [Bland, J 1986 · bland_altman](https://doi.org/10.1016/S0140-6736(86)90837-8) — Fundstelle: Abstract and bibliographic metadata; full text paywalled (aus Stage 1; am Original prüfen) · 🔒 Volltextzugang prüfen: Publisher full text may be paywalled.; [Giavarina, D 2015 · bland_review](https://pmc.ncbi.nlm.nih.gov/articles/PMC4470095/) — Seite prüfen (übernommene Angabe: Methods overview; section/page unverified); [ANSI/AAMI EC13:2002 · ec13](https://webstore.ansi.org/standards/aami/ansiaamiec132002) — Fundstelle: Clause 4.2.7 (accessible copy; official publication status not verified) (aus Stage 1; am Original prüfen) · 🔒 Volltext kostenpflichtig

@@ -42,11 +42,8 @@ uploads appear under *Earlier builds*, without a channel.
 
 ### Toolchain and commands
 
-Pinned Zephyr revision: 357467a011cd2557a1a3f0b4be83d817c4addc9b
-
-Pinned hal_espressif revision: 3d4d922a4d2994f844790ec031a584ec71240485
-
-Zephyr SDK 1.0.1; west 1.5.0. See `Development/system/testing/ci/setup_zephyr.sh`
+The Zephyr, SDK and west pins live in [toolchain.json](../../testing/ci/toolchain.json);
+the Zephyr west manifest fixes the hal_espressif revision. See `Development/system/testing/ci/setup_zephyr.sh`
 for a fresh workspace. Work from an activated Zephyr environment (Python 3.12+,
 CMake, Ninja, esptool >=5.0.2, Espressif binary blobs). Commands below assume the
 current directory is this application:
@@ -81,3 +78,5 @@ Hardware flashing, serial and device-network operations require owner authorizat
 Review the [hardware guide](HARDWARE.md) before connecting the assembly.
 
 Updated by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.
+
+Updated by Claude-Opus-5.5 on behalf of Nico running in T3 Code through Claude Code.
