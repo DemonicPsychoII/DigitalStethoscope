@@ -43,7 +43,8 @@ uploads appear under *Earlier builds*, without a channel.
 ### Toolchain and commands
 
 The Zephyr, SDK and west pins live in [toolchain.json](../../testing/ci/toolchain.json);
-the Zephyr west manifest fixes the hal_espressif revision. See `Development/system/testing/ci/setup_zephyr.sh`
+the Zephyr west manifest fixes the hal_espressif revision
+(`3d4d922a4d2994f844790ec031a584ec71240485` at the current Zephyr pin). See `Development/system/testing/ci/setup_zephyr.sh`
 for a fresh workspace. Work from an activated Zephyr environment (Python 3.12+,
 CMake, Ninja, esptool >=5.0.2, Espressif binary blobs). Commands below assume the
 current directory is this application:

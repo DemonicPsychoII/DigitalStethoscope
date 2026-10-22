@@ -22,7 +22,7 @@ Other documents link here instead of naming the latest decision date.
 | 11 October | [mvp-decisions-2026-10-11.md](mvp-decisions-2026-10-11.md) | MVP scope, session behaviour, BPM acceptance and latency proposals |
 | 12 October | [mvp-decisions-2026-10-12.md](mvp-decisions-2026-10-12.md) | Hotspot portal, patient assignment, FHIR write contract |
 | 13 October | [mvp-decisions-2026-10-13.md](mvp-decisions-2026-10-13.md) | Firmware layer structure |
-| 14 October | [mvp-decisions-2026-10-14.md](mvp-decisions-2026-10-14.md) | Device-testable requirements REQ-01…REQ-14, scope, schedule |
+| 14 October | [mvp-decisions-2026-10-14.md](mvp-decisions-2026-10-14.md) | 14 device-testable requirements from REQ-01, scope, schedule |
 | 15 October | [mvp-decisions-2026-10-15.md](mvp-decisions-2026-10-15.md) | No patient selection on the device, Device registration, no readback; REQ-09/REQ-12 changed, REQ-15 added |
 | 16 October | [mvp-decisions-2026-10-16.md](mvp-decisions-2026-10-16.md) | LED indication, single error type, patient pass-through; REQ-09/REQ-13 changed |
 | 18 October | [mvp-decisions-2026-10-18.md](mvp-decisions-2026-10-18.md) | Wi-Fi and portal discussion record |
