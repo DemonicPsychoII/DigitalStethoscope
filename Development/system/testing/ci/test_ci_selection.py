@@ -1,6 +1,7 @@
 """Changed inputs select their verification without rebuilding unrelated firmware."""
 
 import unittest
+from unittest.mock import patch
 
 from firmware_changes import needs_firmware, select, suites
 
@@ -9,12 +10,48 @@ CI = "Development/system/testing/ci/"
 
 
 class SelectionTests(unittest.TestCase):
+    def setUp(self):
+        availability = patch(
+            "firmware_changes.available_component_suites",
+            return_value=("communication",),
+        )
+        availability.start()
+        self.addCleanup(availability.stop)
+
+    def test_component_pages_select_only_the_available_communication_suite(self):
+        for area in ("architecture", "design"):
+            for component in ("WIFI", "PORTAL", "L2_COMMUNICATION", "system"):
+                self.assertTrue(
+                    suites([f"Development/system/{area}/{component}/README.md"])[
+                        "application_host"
+                    ]
+                )
+            self.assertFalse(
+                suites([f"Development/system/{area}/AUDIO/README.md"])[
+                    "application_host"
+                ]
+            )
+        for component in ("L1_WIFI", "L1_PORTAL", "L2_COMMUNICATION"):
+            path = f"Development/system/coding/app/{component}/service.md"
+            self.assertTrue(suites([path])["application_host"])
+        with patch("firmware_changes.available_component_suites", return_value=()):
+            self.assertFalse(
+                suites(["Development/system/design/WIFI/README.md"])["application_host"]
+            )
+            self.assertFalse(
+                select([], full=True, daily=False, reuse=False)["application_host"]
+            )
+            self.assertFalse(
+                select([], full=False, daily=False, reuse=False, retain=True)[
+                    "application_host"
+                ]
+            )
+
     def test_component_changes_do_not_build_the_other_application(self):
         application = suites(["Development/system/coding/app/main.c"])
         self.assertTrue(application["application"])
-        self.assertFalse(
-            application["firmware"] or application["native"] or application["host"]
-        )
+        self.assertFalse(application["firmware"] or application["native"])
+        self.assertTrue(application["host"])
         bringup = suites([APP + "src/main.c"])
         self.assertTrue(bringup["firmware"] and bringup["native"] and bringup["host"])
         self.assertFalse(bringup["application"])
@@ -28,15 +65,66 @@ class SelectionTests(unittest.TestCase):
             selected = suites([path])
             self.assertTrue(selected["application"] and selected["firmware"])
 
-    def test_daily_promotion_keeps_qc_without_repeating_verified_suites(self):
+    def test_application_host_tests_select_host_without_firmware(self):
+        selected = suites(
+            ["Development/system/coding/app/tests/host/test_communication.py"]
+        )
+        self.assertTrue(selected["host"])
+        self.assertFalse(
+            selected["application"] or selected["firmware"] or selected["native"]
+        )
+
+    def test_daily_promotion_avoids_repeating_verified_suites(self):
         promoted = select([], full=False, daily=True, reuse=True)
-        self.assertEqual([key for key, value in promoted.items() if value], ["qc"])
+        self.assertEqual([key for key, value in promoted.items() if value], [])
         rebuilt = select([], full=False, daily=True, reuse=False)
         self.assertTrue(rebuilt["firmware"] and rebuilt["native"] and rebuilt["host"])
-        self.assertFalse(
-            rebuilt["application"] or rebuilt["tooling"] or rebuilt["gate"]
-        )
+        self.assertTrue(rebuilt["application"] and rebuilt["application_host"])
+        self.assertFalse(rebuilt["tooling"] or rebuilt["gate"])
         self.assertTrue(all(select([], full=True, daily=False, reuse=False).values()))
+
+    def test_publication_selects_both_firmware_targets_and_host_suites(self):
+        for full, daily, publish in (
+            (False, True, False),
+            (True, False, True),
+            (False, False, True),
+        ):
+            selected = select(
+                ["README.md"], full=full, daily=daily, reuse=False, publish=publish
+            )
+            for suite in (
+                "application",
+                "firmware",
+                "application_host",
+                "host",
+                "native",
+            ):
+                self.assertTrue(selected[suite], (full, daily, publish, suite))
+
+    def test_integration_retention_verifies_complete_bundle_for_single_target_changes(
+        self,
+    ):
+        for paths in (
+            ["Development/system/coding/app/main.c"],
+            [APP + "src/main.c"],
+            ["README.md"],
+        ):
+            selected = select(paths, full=False, daily=False, reuse=False, retain=True)
+            for suite in (
+                "application",
+                "firmware",
+                "native",
+                "host",
+                "application_host",
+            ):
+                self.assertTrue(selected[suite], (paths, suite))
+
+    def test_design_basis_changes_run_application_host_scenarios(self):
+        for area in ("design", "architecture", "requirements"):
+            selected = suites([f"Development/system/{area}/basis.md"])
+            self.assertTrue(selected["application_host"] and selected["docs"])
+            self.assertFalse(selected["firmware"] or selected["application"])
+            self.assertFalse(selected["host"])
 
     def test_thesis_application_inputs_compile_firmware(self):
         app = "Development/system/coding/app/"
@@ -86,7 +174,7 @@ class SelectionTests(unittest.TestCase):
                 "host": False,
                 "tooling": False,
                 "gate": True,
-                "qc": False,
+                "application_host": False,
             },
         )
 
@@ -109,7 +197,7 @@ class SelectionTests(unittest.TestCase):
                 "application": False,
                 "native": False,
                 "docs": False,
-                "qc": True,
+                "application_host": False,
                 "host": False,
                 "tooling": True,
                 "gate": False,

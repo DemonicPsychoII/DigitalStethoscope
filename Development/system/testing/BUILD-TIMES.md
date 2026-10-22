@@ -9,7 +9,7 @@ needed. Setup downloads are outside the build timer.
 
 ## Setup
 
-Follow [the shared setup instructions](CI-QUALITY-GATES.md#setup-and-local-checks)
+Follow [the shared setup instructions](ci/OPERATIONS.md#setup-and-local-checks)
 on each device before measuring. Use the pinned workspace Python for runs;
 downloads and provisioning are outside the timer.
 
@@ -90,5 +90,3 @@ absolute build paths; compare the source inputs when establishing equal workload
 `.ci-workspace`, `build-benchmark` and `artifacts` are ignored by Git. Keep the
 result files when collecting thesis measurements. CI still runs its normal
 quality checks and success-only homelab publication via `run_ci.py build`.
-
-Updated by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.

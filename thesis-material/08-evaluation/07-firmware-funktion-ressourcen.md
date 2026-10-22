@@ -71,7 +71,7 @@ BUILD-TIMES beschreibt einen vergleichbaren Buildzeit-Benchmark über Geräte, m
 
 CI-Hardwaregrenze: ESP32-S3-Build belegt Kompilierung/Linken und Ressourcen-Fit, aber nicht Mikrofon-, DAC-, Display-, Touch-, GPIO-, ADC-, PWM- oder Verdrahtungsfunktion.
 
-**Ursprung:** [Development/system/testing/CI-QUALITY-GATES.md:87-107](../../Development/system/testing/CI-QUALITY-GATES.md#L87)
+**Ursprung:** [Development/system/testing/CI-QUALITY-GATES.md:87-107](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/b664887299422a72b10febe4e045e1393616dc47/Development/system/testing/CI-QUALITY-GATES.md?plain=1#L87)
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
 
 <a id="u093"></a>
@@ -79,7 +79,7 @@ CI-Hardwaregrenze: ESP32-S3-Build belegt Kompilierung/Linken und Ressourcen-Fit,
 
 CI-QUALITY-GATES dokumentiert gepinnte Zephyr- und Werkzeugversionen, wiederholbare lokale/CI-Prüfungen sowie getrennte Builds und statische Prüfungen; Quelle beschreibt Entwicklungs-/Verifikationsmethode, keine medizinische Evidenz.
 
-**Ursprung:** [Development/system/testing/CI-QUALITY-GATES.md:1-57](../../Development/system/testing/CI-QUALITY-GATES.md#L1)
+**Ursprung:** [Development/system/testing/CI-QUALITY-GATES.md:1-57](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/b664887299422a72b10febe4e045e1393616dc47/Development/system/testing/CI-QUALITY-GATES.md?plain=1#L1)
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
 
 <a id="u132"></a>
@@ -95,7 +95,7 @@ hardware-results.schema.json requires schema_version and records_by_firmware_com
 
 QC-EVALUATION nennt als offene Aktionen: I²S/LEDC-Pinmux und XPT2046-Kalibrierung validieren, Touch-Callback-Zustand absichern, Eingabepolling ≤20 ms dokumentieren, Laufzeitfehlerbehandlung prüfen sowie Ergebnisse an Firmware-Commit binden.
 
-**Ursprung:** [Development/system/testing/QC-EVALUATION.md:26-40](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/23c1ea492270b897532896179e35f873eee823be/Development/system/testing/QC-EVALUATION.md?plain=1#L26) (**Herkunft verschoben:** seit 89ca8b1 nicht mehr eingecheckt; wird von `qc_eval.py` nach `artifacts/qc/` erzeugt. Link zeigt die zitierte historische Fassung. Aktuell: [Testing-README: Source-level QC](../../Development/system/testing/README.md#source-level-qc))
+**Ursprung:** [Development/system/testing/QC-EVALUATION.md:26-40](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/23c1ea492270b897532896179e35f873eee823be/Development/system/testing/QC-EVALUATION.md?plain=1#L26) (**Herkunft verschoben:** seit 89ca8b1 nicht mehr eingecheckt; wird von `qc_eval.py` nach `artifacts/qc/` erzeugt. Link zeigt die zitierte historische Fassung. Aktuell: [Verification operations: Source-level QC](../../Development/system/testing/ci/OPERATIONS.md#source-level-qc))
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
 
 <a id="u095"></a>
@@ -103,7 +103,7 @@ QC-EVALUATION nennt als offene Aktionen: I²S/LEDC-Pinmux und XPT2046-Kalibrieru
 
 Testing-README unterscheidet QC-Score von funktionaler Evaluation; CI-Hosttests und Offline/QC/Netzwerk-QC-Builds schließen die physische Hardware-Abnahmematrix nicht ab.
 
-**Ursprung:** [Development/system/testing/README.md:27-40](../../Development/system/testing/README.md#L27)
+**Ursprung:** [Development/system/testing/README.md:27-40](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/b664887299422a72b10febe4e045e1393616dc47/Development/system/testing/README.md?plain=1#L27)
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
 
 <a id="u098"></a>
@@ -202,7 +202,7 @@ logic-tests.txt records 10 passing app_logic cases covering audio recovery, brig
 
 QC-Ergebnis JSON dokumentiert 10 Kontrollen mit Score je 10 und Gate PASS; Verifikation basiert teils auf Heuristiken, und erforderliche Maßnahmen bleiben trotz PASS ausgewiesen.
 
-**Ursprung:** [Development/system/testing/qc-eval-results.json:1-92](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/23c1ea492270b897532896179e35f873eee823be/Development/system/testing/qc-eval-results.json#L1) (**Herkunft verschoben:** seit 89ca8b1 nicht mehr eingecheckt; wird von `qc_eval.py` nach `artifacts/qc/` erzeugt. Link zeigt die zitierte historische Fassung. Aktuell: [Testing-README: Source-level QC](../../Development/system/testing/README.md#source-level-qc))
+**Ursprung:** [Development/system/testing/qc-eval-results.json:1-92](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/23c1ea492270b897532896179e35f873eee823be/Development/system/testing/qc-eval-results.json#L1) (**Herkunft verschoben:** seit 89ca8b1 nicht mehr eingecheckt; wird von `qc_eval.py` nach `artifacts/qc/` erzeugt. Link zeigt die zitierte historische Fassung. Aktuell: [Verification operations: Source-level QC](../../Development/system/testing/ci/OPERATIONS.md#source-level-qc))
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
 
 <a id="u091"></a>
@@ -210,7 +210,7 @@ QC-Ergebnis JSON dokumentiert 10 Kontrollen mit Score je 10 und Gate PASS; Verif
 
 QC-EVALUATION meldet 100/100 PASS für statischen THA-baseline-Vergleich, datiert 2026-09-24; der Bericht sagt ausdrücklich, dass dies keine Compilation, Instrumentierung, Elektroprüfung, Audiomessung oder manuelle Hardwareprüfung ersetzt.
 
-**Ursprung:** [Development/system/testing/QC-EVALUATION.md:1-9](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/23c1ea492270b897532896179e35f873eee823be/Development/system/testing/QC-EVALUATION.md?plain=1#L1) (**Herkunft verschoben:** seit 89ca8b1 nicht mehr eingecheckt; wird von `qc_eval.py` nach `artifacts/qc/` erzeugt. Link zeigt die zitierte historische Fassung. Aktuell: [Testing-README: Source-level QC](../../Development/system/testing/README.md#source-level-qc))
+**Ursprung:** [Development/system/testing/QC-EVALUATION.md:1-9](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/23c1ea492270b897532896179e35f873eee823be/Development/system/testing/QC-EVALUATION.md?plain=1#L1) (**Herkunft verschoben:** seit 89ca8b1 nicht mehr eingecheckt; wird von `qc_eval.py` nach `artifacts/qc/` erzeugt. Link zeigt die zitierte historische Fassung. Aktuell: [Verification operations: Source-level QC](../../Development/system/testing/ci/OPERATIONS.md#source-level-qc))
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
 
 <a id="u118"></a>

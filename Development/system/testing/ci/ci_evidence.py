@@ -42,6 +42,7 @@ def main() -> None:
                 "APPLICATION",
                 "NATIVE",
                 "HOST",
+                "APPLICATION_HOST",
                 "TOOLING",
                 "GATE",
                 "QC",

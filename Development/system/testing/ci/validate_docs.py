@@ -45,6 +45,49 @@ def links(source: Path, root: Path = ROOT) -> list[str]:
     return errors
 
 
+def verification_coverage(root: Path = ROOT) -> list[str]:
+    """Require a test/procedure reference or an explicit gap for each VT ID."""
+    catalogue = root / "Development/system/testing/specification-verification.md"
+    text = catalogue.read_text(encoding="utf-8")
+    cases = set(re.findall(r"\bVT-\d{2}\b", text))
+    gaps = set(re.findall(r"^- (VT-\d{2}): Not yet covered .+", text, re.MULTILINE))
+    retired = set(re.findall(r"^- (VT-\d{2}): Retired — .+", text, re.MULTILINE))
+    referenced = set()
+    coding = root / "Development/system/coding"
+    testing = root / "Development/system/testing"
+    sources = list(coding.glob("**/tests/**/*")) + list(testing.rglob("*"))
+    for source in sources:
+        if not source.is_file() or source.suffix not in {
+            ".py",
+            ".c",
+            ".h",
+            ".md",
+            ".sh",
+        }:
+            continue
+        if source == catalogue or (
+            source.is_relative_to(testing)
+            and source.relative_to(testing).parts[0] in {"ci", "evidence"}
+        ):
+            continue
+        referenced.update(
+            re.findall(
+                r"\bVT-\d{2}\b", source.name + "\n" + source.read_text(encoding="utf-8")
+            )
+        )
+    errors = [
+        f"{catalogue.relative_to(root)}: {case} has no test/procedure reference; "
+        "add coverage or a '- VT-xx: Not yet covered ...' entry"
+        for case in sorted(cases - referenced - gaps - retired)
+    ]
+    errors.extend(
+        f"{catalogue.relative_to(root)}: {case} has a test/procedure reference; "
+        "remove its stale 'Not yet covered' entry"
+        for case in sorted(gaps & referenced)
+    )
+    return errors
+
+
 def main() -> None:
     paths = (
         subprocess.check_output(["git", "ls-files", "-z"], cwd=ROOT)
@@ -62,9 +105,10 @@ def main() -> None:
             text = source.read_text().strip()
             if not text.startswith("@startuml") or not text.endswith("@enduml"):
                 errors.append(f"{path}: incomplete PlantUML source")
+    errors.extend(verification_coverage())
     if errors:
         raise SystemExit("\n".join(errors))
-    print("Maintained local documentation links and diagram envelopes: PASS")
+    print("Maintained documentation links, diagram envelopes and VT references: PASS")
 
 
 if __name__ == "__main__":

@@ -18,7 +18,7 @@ GitHub builds arrive there too, grouped by source: add the `firmware` label to a
 a build of every push (`PR #N`, newest only, deleted when the PR closes). *Run workflow*
 builds any branch; dispatching `integration` also publishes it. Daily changed
 `integration` builds are published too (newest only). See
-[CI quality gates](../../testing/CI-QUALITY-GATES.md).
+[Verification operations](../../testing/ci/OPERATIONS.md).
 
 Each image identifies itself. The first console line after Zephyr's banner, and the shell
 command `stetho version`, print the build identity, which is also the cloud version string:

@@ -11,10 +11,14 @@ CODE_STEPS = frozenset(
         "Validate maintained documentation",
         "Test build tooling",
         "Test DSP and FHIR readback",
+        "Test bring-up host tools and DSP",
+        "Test application L2 host scenarios",
+        "Report application scenario results",
         "Run required QC evaluation",
         "Test the agent merge gate",
         "Pristine firmware build",
         "Test audio recovery and application logic",
+        "Test bring-up native logic",
     }
 )
 

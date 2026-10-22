@@ -14,7 +14,7 @@ from unittest.mock import patch
 import release_reuse
 import post_merge
 
-from build_support import BOARD, PROFILES
+from build_support import BOARD, RELEASE_COMPONENTS
 from ci_results import problems
 from firmware_changes import suites
 from firmware_release import PROJECT
@@ -224,15 +224,24 @@ class OverhaulTests(unittest.TestCase):
             "files": [
                 {
                     "profile": p,
+                    "component": RELEASE_COMPONENTS[p],
                     "name": p + ".bin",
                     "sha256": hashlib.sha256(p.encode()).hexdigest(),
                 }
-                for p in PROFILES
+                for p in RELEASE_COMPONENTS
             ],
         }
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            for bad in (None, "dirty", "checksum", "extra", "identity"):
+            for bad in (
+                None,
+                "dirty",
+                "checksum",
+                "extra",
+                "identity",
+                "missing-app",
+                "wrong-component",
+            ):
                 current = copy.deepcopy(manifest)
                 if bad == "dirty":
                     current["dirty"] = True
@@ -240,10 +249,16 @@ class OverhaulTests(unittest.TestCase):
                     current["files"][0]["sha256"] = "0" * 64
                 if bad == "identity":
                     current["commit"] = "b" * 40
+                if bad == "missing-app":
+                    current["files"] = [
+                        f for f in current["files"] if f["profile"] != "application"
+                    ]
+                if bad == "wrong-component":
+                    current["files"][-1]["component"] = "bringup"
                 archive = root / "test.zip"
                 with zipfile.ZipFile(archive, "w") as stream:
                     stream.writestr("manifest.json", json.dumps(current))
-                    for p in PROFILES:
+                    for p in RELEASE_COMPONENTS:
                         stream.writestr(p + ".bin", p)
                     if bad == "extra":
                         stream.writestr("../escape", "unexpected")
