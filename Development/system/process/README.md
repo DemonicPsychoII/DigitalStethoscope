@@ -14,13 +14,13 @@ On the way up, AI (artificial intelligence) generates tests from those agreed do
 
 ## Current state and target
 
-The project will organise architecture and design by component. The current folders are flat. Detailed design is collected in `design/interfaces-and-behavior.md`, including dated decision sections. The target is a system page and component pages under matching `architecture/system/`, `architecture/WIFI/`, `architecture/PORTAL/` and `design/` folders. That document split is future work.
+Architecture is organised into [system](../architecture/system/README.md), [WIFI](../architecture/WIFI/README.md) and [PORTAL](../architecture/PORTAL/README.md) pages with diagrams and editable-source links. Portal content is still mixed into the Wi-Fi views. Detailed design remains flat in `design/interfaces-and-behavior.md`, including dated decision sections. The matching system and component split under `design/` is stage 3 of the visibility trial and remains future work.
 
 The application host batch will check communication logic with substitutes when its test PR is added. Component unit tests, real-service integration and device acceptance need further work. Medical-device compliance, software safety class and independent validation need a separate, sourced assessment.
 
 ## Documents and component PRs
 
-Whole-system requirements stay together. The target component pages contain the relevant diagrams and links to their editable sources. The current [architecture](../architecture/) and [detailed design](../design/interfaces-and-behavior.md) remain in place until that split is agreed.
+Whole-system requirements stay together. The [architecture pages](../architecture/README.md) contain the relevant diagrams and links to their editable sources. [Detailed design](../design/interfaces-and-behavior.md) remains in its current flat layout until the stage 3 split.
 
 Architecture defines components, responsibilities, boundaries and dependencies. Detailed design defines software flows, business logic, interface contracts, states, parameters and failure handling. Shared decisions belong at system level. PR (pull request) stage labels show progress. The [VT coverage check](../testing/ci/validate_docs.py) reports case references and explicit gaps. These records supply status without a page written by hand.
 

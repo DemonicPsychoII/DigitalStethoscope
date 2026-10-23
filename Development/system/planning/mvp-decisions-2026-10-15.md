@@ -9,7 +9,7 @@
 Team discussion on 15 October, given by Nico in T3 Code. These decisions supersede the patient-assignment parts of the
 [12 October decisions](mvp-decisions-2026-10-12.md) and the related parts of the [13 October](mvp-decisions-2026-10-13.md)
 and [14 October](mvp-decisions-2026-10-14.md) records. Everything else from 14 October stands, including the retry rule.
-The [sequence diagram](../architecture/patient-assignment-workflow.puml) shows the complete flow.
+The [sequence diagram](../architecture/system/patient-assignment-workflow.puml) shows the complete flow.
 This records decisions, not implemented firmware behavior.
 
 ## Confirmed decisions

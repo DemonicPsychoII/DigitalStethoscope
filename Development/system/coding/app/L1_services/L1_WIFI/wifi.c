@@ -8,7 +8,7 @@
  * @file
  * Implementation of the WIFI module: one Wi-Fi step per function.
  *
- * Role in the workflow (architecture/wifi-flow.puml): L2_COMMUNICATION
+ * Role in the workflow (architecture/WIFI/wifi-flow.puml): L2_COMMUNICATION
  * decides order, attempts and delays; this module does one step and
  * returns its result:
  * - Boot: wifi_readSettings(), then wifi_connect() and wifi_waitForConnection().

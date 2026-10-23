@@ -10,7 +10,7 @@
 
 Nico's answers in T3 thread `d5e44f69-2ecc-4a3e-917b-31a7b084c12b` extend the [11 October decisions](mvp-decisions-2026-10-11.md). They replace the 11 October treatment of the captive portal as an optional follow-up and the "client, not embedded web server" statement in the [framework evaluation](framework-and-transport-evaluation.md). Everything else from 11 October stands. This records decisions and proposals, not implemented firmware behavior. Numeric values are proposals.
 
-The MVP has no display or touch. The operator therefore assigns the patient through a phone browser on a device hotspot; the FHIR server stores the assignment. The [patient-assignment sequence](../architecture/patient-assignment-workflow.puml) shows the complete flow.
+The MVP has no display or touch. The operator therefore assigns the patient through a phone browser on a device hotspot; the FHIR server stores the assignment. The [patient-assignment sequence](../architecture/system/patient-assignment-workflow.puml) shows the complete flow.
 
 ## Confirmed decisions
 

@@ -2,39 +2,28 @@
 
 Current Wi-Fi/portal and feedback behaviour follows the [19 October resolutions](../planning/mvp-decisions-2026-10-19.md); earlier dated notes remain history.
 
-Open the [local viewer](review.html) for the proposed thesis-product views.
+Open the [local viewer](system/review.html) for the proposed thesis-product views.
 PlantUML sources are editable; the SVG previews are generated. These views do
 not establish that the evaluation firmware implements the proposed contracts.
 
-| View | Source |
+| Area | Diagrams and editable sources |
 |---|---|
-| Architecture | [architecture-choice.puml](architecture-choice.puml) |
-| System context | [system-context.puml](system-context.puml) |
-| System components | [system-components.puml](system-components.puml) |
-| Electrical interfaces | [electrical-interfaces.puml](electrical-interfaces.puml) |
-| Software components | [software-components.puml](software-components.puml) |
-| Threads | [runtime-ownership.puml](runtime-ownership.puml) |
-| Listening | [listening-workflow.puml](listening-workflow.puml) |
-| Wi-Fi states | [wifi-state.puml](wifi-state.puml) |
-| Wi-Fi setup flow | [wifi-flow.puml](wifi-flow.puml) |
-| Wi-Fi recovery flow | [wifi-recovery.puml](wifi-recovery.puml) |
-| Current Wi-Fi snapshot | [wifi-workflows.html](wifi-workflows.html) |
-| MVP session / alarms | [mvp-session-state.puml](mvp-session-state.puml) |
-| BPM measurement | [measurement-workflow.puml](measurement-workflow.puml) |
-| Wi-Fi setup sequence | [patient-assignment-workflow.puml](patient-assignment-workflow.puml) |
+| [System](system/README.md) | Shared system views, workflows and evaluation implementation. |
+| [WIFI](WIFI/README.md) | Wi-Fi states, setup, recovery and the current page snapshot. |
+| [PORTAL](PORTAL/README.md) | Links to portal content currently mixed into the Wi-Fi views. |
 
-[View notes](VIEW-NOTES.md) record review boundaries, I2S presentation-name mapping,
+[View notes](system/VIEW-NOTES.md) record review boundaries, I2S presentation-name mapping,
 provenance, runtime assumptions and the separate evaluation implementation view.
 The [overlay](../coding/bringup-zephyr/boards/esp32s3_devkitc_procpu.overlay) is the
 wiring baseline; the device ends at the DAC line output and the headphone amplifier is outside the project scope (14 October).
 
 For behavior and open choices, use [detailed design](../design/interfaces-and-behavior.md),
 [design parameters](../design/parameters.md) and [implementation readiness](../planning/implementation-readiness.md).
-Original board [snapshots](sources/manifest.json) are immutable provenance.
+Original board [snapshots](system/sources/manifest.json) are immutable provenance.
 
 ## Render
 
-From this directory, render offline with PlantUML 1.2026.2 (no Graphviz or remote includes).
+From the folder containing the sources (`system/`, `WIFI/`, or another diagram folder), render offline with PlantUML 1.2026.2 (no Graphviz or remote includes).
 Component views use Smetana; the evaluation implementation uses bundled ELK
 because Smetana fails on its labelled flat edges. Activity views use the activity renderer:
 

@@ -37,7 +37,7 @@
 
 Current evaluation target: newest Altium evaluation PCB. Hardware is present; carrier expected in approximately two weeks. No peripheral function has been demonstrated on this exact current board/image. Older passes above are historical. Record the exact PCB export/revision and firmware hash at bring-up. Measurement equipment/second microphone is not present; latency evidence remains outstanding.
 
-Component purchase references recovered from the saved [system-architecture snapshot](../../Development/system/architecture/sources/system-architecture-digital-stethoscope.json), checked against its adjacent component labels. These identify Nico's supplied modules; listing availability/specifications were not revalidated.
+Component purchase references recovered from the saved [system-architecture snapshot](../../Development/system/architecture/system/sources/system-architecture-digital-stethoscope.json), checked against its adjacent component labels. These identify Nico's supplied modules; listing availability/specifications were not revalidated.
 
 | Component | Owner-supplied purchase reference | MVP role |
 |---|---|---|
