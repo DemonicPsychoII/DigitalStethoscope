@@ -134,7 +134,7 @@ These items take precedence over items 7 and 9 above where they differ.
     stays as it is. On DevKitC-1 v1.1 the RGB LED pin is shared with the BPM switch contact, so the fitted
     board revision must be confirmed before the RGB LED driver is enabled. This stays open for later.
 
-The repository page snapshot `architecture/wifi-workflows.html` carries the updated table. It is
+The repository page snapshot `architecture/WIFI/wifi-workflows.html` carries the updated table. It is
 published as Pages revision 13 and was checked in the browser (table, diagrams, watermark):
 https://homelab-server.tail15fafc.ts.net:8092/p/stethoscope-wifi-workflows/v/13/
 

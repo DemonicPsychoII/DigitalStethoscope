@@ -28,7 +28,7 @@ SD files are licensed test inputs, not a new patient-recording persistence featu
 
 | ID | Source | Use and limitation |
 |---|---|---|
-| S01 | System Architecture Digital Stethoscope; snapshot in `architecture/sources/` | Context, chosen parts, electrical interfaces; retains historical alternatives and open storage/audio-stream ideas. |
+| S01 | System Architecture Digital Stethoscope; snapshot in `architecture/system/sources/` | Context, chosen parts, electrical interfaces; retains historical alternatives and open storage/audio-stream ideas. |
 | S02 | Software-Architecture and Requirements; same snapshot folder | Original listening and BPM workflows; 3 s window and 15/30/? s aggregation are unresolved sketches. |
 | S03 | Software Architecture — Parallel Audio and Complete Flows; same folder | Detailed working proposal, ownership, fault paths, timing and interface candidates. |
 | S04 | Software Architecture — Options and Decision; same folder | Latest explicit architecture decisions; controller ownership, Zephyr, k_msgq, MON, single-core first, network outside live listening. |

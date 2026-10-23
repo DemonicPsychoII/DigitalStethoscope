@@ -168,15 +168,15 @@ Created by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.
 
 ## MVP session baseline
 
-[Owner decisions and numeric proposals](../planning/mvp-decisions-2026-10-11.md) supersede older clip/retry/recovery proposals here. Raw capture/REC/replay is optional; BPM retains bounded streaming analysis state and window estimates. Session identity changes are never applied and follow SESSION_CONTEXT_CHANGE halt/restart handling in the current catalogue. Invalid BPM sends no numeric value and uses a separately validated error-report contract. Current session state transitions are in [the state diagram](../architecture/mvp-session-state.puml).
+[Owner decisions and numeric proposals](../planning/mvp-decisions-2026-10-11.md) supersede older clip/retry/recovery proposals here. Raw capture/REC/replay is optional; BPM retains bounded streaming analysis state and window estimates. Session identity changes are never applied and follow SESSION_CONTEXT_CHANGE halt/restart handling in the current catalogue. Invalid BPM sends no numeric value and uses a separately validated error-report contract. Current session state transitions are in [the state diagram](../architecture/system/mvp-session-state.puml).
 
 ## Wi-Fi setup and recovery — 19 October
 
 The [18 October discussion](../planning/mvp-decisions-2026-10-18.md) and
 [19 October resolutions](../planning/mvp-decisions-2026-10-19.md) define this project design.
-The [state diagram](../architecture/wifi-state.puml),
-[setup flow](../architecture/wifi-flow.puml) and
-[recovery flow](../architecture/wifi-recovery.puml) share the rules below.
+The [state diagram](../architecture/WIFI/wifi-state.puml),
+[setup flow](../architecture/WIFI/wifi-flow.puml) and
+[recovery flow](../architecture/WIFI/wifi-recovery.puml) share the rules below.
 
 Read settings through L1. At boot, join a stored network with four attempts total,
 5 s between failures. Exhaustion shows an error and waits for a 2 s hold in Idle.

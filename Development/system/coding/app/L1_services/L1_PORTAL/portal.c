@@ -8,7 +8,7 @@
  * @file
  * Implementation of the PORTAL module: the Wi-Fi setup page.
  *
- * Role in the workflow (architecture/wifi-flow.puml): the HTTP server
+ * Role in the workflow (architecture/WIFI/wifi-flow.puml): the HTTP server
  * serves one HTML document with changing views at http://192.168.4.1 on
  * the open setup hotspot. The browser polls the status and sends requests:
  * - Connect (network name and password), Rescan, Cancel.

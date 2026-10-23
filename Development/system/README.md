@@ -6,7 +6,7 @@
 
 1. [Scope and system boundary](spec/product-scope.md)
 2. [Operator flows](requirements/use-cases.md) and [system requirements](requirements/system-requirements.md)
-3. [Architecture](architecture/README.md)
+3. [Architecture](architecture/README.md): [system](architecture/system/README.md), [WIFI](architecture/WIFI/README.md) and [PORTAL](architecture/PORTAL/README.md)
 4. [Detailed design](design/interfaces-and-behavior.md) and [parameters](design/parameters.md)
 5. [Application implementation](coding/app/README.md)
 

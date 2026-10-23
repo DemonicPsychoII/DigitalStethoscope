@@ -1,8 +1,8 @@
 # Architecture view boundaries and provenance
 
-Current Wi-Fi/portal and feedback behaviour follows the [19 October resolutions](../planning/mvp-decisions-2026-10-19.md); earlier dated notes remain history.
+Current Wi-Fi/portal and feedback behaviour follows the [19 October resolutions](../../planning/mvp-decisions-2026-10-19.md); earlier dated notes remain history.
 
-Earlier session decisions and numeric proposals: [11 October MVP decisions](../planning/mvp-decisions-2026-10-11.md). Older source snapshots and evaluation behavior remain historical evidence.
+Earlier session decisions and numeric proposals: [11 October MVP decisions](../../planning/mvp-decisions-2026-10-11.md). Older source snapshots and evaluation behavior remain historical evidence.
 
 These notes qualify the [presentation viewer](review.html); the diagrams describe
 a proposed thesis product, except for the separate evaluation implementation view.
@@ -13,7 +13,7 @@ a proposed thesis product, except for the separate evaluation implementation vie
 | System context | [system-context.puml](system-context.puml) | Device as a black box; the device initiates FHIR requests and receives status responses as the receipt. Test tooling is outside the normal-use view. |
 | System components | [system-components.puml](system-components.puml) | Hardware and external connections; ESP32 remains a black box. Networking is Wi-Fi plus HTTPS. |
 | Electrical interfaces | [electrical-interfaces.puml](electrical-interfaces.puml) | Connection types and chip roles; pin assignments and speeds remain in the maintained overlay and hardware requirements. |
-| Software components | [software-components.puml](software-components.puml) | Firmware modules per [13 October decisions](../planning/mvp-decisions-2026-10-13.md): L2 orchestration, L1 hardware adapters and pure C libraries, L0 Zephyr. Libraries include no Zephyr headers; MONITOR observes across layers. |
+| Software components | [software-components.puml](software-components.puml) | Firmware modules per [13 October decisions](../../planning/mvp-decisions-2026-10-13.md): L2 orchestration, L1 hardware adapters and pure C libraries, L0 Zephyr. Libraries include no Zephyr headers; MONITOR observes across layers. |
 | Threads | [runtime-ownership.puml](runtime-ownership.puml) | Proposed workers, the modules they run and data/communication methods. Touch belongs to Input; the BPM worker belongs to `L2_AUDIO`; original-rate blocks reach BPM before the volume control; whether BPM uses its own filter or a listening filter is decided by the filter study (14 October). |
 | Listening | [listening-workflow.puml](listening-workflow.puml) | Selected filter or Raw bypass, volume, playback and optional bounded capture/replay. Lung is Raw; Heart can also select Raw. |
 | BPM measurement | [measurement-workflow.puml](measurement-workflow.puml) | Freeze measurement settings and acquire until Stop; cancel without sending before 15 s, or finalize at or after 15 s subject to quality/coverage. Aggregate after listening stops, then deliver the result or validated error report. |
@@ -28,7 +28,7 @@ These are presentation names, not register/devicetree identifiers:
 | I2S1 | INMP441 microphone input | `i2s0` / alias `i2s-mic` |
 | I2S2 | PCM5102A DAC output | `i2s1` / alias `i2s-dac` |
 
-The [overlay](../coding/bringup-zephyr/boards/esp32s3_devkitc_procpu.overlay)
+The [overlay](../../coding/bringup-zephyr/boards/esp32s3_devkitc_procpu.overlay)
 remains the wiring baseline. The device ends at the DAC line output; the headphone
 amplifier is outside the project scope (14 October).
 
@@ -57,8 +57,8 @@ explanation come from the subsequent review rather than additions to the old boa
   A/B firmware is explanatory context, not an implementation requirement of this PR.
 
 Detailed contracts, proposals and open questions remain in
-[design](../design/interfaces-and-behavior.md) and
-[implementation readiness](../planning/implementation-readiness.md).
+[design](../../design/interfaces-and-behavior.md) and
+[implementation readiness](../../planning/implementation-readiness.md).
 The separate three-region state render was removed; it repeated the workflows.
 Its proposed lifecycle contracts remain documented in detailed design.
 
@@ -83,5 +83,5 @@ listening and measurement use activity syntax (`start`, actions, decisions, `sto
 PlantUML infers the diagram family from these declarations; `@startuml` names
 the output and is not a diagram-type declaration.
 
-See [framework and transport evaluation](../planning/framework-and-transport-evaluation.md)
+See [framework and transport evaluation](../../planning/framework-and-transport-evaluation.md)
 for ESP32-S3 drivers, external C/C++ library integration and HTTP/HTTPS effort.
