@@ -17,6 +17,11 @@ PROFILES = {
     "network-qc": ["-DEXTRA_CONF_FILE=network.conf;qc.conf"],
 }
 
+RELEASE_COMPONENTS = {
+    **dict.fromkeys(PROFILES, "bringup"),
+    "application": "application",
+}
+
 
 def bin_dir(workspace: Path) -> Path:
     return workspace / ".venv" / ("Scripts" if os.name == "nt" else "bin")

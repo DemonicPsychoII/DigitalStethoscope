@@ -18,6 +18,8 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
+from build_support import RELEASE_COMPONENTS
+
 PROJECT = "Digital Stethoscope"
 COMMIT = re.compile(r"[0-9a-f]{40}")
 # Matches the CMake check on STETHO_BUILD_ID; anything else becomes "-".
@@ -93,6 +95,7 @@ def stage(
             {
                 "name": name,
                 "profile": profile,
+                "component": RELEASE_COMPONENTS[profile],
                 "version": build.version(profile),
                 "sha256": hashlib.sha256((target / name).read_bytes()).hexdigest(),
             }

@@ -87,17 +87,28 @@ def west() -> str:
     )
 
 
+def generated_output(relative: str) -> bool:
+    path = "/" + relative.replace("\\", "/")
+    # These maintained headers substitute the Zephyr API in host scenarios.
+    host_headers = "/Development/system/coding/app/tests/host/include/zephyr/"
+    return (
+        any(
+            part == "build" or part.startswith("build-")
+            for part in path.split("/")[:-1]
+        )
+        or any(token in path for token in ("/.west/", "twister-out"))
+        or ("/zephyr/" in path and not path.startswith(host_headers))
+        or path.endswith((".elf", ".bin", ".map"))
+    )
+
+
 def static() -> None:
     ARTIFACTS.joinpath("ci").mkdir(parents=True, exist_ok=True)
     run(["git", "diff", "--check", "HEAD"])
     tracked = subprocess.check_output(["git", "ls-files", "-z"], cwd=ROOT).split(b"\0")
-    forbidden = ("/build/", "/zephyr/", "/.west/", "twister-out")
     for raw in filter(None, tracked):
         rel = raw.decode("utf-8")
-        normalized = "/" + rel.replace("\\", "/")
-        if any(token in normalized for token in forbidden) or normalized.endswith(
-            (".elf", ".bin", ".map")
-        ):
+        if generated_output(rel):
             raise SystemExit(f"generated/build output is tracked: {rel}")
         path = ROOT / rel
         if not path.is_file():
@@ -140,18 +151,26 @@ def static() -> None:
         run([clang_format, "--dry-run", "--Werror", *maintained_sources])
     elif os.environ.get("CI"):
         raise SystemExit("clang-format is required in CI")
-    for tool in ("actionlint", "shellcheck"):
-        if not shutil.which(tool):
-            raise SystemExit(f"{tool} is required; run validation_tools.py first")
-    run(["actionlint", "-color"])
-    run(
-        [
+    workflow_validators()
+    summary("### Static checks: PASS")
+
+
+def workflow_validators() -> None:
+    commands = {
+        "actionlint": ["actionlint", "-color"],
+        "shellcheck": [
             "shellcheck",
             "Development/system/testing/ci/setup_zephyr.sh",
             ".github/agent-gate/revert-last-merge.sh",
-        ]
-    )
-    summary("### Static checks: PASS")
+        ],
+    }
+    for tool, command in commands.items():
+        if shutil.which(tool):
+            run(command)
+        elif sys.platform == "win32" and not os.environ.get("CI"):
+            print(f"SKIP {tool}: pinned installer supports Linux; CI runs this check.")
+        else:
+            raise SystemExit(f"{tool} is required; run validation_tools.py first")
 
 
 def publish_local_firmware(
@@ -189,8 +208,24 @@ def publish_local_firmware(
     run([publisher, "--retire", "local", "--keep", build_id])
 
 
-def build_application() -> None:
-    # Compile the future application without adding it to the bring-up release.
+def retain_firmware_evidence(build_dir: Path, evidence: Path) -> None:
+    evidence.mkdir(parents=True, exist_ok=True)
+    for source, name in [
+        (build_dir / "zephyr/.config", ".config"),
+        (
+            build_dir / "zephyr/include/generated/zephyr/devicetree_generated.h",
+            "devicetree_generated.h",
+        ),
+        (build_dir / "zephyr/zephyr.elf", "zephyr.elf"),
+        (build_dir / "zephyr/zephyr.bin", "zephyr.bin"),
+        (build_dir / "zephyr/zephyr.map", "zephyr.map"),
+    ]:
+        if not source.is_file():
+            raise SystemExit(f"required firmware evidence missing: {source}")
+        shutil.copy2(source, evidence / name)
+
+
+def build_application(identity: firmware_release.Identity) -> None:
     run(
         [
             west(),
@@ -201,18 +236,29 @@ def build_application() -> None:
             str(THESIS_APP),
             "-d",
             str(ROOT / "build-ci-app"),
+            "--",
+            identity.cmake_arg("application"),
         ],
         log=ARTIFACTS / "firmware" / "app-build.log",
+    )
+    retain_firmware_evidence(
+        ROOT / "build-ci-app", ARTIFACTS / "firmware" / "application"
     )
 
 
 def build(*, application: bool = True, firmware: bool = True) -> None:
-    if application:
-        build_application()
-    if not firmware:
-        summary("### Application build: PASS")
-        return
     identity = firmware_release.identity(ROOT)
+    outputs = []
+    release = ARTIFACTS / "firmware-release"
+    if application:
+        build_application(identity)
+        outputs.append(("application", ROOT / "build-ci-app/zephyr/zephyr.bin"))
+    if not firmware:
+        firmware_release.stage(identity, outputs, release, BOARD)
+        summary(
+            f"### Application build: PASS\n\nBuild identity: `{identity.version('application')}`"
+        )
+        return
     print(f"Firmware build identity: {identity.version('<profile>')}", flush=True)
     out = ROOT / "build-ci"
     evidence = ARTIFACTS / "firmware"
@@ -241,19 +287,7 @@ def build(*, application: bool = True, firmware: bool = True) -> None:
         [west(), "build", "-d", str(out), "-t", "rom_report"],
         log=evidence / "rom-report.txt",
     )
-    for source, name in [
-        (out / "zephyr/.config", ".config"),
-        (
-            out / "zephyr/include/generated/zephyr/devicetree_generated.h",
-            "devicetree_generated.h",
-        ),
-        (out / "zephyr/zephyr.elf", "zephyr.elf"),
-        (out / "zephyr/zephyr.bin", "zephyr.bin"),
-        (out / "zephyr/zephyr.map", "zephyr.map"),
-    ]:
-        if not source.is_file():
-            raise SystemExit(f"required firmware evidence missing: {source}")
-        shutil.copy2(source, evidence / name)
+    retain_firmware_evidence(out, evidence)
     # Compile feature combinations too: the default offline image cannot cover
     # TLS or the optional GPIO extension. These remain disconnected at boot.
     for profile, directory in PROFILES:
@@ -276,17 +310,14 @@ def build(*, application: bool = True, firmware: bool = True) -> None:
             log=evidence / f"{profile}-build.log",
         )
     # CI uploads this directory for the homelab's firmware sync; local runs publish it.
-    release = ARTIFACTS / "firmware-release"
-    manifest = firmware_release.stage(
-        identity,
-        [
-            (profile, ROOT / directory / "zephyr/zephyr.bin")
-            for profile, directory in PROFILES
-        ],
-        release,
-        BOARD,
+    outputs.extend(
+        (profile, ROOT / directory / "zephyr/zephyr.bin")
+        for profile, directory in PROFILES
     )
-    publish_local_firmware(identity, manifest, release)
+    manifest = firmware_release.stage(identity, outputs, release, BOARD)
+    # Publish the complete bundle only; component-only runs supply local evidence.
+    if application:
+        publish_local_firmware(identity, manifest, release)
     summary(
         "### Firmware build: PASS\n\n"
         f"Build identity: `{identity.version('<profile>')}`. See RAM/ROM reports in "

@@ -6,6 +6,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import run_ci
+from build_support import RELEASE_COMPONENTS
 
 
 IDENTITY = run_ci.firmware_release.Identity(
@@ -23,7 +24,7 @@ MANIFEST = {
             "profile": profile,
             "version": profile,
         }
-        for profile, _ in run_ci.PROFILES
+        for profile in RELEASE_COMPONENTS
     ]
 }
 
@@ -38,13 +39,13 @@ class CloudPublishTests(unittest.TestCase):
             patch.object(run_ci, "run") as run,
         ):
             run_ci.publish_local_firmware(IDENTITY, MANIFEST, Path("/release"))
-        self.assertEqual(run.call_count, 4)
+        self.assertEqual(run.call_count, 5)
         build_id = "local-20261002T031705Z-" + "a" * 12
         self.assertEqual(
             run.call_args.args[0],
             ["/usr/local/bin/cloud-publish", "--retire", "local", "--keep", build_id],
         )
-        for call, (profile, _) in zip(run.call_args_list, run_ci.PROFILES):
+        for call, profile in zip(run.call_args_list, RELEASE_COMPONENTS):
             args = call.args[0]
             option = dict(zip(args[1:-1:2], args[2:-1:2]))
             self.assertEqual(option["--project"], "Digital Stethoscope")
@@ -52,7 +53,7 @@ class CloudPublishTests(unittest.TestCase):
             self.assertEqual(option["--commit"], "a" * 40)
             self.assertEqual(option["--source"], "local")
             self.assertEqual(option["--profile"], profile)
-            self.assertEqual(option["--parts"], "3")
+            self.assertEqual(option["--parts"], "4")
             self.assertEqual(option["--build"], "local-20261002T031705Z-" + "a" * 12)
             self.assertIn("--dirty", args)
             self.assertEqual(
@@ -110,17 +111,21 @@ class CloudPublishTests(unittest.TestCase):
                 run_ci.build()
         publish.assert_not_called()
 
-    def test_application_only_build_never_stages_a_bringup_release(self):
+    def test_application_only_build_stages_identity_without_local_publication(self):
         with (
             patch.object(run_ci, "build_application") as application,
-            patch.object(run_ci.firmware_release, "identity") as identity,
+            patch.object(run_ci.firmware_release, "identity", return_value=IDENTITY),
             patch.object(run_ci.firmware_release, "stage") as release,
+            patch.object(run_ci, "publish_local_firmware") as publish,
             patch.object(run_ci, "summary"),
         ):
             run_ci.build(application=True, firmware=False)
-        application.assert_called_once()
-        identity.assert_not_called()
-        release.assert_not_called()
+        application.assert_called_once_with(IDENTITY)
+        self.assertEqual(
+            release.call_args.args[1],
+            [("application", run_ci.ROOT / "build-ci-app/zephyr/zephyr.bin")],
+        )
+        publish.assert_not_called()
 
 
 if __name__ == "__main__":

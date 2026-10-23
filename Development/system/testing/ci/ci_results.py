@@ -14,6 +14,7 @@ def problems(
     daily: str,
     reuse: str = "",
     application: str = "false",
+    static_suites: dict[str, str] | None = None,
 ) -> list[str]:
     if plan != "success":
         return [f"check selection did not succeed: {plan}"]
@@ -24,6 +25,10 @@ def problems(
         for value in (firmware, application, native, publish)
     ):
         return ["suite selection is missing or invalid"]
+    if static_suites is not None and any(
+        value not in {"true", "false"} for value in static_suites.values()
+    ):
+        return ["static suite selection is missing or invalid"]
     if daily == "false":
         return (
             []
@@ -62,6 +67,10 @@ def main() -> None:
         os.environ.get("DAILY", ""),
         os.environ.get("REUSE", ""),
         os.environ.get("APPLICATION", ""),
+        {
+            key: os.environ.get(key, "")
+            for key in ("HOST", "APPLICATION_HOST", "TOOLING", "GATE", "DOCS", "QC")
+        },
     )
     if errors:
         raise SystemExit("; ".join(errors))

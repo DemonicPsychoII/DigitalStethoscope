@@ -82,6 +82,7 @@ workflows may remain hosted. Preserve required check names and existing gate pol
   `python -m unittest discover -s .github/agent-gate`, and for firmware changes `run_ci.py build`.
   Hardware flashing, serial and device-network operations still need the owner.
 
-See [CI operations](Development/system/testing/ci/README.md) for suite selection, artifacts,
-minutes savings and the staged native review migration. Owner questions remain mandatory;
+See [CI operations](Development/system/testing/ci/OPERATIONS.md) for suite selection, artifacts,
+minutes savings. See [native review migration](Development/system/testing/ci/NATIVE-REVIEW-MIGRATION.md)
+for the staged migration and rollback. Owner questions remain mandatory;
 in native mode keep the PR draft and auto-merge disabled until real answers are recorded.

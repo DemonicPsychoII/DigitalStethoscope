@@ -5,6 +5,23 @@
 
 <!-- Concrete problem and resulting behavior. -->
 
+## V-model stage
+
+<!-- Apply one matching label. For mixed work, list other stages below. Explain infrastructure-only exceptions. -->
+- Stage: `v:architecture` / `v:design` / `v:l2` / `v:l1` / `v:tests`
+
+## Basis
+
+- Requirements and design revision: <!-- Full commit SHA and document links. -->
+- Covered cases and requirements: <!-- VT-xx / REQ-xx; explain gaps. -->
+- Agreed decisions: <!-- Links to the discussion or decision record. -->
+
+<!-- For test PRs, fill the case list. The developer reviews this list; AI reviews test code. -->
+| Scenario | Basis (VT / REQ / design link) | Expected result |
+| --- | --- | --- |
+
+- Developer case-list review: <!-- Link to agreement or findings; pending until reviewed. -->
+
 ## Risk & rollback
 
 - **What could break:**

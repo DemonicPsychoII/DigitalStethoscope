@@ -100,6 +100,18 @@ class ParsingTests(unittest.TestCase):
         problems = g.risk_section_problems(template)
         self.assertEqual(len(problems), 3, problems)
 
+    def test_filled_template_basis_preserves_author_and_risk_parsing(self):
+        template = Path(__file__).resolve().parents[1].joinpath("pull_request_template.md").read_text()
+        body = template.replace(
+            "<!-- agent-author harness=<claude-code|codex> model=<id> session=<id> class=<quick-fix|feature|policy|revert> -->",
+            AUTHOR,
+        )
+        body = body.replace("- **What could break:**", "- **What could break:** incorrect case selection")
+        body = body.replace("- **How verified:**", "- **How verified:** tooling and host tests passed")
+        body = body.replace("- **How to revert:**", "- **How to revert:** revert this commit")
+        self.assertEqual(g.parse_author(body)["session"], "auth-1")
+        self.assertEqual(g.risk_section_problems(body), [])
+
     def test_risk_placeholders_rejected(self):
         body = "## Risk & rollback\n- What could break: TODO\n- How verified: n/a\n- How to revert: -\n"
         self.assertEqual(len(g.risk_section_problems(body)), 3)

@@ -9,6 +9,5 @@ Use, modification, redistribution and forking are welcome; retain the copyright
 and license notice. Third-party material and external datasets retain their own
 licenses and attribution requirements.
 
-Updated by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.
-
-CI workflow, retained evidence and approval migration: [CI operations](Development/system/testing/ci/README.md).
+CI (continuous integration) workflow and retained evidence: [CI operations](Development/system/testing/ci/OPERATIONS.md).
+Approval migration and rollback: [native review migration](Development/system/testing/ci/NATIVE-REVIEW-MIGRATION.md).
