@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://digital-stethoscope.local/schemas/hardware-results.schema.json",
+  "title": "Digital stethoscope hardware evaluation record",
+  "type": "object",
+  "required": ["schema_version", "records_by_firmware_commit"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "records_by_firmware_commit": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/session" }
+    }
+  },
+  "$defs": {
+    "session": {
+      "type": "object",
+      "required": [
+        "firmware_git_commit",
+        "evaluation_date",
+        "tester",
+        "board_and_revision",
+        "zephyr_revision",
+        "sdk_version",
+        "test_cases"
+      ],
+      "properties": {
+        "firmware_git_commit": { "type": "string", "minLength": 40 },
+        "working_tree_modified": { "type": "boolean" },
+        "traceability_note": { "type": "string" },
+        "evaluation_date": { "type": "string", "format": "date" },
+        "tester": { "type": "string", "minLength": 1 },
+        "board_and_revision": { "type": "string", "minLength": 1 },
+        "zephyr_revision": { "type": "string", "minLength": 7 },
+        "sdk_version": { "type": "string", "minLength": 1 },
+        "test_cases": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/test_case" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "test_case": {
+      "type": "object",
+      "required": ["test_case_id", "verdict", "captured_evidence"],
+      "properties": {
+        "test_case_id": { "type": "string", "pattern": "^T[0-9]{2}$" },
+        "verdict": { "enum": ["PASS", "PARTIAL", "FAIL", "BLOCKED"] },
+        "captured_evidence": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

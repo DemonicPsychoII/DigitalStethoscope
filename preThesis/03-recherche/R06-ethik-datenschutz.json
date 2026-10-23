@@ -1,0 +1,680 @@
+{
+ "run": {
+  "id": "R06-ethik-datenschutz",
+  "topic": "Ethikvotum / Datenschutz an einer deutschen Hochschule",
+  "preset": "low",
+  "prompt": "Kontext: Bachelorarbeit an der Technischen Hochschule Augsburg (THA), Deutschland. Geplant ist eine Pilot-Hoerstudie mit wenigen Teilnehmenden. Es sollen moeglichst nur synthetische bzw. bereits oeffentlich verfuegbare, anonymisierte Herzschall-Aufnahmen verwendet werden - keine eigenen Patientendaten.\n\nHauptfrage: Braucht eine solche Studie an einer deutschen Hochschule (speziell HAW/THA) ein Ethikvotum, und welche Datenschutzpflichten bestehen?\n\nUnterfrage 1: Wann ist ein Ethikvotum an deutschen Hochschulen/HAWs erforderlich bzw. entbehrlich - insbesondere bei nicht-medizinischen Hoerversuchen mit gesunden Erwachsenen ohne Patientendaten? Gibt es an der TH Augsburg eine Ethikkommission und dokumentierte Zustaendigkeit?\nUnterfrage 2: Welche DSGVO-Anforderungen gelten fuer Einwilligungserklaerung, Pseudonymisierung und Aufbewahrung der Hoerstudien-Daten, und aendert sich der Status, wenn Herzschall-Aufnahmen aus oeffentlichen Datenbanken (z. B. PhysioNet) statt eigener Aufnahmen verwendet werden?\n\nAntwort auf Deutsch, mit Quellen und - falls THA-spezifische Regelungen nicht auffindbar sind - klarer Aussage dazu."
+ },
+ "response": {
+  "id": "chatcmpl-bdf0475c14884dcf852fb95e",
+  "object": "chat.completion",
+  "created": 1786462902,
+  "model": "preset/low",
+  "choices": [
+   {
+    "index": 0,
+    "message": {
+     "role": "assistant",
+     "content": "## Kurzantwort\n\n**Für die geplante Pilot-Hörstudie ist nach den auffindbaren Regelungen wahrscheinlich kein förmliches Ethikvotum zwingend erforderlich**, wenn ausschließlich gesunde, einwilligungsfähige Erwachsene teilnehmen, die Untersuchung nur geringe bzw. keine körperlichen oder psychischen Risiken birgt und keine eigenen Patientendaten oder identifizierbaren Gesundheitsdaten erhoben werden. **Vor Beginn sollte jedoch eine dokumentierte ethische Selbsteinschätzung durch den Betreuer und eine Anfrage bei der zuständigen THA-Stelle bzw. der GEHBa erfolgen.**\n\nDatenschutzrechtlich gilt:\n\n- **vollständig anonymisierte Herzschall-Aufnahmen** unterliegen grundsätzlich nicht mehr der DSGVO;\n- **pseudonymisierte oder nur „de-identifizierte“ Aufnahmen** bleiben personenbezogene Daten;\n- bei Herzschall-Aufnahmen kann zusätzlich ein Bezug zu **Gesundheitsdaten** bestehen, sodass Art. 9 DSGVO zu beachten sein kann;\n- bei öffentlichen Datenbanken wie PhysioNet ist zusätzlich die jeweilige **Lizenz bzw. Nutzungsvereinbarung** einzuhalten.\n\n## 1. Ethikvotum: allgemeine deutsche Rechtslage\n\nEin einheitliches deutsches Gesetz, wonach **jede** Bachelorarbeit mit menschlichen Versuchspersonen ein Ethikvotum benötigt, gibt es nicht. Ob ein Votum erforderlich ist, richtet sich regelmäßig nach:\n\n1. dem konkreten Risiko und der Belastung der Teilnehmenden,\n2. der Art der erhobenen Daten oder Proben,\n3. den Regeln der Hochschule bzw. Fakultät,\n4. gegebenenfalls Anforderungen von Förderern, Fachzeitschriften oder Kooperationspartnern.\n\nDie DFG geht für Untersuchungen am Menschen oder mit identifizierbarem menschlichem Material grundsätzlich von einer ethischen Prüfung aus, wenn das Vorhaben einen negativen Einfluss auf Menschen haben kann. Als typische Ausnahmen nennt sie unter anderem reine Nutzendenstudien ohne relevantes Risiko sowie die Nutzung öffentlich zugänglicher Datensätze, deren Erhebung bereits ethisch unbedenklich bewertet wurde oder für die ein gültiges Ethikvotum vorliegt. [web:35]\n\nFür eine **nicht-medizinische Hörstudie mit gesunden Erwachsenen** spricht daher viel gegen eine zwingende formale Begutachtung, wenn beispielsweise:\n\n- nur akustische Stimuli oder synthetische Herzschallsignale beurteilt werden,\n- keine medizinische Diagnose oder Behandlung erfolgt,\n- keine invasive Untersuchung stattfindet,\n- keine körperliche Belastung oder relevante psychische Belastung zu erwarten ist,\n- die Teilnahme freiwillig und informiert erfolgt,\n- nur wenige, nicht vulnerable Erwachsene teilnehmen.\n\nEin Ethikvotum sollte dagegen eingeholt oder zumindest ausdrücklich geprüft werden, wenn:\n\n- reale Herzschall-Aufnahmen mit noch möglichem Personenbezug verwendet werden,\n- die Studie diagnostische Aussagen über Krankheiten oder einzelne Personen bezweckt,\n- Patientinnen oder Patienten bzw. vulnerable Personen teilnehmen,\n- die Untersuchung körperliche oder erhebliche psychische Belastungen verursacht,\n- Audioaufnahmen der Teilnehmenden selbst erstellt werden,\n- Täuschung, fehlende Aufklärung oder ein erhöhtes Risiko vorgesehen sind,\n- die Ergebnisse publiziert oder in ein größeres medizinisches Forschungsprojekt übernommen werden sollen.\n\n## 2. THA und GEHBa\n\nEine **eigenständige, öffentlich dokumentierte Ethikkommission der TH Augsburg mit klar beschriebener Zuständigkeit** konnte in den auffindbaren THA-Unterlagen nicht eindeutig festgestellt werden. Die THA-Webseite nennt zwar verschiedene Hochschulgremien und einen Compliance-Beauftragten, aber keine klar ausgewiesene eigene Ethikkommission für Humanforschung. Deshalb sollte nicht ohne Rückfrage angenommen werden, dass ein THA-internes Standardverfahren existiert.\n\nFür Bayern ist jedoch die **Gemeinsame Ethikkommission der Hochschulen Bayerns (GEHBa)** einschlägig. Sie richtet sich an Studierende und Forschende an bayerischen Hochschulen und Forschungseinrichtungen. Hochschulen mit eigener Ethikkommission sollen zunächst diese eigene Kommission kontaktieren. Die GEHBa-Unterlagen klären damit die grundsätzliche Ansprechmöglichkeit für THA-Angehörige, dokumentieren aber nicht ausdrücklich eine separate THA-Kommission oder eine ausschließliche THA-Zuständigkeit. [web:44]\n\nNach der GEHBa soll ein Antrag gestellt werden, wenn medizinische oder nicht-medizinische Forschung mit Beteiligten oder Betroffenen durchgeführt wird und nicht vollständig ausgeschlossen werden kann, dass ein Schaden oder eine unverhältnismäßige psychische oder körperliche Belastung entsteht oder ethische Prinzipien wie Autonomie, Nichtschädigung und Gerechtigkeit berührt werden. Wenn keine Risiken oder besonderen Belastungen zu erwarten sind und diese Prinzipien nicht beeinträchtigt werden, ist ein Antrag grundsätzlich entbehrlich. [web:44]\n\nFür **Bachelorarbeiten** sagt die GEHBa ausdrücklich, dass regelmäßig kein vollständiger Ethikantrag erforderlich ist. Sie sieht hierfür eine Selbsteinschätzung zu Ethik und Datenschutz vor. Das entbindet allerdings nicht von möglichen hochschulinternen Sonderregeln. [web:44]\n\n### Praktische Empfehlung für die THA\n\nVor Beginn der Datenerhebung sollte der Betreuer schriftlich dokumentieren:\n\n1. Ziel und Ablauf der Hörstudie,\n2. Teilnehmerkreis: gesunde, volljährige Erwachsene,\n3. fehlende oder nur minimale Risiken,\n4. verwendete Audioquellen,\n5. Datenschutz- und Löschkonzept,\n6. Ergebnis der ethischen Selbsteinschätzung.\n\nZusätzlich sollte eine kurze schriftliche Anfrage an\n\n- den Betreuer bzw. die zuständige Fakultätsleitung,\n- den THA-Datenschutzbeauftragten und\n- gegebenenfalls die GEHBa\n\ngerichtet werden. Die Frage sollte ausdrücklich lauten, ob für **diese konkrete Bachelorarbeit** ein Ethikvotum oder lediglich eine Selbsteinschätzung erforderlich ist. Die GEHBa verlangt Anträge grundsätzlich vor Beginn der Forschung; nachträgliche Anträge werden regelmäßig nicht mehr bewertet. [web:44]\n\n## 3. DSGVO: Einwilligung der Hörstudienteilnehmenden\n\n### Rechtsgrundlage\n\nFür die Verarbeitung personenbezogener Daten von Versuchspersonen kommt bei einer solchen Studie typischerweise eine **informierte Einwilligung nach Art. 6 Abs. 1 lit. a DSGVO** in Betracht. Wenn Gesundheitsdaten verarbeitet werden, ist zusätzlich eine Ausnahme nach **Art. 9 Abs. 2 DSGVO**, regelmäßig die ausdrückliche Einwilligung nach Art. 9 Abs. 2 lit. a DSGVO, erforderlich.\n\nDie Einwilligung muss:\n\n- freiwillig,\n- informiert,\n- für einen bestimmten Zweck,\n- eindeutig bzw. bei Gesundheitsdaten ausdrücklich,\n- nachweisbar und\n- jederzeit widerrufbar\n\nsein. Die Einwilligung darf nicht durch eine unangemessene Benachteiligung oder ein faktisches Abhängigkeitsverhältnis erzwungen werden.\n\nDie Teilnehmerinformation sollte mindestens enthalten:\n\n- Name und Kontaktdaten der verantwortlichen Stelle,\n- Zweck und Ablauf der Studie,\n- Art der erhobenen Daten,\n- Rechtsgrundlage,\n- Empfänger und Speicherort,\n- Speicherdauer oder Kriterien für deren Bestimmung,\n- geplante Veröffentlichung oder Nachnutzung,\n- Freiwilligkeit und Abbruchmöglichkeit,\n- Widerrufsrecht,\n- Rechte nach Art. 15 bis 21 DSGVO,\n- Kontaktdaten des Datenschutzbeauftragten,\n- Hinweis auf mögliche Risiken.\n\nDie GEHBa-Unterlagen sehen für Ethikanträge ebenfalls Informationen zu Freiwilligkeit, Widerruf, Anonymisierung, Speicherort, Speicherdauer und Löschfrist sowie eine entsprechende Einwilligungserklärung vor. [web:44]\n\n### Audioaufnahmen\n\nWerden **die Teilnehmenden selbst aufgenommen**, sollte die Einwilligung die Audioaufnahme ausdrücklich nennen. Für Bild- und Audioaufnahmen verlangt die GEHBa eine gesonderte Einwilligung. [web:44]\n\nWerden dagegen ausschließlich bereits vorhandene Herzschall-Dateien abgespielt und von den Teilnehmenden nur Bewertungen oder Antwortdaten erhoben, ist die Einwilligung vor allem für die **Erhebung und Speicherung dieser Bewertungsdaten** erforderlich. Eine Audioaufnahme der Versuchsperson liegt dann nicht automatisch vor.\n\n## 4. Pseudonymisierung und Anonymisierung\n\nDie Begriffe sind rechtlich zu unterscheiden:\n\n- **Anonymisierung:** Eine Zuordnung zu einer Person ist praktisch nicht mehr möglich. Echte Anonymisierung beendet grundsätzlich die Anwendbarkeit der DSGVO.\n- **Pseudonymisierung:** Name und direkte Identifikatoren werden durch einen Code ersetzt, die Zuordnung ist mit einer separat aufbewahrten Liste aber weiterhin möglich. Pseudonymisierte Daten bleiben personenbezogene Daten. [web:4]\n\nFür die Studie sollte daher ein möglichst datensparsames Verfahren verwendet werden:\n\n1. keine Namen oder Matrikelnummern im Forschungsdatensatz,\n2. zufällige Teilnehmer-ID statt Identität,\n3. separate, verschlüsselte Zuordnungsliste,\n4. Zugriff nur für den Betreuer bzw. die unbedingt erforderlichen Personen,\n5. verschlüsselte Speicherung und Übertragung,\n6. keine Speicherung unnötiger Angaben wie vollständiges Geburtsdatum,\n7. getrennte Speicherung von Einwilligungen und Messdaten,\n8. Löschung der Zuordnungsliste, sobald sie nicht mehr benötigt wird,\n9. Veröffentlichung nur aggregierter Ergebnisse.\n\nEin Schlüssel zur Re-Identifizierung darf nicht im selben Ordner oder auf demselben ungeschützten Laufwerk wie die Forschungsdaten liegen. Die DSK bzw. EDPB unterscheiden ebenfalls klar: Pseudonymisierung ist nur eine Schutzmaßnahme; pseudonymisierte Daten bleiben vom Datenschutzrecht erfasst, während wirklich anonymisierte Daten nicht mehr als personenbezogene Daten gelten. [web:3][web:4]\n\n## 5. Aufbewahrung und Löschung\n\nEs gibt für eine Bachelorarbeit nicht generell eine einheitliche DSGVO-Aufbewahrungsfrist von beispielsweise zehn Jahren. Die Frist muss sich aus dem Forschungszweck, institutionellen Vorgaben, Nachweispflichten und gegebenenfalls Publikations- oder Prüfungsanforderungen ergeben.\n\nDas Datenkonzept sollte deshalb konkret festlegen:\n\n| Datenkategorie | Empfohlene Behandlung |\n|---|---|\n| Einwilligungserklärungen | getrennt, zugriffsbeschränkt und verschlüsselt aufbewahren |\n| Teilnehmer-Schlüssel | getrennt von den Forschungsdaten; frühestmöglich löschen |\n| pseudonymisierte Bewertungen | nur so lange speichern, wie Auswertung, Qualitätssicherung und Nachweis erforderlich sind |\n| synthetische Audiodateien | ohne Personenbezug speichern und archivieren |\n| öffentliche, anonymisierte Audiodateien | nur im Rahmen der Datenbanklizenz speichern und verwenden |\n| Rohdaten mit Personenbezug | nach Abschluss möglichst anonymisieren oder löschen |\n| Veröffentlichte Ergebnisse | nur aggregiert; keine Re-Identifizierung einzelner Personen |\n\nFür wissenschaftliche Forschung verlangt Art. 89 DSGVO geeignete Garantien, insbesondere Datenminimierung und, soweit möglich, Anonymisierung oder Pseudonymisierung. Die Daten sollten daher frühestmöglich pseudonymisiert und, sobald der Forschungszweck dies erlaubt, anonymisiert oder gelöscht werden.\n\nDie GEHBa verlangt bei einem Antrag Angaben zu Datenformaten, Server- und Speicherorten, Zugriffsrechten, Speicherdauer und Löschfristen sowie gegebenenfalls eine Bestätigung der Datenschutzbeauftragten. [web:44]\n\n## 6. Verwendung öffentlicher Datenbanken wie PhysioNet\n\nDie öffentliche Zugänglichkeit einer Datenbank bedeutet **nicht automatisch**, dass die enthaltenen Daten anonym im Sinne der DSGVO sind oder frei weiterverwendet werden dürfen.\n\nEntscheidend ist:\n\n1. Sind die Aufnahmen tatsächlich anonymisiert?\n2. Können sie unter Berücksichtigung aller verfügbaren Informationen noch einer Person zugeordnet werden?\n3. Welche Nutzungsbedingungen gelten für den konkreten Datensatz?\n4. Wurde die ursprüngliche Erhebung ethisch und rechtmäßig durchgeführt?\n5. Ist die geplante Nutzung mit Zweck, Lizenz und Data-Use-Agreement vereinbar?\n\nBei vollständig anonymisierten Aufnahmen entfällt grundsätzlich die DSGVO-Verarbeitung durch die THA. Die Studie kann aber weiterhin ethisch relevant sein, insbesondere wenn der Datensatz aus medizinischer Forschung stammt oder die Herkunft und Nutzung der Aufnahmen besondere Bedingungen enthält.\n\nBei pseudonymisierten oder lediglich de-identifizierten Daten bleibt die DSGVO anwendbar. Das gilt auch dann, wenn die THA selbst keine Identitätsschlüssel besitzt, sofern eine Re-Identifizierung mit vertretbarem Aufwand nicht ausgeschlossen werden kann.\n\nPhysioNet unterscheidet insbesondere zwischen frei verfügbaren und zugangsbeschränkten Datensätzen. Für eingeschränkte Gesundheitsdaten verpflichtet die Credentialed Health Data Use Agreement unter anderem dazu, keine Personen oder Institutionen zu identifizieren, die Daten nicht weiterzugeben, angemessene technische und organisatorische Sicherheitsmaßnahmen zu treffen und die Daten ausschließlich für den beantragten wissenschaftlichen Zweck zu verwenden. [web:5]\n\n### Konsequenz für die geplante Arbeit\n\nDie günstigste Variante ist:\n\n- synthetische Herzschallsignale oder\n- ein ausdrücklich für wissenschaftliche Nachnutzung freigegebener, vollständig anonymisierter Datensatz,\n- keine eigenen Patientendaten,\n- keine Kombination mit zusätzlichen Identifikatoren,\n- nur Speicherung der für die Hörstudie benötigten Dateien,\n- Dokumentation der Quelle, Lizenz und ursprünglichen Ethik-/Datenschutzinformationen.\n\n## Ergebnis\n\n**Ein förmliches Ethikvotum ist für die beschriebene, risikoarme Bachelor-Pilotstudie wahrscheinlich nicht erforderlich**, sofern sie tatsächlich nur gesunde Erwachsene, keine eigenen Patientendaten und möglichst synthetische oder vollständig anonymisierte Herzschall-Aufnahmen verwendet. Die GEHBa nennt Bachelorarbeiten als Fälle, in denen regelmäßig kein vollständiger Ethikantrag erforderlich ist, und sieht stattdessen eine ethische und datenschutzrechtliche Selbsteinschätzung vor. [web:44]\n\n**Eine öffentlich dokumentierte eigene THA-Ethikkommission mit eindeutig ausgewiesener Zuständigkeit war nicht auffindbar.** Daher sollte die konkrete Einordnung vor Beginn schriftlich mit Betreuer, THA-Datenschutzbeauftragtem und gegebenenfalls der GEHBa geklärt und dokumentiert werden.\n\n**Die DSGVO entfällt nur bei echter Anonymisierung.** Bei Pseudonymisierung oder möglicher Re-Identifizierbarkeit gelten insbesondere Einwilligung, Art. 9 DSGVO bei Gesundheitsdaten, Zweckbindung, Datenminimierung, Zugriffsschutz, getrennte Schlüsselverwaltung und eine begründete Lösch- bzw. Aufbewahrungsfrist."
+    },
+    "finish_reason": "stop"
+   }
+  ],
+  "usage": {
+   "prompt_tokens": 20965,
+   "completion_tokens": 3614,
+   "total_tokens": 24579,
+   "cost": {
+    "cache_creation_cost": 0.00247,
+    "cache_read_cost": 0.00022,
+    "currency": "USD",
+    "input_cost": 0,
+    "output_cost": 0.00434,
+    "tool_calls_cost": 0.01159,
+    "tool_calls_cost_details": {
+     "fetch_url": 0.00409,
+     "search_web": 0.0075
+    },
+    "total_cost": 0.01862
+   },
+   "input_tokens_details": {
+    "cache_creation_input_tokens": 9898,
+    "cache_read_input_tokens": 11058,
+    "cached_tokens": 11058
+   },
+   "output_tokens_details": {
+    "reasoning_tokens": 80
+   },
+   "tool_calls_details": {
+    "fetch_url": {
+     "cost_usd": 0.00409,
+     "invocation": 3,
+     "token_usage": [
+      {
+       "input_tokens": 3347,
+       "input_tokens_details": {
+        "cache_creation_input_tokens": 3344,
+        "cached_tokens": 0
+       },
+       "model": "openai/gpt-5.6-luna",
+       "output_tokens": 2082,
+       "output_tokens_details": {
+        "reasoning_tokens": 94
+       }
+      }
+     ]
+    },
+    "search_web": {
+     "invocation": 3
+    }
+   }
+  },
+  "citations": [
+   {
+    "url": "https://www.tha.de/Geistes-und-Naturwissenschaften/Julia-Krumme.html",
+    "title": "Prof. Dr. phil. Julia Krumme",
+    "date": null
+   },
+   {
+    "url": "https://www.tha.de/Gremien.html",
+    "title": "Gremien - Technische Hochschule Augsburg",
+    "date": null
+   },
+   {
+    "url": "https://www.tha.de/en/University-Boards-Committees.html",
+    "title": "Board of Management / President",
+    "date": "2016-01-01"
+   },
+   {
+    "url": "https://www.uni-augsburg.de/de/organisation/gremien/",
+    "title": "Gesamtuniversitäre Gremien und Ansprechpersonen",
+    "date": null
+   },
+   {
+    "url": "https://www.tha.de/Zentrale-Einrichtungen-und-Dienste.html",
+    "title": "Bibliothek",
+    "date": "2016-01-01"
+   },
+   {
+    "url": "https://www.tha.de/Service/Amtsblatt.html",
+    "title": "Amtsblatt der Technischen Hochschule Augsburg",
+    "date": null
+   },
+   {
+    "url": "https://www.sicherheitsrelevante-forschung.org/ansprechpartner/uniaugsburg/",
+    "title": "Universität Augsburg",
+    "date": "2024-11-15"
+   },
+   {
+    "url": "https://www.hnu.de/forschung/netzwerke-mitgliedschaften",
+    "title": "Netzwerke & Mitgliedschaften",
+    "date": "2020-01-01"
+   },
+   {
+    "url": "https://www.tha.de/Binaries/Binary32491/20251201-THA-Organigramm-25-MHe.pdf",
+    "title": "Organisationsplan der Technischen Hochschule Augsburg",
+    "date": null
+   },
+   {
+    "url": "https://www.gehba.de/fileadmin/daten/Gehba/Taetigkeitsbericht_GEHBa_2022.pdf",
+    "title": "[PDF] Tätigkeitsbericht der Gemeinsamen Ethikkommission der ... - GEHBa",
+    "date": null
+   },
+   {
+    "url": "https://www.tha.de/Geistes-und-Naturwissenschaften/Zertifikat-Ethik.html",
+    "title": "Zertifikat Ethik",
+    "date": "2016-01-01"
+   },
+   {
+    "url": "https://www.tha.de/Binaries/Binary8851/forschungsbericht-2013.pdf",
+    "title": "Forschungsbericht 2013",
+    "date": null
+   },
+   {
+    "url": "https://www.akek.de/mitglieder/ethikkommission-der-medizinischen-fakultaet-der-universitaet-augsburg/",
+    "title": "Ethikkommission der medizinischen Fakultät ...",
+    "date": "2024-01-01"
+   },
+   {
+    "url": "https://opus.bibliothek.uni-augsburg.de/opus4/frontdoor/deliver/index/docId/79056/file/wegweiser_sose_2020_zur_ansicht_reduzierte_grosse.pdf",
+    "title": "Ein Wegweiser von A-Z durch die Universität Augsburg",
+    "date": null
+   },
+   {
+    "url": "https://www.akek.de/wp-content/uploads/Vortrag_Gemeinsame-Ethikkommission-der-Hochschulen-Bayerns_Prof.-Dr.-med.-Walter-Swoboda.pdf",
+    "title": "[PDF] Gemeinsame Ethikkommission der Hochschulen Bayerns",
+    "date": "2024-11-14"
+   },
+   {
+    "url": "https://www.uni-bremen.de/rechtsstelle/ethikkommission",
+    "title": "Ethikkommission - Universität Bremen",
+    "date": null
+   },
+   {
+    "url": "https://www.dfg.de/resource/blob/168312/54-01-de.pdf",
+    "title": "[PDF] Leitfaden für die Antragstellung - Projektanträge - DFG",
+    "date": null
+   },
+   {
+    "url": "https://www.medizinische-fakultaet-hd.uni-heidelberg.de/fileadmin/medizinische_fakultaet/Ethikkommission/Sonstige_Studien/Leitfaden_Sonstige_Studien.pdf",
+    "title": "Leitfaden Sonstige Studien",
+    "date": null
+   },
+   {
+    "url": "https://www.dfg.de/de/foerderung/antrag-foerderprozess/faq/geistes-sozialwissenschaften",
+    "title": "Informationen aus den Geistes- und Sozialwissenschaften",
+    "date": "2023-02-22"
+   },
+   {
+    "url": "https://www.dfg.de/de/grundlagen-themen/fachwissenschaften/ingenieurwissenschaften/faq",
+    "title": "DFG - Deutsche Forschungsgemeinschaft - FAQ: Informationen aus den Ingenieurwissenschaften",
+    "date": "2018-01-01"
+   },
+   {
+    "url": "https://www.hs-niederrhein.de/fileadmin/dateien/FB10/Stellenanzeigen_PDF/Hinweise_zum_Antrag.pdf",
+    "title": "Hinweise für die Erstellung eines Antrags an ...",
+    "date": null
+   },
+   {
+    "url": "https://www.haw-hamburg.de/fileadmin/Forschung/PDF/Ethik/Vorlage_Ethikantrag_HAW_Hamburg.docx",
+    "title": "[DOC] Vorlage Ethikantrag - HAW Hamburg",
+    "date": null
+   },
+   {
+    "url": "https://www.haw-hamburg.de/forschung/ethik/",
+    "title": "HAW-Hamburg: Ethik",
+    "date": "2025-07-31"
+   },
+   {
+    "url": "https://www.hf.uni-koeln.de/39912",
+    "title": "Universität zu Köln Ethikkommission der Humanwissenschaftlichen ...",
+    "date": null
+   },
+   {
+    "url": "https://www.zhaw.ch/de/forschung/ethik-werte-und-datenschutz",
+    "title": "Ethik, Werte und Datenschutz - Forschung",
+    "date": "2026-06-03"
+   },
+   {
+    "url": "https://www.dgfe.de/dgfe-wir-ueber-uns/kommission-zur-forschungsethik",
+    "title": "Kommission zur Forschungsethik der DGfE",
+    "date": null
+   },
+   {
+    "url": "https://www.wi.ovgu.de/Forschungsethik.html",
+    "title": "Forschungsethik - Servicestelle Wissenschaftliche Integrität",
+    "date": "2025-08-29"
+   },
+   {
+    "url": "https://www.haw-hamburg.de/fileadmin/Forschung/PDF/Ethik/Checkliste_Ethische_Selbsbewertung.docx",
+    "title": "Checkliste Ethische Selbstbewertung",
+    "date": null
+   },
+   {
+    "url": "https://www.gehba.de/fileadmin/daten/Gehba/GEHBa-FAQ_2.1.pdf",
+    "title": "Häufig gestellte Fragen zum Ethikantrag - GEHBa",
+    "date": null
+   },
+   {
+    "url": "https://uol.de/senat/forschungsfolgenabschaetzung-und-ethik",
+    "title": "Kommission für Forschungsfolgenabschätzung und Ethik",
+    "date": "2017-03-17"
+   },
+   {
+    "url": "https://www.edps.europa.eu/system/files/2021-12/06_griet_verhenneman_en.pdf",
+    "title": "How GDPR fosters pseudonymisation in academic research ...",
+    "date": null
+   },
+   {
+    "url": "https://www.studiolegalestefanelli.it/en/insights/edpb-guidelines-1-2026-scientific-research-gdpr",
+    "title": "EDPB Guidelines 1/2026 on the processing of personal ...",
+    "date": "2026-04-21"
+   },
+   {
+    "url": "https://www.edpb.europa.eu/system/files/documents/files/file1/edpb_replyec_questionnaireresearch_final.pdf",
+    "title": "[PDF] EDPB Document on response to the request from the European ...",
+    "date": null
+   },
+   {
+    "url": "https://www.edpb.europa.eu/topics/ai-and-technology/anonymisation-pseudonymisation_en",
+    "title": "Anonymisation / pseudonymisation",
+    "date": "2021-01-01"
+   },
+   {
+    "url": "https://physionet.org/content/mimiciii/view-dua/1.4/",
+    "title": "PhysioNet Credentialed Health Data Use Agreement 1.5.0",
+    "date": null
+   },
+   {
+    "url": "https://www.edpb.europa.eu/news/edpb-brings-clarity-to-data-processing-for-scientific-research-speeds-up-the-finalisation-of_en",
+    "title": "EDPB brings clarity to data processing for scientific research ...",
+    "date": "2026-04-16"
+   },
+   {
+    "url": "https://www.edpb.europa.eu/sites/default/files/webform/public_consultation_reply/tmf-statement_edpb-on-pseudonymisation_2025-03-14_en.pdf",
+    "title": "1/13",
+    "date": null
+   },
+   {
+    "url": "https://www.bmftr.bund.de/SharedDocs/Downloads/DE/gesetze/forschungsdatengesetz/stellungnahmen/Bitkom/Bitkom-Anlage.pdf?__blob=publicationFile&v=3",
+    "title": "Datenschutzrechtliche Forschungsprivilegien",
+    "date": null
+   },
+   {
+    "url": "https://www.edpb.europa.eu/sites/default/files/webform/public_consultation_reply/comments-guid-1_2025-edpb.pdf",
+    "title": "comments on the 01/2025 guidelines on pseudonymisation",
+    "date": null
+   },
+   {
+    "url": "https://www.jdsupra.com/legalnews/scientific-research-under-gdpr-edpb-5379784/",
+    "title": "Scientific Research Under GDPR: EDPB Sets New Boundaries",
+    "date": "2026-05-21"
+   },
+   {
+    "url": "https://www.uni-kassel.de/uni/files/Forschung/Forschungsfoerderung/Rahmenbedingungen_guter_Forschung/Datenschutz_bei_FV/Datenschutz_bei_Forschungsvorhaben.pdf",
+    "title": "Datenschutz bei Forschungsvorhaben",
+    "date": null
+   },
+   {
+    "url": "https://cms-cdn.lmu.de/media/07-medizin/fakultaet-medizin/downloads/ethikkommission/datenschutzp_2020.pdf",
+    "title": "Mustertext zum Datenschutz in Informationsschriften bei ...",
+    "date": null
+   },
+   {
+    "url": "https://www.uni-bielefeld.de/ub/digital/forschungsdaten/veranstaltungen/datenwoche/pdf/2024/2024-03-07_Datenschutz_Einwilligungserklaerungen.pdf",
+    "title": "[PDF] Datenschutz in der Forschung - Uni Bielefeld",
+    "date": "2024-03-07"
+   },
+   {
+    "url": "https://www.bfdi.bund.de/DE/Buerger/Inhalte/GesundheitSoziales/Allgemein/MedizinischeForschung.html",
+    "title": "Neue Entwicklungen in der Forschung mit Gesundheitsdaten",
+    "date": null
+   },
+   {
+    "url": "https://datenschutz.hessen.de/sites/datenschutz.hessen.de/files/2023-03/muster_datenschutzkonzept_forschungsvorhaben_abschlussarbeiten_0.docx",
+    "title": "muster_datenschutzkonzept_forschungsvorhaben_abschlussarbeiten_0.docx",
+    "date": null
+   }
+  ],
+  "search_results": [
+   {
+    "id": 16,
+    "last_updated": "2026-06-17",
+    "snippet": "Raum\nU-Gebäude (1.Stock)\nTelefon\n+49 821 5586-3731\nSprechstunde\nnach Vereinbarung.\nBitte buchen Sie online einen Termin.\nE-Mail\n[Bitte aktivieren Sie Javascript]",
+    "source": "web",
+    "title": "Prof. Dr. phil. Julia Krumme",
+    "url": "https://www.tha.de/Geistes-und-Naturwissenschaften/Julia-Krumme.html"
+   },
+   {
+    "id": 17,
+    "last_updated": "2026-05-31",
+    "snippet": "",
+    "source": "web",
+    "title": "Gremien - Technische Hochschule Augsburg",
+    "url": "https://www.tha.de/Gremien.html"
+   },
+   {
+    "date": "2016-01-01",
+    "id": 18,
+    "last_updated": "2025-01-23",
+    "snippet": "",
+    "source": "web",
+    "title": "Board of Management / President",
+    "url": "https://www.tha.de/en/University-Boards-Committees.html"
+   },
+   {
+    "id": 19,
+    "last_updated": "2025-11-29",
+    "snippet": "Ethikkommission\nUntersuchungskommission zur Aufklärung wissenschaftlichen Fehlverhaltens",
+    "source": "web",
+    "title": "Gesamtuniversitäre Gremien und Ansprechpersonen",
+    "url": "https://www.uni-augsburg.de/de/organisation/gremien/"
+   },
+   {
+    "date": "2016-01-01",
+    "id": 20,
+    "last_updated": "2025-08-27",
+    "snippet": "Der Compliancebeauftragte stellt sicher, dass Gesetze, interne und externe Verordnungen und Richtlinien sowie selbst gesetzte ethische Standards und Anforderungen an der Technischen Hochschule Augsburg stets eingehalten werden.",
+    "source": "web",
+    "title": "Bibliothek",
+    "url": "https://www.tha.de/Zentrale-Einrichtungen-und-Dienste.html"
+   },
+   {
+    "id": 21,
+    "last_updated": "2026-05-31",
+    "snippet": "",
+    "source": "web",
+    "title": "Amtsblatt der Technischen Hochschule Augsburg",
+    "url": "https://www.tha.de/Service/Amtsblatt.html"
+   },
+   {
+    "date": "2024-11-15",
+    "id": 22,
+    "last_updated": "2026-06-20",
+    "snippet": "Universität Augsburg\n### Ansprechpartner\nProf. Dr. Elisabeth André\n### Funktion\nVorsitzende der Ethikkommission\n### Adresse\nUniversitätsstr.\n6a\n### PLZ\n86159\n### Stadt\nAugsburg\n### Telefon\n...\nEthikkommission\nUniversität Augsburg\nProf. Dr. Elisabeth André\nVorsitzende der Ethikkommission\nUniversitätsstr.\n6a\n86159\nAugsburg\nEthikkommission",
+    "source": "web",
+    "title": "Universität Augsburg",
+    "url": "https://www.sicherheitsrelevante-forschung.org/ansprechpartner/uniaugsburg/"
+   },
+   {
+    "date": "2020-01-01",
+    "id": 23,
+    "last_updated": "2024-10-09",
+    "snippet": "",
+    "source": "web",
+    "title": "Netzwerke & Mitgliedschaften",
+    "url": "https://www.hnu.de/forschung/netzwerke-mitgliedschaften"
+   },
+   {
+    "id": 24,
+    "last_updated": "2026-01-28",
+    "snippet": "Academia\n...\nBriefanschrift: \nTechnische Hochschule Augsburg\nPostfach 110605\n86031 Augsburg\nTelefon:\nZentrale\n(0821) 5586-0\nDurchwahl\n(0821) 5586-…\nE-Mail:\ninfo@tha.de\nInternet:\nhttp://www.tha.de\n...\nKonfliktbeauftragte\n(Konfliktkommission):\nProf. Dr. Alexandra Teynor (3512) \nProf. Dr. Max Wedekind (2061)\nProf. Dr. Peter Cocron (3716)",
+    "source": "web",
+    "title": "Organisationsplan der Technischen Hochschule Augsburg",
+    "url": "https://www.tha.de/Binaries/Binary32491/20251201-THA-Organigramm-25-MHe.pdf"
+   },
+   {
+    "id": 25,
+    "last_updated": "2025-05-23",
+    "snippet": "Seit den kommissionsinternen Wahlen am 21.-23. November 2022 bilden Herr Prof. Dr. med. Walter \nSwoboda (Hochschule Neu-Ulm), Frau Dr. phil. Julia Krumme (Hochschule Augsburg) und Herr Prof. \nDr. phil. habil.\nKarsten Weber (Ostbayerische Technische Hochschule Regensburg) als Sprecher und \nstellvertretende Sprecherin bzw.\nSprecher seit Jahresbeginn 2023 den Vorsitz der GEHBa.\n...\nHochschule Augsburg \nAn der Hochschule 1  \nD-86161 Augsburg \n 0821 - 5586 3375 \n Julia.Krumme@hs-augsburg.de\n...\nKontakt für Anträge und Fragen zur Antragstellung \nHerr Dr. Martin Schmieder \nHochschule für angewandte Wissenschaften Neu-Ulm (HNU)\nRaum B.2.19 \nWileystraße 1 \nD-89231 Neu-Ulm \n 0731/9762-1625 \n antrag@gehba.de (Anträge) \n Martin.Schmieder@hnu.de (HNU)\n https://www.gehba.de  ",
+    "source": "web",
+    "title": "[PDF] Tätigkeitsbericht der Gemeinsamen Ethikkommission der ... - GEHBa",
+    "url": "https://www.gehba.de/fileadmin/daten/Gehba/Taetigkeitsbericht_GEHBa_2022.pdf"
+   },
+   {
+    "date": "2016-01-01",
+    "id": 26,
+    "last_updated": "2025-09-29",
+    "snippet": "Voraussetzung ist die Immatrikulation an der Hochschule Augsburg.",
+    "source": "web",
+    "title": "Zertifikat Ethik",
+    "url": "https://www.tha.de/Geistes-und-Naturwissenschaften/Zertifikat-Ethik.html"
+   },
+   {
+    "id": 27,
+    "last_updated": "2025-11-03",
+    "snippet": "",
+    "source": "web",
+    "title": "Forschungsbericht 2013",
+    "url": "https://www.tha.de/Binaries/Binary8851/forschungsbericht-2013.pdf"
+   },
+   {
+    "date": "2024-01-01",
+    "id": 28,
+    "last_updated": "2025-12-12",
+    "snippet": "|Vorsitzender|Prof. Dr. Michael Frühwald|\n...\n|Stellv.\nVorsitzender|Prof. Dr. Alkomeit Hasan|\n|Leiterin Geschäftsstelle|N.N.|\n**Kontakt**\nUniversität Augsburg\nMedizinische Fakultät\nAm Medizincampus 2\n86156 Augsburg\nTel.: +49 (0) 821 4803 - 1001\nFax:",
+    "source": "web",
+    "title": "Ethikkommission der medizinischen Fakultät ...",
+    "url": "https://www.akek.de/mitglieder/ethikkommission-der-medizinischen-fakultaet-der-universitaet-augsburg/"
+   },
+   {
+    "id": 29,
+    "last_updated": "2026-08-07",
+    "snippet": "Prüfungsausschuss für den Elitestudiengang Ethik der Textkulturen\nVorsitzender \nMayer Mathias, Dr. phil., Professor\n...\nVertretungsprofessur Christliche Sozialethik, Tel.: 0821-598-5827 (Sekretariat)",
+    "source": "web",
+    "title": "Ein Wegweiser von A-Z durch die Universität Augsburg",
+    "url": "https://opus.bibliothek.uni-augsburg.de/opus4/frontdoor/deliver/index/docId/79056/file/wegweiser_sose_2020_zur_ansicht_reduzierte_grosse.pdf"
+   },
+   {
+    "date": "2024-11-14",
+    "id": 30,
+    "last_updated": "2026-04-01",
+    "snippet": "Gemeinsame Ethikkommission \nder Hochschulen Bayerns\nSprecher:\nWalter Swoboda (Hochschule Neu-Ulm)\nKarsten Weber (Technische Hochschule Regensburg), \nJulia Krumme (Technische Hochschule Augsburg)",
+    "source": "web",
+    "title": "[PDF] Gemeinsame Ethikkommission der Hochschulen Bayerns",
+    "url": "https://www.akek.de/wp-content/uploads/Vortrag_Gemeinsame-Ethikkommission-der-Hochschulen-Bayerns_Prof.-Dr.-med.-Walter-Swoboda.pdf"
+   },
+   {
+    "id": 31,
+    "last_updated": "2026-05-27",
+    "snippet": "",
+    "source": "web",
+    "title": "Ethikkommission - Universität Bremen",
+    "url": "https://www.uni-bremen.de/rechtsstelle/ethikkommission"
+   },
+   {
+    "id": 32,
+    "last_updated": "2026-08-10",
+    "snippet": "",
+    "source": "web",
+    "title": "[PDF] Leitfaden für die Antragstellung - Projektanträge - DFG",
+    "url": "https://www.dfg.de/resource/blob/168312/54-01-de.pdf"
+   },
+   {
+    "id": 33,
+    "last_updated": "2026-08-08",
+    "snippet": "",
+    "source": "web",
+    "title": "Leitfaden Sonstige Studien",
+    "url": "https://www.medizinische-fakultaet-hd.uni-heidelberg.de/fileadmin/medizinische_fakultaet/Ethikkommission/Sonstige_Studien/Leitfaden_Sonstige_Studien.pdf"
+   },
+   {
+    "date": "2023-02-22",
+    "id": 34,
+    "last_updated": "2026-08-10",
+    "snippet": "Ist die Durchführung von Untersuchungen am Menschen, an identifizierbarem menschlichem Material oder an identifizierbaren Daten geplant, so ist im Grundsatz die Stellungnahme der örtlich zuständigen Ethikkommission erforderlich.\n...\n1. Für die Sozialwissenschaften (und Projekte aus benachbarten Fächern, die mit sozialwissenschaftlichen Methoden arbeiten) ist eine Vorlage eines **Ethikvotums grundsätzlich erforderlich**, wenn an der Untersuchung Patientinnen und Patienten beteiligt sind.\n2. In folgenden Fällen wird eine **Stellungnahme im Antrag** erwartet, und es ist unter **Umständen ** die Vorlage eines Ethikvotums erforderlich: - An der Untersuchung sind Personen beteiligt, für die ein besonderes Schutzbedürfnis („vulnerable groups“) gilt, wie etwa bei Personen mit eingeschränkter Einwilligungsfähigkeit.\n- Die Untersuchung und das dabei eingesetzte Material sind geeignet, bei den Teilnehmenden (Interviewte, Informant*innen, Mitarbeiter*innen am Projekt, Forscher*innen und Beforschte), starke Emotionen, starken psychischen Stress oder traumatische Erfahrungen auszulösen, die über alltägliche Erfahrungen hinausgehen.\n- Die Untersuchung impliziert physische Risiken für die Teilnehmer*innen oder führt zu körperlichen Schmerzen.\n- Potenzielle Teilnehmer*innen sollen nicht über die Untersuchung informiert werden.\n...\n- Die Teilnahme an der Untersuchung impliziert eine Täuschung (z.B. in Laborexperimenten).\n...\nWenn Sie im Antrag ankündigen, dass Sie bereits ein Ethikvotum für Ihr Projekt einholen, so ist dieses immer unverzüglich bei der DFG nachzureichen.\n...\nBei der lokalen Ethikkommission der Fakultät bzw.\nUniversität, an der die Untersuchung durchgeführt werden soll.",
+    "source": "web",
+    "title": "Informationen aus den Geistes- und Sozialwissenschaften",
+    "url": "https://www.dfg.de/de/foerderung/antrag-foerderprozess/faq/geistes-sozialwissenschaften"
+   },
+   {
+    "date": "2018-01-01",
+    "id": 35,
+    "last_updated": "2025-09-16",
+    "snippet": "Ist die Durchführung von Untersuchungen am Menschen oder an identifizierbarem menschlichem Material geplant, so ist grundsätzlich eine ethische Evaluierung erforderlich.\nDie Stellungnahme einer Ethikkommission ist einzuholen, wenn die Durchführung des Projektes einen negativen Einfluss auf den Menschen haben kann.\n...\nAusnahmen, bei denen in der Regel kein Ethikvotum erforderlich ist:\n- Nutzendenstudien, bei denen es um die reine Testung von Software-Anwendungen und Plattformen o.Ä. geht, bei der für die Testpersonen kein Risiko besteht\n- Verwendung von öffentlich zugänglichen Datensätzen, deren Erhebung bereits als ethisch unbedenklich eingestuft worden ist bzw.\nfür welche bereits ein gültiges Ethikvotum vorliegt",
+    "source": "web",
+    "title": "DFG - Deutsche Forschungsgemeinschaft - FAQ: Informationen aus den Ingenieurwissenschaften",
+    "url": "https://www.dfg.de/de/grundlagen-themen/fachwissenschaften/ingenieurwissenschaften/faq"
+   },
+   {
+    "id": 36,
+    "last_updated": "2025-11-17",
+    "snippet": "",
+    "source": "web",
+    "title": "Hinweise für die Erstellung eines Antrags an ...",
+    "url": "https://www.hs-niederrhein.de/fileadmin/dateien/FB10/Stellenanzeigen_PDF/Hinweise_zum_Antrag.pdf"
+   },
+   {
+    "id": 37,
+    "last_updated": "2026-05-26",
+    "snippet": "",
+    "source": "web",
+    "title": "[DOC] Vorlage Ethikantrag - HAW Hamburg",
+    "url": "https://www.haw-hamburg.de/fileadmin/Forschung/PDF/Ethik/Vorlage_Ethikantrag_HAW_Hamburg.docx"
+   },
+   {
+    "date": "2025-07-31",
+    "id": 38,
+    "last_updated": "2026-07-31",
+    "snippet": "- Prof. Dr. Sabine Wöhlke (Vorsitzende)\n...\nA. (stellvertretende Vorsitzende)\n- Dr. Christiane Stange (Geschäftsstelle)\n...\nDr. Christiane Stange\nForschung und Transfer\nchristiane.stange (at) haw-hamburg (dot) de\n…\n...\nDie Ethikkommission an der HAW Hamburg übernimmt auf Antrag Stellungnahmen zur ethischen Vertretbarkeit der Ziele und Verfahrensweisen eines Forschungsvorhabens.",
+    "source": "web",
+    "title": "HAW-Hamburg: Ethik",
+    "url": "https://www.haw-hamburg.de/forschung/ethik/"
+   },
+   {
+    "id": 39,
+    "last_updated": "2026-06-25",
+    "snippet": "Bitte benutzen Sie zur Antragstellung das dafür bereit gestellte Antragsformular (s.\nDownloads) und reichen Sie einen Ethikantrag in einem durchsuchbaren PDF-Dokument ein.\nDieses Dokument sollte (eindeutig gekennzeichnet) auch die „Allgemeinen Teilnehmerinformationen“, „Einwilligungserklärung“ und andere erforderliche Anlagen enthalten (z.B. ggf. einen dazugehörigen Förderungsantrag).\n...\nSenden Sie den vollständigen Antrag bitte als PDF- Dokument an folgende E-Mail-Adresse:\n**humf-ethikantrag[at]uni-koeln.de** (zu Händen des stellvertretenden (geschäftsführenden) Leiters der Ethikkommmission Herrn Prof. Dr. Alexander L. Gerlach).\n...\nBenötigen Sie ein Votum der Ethikkommission im Rahmen eines DFG-Antrags, haben Sie die Möglichkeit, ein alternatives zweistufiges Begutachtungsverfahren zu wählen: Ein möglicher Vorteil liegt hierbei darin, dass Sie noch nicht alle weiterführenden Dokumente (z.B. Teilnehmerinformationen, Einverständniserklärung, Flyer, etc.) zum Zeitpunkt der Antragsstellung einreichen müssen.\n- Stufe 1: Beim ersten Schritt reichen Sie lediglich das ausgefüllte Formular für die erste Antragsstufe eines DFG-Projekts (s. u.) sowie den dazugehörigen DFG-Antrag (in der finalen Form wie bei der DFG eingereicht) in einem durchsuchbaren pdf-Dokument ein.\nDie Ethikkommission wird dann die ethische Unbedenklichkeit auf der konzeptuellen Grundlage Ihrer Studie/n prüfen und Sie dazu beraten.\n- Stufe 2: Sollten Sie eine Bewilligung Ihres Projektes durch die DFG erhalten, müssten Sie im zweiten Schritt einen regulären Antrag mit allen erforderlichen Dokumenten einreichen, woraufhin dieser entsprechend der relevanten Kriterien geprüft wird.",
+    "source": "web",
+    "title": "Universität zu Köln Ethikkommission der Humanwissenschaftlichen ...",
+    "url": "https://www.hf.uni-koeln.de/39912"
+   },
+   {
+    "date": "2026-06-03",
+    "id": 40,
+    "last_updated": "2026-08-05",
+    "snippet": "Diese Aufgabe übernimmt seit Herbst 2022 der Ethikausschuss der ZHAW: Er versteht sich als eine unabhängige Stelle, die prüft, ob in einer Studie der Schutz der Versuchsteilnehmenden in einem angemessenen Verhältnis zum Nutzen und potenziellen Schaden steht.",
+    "source": "web",
+    "title": "Ethik, Werte und Datenschutz - Forschung",
+    "url": "https://www.zhaw.ch/de/forschung/ethik-werte-und-datenschutz"
+   },
+   {
+    "id": 41,
+    "last_updated": "2026-07-15",
+    "snippet": "2. Informationen zum Projekt: Gegenstand, Zielsetzung, Methoden und Verlauf der Untersuchung.\n3. Informationen, die den Teilnehmenden/Probanden zur Verfügung gestellt werden (zum Bsp.\nzum Datenschutz, zu Filmaufnahmen etc.\n...\n4. Einverständniserklärungen der Teilnehmenden, ggf.\nabgestimmt auf verschiedene Untersuchungsschritte und - wenn geplant - auf die spätere Verwendung von Daten, Interviews, Bildern etc.\nüber das eigentliche Forschungsprojekt hinaus, zum Bsp.",
+    "source": "web",
+    "title": "Kommission zur Forschungsethik der DGfE",
+    "url": "https://www.dgfe.de/dgfe-wir-ueber-uns/kommission-zur-forschungsethik"
+   },
+   {
+    "date": "2025-08-29",
+    "id": 42,
+    "last_updated": "2025-09-02",
+    "snippet": "**Fragen zu ethischen Aspekten ihrer Forschung am und mit Menschen** (inklusive biologischem Material und personenbezogenen Daten) können sich Wissenschaftlerinnen und Wissenschaftler der Otto-von-Guericke-Universität Magdeburg an die Ethik-Kommission der OVGU wenden, die an der Medizinischen Fakultät und der Universitätsmedizin Magdeburg A.ö.R. angesiedelt ist.",
+    "source": "web",
+    "title": "Forschungsethik - Servicestelle Wissenschaftliche Integrität",
+    "url": "https://www.wi.ovgu.de/Forschungsethik.html"
+   },
+   {
+    "id": 43,
+    "last_updated": "2025-09-16",
+    "snippet": "a)  Liegt eine freiwillige informierte Einwilligung[^1] zur Studienteilnahme **nicht** vor?[^2]",
+    "source": "web",
+    "title": "Checkliste Ethische Selbstbewertung",
+    "url": "https://www.haw-hamburg.de/fileadmin/Forschung/PDF/Ethik/Checkliste_Ethische_Selbsbewertung.docx"
+   },
+   {
+    "id": 44,
+    "last_updated": "2026-08-06",
+    "snippet": "Bei weitere Fragen können Sie sich jederzeit an die Geschäftsstelle der GEHBa wenden:\nDr. Martin Schmieder \nTelefon: +49(0)731-9762-1625  \nE-Mail: antrag@gehba.de ",
+    "source": "web",
+    "title": "Häufig gestellte Fragen zum Ethikantrag - GEHBa",
+    "url": "https://www.gehba.de/fileadmin/daten/Gehba/GEHBa-FAQ_2.1.pdf"
+   },
+   {
+    "date": "2017-03-17",
+    "id": 45,
+    "last_updated": "2025-01-28",
+    "snippet": "Insbesondere beurteilt sie ethische und rechtliche Aspekte bei",
+    "source": "web",
+    "title": "Kommission für Forschungsfolgenabschätzung und Ethik",
+    "url": "https://uol.de/senat/forschungsfolgenabschaetzung-und-ethik"
+   },
+   {
+    "id": 1,
+    "last_updated": "2025-09-11",
+    "snippet": "",
+    "source": "web",
+    "title": "How GDPR fosters pseudonymisation in academic research ...",
+    "url": "https://www.edps.europa.eu/system/files/2021-12/06_griet_verhenneman_en.pdf"
+   },
+   {
+    "date": "2026-04-21",
+    "id": 2,
+    "last_updated": "2026-08-11",
+    "snippet": "Starting from Article 89 GDPR, according to which, where the scientific research purposes *“can be fulfilled by further processing which does not permit or no longer permits the identification of data subjects, those purposes shall be fulfilled in that manner”*, the EDPB states that, where possible, the data must be **anonymised**.\nWhere anonymisation is not possible — because, for example, the controller seeks to analyse developments in respect of an individual over time, which requires an identifier, or because anonymisation is not technically feasible — the data must be **pseudonymised** (paragraph 157).\n...\nThe EDPB answers with a formulation of fundamental operational importance: *“a controller may rely on the same legal basis both for the anonymisation process and for the preceding processing operations, where such operations are part of a set of operations carried out for the same scientific research purposes”*.",
+    "source": "web",
+    "title": "EDPB Guidelines 1/2026 on the processing of personal ...",
+    "url": "https://www.studiolegalestefanelli.it/en/insights/edpb-guidelines-1-2026-scientific-research-gdpr"
+   },
+   {
+    "id": 3,
+    "last_updated": "2026-08-08",
+    "snippet": "When techniques \nfor pseudonymisation of data have been applied, these data are still considered personal data under \nthe GDPR (see Article 4(5) GDPR).\nIn Article 89(1) GDPR  pseudonymisation is considered to be as an\nadditional safeguard which should be employed in the context of scientific research to ensure respect \nfor the principle of data minimisation.",
+    "source": "web",
+    "title": "[PDF] EDPB Document on response to the request from the European ...",
+    "url": "https://www.edpb.europa.eu/system/files/documents/files/file1/edpb_replyec_questionnaireresearch_final.pdf"
+   },
+   {
+    "date": "2021-01-01",
+    "id": 4,
+    "last_updated": "2026-08-11",
+    "snippet": "Pseudonymisation and anonymisation are distinct concepts.\nPseudonymisation is a safeguard that reduces the linkability of data to a specific individual, but without aiming at completely cutting that link, while anonymisation makes data unlinkable to any individual.\nTruly anonymised data is no longer considered personal data, thus falling outside the scope of EU data protection law.",
+    "source": "web",
+    "title": "Anonymisation / pseudonymisation",
+    "url": "https://www.edpb.europa.eu/topics/ai-and-technology/anonymisation-pseudonymisation_en"
+   },
+   {
+    "id": 5,
+    "last_updated": "2026-08-07",
+    "snippet": "1. I will not attempt to identify any individual or institution referenced in PhysioNet restricted data.",
+    "source": "web",
+    "title": "PhysioNet Credentialed Health Data Use Agreement 1.5.0",
+    "url": "https://physionet.org/content/mimiciii/view-dua/1.4/"
+   },
+   {
+    "date": "2026-04-16",
+    "id": 6,
+    "last_updated": "2026-08-03",
+    "snippet": "Finally, the Board explains how controllers can assess the appropriate technical and organisational measures, such as anonymisation or pseudonymisation, when processing personal data for scientific research purposes.",
+    "source": "web",
+    "title": "EDPB brings clarity to data processing for scientific research ...",
+    "url": "https://www.edpb.europa.eu/news/edpb-brings-clarity-to-data-processing-for-scientific-research-speeds-up-the-finalisation-of_en"
+   },
+   {
+    "id": 7,
+    "last_updated": "2025-05-26",
+    "snippet": "'pseudonymisation' means the processing of personal data in such a manner that the \npersonal data can no longer be attributed to a specific data subject without the use of\nadditional information, provided that such additional information is kept separately \nand is subject to technical and organisational measures to ensure that the personal \ndata are not attributed to an identified or identifiable natural person; ",
+    "source": "web",
+    "title": "1/13",
+    "url": "https://www.edpb.europa.eu/sites/default/files/webform/public_consultation_reply/tmf-statement_edpb-on-pseudonymisation_2025-03-14_en.pdf"
+   },
+   {
+    "id": 8,
+    "last_updated": "2026-07-08",
+    "snippet": "",
+    "source": "web",
+    "title": "Datenschutzrechtliche Forschungsprivilegien",
+    "url": "https://www.bmftr.bund.de/SharedDocs/Downloads/DE/gesetze/forschungsdatengesetz/stellungnahmen/Bitkom/Bitkom-Anlage.pdf?__blob=publicationFile&v=3"
+   },
+   {
+    "id": 9,
+    "last_updated": "2025-10-20",
+    "snippet": "The Guidelines insists that pseudonymised data, which could be attributed to a natural \nperson using additional information, should be considered as information on an identifiable\nnatural person (Recital 26 GDPR) and are therefore personal data subject to the GDPR.",
+    "source": "web",
+    "title": "comments on the 01/2025 guidelines on pseudonymisation",
+    "url": "https://www.edpb.europa.eu/sites/default/files/webform/public_consultation_reply/comments-guid-1_2025-edpb.pdf"
+   },
+   {
+    "date": "2026-05-21",
+    "id": 10,
+    "last_updated": "2026-06-10",
+    "snippet": "6. Appropriate safeguards must be implemented, with a clear preference for anonymisation or pseudonymisation where possible.\n...\nThe EDPB reiterates a clear hierarchy: Personal data should be anonymised where possible, otherwise pseudonymised, with the use of identifiable data limited to what is strictly necessary and proportionate.",
+    "source": "web",
+    "title": "Scientific Research Under GDPR: EDPB Sets New Boundaries",
+    "url": "https://www.jdsupra.com/legalnews/scientific-research-under-gdpr-edpb-5379784/"
+   },
+   {
+    "id": 11,
+    "last_updated": "2025-10-09",
+    "snippet": " \nPseudonymisierung der personenbezogenen Daten, sofern Forschungszwecke \nauf diese Weise noch erreicht werden können,\n \nWeiterverarbeitung der Daten in anonymer Form, soweit dies möglich ist (Ano-\nnyme Daten sind nicht personenbezogen – für sie gilt das Datenschutzrecht nicht).\n...\nEine Einwilligung der betroffenen Person muss freiwillig, bestimmt, informiert, unmiss-\nverständlich und nachweisbar sein.\nDie Einwilligung muss so bestimmt wie möglich \nsein.\nSie muss insbesondere die Datenkategorien, den Verarbeitungszweck, die Weiter-\nverwendung und den Zeitpunkt der Datenlöschung umfassen.\n...\nFür die langfristige Aufbewahrung personenbezogener Daten nach Abschluss des For-\nschungsprojekts sind die Daten zuvor zu anonymisieren oder zu pseudonymisieren.\nIn\npersonenbezogener Form dürfen sie nur aufbewahrt werden, wenn nur in dieser Form \ndie anerkannten Funktionen des Forschungsdatenmanagements erfüllt werden können.",
+    "source": "web",
+    "title": "Datenschutz bei Forschungsvorhaben",
+    "url": "https://www.uni-kassel.de/uni/files/Forschung/Forschungsfoerderung/Rahmenbedingungen_guter_Forschung/Datenschutz_bei_FV/Datenschutz_bei_Forschungsvorhaben.pdf"
+   },
+   {
+    "id": 12,
+    "last_updated": "2025-10-22",
+    "snippet": "„Rechtsgrundlage für die Datenverarbeitung ist Ihre freiwillige Einwilligung (Art.\n6 Abs.\n1 Buchst.\na, Art.\n9 Abs.\n2 Buchst.\na) DSGVO).\nDie Daten werden also nur dann erhoben, gespeichert, ausgewertet und \nweitergegeben, wenn Sie dazu schriftlich Ihre Einwilligung erklären.\n...\nEs werden persönliche Daten und Befunde von Ihnen (auswählen:)  \n- \nin irreversibel anonymisierter Form /  \n- \nverschlüsselt (pseudonymisiert), d.h. weder Ihr Name noch Ihre Initialen oder das \nGeburtsdatum erscheinen im Verschlüsselungscode,\nverarbeitet und (falls zutreffend) an den Initiator der Studie [hier den Sponsor, Auftraggeber etc. \nnennen] bzw.\nvon ihm beauftragte Stellen zum Zweck der wissenschaftlichen Auswertung und \n[konkrete Zwecke einfügen] weitergeleitet.\n...\nPseudonymisieren bedeutet, dass die erhobenen Daten ohne Hinzuziehung einer Liste nicht mehr \neiner spezifischen betroffenen Person zugeordnet werden können.\n...\nDie pseudonymisierten Daten werden XXX Jahre nach Beendigung oder Abbruch der Studie am/im (Ort \nder Aufbewahrung ergänzen) aufbewahrt.\nSie sind gegen unbefugten Zugriff gesichert.\nSie werden \ngelöscht, wenn sie nicht mehr benötigt werden.\nSpätestens nach 10 Jahren werden sie gelöscht.",
+    "source": "web",
+    "title": "Mustertext zum Datenschutz in Informationsschriften bei ...",
+    "url": "https://cms-cdn.lmu.de/media/07-medizin/fakultaet-medizin/downloads/ethikkommission/datenschutzp_2020.pdf"
+   },
+   {
+    "date": "2024-03-07",
+    "id": 13,
+    "last_updated": "2025-12-27",
+    "snippet": "wissenschaftlichen Qualitätssicherung\n...\ngeplante Nachnutzung der Forschungsdaten muss \n...\n• „[…] Verarbeitung personenbezogener Daten in einer Weise, dass die \npersonenbezogenen Daten ohne Hinzuziehung zusätzlicher Informationen nicht \nmehr einer spezifischen betroffenen Person zugeordnet werden können, sofern \ndiese zusätzlichen Informationen gesondert aufbewahrt werden und technischen \nund organisatorischen Maßnahmen unterliegen, die gewährleisten, dass die\npersonenbezogenen Daten nicht einer identifizierten oder identifizierbaren \nnatürlichen Person zugewiesen werden“ (Art. 4 Nr. 5 DSGVO)",
+    "source": "web",
+    "title": "[PDF] Datenschutz in der Forschung - Uni Bielefeld",
+    "url": "https://www.uni-bielefeld.de/ub/digital/forschungsdaten/veranstaltungen/datenwoche/pdf/2024/2024-03-07_Datenschutz_Einwilligungserklaerungen.pdf"
+   },
+   {
+    "id": 14,
+    "last_updated": "2026-08-09",
+    "snippet": "Seit Inkrafttreten des Gesundheitsdatennutzungsgesetzes – GDNG – am 28. März 2024 ist bei der Weiterverarbeitung von Gesundheitsdaten aus der elektronischen Patientenakte zu verschiedenen weiteren Zwecken im Forschungsdatenzentrum Gesundheit eine Einwilligung der Betroffenen nicht mehr erforderlich.\nDiese haben nunmehr lediglich die Möglichkeit, dieser Verarbeitung zu widersprechen (sog. Opt-out-Modell).\n...\nIn der medizinischen Forschung werden die Gesundheitsdaten standardmäßig pseudonymisiert.\nBei einer Pseudonymisierung ist die Re-Identifizierung oder zumindest die Re-Identifizierbarkeit explizit vorgesehen, dies dient dazu, eine Person in einem Datensatz wiederzuerkennen, denn falls nun zu einem späteren Zeitpunkt weitere Gesundheitsdaten zu dieser Person gespeichert werden, soll es möglich sein, diese mit den bisherigen gespeicherten Daten dieser Person zu verknüpfen.\n...\nOhne die Kenntnis der korrekten Zuordnung zwischen Pseudonym und Identität dürfen die Daten jedoch nicht einer spezifischen Person zugeordnet werden.\nEs muss also auch sichergestellt werden, dass die mit dem Pseudonym verknüpften Daten selbst nicht identifizierende Merkmale aufweisen.\nBei pseudonymisierten Daten handelt es sich um personenbezogene Daten; die DSGVO ist voll wirksam.",
+    "source": "web",
+    "title": "Neue Entwicklungen in der Forschung mit Gesundheitsdaten",
+    "url": "https://www.bfdi.bund.de/DE/Buerger/Inhalte/GesundheitSoziales/Allgemein/MedizinischeForschung.html"
+   },
+   {
+    "id": 15,
+    "last_updated": "2024-11-05",
+    "snippet": "Pseudonymisierung bedeutet, dass personenbezogene Daten ohne Hinzuziehung zusätzlicher Informationen nicht mehr einer spezifischen betroffenen Person zugeordnet werden können (Art 4 Nr. 5 DS-GVO).\nDie zusätzlichen Informationen müssen gesondert aufbewahrt werden und technischen und organisatorischen Maßnahmen unterliegen, die gewährleisten, dass die personenbezogenen Daten nicht einer identifizierten oder identifizierbaren natürlichen Person zugewiesen werden.\nDie personenbezogenen Daten sind frühestmöglich zu pseudonymisieren.\n...\nSobald der Forschungs- oder Statistikzweck dies erlaubt, sind die Merkmale, mit deren Hilfe ein Personenbezug hergestellt werden kann, gesondert zu speichern; die Merkmale sind zu löschen, sobald der Forschungs- oder Statistikzweck dies zulässt (siehe auch § 24 Absatz 3 Satz 2 HDSIG)\n...\nDie Verarbeitung ohne Einwilligung ist nicht erforderlich, wenn die Forschungsziele auch unter Nutzung anonymer oder anonymisierter Daten erreicht werden können oder mittels einer Einwilligung der Betroffenen.",
+    "source": "web",
+    "title": "muster_datenschutzkonzept_forschungsvorhaben_abschlussarbeiten_0.docx",
+    "url": "https://datenschutz.hessen.de/sites/datenschutz.hessen.de/files/2023-03/muster_datenschutzkonzept_forschungsvorhaben_abschlussarbeiten_0.docx"
+   }
+  ]
+ }
+}

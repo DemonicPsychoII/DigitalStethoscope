@@ -1,0 +1,423 @@
+{
+ "run": {
+  "id": "R11-fhir-tls",
+  "topic": "FHIR-Ressourcenprofil und TLS-Zertifikatshandling auf ESP32",
+  "preset": "low",
+  "prompt": "Kontext: Bachelorarbeit, digitales Stethoskop auf ESP32-S3. Die gemessene Herzfrequenz soll als FHIR-Ressource ueber eine TLS-gesicherte Verbindung an einen Server uebertragen werden.\n\nHauptfrage: Wie sieht eine minimale, standardkonforme FHIR-Uebertragung einer Herzfrequenz aus, und was ist beim TLS-Zertifikatshandling auf einem ESP32 zu beachten?\n\nUnterfrage 1: Wie ist eine FHIR-Observation fuer Herzfrequenz korrekt aufgebaut (FHIR R4/R5, Profil 'Vitalsigns', LOINC-Code fuer Heart rate, UCUM-Einheit, Pflichtfelder status/category/subject/effectiveDateTime)? Bitte ein minimales JSON-Beispiel.\nUnterfrage 2: Welche praktischen Stolpersteine gibt es bei mbedTLS auf dem ESP32 - Speicherbedarf des Root-CA-Bundles vs. einzelnes gepinntes Zertifikat, Notwendigkeit korrekter Systemzeit (SNTP) fuer die Gueltigkeitspruefung, Verhalten bei Zertifikatsablauf, und Heap-Bedarf des Handshakes?\n\nAntwort auf Deutsch, mit Quellen (FHIR-Spezifikation, ESP-IDF-Dokumentation) und konkretem JSON-Beispiel."
+ },
+ "response": {
+  "id": "chatcmpl-8dd08a9d26e144cdbf2caee3",
+  "object": "chat.completion",
+  "created": 1786462958,
+  "model": "preset/low",
+  "choices": [
+   {
+    "index": 0,
+    "message": {
+     "role": "assistant",
+     "content": "## Kurzantwort\n\nEine minimale, standardkonforme Übertragung besteht aus einer **FHIR-`Observation`** mit dem Vital-Signs-Profil, dem LOINC-Code **8867-4 (Heart rate)**, dem UCUM-Code **`/min`**, einem numerischen `valueQuantity` sowie den Angaben zu Status, Patient und Messzeitpunkt. Die Ressource wird anschließend als JSON über eine per TLS authentisierte HTTPS-Verbindung übertragen.\n\nFür den ESP32-S3 sollte der Server mindestens über einen vertrauenswürdigen **Root-CA-Zertifikatsanker** geprüft werden. Das kann entweder ein einzelnes CA-Zertifikat oder das ESP-IDF-Zertifikatsbundle sein. Die Systemzeit muss vor der Zertifikatsprüfung korrekt gesetzt werden, typischerweise per SNTP.\n\n## 1. FHIR-Observation für die Herzfrequenz\n\n### Profil und Pflichtinhalte\n\nDas FHIR-Core-Profil **Vital Signs** gilt sowohl für FHIR R4 als auch für FHIR R5 grundsätzlich nach demselben Muster. Für eine Herzfrequenz sind insbesondere folgende Inhalte erforderlich:\n\n| FHIR-Element | Minimaler Inhalt |\n|---|---|\n| `resourceType` | `Observation` |\n| `status` | z. B. `final` |\n| `category` | Code `vital-signs` aus `http://terminology.hl7.org/CodeSystem/observation-category` |\n| `code` | LOINC `8867-4`, `Heart rate` |\n| `subject` | Referenz auf eine `Patient`-Ressource |\n| `effectiveDateTime` | Zeitpunkt der Messung |\n| `valueQuantity.value` | numerischer Herzfrequenzwert |\n| `valueQuantity.unit` | z. B. `beats/min` |\n| `valueQuantity.system` | `http://unitsofmeasure.org` |\n| `valueQuantity.code` | `/min` |\n\nDas Vital-Signs-Profil verlangt eine Statusangabe, die Kategorie `vital-signs`, einen passenden LOINC-Code, einen Patienten, einen Messzeitpunkt und einen numerischen Messwert mit standardisierter UCUM-Einheit. Für Herzfrequenz ist der vorgesehene LOINC-Code **8867-4** und die UCUM-Einheit **`/min`**. [web:1]\n\n`subject` sollte dabei auf eine `Patient`-Ressource verweisen, beispielsweise `Patient/123`. Die Patient-Ressource muss nicht Bestandteil derselben HTTP-Anfrage sein; sie kann bereits auf dem FHIR-Server existieren.\n\n### Minimales JSON-Beispiel\n\n```json\n{\n  \"resourceType\": \"Observation\",\n  \"id\": \"heart-rate-20260811-001\",\n  \"status\": \"final\",\n  \"category\": [\n    {\n      \"coding\": [\n        {\n          \"system\": \"http://terminology.hl7.org/CodeSystem/observation-category\",\n          \"code\": \"vital-signs\",\n          \"display\": \"Vital Signs\"\n        }\n      ]\n    }\n  ],\n  \"code\": {\n    \"coding\": [\n      {\n        \"system\": \"http://loinc.org\",\n        \"code\": \"8867-4\",\n        \"display\": \"Heart rate\"\n      }\n    ],\n    \"text\": \"Herzfrequenz\"\n  },\n  \"subject\": {\n    \"reference\": \"Patient/123\"\n  },\n  \"effectiveDateTime\": \"2026-08-11T10:15:30Z\",\n  \"valueQuantity\": {\n    \"value\": 72,\n    \"unit\": \"beats/min\",\n    \"system\": \"http://unitsofmeasure.org\",\n    \"code\": \"/min\"\n  }\n}\n```\n\nDer numerische Wert `72` bedeutet in diesem Beispiel 72 Herzschläge pro Minute. Der Code `/min` ist der maschinenlesbare UCUM-Code; `beats/min` ist die menschenlesbare Einheit. Ein optionaler `device`-Verweis kann ergänzt werden, wenn das digitale Stethoskop als FHIR-`Device` registriert ist. Ebenso kann ein `performer` angegeben werden, ist für das minimale Beispiel aber nicht erforderlich.\n\nEin Senden an einen FHIR-Server erfolgt typischerweise mit:\n\n```http\nPOST /fhir/Observation HTTP/1.1\nHost: fhir.example.org\nContent-Type: application/fhir+json\nAccept: application/fhir+json\nAuthorization: Bearer <token>\n```\n\nDer HTTP-Body ist das oben dargestellte JSON. Die Übertragung muss über HTTPS erfolgen, also beispielsweise:\n\n```text\nhttps://fhir.example.org/fhir/Observation\n```\n\nDie FHIR-Spezifikation definiert die Ressource und ihre Semantik; die TLS-Sicherung erfolgt auf der darunterliegenden HTTP- beziehungsweise Transportebene.\n\n### R4/R5-Hinweis\n\nFür dieses Minimalbeispiel gibt es zwischen R4 und R5 keinen relevanten Unterschied bei den verwendeten Elementen. Wichtig ist jedoch, dass der Server und das verwendete Implementierungsleitfaden-Profil dieselbe FHIR-Version erwarten. Die URL des verwendeten Profils kann mit einem zusätzlichen `meta.profile` angegeben werden, beispielsweise:\n\n```json\n\"meta\": {\n  \"profile\": [\n    \"http://hl7.org/fhir/StructureDefinition/vitalsigns\"\n  ]\n}\n```\n\nFür eine streng profilbezogene Implementierung sollte die konkrete Profil-URL aus der Zielumgebung verwendet und anschließend mit einem FHIR-Validator geprüft werden.\n\n## 2. TLS-Zertifikatshandling auf dem ESP32-S3\n\n### Einzelnes CA-Zertifikat versus Root-CA-Bundle\n\nESP-TLS unterstützt unter anderem:\n\n- ein einzelnes CA-Zertifikat über `cacert_buf` und `cacert_bytes`,\n- einen globalen CA-Speicher,\n- das ESP-IDF-X.509-Zertifikatsbundle über `crt_bundle_attach = esp_crt_bundle_attach`. [web:16]\n\nEin einzelnes CA-Zertifikat ist hinsichtlich Flash- und meist auch RAM-Bedarf günstiger. Es eignet sich, wenn der Server kontrolliert wird und dessen Zertifikatskette dauerhaft auf einer bekannten Root-CA beruht. Gepinnt werden sollte vorzugsweise die **Root-CA** und nicht das kurzlebige Server- oder Intermediate-Zertifikat. Das reduziert die Häufigkeit notwendiger Firmwareupdates.\n\nDas CA-Bundle ist flexibler, weil damit viele öffentliche Zertifizierungsstellen unterstützt werden. Dafür enthält es wesentlich mehr Zertifikatsdaten und benötigt entsprechend zusätzlichen Flash-Speicher sowie Ressourcen beim Parsen und bei der Zertifikatsvalidierung. Ein Bundle verhindert außerdem nicht automatisch jedes Wartungsproblem: Wenn eine Root-CA abläuft, entfernt oder geändert wird, muss das Bundle aktualisiert werden. [web:21]\n\nFür eine Bachelorarbeits-Demonstration mit genau einem eigenen FHIR-Server ist daher meist folgende Strategie sinnvoll:\n\n```c\nesp_tls_cfg_t cfg = {\n    .cacert_buf   = server_root_ca_pem,\n    .cacert_bytes = sizeof(server_root_ca_pem),\n    .common_name  = \"fhir.example.org\"\n};\n```\n\nBei einer öffentlichen, wechselnden Serverlandschaft kann dagegen das Bundle zweckmäßiger sein:\n\n```c\nesp_tls_cfg_t cfg = {\n    .crt_bundle_attach = esp_crt_bundle_attach\n};\n```\n\nDie Serveridentität darf nicht durch `skip_server_verification` oder `skip_common_name` abgeschaltet werden. `skip_common_name` deaktiviert sowohl die Prüfung des Hostnamens gegen CN/SAN als auch SNI und sollte nur für kontrollierte Testfälle verwendet werden. [web:16]\n\n### Korrekte Systemzeit und SNTP\n\nmbedTLS kann die Gültigkeitszeiträume von X.509-Zertifikaten prüfen. Dafür muss die Option zur Zeit-/Datumsprüfung aktiviert sein. Ist sie aktiviert, vergleicht mbedTLS die Felder `valid from` und `valid to` mit der aktuellen Systemzeit. Eine falsche oder noch nicht gesetzte ESP32-Uhr kann daher dazu führen, dass ein eigentlich gültiges Zertifikat als noch nicht gültig oder als abgelaufen bewertet wird. ESP-IDF nennt dafür unter anderem die Fehler `MBEDTLS_X509_BADCERT_FUTURE` und `MBEDTLS_X509_BADCERT_EXPIRED`. [web:18]\n\nDer typische Ablauf ist deshalb:\n\n1. WLAN-Verbindung herstellen.\n2. DNS beziehungsweise Netzwerkzugang abwarten.\n3. Uhrzeit über SNTP synchronisieren.\n4. Erst danach die HTTPS-/FHIR-Verbindung aufbauen.\n5. Bei fehlender Zeit-Synchronisation nicht einfach die Zertifikatsprüfung deaktivieren.\n\nKonzeptionell:\n\n```c\ninitialize_wifi();\nwait_until_ip_address_is_obtained();\n\ninitialize_sntp();\nwait_until_system_time_is_valid();\n\nsend_fhir_observation_over_https();\n```\n\nBeim ersten Boot nach einem Reset oder bei einer RTC ohne Batterie ist die Uhr häufig zunächst auf einen ungültigen Standardwert gesetzt. Das ist besonders relevant, wenn unmittelbar nach dem WLAN-Verbindungsaufbau ein TLS-Handshake gestartet wird.\n\n### Verhalten bei Zertifikatsablauf\n\nLäuft das Serverzertifikat oder eine benötigte CA ab, schlägt die Zertifikatsprüfung fehl. Ein automatischer Zeit- oder Zertifikats-Workaround auf dem ESP32 wäre sicherheitswidrig. Stattdessen müssen:\n\n- das Serverzertifikat rechtzeitig erneuert,\n- gegebenenfalls das einzelne Root-CA-Zertifikat aktualisiert,\n- bei Verwendung des Bundles das Bundle aktualisiert,\n- und die Firmware beziehungsweise Zertifikatsdaten kontrolliert ausgerollt werden.\n\nDas Endgerät sollte den TLS-Fehler protokollieren und eine erneute Verbindung später versuchen, aber **nicht** auf ungesichertes HTTP zurückfallen. Bei Zertifikatswechseln sollte geprüft werden, ob die neue Serverkette weiterhin zur eingebauten Root-CA passt.\n\n### Heap-Bedarf des TLS-Handshakes\n\nDer TLS-Handshake benötigt deutlich mehr Heap als die spätere Übertragung eines kleinen JSON-Dokuments. Die ESP-IDF-FAQ nennt typischerweise etwa **40–50 kB freien Heap** für einen stabilen TLS-Handshake; Fragmentierung oder zu wenig zusammenhängender Speicher können den Handshake trotzdem scheitern lassen. [web:17]\n\nDie ESP-IDF-Dokumentation zeigt als Größenordnung für Mbed TLS bei aktivierter Servervalidierung beispielsweise ungefähr:\n\n- Standardkonfiguration: circa **42 kB**,\n- ohne dauerhaft gespeichertes Peer-Zertifikat: circa **38,5 kB**,\n- mit dynamischen TX-/RX-Puffern: circa **22 kB**.\n\nDiese Werte sind konfigurations- und versionsabhängig und stellen keine harte Mindestanforderung für jedes ESP32-S3-System dar. [web:19]\n\nPraktische Maßnahmen:\n\n- freien **internen** Heap unmittelbar vor dem Handshake messen,\n- große Audio-Puffer während des Handshakes freigeben oder verkleinern,\n- dynamische TLS-TX-/RX-Puffer aktivieren,\n- Peer-Zertifikate nach dem Handshake nicht behalten, wenn sie nicht benötigt werden,\n- PSRAM für geeignete Mbed-TLS-Allokationen konfigurieren,\n- `CONFIG_MBEDTLS_SSL_IN_CONTENT_LEN` nicht zu klein wählen; die ESP-IDF weist insbesondere auf eine notwendige Größenordnung bis maximal 16 kB für TLS-Eingabedaten hin. [web:17][web:20]\n\nFür das Stethoskop ist außerdem zu beachten, dass die Herzfrequenzmessung und die Audioverarbeitung ihre Speicheranforderungen nicht nur während des HTTP-POSTs, sondern auch während DNS, TCP-Aufbau und TLS-Handshake behalten können. Der relevante Test ist deshalb der tatsächlich verfügbare Heap **während** des Handshakes, nicht nur der Heap direkt nach dem Boot.\n\n## Empfohlene Minimalarchitektur\n\nFür die konkrete Bachelorarbeit bietet sich folgende Minimalarchitektur an:\n\n1. Herzfrequenz aus dem Audiosignal bestimmen.\n2. Messwert zusammen mit einem UTC-Zeitstempel erfassen.\n3. JSON-`Observation` gemäß dem Beispiel erzeugen.\n4. SNTP-Zeit synchronisieren.\n5. HTTPS-Verbindung mit aktivierter Serverzertifikats- und Hostnamenprüfung aufbauen.\n6. Das Root-CA-Zertifikat des FHIR-Servers entweder einzeln im Firmware-Image hinterlegen oder das ESP-IDF-Bundle verwenden.\n7. `POST /fhir/Observation` mit `Content-Type: application/fhir+json` senden.\n8. HTTP- und FHIR-Fehlerantworten auswerten und bei transienten Fehlern mit Backoff wiederholen.\n\nDamit sind sowohl die FHIR-Anforderungen an eine minimale Herzfrequenz-Observation als auch die wesentlichen Sicherheits- und Ressourcenanforderungen des ESP32-S3 abgedeckt."
+    },
+    "finish_reason": "stop"
+   }
+  ],
+  "usage": {
+   "prompt_tokens": 28164,
+   "completion_tokens": 3243,
+   "total_tokens": 31407,
+   "cost": {
+    "cache_creation_cost": 0.00279,
+    "cache_read_cost": 0.00034,
+    "currency": "USD",
+    "input_cost": 0,
+    "output_cost": 0.00389,
+    "tool_calls_cost": 0.01643,
+    "tool_calls_cost_details": {
+     "fetch_url": 0.01143,
+     "search_web": 0.005
+    },
+    "total_cost": 0.02345
+   },
+   "input_tokens_details": {
+    "cache_creation_input_tokens": 11149,
+    "cache_read_input_tokens": 17003,
+    "cached_tokens": 17003
+   },
+   "output_tokens_details": {
+    "reasoning_tokens": 161
+   },
+   "tool_calls_details": {
+    "fetch_url": {
+     "cost_usd": 0.01143,
+     "invocation": 2,
+     "token_usage": [
+      {
+       "input_tokens": 4104,
+       "input_tokens_details": {
+        "cache_creation_input_tokens": 4101,
+        "cached_tokens": 0
+       },
+       "model": "openai/gpt-5.6-luna",
+       "output_tokens": 1972,
+       "output_tokens_details": {
+        "reasoning_tokens": 293
+       }
+      },
+      {
+       "input_tokens": 18669,
+       "input_tokens_details": {
+        "cache_creation_input_tokens": 18666,
+        "cached_tokens": 0
+       },
+       "model": "openai/gpt-5.6-luna",
+       "output_tokens": 2395,
+       "output_tokens_details": {
+        "reasoning_tokens": 193
+       }
+      }
+     ]
+    },
+    "search_web": {
+     "invocation": 2
+    }
+   }
+  },
+  "citations": [
+   {
+    "url": "https://build.fhir.org/observation-vitalsigns.html",
+    "title": "Observation-vitalsigns - FHIR v6.0.0-ballot4",
+    "date": "2014-01-10"
+   },
+   {
+    "url": "https://digital.nhs.uk/developer/api-catalogue/fhir-vital-signs-standards",
+    "title": "FHIR Vital Signs profiles API standards - NHS England Digital",
+    "date": "2022-11-21"
+   },
+   {
+    "url": "https://help.elationhealth.com/articles/fhir/uscdi-vital-signs",
+    "title": "Vital Signs - Elation Help Center",
+    "date": null
+   },
+   {
+    "url": "https://hl7.eu/fhir/imaging-r5/0.1.0-snapshot1/Observation-HRObservation.xml.html",
+    "title": "Patient heart rate - XML Representation",
+    "date": null
+   },
+   {
+    "url": "https://fhir.medirecords.com/Observation-hrtbb6-e771-4801-ad05-63b33737189f.json.html",
+    "title": "Vital Sign Heart Rate Example with component Heart Rate Rhythm",
+    "date": "2021-10-25"
+   },
+   {
+    "url": "http://fhir.outburn.co.il/R4-spec/observation-example-heart-rate.html",
+    "title": "Observation-example-heart-rate",
+    "date": "1999-07-02"
+   },
+   {
+    "url": "https://build.fhir.org/ig/HL7/cimi-vital-signs/StructureDefinition-heart-rate.html",
+    "title": "Heart Rate - Vital Signs with Qualifying Elements v2.0.0",
+    "date": null
+   },
+   {
+    "url": "https://nrces.in/ndhm/fhir/r4/StructureDefinition-ObservationVitalSigns.html",
+    "title": "StructureDefinition/ObservationVitalSigns",
+    "date": null
+   },
+   {
+    "url": "https://nrces.in/ndhm/fhir/r4/ValueSet-ndhm-vital-signs.html",
+    "title": "Vital Signs - FHIR Implementation Guide for ABDM v6.5.0 - NRCeS",
+    "date": "2025-05-08"
+   },
+   {
+    "url": "https://fhir.openservices.cambio.se/site/StructureDefinition-ObservationHeartRate.html",
+    "title": "Observation Heart Rate Profile - v1.0.0 - Cambio",
+    "date": "2025-10-27"
+   },
+   {
+    "url": "https://hl7.eu/fhir/base/2.0.0/StructureDefinition-medicalTestResult-eu-core.html",
+    "title": "Observation: Medical Test Result (EU core) - HL7 Europe -",
+    "date": null
+   },
+   {
+    "url": "https://build.fhir.org/observation.html",
+    "title": "Observation - FHIR v6.0.0-ballot4",
+    "date": null
+   },
+   {
+    "url": "https://fhir.interweavedigital.com/ValueSet-observation-vitalsignresult.html",
+    "title": "Vital Signs",
+    "date": "2025-02-11"
+   },
+   {
+    "url": "https://devportal-dev.blueshieldca.com/bsc/fhir-sandbox/vital",
+    "title": "vital | API Developer Portal",
+    "date": null
+   },
+   {
+    "url": "https://github.com/google/fhir/blob/master/spec/hl7.fhir.us.core/3.0.0/package/Observation-vitals-panel.json",
+    "title": "Observation-vitals-panel.json - hl7.fhir.us.core - GitHub",
+    "date": "2018-01-10"
+   },
+   {
+    "url": "https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/protocols/esp_tls.html",
+    "title": "ESP-TLS - ESP32 - — ESP-IDF Programming Guide v6.0.2 ...",
+    "date": null
+   },
+   {
+    "url": "https://docs.espressif.com/projects/esp-faq/en/latest/software-framework/protocols/esp-tls.html",
+    "title": "ESP-TLS - - — ESP-FAQ latest documentation",
+    "date": null
+   },
+   {
+    "url": "https://docs.espressif.com/projects/esp-idf/en/v4.4.5/esp32/api-reference/kconfig.html",
+    "title": "Project Configuration - ESP32 - — ESP-IDF Programming ...",
+    "date": null
+   },
+   {
+    "url": "https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/protocols/mbedtls.html",
+    "title": "Mbed TLS - ESP32 - — ESP-IDF Programming Guide v6. ...",
+    "date": null
+   },
+   {
+    "url": "https://docs.espressif.com/projects/esp-faq/en/latest/software-framework/protocols/mbedtls.html",
+    "title": "Mbed TLS - - — ESP-FAQ latest documentation",
+    "date": null
+   },
+   {
+    "url": "https://docs.espressif.com/projects/esp-idf/en/stable/esp32c61/security/security.html",
+    "title": "Security Overview - ESP32-C61 - — ESP-IDF Programming ...",
+    "date": null
+   },
+   {
+    "url": "https://docs.espressif.com/projects/esp-idf/zh_CN/stable/esp32/api-reference/protocols/esp_tls.html",
+    "title": "ESP-TLS - ESP32 - — ESP-IDF 编程指南v6.0.2 文档",
+    "date": null
+   },
+   {
+    "url": "https://docs.espressif.com/projects/esp-idf/zh_CN/v5.3.1/esp32s3/api-reference/network/esp_wifi.html",
+    "title": "Wi-Fi 库 - ESP32-S3 - — ESP-IDF 编程指南 v5.3.1 文档",
+    "date": null
+   },
+   {
+    "url": "https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/system/esp_https_ota.html",
+    "title": "ESP HTTPS OTA - ESP32",
+    "date": null
+   },
+   {
+    "url": "https://docs.espressif.com/projects/esp-techpedia/en/latest/ESP-Techpedia-en-master.pdf",
+    "title": "ESP-Techpedia_EN - Technical Documents",
+    "date": "2024-02-05"
+   }
+  ],
+  "search_results": [
+   {
+    "date": "2014-01-10",
+    "id": 1,
+    "last_updated": "2026-06-24",
+    "snippet": "3. an additional \"interoperability standard\" high level (methodless LOINC) code for what is being measured\n...\n- note: if there is no numeric result available for a required observation or observation component, then you must supply a data absent reason\n...\n|Heart rate|8867-4|*Heart rate* To supplement this vital sign observation, 8887-2 -* Heart rate device type* MAY be included as an additional component observation.|/min|Heart Rate Example|",
+    "source": "web",
+    "title": "Observation-vitalsigns - FHIR v6.0.0-ballot4",
+    "url": "https://build.fhir.org/observation-vitalsigns.html"
+   },
+   {
+    "date": "2022-11-21",
+    "id": 2,
+    "last_updated": "2024-11-13",
+    "snippet": "|LOINC \"magic value\"|Naïve SNOMED|Complex SNOMED (ECL)|\n...\n|8867-4|364075005|Heart rate (observable entity)||\"<<364075005|Heart rate (observable entity)| MINUS (<<928001000000104|Baseline heart rate (observable entity)| OR <<428420003|Target heart rate (observable entity)| OR <<852341000000107|Maximum pulse rate (observable entity)| OR <<852351000000105|Minimum pulse rate (observable entity)| OR <<852331000000103|Target pulse rate (observable entity)|)\"|",
+    "source": "web",
+    "title": "FHIR Vital Signs profiles API standards - NHS England Digital",
+    "url": "https://digital.nhs.uk/developer/api-catalogue/fhir-vital-signs-standards"
+   },
+   {
+    "id": 3,
+    "last_updated": "2026-07-09",
+    "snippet": "| Vital Sign                                                          | US Core Profile                                                                                                                                                                           | Observation LOINC code                                    |\n| ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |\n...\n| Heart Rate                                                          | [Heart rate (FHIR Core Profile)](https://hl7.org/fhir/us/core/STU6.1/StructureDefinition-us-core-heart-rate.html)                                                                         | 8867-4                                                    |",
+    "source": "web",
+    "title": "Vital Signs - Elation Help Center",
+    "url": "https://help.elationhealth.com/articles/fhir/uscdi-vital-signs"
+   },
+   {
+    "id": 4,
+    "last_updated": "2026-05-05",
+    "snippet": "<system value=\"http://loinc.org\"/>\n<code value=\"8867-4\"/>\n<display value=\"Heart rate\"/>\n...\n<value value=\"180\"/>\n<unit value=\"bpm\"/>",
+    "source": "web",
+    "title": "Patient heart rate - XML Representation",
+    "url": "https://hl7.eu/fhir/imaging-r5/0.1.0-snapshot1/Observation-HRObservation.xml.html"
+   },
+   {
+    "date": "2021-10-25",
+    "id": 5,
+    "last_updated": "2025-04-18",
+    "snippet": "\"div\" : \"<div xmlns=\\\"http://www.w3.org/1999/xhtml\\\"><p class=\\\"res-header-id\\\"><b>Generated Narrative: Observation hrtbb6-e771-4801-ad05-63b33737189f</b></p><a name=\\\"hrtbb6-e771-4801-ad05-63b33737189f\\\"> </a><a name=\\\"hchrtbb6-e771-4801-ad05-63b33737189f\\\"> </a><a name=\\\"hrtbb6-e771-4801-ad05-63b33737189f-en-US\\\"> </a><p><b>status</b>: Final</p><p><b>category</b>: <span title=\\\"Codes:{http://terminology.hl7.org/CodeSystem/observation-category vital-signs}\\\">Vital Signs</span></p><p><b>code</b>: <span title=\\\"Codes:{http://loinc.org 8867-4}, {http://snomed.info/sct 364075005}\\\">Heart Rate</span></p><p><b>subject</b>: <a href=\\\"Patient-1e5cae20-85bf-11e8-b401-ffccd711ad9c.html\\\">Mila Female, DoB: 1990-11-29 ( Medicare Number:\\u00a032788511952\\u00a0(,\\u00a0period:\\u00a0(?)\n--> 2025-02))</a></p><p><b>encounter</b>: <a href=\\\"Encounter-1e5cae20-85bf-11e8-b401-ffccd711ad9g.html\\\">Encounter: status = finished; class = ambulatory (ActCode#AMB); period = 2021-10-25 01:43:30+0000 --> 2021-10-25 02:21:30+0000; reasonCode = </a></p><p><b>effective</b>: 2022-03-01</p><p><b>performer</b>: <a href=\\\"Practitioner-6d6d7ce8-65c2-11e6-a20e-7b5deed40054.html\\\">Practitioner John Smith </a></p><p><b>value</b>: 60 /min<span style=\\\"background: LightGoldenRodYellow\\\"> (Details: UCUM code/min = '/min')</span></p><h3>Components</h3><table class=\\\"grid\\\"><tr><td style=\\\"display: none\\\">-</td><td><b>Code</b></td><td><b>Value[x]</b></td></tr><tr><td style=\\\"display: none\\\">*</td><td><span title=\\\"Codes:{http://snomed.info/sct 301112006}\\\">Finding of heart rhythm</span></td><td><span title=\\\"Codes:{http://snomed.info/sct 76863003}\\\">Normal Heart Rate</span></td></tr></table></div>\"",
+    "source": "web",
+    "title": "Vital Sign Heart Rate Example with component Heart Rate Rhythm",
+    "url": "https://fhir.medirecords.com/Observation-hrtbb6-e771-4801-ad05-63b33737189f.json.html"
+   },
+   {
+    "date": "1999-07-02",
+    "id": 6,
+    "last_updated": "2025-08-14",
+    "snippet": "**id**: heart-rate\n**meta**:\n**status**: final\n**category**: Vital Signs (Details : {http://terminology.hl7.org/CodeSystem/observation-category code 'vital-signs' = 'Vital Signs', given as 'Vital Signs'})\n**code**: Heart rate (Details : {LOINC code '8867-4' = 'Heart rate', given as 'Heart rate'})\n**subject**: Patient/example\n**effective**: 02/07/1999\n**value**: 44 beats/minute (Details: UCUM code /min = '/min')",
+    "source": "web",
+    "title": "Observation-example-heart-rate",
+    "url": "http://fhir.outburn.co.il/R4-spec/observation-example-heart-rate.html"
+   },
+   {
+    "id": 7,
+    "last_updated": "2026-03-10",
+    "snippet": "The Heart Rate profile contains one observation, heart rate.\nIn addition, this profile contains the following qualifying observations with associated SNOMED CT value sets: Body Position, observation-deviceCode, Exercise Association, SleepStatus, and MeasurementSetting.",
+    "source": "web",
+    "title": "Heart Rate - Vital Signs with Qualifying Elements v2.0.0",
+    "url": "https://build.fhir.org/ig/HL7/cimi-vital-signs/StructureDefinition-heart-rate.html"
+   },
+   {
+    "id": 8,
+    "last_updated": "2025-11-03",
+    "snippet": "This profile sets minimum expectations for the ObservationVitalSigns to record, search, and fetch the details of the vital signs of a patient.\n...\nIt identifies the mandatory core elements, vocabularies, and value sets which SHALL be present in the Observation resource when using this profile.\nIn the Observation resource, the type of value[x] and the unit should be defined in accordance with the code defined in Observation.code element (either LOINC or SNOMED CT).\nIf LOINC code is not associated with the unit, then the type of value can be selected as Quantity, String, or CodeableConcept depending on the context.",
+    "source": "web",
+    "title": "StructureDefinition/ObservationVitalSigns",
+    "url": "https://nrces.in/ndhm/fhir/r4/StructureDefinition-ObservationVitalSigns.html"
+   },
+   {
+    "date": "2025-05-08",
+    "id": 9,
+    "last_updated": "2025-08-08",
+    "snippet": "|Code|System|Display|\n...\n|8867-4|http://loinc.org|Heart rate|",
+    "source": "web",
+    "title": "Vital Signs - FHIR Implementation Guide for ABDM v6.5.0 - NRCeS",
+    "url": "https://nrces.in/ndhm/fhir/r4/ValueSet-ndhm-vital-signs.html"
+   },
+   {
+    "date": "2025-10-27",
+    "id": 10,
+    "last_updated": "2025-11-07",
+    "snippet": "",
+    "source": "web",
+    "title": "Observation Heart Rate Profile - v1.0.0 - Cambio",
+    "url": "https://fhir.openservices.cambio.se/site/StructureDefinition-ObservationHeartRate.html"
+   },
+   {
+    "id": 11,
+    "last_updated": "2026-07-07",
+    "snippet": "",
+    "source": "web",
+    "title": "Observation: Medical Test Result (EU core) - HL7 Europe -",
+    "url": "https://hl7.eu/fhir/base/2.0.0/StructureDefinition-medicalTestResult-eu-core.html"
+   },
+   {
+    "id": 12,
+    "last_updated": "2026-07-09",
+    "snippet": "|Profile|Description|\n|--|--|\n|Vital Signs|The FHIR Vital Signs profiles set the minimum expectations for the Observation resource to record, search and fetch the vital signs (e.g. temperature, blood pressure, respiration rate, etc.) associated with a patient|",
+    "source": "web",
+    "title": "Observation - FHIR v6.0.0-ballot4",
+    "url": "https://build.fhir.org/observation.html"
+   },
+   {
+    "date": "2025-02-11",
+    "id": 13,
+    "last_updated": "2025-02-12",
+    "snippet": "|Code|Display|\n|--|--|\n...\n|Code|System|Display|\n...\n|8867-4|http://loinc.org|Heart rate|",
+    "source": "web",
+    "title": "Vital Signs",
+    "url": "https://fhir.interweavedigital.com/ValueSet-observation-vitalsignresult.html"
+   },
+   {
+    "id": 14,
+    "last_updated": "2026-04-06",
+    "snippet": "|**FHIR Mapping**|\n...\n|**FHIR Data Element**|**ValueSet**|**Binding**|\n|--|--|--|\n|status|Valueset-observation-status - FHIR v4.0.1 (hl7.org)|required|\n|observation.category[0].coding[0].code|Valueset-observation-category - FHIR v4.0.1 (hl7.org)|preferred|\n...\n|observation.valueQuantity.unit|Valueset-ucum-vitals-common - FHIR v4.0.1 (hl7.org)|required|",
+    "source": "web",
+    "title": "vital | API Developer Portal",
+    "url": "https://devportal-dev.blueshieldca.com/bsc/fhir-sandbox/vital"
+   },
+   {
+    "date": "2018-01-10",
+    "id": 15,
+    "last_updated": "2025-08-24",
+    "snippet": "Generated Summary: id: heart-rate; <span title=\\\"Codes: {http://terminology.hl7.org/CodeSystem/observation-category vital-signs}\\\">Vital Signs</span>; <span title=\\\"Codes: {http://loinc.org 8867-4}\\\">heart_rate</span>; effective: Jul 2, 1999, 12:00:00 AM; 44.0 {beats}/min</a></li><li><a href=\\\"Observation-blood-pressure.html\\\">Blood Pressure.",
+    "source": "web",
+    "title": "Observation-vitals-panel.json - hl7.fhir.us.core - GitHub",
+    "url": "https://github.com/google/fhir/blob/master/spec/hl7.fhir.us.core/3.0.0/package/Observation-vitals-panel.json"
+   },
+   {
+    "id": 16,
+    "last_updated": "2026-07-09",
+    "snippet": "",
+    "source": "web",
+    "title": "ESP-TLS - ESP32 - — ESP-IDF Programming Guide v6.0.2 ...",
+    "url": "https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/protocols/esp_tls.html"
+   },
+   {
+    "id": 17,
+    "last_updated": "2026-07-12",
+    "snippet": "> - ESP-IDF v5.0 and later no longer support SSL 3.0, TLS 1.0 and TLS 1.1, but only support TLS 1.2 and TLS 1.3.\n...\n> - The 0x7200 error is caused by the following reasons:\n>   - MBEDTLS_SSL_IN_CONTENT_LEN is too small, generally less than the maximum 16 K\n>   - Insufficient memory\n...\n## How much memory is required for a stable TLS handshake on ESP32?\n...\n> A TLS handshake typically requires 40-50 KB of free heap memory for temporary allocation during the handshake process.\nIf memory fragmentation is excessive or available memory is insufficient, the handshake may fail.\nWhen memory is insufficient, it needs to be optimized.\nPlease refer to . Additionally, if the module includes external PSRAM, ensure it is properly configured and utilized.\n...\n> By default, when acting as a TLS server, the ESP does not validate the legitimacy of the client certificate.\nEven if client certificate verification fails, the ESP may still consider the handshake successful.\nTo enable client certificate verification, you must provide a valid CA certificate via the `cacert_pem` configuration.",
+    "source": "web",
+    "title": "ESP-TLS - - — ESP-FAQ latest documentation",
+    "url": "https://docs.espressif.com/projects/esp-faq/en/latest/software-framework/protocols/esp-tls.html"
+   },
+   {
+    "id": 18,
+    "last_updated": "2026-08-02",
+    "snippet": "> When this option is enabled, the peer (here, the client) certificate is checked by the server,\n> however the handshake continues even if verification failed.\nBy default, the\n> peer certificate is not checked and ignored by the server.\n> mbedtls_ssl_get_verify_result() can be called after the handshake is complete to\n> retrieve status of verification.\n...\n> After enabling this option the esp-tls client will skip the server certificate verification\n> by default.\n...\n###### CONFIG_MBEDTLS_HAVE_TIME_DATE \n>\nEnable mbedtls certificate expiry check\n> *Found in:* > >\n> Enables X.509 certificate expiry checks in mbedTLS.\n> If this option is disabled (default) then X.509 certificate\n> “valid from” and “valid to” timestamp fields are ignored.\n> If this option is enabled, these fields are compared with the\n> current system date and time.\nThe time is retrieved using the\n> standard time() and gmtime() functions.\nIf the certificate is not\n> valid for the current system time then verification will fail with\n> code MBEDTLS_X509_BADCERT_FUTURE or MBEDTLS_X509_BADCERT_EXPIRED.\n> Enabling this option requires adding functionality in the firmware\n> to set the system clock to a valid timestamp before using TLS.\nThe\n> recommended way to do this is via ESP-IDF’s SNTP functionality, but\n> any method can be used.",
+    "source": "web",
+    "title": "Project Configuration - ESP32 - — ESP-IDF Programming ...",
+    "url": "https://docs.espressif.com/projects/esp-idf/en/v4.4.5/esp32/api-reference/kconfig.html"
+   },
+   {
+    "id": 19,
+    "last_updated": "2026-08-09",
+    "snippet": "is a C library that implements cryptographic primitives, X.509 certificate manipulation and the SSL/TLS and DTLS protocols.\n...\nTo enable debugging, add these configurations:\n```\nCONFIG_MBEDTLS_DEBUG=y\nCONFIG_MBEDTLS_DEBUG_LEVEL=3\n...\n### Reducing Heap Usage \nThe following table shows typical memory usage with different configs when the example (with Server Validation enabled) is run with Mbed TLS as the SSL/TLS library.\n|Mbed TLS Test|Related Configs|Heap Usage (approx.)|\n|--|--|--|\n|Default|NA|42196 B|\n|Enable SSL Dynamic Buffer Length| |42120 B|\n|Disable Keep Peer Certificate| |38533 B|\n|Enable Dynamic TX/RX Buffer| |22013 B|",
+    "source": "web",
+    "title": "Mbed TLS - ESP32 - — ESP-IDF Programming Guide v6. ...",
+    "url": "https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/protocols/mbedtls.html"
+   },
+   {
+    "id": 20,
+    "last_updated": "2026-05-05",
+    "snippet": "> - You can enable dynamic buffer in menuconfig, the specific operation is `menuconfig` > `Component config` > `mbedTLS` > `Using dynamic TX/RX buffer (key \"Y\" to enable)`.\n> - At the same time, you can enable the sub-options `Free SSL peer certificate after its usage` and `Free certificate, key and DHM data after its usage` in the `Using dynamic TX/RX buffer` in the previous step.\n...\nIf you want to save memory, you can close it by `menuconfig` > `Component config` > `mbedTLS` > `mbedTLS v3.x related` > `Keep peer certificate after handshake completion (key \"N\" to disable）`.\n...\n> - The error is caused by low memory.\nThe log shows that you use the API to get the remaining memory.\nHowever, the remaining memory includes the chip’s internal RAM as well as external PSRAM.\n> - By default, mbedTLS uses internal RAM memory, and you can use the API to obtain the remaining internal memory.\n> - If the module has an external PSRAM, you can modify the configuration from `menuconfig` > `Component config` > `mbedTLS` > `Memory allocation strategy` > `Internal memory` to `menuconfig` > `Component config` > `mbedTLS` > `Memory allocation strategy` > `External SPIRAM` for testing.\n...\n> - TLS v1.3 is not yet supported on ESP-IDF v5.1.2.\nIf you need to connect to a TLS v1.3 server, please test with the ESP-IDF v5.2-beta1 or later SDK.\n...\n> This error is usually caused by insufficient memory.\nIt is recommended to check the available RAM on the device.\n...\n> Check whether the field length of the SAN (Subject Alternative Name) IP address in the certificate meets the definition of the x.509 standard.\nIn Mbedtls, the length for IPv4 is 4 bytes, and the length for IPv6 is 16 bytes.\n...\n> This is usually caused by incomplete reception of data, making parsing impossible.\nVerify whether `CONFIG_MBEDTLS_SSL_IN_CONTENT_LEN` is set to 16 K.\nIf it is already configured to the maximum 16 K, enable Mbedtls debug logs to investigate the issue.",
+    "source": "web",
+    "title": "Mbed TLS - - — ESP-FAQ latest documentation",
+    "url": "https://docs.espressif.com/projects/esp-faq/en/latest/software-framework/protocols/mbedtls.html"
+   },
+   {
+    "id": 21,
+    "last_updated": "2026-03-29",
+    "snippet": "#### ESP Certificate Bundle \nThe API provides an easy way to include a bundle of custom x509 root certificates for TLS server verification.\nThe certificate bundle is the easiest way to verify the identity of almost all standard TLS servers.\n...\nIt is highly recommended to verify the identity of the server based on X.509 certificates to avoid establishing communication with the **fake** server.\n...\nRoot certificates list update could have following reasons:\n...\n- The existing certificate has expired.\n- The certificate has been added or retracted from the upstream certificate bundle.\n- The certificate list changed due to market share statistics (`CONFIG_MBEDTLS_CERTIFICATE_BUNDLE_DEFAULT_CMN` case).",
+    "source": "web",
+    "title": "Security Overview - ESP32-C61 - — ESP-IDF Programming ...",
+    "url": "https://docs.espressif.com/projects/esp-idf/en/stable/esp32c61/security/security.html"
+   },
+   {
+    "id": 22,
+    "last_updated": "2026-08-04",
+    "snippet": "2. 在成功建立 TLS 连接（并完成握手）后，使用 `esp_tls_get_client_session()` 获取会话票据。\n...\n3. 将此会话票据安全地存储起来。\n4. 后续连接同一服务器时，将存储的会话票据填入 `esp_tls_cfg_t::client_session` 字段。\n5. 在不再需要客户端会话或获取新会话前，应调用 `esp_tls_free_client_session()` 释放客户端会话上下文。\n...\n- 从服务器获取的会话票据通常有有效期，期限由服务器决定。\n- 当尝试使用存储的票据进行连接时，如果服务器判定该票据无效（例如过期或被拒绝），ESP-TLS 会自动尝试执行完整的 TLS 握手来建立连接。在这种情况下，应用程序无需实现额外的重试逻辑。只有当会话恢复和后续的完整握手均失败时，才会报告连接失败。",
+    "source": "web",
+    "title": "ESP-TLS - ESP32 - — ESP-IDF 编程指南v6.0.2 文档",
+    "url": "https://docs.espressif.com/projects/esp-idf/zh_CN/stable/esp32/api-reference/protocols/esp_tls.html"
+   },
+   {
+    "id": 23,
+    "last_updated": "2026-06-16",
+    "snippet": "Get the TSF time In Station mode or SoftAP+Station mode if station is not connected or station doesn't receive at least one beacon after connected, will return 0.",
+    "source": "web",
+    "title": "Wi-Fi 库 - ESP32-S3 - — ESP-IDF 编程指南 v5.3.1 文档",
+    "url": "https://docs.espressif.com/projects/esp-idf/zh_CN/v5.3.1/esp32s3/api-reference/network/esp_wifi.html"
+   },
+   {
+    "id": 24,
+    "last_updated": "2026-08-10",
+    "snippet": "The root certificate in PEM format needs to be provided to the member.\n...\nThe server-endpoint **root** certificate should be used for verification instead of any intermediate ones from the certificate chain.\nThe reason is that the root certificate has the maximum validity and usually remains the same for a long period of time.\nUsers can also use the member for verification by the `ESP x509 Certificate Bundle` feature, which covers most of the trusted root certificates.",
+    "source": "web",
+    "title": "ESP HTTPS OTA - ESP32",
+    "url": "https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/system/esp_https_ota.html"
+   },
+   {
+    "date": "2024-02-05",
+    "id": 25,
+    "last_updated": "2025-11-03",
+    "snippet": "• You can use heap_caps_get_per_task_info to get the memory allocation status of all tasks\n...\n• You can use heap_caps_get_free_size to compare the remaining memory situation and roughly determine the\nleak area\n• Enable CONFIG_HEAP_TRACING_STANDALONE or CONFIG_HEAP_TRACING_TOHOST\n...\n• Enable\nmemory\ndebugging,\nraise\nthe\nheap\nmemory\ndebugging\nlevel\nCON-\nFIG_HEAP_CORRUPTION_DETECTION to light impact or comprehensive:\n– Basic (default): Use heap properties to detect if it has been contaminated\n– Light impact : Add special bytes 0xABBA1234 0xBAAD5678 before and after the allocated memory\n...\n• After enabling memory debugging,\nwait for crash or actively call to check memory integrity\nheap_caps_check_integrity_all to trigger crash before and after the suspected memory stomping position.\nIf\nthe stomping address has been located, you can directly use heap_caps_check_integrity_addr.\n...\n• Two methods can confirm the neighbors before and after the memory block\n– Use heap trace, call heap_trace_start(HEAP_TRACE_ALL) to collect information\n– Use heap_caps_dump_all to print the collected information (need to print before and after memory al-\n...\n1. Enable LWIP_DHCP_RESTORE_LAST_IP Configuration Option",
+    "source": "web",
+    "title": "ESP-Techpedia_EN - Technical Documents",
+    "url": "https://docs.espressif.com/projects/esp-techpedia/en/latest/ESP-Techpedia-en-master.pdf"
+   }
+  ]
+ }
+}

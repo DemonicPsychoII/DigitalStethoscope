@@ -1,0 +1,74 @@
+[
+  {
+    "id": "R01-murmur-metrik",
+    "topic": "Objektive Murmur-Metrik + Erfolgskriterium Q2",
+    "preset": "medium",
+    "prompt": "Kontext: Bachelorarbeit, digitales Stethoskop (ESP32-S3, MEMS-Mikrofon). Es soll objektiv nachgewiesen werden, dass eine digitale Filterung die 'Murmur-Detektierbarkeit' in Herzschall-Aufnahmen verbessert, und dass sich zwei Filtercharakteristiken (z. B. Bell- vs. Diaphragm-Nachbildung) zweckabhaengig unterscheiden.\n\nHauptfrage: Welche objektiven, in der Literatur etablierten Metriken quantifizieren die Detektierbarkeit von Herzgeraeuschen (murmurs) in Phonokardiogramm-Signalen, und welche davon sind fuer einen Filtervergleich auf identischem Eingangsmaterial geeignet?\n\nUnterfrage 1: Wie werden SNR im Murmur-Band, Spektralkontrast bzw. Envelope-basierte Kennwerte in der PCG-Literatur konkret berechnet (Bandgrenzen, Referenzfenster, Normierung)?\nUnterfrage 2: Welche Schwellen oder Effektgroessen gelten in vergleichbaren Arbeiten als belegter Unterschied zwischen zwei Verarbeitungsketten (z. B. dB-Differenz, Cohen's d, statistische Tests bei gepaarten Signalen)?\n\nBitte praezise, mit Quellenangaben (Paper, Standards), Antwort auf Deutsch. Nenne konkrete Zahlenwerte und Bandgrenzen wo verfuegbar."
+  },
+  {
+    "id": "R02-ground-truth",
+    "topic": "Referenz / Ground Truth fuer Murmur-Signale",
+    "preset": "low",
+    "prompt": "Kontext: Bachelorarbeit, digitales Stethoskop. Es werden Herzschall-Signale mit *bekanntem* Murmur als Ground Truth benoetigt.\n\nHauptfrage: Welche Quellen fuer annotierte Herzschall-Signale mit bekanntem Murmur stehen fuer eine studentische Abschlussarbeit realistisch zur Verfuegung?\n\nUnterfrage 1: Welche oeffentlichen, annotierten PCG-Datenbanken existieren (z. B. PhysioNet/CinC 2016, CirCor DigiScope 2022) - Umfang, Annotationstiefe (Murmur-Grad, Timing, Lokalisation), Abtastrate und Lizenzbedingungen fuer akademische Nutzung?\nUnterfrage 2: Welche Herzschall-Simulatoren / Auskultations-Trainingsmodelle (z. B. Kyoto Kagaku, Laerdal, SimMan, guenstige Alternativen) eignen sich, um reproduzierbar definierte Murmurs akustisch am Bruststueck einzuspielen - inkl. ungefaehrer Preisklasse?\n\nAntwort auf Deutsch, mit Links und Lizenzhinweisen."
+  },
+  {
+    "id": "R03-bpm-referenz",
+    "topic": "BPM-Referenz und Zielgenauigkeit",
+    "preset": "low",
+    "prompt": "Kontext: Bachelorarbeit, digitales Stethoskop mit Herzfrequenz-Bestimmung (BPM) aus dem Herzschall.\n\nHauptfrage: Womit wird die BPM-Genauigkeit eines Herzschall-basierten Geraets ueblicherweise verglichen, und welche Zielgenauigkeit ist begruendbar?\n\nUnterfrage 1: Welche Referenzverfahren sind ueblich (EKG als Goldstandard, kommerzielles Referenz-Stethoskop, annotierte Datenbank-Labels) und wie wird die Uebereinstimmung ausgewertet (Bland-Altman, mittlerer absoluter Fehler, Prozentfehler)?\nUnterfrage 2: Welche Genauigkeitsanforderungen nennen einschlaegige Normen bzw. Publikationen fuer Herzfrequenzmessung (z. B. ANSI/AAMI EC13, IEC 60601-2-27, Wearable-Studien) - konkrete Toleranzen wie +/- 5 bpm oder +/- 10 %?\n\nAntwort auf Deutsch, mit Quellen und konkreten Zahlenwerten."
+  },
+  {
+    "id": "R04-time-stretch",
+    "topic": "Q3 Wiedergabegeschwindigkeit / Time-Stretch ohne Pitch-Shift",
+    "preset": "medium",
+    "prompt": "Kontext: Bachelorarbeit, digitales Stethoskop auf ESP32-S3. Herzschall soll verlangsamt wiedergegeben werden (z. B. 0,5x / 0,75x), um Geraeusche hoerbarer zu machen. Problem: einfaches Verlangsamen verschiebt die Frequenzen aus dem diagnostischen Band (ca. 20-600 Hz).\n\nHauptfrage: Ist eine Verlangsamung der Herzschall-Wiedergabe ohne Tonhoehenaenderung (Time-Stretch) diagnostisch sinnvoll, und welche Verfahren kommen auf einem Mikrocontroller in Frage?\n\nUnterfrage 1: Welche Time-Stretch-Verfahren (WSOLA, SOLA, PSOLA, Phase-Vocoder) sind fuer Signale mit transienten Anteilen wie S1/S2 geeignet, und welche Artefakte sind bei Faktoren 0,5x-0,75x zu erwarten?\nUnterfrage 2: Welcher Rechen- und Speicheraufwand ist fuer WSOLA bzw. Phase-Vocoder bei ~2-8 kHz Abtastrate auf einem ESP32-S3 (240 MHz Xtensa LX7, Dual Core, mit DSP-Instruktionen) realistisch - gibt es publizierte Benchmarks oder existierende Implementierungen?\n\nAntwort auf Deutsch, mit Quellen. Falls Time-Stretch on-device unrealistisch ist, bitte klar sagen und Alternativen nennen (z. B. Offline-Wiedergabe, Pitch-Shift-Toleranz)."
+  },
+  {
+    "id": "R05-hoerstudie-design",
+    "topic": "Pilot-Hoerstudie: Teilnehmer und Studiendesign",
+    "preset": "low",
+    "prompt": "Kontext: Bachelorarbeit, digitales Stethoskop. Geplant ist eine kleine explorative Pilot-Hoerstudie (n ca. 5-10), die den objektiven Filternachweis unterstuetzen soll.\n\nHauptfrage: Wie wird eine Hoerstudie zur Beurteilung von Herzgeraeusch-Hoerbarkeit methodisch sauber aufgesetzt, wenn nur n = 5-10 Teilnehmende moeglich sind?\n\nUnterfrage 1: Laien vs. medizinisch geschulte Hoerende - was zeigt die Auskultations-Literatur zur Aussagekraft, und gibt es Aufgabenformate (z. B. 2AFC/ABX Detektionsaufgabe statt Diagnosestellung), mit denen auch Laien valide Ergebnisse liefern?\nUnterfrage 2: Welche Designelemente sind bei kleinem n Pflicht (Blindung, Randomisierung der Filterkonditionen, Anzahl Stimuli pro Kondition, Within-Subject-Design) und welche Auswertung ist bei n = 5-10 noch vertretbar (deskriptiv, nichtparametrisch, Effektgroessen statt p-Werten)?\n\nAntwort auf Deutsch, mit Quellen aus Psychoakustik/Auskultationsforschung."
+  },
+  {
+    "id": "R06-ethik-datenschutz",
+    "topic": "Ethikvotum / Datenschutz an einer deutschen Hochschule",
+    "preset": "low",
+    "prompt": "Kontext: Bachelorarbeit an der Technischen Hochschule Augsburg (THA), Deutschland. Geplant ist eine Pilot-Hoerstudie mit wenigen Teilnehmenden. Es sollen moeglichst nur synthetische bzw. bereits oeffentlich verfuegbare, anonymisierte Herzschall-Aufnahmen verwendet werden - keine eigenen Patientendaten.\n\nHauptfrage: Braucht eine solche Studie an einer deutschen Hochschule (speziell HAW/THA) ein Ethikvotum, und welche Datenschutzpflichten bestehen?\n\nUnterfrage 1: Wann ist ein Ethikvotum an deutschen Hochschulen/HAWs erforderlich bzw. entbehrlich - insbesondere bei nicht-medizinischen Hoerversuchen mit gesunden Erwachsenen ohne Patientendaten? Gibt es an der TH Augsburg eine Ethikkommission und dokumentierte Zustaendigkeit?\nUnterfrage 2: Welche DSGVO-Anforderungen gelten fuer Einwilligungserklaerung, Pseudonymisierung und Aufbewahrung der Hoerstudien-Daten, und aendert sich der Status, wenn Herzschall-Aufnahmen aus oeffentlichen Datenbanken (z. B. PhysioNet) statt eigener Aufnahmen verwendet werden?\n\nAntwort auf Deutsch, mit Quellen und - falls THA-spezifische Regelungen nicht auffindbar sind - klarer Aussage dazu."
+  },
+  {
+    "id": "R07-bruststueck-mems",
+    "topic": "Bruststueck-Kopplung an MEMS-Mikrofon + Bauteilauswahl",
+    "preset": "medium",
+    "prompt": "Kontext: Bachelorarbeit, digitales Stethoskop. Ein analoges Stethoskop-Bruststueck soll akustisch/mechanisch an ein MEMS-Mikrofon gekoppelt werden. Relevantes Band: ca. 20-600 Hz, inkl. S3/S4 bei ca. 20-60 Hz.\n\nHauptfrage: Wie koppelt man ein Stethoskop-Bruststueck praktisch an ein MEMS-Mikrofon, und welche konkreten Bauteile erfuellen die untere Grenzfrequenz?\n\nUnterfrage 1: Welche Kopplungsvarianten sind in Publikationen und Open-Source-Projekten zu digitalen Stethoskopen dokumentiert (Mikrofon direkt in der Schlauchkammer, kurzer Schlauchstummel mit abgeschlossenem Hohlraum, Membran-/Kavitaets-Ankopplung, Kontakt-/Vibrationsaufnehmer statt Luftschall)? Welche Effekte hat das Hohlraumvolumen auf den Frequenzgang (Helmholtz-Resonanz), und welche Fehler sind typisch (Leckage, Koerperschall, Reibgeraeusche)?\nUnterfrage 2: Welche konkreten, beschaffbaren MEMS-Mikrofone (Hersteller, Typenbezeichnung, digital I2S/PDM vs. analog) haben eine ausreichend tiefe untere Grenzfrequenz fuer 20 Hz - z. B. Infineon IM69D130, TDK/InvenSense ICS-40180 oder ICS-43434, Knowles-Typen - mit Angabe von -3 dB-Punkt, Rauschen (AOP/SNR) und Verfuegbarkeit als Breakout?\n\nAntwort auf Deutsch, mit Datenblatt-Links und konkreten Zahlenwerten."
+  },
+  {
+    "id": "R08-messmethode-akustik",
+    "topic": "Messmethode zur Charakterisierung der akustischen Kette",
+    "preset": "low",
+    "prompt": "Kontext: Bachelorarbeit, digitales Stethoskop. Die akustische Kette (Bruststueck -> Kopplung -> MEMS-Mikrofon -> ADC) soll messtechnisch charakterisiert werden (Frequenzgang, Rauschen, Linearitaet) im Band 20-1000 Hz.\n\nHauptfrage: Mit welchem Messaufbau charakterisiert man die akustische Uebertragungskette eines digitalen Stethoskops reproduzierbar, mit hochschulueblichem Equipment?\n\nUnterfrage 1: Welche Anregungsverfahren und Auswertungen sind ueblich (Sinus-Sweep/ESS mit Deconvolution, rosa Rauschen, Stepped Sine), welche Anregungsquelle eignet sich fuer 20-1000 Hz (Lautsprecher mit Koppler, Shaker, Kunstbrustkorb/Phantom mit definierter Impedanz) und wie wird gegen ein Referenzmikrofon kalibriert?\nUnterfrage 2: Welche Normen oder etablierten Verfahren gibt es fuer die Charakterisierung von Stethoskopen bzw. Auskultationsgeraeten (z. B. Arbeiten zur Stethoskop-Frequenzgangmessung, ANSI/IEC-Bezuege), und welche Minimalvariante ist mit einem guten Studiolautsprecher + Messmikrofon (z. B. Class-2 Messmikrofon) noch belastbar?\n\nAntwort auf Deutsch, mit Quellen und einer konkreten Empfehlung fuer einen minimalen, belastbaren Aufbau."
+  },
+  {
+    "id": "R09-latenz",
+    "topic": "Latenz-Ziel fuer Echtzeit-Audiopfad",
+    "preset": "fast",
+    "prompt": "Kontext: Bachelorarbeit, digitales Stethoskop mit Echtzeit-Audiopfad (Mikrofon -> DSP -> DAC -> Kopfhoerer). 'Echtzeit' soll quantifiziert werden.\n\nHauptfrage: Welche End-to-End-Latenz ist fuer ein digitales Stethoskop als Zielwert begruendbar, und ab welcher Latenz wird die Verzoegerung bei Live-Auskultation stoerend?\n\nUnterfrage 1: Welche Latenzschwellen nennt die Literatur fuer Live-Monitoring von Audio bzw. fuer taktil-auditive Kopplung (Anwender beruehrt das Bruststueck und hoert gleichzeitig) - typische Werte fuer 'nicht wahrnehmbar' vs. 'stoerend'?\nUnterfrage 2: Welche Latenz geben kommerzielle elektronische Stethoskope (z. B. 3M Littmann Core/3200, Eko) an bzw. was ist aus Teardowns/Reviews bekannt?\n\nAntwort auf Deutsch, kurz und mit Quellen. Nenne einen konkreten empfohlenen Zielwert in Millisekunden."
+  },
+  {
+    "id": "R10-esp32-plattform",
+    "topic": "ESP-IDF/C vs. Zephyr auf ESP32-S3 + Rechenbudget",
+    "preset": "medium",
+    "prompt": "Kontext: Bachelorarbeit, digitales Stethoskop auf ESP32-S3 (240 MHz Xtensa LX7 Dual Core, PSRAM optional). Gleichzeitig laufen sollen: 3 digitale Filter (Herz/Lunge/Wide), BPM-Erkennung, optional Time-Stretch der Wiedergabe und eine TLS-gesicherte Datenuebertragung (FHIR).\n\nHauptfrage: Reicht das Rechenbudget des ESP32-S3 fuer diese Kombination in Echtzeit, und ist ESP-IDF (C/FreeRTOS) oder Zephyr die tragfaehigere Basis?\n\nUnterfrage 1: Wie ist der Reifegrad der Zephyr-Unterstuetzung fuer ESP32-S3 im Vergleich zu ESP-IDF - konkret bei I2S/PDM-Audioeingang, DAC/I2S-Audioausgang, WiFi-Stack und TLS? Welche Einschraenkungen sind dokumentiert, und welche Entscheidungskriterien nennen Praxisberichte?\nUnterfrage 2: Welche CPU- und RAM-Kosten sind realistisch fuer (a) mehrere IIR/FIR-Filter bei 2-8 kHz Abtastrate unter Nutzung der esp-dsp-Bibliothek, (b) Huellkurven-/Autokorrelations-basierte BPM-Erkennung und (c) einen mbedTLS-Handshake inkl. Zertifikatspruefung - gibt es publizierte Benchmarks oder Groessenordnungen (Zyklen pro Sample, Heap fuer TLS)?\n\nAntwort auf Deutsch, mit Quellen. Bitte am Ende eine klare Einschaetzung: passt das Budget, und wo liegt der Engpass?"
+  },
+  {
+    "id": "R11-fhir-tls",
+    "topic": "FHIR-Ressourcenprofil und TLS-Zertifikatshandling auf ESP32",
+    "preset": "low",
+    "prompt": "Kontext: Bachelorarbeit, digitales Stethoskop auf ESP32-S3. Die gemessene Herzfrequenz soll als FHIR-Ressource ueber eine TLS-gesicherte Verbindung an einen Server uebertragen werden.\n\nHauptfrage: Wie sieht eine minimale, standardkonforme FHIR-Uebertragung einer Herzfrequenz aus, und was ist beim TLS-Zertifikatshandling auf einem ESP32 zu beachten?\n\nUnterfrage 1: Wie ist eine FHIR-Observation fuer Herzfrequenz korrekt aufgebaut (FHIR R4/R5, Profil 'Vitalsigns', LOINC-Code fuer Heart rate, UCUM-Einheit, Pflichtfelder status/category/subject/effectiveDateTime)? Bitte ein minimales JSON-Beispiel.\nUnterfrage 2: Welche praktischen Stolpersteine gibt es bei mbedTLS auf dem ESP32 - Speicherbedarf des Root-CA-Bundles vs. einzelnes gepinntes Zertifikat, Notwendigkeit korrekter Systemzeit (SNTP) fuer die Gueltigkeitspruefung, Verhalten bei Zertifikatsablauf, und Heap-Bedarf des Handshakes?\n\nAntwort auf Deutsch, mit Quellen (FHIR-Spezifikation, ESP-IDF-Dokumentation) und konkretem JSON-Beispiel."
+  },
+  {
+    "id": "R12-tha-formales",
+    "topic": "THA-Vorgaben zu Titel und Formalia der Bachelorarbeit",
+    "preset": "fast",
+    "prompt": "Kontext: Bachelorarbeit an der Technischen Hochschule Augsburg (THA), vermutlich Fakultaet fuer Elektrotechnik oder Informatik.\n\nHauptfrage: Welche formalen Vorgaben macht die Technische Hochschule Augsburg fuer den Titel und die Anmeldung einer Bachelorarbeit?\n\nUnterfrage 1: Gibt es Vorgaben zur Titel-Laenge, zur Sprache (deutsch/englisch, Notwendigkeit einer Uebersetzung) oder zum Format des Themas im Anmeldeformular - laut Studien- und Pruefungsordnung (SPO), Merkblaettern oder Fakultaetsvorgaben?\nUnterfrage 2: Welche Fristen und Formalia gelten fuer Anmeldung, Bearbeitungszeit und Abgabe der Bachelorarbeit an der THA?\n\nAntwort auf Deutsch, mit direkten Links zu den THA-Dokumenten. Falls konkrete Vorgaben nicht oeffentlich auffindbar sind, das bitte klar sagen statt zu raten."
+  }
+]

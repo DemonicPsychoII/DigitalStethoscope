@@ -1,0 +1,1042 @@
+{
+ "run": {
+  "id": "R04-time-stretch",
+  "topic": "Q3 Wiedergabegeschwindigkeit / Time-Stretch ohne Pitch-Shift",
+  "preset": "medium",
+  "prompt": "Kontext: Bachelorarbeit, digitales Stethoskop auf ESP32-S3. Herzschall soll verlangsamt wiedergegeben werden (z. B. 0,5x / 0,75x), um Geraeusche hoerbarer zu machen. Problem: einfaches Verlangsamen verschiebt die Frequenzen aus dem diagnostischen Band (ca. 20-600 Hz).\n\nHauptfrage: Ist eine Verlangsamung der Herzschall-Wiedergabe ohne Tonhoehenaenderung (Time-Stretch) diagnostisch sinnvoll, und welche Verfahren kommen auf einem Mikrocontroller in Frage?\n\nUnterfrage 1: Welche Time-Stretch-Verfahren (WSOLA, SOLA, PSOLA, Phase-Vocoder) sind fuer Signale mit transienten Anteilen wie S1/S2 geeignet, und welche Artefakte sind bei Faktoren 0,5x-0,75x zu erwarten?\nUnterfrage 2: Welcher Rechen- und Speicheraufwand ist fuer WSOLA bzw. Phase-Vocoder bei ~2-8 kHz Abtastrate auf einem ESP32-S3 (240 MHz Xtensa LX7, Dual Core, mit DSP-Instruktionen) realistisch - gibt es publizierte Benchmarks oder existierende Implementierungen?\n\nAntwort auf Deutsch, mit Quellen. Falls Time-Stretch on-device unrealistisch ist, bitte klar sagen und Alternativen nennen (z. B. Offline-Wiedergabe, Pitch-Shift-Toleranz)."
+ },
+ "response": {
+  "id": "chatcmpl-b9ef85cd62c948df9df46b54",
+  "object": "chat.completion",
+  "created": 1786462833,
+  "model": "preset/medium",
+  "choices": [
+   {
+    "index": 0,
+    "message": {
+     "role": "assistant",
+     "content": "## Kurzantwort\n\n**Ja, eine Wiedergabe mit 0,5× oder 0,75× Geschwindigkeit ohne Tonhöhenänderung kann für die auditive Beurteilung von Herzgeräuschen sinnvoll sein – aber primär als zusätzliche Hörhilfe, nicht als diagnostisch validiertes Verfahren.** Die Frequenzlage von S1, S2 und vielen Herzgeräuschen bleibt dabei erhalten. Es werden jedoch die zeitlichen Verhältnisse verändert: S1 und S2 sowie systolische und diastolische Intervalle werden auseinandergezogen. Deshalb sollte immer zusätzlich eine Wiedergabe mit Originalgeschwindigkeit beziehungsweise eine unveränderte Aufzeichnung verfügbar sein.\n\nFür ein ESP32-S3-Projekt ist **WSOLA beziehungsweise eine für transiente Signale modifizierte WSOLA-Variante die naheliegendste On-device-Lösung**. Ein kleiner Phase-Vocoder ist bei 2–8 kHz prinzipiell ebenfalls realisierbar, benötigt aber mehr Speicher, verursacht höhere Latenz und ist bei den transienten Anteilen von S1/S2 anfälliger für Artefakte. Eine vollständige klinische Beurteilung sollte nicht ausschließlich auf der verlangsamten Wiedergabe beruhen.\n\n---\n\n## 1. Medizinisch-akustische Einordnung\n\nHerzschall ist kein stationäres, harmonisches Signal wie ein längerer Vokal. S1 und S2 sind kurze, nichtstationäre Ereignisse mit breitbandigen und zeitlich veränderlichen Anteilen. Literaturwerte liegen je nach Messmethode und Zielbereich ungefähr bei:\n\n- S1/S2 überwiegend im Bereich von etwa **20–250 beziehungsweise 20–300 Hz**,\n- Herzgeräusche häufig bis etwa **500–700 Hz**,\n- für die allgemeine Auskultation werden teilweise Bereiche bis etwa **1,2 kHz** angegeben. [web:1][web:3][web:4]\n\nDie im Projekt genannte Bandbreite von ungefähr **20–600 Hz** ist daher als praktischer Arbeitsbereich plausibel.\n\nBei einfacher Geschwindigkeitsänderung durch Resampling gilt näherungsweise:\n\n\\[\nf_\\mathrm{neu}=r f_\\mathrm{alt}\n\\]\n\nmit dem Geschwindigkeitsfaktor \\(r\\).\n\n| Wiedergabegeschwindigkeit | Zeitdauer | Frequenzverschiebung |\n|---|---:|---:|\n| 0,5× | 2,0-fach | auf 50 % |\n| 0,75× | 1,333-fach | auf 75 % |\n\nEin 600-Hz-Anteil würde bei 0,5× somit auf etwa 300 Hz verschoben. Ein 20-Hz-Anteil läge danach bei 10 Hz und wäre kaum noch hörbar. Bei 0,75× wäre der Bereich weniger problematisch, aber ebenfalls nach unten verschoben.\n\nBeim **Time-Stretching ohne Tonhöhenänderung** bleiben die Spektralbereiche dagegen näherungsweise erhalten. Der Nutzen besteht daher darin, dass kurze Ereignisse und Geräuschverläufe länger wahrgenommen werden können, ohne sie in einen anderen Frequenzbereich zu verschieben.\n\nWichtig ist aber: Time-Stretching erzeugt keine neue diagnostische Information. Es kann die Wahrnehmbarkeit verbessern, verändert jedoch die Zeitstruktur und kann Artefakte hinzufügen. Für eine wissenschaftlich belastbare Aussage wäre ein Vergleichstest mit Original- und verlangsamten Signalen durch erfahrene Hörer beziehungsweise Ärztinnen und Ärzte erforderlich.\n\n---\n\n## 2. Vergleich der Verfahren\n\n| Verfahren | Grundprinzip | Eignung für S1/S2 und Herzgeräusche | Typische Artefakte bei 0,5×–0,75× | Einschätzung für ESP32-S3 |\n|---|---|---|---|---|\n| **SOLA** | Überlappende Signalabschnitte werden so zusammengefügt, dass die Wellenformen möglichst gut anschließen | Grundsätzlich geeignet, aber weniger robust als WSOLA | Periodische Phasensprünge, Knacken, hörbare Übergänge, bei Transienten Verdopplung oder Auslassen | Einfach; als Baseline oder Prototyp geeignet |\n| **WSOLA** | Wie SOLA, zusätzlich Suche nach derjenigen Analyseposition mit maximaler Wellenformähnlichkeit | **Am besten geeignet für eine einfache Echtzeitlösung**; funktioniert gut bei quasi-monophonen, kurzzeitigen Ereignissen | Stottern, Transientenverdopplung, Transientenauslassen, leichte Modulation; bei großer Streckung zunehmend auffällig | **Sehr gut realisierbar**, relativ wenig Speicher und keine FFT erforderlich |\n| **PSOLA/TD-PSOLA** | Signal wird an erkannten Perioden beziehungsweise Grundtonperioden segmentiert und synchron überlagert | Für stimmhafte Sprache gut, für Herzschall meist ungeeignet, da S1/S2 nicht zuverlässig periodisch oder tonal sind | Falsche Periodenschätzung, Phasen- und Amplitudensprünge, unnatürliche Klangfarbe | Rechenaufwand nicht das Hauptproblem; robuste Periodenschätzung wäre das Problem |\n| **Phase-Vocoder** | STFT, Änderung der zeitlichen Position der Spektralrahmen, Phasenrekonstruktion und inverse STFT | Für stationäre beziehungsweise tonalere Geräuschanteile gut; für S1/S2 nur mit Transientenerkennung oder Phase-Locking empfehlenswert | Transientenschmierung, „phasiness“, Nachhall-/Echoeindruck, Verlust der Schärfe von S2 | Möglich, aber höhere Latenz, mehr Speicher und komplexere Implementierung |\n| **Hybrid WSOLA/Phase-Vocoder** | WSOLA für Transienten, Phase-Vocoder für stationäre Anteile | Qualitativ wahrscheinlich am besten | Je nach Umschaltung zusätzliche Übergangsartefakte | Für einen zweiten Entwicklungsschritt sinnvoll, nicht als Minimalimplementierung |\n\n### WSOLA\n\nWSOLA ist für dieses Projekt besonders interessant, weil die Methode im Zeitbereich arbeitet und die Anschlussstelle zwischen zwei Segmenten über eine Ähnlichkeitssuche optimiert. Dadurch werden hörbare Sprünge gegenüber einfachem OLA reduziert. SoundTouch verwendet beispielsweise eine WSOLA-ähnliche Zeitbereichsmethode und nennt für seine Implementierung eine typische Latenz von ungefähr 100 ms. [web:47]\n\nDer zentrale Nachteil ist das Verhalten an Transienten. Für WSOLA sind insbesondere folgende Artefakte dokumentiert:\n\n- **Transient doubling/stuttering**: Ein kurzer Impuls kann durch überlappende, verschobene Frames doppelt oder mehrfach erscheinen.\n- **Transient skipping**: Ein Ereignis kann bei ungünstiger Segmentwahl teilweise übersprungen werden.\n- Amplitudenmodulation oder leichtes „Flattern“ an S1/S2.\n\nDiese Artefakte sind bei stark transienten Signalen besonders problematisch. [web:48][web:50]\n\nFür Herzschall ist die Situation etwas günstiger als bei Schlagzeugsignalen: S1 und S2 sind zwar transiente Ereignisse, aber typischerweise nicht so kurz und impulsartig wie ein Schlagzeugattack. Andererseits ist gerade ihre zeitliche Form diagnostisch relevant. Deshalb sollte die WSOLA-Implementierung nicht blind auf beliebige Musikparameter abgestimmt werden.\n\nSinnvolle Maßnahmen sind:\n\n1. **Transientenerkennung** mit Energieanstieg, spektralem Flux oder kurzzeitiger Hüllkurve.\n2. Während eines erkannten S1/S2-Angriffs die Segmentierung nicht mehrfach über denselben Transienten laufen lassen.\n3. Kürzere Frames oder spezielle Behandlung transienter Abschnitte.\n4. Begrenzung der maximalen Suchverschiebung.\n5. A/B-Vergleich zwischen Original, 0,75× und 0,5×.\n\nEine Transientenerkennung mit separater Behandlung ist auch für andere TSM-Verfahren ein etablierter Ansatz. [web:21][web:23]\n\n### Phase-Vocoder\n\nDer klassische Phase-Vocoder erhält die Frequenzen gut, ist aber anfällig für:\n\n- **Transientenschmierung**: S2 kann weniger scharf und „weicher“ klingen.\n- **Phasigkeit**: ein leicht künstlicher, flanger- oder hallähnlicher Eindruck.\n- Verlust der vertikalen Phasenkohärenz zwischen Frequenzkanälen.\n- Bei zu langen Fenstern: schlechte Zeitauflösung.\n- Bei zu kurzen Fenstern: schlechte Frequenzauflösung und instabilere Tonhöhen-/Phasenverfolgung.\n\nDiese Artefakte sind in der Literatur gut beschrieben. [web:51][web:53][web:56]\n\nFür S1/S2 wäre ein einfacher Phase-Vocoder daher nicht die erste Wahl. Besser wären:\n\n- **identity phase locking**,\n- Onset-/Transientenerkennung,\n- transientenbewusstes Phase-Vocoder-Verfahren,\n- oder eine Hybridlösung aus WSOLA für Transienten und Phase-Vocoder für längere, stationäre Herzgeräuschanteile.\n\nEin solches hybrides Prinzip – Phase-Vocoder für tonale beziehungsweise stationäre Anteile und WSOLA für Transienten – wird auch in existierenden Time-Stretching-Bibliotheken verwendet. [web:41]\n\n### PSOLA\n\nPSOLA ist vor allem dann stark, wenn ein Signal eine gut definierte Grundperiode besitzt, beispielsweise bei Sprache. Herzschall enthält aber:\n\n- stark gedämpfte und breitbandige Ereignisse,\n- unterschiedliche Komponenten in S1 und S2,\n- Geräuschanteile und mögliche Murmurs,\n- keine durchgehend zuverlässige Grundfrequenz.\n\nEine pitch-synchrone Segmentierung kann daher bei Herzschall eher Fehlentscheidungen erzeugen. PSOLA wäre für dieses Projekt nur dann interessant, wenn ausschließlich ein stark periodischer, länger andauernder Anteil verarbeitet werden soll. Für vollständige Phonokardiogramme ist es nicht die bevorzugte Methode.\n\n---\n\n## 3. Realistische Parameter\n\nFür eine erste Implementierung wären beispielsweise folgende Parameter plausibel:\n\n### WSOLA bei 8 kHz\n\n- Frame-Länge: **20–40 ms**, also 160–320 Samples\n- Überlappung: **50–75 %**\n- Synthese-Hop: etwa 5–15 ms\n- Suchbereich: etwa **±5–10 ms**\n- 16-Bit-Festkomma statt Float möglich\n- Ringpuffer mit einigen Frames\n\nBei 2 kHz entspricht ein 30-ms-Frame nur 60 Samples. Das spart zwar Rechenzeit, verschlechtert aber die zeitliche und spektrale Darstellung. Für hörbare Wiedergabe ist 4–8 kHz daher wesentlich angenehmer. Bei 2 kHz liegt die Nyquist-Frequenz bei 1 kHz und reicht formal für 600 Hz, lässt aber wenig Reserve für Filter, Mikrofoncharakteristik und Anti-Aliasing.\n\n### Phase-Vocoder bei 8 kHz\n\nBeispiel:\n\n- FFT-Größe: 256 oder 512\n- Fenster: etwa 32–64 ms\n- Hop-Größe: 25–50 % der FFT-Größe\n- Hann-Fenster\n- Phase-Voraussage pro Frequenz-Bin\n- inverse FFT und Overlap-Add\n\nBei 8 kHz liefert eine 512-Punkt-FFT eine Binbreite von:\n\n\\[\n\\Delta f=\\frac{8000}{512}\\approx 15{,}6\\ \\mathrm{Hz}\n\\]\n\nEine 256-Punkt-FFT liefert etwa 31,25 Hz. Für niedrige Herzschallfrequenzen ist die größere FFT zwar spektral attraktiver, erhöht jedoch Latenz und verschlechtert die zeitliche Auflösung. Bei 2 kHz wären 512 Samples bereits 256 ms – für eine unmittelbare Auskultation wahrscheinlich zu träge.\n\n---\n\n## 4. Rechen- und Speicheraufwand auf dem ESP32-S3\n\n### Verfügbare Benchmarks\n\nEspressif veröffentlicht Benchmarks für die ESP-DSP-Bibliothek. Für den ESP32-S3 werden unter anderem folgende Werte angegeben:\n\n| Operation | ESP32-S3, optimierte Implementierung |\n|---|---:|\n| 256-Punkt-Float-Dot-Product | 432 Zyklen |\n| 256-Punkt-16-Bit-Dot-Product | 307 Zyklen |\n| 256-Punkt-Float-FFT, Radix-2 | 20.139 Zyklen |\n| 512-Punkt-Float-FFT, Radix-2 | 44.594 Zyklen |\n| 1024-Punkt-Float-FFT, Radix-4 | 64.482 Zyklen |\n| 256-Punkt-16-Bit-FFT | 3.412 Zyklen |\n| 512-Punkt-16-Bit-FFT | 7.294 Zyklen |\n| 1024-Punkt-16-Bit-FFT | 15.623 Zyklen |\n\nDas sind Einzelbenchmarks der DSP-Grundoperationen, nicht vollständige Time-Stretching-Benchmarks. [web:31]\n\nBei 240 MHz entsprechen beispielsweise:\n\n- 20.139 Zyklen etwa **84 µs**,\n- 44.594 Zyklen etwa **186 µs**,\n- 64.482 Zyklen etwa **269 µs**.\n\nDie tatsächliche Zeit eines vollständigen Algorithmus ist größer, weil Fensterung, Magnituden-/Phasenberechnung, Phasenakkumulatoren, Bufferverwaltung, Overlap-Add und Audio-I/O hinzukommen.\n\n### Grobe WSOLA-Schätzung\n\nEine WSOLA-Iteration benötigt typischerweise:\n\n- mehrere Korrelationsberechnungen über den Überlappungsbereich,\n- Auswahl des besten Kandidaten,\n- Fensterung,\n- Overlap-Add,\n- Kopieren beziehungsweise Ringpufferverwaltung.\n\nFür moderate Parameter und 16-Bit-DSP-Code ist auf dem ESP32-S3 eine **Echtzeitimplementierung sehr realistisch**. Eine grobe Größenordnung ist:\n\n- wenige 10.000 bis einige 100.000 Zyklen pro Synthese-Hop, abhängig von Suchbereich und Korrelation,\n- bei 8 kHz typischerweise etwa 70–200 Hops/s,\n- damit grob einige Millionen bis einige zehn Millionen Zyklen/s.\n\nSelbst eine konservative Größenordnung von 20–50 Millionen Zyklen/s entspricht bei 240 MHz ungefähr 8–21 % einer CPU-Kernkapazität. Für eine optimierte, einkanalige Implementierung ist WSOLA daher nicht grundsätzlich zu groß für den ESP32-S3. Der kritische Punkt ist eher die Qualität und die Echtzeitpufferung als die reine Rechenleistung.\n\nDer Speicherbedarf liegt typischerweise nur bei:\n\n- einigen Audioframes,\n- einem Korrelationspuffer,\n- Fensterkoeffizienten,\n- Ein-/Ausgangs-Ringpuffern.\n\nJe nach Implementierung sind **wenige Kilobyte bis einige zehn Kilobyte internes RAM** plausibel. Für eine reine Wiedergabe muss nicht die gesamte Aufzeichnung im RAM liegen; sie kann aus Flash, PSRAM oder einer Datei gestreamt werden.\n\n### Grobe Phase-Vocoder-Schätzung\n\nFür einen Phase-Vocoder mit 512-Punkt-Float-FFT und 25-%-Hop bei 8 kHz ergeben sich etwa 62,5 Analyseframes/s. Pro Frame werden mindestens benötigt:\n\n- eine Vorwärts-FFT,\n- eine inverse FFT,\n- komplexe Spektralverarbeitung,\n- Fensterung und Overlap-Add.\n\nDie beiden FFTs liegen größenordnungsmäßig bei etwa:\n\n\\[\n2 \\cdot 44.594 \\approx 89.000\n\\]\n\nZyklen pro Frame, bevor die zusätzliche Phasenverarbeitung berücksichtigt wird. Damit liegt der reine FFT-Anteil bei rund 5,6 Millionen Zyklen/s. Mit den übrigen Operationen ist eine Größenordnung von **10–30 Millionen Zyklen/s** für eine einfache Float-Implementierung plausibel. Eine 1024-Punkt-Variante kann trotz weniger Frames/s eine höhere Latenz und mehr Bufferbedarf verursachen.\n\nAuch der Phase-Vocoder ist somit grundsätzlich machbar. Allerdings muss zusätzlich Speicher reserviert werden für:\n\n- komplexe FFT- und IFFT-Puffer,\n- Magnituden und Phasen,\n- vorherige Phasenwerte,\n- Fenster,\n- Overlap-Add-Puffer,\n- eventuell Transientenerkennung.\n\nBei 512 Punkten sind **einige 10 kB RAM** für eine schlanke Implementierung realistisch; mit Float-Puffern, mehreren Kanälen und komfortabler Bufferverwaltung kann der Bedarf deutlich höher werden. Bei 2 kHz wird die Rechenlast geringer, aber die für ausreichende Frequenzauflösung erforderliche Fensterdauer wird problematisch.\n\n### Gibt es publizierte ESP32-S3-Time-Stretching-Benchmarks?\n\nNach den auffindbaren Quellen gibt es **ESP-DSP-Benchmarks für die notwendigen Grundoperationen**, aber keinen etablierten, direkt vergleichbaren Benchmark „WSOLA beziehungsweise Phase-Vocoder auf ESP32-S3 bei 8 kHz“ mit vollständiger Codebasis und festen Qualitätsparametern. Die Espressif-Werte sind deshalb eine gute Grundlage für eine Abschätzung, ersetzen aber keinen Messversuch auf dem konkreten Board.\n\nExistierende Implementierungen sind überwiegend:\n\n- allgemeine WSOLA-Implementierungen,\n- SoundTouch mit WSOLA-ähnlicher Zeitbereichsmethode,\n- PC-/Desktop-Phase-Vocoder,\n- Forschungs- und Python-Bibliotheken wie PyTSMod mit OLA, WSOLA, TD-PSOLA und Phase-Vocoder. [web:47][web:65]\n\nSie können als Referenz für Algorithmen dienen, müssen für ESP-IDF/C angepasst, speicherseitig reduziert und hinsichtlich Float/Festkomma sowie Echtzeitverhalten vermessen werden.\n\n---\n\n## 5. Empfohlene Architektur für die Bachelorarbeit\n\n### Stufe 1: Baseline\n\n1. Mikrofonaufnahme bei 8 kHz, 16 Bit, mono.\n2. Anti-Aliasing- und Hochpassfilter, beispielsweise unterhalb von 15–20 Hz.\n3. Originalwiedergabe.\n4. Resampling auf 0,5× und 0,75× als bewusst einfache Vergleichsreferenz.\n5. WSOLA ohne Transientenerkennung.\n6. WSOLA mit einfacher Transientenerkennung.\n7. Messung von:\n   - CPU-Last,\n   - RAM,\n   - Latenz,\n   - Dropouts,\n   - Frequenzlage,\n   - S1/S2-Dauer,\n   - subjektiven Artefakten.\n\n### Stufe 2: Qualitätsverbesserung\n\nFür die bevorzugte Lösung würde ich empfehlen:\n\n- **WSOLA als Hauptverfahren**,\n- 0,75× als Standardmodus,\n- 0,5× als optionaler, stärker artefaktgefährdeter Modus,\n- getrennte Behandlung von transienten und stationären Abschnitten,\n- kein PSOLA für das komplette Signal,\n- Phase-Vocoder nur als Vergleich oder zweite, anspruchsvollere Variante.\n\nEin sinnvoller Hörtest sollte dieselben Aufnahmen in drei Bedingungen abspielen:\n\n1. Originalgeschwindigkeit,\n2. Resampling mit Tonhöhenänderung,\n3. WSOLA mit erhaltener Tonhöhe.\n\nBewertet werden könnten insbesondere die Erkennung von:\n\n- S1 und S2,\n- S3/S4,\n- systolischen und diastolischen Geräuschen,\n- hochfrequenten Murmurs,\n- Klicks und Reibegeräuschen.\n\n---\n\n## 6. Falls On-device-Time-Stretching verworfen wird\n\nFalls die verfügbare Entwicklungszeit oder die gewünschte Audioqualität für eine Echtzeit-WSOLA nicht ausreicht, sind diese Alternativen sinnvoll:\n\n1. **Offline-Time-Stretching**  \n   Die Aufnahme wird zunächst gespeichert und anschließend auf dem ESP32 oder auf einem PC/Smartphone verarbeitet. Dadurch sind komplexere Transientenerkennung und Phase-Locking möglich.\n\n2. **Vorverarbeitung auf einem Smartphone oder PC**  \n   Das ESP32-Stethoskop liefert PCM beziehungsweise WAV; die verlangsamte Wiedergabe erfolgt in einer App. Das ist qualitativ und experimentell am einfachsten.\n\n3. **Nur 0,75× mit normaler Tonhöhe**  \n   0,75× ist deutlich weniger anspruchsvoll als 0,5× und verursacht normalerweise weniger Artefakte.\n\n4. **Normale Wiedergabe mit einstellbarer Verstärkung und Filterung**  \n   Für diagnostische Zwecke kann eine gute Bandpassfilterung, Rauschunterdrückung, Lautstärkeanhebung und Kopfhörerwiedergabe sinnvoller sein als eine starke zeitliche Manipulation.\n\n5. **Resampling als Vergleichs- oder Notfallmodus**  \n   0,75× mit Tonhöhenverschiebung kann als robuste Minimalfunktion dienen, sollte aber ausdrücklich als nicht frequenztreue Wiedergabe gekennzeichnet werden.\n\n## Schlussfolgerung\n\nFür die Bachelorarbeit lautet die wahrscheinlich beste technische Entscheidung:\n\n> **Ein einkanaliges WSOLA-Time-Stretching mit transientenbewusster Segmentierung ist auf dem ESP32-S3 bei 2–8 kHz realistisch und für Herzschall wahrscheinlich geeigneter als ein einfacher Phase-Vocoder.**\n\nEin Phase-Vocoder ist auf dem ESP32-S3 zwar ebenfalls realisierbar, aber ohne Transientenerkennung ist mit einer hörbaren Schmierung und einem künstlichen, phasigen Klang zu rechnen. **PSOLA ist wegen der fehlenden stabilen Periodizität des Herzschalls nicht die bevorzugte Lösung.**\n\nDiagnostisch sollte die verlangsamte Wiedergabe als **zusätzliche Hörhilfe** verstanden werden. Sie kann das Erkennen länger dauernder oder schwacher Geräuschanteile erleichtern, darf aber nicht die unveränderte Originalwiedergabe und eine spätere klinische Validierung ersetzen."
+    },
+    "finish_reason": "stop"
+   }
+  ],
+  "usage": {
+   "prompt_tokens": 28178,
+   "completion_tokens": 5898,
+   "total_tokens": 34076,
+   "cost": {
+    "cache_creation_cost": 0.00422,
+    "cache_read_cost": 0.00023,
+    "currency": "USD",
+    "input_cost": 0,
+    "output_cost": 0.00708,
+    "tool_calls_cost": 0.01275,
+    "tool_calls_cost_details": {
+     "fetch_url": 0.00025,
+     "search_web": 0.0125
+    },
+    "total_cost": 0.02428
+   },
+   "input_tokens_details": {
+    "cache_creation_input_tokens": 16895,
+    "cache_read_input_tokens": 11274,
+    "cached_tokens": 11274
+   },
+   "output_tokens_details": {
+    "reasoning_tokens": 794
+   },
+   "tool_calls_details": {
+    "fetch_url": {
+     "invocation": 1
+    },
+    "search_web": {
+     "invocation": 5
+    }
+   }
+  },
+  "citations": [
+   {
+    "url": "https://www.scribd.com/document/403092782/2011-DriedgerJonathan-TSM-MasterThesis-pdf",
+    "title": "Time-Scale Modification Algorithms For Music Audio Signals",
+    "date": "2025-12-06"
+   },
+   {
+    "url": "https://www.pitchtech.ch/Confs/AES142/index.html",
+    "title": "Audio Time Stretching with Controllable Phase Coherence - PitchTech",
+    "date": "2016-01-01"
+   },
+   {
+    "url": "https://reposit.haw-hamburg.de/bitstream/20.500.12738/15713/1/MA_Latenzoptimierte%20Tonh%C3%B6henverschiebung.pdf",
+    "title": "Masterthesis",
+    "date": null
+   },
+   {
+    "url": "https://repository.gatech.edu/bitstreams/f4b1290d-061f-45ab-8016-dfa8240b024e/download",
+    "title": "[PDF] Time Stretching & Pitch Shifting with the Web Audio API",
+    "date": null
+   },
+   {
+    "url": "https://www.dafx12.york.ac.uk/papers/dafx12_submission_26.pdf",
+    "title": "[PDF] improved pvsola time-stretching and pitch-shifting for polyphonic",
+    "date": null
+   },
+   {
+    "url": "https://audiolabs-erlangen.de/content/05_fau/professor/00_mueller/01_group/2011_DriedgerJonathan_TSM_MasterThesis.pdf",
+    "title": "Time-Scale Modification Algorithms for Music Audio Signals",
+    "date": null
+   },
+   {
+    "url": "https://www.dafx.de/paper-archive/2019/DAFx2019_paper_38.pdf",
+    "title": "[PDF] Time scale modification of audio using Non-negative Matrix ...",
+    "date": null
+   },
+   {
+    "url": "https://quod.lib.umich.edu/i/icmc/bbp2372.2003.074?rgn=main;view=fulltext",
+    "title": "Transient detection and preservation in the phase vocoder",
+    "date": "2003-01-01"
+   },
+   {
+    "url": "https://arxiv.org/abs/2202.07382",
+    "title": "[2202.07382] Phase Vocoder Done Right",
+    "date": "2022-02-15"
+   },
+   {
+    "url": "http://recherche.ircam.fr/pub/dafx11/Papers/57_e.pdf",
+    "title": "PVSOLA: A Phase Vocoder with Synchronized OverLap-Add",
+    "date": null
+   },
+   {
+    "url": "https://thesis.unipd.it/retrieve/6b0fb0a0-ebc7-4553-92b4-76661ac353f1/tesi.pdf",
+    "title": "UNIVERSIT `A DI PADOVA",
+    "date": null
+   },
+   {
+    "url": "https://www.semanticscholar.org/paper/Time-Stretching-&-Pitch-Shifting-with-the-Web-Audio-Dias-Matos/7a4c90f7d2de4c457073ff6c5a862cbd4db05f33",
+    "title": "[PDF] Time Stretching & Pitch Shifting with the Web Audio API: Where are we at? | Semantic Scholar",
+    "date": "2016-04-01"
+   },
+   {
+    "url": "https://hal.science/hal-01161124/document",
+    "title": "A new approach to transient processing in the phase vocoder",
+    "date": null
+   },
+   {
+    "url": "https://hci.rwth-aachen.de/publications/karrer2006a.pdf",
+    "title": "PhaVoRIT: A Phase Vocoder for Real-Time Interactive Time ...",
+    "date": null
+   },
+   {
+    "url": "https://www.mtg.upf.edu/files/publications/Phd-2002-Jordi-Bonada.pdf",
+    "title": "Audio Time-Scale Modification in the Context of Professional ...",
+    "date": null
+   },
+   {
+    "url": "https://docs.espressif.com/projects/esp-dsp/en/latest/esp32/esp-dsp-benchmarks.html",
+    "title": "Espressif DSP Library Benchmarks - ESP32",
+    "date": "2004-01-01"
+   },
+   {
+    "url": "https://docs.espressif.com/projects/esp-sr/en/latest/esp32s3/benchmark/README.html",
+    "title": "Benchmark - ESP32-S3 - — ESP-SR latest documentation",
+    "date": null
+   },
+   {
+    "url": "https://deepwiki.com/espressif/esp-dsp/4.2-fft-and-transforms",
+    "title": "FFT and Transforms | espressif/esp-dsp | DeepWiki",
+    "date": "2025-09-05"
+   },
+   {
+    "url": "https://espressif-docs.readthedocs-hosted.com/_/downloads/esp-dsp/en/latest/pdf/",
+    "title": "Read the Docs Template Documentation",
+    "date": null
+   },
+   {
+    "url": "https://deepwiki.com/espressif/esp-dsp/5.1-benchmarking-framework",
+    "title": "Benchmarking Framework | espressif/esp-dsp | DeepWiki",
+    "date": "2025-09-05"
+   },
+   {
+    "url": "https://documentation.espressif.com/esp32-s3_technical_reference_manual_en.html",
+    "title": "ESP32-S3 Technical Reference Manual",
+    "date": "2010-04-27"
+   },
+   {
+    "url": "https://www.reddit.com/r/esp32/comments/1r5xhkz/practical_fft_on_the_esp32s3_dsp_acceleration_and/",
+    "title": "Practical FFT on the ESP32-S3: DSP Acceleration and Real-World Usage",
+    "date": "2026-02-16"
+   },
+   {
+    "url": "https://components.espressif.com/components/espressif/esp-dsp/versions/1.2.0?language=",
+    "title": "espressif/esp-dsp • v1.2.0 • ESP Component Registry",
+    "date": "2019-01-01"
+   },
+   {
+    "url": "https://www.reddit.com/r/embedded/comments/rg5rco/audio_fft_calculation_on_esp32_or_dedicated_dsp/",
+    "title": "Audio FFT calculation on ESP32 or dedicated DSP?",
+    "date": "2021-12-14"
+   },
+   {
+    "url": "https://lib.rs/crates/timestretch",
+    "title": "timestretch - Lib.rs",
+    "date": "2026-03-25"
+   },
+   {
+    "url": "https://github.com/tmiw/esp32s3-benchmark",
+    "title": "tmiw/esp32s3-benchmark",
+    "date": "2024-08-04"
+   },
+   {
+    "url": "https://www.speechbase.ai/blog/writing-a-wsola-time-stretcher",
+    "title": "Writing a WSOLA time-stretcher for the Speech SDK",
+    "date": "2026-05-08"
+   },
+   {
+    "url": "https://www.reddit.com/r/DSP/comments/1b0ffz6/benchmark_for_timestretching_based_on_simple/",
+    "title": "Benchmark for Time-Stretching based on simple Phase ...",
+    "date": null
+   },
+   {
+    "url": "https://github.com/jatinchowdhury18/time-stretcher",
+    "title": "jatinchowdhury18/time-stretcher",
+    "date": "2021-06-05"
+   },
+   {
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7305673/",
+    "title": "Frequency Responses of Conventional and Amplified ... - PMC",
+    "date": "2020-04-17"
+   },
+   {
+    "url": "https://clinicalcasereportsjournal.com/article/1000046/analysis-of-the-four-heart-sounds-statistical-study-and-spectro-temporal-characteristics",
+    "title": "Analysis of the Four Heart Sounds Statistical Study and ...",
+    "date": "2020-07-08"
+   },
+   {
+    "url": "https://www.intechopen.com/chapters/19510",
+    "title": "Computerized Heart Sounds Analysis",
+    "date": "2011-09-12"
+   },
+   {
+    "url": "https://pdfs.semanticscholar.org/1d4b/bd3793a61beb32b110efd8559588f69c7d1b.pdf",
+    "title": "[PDF] Phonocardiographic Signal and Electrocardiographic Signal ...",
+    "date": null
+   },
+   {
+    "url": "https://ia800603.us.archive.org/12/items/EvidenceBasedPhysicalDiagnosis/39AuscultationOfTheHeartGeneralPrinciples.pdf",
+    "title": "Chapter 39 - Auscultation of the Heart: General Principles",
+    "date": null
+   },
+   {
+    "url": "https://thoracickey.com/stethoscope-performance/",
+    "title": "Stethoscope Performance",
+    "date": "2016-07-10"
+   },
+   {
+    "url": "https://fiveable.me/advanced-signal-processing/unit-12/phonocardiogram-pcg-signal-processing/study-guide/qvhCqH5XnP8wUiss",
+    "title": "12.4 Phonocardiogram (PCG) signal processing - Fiveable",
+    "date": "2024-08-20"
+   },
+   {
+    "url": "https://dspace.vut.cz/bitstreams/bae73908-5ddd-4939-9196-b8713c567749/download",
+    "title": "[PDF] CLASSIFICATION OF HEART SOUNDS USING TIME - DSpace",
+    "date": null
+   },
+   {
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10474097/",
+    "title": "Novel phonocardiography system for heartbeat detection from ...",
+    "date": "2023-09-01"
+   },
+   {
+    "url": "https://www.internationaljournalssrg.org/IJEEE/2022/Volume9-Issue12/IJEEE-V9I12P102.pdf",
+    "title": "A Novel Digital Phonocardiography Method to Identify the ...",
+    "date": null
+   },
+   {
+    "url": "https://link.springer.com/article/10.1007/s10439-008-9611-z",
+    "title": "Digital Auscultation Analysis for Heart Murmur Detection",
+    "date": null
+   },
+   {
+    "url": "https://stars.library.ucf.edu/cgi/viewcontent.cgi?article=2538&context=honorstheses",
+    "title": "University of Central Florida",
+    "date": null
+   },
+   {
+    "url": "https://pubmed.ncbi.nlm.nih.gov/34649235/",
+    "title": "Spectral analysis of heart sounds associated with coronary ...",
+    "date": "2021-11-26"
+   },
+   {
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC1906774/",
+    "title": "Phono-spectrographic analysis of heart murmur in children",
+    "date": "2007-06-11"
+   },
+   {
+    "url": "https://pubmed.ncbi.nlm.nih.gov/17701776/",
+    "title": "Computer aided analysis of phonocardiogram - PubMed",
+    "date": "2007-01-01"
+   },
+   {
+    "url": "https://github.com/tmdarwen/PhaseVocoder",
+    "title": "GitHub - tmdarwen/PhaseVocoder: A cross platform command line utility allowing for time expansion/compression, pitch shifting and resampling of audio.",
+    "date": "2017-09-07"
+   },
+   {
+    "url": "https://github.com/ybdarrenwang/PhaseVocoder",
+    "title": "Phase Vocoder",
+    "date": "2016-01-19"
+   },
+   {
+    "url": "https://github.com/JorenSix/TarsosDSP/issues/206",
+    "title": "Time-stretching (WSOLA) incorrect length output · Issue #206",
+    "date": "2022-02-24"
+   },
+   {
+    "url": "https://github.com/KAIST-MACLab/PyTSMod",
+    "title": "KAIST-MACLab/PyTSMod: An open-source Python ...",
+    "date": "2020-09-16"
+   },
+   {
+    "url": "https://github.com/topics/phase-vocoder?l=c++",
+    "title": "Build software better, together",
+    "date": "2025-04-25"
+   },
+   {
+    "url": "https://oramics.github.io/dsp-kit/api/module-phase-vocoder.html",
+    "title": "phase-vocoder",
+    "date": null
+   },
+   {
+    "url": "https://iver56.github.io/audiomentations/waveform_transforms/time_stretch/",
+    "title": "TimeStretch - audiomentations documentation",
+    "date": "1995-01-01"
+   },
+   {
+    "url": "https://github.com/0xfe/vexwarp",
+    "title": "0xfe/vexwarp: Audio Time Stretching and Pitch Shifting",
+    "date": "2016-08-26"
+   },
+   {
+    "url": "https://mlverse.github.io/torchaudio/reference/functional_phase_vocoder.html",
+    "title": "Phase Vocoder — functional_phase_vocoder • torchaudio",
+    "date": null
+   },
+   {
+    "url": "https://github.com/Abletobetable/time-stretch",
+    "title": "time stretching algorithm for audio without pitch shifting",
+    "date": "2023-03-03"
+   },
+   {
+    "url": "https://github.com/bilibili/soundtouch",
+    "title": "GitHub - bilibili/soundtouch: SoundTouch library compiled for ijkplayer/Android http://www.surina.net/soundtouch/sourcecode.html",
+    "date": "2017-04-01"
+   },
+   {
+    "url": "https://github.com/rspeyer/soundtouch/blob/master/README.md",
+    "title": "soundtouch/README.md at master · rspeyer/soundtouch",
+    "date": "2014-03-14"
+   },
+   {
+    "url": "https://sites.units.it/ramponi/teaching/DSP/materials/S03.4a/Driedger16_Review.pdf",
+    "title": "A Review of Time-Scale Modification of Music Signals",
+    "date": null
+   },
+   {
+    "url": "https://thesis.unipd.it/bitstream/20.500.12608/16470/1/tesi.pdf",
+    "title": "UNIVERSIT `",
+    "date": null
+   },
+   {
+    "url": "https://www.audiolabs-erlangen.de/content/resources/MIR/TSMtoolbox/2014_DriedgerMueller_TSM-Toolbox_DAFX.pdf",
+    "title": "TSM Toolbox: MATLAB Implementations of Time-Scale ...",
+    "date": null
+   },
+   {
+    "url": "https://citeseerx.ist.psu.edu/document?repid=rep1&type=pdf&doi=ecd7529ab7059e2348e1d007f7a02370bdd05edc",
+    "title": "Proc. of the 8th Int. Conference on Digital Audio Effects (DAFx’05), Madrid, Spain, September 20-22, 2005",
+    "date": null
+   },
+   {
+    "url": "https://qmro.qmul.ac.uk/xmlui/bitstream/123456789/12184/2/Driedger%20Improving%20Time-Scale%20Modification%20of%20Music%20Signals%20Using%20Harmonic-Percussive%20Separation%202013%20Accepted.pdf",
+    "title": "Improving Time-Scale Modification of Music Signals Using ...",
+    "date": null
+   },
+   {
+    "url": "https://ltfat.org/notes/ltfatnote050.pdf",
+    "title": "Phase Vocoder Done Right",
+    "date": null
+   },
+   {
+    "url": "https://www.pitchtech.ch/Confs/ICASSP2017/0000716.pdf",
+    "title": "AUDIO TIME STRETCHING WITH AN ADAPTIVE ... - PitchTech",
+    "date": null
+   },
+   {
+    "url": "https://github.com/naudio/varispeed-sample/blob/master/VarispeedDemo/SoundTouch/SoundTouchSettings.cs",
+    "title": "varispeed-sample/VarispeedDemo/SoundTouch/SoundTouchSettings.cs at master · naudio/varispeed-sample",
+    "date": "2016-05-11"
+   },
+   {
+    "url": "http://arxiv.org/pdf/1612.05156.pdf",
+    "title": "IEEE/ACM TRANSACTIONS ON AUDIO, SPEECH AND LANGUAGE PROCESSING",
+    "date": null
+   },
+   {
+    "url": "https://old.iem.at/projekte/dsp/hammer/hammer.pdf",
+    "title": "Time-scale Modification using the Phase Vocoder",
+    "date": null
+   },
+   {
+    "url": "https://www.semanticscholar.org/paper/A-Review-of-Time-Scale-Modification-of-Music-%E2%80%A0-Driedger-M%C3%BCller/0ac0fed7476412c7d85073e1cc2dd0923a1ce90f",
+    "title": "[PDF] A Review of Time-Scale Modification of Music Signals † | Semantic Scholar",
+    "date": "2016-02-18"
+   },
+   {
+    "url": "https://www.pitchtech.ch/Confs/ICASSP2017/index.html",
+    "title": "Audio Time Stretching with an Adaptive Multiresolution Phase ...",
+    "date": null
+   }
+  ],
+  "search_results": [
+   {
+    "date": "2025-12-06",
+    "id": 16,
+    "last_updated": "2026-01-19",
+    "snippet": "Both algorithms can produce artifacts, which the thesis classifies and investigates ways to overcome, such as by preserving transients in WSOLA.\n...\nThese algorithms often suffer from stuttering artifactsat transient regions in audio signals.\nTherefore the quality of the results can be improvedby giving these transient regions a specialized treatment.\n...\nThe most typical artifacts occurring in audio signals that were produced by WSOLAare stuttering artifacts.\nMost often they are audible at transient regions in an audiosignal.\nTransients are very short, noise-like parts in audio signals that typically originatefrom instrument onsets like for example the stroke of a guitar string or a drum hit.\n...\nA method to prevent this kind of degradation is theso called transient preservation.\nThe core idea is to suspend the time-scale modification attransient positions in the audio signal.\nTo compensate for these suspensions the remainingparts of the signal are stretched with a slightly different time-stretch factor.",
+    "source": "web",
+    "title": "Time-Scale Modification Algorithms For Music Audio Signals",
+    "url": "https://www.scribd.com/document/403092782/2011-DriedgerJonathan-TSM-MasterThesis-pdf"
+   },
+   {
+    "date": "2016-01-01",
+    "id": 17,
+    "last_updated": "2025-06-02",
+    "snippet": "Nicolas Juillerat, \"Audio Time Stretching with Controllable Phase Coherence\" ,\n142, May 2017, Berlin ndAudio Engineering Society Convention\n...\n|Original|Time Domain|Phase Vocoder|\n...\nNote: The pairs of exagerated artifacts have been simply (!) produced by processing the audio with a too high (184 ms) and a too low (46 ms) frequency resolution instead of the optimal one (92 ms).\n...\nThe following tables shows the presented technique with various values of M, on various audio signals, compared to the phase-locked vocoder and time-domain WSOLA with comparable time-frequency resolutions.",
+    "source": "web",
+    "title": "Audio Time Stretching with Controllable Phase Coherence - PitchTech",
+    "url": "https://www.pitchtech.ch/Confs/AES142/index.html"
+   },
+   {
+    "id": 18,
+    "last_updated": "2025-11-03",
+    "snippet": "der Streckung des Signals (α > 1) zur Duplizierung oder bei der Stauchung des Signals\n(α < 1) zum Überspringen von Transienten kommen.\n...\nBei der ersten Variante werden die monophonen\nStellen ebenfalls gut wiedergegeben, allerdings entstehen bei den polyphonen Stellen\nstarke Artefakte in Form von Phasensprüngen (ähnlich wie bei OLA).\n...\nIm Gegensatz zum WSOLA Algorithmus ist ein Verschmieren der Transienten wahr-\nzunehmen, welches zu einem weniger direkten Klang führt.\nDieser Artefakt wird beim\n...\nVerlust der vertikalen Phasenkohärenz (trotz Identiy Phase Locking) begründet.",
+    "source": "web",
+    "title": "Masterthesis",
+    "url": "https://reposit.haw-hamburg.de/bitstream/20.500.12738/15713/1/MA_Latenzoptimierte%20Tonh%C3%B6henverschiebung.pdf"
+   },
+   {
+    "id": 19,
+    "last_updated": "2024-07-16",
+    "snippet": "First introduced in [12], WSOLA applies a delay δ ∈\n[−δmax : δmax] to each analysis frame, such that the wave-\nforms of two overlapping synthesis frames are as similar as\npossible in the overlapping regions, where WSOLA is equiv-\nalent to OLA when δmax = 0.\n...\nwhere Hai is the analysis hop size for frame i and is defined\n...\nδi = xi ⋆xi−1[δmax]\n...\nwhere δmax < Ha.\nThis algorithm removes reverberation\nand modulation but, for transient rich sounds (percussion,\nguitar riffs), there might be some missed transients and\nstuttering (i.e.: repeated transients).",
+    "source": "web",
+    "title": "[PDF] Time Stretching & Pitch Shifting with the Web Audio API",
+    "url": "https://repository.gatech.edu/bitstreams/f4b1290d-061f-45ab-8016-dfa8240b024e/download"
+   },
+   {
+    "id": 20,
+    "last_updated": "2025-10-26",
+    "snippet": "bedded into a flexible pitch shifting and time stretching framework\nby adding transient detection and resampling.\n...\nThe proposed solution is to implement a transient detection\nand then synchronize the reset with the transient position.\n...\nsoon as the beginning of a transient is detected the regular reset is",
+    "source": "web",
+    "title": "[PDF] improved pvsola time-stretching and pitch-shifting for polyphonic",
+    "url": "https://www.dafx12.york.ac.uk/papers/dafx12_submission_26.pdf"
+   },
+   {
+    "id": 21,
+    "last_updated": "2026-07-07",
+    "snippet": "These algorithms often suffer from stuttering artifacts\nat transient regions in audio signals.\n...\npoints, and therefore the time-stretch function τ, such that at transient positions we have",
+    "source": "web",
+    "title": "Time-Scale Modification Algorithms for Music Audio Signals",
+    "url": "https://audiolabs-erlangen.de/content/05_fau/professor/00_mueller/01_group/2011_DriedgerJonathan_TSM_MasterThesis.pdf"
+   },
+   {
+    "id": 22,
+    "last_updated": "2026-03-03",
+    "snippet": "[7] Shahaf Grofit and Yizhar Lavner, “Time-scale modification\nof audio signals using enhanced wsola with management of\ntransients,” IEEE transactions on audio, speech, and lan-\nguage processing, vol. 16, no.\n1, pp.\n106–115, 2008.",
+    "source": "web",
+    "title": "[PDF] Time scale modification of audio using Non-negative Matrix ...",
+    "url": "https://www.dafx.de/paper-archive/2019/DAFx2019_paper_38.pdf"
+   },
+   {
+    "date": "2003-01-01",
+    "id": 23,
+    "last_updated": "2025-03-26",
+    "snippet": "Page 00000001 Transient detection and preservation in the phase vocoder Axel Robel IRCAM, Analysis-Synthesis Team, France email: [email protected] Abstract In this paper we propose a new method to reduce phase vocoder artifacts during attack transients.\nIn contrast to existing algorithms the new approach does not enforce the time dilation parameter to one during transient segments and works at the level of spectral peaks such that stationary parts of the signal will not be affected by detected transients.\n...\nAttack transients in sound signals transformed with the new algorithm provide very high quality even if strong dilation is applied to polyphonic signals.\n...\nWe have shown that the group delay of spectral peaks can be used to detect transient peaks and how transient peaks can be preserved during time stretching without fixing the stretch factor to one.",
+    "source": "web",
+    "title": "Transient detection and preservation in the phase vocoder",
+    "url": "https://quod.lib.umich.edu/i/icmc/bbp2372.2003.074?rgn=main;view=fulltext"
+   },
+   {
+    "date": "2022-02-15",
+    "id": 24,
+    "last_updated": "2025-10-28",
+    "snippet": "",
+    "source": "web",
+    "title": "[2202.07382] Phase Vocoder Done Right",
+    "url": "https://arxiv.org/abs/2202.07382"
+   },
+   {
+    "id": 25,
+    "last_updated": "2026-07-14",
+    "snippet": "add), WSOLA (waveform similarity-based synchronized overlap-\nadd), SOLAFS (synchronized overlap-add, fixed synthesis), TD-\n...\nAs a side-effect of the algorithm, transients tend to be well-\npreserved contrary to what happens with time-domain (transient\nduplication) or phase vocoder-based algorithms (transient smear-",
+    "source": "web",
+    "title": "PVSOLA: A Phase Vocoder with Synchronized OverLap-Add",
+    "url": "http://recherche.ircam.fr/pub/dafx11/Papers/57_e.pdf"
+   },
+   {
+    "id": 26,
+    "last_updated": "2025-05-02",
+    "snippet": "Phase dispersion indicates that the phase relationship between different STFT bins are not\npreserved, causing an annoying reverberant artifact called phasiness.\n...\nTransient smearing\nis an artifact caused by the time-scale and spectral modification of attack transients; the procedure\nto avoid this artifact is called transient preservation.\n...\nEven though this method avoids phase discontinuities, it has a major draw-back: in case\nof pitched sounds it can misalign pitch peaks causing pitch discontinuities artifacts that can be\nreduced using rather long windows (between 40 and 80 ms [14] [51]).\n...\nWSOLA is a variant of SOLA algorithm that usse wave similarity measures to segment the input.\nIn fact instead of changing the synthesis hop size to avoid phase discontinuities, it uses a constant\n12\nsynthesis hop size, while the analysis hop size is adjusted by a k time lag in order to maximize\nthe wave similarity between the time scaled signal and the original input in the corresponding\ntime scaled position.\nThis approach leads to better results with lower computational complexity\n...\nstretching for factor close to one, otherwise it causes unpleasant reverberation artifacts because\ntreats in the same way both stationary and non stationary portions of sound. Special measure",
+    "source": "web",
+    "title": "UNIVERSIT `A DI PADOVA",
+    "url": "https://thesis.unipd.it/retrieve/6b0fb0a0-ebc7-4553-92b4-76661ac353f1/tesi.pdf"
+   },
+   {
+    "date": "2016-04-01",
+    "id": 27,
+    "last_updated": "2026-05-16",
+    "snippet": "",
+    "source": "web",
+    "title": "[PDF] Time Stretching & Pitch Shifting with the Web Audio API: Where are we at? | Semantic Scholar",
+    "url": "https://www.semanticscholar.org/paper/Time-Stretching-&-Pitch-Shifting-with-the-Web-Audio-Dias-Matos/7a4c90f7d2de4c457073ff6c5a862cbd4db05f33"
+   },
+   {
+    "id": 28,
+    "last_updated": "2025-11-04",
+    "snippet": "In this paper we propose a new method to reduce phase vocoder\nartifacts during attack transients.",
+    "source": "web",
+    "title": "A new approach to transient processing in the phase vocoder",
+    "url": "https://hal.science/hal-01161124/document"
+   },
+   {
+    "id": 29,
+    "last_updated": "2026-07-07",
+    "snippet": "The phase vocoder is\na popular algorithm for time-stretching audio without chang-\n...\nverberation” artifacts, however, limit its application to “sim-\n...\nThe process of reducing transient smearing can be divided\ninto two steps: detecting transient events in the input signal",
+    "source": "web",
+    "title": "PhaVoRIT: A Phase Vocoder for Real-Time Interactive Time ...",
+    "url": "https://hci.rwth-aachen.de/publications/karrer2006a.pdf"
+   },
+   {
+    "id": 30,
+    "last_updated": "2025-12-15",
+    "snippet": "segment. On the other hand, uniformly applied time stretching can produce some artifacts \non fast transitions (or transients). Here one possible solution could be to identify this\ntransitions and don’t time-scale them (no segment would be repeated). \n...\nVerhelst and Roelands proposed in [89] a variant of the SOLA tradition techniques \ncalled WSOLA. It ensures sufficient signal continuity at segment joints by requiring\nmaximal similarity to the natural continuity in the original signal via cross-correlation.  \n...\nAll the above mentioned techniques consider equally transient and steady state\nparts of the input signal, thus time-scale them both in the same way. To get better results, \nit would be preferable to detect the transients regions and don’t time-scale them, just \ntranslate them into a new time position, while time-scaling the rests parts of the input \nsignal (non-transient segments). The earliest found mention of this technique is the",
+    "source": "web",
+    "title": "Audio Time-Scale Modification in the Context of Professional ...",
+    "url": "https://www.mtg.upf.edu/files/publications/Phd-2002-Jordi-Bonada.pdf"
+   },
+   {
+    "date": "2004-01-01",
+    "id": 31,
+    "last_updated": "2025-10-27",
+    "snippet": "The values are CPU cycle counts taken to execute each of the functions.\n...\nThe values in “ESP32”, “ESP32S3” and “ESP32P4” columns are for the optimized (assembly) implementation, values in “ANSI” column are for the non-optimized implementation.\n|Function Optimization|ESP32|ESP32S3|ESP32P4|ANSI Xtensa|ANSI Risc-V|ESP32|ESP32S3|ESP32P4|ANSI Xtensa|ANSI Risc-V|",
+    "source": "web",
+    "title": "Espressif DSP Library Benchmarks - ESP32",
+    "url": "https://docs.espressif.com/projects/esp-dsp/en/latest/esp32/esp-dsp-benchmarks.html"
+   },
+   {
+    "id": 32,
+    "last_updated": "2026-05-05",
+    "snippet": "|Model Type|RAM|PSRAM|Average Running Time per Frame|Frame Length|\n|--|--|--|--|--|\n|Quantised WakeNet8 @ 2 channel|50 KB|1640 KB|10.0 ms|32 ms|\n|Quantised WakeNet9 @ 2 channel|16 KB|324 KB|3.0 ms|32 ms|\n|Quantised WakeNet9 @ 3 channel|20 KB|347 KB|4.3 ms|32 ms|\n...\n|Distance|Quiet|Stationary Noise (SNR = 4 dB)|Speech Noise (SNR = 4 dB)|AEC I nterruption (-10 dB)|\n|--|--|--|--|--|\n|1 m|98%|96%|94%|96%|\n|3 m|98%|96%|94%|94%|\nFalse triggering rate: once in 12 hours\nNote\nThe above test results are based on the ESP32-S3-Korvo V4.0 development board and the WakeNet9 (Alexa) model.\n...\n|Model Type|Internal RAM|PSRAM|Average Running Time per Frame|Frame Length|\n...\n|MultiNet 4|16.8KB|1866 KB|18 ms|32 ms|\n|MultiNet 4 Q8|10.5 KB|1009 KB|11 ms|32 ms|\n|MultiNet 5 Q8|16 KB|2310 KB|12 ms|32 ms|\n|MultiNet 6|32 KB|4100 KB|12 ms|32 ms|\n|MultiNet 7|18 KB|2920 KB|11 ms|32 ms|\n### Word Error Rate Performance Test \n|Model Type|librispeech test-clean|librispeech test-other|\n...\n|MultiNet5-en|16.5%|41.4%|\n|MultiNet6-en|9.0%|21.3%|\n|MultiNet7-en|8.5%|21.3%|\n...\n|Model Type|Distance|Quiet|Stationary Noise (SNR=5~10dB dB)|Speech Noise (SNR=5~10dB dB)|\n...\n|MultiNet 5_en|3 m|95.4%|85.9%|82.7%|\n|MultiNet 6_en|3 m|96.8%|87.9%|85.5%|\n|MultiNet 7_en|3 m|97.2%|92.3%|90.6%|\n...\nCPU loading test (ESP32 @240 MHz):\n|Speech Rate|0|1|2|3|4|5|\n...\n|Times faster than real time|4.5|3.2|2.9|2.5|2.2|1.8|",
+    "source": "web",
+    "title": "Benchmark - ESP32-S3 - — ESP-SR latest documentation",
+    "url": "https://docs.espressif.com/projects/esp-sr/en/latest/esp32s3/benchmark/README.html"
+   },
+   {
+    "date": "2025-09-05",
+    "id": 33,
+    "last_updated": "2026-08-01",
+    "snippet": "Based on benchmark data for 1024-point complex FFT (O2 optimization):\n|Platform|Radix-2 Cycles|Radix-4 Cycles|Performance Gain|Data Source|\n|--|--|--|--|--|\n|ESP32 AE32|113,205|75,068|34% faster|`dsps_fft2r_fc32` vs `dsps_fft4r_fc32`|\n|ESP32-S3 AES3|97,847|64,482|34% faster|Optimized assembly implementations|\n|ESP32-P4 ARP4|126,053|89,820|29% faster|RISC-V vector instructions|\n|ANSI (Xtensa)|175,729|122,592|30% faster|Portable C reference|\n|ANSI (RISC-V)|140,083|95,550|32% faster|ESP32-P4 ANSI fallback|\n...\nFor 1024-point FFT on ESP32-S3 (O2 optimization):\n- **32-bit float (`dsps_fft2r_fc32`)**: 97,847 cycles\n- **16-bit integer (`dsps_fft2r_sc16`)**: 15,623 cycles\n- **Performance ratio**: ~6.3x faster for fixed-point\n- **Memory usage ratio**: ~2x less memory for fixed-point",
+    "source": "web",
+    "title": "FFT and Transforms | espressif/esp-dsp | DeepWiki",
+    "url": "https://deepwiki.com/espressif/esp-dsp/4.2-fft-and-transforms"
+   },
+   {
+    "id": 34,
+    "last_updated": "2026-03-17",
+    "snippet": "The table bellow contains benchmarks of functions provided by ESP-DSP library.\nThe values are CPU cycle counts\ntaken to execute each of the functions.\nThe Values in the column “O2” are made with compiler optimization for\nspeed, and in the column “Os” column are made with compiler optimization for size.\nThe values in “ESP32” and\n“ESP32S3” column are for the optimized (assembly) implementation, values in “ANSI” column are for the non-\noptimized implementation.\nFunction\nOptimization\nESP32\nO2\nESP32S3\nO2\nANSI\nO2\nESP32\nOs\nESP32S3\nOs\nANSI\nOs\nDot Product",
+    "source": "web",
+    "title": "Read the Docs Template Documentation",
+    "url": "https://espressif-docs.readthedocs-hosted.com/_/downloads/esp-dsp/en/latest/pdf/"
+   },
+   {
+    "date": "2025-09-05",
+    "id": 35,
+    "last_updated": "2026-07-29",
+    "snippet": "|Platform|Optimized Implementation|Architecture Features|\n...\n|ESP32-S3|`_aes3` variants|Xtensa LX7, Vector extensions|\n...\n|**Absolute Performance**|CPU cycles for standard workloads|`dsps_fft2r_fc32` 1024 points: ~97K cycles|",
+    "source": "web",
+    "title": "Benchmarking Framework | espressif/esp-dsp | DeepWiki",
+    "url": "https://deepwiki.com/espressif/esp-dsp/5.1-benchmarking-framework"
+   },
+   {
+    "id": 36,
+    "last_updated": "2024-07-16",
+    "snippet": "",
+    "source": "web",
+    "title": "[PDF] Time Stretching & Pitch Shifting with the Web Audio API",
+    "url": "https://repository.gatech.edu/bitstreams/f4b1290d-061f-45ab-8016-dfa8240b024e/download"
+   },
+   {
+    "date": "2010-04-27",
+    "id": 37,
+    "last_updated": "2025-12-22",
+    "snippet": "",
+    "source": "web",
+    "title": "ESP32-S3 Technical Reference Manual",
+    "url": "https://documentation.espressif.com/esp32-s3_technical_reference_manual_en.html"
+   },
+   {
+    "date": "2026-02-16",
+    "id": 38,
+    "last_updated": "2026-03-16",
+    "snippet": "",
+    "source": "web",
+    "title": "Practical FFT on the ESP32-S3: DSP Acceleration and Real-World Usage",
+    "url": "https://www.reddit.com/r/esp32/comments/1r5xhkz/practical_fft_on_the_esp32s3_dsp_acceleration_and/"
+   },
+   {
+    "date": "2019-01-01",
+    "id": 39,
+    "last_updated": "2025-08-20",
+    "snippet": "## Build a Benchmarks Table The Benchmark table [esp-dsp-benchmarks.rst](docs/esp-dsp-benchmarks.rst) contains benchmarks for ESP32 and ESP32S3 CPUs.\nThe benchmarks collected with compiler optimization flags for speed (Os) and for size (Q2).",
+    "source": "web",
+    "title": "espressif/esp-dsp • v1.2.0 • ESP Component Registry",
+    "url": "https://components.espressif.com/components/espressif/esp-dsp/versions/1.2.0?language="
+   },
+   {
+    "date": "2021-12-14",
+    "id": 40,
+    "last_updated": "2025-08-30",
+    "snippet": "ESP32 & ESP32-S3 use the esp dsp lib https://github.com/espressif/esp-dsp/blob/master/docs/esp-dsp-benchmarks.rst I think its only fixed point the S3 has extended instructions and optimisation but if you check the above benchmark its considerable.\nThe s3 garners x2-x6 ML with new vector instructions over esp32 and just short of x15 for fixed point 16bit FFT as it seems directly focused on voice AI.",
+    "source": "web",
+    "title": "Audio FFT calculation on ESP32 or dedicated DSP?",
+    "url": "https://www.reddit.com/r/embedded/comments/rg5rco/audio_fft_calculation_on_esp32_or_dedicated_dsp/"
+   },
+   {
+    "date": "2026-03-25",
+    "id": 41,
+    "last_updated": "2026-05-26",
+    "snippet": "Stretches audio in time without changing its pitch, using a hybrid algorithm that\ncombines phase vocoder (for tonal content) with WSOLA (for transients).\n...\nTransient segments are stretched with WSOLA (preserves waveform shape and attack character).\nTonal segments are stretched with a phase vocoder (preserves frequency content with identity phase locking).",
+    "source": "web",
+    "title": "timestretch - Lib.rs",
+    "url": "https://lib.rs/crates/timestretch"
+   },
+   {
+    "date": "2024-08-04",
+    "id": 42,
+    "last_updated": "2025-10-08",
+    "snippet": "This repository is to help benchmark various math operations on the ESP32-S3 microcontroller.\nCurrently, this is set up to\nmultiply a million numbers in memory (thus exercising the PSRAM) using the following methods:\n- int8 using the Xtensa/Espressif SIMD instructions\n- int8 using standard C\n- Floating point using standard C\nTiming information is collected during execution and displayed in the console in terms of raw time (microseconds) and \"million multiply-accumulates per second\" (MMACS).",
+    "source": "web",
+    "title": "tmiw/esp32s3-benchmark",
+    "url": "https://github.com/tmiw/esp32s3-benchmark"
+   },
+   {
+    "date": "2026-05-08",
+    "id": 43,
+    "last_updated": "2026-07-18",
+    "snippet": "The textbook algorithm for doing this on speech is WSOLA: Waveform Similarity Overlap-Add.\nWe wrote a pure-TypeScript implementation with zero dependencies that runs identically in the browser and in Node.\n...\nWSOLA stretches audio by overlap-adding analysis frames at output positions.\nThe trick: instead of grabbing each frame at a fixed input offset, it searches a small window around the expected offset and picks the frame whose overlap region best matches what's already in the output.\nThe match is scored by normalized cross-correlation, so amplitude differences don't dominate.\nFor each synthesis hop:\n1. Compute the *expected* input position from the speed ratio.\n2. Search ±10ms around it.\nScore each candidate by normalized cross-correlation against the output so far.\n3. Hann-window the chosen frame and overlap-add it into the output.\n```\n// Defaults at 24kHz:\n// windowSize = 30ms (720 samples)\n// synthesisHop = windowSize / 4 (75% overlap)\n// searchRadius = 10ms (240 samples)\n// correlationStep = 8 samples\n...\nThe stretcher is exposed as\n```\n@speech-sdk/core/plugins\n```\nso you can apply the same step outside the SDK pipeline:\n```\nimport { timeStretch } from \"@speech-sdk/core/plugins\";\nconst stretched = timeStretch(pcm, { speed: 1.25, sampleRate: 24000 });\n```\n```\npcm\n```\nis an\n```\nInt16Array\n```\n```\nUint8Array\n```\nof raw s16le bytes, or an\n```\nArrayBuffer\n```\n. Speed range is\n```\n0.75\n```\n```\n1.5\n```\n; sample rate range is\n```\n8000\n```\n```\n48000\n```",
+    "source": "web",
+    "title": "Writing a WSOLA time-stretcher for the Speech SDK",
+    "url": "https://www.speechbase.ai/blog/writing-a-wsola-time-stretcher"
+   },
+   {
+    "id": 44,
+    "last_updated": "2025-11-03",
+    "snippet": "",
+    "source": "web",
+    "title": "Benchmark for Time-Stretching based on simple Phase ...",
+    "url": "https://www.reddit.com/r/DSP/comments/1b0ffz6/benchmark_for_timestretching_based_on_simple/"
+   },
+   {
+    "date": "2021-06-05",
+    "id": 45,
+    "last_updated": "2026-04-16",
+    "snippet": "",
+    "source": "web",
+    "title": "jatinchowdhury18/time-stretcher",
+    "url": "https://github.com/jatinchowdhury18/time-stretcher"
+   },
+   {
+    "date": "2020-04-17",
+    "id": 1,
+    "last_updated": "2026-07-20",
+    "snippet": "In terms of heart sounds, Rennert *et al*.[15] stated that the heart sounds fall between 20 and 650 Hz and are better detected by the bell of a stethoscope.\n...\nThe bandwidth of cardiopulmonary auscultation is between 50 and 1200 Hz.[16] In fact, heart sounds have multiple components with S1 and S2 being normal, S3 being normal or pathologic and S4 almost always being pathologic.\nSpencer and Pennington[14] indicated that S1 and S2 occur between 50 and 500 Hz, while S3 and S4 occur between 20 and 200 Hz and S3 appearing at the lowest frequency.",
+    "source": "web",
+    "title": "Frequency Responses of Conventional and Amplified ... - PMC",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7305673/"
+   },
+   {
+    "date": "2020-07-08",
+    "id": 2,
+    "last_updated": "2026-08-09",
+    "snippet": "The cardiac sounds S1 and S2 represented by (Figure 1) are by definition non-stationary signals (whose spectral properties, therefore, vary as a function of time) and are located in the low-frequency range, approximately between 10 Hz and 300 Hz [6].\nThe sound S2 a greater frequency range than that of the sound S1 [10].\n...\nThe first heart sound (1): It registers in low-frequency 10 Hz to 200 Hz last 100 minutes its recording focus is located at the tip of the heart, the phonocardiographic analysis makes it possible to distinguish four components among which only the second and the third are audible.\n...\nThe second heart sound (S2): This sound marking the end of the ventricular systole lasts less than 100 minutes and is located in high-frequency 20 Hz to 250 Hz.\nIts recording focus is located at the base, that is to say at the upper part of the thorax, on either side of the sternum; Most often, this second sound consists of four components, two of which are main.\n...\nFrequency study of the four heart sounds: The variation in the frequency range of cardiac sounds S1 and S2 (in the form of histograms) illustrated by (Figure 5) of normal PCG signals, varies between 76 Hz and 140 Hz for cardiac sound S1 (with an average value of 106.6 Hz) and between 102 Hz and 202 Hz for cardiac sound S2 (with an average value of 153.5 Hz).\n...\nNote that this range is between 102 Hz and 121 Hz for cardiac sound S3, (with an average value of 109.7 Hz minutes) and between 66 Hz and 117 Hz for cardiac sound S4 (with an average value of 91.95 Hz).",
+    "source": "web",
+    "title": "Analysis of the Four Heart Sounds Statistical Study and ...",
+    "url": "https://clinicalcasereportsjournal.com/article/1000046/analysis-of-the-four-heart-sounds-statistical-study-and-spectro-temporal-characteristics"
+   },
+   {
+    "date": "2011-09-12",
+    "id": 3,
+    "last_updated": "2026-03-20",
+    "snippet": "The sound emitted by a human heart during a single cardiac cycle consist of two dominant events, known as the first heart sound S1 and the second heart sound S2 (Figure1), S1 relates to the closing of the mitral and tricuspid valves whilst S2 is generated by the halting of the aortic and pulmonary valves leaflets [1].\n...\nThe frequency spectrum illustrated in Figure4a shows that the normal PCG signal has a frequency content varying from around 40Hz up to 200Hz.\n...\nThe spectrum of S1 has reasonable values in the range 10-180Hz.\n...\nThe spectrum of the sound S2 has reasonable values in the range 50-250Hz.",
+    "source": "web",
+    "title": "Computerized Heart Sounds Analysis",
+    "url": "https://www.intechopen.com/chapters/19510"
+   },
+   {
+    "id": 4,
+    "last_updated": "2025-10-07",
+    "snippet": "The two normal heart sounds are S1 and S2, and \nare low frequency signals.\nThe heart sounds with \nhigher frequency are called murmurs.\nMurmurs \n...\nTable 1.\nHeart Sounds Frequency Range\nPCG Signal \nFrequency Range (Hz)\nS1 and S2 \n20 – 200\nMurmurs \n120 - 700\n81",
+    "source": "web",
+    "title": "[PDF] Phonocardiographic Signal and Electrocardiographic Signal ...",
+    "url": "https://pdfs.semanticscholar.org/1d4b/bd3793a61beb32b110efd8559588f69c7d1b.pdf"
+   },
+   {
+    "id": 5,
+    "last_updated": "2026-05-18",
+    "snippet": "Although the human ear can hear sounds with frequencies from 20 to 20,000 \ncycles per second (Hz), the principal frequencies of heart sounds and murmurs \nare at the lower end of this range, from 20 to 500 Hz.1,2 Therefore low-frequency\nsounds are those whose dominant frequencies are less than 100 Hz, such as third \nand fourth heart sounds and the diastolic murmur of mitral stenosis.\nThese sounds \n...\nrelatively less well than higher frequencies.\nThe murmur containing the high­\nest frequency sound is aortic regurgitation, whose dominant frequencies are \napproximately 400 Hz.\nThe principal frequencies of other sounds and murmurs are \nbetween 100 and 400 Hz.\nCHAPTER 39\n...\nAt the second left intercostal space, S2 is generally louder, shorter, and sharper\nthan S1 (S2 has more high-frequency energy than S1, which is why dup, a snappier \nsound than lub, is used to characterize S2).",
+    "source": "web",
+    "title": "Chapter 39 - Auscultation of the Heart: General Principles",
+    "url": "https://ia800603.us.archive.org/12/items/EvidenceBasedPhysicalDiagnosis/39AuscultationOfTheHeartGeneralPrinciples.pdf"
+   },
+   {
+    "date": "2016-07-10",
+    "id": 6,
+    "last_updated": "2025-10-06",
+    "snippet": "Systolic murmurs, mitral diastolic murmurs, and S1 – S4 sounds range from 20 to 115 Hz, pericardial rubs, pulmonary regurgitation, and aortic regurgitation range from 140 to 600 Hz [2], while mechanical heart sounds are heard at ranges over 1000 Hz [3].",
+    "source": "web",
+    "title": "Stethoscope Performance",
+    "url": "https://thoracickey.com/stethoscope-performance/"
+   },
+   {
+    "date": "2024-08-20",
+    "id": 7,
+    "last_updated": "2026-08-09",
+    "snippet": "- Heart sounds typically have a frequency range of 20-500 Hz, with the majority of the signal energy concentrated below 200 Hz\n- The first heart sound (S1) is generally lower in frequency (20-100 Hz) compared to the second heart sound (S2), which has a higher frequency range (50-200 Hz)\n- High-frequency components (above 200 Hz) may be present in certain pathological conditions, such as valve stenosis or regurgitation, producing murmurs or clicks\n### Temporal features of PCG signals",
+    "source": "web",
+    "title": "12.4 Phonocardiogram (PCG) signal processing - Fiveable",
+    "url": "https://fiveable.me/advanced-signal-processing/unit-12/phonocardiogram-pcg-signal-processing/study-guide/qvhCqH5XnP8wUiss"
+   },
+   {
+    "id": 8,
+    "last_updated": "2026-04-19",
+    "snippet": "Heart sounds are acoustic waves in the frequency range from 30 to 500 Hz originating from \nstriking of blood flow to the wall of the heart or by opening and closing of heart valves.\nResulting \nvibrations are transferred to the surface of the thorax, where are captured by phonocardiograph.\nThe first heart sound (S1) occurs at the beginning of systole due to the closure of atrioventricular \nvalves.\nThe second heart sound (S2) originates from the end of systolic phase while the semilunar \nvalves are closing [2].",
+    "source": "web",
+    "title": "[PDF] CLASSIFICATION OF HEART SOUNDS USING TIME - DSpace",
+    "url": "https://dspace.vut.cz/bitstreams/bae73908-5ddd-4939-9196-b8713c567749/download"
+   },
+   {
+    "date": "2023-09-01",
+    "id": 9,
+    "last_updated": "2026-05-05",
+    "snippet": "Cut-off frequency of about 20 Hz is usually used for high-pass filter, while cut-off frequencies for low-pass filtration are set depending of the purpose of analysis; 100 Hz for S1/S2 detection and up to 800 Hz for evaluation of heart murmurs^18^.\n...\nBecause the heart sounds S1 and S2 are composed of frequencies lower than 100 Hz, the system is suitable for the HR detection.",
+    "source": "web",
+    "title": "Novel phonocardiography system for heartbeat detection from ...",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10474097/"
+   },
+   {
+    "id": 10,
+    "last_updated": "2026-01-31",
+    "snippet": "The first cardiac sound, S1(lub), has a\ndull and prolonged characteristic with a longer duration \n(0.1 to 0.15s) and low pitch sound of frequency ranges \nfrom 10 to 200Hz.\nThis cardiac sound can be auscultated at \nthe arrival of the systolic phase [10].\n...\nThe second cardiac sound, S2(dub), has a \nshort and sharp characteristic with a shorter duration of \n0.08 to 0.12 seconds and a high pitch sound with a \nfrequency range of  20-250Hz.\nThis cardiac sound can be \nasculated between the end of systolic and the arrival of\ndiastolic phases [10].",
+    "source": "web",
+    "title": "A Novel Digital Phonocardiography Method to Identify the ...",
+    "url": "https://www.internationaljournalssrg.org/IJEEE/2022/Volume9-Issue12/IJEEE-V9I12P102.pdf"
+   },
+   {
+    "id": 11,
+    "last_updated": "2025-11-03",
+    "snippet": "The time interval between S1 and S2 is the systole, while the S2 and next S1 gap corresponds to the diastole.\nS1 implies the closing of the tricuspid and mitral valves immediately preceding the systole, while S2 corresponds to the closing of the aortic and pulmonary valves at the end of systole.\n...\nOn the other hand, the human heart produces low-frequency sounds (20–1000 Hz), and therefore in former studies,2,17 the PCG has been characterized by means of perceptual analysis, using well-known techniques from speech processing such as\n...\nThe human heart produces sounds with low-frequency components (20–1000 Hz), a large dynamic range, and changing content.",
+    "source": "web",
+    "title": "Digital Auscultation Analysis for Heart Murmur Detection",
+    "url": "https://link.springer.com/article/10.1007/s10439-008-9611-z"
+   },
+   {
+    "id": 12,
+    "last_updated": "2025-11-03",
+    "snippet": "Table 1: Criteria for the three frequency ranges.\nFull range \n0-100 Hz \nSub-audible range \n0-20 Hz \nAudible range \n20-100 Hz ",
+    "source": "web",
+    "title": "University of Central Florida",
+    "url": "https://stars.library.ucf.edu/cgi/viewcontent.cgi?article=2538&context=honorstheses"
+   },
+   {
+    "date": "2021-11-26",
+    "id": 13,
+    "last_updated": "2026-05-05",
+    "snippet": "Diastole and systole segments of CAD patients showed increased energy at frequencies 20-120 Hz; furthermore, this difference was statistically significant for the diastole.",
+    "source": "web",
+    "title": "Spectral analysis of heart sounds associated with coronary ...",
+    "url": "https://pubmed.ncbi.nlm.nih.gov/34649235/"
+   },
+   {
+    "date": "2007-06-11",
+    "id": 14,
+    "last_updated": "2026-05-05",
+    "snippet": "Typically, innocent murmurs had lower frequencies (below 200 Hz) and a frequency spectrum with a more harmonic structure than pathological cases.\n...\nA parabolic-shaped cup combined with a high-quality electric microphone and variable-gain battery-powered amplifier in the electronic stethoscope gave a flat frequency response in the whole frequency range of usual heart sounds and murmurs (from 75 to 1500 Hz).",
+    "source": "web",
+    "title": "Phono-spectrographic analysis of heart murmur in children",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC1906774/"
+   },
+   {
+    "date": "2007-01-01",
+    "id": 15,
+    "last_updated": "2025-08-07",
+    "snippet": "",
+    "source": "web",
+    "title": "Computer aided analysis of phonocardiogram - PubMed",
+    "url": "https://pubmed.ncbi.nlm.nih.gov/17701776/"
+   },
+   {
+    "date": "2017-09-07",
+    "id": 61,
+    "last_updated": "2025-06-15",
+    "snippet": "A cross platform command line utility implementing a phase vocoder.\nThe PhaseVocoder allows for time compression/expansion, pitch shifting and resampling of audio with quite a good degree of quality.\n...\n**Steps for Building**\n1. Clone this repo.\n2. Create a new directory at the parallel level as the cloned repo.\nThis directory will hold the project files CMake creates.\n3. cd into this new directory.\n4. From the command line, run *cmake -G YourDesiredGeneratorType ../PhaseVocoder/Source*\n5. Run make or open the project file in an IDE and build.\n...\nTime Stretching Example - Increase the length of the input by a factor of two:\n```\nPhaseVocoder -i in.wav -o out.wav -s 2.0\n```\nTime Compression Example - Reduce the length of the input by twenty percent:\n```\nPhaseVocoder -input in.wav -output out.wav -stretch 0.8\n```\n...\nA cross platform command line utility allowing for time expansion/compression, pitch shifting and resampling of audio.",
+    "source": "web",
+    "title": "GitHub - tmdarwen/PhaseVocoder: A cross platform command line utility allowing for time expansion/compression, pitch shifting and resampling of audio.",
+    "url": "https://github.com/tmdarwen/PhaseVocoder"
+   },
+   {
+    "date": "2016-01-19",
+    "id": 62,
+    "last_updated": "2026-04-17",
+    "snippet": "This is a phase vocoder written in C++.\nThe main purpose of a phase vocoder is to change the speed and pitch of a given voice recording file.\nCurrent version supports the following time stretching algorithms\n- Default: number of frames remain the same, while the output synthesis-rate/frame-shift/hop-size is modified correspondingly.\n- --phaseLock: perform phase locking as described in [Laroche99]\n- --fdTimeStretch: perform interpolate/extrapolate on spectrogram, thus the number of frames changed; while the output synthesis-rate/frame-shift/hop-size remain the same as analysis.\n- Both --phaseLocking and --fdTimeStretch\nHeuristically, use --phaseLock for human speech and --fdTimeStretch for music yield the best result.\n...\nModify the speed and pitch of a given audio file.",
+    "source": "web",
+    "title": "Phase Vocoder",
+    "url": "https://github.com/ybdarrenwang/PhaseVocoder"
+   },
+   {
+    "date": "2022-02-24",
+    "id": 63,
+    "last_updated": "2026-04-16",
+    "snippet": "",
+    "source": "web",
+    "title": "Time-stretching (WSOLA) incorrect length output · Issue #206",
+    "url": "https://github.com/JorenSix/TarsosDSP/issues/206"
+   },
+   {
+    "date": "2021-06-05",
+    "id": 64,
+    "last_updated": "2026-04-16",
+    "snippet": "C++ audio time-stretching implementation, based on the algorithms\npresented in:\n- Audio Time Stretching with an Adaptive Phase Vocoder, Nicolas Juillerat and Beat Hirsbrunner (ICASP 2017)",
+    "source": "web",
+    "title": "jatinchowdhury18/time-stretcher",
+    "url": "https://github.com/jatinchowdhury18/time-stretcher"
+   },
+   {
+    "date": "2020-09-16",
+    "id": 65,
+    "last_updated": "2026-03-21",
+    "snippet": "PyTSMod is an open-source library for Time-Scale Modification algorithms in Python 3.\nPyTSMod contains basic TSM algorithms such as Overlap-Add (OLA), Waveform-Similarity Overlap-Add (WSOLA), Time-Domain Pitch-Synchronous Overlap-Add (TD-PSOLA), and Phase Vocoder (PV-TSM).\n...\nAn open-source Python library for audio time-scale modification.",
+    "source": "web",
+    "title": "KAIST-MACLab/PyTSMod: An open-source Python ...",
+    "url": "https://github.com/KAIST-MACLab/PyTSMod"
+   },
+   {
+    "date": "2025-04-25",
+    "id": 66,
+    "last_updated": "2025-04-26",
+    "snippet": "A C++ based phase vocoder example that allows pitch and timescale modifications of incoming signals.\nUI built with Juce.\n...\nBela Sound Mangler is a simple & intuitive, quaint & chaotic tool for sound exploration developed using phase vocoder techniques in C++ for the Bela platform.\n...\nAn audio processing tool that enables time stretching and pitch shifting.",
+    "source": "web",
+    "title": "Build software better, together",
+    "url": "https://github.com/topics/phase-vocoder?l=c++"
+   },
+   {
+    "id": 67,
+    "last_updated": "2025-02-24",
+    "snippet": "Time stretching means altering the duration of a signal without changing its pitch\n...\nImplements the paul stretch algorithm for extreme timestretching\n...\n#### (static) phaseVocoder()\nImplements a standard phase vocoder timestretch algorithm.\nIt returns a function that process the data.",
+    "source": "web",
+    "title": "phase-vocoder",
+    "url": "https://oramics.github.io/dsp-kit/api/module-phase-vocoder.html"
+   },
+   {
+    "date": "1995-01-01",
+    "id": 68,
+    "last_updated": "2025-10-27",
+    "snippet": "Change the speed or duration of the signal without changing the pitch.\nThis transform lets you choose\nbetween\n`method=\"signalsmith_stretch\"` and\n`method=\"librosa_phase_vocoder\"`.\nIf you need other time stretching methods,\nconsider the following alternatives:\n...\n- https://github.com/vinusankars/ESOLA\n...\nfrom audiomentations import TimeStretch\ntransform = TimeStretch(\nmin_rate=0.8,\nmax_rate=1.25,\nleave_length_unchanged=True,\np=1.0\naugmented_sound = transform(my_waveform_ndarray, sample_rate=16000)",
+    "source": "web",
+    "title": "TimeStretch - audiomentations documentation",
+    "url": "https://iver56.github.io/audiomentations/waveform_transforms/time_stretch/"
+   },
+   {
+    "date": "2016-08-26",
+    "id": 69,
+    "last_updated": "2026-04-17",
+    "snippet": "VexWarp is a JavaScript implementation of the STFT and Phase Vocoder algorithms for audio time stretching and pitch shifting.\nIt can be used to slow down (or speed up) audio segments without changing pitch, ot to transpose audio segments without changing speed, or both.",
+    "source": "web",
+    "title": "0xfe/vexwarp: Audio Time Stretching and Pitch Shifting",
+    "url": "https://github.com/0xfe/vexwarp"
+   },
+   {
+    "date": "2026-05-08",
+    "id": 70,
+    "last_updated": "2026-07-18",
+    "snippet": "The textbook algorithm for doing this on speech is WSOLA: Waveform Similarity Overlap-Add.\nWe wrote a pure-TypeScript implementation with zero dependencies that runs identically in the browser and in Node.\n...\nWSOLA stretches audio by overlap-adding analysis frames at output positions.\nThe trick: instead of grabbing each frame at a fixed input offset, it searches a small window around the expected offset and picks the frame whose overlap region best matches what's already in the output.\nThe match is scored by normalized cross-correlation, so amplitude differences don't dominate.\nFor each synthesis hop:\n1. Compute the *expected* input position from the speed ratio.\n2. Search ±10ms around it.\nScore each candidate by normalized cross-correlation against the output so far.\n3. Hann-window the chosen frame and overlap-add it into the output.\n```\n...\nThe stretcher is exposed as\n```\n@speech-sdk/core/plugins\n```\nso you can apply the same step outside the SDK pipeline:\n```\nimport { timeStretch } from \"@speech-sdk/core/plugins\";\nconst stretched = timeStretch(pcm, { speed: 1.25, sampleRate: 24000 });\n```\n...\n. Speed range is\n```\n0.75\n```\n```\n1.5\n```\n; sample rate range is\n```\n8000\n```\n```\n48000\n```",
+    "source": "web",
+    "title": "Writing a WSOLA time-stretcher for the Speech SDK",
+    "url": "https://www.speechbase.ai/blog/writing-a-wsola-time-stretcher"
+   },
+   {
+    "id": 71,
+    "last_updated": "2024-07-16",
+    "snippet": "",
+    "source": "web",
+    "title": "Time Stretching & Pitch Shifting with the Web Audio API",
+    "url": "https://repository.gatech.edu/bitstreams/f4b1290d-061f-45ab-8016-dfa8240b024e/download"
+   },
+   {
+    "date": "2026-03-25",
+    "id": 72,
+    "last_updated": "2026-05-26",
+    "snippet": "Pure Rust audio time-stretching library optimized for electronic dance music.\nStretches audio in time without changing its pitch, using a hybrid algorithm that\ncombines phase vocoder (for tonal content) with WSOLA (for transients).\nThe only\nexternal DSP dependency is `rustfft`.",
+    "source": "web",
+    "title": "timestretch - Lib.rs",
+    "url": "https://lib.rs/crates/timestretch"
+   },
+   {
+    "id": 73,
+    "last_updated": "2026-08-10",
+    "snippet": "functional_phase_vocoder.Rd\nGiven a STFT tensor, speed up in time without modifying pitch by a factor of rate.\nrate\nfunctional_phase_vocoder(complex_specgrams, rate, phase_advance)\n(Tensor): Dimension of (..., freq, time, complex=2)\n(..., freq, time, complex=2)\n(float): Speed-up factor\n(Tensor): Expected phase advance in each bin.\nDimension of (freq, 1)\ntensor: Complex Specgrams Stretch with dimension of (..., freq, ceiling(time/rate), complex=2)\n...\nphase_advance = torch_linspace(0, pi * hop_length, freq)[.., NULL]\nx = functional_phase_vocoder(complex_specgrams, rate, phase_advance)\nx$shape # with 231 == ceil (300 / 1.3)",
+    "source": "web",
+    "title": "Phase Vocoder — functional_phase_vocoder • torchaudio",
+    "url": "https://mlverse.github.io/torchaudio/reference/functional_phase_vocoder.html"
+   },
+   {
+    "date": "2023-03-03",
+    "id": 74,
+    "last_updated": "2026-04-17",
+    "snippet": "time stretching algorithm for audio without pitch shifting\n# how to use?\n1. git clone https://github.com/Abletobetable/time-stretch.git\n2. cd time-stretch\n3. ./run.sh \"<input_path>.wav\" \"<output_path>.wav\" <time_stretching_rate>\n0 < time_stretching_rate < 1 - squeeze\n1 <= time_stretching_rate - stretch\n## About\nimplement time stretching algorithm for audio without pitch shifting",
+    "source": "web",
+    "title": "time stretching algorithm for audio without pitch shifting",
+    "url": "https://github.com/Abletobetable/time-stretch"
+   },
+   {
+    "date": "2017-04-01",
+    "id": 75,
+    "last_updated": "2025-06-06",
+    "snippet": "The Android compilation automatically builds separate .so library binaries for ARM, X86 and MIPS processor architectures.\nFor optimal device support, include all these .so library binaries into the Android .apk application package, so the target Android device can automatically choose the proper library binary version to use.\n...\nTime-stretching means changing the audio stream duration without affecting it's pitch.\nSoundTouch uses WSOLA-like time-stretching routines that operate in the time domain.\n...\nTypical i/o latency for the SoundTouch time-stretch algorithm is around 100 ms.\n...\nSoundTouch 1.9 onwards support running the algorithms parallel in several CPU cores.\nBased on benchmark the experienced multi-core processing speed-up gain ranges between +30% (on a high-spec dual-core x86 Windows PC) to 215% (on a moderately low-spec quad-core ARM of Raspberry Pi2).",
+    "source": "web",
+    "title": "GitHub - bilibili/soundtouch: SoundTouch library compiled for ijkplayer/Android http://www.surina.net/soundtouch/sourcecode.html",
+    "url": "https://github.com/bilibili/soundtouch"
+   },
+   {
+    "id": 46,
+    "last_updated": "2026-07-07",
+    "snippet": "The most typical artifacts occurring in audio signals that were produced by WSOLA\nare stuttering artifacts.\nMost often they are audible at transient regions in an audio\nsignal.\nTransients are very short, noise-like parts in audio signals that typically originate\nfrom instrument onsets like for example the stroke of a guitar string or a drum hit.\nAt",
+    "source": "web",
+    "title": "Time-Scale Modification Algorithms for Music Audio Signals",
+    "url": "https://audiolabs-erlangen.de/content/05_fau/professor/00_mueller/01_group/2011_DriedgerJonathan_TSM_MasterThesis.pdf"
+   },
+   {
+    "date": "2014-03-14",
+    "id": 47,
+    "last_updated": "2025-06-16",
+    "snippet": "*Time-stretching* means changing the audio stream duration without affecting it's pitch.\nSoundTouch uses WSOLA-like time-stretching routines that operate in the time domain.\n...\nThis mode is activated by calling SoundTouch::setSetting() function with parameter  id of SETTING_USE_QUICKSEEK and value \"1\", i.e.",
+    "source": "web",
+    "title": "soundtouch/README.md at master · rspeyer/soundtouch",
+    "url": "https://github.com/rspeyer/soundtouch/blob/master/README.md"
+   },
+   {
+    "id": 48,
+    "last_updated": "2026-07-22",
+    "snippet": "A prominent problem with WSOLA-like methods is known as transient doubling or stuttering.\nThis artifact is visualized in Figure 7, where we can see a single transient in the input signal x that is\ncontained in the overlapping region of two successive adjusted analysis frames x′\nm and x′\nm+1.\nWhen the\nframes are relocated and copied to the output signal, the transient is duplicated and can be heard\ntwo times in quick succession.\nA related artifact is transient skipping where transients get lost in the\n...\nOne possibility to reduce transient doubling and skipping artifacts in WSOLA is to apply a\ntransient preservation scheme.",
+    "source": "web",
+    "title": "A Review of Time-Scale Modification of Music Signals",
+    "url": "https://sites.units.it/ramponi/teaching/DSP/materials/S03.4a/Driedger16_Review.pdf"
+   },
+   {
+    "id": 49,
+    "last_updated": "2026-01-19",
+    "snippet": "Phase dispersion indicates that the phase relationship between different STFT bins are not\npreserved, causing an annoying reverberant artifact called phasiness.\nPhasiness can be dramat-\nically reduced using a real-time inexpensive technique named rigid phase locking [26], whose\npatent is owned by Creative Technology Ltd.\n[13].\n...\nTransient smearing is a much more complex problem to solve real-time.\nTransient smearing\nis an artifact caused by the time-scale and spectral modification of attack transients; the procedure\nto avoid this artifact is called transient preservation.\n...\nThe artifact caused by phase dispersion is called phasiness, and basically it is due to the fact\nthat phase dispersion introduces beatings1 between adjacent channels causing a sort of reverber-\nant effect.\n...\nceived attack, but in a complete change in the sound characteristics.",
+    "source": "web",
+    "title": "UNIVERSIT `",
+    "url": "https://thesis.unipd.it/bitstream/20.500.12608/16470/1/tesi.pdf"
+   },
+   {
+    "id": 50,
+    "last_updated": "2025-09-16",
+    "snippet": "The introduced tolerance for the analysis\nframes strongly reduces artifacts resulting from phase dis-\ncontinuities.\nHowever, especially at transients in the input\nsignal, the algorithm introduces noticeable stuttering arti-\nfacts in the output signal.\nThese artifacts originate from\nshifted frame positions which tend to cluster around tran-\nsients in the input signal.\nIn the output signal, the transients\n...\nstuttering sound.\nFor example, in Figure 3c, the first tran-\nsient is repeated three times with different amplitudes.\n...\nThe core idea of the phase\nvocoder [5, 6] is to see each analysis frame as a weighted\nsum of sinusoids with known frequency and phase.\nThe\nsynthesis frames are then computed by adapting the phases\nof these sinusoids such that no phase discontinuities are in-\ntroduced when adding up the relocated synthesis frames.",
+    "source": "web",
+    "title": "TSM Toolbox: MATLAB Implementations of Time-Scale ...",
+    "url": "https://www.audiolabs-erlangen.de/content/resources/MIR/TSMtoolbox/2014_DriedgerMueller_TSM-Toolbox_DAFX.pdf"
+   },
+   {
+    "id": 51,
+    "last_updated": "2025-04-08",
+    "snippet": "Though\nthe phase vocoder gives far better results for polyphonic signals, it\nalso introduces some artifacts.\nThe two main artifacts are known\nas transient smearing and phasiness.\nTransient smearing refers\nto the softening of attacks such that the natural percussiveness of\nthe transient regions is lost.\nPhasiness, on the other hand, is often\nperceived as if a reverb-like effect has been added to the sound.\nThe reason for these is that the algorithm does not ensure phase\ncoherence across frequency channels in a given frame.\nIn previous works, Duxbury [1] proposes a modification of the\nstandard phase vocoder time-scaling algorithm that partially solves\nthe problem of transient smearing and considerably reduces phasi-\nness by means of phase-locking and onset-based transient preser-",
+    "source": "web",
+    "title": "Proc. of the 8th Int. Conference on Digital Audio Effects (DAFx’05), Madrid, Spain, September 20-22, 2005",
+    "url": "https://citeseerx.ist.psu.edu/document?repid=rep1&type=pdf&doi=ecd7529ab7059e2348e1d007f7a02370bdd05edc"
+   },
+   {
+    "id": 52,
+    "last_updated": "2024-09-26",
+    "snippet": "sive component is modified with a simple time-domain overlap-add\ntechnique using a short frame size, which preserves the transients\nto a high degree without any explicit transient detection.",
+    "source": "web",
+    "title": "Improving Time-Scale Modification of Music Signals Using ...",
+    "url": "https://qmro.qmul.ac.uk/xmlui/bitstream/123456789/12184/2/Driedger%20Improving%20Time-Scale%20Modification%20of%20Music%20Signals%20Using%20Harmonic-Percussive%20Separation%202013%20Accepted.pdf"
+   },
+   {
+    "id": 53,
+    "last_updated": "2026-04-12",
+    "snippet": "Time scaling using phase vocoder techniques is known to\nproduce specific artifacts such as transient smearing, “echo”\nand “loss of presence” collectively referred to as phasiness\n[4].\nThe artifacts are generally attributed to the loss of vertical\nphase coherence.",
+    "source": "web",
+    "title": "Phase Vocoder Done Right",
+    "url": "https://ltfat.org/notes/ltfatnote050.pdf"
+   },
+   {
+    "id": 54,
+    "last_updated": "2025-11-17",
+    "snippet": "Time stretching of audio signals using a phase vocoder \ngives high quality results, but tends to smear the transients \nbecause of insufficient time resolution [1].\nIt is hence \n...\nNo smearing artefacts are \nintroduced for moderate time stretching factors, and non-\ntransient components are better preserved.",
+    "source": "web",
+    "title": "AUDIO TIME STRETCHING WITH AN ADAPTIVE ... - PitchTech",
+    "url": "https://www.pitchtech.ch/Confs/ICASSP2017/0000716.pdf"
+   },
+   {
+    "date": "2016-05-11",
+    "id": 55,
+    "last_updated": "2025-02-13",
+    "snippet": "/// Enable/disable anti-alias filter in pitch transposer (0 = disable)\n/// </summary>\nUseAaFilter = 0,\n...\n/// Pitch transposer anti-alias filter length (8 .. 128 taps, default = 32)\n/// </summary>\nAaFilterLength = 1,\n/// <summary>\n/// Enable/disable quick seeking algorithm in tempo changer routine\n/// (enabling quick seeking lowers CPU utilization but causes a minor sound\n/// quality compromising)\n/// </summary>\nUseQuickSeek = 2,\n/// <summary>\n/// Time-stretch algorithm single processing sequence length in milliseconds.\nThis determines\n/// to how long sequences the original sound is chopped in the time-stretch algorithm.\n...\nSequenceMs = 3,\n...\n/// Time-stretch algorithm seeking window length in milliseconds for algorithm that finds the\n/// best possible overlapping location.\nThis determines from how wide window the algorithm\n/// may look for an optimal joining location when mixing the sound sequences back together.\n...\nSeekWindowMs = 4,\n...\n/// Time-stretch algorithm overlap length in milliseconds.\nWhen the chopped sound sequences\n/// are mixed back together, to form a continuous sound stream, this parameter defines over\n/// how long period the two consecutive sequences are let to overlap each other.",
+    "source": "web",
+    "title": "varispeed-sample/VarispeedDemo/SoundTouch/SoundTouchSettings.cs at master · naudio/varispeed-sample",
+    "url": "https://github.com/naudio/varispeed-sample/blob/master/VarispeedDemo/SoundTouch/SoundTouchSettings.cs"
+   },
+   {
+    "id": 56,
+    "last_updated": "2025-06-18",
+    "snippet": "Unfortunately, it is known that the PV induces artifacts\nknown as ”phasiness” and ”transient smearing” [7].\nPhasiness\nis perceived as a characteristic colouration of the sound\nwhereas transient smearing is heard as a lack of sharpness at\n…",
+    "source": "web",
+    "title": "IEEE/ACM TRANSACTIONS ON AUDIO, SPEECH AND LANGUAGE PROCESSING",
+    "url": "http://arxiv.org/pdf/1612.05156.pdf"
+   },
+   {
+    "id": 57,
+    "last_updated": "2026-07-07",
+    "snippet": "The phase vocoder is\na popular algorithm for time-stretching audio without chang-\ning the pitch; its characteristic “transient smearing” and “re-\nverberation” artifacts, however, limit its application to “sim-\nple” audio signals such as instrumental or vocal music.",
+    "source": "web",
+    "title": "PhaVoRIT: A Phase Vocoder for Real-Time Interactive Time ...",
+    "url": "https://hci.rwth-aachen.de/publications/karrer2006a.pdf"
+   },
+   {
+    "id": 58,
+    "last_updated": "2026-07-14",
+    "snippet": "(From [1]:) The object of time-scale modification is to alter the signal’s apparent time-evolution\nwithout affecting its spectral content.\nDefining an arbitrary time-scale modification amounts\nto specifying a mapping between the time in the original signal and the time in the modified\nsignal.",
+    "source": "web",
+    "title": "Time-scale Modification using the Phase Vocoder",
+    "url": "https://old.iem.at/projekte/dsp/hammer/hammer.pdf"
+   },
+   {
+    "date": "2016-02-18",
+    "id": 59,
+    "last_updated": "2025-02-17",
+    "snippet": "",
+    "source": "web",
+    "title": "[PDF] A Review of Time-Scale Modification of Music Signals † | Semantic Scholar",
+    "url": "https://www.semanticscholar.org/paper/A-Review-of-Time-Scale-Modification-of-Music-%E2%80%A0-Driedger-M%C3%BCller/0ac0fed7476412c7d85073e1cc2dd0923a1ce90f"
+   },
+   {
+    "id": 60,
+    "last_updated": "2025-11-03",
+    "snippet": "|Original|High frequency resolution|Low frequency resolution|Best trade-off|\n|--|--|--|--|\n|Good on steady-state sound, but transient smearing|Good on transients (percussive), poor on steady-state|Perfectible|\n**The idea: combine the two!**\n|Transients|Steady-state|\n...\n|1.\nSplit transients / steady state|\n|2.\nProcess with appropriate time-frequency resolution|Low frequency resolution|High frequency resolution|These steps are far from being straightforward to implement.\nSee paper for details and proposed solution.|\n|3.\nMix!|Proposed technique, final result:|\n...\nOne of the most relevant step is the magnitude correction of the most transient components, that transforms v\n2[t] into y 2[t] (rightmost column) and \"fixes\" the smearing.",
+    "source": "web",
+    "title": "Audio Time Stretching with an Adaptive Multiresolution Phase ...",
+    "url": "https://www.pitchtech.ch/Confs/ICASSP2017/index.html"
+   }
+  ]
+ }
+}

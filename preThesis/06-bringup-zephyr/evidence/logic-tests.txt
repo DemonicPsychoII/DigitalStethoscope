@@ -1,0 +1,53 @@
+*** Booting Zephyr OS build 357467a011cd ***
+Running TESTSUITE app_logic
+===================================================================
+START - test_audio_initial_failure_recovers_without_manual_wake
+ PASS - test_audio_initial_failure_recovers_without_manual_wake in 0.000 seconds
+===================================================================
+START - test_audio_retry_limit_and_explicit_restart
+ PASS - test_audio_retry_limit_and_explicit_restart in 0.000 seconds
+===================================================================
+START - test_audio_runtime_recovery_preserves_budget
+ PASS - test_audio_runtime_recovery_preserves_budget in 0.000 seconds
+===================================================================
+START - test_brightness_conversion_boundaries
+ PASS - test_brightness_conversion_boundaries in 0.000 seconds
+===================================================================
+START - test_degraded_mode_decisions
+ PASS - test_degraded_mode_decisions in 0.000 seconds
+===================================================================
+START - test_driver_error_handling_decisions
+ PASS - test_driver_error_handling_decisions in 0.000 seconds
+===================================================================
+START - test_probe_retry_and_state_transitions
+ PASS - test_probe_retry_and_state_transitions in 0.000 seconds
+===================================================================
+START - test_status_formatting_and_boundaries
+ PASS - test_status_formatting_and_boundaries in 0.000 seconds
+===================================================================
+START - test_switch_position_decoding
+ PASS - test_switch_position_decoding in 0.000 seconds
+===================================================================
+START - test_touch_event_color_transitions
+ PASS - test_touch_event_color_transitions in 0.000 seconds
+===================================================================
+TESTSUITE app_logic succeeded
+
+------ TESTSUITE SUMMARY START ------
+
+SUITE PASS - 100.00% [app_logic]: pass = 10, fail = 0, skip = 0, total = 10 duration = 0.000 seconds
+ - PASS - [app_logic.test_audio_initial_failure_recovers_without_manual_wake] duration = 0.000 seconds
+ - PASS - [app_logic.test_audio_retry_limit_and_explicit_restart] duration = 0.000 seconds
+ - PASS - [app_logic.test_audio_runtime_recovery_preserves_budget] duration = 0.000 seconds
+ - PASS - [app_logic.test_brightness_conversion_boundaries] duration = 0.000 seconds
+ - PASS - [app_logic.test_degraded_mode_decisions] duration = 0.000 seconds
+ - PASS - [app_logic.test_driver_error_handling_decisions] duration = 0.000 seconds
+ - PASS - [app_logic.test_probe_retry_and_state_transitions] duration = 0.000 seconds
+ - PASS - [app_logic.test_status_formatting_and_boundaries] duration = 0.000 seconds
+ - PASS - [app_logic.test_switch_position_decoding] duration = 0.000 seconds
+ - PASS - [app_logic.test_touch_event_color_transitions] duration = 0.000 seconds
+
+------ TESTSUITE SUMMARY END ------
+
+===================================================================
+PROJECT EXECUTION SUCCESSFUL

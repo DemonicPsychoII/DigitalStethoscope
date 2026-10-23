@@ -1,0 +1,189 @@
+{
+ "run": {
+  "id": "R12-tha-formales",
+  "topic": "THA-Vorgaben zu Titel und Formalia der Bachelorarbeit",
+  "preset": "fast",
+  "prompt": "Kontext: Bachelorarbeit an der Technischen Hochschule Augsburg (THA), vermutlich Fakultaet fuer Elektrotechnik oder Informatik.\n\nHauptfrage: Welche formalen Vorgaben macht die Technische Hochschule Augsburg fuer den Titel und die Anmeldung einer Bachelorarbeit?\n\nUnterfrage 1: Gibt es Vorgaben zur Titel-Laenge, zur Sprache (deutsch/englisch, Notwendigkeit einer Uebersetzung) oder zum Format des Themas im Anmeldeformular - laut Studien- und Pruefungsordnung (SPO), Merkblaettern oder Fakultaetsvorgaben?\nUnterfrage 2: Welche Fristen und Formalia gelten fuer Anmeldung, Bearbeitungszeit und Abgabe der Bachelorarbeit an der THA?\n\nAntwort auf Deutsch, mit direkten Links zu den THA-Dokumenten. Falls konkrete Vorgaben nicht oeffentlich auffindbar sind, das bitte klar sagen statt zu raten."
+ },
+ "response": {
+  "id": "chatcmpl-772d76ef75324578871eafcc",
+  "object": "chat.completion",
+  "created": 1786462937,
+  "model": "preset/fast",
+  "choices": [
+   {
+    "index": 0,
+    "message": {
+     "role": "assistant",
+     "content": "Für die THA ist die **Anmeldung der Bachelorarbeit inzwischen digital über das DMS** vorgesehen; laut FAQ braucht man für den ersten Anmeldeschritt noch **keinen Titel sowie noch keinen Erst- und Zweitprüfer** anzugeben. Erst nach dem „grünen Licht“ des Studierendensekretariats wird der **final abgestimmte Titel** zusammen mit Erst- und Zweitprüfer im DMS eingetragen.[2]\n\n## 1) Titel, Sprache und Form des Themas\n\n- **Titel-Länge:** Eine konkrete offizielle Vorgabe zur **maximalen oder minimalen Titellänge** habe ich in den öffentlich auffindbaren THA-Dokumenten nicht gefunden.[1][2][4][7]\n- **Sprache:** Eine ausdrückliche allgemeine THA-Regel, ob der Titel **deutsch, englisch oder zweisprachig** sein muss, war in den öffentlich auffindbaren Unterlagen nicht ersichtlich.[1][2][4][7]\n- **Übersetzung:** Eine allgemeine Pflicht, den Titel zusätzlich zu übersetzen, konnte ich in den öffentlich auffindbaren THA-Dokumenten nicht belegen.[1][2][7]\n- **Titelblatt/Form des Themas:** In der THA-Vorlage für Abschlussarbeiten stehen auf dem Titelblatt u. a. **„Thema der Arbeit“** und optional ein **„Untertitel“**; außerdem wird beschrieben, welche Angaben auf dem Titelblatt stehen müssen.[7] Auf der Fakultätsseite Gestaltung werden für die Titelseite u. a. **Hochschule Augsburg, Studiengang, Titel der Arbeit, Name, Betreuer und Abgabedatum** genannt.[1]\n\nWichtig: Die öffentlich auffindbaren Dokumente geben also eher **Vorgaben zum Titelblatt und zum Anmeldeprozess** als strenge Regeln zur Titellänge oder Sprachform.[1][2][7]\n\n## 2) Anmeldung, Fristen und Bearbeitungszeit\n\n- Die Anmeldung erfolgt laut FAQ **digital im DMS**; dafür muss man sich im Hochschulnetz oder per VPN anmelden.[2]\n- Sobald die Anmeldung angestoßen ist, prüft das Studierendensekretariat die **formalen Voraussetzungen**.[2]\n- Die **Bearbeitungsdauer beträgt 4 Monate**; sie beginnt laut FAQ **am nächsten 20. des Monats**, in dem die Anmeldung im DMS erfolgt ist.[2]\n- Eine **Anmeldung im August ist nicht möglich**.[2]\n- Für die Fakultät Gestaltung nennt die THA für das Sommersemester 2026 einen konkreten Zeitplan: Thema und Prüfer bis **31. Januar**, Zulassungsantrag bis **13. März**, Eintragung von Thema und Prüfern bis **spätestens 27. März**.[1]\n- Dort wird außerdem ein Bearbeitungszeitraum vom **14. März bis 14. Juli** genannt.[1]\n- In einem Fakultäts-Merkblatt für Maschinenbau und Umwelt steht, dass die in der APO festgelegte Bearbeitungszeit **maximal 5 Monate** beträgt und dass die Prüfungskommission die offiziellen Anmelde- und Abgabetermine veröffentlicht.[4]\n\n## 3) Abgabe und spätere Titeländerung\n\n- Die THA weist darauf hin, dass das **Abgabedatum strikt einzuhalten** ist; eine **frühere Abgabe ist möglich**.[8]\n- Für die Titelseite nennt die Fakultät Gestaltung ausdrücklich, dass dort u. a. **Abgabedatum** stehen muss.[1]\n- Eine **Änderung des Titels** ist möglich, muss aber mit den Betreuern abgestimmt werden; laut Fakultätsseite Gestaltung kann der neue Titel **bis spätestens zwei Wochen vor dem offiziellen Abgabetermin** eingetragen werden.[1]\n\n## Kurzfazit\n\n- **Keine öffentlich belegte THA-Regel** zur exakten **Titellänge** gefunden.[1][2][4][7]\n- **Keine eindeutig veröffentlichte allgemeine THA-Regel** zur **Sprache des Titels** oder zu einer zwingenden **Übersetzung** gefunden.[1][2][7]\n- **Sicher belegt** sind dagegen: **DMS-Anmeldung**, **formale Vorprüfung**, **4 Monate Bearbeitungszeit** in der FAQ, sowie **fakultätsspezifische Fristen** und teils abweichende Regelungen in Merkblättern.[1][2][4][8]\n\nWenn gewünscht, kann ich im nächsten Schritt die **relevanten THA-Quellen nach Fakultät** aufteilen, z. B. **Elektrotechnik/Informatik** versus **Gestaltung/Maschinenbau**, damit die für dich passendsten Vorgaben sauber getrennt sind."
+    },
+    "finish_reason": "stop"
+   }
+  ],
+  "usage": {
+   "prompt_tokens": 6684,
+   "completion_tokens": 1209,
+   "total_tokens": 7893,
+   "cost": {
+    "cache_read_cost": 0.00022,
+    "currency": "USD",
+    "input_cost": 0.00281,
+    "output_cost": 0.00544,
+    "tool_calls_cost": 0.0025,
+    "tool_calls_cost_details": {
+     "search_web": 0.0025
+    },
+    "total_cost": 0.01097
+   },
+   "input_tokens_details": {
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 2944,
+    "cached_tokens": 2944
+   },
+   "output_tokens_details": {
+    "reasoning_tokens": 125
+   },
+   "tool_calls_details": {
+    "search_web": {
+     "invocation": 1
+    }
+   }
+  },
+  "citations": [
+   {
+    "url": "https://www.tha.de/Gestaltung/Interaktive-Medien/Abschlussarbeit.html",
+    "title": "Abschlussarbeit",
+    "date": null
+   },
+   {
+    "url": "https://www.tha.de/Binaries/Binary89415/FAQ-Bachelorarbeit-02.26-clean.pdf",
+    "title": "[PDF] FAQs zur Bachelorarbeit - Technische Hochschule Augsburg",
+    "date": null
+   },
+   {
+    "url": "https://moodle.hs-augsburg.de/course/view.php?id=261",
+    "title": "Kurs: Bachelor Kolloquium / SoSe 2026",
+    "date": "2024-08-06"
+   },
+   {
+    "url": "https://www.tha.de/Binaries/Binary77874/Merkblatt-Bachelorarbeit.pdf",
+    "title": "Merkblatt für Bachelorarbeiten Maschinenbau und Umwelt",
+    "date": null
+   },
+   {
+    "url": "https://www.tha.de/Architektur-und-Bauwesen/Formulare.html",
+    "title": "Formulare",
+    "date": null
+   },
+   {
+    "url": "https://www.tha.de/Gestaltung/Intern/Prfungsangelegenheiten.html",
+    "title": "Prüfungsangelegenheiten",
+    "date": null
+   },
+   {
+    "url": "https://moodle.hs-augsburg.de/pluginfile.php/207051/mod_resource/content/4/THA_Bachelorarbeit2024.docx",
+    "title": "THA_Bachelorarbeit2024.docx",
+    "date": null
+   },
+   {
+    "url": "https://www.tha.de/Elektrotechnik/Welchen-Arbeitsumfang-hat-eine-Bachelorarbeit-und-wie-lange-dauert-deren-Bearbeitung.html",
+    "title": "Welchen Arbeitsumfang hat eine Bachelorarbeit und wie ...",
+    "date": "2016-01-01"
+   },
+   {
+    "url": "https://www.th-ab.de/fileadmin/th-ab-redaktion/dokumente/Hochschulleitung/Hochschulrecht/Pruefungsrecht/SPO/WBB/WBB_PO12.pdf",
+    "title": "Studien",
+    "date": null
+   },
+   {
+    "url": "https://www.maschinenbau.uni-hannover.de/fileadmin/maschinenbau/Pruefungen/20230712_Verfahrensrichtlinien_Abschlussarbeiten_FakultaetMB.pdf",
+    "title": "Verfahrensrichtlinie für die Anfertigung von Abschluss",
+    "date": null
+   }
+  ],
+  "search_results": [
+   {
+    "id": 1,
+    "last_updated": "2026-03-07",
+    "snippet": "Ab kommendem Semester wird die Anmeldung der Bachelorarbeit, anders als bisher, über das Dokumenten-Management-System (DMS) der Hochschule gehandhabt.\nAnleitungen zum DMS finden Sie hier:\nhttps://www.tha.de/Rechenzentrum/Schulungen/DMS/Abschlussarbeit/Studierende.page\nDer **Bearbeitungszeitraum** für die Bachelorarbeiten im Sommersemester 2026 ist vom **14.März bis zum 14.Juli**.\nDer Zeitplan zur Anmeldung für die Bachelorarbeiten ist wie folgt:\n- Bis zum **31. Januar** suchen Sie sich bitte ein Thema sowie eine/n Erst- und Zweitprüfer/in.\nAchten Sie hierbei bitte darauf, dass Sie nach Möglichkeit sowohl eine/n Gestaltungs- als auch Informatik-Dozierende/n finden.\nSollte dies nicht möglich sein, stimmen Sie das bitte mit Ihrem Erstprüfer/in ab.\n- Sollten Sie bis Ende Januar kein Thema gefunden haben, melden Sie sich bitte so schnell wie möglich an die Prüfungskommission, sodass hier eine Lösung gefunden werden kann.\n- Sie haben anschließend bis zum **13. März ** Zeit, im DMS einen Zulassungsantrag für die Bachelorarbeit zu stellen.\nUnter den oben verlinkten Anleitungen zum DMS wird erklärt, wie das geht.\n- In den Tagen darauf wird Ihr Zulassungsantrag vom Prüfungsamt geprüft, Sie erhalten eine Mail sobald die Überprüfung erfolgreich war.\n...\n- Sobald Sie die Bestätigung erhalten haben, dass die Überprüfung vom Prüfungsamt erfolgreich war, tragen Sie bitte Ihr Thema, sowie Ihren Erst- und Zweitprüfer im DMS ein, allerdings bis **spätestens zum 27. März**.\nAuch hierzu finden Sie Informationen im obigen Link.\n- Sobald Ihr Erstprüfer und die Prüfungskommission dann die Anmeldung bestätigt haben, erhalten Sie dann noch einen offiziellen Bescheid.\n...\nWichtig ist, dass Sie auf der Titelseite folgenden Informationen eintragen:\n- Hochschule Augsburg\n- Studiengang\n- Titel der Arbeit\n- Ihr Name\n- Name der Erstbetreuerin/des Erstbetreuers\n- Namen des Zweitbetreuers/der Zweitbetreuerin, falls Sie diesen/diese auf dem Anmeldeformular selbst eingetragen haben\n- Abgabedatum\n### Abgabe der Abschlussarbeit\n...\n### Änderung des Titels der Abschlussarbeit\nFalls Sie den Titel Ihrer Abschlussarbeit ändern möchten, stimmen Sie dies bitte mit Ihren **Betreuern** ab.\nDie Betreuer können den neuen Titel bis **spätestens zwei Wochen vor dem offiziellen Abgabetermin** eintragen und der Prüfungskommission vorlegen.\n...\nBei Abschlussarbeiten, die gemäß der SPO 2018 angefertigt werden, wird zwischen Bachelorarbeit (Thesis) und Bachelorprojekt (Werkstück) unterscheiden.\nBeide werde gemeinsam ausgegeben und üblicherweise auch gemeinsam abgegeben.\nFür beide Teile erhalten Sie eine eigene Note.\nDiese Noten können sich durchaus unterscheiden.",
+    "source": "web",
+    "title": "Abschlussarbeit",
+    "url": "https://www.tha.de/Gestaltung/Interaktive-Medien/Abschlussarbeit.html"
+   },
+   {
+    "id": 2,
+    "last_updated": "2026-07-07",
+    "snippet": "Augsburg \nAn der Hochschule 1 \nD-86161 Augsburg \nT +49 821 5586-0 \nF +49 821 5586-3222 \ninfo@tha.de\n...\n2. Anmeldung der Abschlussarbeit \nSobald die Betreuerin oder der Betreuer der Arbeit feststehen, können Sie die\nAbschlussarbeit digital anmelden.\nFür diesen ersten Schritt brauchen Sie noch \nkeinen Titel sowie Erst- und Zweitprüfer anzugeben.\nSie können diese Anmel-\ndung jederzeit im Dokumentenmanagementsystem (DMS) unter dem Link \nhttps://dms.hs-augsburg.de mit Ihrer RZ-Kennung vornehmen.\nSie müssen sich\ndazu im Hochschul-Netz befinden oder eine VPN-Verbindung herstellen (siehe \ndazu: \nhttps://www.tha.de/Rechenzentrum/Datennetz-WLAN-VPN.html#sec-\ntion19890).\nSobald die Anmeldung im DMS durch Sie angestoßen ist, prüft das Studieren-\ndensekretariat, ob Sie die formalen Anmeldevoraussetzungen (z.B. 135 ECST) \nerfüllen.\nBitte geben Sie nach einem „grünen Licht“ durch das Studierenden-\nsekretariat den final abgestimmten Titel, den Erstprüfer und auch den Zweit-\nprüfer im DMS an.\nAnschließend wird die Anmeldung zunächst an die betreu-\nende Person und dann an den PK-Vorsitz zur Genehmigung weitergeleitet.\nDas \nkann ein paar Tage dauern, weshalb Sie den Prozess frühzeitig starten sollten.\n...\nDie Bearbeitungsdauer von 4 Monaten für die Bachelorarbeit beginnt am \nnächsten 20.\ndes Monats, in dem Sie Ihre Anmeldung im DMS-System vorge-\nnommen haben.\nEine Anmeldung im August ist hier nicht möglich.",
+    "source": "web",
+    "title": "[PDF] FAQs zur Bachelorarbeit - Technische Hochschule Augsburg",
+    "url": "https://www.tha.de/Binaries/Binary89415/FAQ-Bachelorarbeit-02.26-clean.pdf"
+   },
+   {
+    "date": "2024-08-06",
+    "id": 3,
+    "last_updated": "2026-06-07",
+    "snippet": "- Abschlussarbeit-Themenanmeldung-Industrie.pdf (67,6 KB) Datei",
+    "source": "web",
+    "title": "Kurs: Bachelor Kolloquium / SoSe 2026",
+    "url": "https://moodle.hs-augsburg.de/course/view.php?id=261"
+   },
+   {
+    "id": 4,
+    "last_updated": "2025-10-15",
+    "snippet": "1. Formale Voraussetzungen: \nBevor Sie sich zur Bachelorarbeit anmelden können, müssen Sie laut Prüfungsordnung die formalen \nVoraussetzungen erfüllen: \na) Das Modul Industriepraktikum,\nb) mindestens 165 Credits sowie \nc) alle Prüfungen der Semester 1 – 4 bestanden \n2. Bachelorarbeitsthema: \nEs gibt verschiedene Wege, Ihr individuelles Bachelorarbeitsthema zu finden: \na) Im Moodle-Kurs der Fakultät \nb) In den Schaukästen der Professor(inn)en\nc) Sie können eine(n) Professor(in) direkt mit der Bitte um ein Thema ansprechen.\nd) Sie können ein eigenes Thema eine(r)m Professor(in) mit der Bitte um Betreuung \nvorlegen.\ne) Sie können ein Thema aus der Industrie eine(r)m Professor(in) mit der Bitte um\nBetreuung vorlegen.\nFür d) und e) ist es notwendig, dass Sie eine detaillierte Aufgabenstellung erstellen oder mitbringen.\nBeachten Sie bitte, dass ein Zulassungsantrag (Anmeldung zur Bachelorarbeit) erst dann \ngestellt werden kann, wenn ein(e) Professor(in) \n1. Ihren Themenvorschlag als geeignet für eine Bachelorarbeit einstuft,\n2. die Betreuung als Erstprüfer(in) verbindlich zusagt und \n3. ein(e) Zweitprüfer(in) benannt ist.\n...\n3. Anmeldung zur Bachelorarbeit: \nDie Anmeldung erfolgt im Dokumenten Management System (DMS) \nSchulungen hierzu finden Sie unter: https://www.tha.de/Rechenzentrum/Schulungen/DMS.page \n...\nDie in der APO festgelegte Bearbeitungszeit\nbeträgt maximal 5 Monate.\n...\nDie Prüfungskommission veröffentlicht die offiziellen Anmelde- und Abgabetermine der\nBachelorarbeit auf der Internetseite der Fakultät unter: https://www.tha.de/fmv/termine.html, \ndamit Sie die Möglichkeit haben, Ihren individuellen Bearbeitungszeitraum rechtzeitig planen zu \nkönnen.",
+    "source": "web",
+    "title": "Merkblatt für Bachelorarbeiten Maschinenbau und Umwelt",
+    "url": "https://www.tha.de/Binaries/Binary77874/Merkblatt-Bachelorarbeit.pdf"
+   },
+   {
+    "id": 5,
+    "last_updated": "2026-07-28",
+    "snippet": "Die Anmeldung zur Abschlussarbeit erfolgt seit 01.10.2023 ausschließlich online über das Dokumentenmanagementsystem (DMS) Dieses ist nur aus dem Hochschulnetz oder via VPN erreichbar.",
+    "source": "web",
+    "title": "Formulare",
+    "url": "https://www.tha.de/Architektur-und-Bauwesen/Formulare.html"
+   },
+   {
+    "id": 6,
+    "last_updated": "2026-08-11",
+    "snippet": "Anmeldung Ende des Sommersemesters:\n- Bearbeitungszeitraum Bachelorarbeit: Anfang Oktober bis Ende Januar\n- Bearbeitungszeitraum Masterarbeit: Anfang September bis Ende Januar\nAnmeldung Ende des Wintersemester:\n- Bearbeitungszeitraum Bachelorarbeit: Mitte März bis Mitte Juli\n- Bearbeitungszeitraum Masterarbeit: Mitte Februar bis Mitte Juli\nDer Anmeldeantrag muss spätestens zum Ende der Anmeldefrist im Sekretariat der Fakultät für Gestaltung abgegeben werden.",
+    "source": "web",
+    "title": "Prüfungsangelegenheiten",
+    "url": "https://www.tha.de/Gestaltung/Intern/Prfungsangelegenheiten.html"
+   },
+   {
+    "id": 7,
+    "last_updated": "2026-06-21",
+    "snippet": "**Bachelorarbeit / Masterarbeit**\n**Thema der Arbeit**\n**Untertitel (optional)\\**\n...\nDas Titelblatt entspricht den Vorgaben der Hochschule Augsburg.\nÜberschreiben Sie Titel, Fach, Studiengang, die Namen und Kalenderdaten mit den in Ihrem Fall gültigen Angaben.\nDas Titelblatt bekommt keine Seitenzahl.\n...\nDas folgende Blatt trägt keine Seitenzahl und enthält die deutsche Kurzfassung und das englische Abstract, jeweils gefolgt von Schlagwörtern bzw.\nKeywords in der jeweiligen Sprache.\\",
+    "source": "web",
+    "title": "THA_Bachelorarbeit2024.docx",
+    "url": "https://moodle.hs-augsburg.de/pluginfile.php/207051/mod_resource/content/4/THA_Bachelorarbeit2024.docx"
+   },
+   {
+    "date": "2016-01-01",
+    "id": 8,
+    "last_updated": "2025-09-13",
+    "snippet": "Der essentielle Arbeitsinhalt einer Bachelorarbeit einschließlich der schriftlichen Ausarbeitung entspricht etwa zwei Personenmonaten in Vollzeit (5-Tage-Woche, 8-Stunden-Tag, d.h. insgesamt 320 Stunden).\n**Nicht** zu diesen zwei Personenmonaten zählen\n- das Einlesen in die Aufgabenstellung,\n- das Anfertigen eines Zeitplans für die Bearbeitung, der individuell den Abschluss des Studiums, die Teilnahme an Prüfungen, Feiertage usw.\nberücksichtigt und den Arbeitsaufwand der einzelnen Arbeitspakete darstellt und\n- das Kennenlernen von Firmenstruktur und betriebsinternen Abläufen, wenn die Bachelorarbeit in einem Industriebetrieb durchgeführt wird.\nDie Aufteilung der Bearbeitungszeit auf den Zeitraum bis zur Abgabe richtet sich nach dem individuellen Studienverlauf und wird z.B. von begleitendem Vorlesungsbesuch oder der Teilnahme an Prüfungen beeinflusst.\nDas von der Prüfungskommission festgesetzte\n**Abgabedatum** ist **strikt einzuhalten**!\nEine frühere Abgabe ist möglich.",
+    "source": "web",
+    "title": "Welchen Arbeitsumfang hat eine Bachelorarbeit und wie ...",
+    "url": "https://www.tha.de/Elektrotechnik/Welchen-Arbeitsumfang-hat-eine-Bachelorarbeit-und-wie-lange-dauert-deren-Bearbeitung.html"
+   },
+   {
+    "id": 9,
+    "last_updated": "2025-09-29",
+    "snippet": "(1) 1In der Bachelorarbeit sollen die Studierenden ihre Fähigkeit nachweisen, die im Studium \nerworbenen Kenntnisse und Fähigkeiten auf komplexe Aufgabenstellungen selbständig\nanzuwenden.\n2Zur Bachelorarbeit kann sich anmelden, wer mindestens 150 ECTS-Leistungspunkte \nerreicht hat.\n3Themen werden von Prüferinnen und Prüfern vergeben.\n4Die Bearbeitungszeit für die \nBachelorarbeit beträgt 5 Monate.\n(2) Die Ausgabe eines Themas an mehrere Studierende zur gemeinsamen Bearbeitung ist zulässig, \nsofern die individuelle Leistung der/des einzelnen Studierenden deutlich abgrenzbar und bewertbar ",
+    "source": "web",
+    "title": "Studien",
+    "url": "https://www.th-ab.de/fileadmin/th-ab-redaktion/dokumente/Hochschulleitung/Hochschulrecht/Pruefungsrecht/SPO/WBB/WBB_PO12.pdf"
+   },
+   {
+    "id": 10,
+    "last_updated": "2026-07-13",
+    "snippet": "Die Bearbeitungszeit von Abschluss- und Studienarbeiten muss dem in der Prüfungsordnung \nvorgegebenem Workload entsprechen.\n\nDer vorgesehene Workload für Bachelorarbeiten beträgt nach §7 der \nPrüfungsordnung (PO) 13 ECTS-Leistungspunkte (davon 1 Leistungspunkt (LP) für\ndie Präsentation und 1 LP für das Tutorium „Teil der Bachelorarbeit: Einführung in \ndas wissenschaftliche Arbeiten“).\nDer Workload für 1 LP beträgt durchschnittlich \n30 Stunden Bearbeitungszeit.\nDas vereinbarte Thema der Bachelorarbeit soll daher \nin durchschnittlich 11 x 30 Stunden = 330 Stunden (ca. 9 Wochen) Arbeitszeit zu\nbearbeiten sein.\nDie Abgabe der Bachelorarbeit soll daher 9 Wochen nach Ausgabe des Themas (bei \nBearbeitung in Vollzeit), spätestens jedoch nach 3 Monaten nach Ausgabe des \nThemas erfolgen.\nInnerhalb der Bearbeitungszeit ist darüber hinaus die Präsentation aus dem \nModul Bachelorarbeit abzuhalten.\n...\nDrittels der Bearbeitungsdauer zurückgegeben werden.",
+    "source": "web",
+    "title": "Verfahrensrichtlinie für die Anfertigung von Abschluss",
+    "url": "https://www.maschinenbau.uni-hannover.de/fileadmin/maschinenbau/Pruefungen/20230712_Verfahrensrichtlinien_Abschlussarbeiten_FakultaetMB.pdf"
+   }
+  ]
+ }
+}

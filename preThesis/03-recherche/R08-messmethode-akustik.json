@@ -1,0 +1,656 @@
+{
+ "run": {
+  "id": "R08-messmethode-akustik",
+  "topic": "Messmethode zur Charakterisierung der akustischen Kette",
+  "preset": "low",
+  "prompt": "Kontext: Bachelorarbeit, digitales Stethoskop. Die akustische Kette (Bruststueck -> Kopplung -> MEMS-Mikrofon -> ADC) soll messtechnisch charakterisiert werden (Frequenzgang, Rauschen, Linearitaet) im Band 20-1000 Hz.\n\nHauptfrage: Mit welchem Messaufbau charakterisiert man die akustische Uebertragungskette eines digitalen Stethoskops reproduzierbar, mit hochschulueblichem Equipment?\n\nUnterfrage 1: Welche Anregungsverfahren und Auswertungen sind ueblich (Sinus-Sweep/ESS mit Deconvolution, rosa Rauschen, Stepped Sine), welche Anregungsquelle eignet sich fuer 20-1000 Hz (Lautsprecher mit Koppler, Shaker, Kunstbrustkorb/Phantom mit definierter Impedanz) und wie wird gegen ein Referenzmikrofon kalibriert?\nUnterfrage 2: Welche Normen oder etablierten Verfahren gibt es fuer die Charakterisierung von Stethoskopen bzw. Auskultationsgeraeten (z. B. Arbeiten zur Stethoskop-Frequenzgangmessung, ANSI/IEC-Bezuege), und welche Minimalvariante ist mit einem guten Studiolautsprecher + Messmikrofon (z. B. Class-2 Messmikrofon) noch belastbar?\n\nAntwort auf Deutsch, mit Quellen und einer konkreten Empfehlung fuer einen minimalen, belastbaren Aufbau."
+ },
+ "response": {
+  "id": "chatcmpl-2a3bdc712e664935805dac38",
+  "object": "chat.completion",
+  "created": 1786462925,
+  "model": "preset/low",
+  "choices": [
+   {
+    "index": 0,
+    "message": {
+     "role": "assistant",
+     "content": "## Kurzantwort\n\nFür eine **reproduzierbare Charakterisierung der gesamten akustischen Kette** empfehle ich keinen Freifeldaufbau mit dem Stethoskop einfach vor einem Lautsprecher, sondern einen **definierten akustischen Koppler bzw. Kunstbrustkorb**:\n\n> **Lautsprecher oder Shaker → definierter Brust-/Kopplungskörper → Stethoskop-Bruststück → internes MEMS-Mikrofon → ADC**\n\nDabei wird der Schalldruck unmittelbar am Eingang des Bruststücks mit einem **kalibrierten Referenzmikrofon** gemessen. Die Übertragungsfunktion wird anschließend als Verhältnis von digitalem Stethoskopsignal zu Referenzmikrofonsignal bestimmt. Für eine Bachelorarbeit ist ein **Lautsprecher mit kleinem, abgedichtetem Koppler und Referenzmikrofon** die beste Minimalvariante; ein Shaker mit Kunstbrust ist hinsichtlich der mechanischen Ankopplung realistischer, aber deutlich aufwendiger.\n\nFür elektronische Stethoskope existiert derzeit keine allgemein verbindliche akustische Produktnorm. Eine einschlägige Arbeit stellt ausdrücklich fest, dass keine etablierten akustischen Standards für elektronische Stethoskope existieren. [web:3] Auch neuere Untersuchungen konventioneller und verstärkter Stethoskope weisen darauf hin, dass bislang keine einheitlichen Normen oder Parameter zur akustischen Charakterisierung von Stethoskopen bestehen. [web:5]\n\n---\n\n## 1. Empfohlener Messaufbau\n\n### 1.1 Blockschaltbild\n\n```text\nAudio-Interface / DAW\n        │\n        ▼\nAnregungssignal: ESS oder Stepped Sine\n        │\n        ▼\nLeistungsverstärker\n        │\n        ▼\nTieftonfähiger Lautsprecher\n        │\n        ▼\ndefinierter akustischer Koppler / Kunstbrust\n        │\n        ├── Referenzmikrofon\n        │       │\n        │       ▼\n        │   Mikrofonvorverstärker / ADC\n        │\n        └── Bruststück des digitalen Stethoskops\n                │\n                ▼\n          MEMS-Mikrofon + interner ADC\n                │\n                ▼\n          aufgezeichnetes Digitalsignal\n```\n\nDer wesentliche Messwert ist die komplexe Übertragungsfunktion\n\n\\[\nH_\\mathrm{Steth}(f)\n=\n\\frac{X_\\mathrm{Steth}(f)}\n     {P_\\mathrm{ref}(f)}\n\\]\n\nmit\n\n- \\(X_\\mathrm{Steth}(f)\\): Ausgangsspektrum des digitalen Stethoskops,\n- \\(P_\\mathrm{ref}(f)\\): Schalldruckspektrum am Bruststück,\n- \\(f\\): Frequenz.\n\nFür einen reinen relativen Frequenzgang genügt auch die Quotientenbildung zwischen Stethoskop- und Referenzkanal. Für eine absolute Empfindlichkeit muss das Referenzmikrofon in Pascal kalibriert sein.\n\n### 1.2 Mechanischer Koppler\n\nDer Koppler sollte folgende Eigenschaften besitzen:\n\n- definierte, reproduzierbare Auflagefläche für das Bruststück,\n- möglichst luftdichte Abdichtung,\n- definierte akustische Impedanz oder zumindest dokumentierte Geometrie,\n- Anschlussmöglichkeit für das Referenzmikrofon,\n- definierte Anpresskraft des Bruststücks,\n- Möglichkeit, Membran- und Glockenbetrieb getrennt zu untersuchen.\n\nEine einfache Variante ist eine **starre oder halbstarre Kammer** mit einer elastischen Kontaktfläche, auf die das Bruststück aufgelegt wird. Das Referenzmikrofon sitzt möglichst nahe an der Bruststückfläche, ohne die akustische Last wesentlich zu verändern.\n\nDie wissenschaftlich anspruchsvollere Variante ist eine **Kunstbrust mit definierter mechanischer bzw. akustischer Impedanz**. In der Literatur wurden beispielsweise ein mit Flüssigkeit gefüllter Gummiball und ein mechanischer Shaker verwendet; außerdem wurden Phantomaufbauten zur Annäherung an die Impedanz der menschlichen Brustwand beschrieben. [web:41] Eine weitere Arbeit modelliert die Stethoskopakustik anhand eines Phantomaufbaus und vergleicht dessen Impedanz mit derjenigen des menschlichen Brustkorbs. [web:45]\n\n### 1.3 Anregungsquelle\n\n#### Variante A: Lautsprecher mit Koppler — Empfehlung für die Minimalvariante\n\nEin guter Studiolautsprecher oder kleiner Tieftonlautsprecher ist für 20–1000 Hz grundsätzlich geeignet, sofern:\n\n- der Frequenzgang im Messbereich bekannt oder mit dem Referenzmikrofon korrigiert wird,\n- bei 20–50 Hz ausreichend Schalldruck erzeugt wird,\n- keine Übersteuerung oder Strömungsgeräusche auftreten,\n- der Koppler möglichst geschlossen und mechanisch stabil ist.\n\nDie Lautsprechermessung selbst lässt sich an Verfahren aus IEC 60268-5 anlehnen. Diese Norm behandelt unter anderem Messungen mit Sinussignalen, breitbandigem Rauschen, bandbegrenztem rosa Rauschen und Impulssignalen. [web:39] Für Lautsprecher werden außerdem ein kalibriertes Mikrofon und definierte Messbedingungen empfohlen. [web:42]\n\nDer Lautsprecher sollte nicht als „ideale“ Quelle angenommen werden. Gemessen wird daher immer gleichzeitig der tatsächlich am Bruststück anliegende Schalldruck. Damit wird der Lautsprecherfrequenzgang weitgehend aus dem Ergebnis herausdividiert.\n\n#### Variante B: Shaker mit Kunstbrust\n\nEin Shaker ist sinnvoll, wenn die **mechanische Anregung der Brustwand** untersucht werden soll. Er eignet sich besonders für:\n\n- Untersuchungen der Auflage- und Kontaktmechanik,\n- Vergleich verschiedener Bruststücke,\n- Untersuchung des Einflusses der Anpresskraft,\n- realistischere Simulation der Übertragung vom Körper auf das Bruststück.\n\nNachteile sind:\n\n- schwierige Definition der Eingangsgröße,\n- keine unmittelbar einfache Schalldruckkalibrierung,\n- Abhängigkeit von Masse, Steifigkeit und Dämpfung des Phantoms,\n- höhere mechanische und messtechnische Komplexität.\n\nFür die erste Charakterisierung des MEMS-/ADC-Pfades würde ich deshalb zunächst den **akustischen Lautsprecher-Koppler** verwenden und den Shaker als Erweiterung behandeln.\n\n---\n\n## 2. Anregungsverfahren und Auswertung\n\n### 2.1 Exponentieller Sinus-Sweep / ESS\n\nFür die Hauptmessung ist ein **exponentieller Swept-Sine von 20 bis 1000 Hz** am geeignetsten.\n\nVorteile:\n\n- gute Energieverteilung über den gesamten Frequenzbereich,\n- hoher Signal-Rausch-Abstand,\n- ein einzelner Sweep liefert den gesamten Frequenzgang,\n- Impulsantwort und Frequenzgang können durch Deconvolution gewonnen werden,\n- nichtlineare Verzerrungen erscheinen zeitlich getrennt und können ausgewertet werden.\n\nBei der ESS-Methode wird das aufgezeichnete Signal mit einem inversen Sweep dekonvolviert. Dadurch entsteht eine Impulsantwort; aus deren Fourier-Transformation erhält man Betrag und Phase der Übertragungsfunktion. Das Grundprinzip — Ausgangsspektrum durch Eingangsspektrum zu teilen oder alternativ per Deconvolution eine Impulsantwort zu bestimmen — ist in der akustischen Messtechnik etabliert. [web:32] Für logarithmische Sweeps wird außerdem der Vorteil beschrieben, dass harmonische Verzerrungen zeitlich getrennt von der linearen Impulsantwort erscheinen. [web:34]\n\nPraktische Einstellungen:\n\n- Startfrequenz: 15 oder 20 Hz,\n- Endfrequenz: 1200 oder 1500 Hz,\n- Auswertebereich: 20–1000 Hz,\n- Sweepdauer: etwa 10–30 s,\n- mindestens 3 Wiederholungen,\n- Vorlauf und Nachlauf zur Erfassung des Einschwingens,\n- identische Pegel und identische mechanische Position für alle Wiederholungen.\n\nDie Auswertung sollte umfassen:\n\n1. Deconvolution,\n2. Ausschneiden der linearen Impulsantwort,\n3. FFT,\n4. Betrag in dB,\n5. Phase beziehungsweise Gruppenlaufzeit,\n6. Mittelwert und Standardabweichung über mehrere Wiederholungen,\n7. separate Auswertung harmonischer Verzerrungen, sofern der Dynamikbereich ausreicht.\n\n### 2.2 Stepped Sine\n\nEin **gestufter Sinus** ist die beste Methode für:\n\n- präzise Pegel- und Frequenzgangmessung,\n- Linearitätsuntersuchungen,\n- THD-Messung,\n- Verifikation einzelner Frequenzpunkte.\n\nGeeignete Frequenzen sind beispielsweise:\n\n```text\n20, 25, 31.5, 40, 50, 63, 80, 100, 125, 160,\n200, 250, 315, 400, 500, 630, 800, 1000 Hz\n```\n\nFür eine detaillierte Kennlinie kann ein Abstand von 1/12 Oktave oder 1/24 Oktave verwendet werden.\n\nBei jeder Frequenz:\n\n1. Pegel einschwingen lassen,\n2. mehrere Perioden aufzeichnen,\n3. erste Perioden verwerfen,\n4. Amplitude und Phase per synchroner Demodulation oder FFT bestimmen,\n5. zweiten und dritten Oberton auswerten,\n6. den Pegel in mehreren Stufen wiederholen.\n\nFür Linearität werden beispielsweise fünf Pegelstufen verwendet, etwa 60, 70, 80, 90 und 100 dB SPL am Koppler. Die genaue obere Grenze richtet sich nach der zulässigen Belastung des Bruststücks und dem Übersteuerungsverhalten des Stethoskops.\n\n### 2.3 Rosa Rauschen\n\nRosa Rauschen mit Terz- oder Oktavbandanalyse ist nützlich für:\n\n- schnelle Plausibilitätskontrolle,\n- Pegel- und Rauschmessungen,\n- Ermittlung breitbandiger Übertragungsfunktionen,\n- Prüfung des Betriebs unter realitätsnaher breitbandiger Anregung.\n\nFür die präzise Bestimmung des Frequenzgangs ist es jedoch weniger günstig als ESS oder Stepped Sine, da das Ergebnis stärker von Mittelungsdauer, Fensterung, Raumreflexionen und Signal-Rausch-Verhältnis abhängt.\n\nEine sinnvolle Kombination ist daher:\n\n- **ESS** für den vollständigen Frequenzgang,\n- **Stepped Sine** für Linearität und Verzerrung,\n- **rosa Rauschen** für Plausibilitäts- und Rauschmessungen.\n\n---\n\n## 3. Kalibrierung mit Referenzmikrofon\n\n### 3.1 Mikrofonkalibrierung\n\nDas Referenzmikrofon wird vor der Messreihe mit einem akustischen Kalibrator, typischerweise bei:\n\n- 1 kHz,\n- 94 dB SPL oder 114 dB SPL,\n\nkalibriert. Für Class-2-Messmikrofone sind solche Kalibratoren üblich; ein Beispiel erzeugt 94 dB SPL bei 1 kHz. [web:24]\n\nWichtig ist, dass nicht nur die Empfindlichkeit bei 1 kHz, sondern möglichst auch der **Frequenzgang des Mikrofons** berücksichtigt wird. IEC 61672-1 definiert Anforderungen an Schallpegelmesser der Klassen 1 und 2; für Class 2 liegt die untere Referenzgrenze typischerweise bei 20 Hz, mit größeren Toleranzen als bei Class 1. [web:19] Ein konkretes Class-2-Messmikrofon ist beispielsweise für 20 Hz bis 16 kHz spezifiziert. [web:16]\n\nFür den Bereich 20–1000 Hz ist ein gutes Class-2-Mikrofon daher grundsätzlich verwendbar, aber:\n\n- die Unsicherheit nahe 20 Hz ist größer,\n- der individuelle Frequenzgang muss bekannt sein,\n- der Kalibrierstatus sollte dokumentiert werden,\n- ein 1/4-Zoll-Mikrofon kann wegen geringerer Richtwirkung und kleinerer Bauform vorteilhaft sein.\n\n### 3.2 Referenzkanal während der Messung\n\nDas Referenzmikrofon sollte **während jeder Messung gleichzeitig** mit dem Stethoskop aufzeichnen. Dadurch werden folgende Einflüsse automatisch korrigiert:\n\n- Frequenzgang des Lautsprechers,\n- Verstärkerfrequenzgang,\n- Pegelschwankungen,\n- teilweise auch zeitliche Drift.\n\nEs wird nicht lediglich das elektrische Lautsprechersignal als Eingangssignal verwendet, weil dieses den tatsächlich am Bruststück wirksamen Schalldruck nicht beschreibt.\n\nDie korrigierte Übertragungsfunktion lautet beispielsweise:\n\n\\[\nH_\\mathrm{corr}(f)\n=\n\\frac{X_\\mathrm{Steth}(f)}\n     {X_\\mathrm{ref}(f)}\n\\cdot\nH_\\mathrm{ref,kal}(f)\n\\]\n\nDabei bezeichnet \\(H_\\mathrm{ref,kal}(f)\\) den kalibrierten Frequenzgang des Referenzmikrofons.\n\nWenn nur der relative Frequenzgang des Stethoskops benötigt wird, kann auf die absolute Korrektur verzichtet werden; dann muss aber klar angegeben werden, dass das Ergebnis **relativ zum Schalldruck am Kopplereingang** ist.\n\n### 3.3 Pegeldefinition\n\nDer Pegel sollte als Schalldruckpegel am Referenzmikrofon angegeben werden:\n\n\\[\nL_p = 20 \\log_{10}\\left(\\frac{p_\\mathrm{rms}}{20\\,\\mu\\mathrm{Pa}}\\right)\n\\]\n\nDie Messung sollte mindestens bei einem festen Referenzpegel durchgeführt werden. Für die Linearität sind mehrere Pegel erforderlich.\n\nBei sehr tiefen Frequenzen ist zu beachten, dass Entlüftungsöffnungen und Druckausgleichssysteme von Mikrofonen den Tieffrequenzgang beeinflussen können. Dieser Effekt ist in der akustischen Kalibriertechnik bekannt und muss insbesondere unterhalb von etwa 20 Hz berücksichtigt werden. [web:30] Im Bereich ab 20 Hz ist er bei einem geeigneten Messmikrofon beherrschbar, sollte aber durch die Datenblattkorrektur und eine dokumentierte Messgeometrie berücksichtigt werden.\n\n---\n\n## 4. Messung von Rauschen\n\nDas Eigenrauschen sollte ohne akustische Anregung bestimmt werden:\n\n1. Lautsprecher abgeschaltet,\n2. Bruststück im Koppler montiert,\n3. Stethoskop eingeschaltet,\n4. mindestens 30–60 s aufzeichnen,\n5. mehrere Wiederholungen durchführen.\n\nAuswertung:\n\n- Zeitverlauf auf Ausreißer und Störgeräusche,\n- RMS-Wert im Band 20–1000 Hz,\n- PSD beziehungsweise Leistungsdichtespektrum,\n- 1/3-Oktav- oder schmalbandige Darstellung,\n- gegebenenfalls A-bewerteter Wert, aber nur zusätzlich.\n\nFür das Stethoskop ist die breitbandige Rauschleistung\n\n\\[\nN_{20-1000}\n=\n\\sqrt{\\int_{20}^{1000} S_x(f)\\,df}\n\\]\n\nsinnvoller als ausschließlich ein A-bewerteter Pegel, da der relevante Auskultationsbereich tieffrequent ist.\n\nDie Rauschmessung sollte außerdem bei mindestens zwei Verstärkungsstufen erfolgen. So lässt sich unterscheiden zwischen:\n\n- Mikrofon- und Analograuschen,\n- ADC-Rauschen,\n- digitaler Verstärkung,\n- eventuell aktivierter Rauschunterdrückung oder Filterung.\n\n---\n\n## 5. Messung der Linearität\n\nDie Linearität wird bei mehreren Frequenzen und Pegeln bestimmt, zum Beispiel:\n\n- Frequenzen: 25, 50, 100, 200, 500 und 1000 Hz,\n- Pegel: fünf Stufen über den vorgesehenen Betriebsbereich,\n- mindestens drei Wiederholungen pro Punkt.\n\nAuszuwerten sind:\n\n### Amplitudenlinearität\n\n\\[\nL_\\mathrm{out}\n=\na \\, L_\\mathrm{in} + b\n\\]\n\nBewertet werden:\n\n- Abweichung von der Regressionsgeraden,\n- Kompression,\n- Pegelabhängigkeit des Frequenzgangs,\n- Übersteuerungsgrenze.\n\n### Nichtlineare Verzerrung\n\nBei Stepped Sine können die Oberwellen ausgewertet werden:\n\n\\[\n\\mathrm{THD}\n=\n\\frac{\n\\sqrt{A_2^2 + A_3^2 + \\dots}\n}{\nA_1\n}\n\\]\n\nmit \\(A_1\\) als Grundschwingungsamplitude und \\(A_2, A_3,\\dots\\) als Obertonamplituden.\n\nWichtig: Bei einem digitalen Stethoskop können digitale Filter, AGC, Noise-Gates oder dynamische Kompression aktiv sein. Deshalb muss die Firmware-Konfiguration dokumentiert und möglichst auf einen linearen beziehungsweise unveränderten Modus eingestellt werden.\n\n---\n\n## 6. Relevante Normen und ihre Einordnung\n\n| Norm/Quelle | Relevanz für die Arbeit |\n|---|---|\n| **IEC 61672-1 / ANSI S1.4** | Anforderungen an Schallpegelmesser der Klassen 1 und 2; relevant für Auswahl und Einordnung des Referenzmikrofons, aber keine Stethoskopnorm. [web:28][web:19] |\n| **IEC 60268-5** | Messverfahren für Lautsprecher mit Sinus, Rauschen und Impulssignalen; als methodische Orientierung für die Anregungsquelle geeignet. [web:39][web:42] |\n| **IEC 60268-4** | Eigenschaften und Messungen von Schall­system­mikrofonen; ausdrücklich nicht primär für Messmikrofone vorgesehen. Daher nur eingeschränkt einschlägig. [web:1] |\n| **IEC 60318-5** | Akustischer Koppler mit definierter akustischer Impedanz für Hörgeräte und Einsteckhörer; nicht direkt für Stethoskope gedacht, aber als Konzept für einen definierten Koppler relevant. [web:6] |\n| **ANSI/ASA S3.7** | Messung und Kalibrierung von Hörern und Wandlern mit Kopplern beziehungsweise Ohrsimulatoren; methodisch übertragbar, aber keine direkte Stethoskopnorm. [web:9] |\n| **IEC 60118-0** | Messung von Hörgeräteeigenschaften mit akustischem Koppler beziehungsweise Ohrsimulator; hilfreich für die Idee einer definierten akustischen Last. [web:2] |\n| **Arbeiten zu elektronischen Stethoskopen** | Beschreiben Shaker-, Flüssigkeitsball-, Phantom- und Impedanzrohrverfahren; zeigen zugleich, dass eine einheitliche Norm fehlt. [web:3][web:41] |\n\nDie Normen sollten in der Arbeit daher als **methodische Bezugspunkte** bezeichnet werden, nicht als direkte Prüfanforderungen für das digitale Stethoskop.\n\n---\n\n## 7. Konkrete Minimalvariante mit Hochschulausrüstung\n\n### Empfohlene Ausstattung\n\n1. **Audio-Interface mit zwei synchronen Eingangskanälen**\n   - Kanal 1: kalibriertes Referenzmikrofon,\n   - Kanal 2: analoger oder digitaler Ausgang des Stethoskops, sofern zugänglich.\n\n2. **Guter Studiolautsprecher oder kleiner Tieftonlautsprecher**\n   - nutzbarer Frequenzbereich bis mindestens 20 Hz,\n   - ausreichend Schalldruck ohne deutliche Verzerrung.\n\n3. **Class-2-Messmikrofon**\n   - mit individueller Empfindlichkeitskalibrierung,\n   - vorzugsweise mit bekanntem Frequenzgang bis 20 Hz.\n\n4. **Akustischer Koppler**\n   - starre Kammer oder definierte kleine Kontaktfläche,\n   - definierter Montageanschlag,\n   - definierte Anpresskraft,\n   - Anschluss für Referenzmikrofon.\n\n5. **Schallpegelkalibrator**\n   - 94 dB SPL bei 1 kHz,\n   - Kalibrierung vor und nach der Messreihe.\n\n6. **Messsoftware**\n   - MATLAB, Python, REW, ARTA oder vergleichbare Software,\n   - ESS-Erzeugung und Deconvolution,\n   - FFT/FRF,\n   - RMS-, PSD- und THD-Auswertung.\n\n### Durchführung\n\n1. Referenzmikrofon mit 94 dB bei 1 kHz kalibrieren.\n2. Koppler und Bruststück mechanisch reproduzierbar montieren.\n3. Referenzmikrofon unmittelbar am Kopplervolumen positionieren.\n4. ESS 20–1000 Hz bei moderatem Pegel abspielen.\n5. Referenz- und Stethoskopsignal synchron aufzeichnen.\n6. Mehrfach messen und mitteln.\n7. Frequenzgang als Verhältnis beider Kanäle bestimmen.\n8. Stepped-Sine-Messung bei mehreren Pegeln für Linearität und THD durchführen.\n9. Ohne Anregung das Eigenrauschen messen.\n10. Messunsicherheit und Wiederholbarkeit bestimmen.\n\n### Belastbarkeit dieser Minimalvariante\n\nDer Aufbau ist belastbar für:\n\n- relativen Frequenzgang der vollständigen Kette,\n- Vergleich verschiedener Bruststücke oder Betriebsmodi,\n- Rauschmessungen,\n- Pegelabhängigkeit,\n- grobe bis mittlere Linearitäts- und Verzerrungsbewertung,\n- reproduzierbare Vergleiche innerhalb derselben Messanordnung.\n\nEr ist **nicht** ohne Weiteres belastbar für:\n\n- direkte Aussagen über den Frequenzgang im menschlichen Brustkorb,\n- absolute klinische Empfindlichkeit,\n- Übertragbarkeit auf jede Anpresskraft oder Körperstelle,\n- normgerechte Produktzertifizierung,\n- exakte Bestimmung der akustischen Impedanz des Brustkorbs.\n\n## Konkrete Empfehlung für die Bachelorarbeit\n\nIch würde als Hauptaufbau wählen:\n\n> **Tieftonlautsprecher in einem geschlossenen, selbstgebauten akustischen Koppler; kalibriertes Class-2-Referenzmikrofon im Kopplervolumen; digitales Stethoskop auf definierter Kontaktfläche; synchroner Zweikanal-Scan mit ESS; Verifikation durch Stepped Sine; getrennte Rauschmessung.**\n\nDer Aufbau sollte zunächst mit einem **linearen Kontrollmikrofon beziehungsweise einem bekannten Mikrofon** validiert werden. Zusätzlich sollten drei Größen dokumentiert werden:\n\n- genaue Kopplergeometrie,\n- Anpresskraft und Position des Bruststücks,\n- Schalldruckpegel am Referenzmikrofon.\n\nDamit erhält man trotz begrenztem Hochschulequipment eine nachvollziehbare und wiederholbare Messung der Kette **Bruststück → Kopplung → MEMS-Mikrofon → ADC**. Der entscheidende methodische Punkt ist, den tatsächlichen Eingangsschalldruck am Bruststück mit dem Referenzmikrofon zu messen und nicht lediglich das elektrische Lautsprechersignal als Referenz zu verwenden."
+    },
+    "finish_reason": "stop"
+   }
+  ],
+  "usage": {
+   "prompt_tokens": 10414,
+   "completion_tokens": 5182,
+   "total_tokens": 15596,
+   "cost": {
+    "cache_creation_cost": 0.00186,
+    "cache_read_cost": 6e-05,
+    "currency": "USD",
+    "input_cost": 0,
+    "output_cost": 0.00622,
+    "tool_calls_cost": 0.0075,
+    "tool_calls_cost_details": {
+     "search_web": 0.0075
+    },
+    "total_cost": 0.01564
+   },
+   "input_tokens_details": {
+    "cache_creation_input_tokens": 7424,
+    "cache_read_input_tokens": 2984,
+    "cached_tokens": 2984
+   },
+   "output_tokens_details": {
+    "reasoning_tokens": 50
+   },
+   "tool_calls_details": {
+    "search_web": {
+     "invocation": 3
+    }
+   }
+  },
+  "citations": [
+   {
+    "url": "https://webstore.ansi.org/preview-pages/iec/preview_iec60268-4%7Bed6.0%7Den.pdf",
+    "title": "IEC 60268-4",
+    "date": null
+   },
+   {
+    "url": "https://webstore.ansi.org/standards/iec/iec60118ed2022",
+    "title": "IEC 60118-0 Ed. 4.0 b:2022",
+    "date": "2022-01-01"
+   },
+   {
+    "url": "https://cinc.org/archives/2002/pdf/653.pdf",
+    "title": "Methods and Results in Characterizing Electronic ...",
+    "date": null
+   },
+   {
+    "url": "https://webstore.ansi.org/standards/asa/ansiasas3552015partiec60318-2415765",
+    "title": "ANSI/ASA S3.55-2015/Part 3/IEC 60318-3:2015 (R2020)",
+    "date": "2015-03-01"
+   },
+   {
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7305673/",
+    "title": "Frequency Responses of Conventional and Amplified Stethoscopes ...",
+    "date": "2020-04-17"
+   },
+   {
+    "url": "https://webstore.ansi.org/standards/iec/iec60318ed2006",
+    "title": "IEC 60318-5 Ed. 1.0 b:2006",
+    "date": "2006-01-01"
+   },
+   {
+    "url": "http://hydromech.org.ua/content/pdf/av/av-16-3(46-57).pdf",
+    "title": "AV-16(3).dvi",
+    "date": null
+   },
+   {
+    "url": "https://standards.iteh.ai/catalog/standards/clc/2a38d639-39db-4677-9e50-d3781a8dd3b1/en-iec-60318-8-2022",
+    "title": "EN IEC 60318-8:2022 - Acoustic Coupler for High-Frequency ...",
+    "date": "2023-04-02"
+   },
+   {
+    "url": "https://webstore.ansi.org/preview-pages/ASA/preview_ANSI+ASA+S3.7-2016+(R2020).pdf",
+    "title": "ANSI/ASA S3.7-2016",
+    "date": null
+   },
+   {
+    "url": "https://pubmed.ncbi.nlm.nih.gov/36794318/",
+    "title": "Technical characterisation of digital stethoscopes: towards scalable artificial intelligence-based auscultation - PubMed",
+    "date": "2023-04-27"
+   },
+   {
+    "url": "https://www.brotechelectronics.com/Stethoscope_Evaluation_Tool_User_Manual%202021-12-29.pdf",
+    "title": "Brotech Electronics Stethoscope Acoustic Performance Evaluation Tool User Manual 2021-12-29",
+    "date": null
+   },
+   {
+    "url": "https://www.scribd.com/document/146423201/BIOEN-481-Stethoscope-Testing-Report",
+    "title": "BIOEN 481 Stethoscope Testing Report",
+    "date": "2025-08-07"
+   },
+   {
+    "url": "https://isip.piconepress.com/conferences/ieee_spmb/2014/papers/p01_09.pdf",
+    "title": "Active and Passive Stethoscope Frequency Transfer Functions",
+    "date": null
+   },
+   {
+    "url": "https://pdfs.semanticscholar.org/296b/e3d6db0c610bd5cbfc65a364950cfe2e2252.pdf",
+    "title": "[PDF] Система электронной аускультации: метод измерения ...",
+    "date": null
+   },
+   {
+    "url": "https://www.kar.fi/KARAudio/Publications/publications/nam98.pdf",
+    "title": "[PDF] frequency response of stethoscopes",
+    "date": null
+   },
+   {
+    "url": "https://www.diva-portal.org/smash/get/diva2:1762551/FULLTEXT01.pdf",
+    "title": "Approach for frequency response-calibration for ...",
+    "date": null
+   },
+   {
+    "url": "https://pub.dega-akustik.de/DAGA_1999-2008/data/articles/001658.pdf",
+    "title": "[PDF] Building and Room Acoustics Measurements with Sine-Sweep ...",
+    "date": null
+   },
+   {
+    "url": "https://dsp.stackexchange.com/questions/59756/frequency-response-of-a-microphone-using-a-sine-sweep",
+    "title": "Frequency response of a microphone using a sine sweep",
+    "date": "2019-07-26"
+   },
+   {
+    "url": "https://jmrplens.github.io/phonometry/guides/room-impulse-response/index.md",
+    "title": "index.md",
+    "date": null
+   },
+   {
+    "url": "https://dael.euracoustics.org/confs/fa2025/data/articles/000405.pdf",
+    "title": "Flat and curved parametric acoustic loudspeakers ...",
+    "date": null
+   },
+   {
+    "url": "https://www.angelofarina.it/Public/papers/226-AES122.pdf",
+    "title": "Convention Paper - Angelo Farina",
+    "date": null
+   },
+   {
+    "url": "http://arqen.com/wp-content/docs/Surround-Sound-Impulse-Response.pdf",
+    "title": "Surround-Sound-Impulse-Response. ...",
+    "date": null
+   },
+   {
+    "url": "https://psqca.com.pk/cs/newitems2021/electronics/28-PS%20IEC%2060268-5-2014_FINAL.pdf",
+    "title": "[PDF] only for research purposes not for sale copyright www.psqca.com.pk",
+    "date": null
+   },
+   {
+    "url": "https://webstore.iec.ch/en/publication/1224",
+    "title": "IEC 60268-5:2003+AMD1:2007 CSV | IEC",
+    "date": "2007-09-11"
+   },
+   {
+    "url": "https://webstore.iec.ch/en/publication/14422",
+    "title": "IEC 60268-5:1989+AMD1:1993 CSV",
+    "date": "2007-09-11"
+   },
+   {
+    "url": "https://www.admess.de/tl_files/admess-2013/pdf/Audio%20Precision/AppNote%20-%20Loudspeaker%20EA%20Measurements-1.pdf",
+    "title": "Loudspeaker Electroacoustic Measurements",
+    "date": null
+   },
+   {
+    "url": "https://play.google.com/store/apps/details?id=se.bllund.akustikkollen",
+    "title": "AcousticsCheck - Apps on Google Play",
+    "date": null
+   },
+   {
+    "url": "http://arqen.com/wp-content/docs/Surround-Sound-IR-Poster.pdf",
+    "title": "Surround Sound Impulse Response",
+    "date": null
+   },
+   {
+    "url": "https://www.repository.cam.ac.uk/items/feadd88b-9e03-44fb-a875-c49f7c550259",
+    "title": "Stethoscope acoustics",
+    "date": "2022-03-16"
+   },
+   {
+    "url": "https://placidinstruments.com/product/pmp22-class-2-measurement-microphone/",
+    "title": "PMP22 Class 2 Measurement Microphone - PLACID Measurement microphones",
+    "date": "2024-06-26"
+   },
+   {
+    "url": "https://www.castlegroup.co.uk/products/castle-sonus-ga216i-class-2-integrating-sound-level-meter.html",
+    "title": "Castle Sonus GA216I Class 2 Integrating Sound Level Meter",
+    "date": "2005-01-01"
+   },
+   {
+    "url": "https://www.nti-audio.com/en/products/measurement-microphones/class-2",
+    "title": "Cost-effective Measurement Microphone I NTi Audio",
+    "date": null
+   },
+   {
+    "url": "https://sonavyx.com/en/insights/iec-61672-complete-guide",
+    "title": "SonaVyx™ — IEC 61672-1 Complete Guide: Sound Level Meter ...",
+    "date": "2026-03-19"
+   },
+   {
+    "url": "https://www.scribd.com/document/535153905/Measurement-Microphones-2020",
+    "title": "Measurement Microphones Price List | PDF | Decibel | Sound",
+    "date": "2025-11-05"
+   },
+   {
+    "url": "https://images.thomann.de/pics/atg/atgdata/document/manual/242618_measurement_microphones_manual.pdf",
+    "title": "OPERATING MANUAL",
+    "date": null
+   },
+   {
+    "url": "https://www.belram.be/wp-content/uploads/2020/07/Measurement-Microphones-Specifications.pdf",
+    "title": "24",
+    "date": null
+   },
+   {
+    "url": "https://www.norsonic.ch/wordpress/wp-content/uploads/Piccolo-II_Specsheet1.pdf",
+    "title": "[PDF] Piccolo II",
+    "date": null
+   },
+   {
+    "url": "https://www.pce-instruments.com/english/measuring-instruments/test-meters/sound-level-meter-noise-level-meter-kat_40095.htm?_start=37",
+    "title": "Sound Level Meter - Noise Level Meter",
+    "date": "2025-10-06"
+   },
+   {
+    "url": "https://images.thomann.de/pics/atg/atgdata/document/specs/technical_data_xl2.pdf",
+    "title": "18. Technical Data XL2",
+    "date": null
+   },
+   {
+    "url": "https://www.vde-verlag.de/iec-normen/preview-pdf/info_iec61672-1%7Bed2.0%7Db.pdf",
+    "title": "INTERNATIONAL STANDARD NORME INTERNATIONALE",
+    "date": null
+   },
+   {
+    "url": "https://www.instrukart.com/wp-content/uploads/2017/04/DS_Testo-816-1-Sound-Level-Meter_Ver1.0.pdf",
+    "title": "[PDF] Sound level meter",
+    "date": null
+   },
+   {
+    "url": "https://webstore.ansi.org/standards/iec/iec61672ed2013",
+    "title": "IEC 61672-1 Ed. 2.0 b:2013",
+    "date": "2013-01-01"
+   },
+   {
+    "url": "https://scarlet-tech.com/products/class-2-sound-level-meter-st21d/",
+    "title": "Class 2 Sound Level Meter ST-21D - Scarlet Tech",
+    "date": "2026-07-08"
+   },
+   {
+    "url": "https://www.metrology-journal.org/articles/ijmqe/pdf/2013/02/ijmqe130045.pdf",
+    "title": "Acoustic metrology – an overview of calibration methods and their uncertainties",
+    "date": null
+   }
+  ],
+  "search_results": [
+   {
+    "id": 1,
+    "last_updated": "2025-02-27",
+    "snippet": "Edition 6.0 2018-09 \n...\nThis part of IEC 60268 specifies methods of measurement for the electrical impedance, \nsensitivity, directional response pattern, dynamic range and external influences of sound\nsystem microphones, and also details the characteristics to be specified by the manufacturer.\nIt applies to sound system microphones for all applications for speech and music.\nIt does not \napply to measurement microphones, but it does apply to each audio channel of microphones \nhaving more than one channel, for example for stereo or similar use.",
+    "source": "web",
+    "title": "IEC 60268-4",
+    "url": "https://webstore.ansi.org/preview-pages/iec/preview_iec60268-4%7Bed6.0%7Den.pdf"
+   },
+   {
+    "date": "2022-01-01",
+    "id": 2,
+    "last_updated": "2025-05-01",
+    "snippet": "IEC 60118-0:2022 gives recommendations for the measurement of the performance characteristics of air conduction hearing aids measured with an acoustic coupler or occluded ear simulator.\n...\nThis document primarily uses an acoustic coupler according to IEC 60318-5 which is only intended for loading a hearing aid with specified acoustic impedance and is not intended to reproduce the sound pressure in a person's ear.\nFor measurements reflecting the output level in the normal human ear the occluded ear simulator according to IEC 60318-4 can be used.\nFor extended high-frequency measurements and for deep insert hearing aids, the acoustic coupler according to IEC 60318-8 can be used.\n...\nc) addition of the optional use of an acoustic coupler according to IEC 60318-8 (new standard based on IEC TS 62886) when information about the response above 8 kHz is needed, or the optional use of the acoustic coupler according to IEC 60318-8 for deep insert hearing aids,",
+    "source": "web",
+    "title": "IEC 60118-0 Ed. 4.0 b:2022",
+    "url": "https://webstore.ansi.org/standards/iec/iec60118ed2022"
+   },
+   {
+    "id": 3,
+    "last_updated": "2026-03-22",
+    "snippet": "The \nfirst method measures the frequency response of the\nstethoscope using a fluid-filled rubber ball that is excited \nby a mechanical shaker driven by broadband noise.\n...\nThere are, however, no existing \nacoustical \nstandards \nfor \ncharacterizing \nelectronic \nstethoscopes.\n...\nThere are no existing standards for characterizing \nelectronic stethoscopes.",
+    "source": "web",
+    "title": "Methods and Results in Characterizing Electronic ...",
+    "url": "https://cinc.org/archives/2002/pdf/653.pdf"
+   },
+   {
+    "date": "2015-03-01",
+    "id": 4,
+    "last_updated": "2026-01-19",
+    "snippet": "# ANSI/ASA S3.55-2015/Part 3/IEC 60318-3:2015 (R2020)\n## Electroacoustics - Simulators of Human Head and Ear - Part 3: Acoustic Coupler for the Calibration of Supra-aural Earphones Used in Audiometry (a nationally adopted international standard)\nThis standard specifies an acoustic coupler for objective and reproducible measurements of supraaural audiometric earphones in the frequency range from 125 Hz to 8000 Hz.\nThe results of these measurements can be used for specifying reference equivalent threshold sound pressure levels (RETSPL) for the calibration of audiometers.",
+    "source": "web",
+    "title": "ANSI/ASA S3.55-2015/Part 3/IEC 60318-3:2015 (R2020)",
+    "url": "https://webstore.ansi.org/standards/asa/ansiasas3552015partiec60318-2415765"
+   },
+   {
+    "date": "2020-04-17",
+    "id": 5,
+    "last_updated": "2026-07-20",
+    "snippet": "Amplified stethoscopes were designed to overcome the auditory limitations of nonamplified stethoscopes in terms of amplifying sounds, eradicating background noise and filtering sound frequencies.[4] Currently, no standards (or parameters) exist for measuring the acoustical characteristics of stethoscopes.[5] Pasterkamp *et al*.[6] stated >20 years ago that “stethoscopes are rarely tested, rated, or compared and are often chosen for their appearance, reputation, and inadequately supported claims of performance” (p. 974), and this currently remains the case.",
+    "source": "web",
+    "title": "Frequency Responses of Conventional and Amplified Stethoscopes ...",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7305673/"
+   },
+   {
+    "date": "2006-01-01",
+    "id": 6,
+    "last_updated": "2025-02-15",
+    "snippet": "# IEC 60318-5 Ed.\n1.0 b:2006\n## Electroacoustics - Simulators of human head and ear - Part 5: 2 cm\n3 coupler for the measurement of hearing aids and earphones coupled to the ear by means of ear inserts\nDescribes an acoustic coupler for loading an earphone or hearing aid with a specified acoustic impedance when determining its physical performance characteristics, in the frequency range 125 Hz to 8 kHz.\nIt is suitable for air conduction hearing aids and earphones, coupled to the ear by means of ear inserts e.g. ear moulds or similar devices.\n...\nThis first edition of IEC 60318-5 cancels and replaces IEC 60126:1973.",
+    "source": "web",
+    "title": "IEC 60318-5 Ed. 1.0 b:2006",
+    "url": "https://webstore.ansi.org/standards/iec/iec60318ed2006"
+   },
+   {
+    "id": 7,
+    "last_updated": "2024-12-13",
+    "snippet": "",
+    "source": "web",
+    "title": "AV-16(3).dvi",
+    "url": "http://hydromech.org.ua/content/pdf/av/av-16-3(46-57).pdf"
+   },
+   {
+    "date": "2023-04-02",
+    "id": 8,
+    "last_updated": "2025-11-03",
+    "snippet": "IEC 60318-8:2022 describes an acoustic coupler for loading a hearing aid or insert earphone with a specified acoustic impedance when testing its acoustic performance, in the frequency range up to 16 kHz.\nIt is suitable for air-conduction hearing aids and earphones, coupled to the ear by means of ear inserts, earmoulds or similar devices.\n...\nL’IEC 60318-8:2022 décrit un coupleur acoustique permettant de charger un appareil de correction auditive ou un écouteur à insérer avec une impédance acoustique spécifiée lors de l'essai de ses performances acoustiques, dans la plage de fréquences allant jusqu'à 16 kHz.",
+    "source": "web",
+    "title": "EN IEC 60318-8:2022 - Acoustic Coupler for High-Frequency ...",
+    "url": "https://standards.iteh.ai/catalog/standards/clc/2a38d639-39db-4677-9e50-d3781a8dd3b1/en-iec-60318-8-2022"
+   },
+   {
+    "id": 9,
+    "last_updated": "2025-05-14",
+    "snippet": "This standard describes measurement methods for earphones and earphone transducers using couplers \nor ear simulators.\nGuidance is provided for the selection of the appropriate coupler or ear simulator for a \ngiven earphone and application.\nMethods for measurement of calibrated frequency response, input-\noutput linearity, electrical impedance, and non-linear distortion, are described.\n...\nThis standard describes test methods and procedures for the measurement and calibration of earphones \nand receivers using couplers or ear simulators.",
+    "source": "web",
+    "title": "ANSI/ASA S3.7-2016",
+    "url": "https://webstore.ansi.org/preview-pages/ASA/preview_ANSI+ASA+S3.7-2016+(R2020).pdf"
+   },
+   {
+    "date": "2023-04-27",
+    "id": 10,
+    "last_updated": "2025-10-27",
+    "snippet": "",
+    "source": "web",
+    "title": "Technical characterisation of digital stethoscopes: towards scalable artificial intelligence-based auscultation - PubMed",
+    "url": "https://pubmed.ncbi.nlm.nih.gov/36794318/"
+   },
+   {
+    "id": 11,
+    "last_updated": "2025-02-20",
+    "snippet": "Fundamentally it works by supplying an audio signal to the stethoscope chestpiece, while monitoring \namplitude at the binaural: scope performance may be gauged by frequency response and amplitude.\nThe\namplitude is measured in calibrated decibels (dB).\n...\nswept from 5 through 500Hz in 5Hz increments, or 10 through 1000Hz in 10Hz increments.\n...\nFixed Frequency Testing: In this mode, the user selects any of the available 6 fixed frequencies as the \nsource signal, or manually enter any frequency from 1 thru 20kHz.",
+    "source": "web",
+    "title": "Brotech Electronics Stethoscope Acoustic Performance Evaluation Tool User Manual 2021-12-29",
+    "url": "https://www.brotechelectronics.com/Stethoscope_Evaluation_Tool_User_Manual%202021-12-29.pdf"
+   },
+   {
+    "date": "2025-08-07",
+    "id": 12,
+    "last_updated": "2026-01-20",
+    "snippet": "Frequency response tests show the microphones can accurately detect heart sounds from 10-1000 Hz.\n...\nThe microphones given to us for this project are specified to function in a range from 50Hz to 18kHz.\n...\nThe frequency ranges fed to the microphone were 10 to 200Hz in 10Hz increments and 200 to 1000Hz in 50Hz increments.",
+    "source": "web",
+    "title": "BIOEN 481 Stethoscope Testing Report",
+    "url": "https://www.scribd.com/document/146423201/BIOEN-481-Stethoscope-Testing-Report"
+   },
+   {
+    "id": 13,
+    "last_updated": "2026-07-17",
+    "snippet": "In \nsummary, a step change in pressure was applied to the bell \nand diaphragm, and then a calibrated microphone was used to \nrecord the scope step response at one earpiece while the\nopposite earpiece was plugged.\n...\nThe sequence of calculations \nis outlined as follows: \n1. Apply input step pressure and measure step response.\n2. Convert to sound pressure in Pascals by multiplying by \n0.1 Pascal/mV.\n3. Compute the numerical derivative, which is approximated \nby 2 point differencing to yield the impulse response.\n4. Normalize the step response by the sound input \nmagnitude of 4000 Pascal.\n5. Calculate the numerical Fourier Transform (FFT) to get \nthe final result of stethoscope frequency transfer function \nmagnitude [normalized].",
+    "source": "web",
+    "title": "Active and Passive Stethoscope Frequency Transfer Functions",
+    "url": "https://isip.piconepress.com/conferences/ieee_spmb/2014/papers/p01_09.pdf"
+   },
+   {
+    "id": 14,
+    "last_updated": "2026-03-10",
+    "snippet": "сударственных стандартах разработан упрощенный метод измерения амплитудно-частотных характе-\n...\n1. Измерение чувствительности по \nсвободному полю.\n2. Измерение чувствительности по \nдиффузному полю.\n3. Измерение чувствительности по \nдавлению.",
+    "source": "web",
+    "title": "[PDF] Система электронной аускультации: метод измерения ...",
+    "url": "https://pdfs.semanticscholar.org/296b/e3d6db0c610bd5cbfc65a364950cfe2e2252.pdf"
+   },
+   {
+    "id": 15,
+    "last_updated": "2025-11-03",
+    "snippet": "IR of stethoscope non3 (diaphragm = g, cup = b)\n...\nCompensated FR of stethoscope non3 (diaphragm = y, cup = b)\nMagnitude (dB)",
+    "source": "web",
+    "title": "[PDF] frequency response of stethoscopes",
+    "url": "https://www.kar.fi/KARAudio/Publications/publications/nam98.pdf"
+   },
+   {
+    "id": 31,
+    "last_updated": "2026-08-11",
+    "snippet": "In this report, two methods for frequency\nresponse-calibration of a pre-assembled microphone array are presented and\nevaluated.\nThis is done by extracting the deviation in frequency responses of the\nmicrophones in relation to a selected reference microphone, using a swept sine as\na stimulus signal and an inverse filter.\nThe swept sine includes all frequencies\nwithin the bandwidth of human speech.\nThis allows for a full frequency response\nmeasurements from all microphones using a single recording.\nUsing the swept sine, the deviation in frequency response between the microphones\ncan be obtained.\nThis deviation represents the scaling factor that all microphones\n…",
+    "source": "web",
+    "title": "Approach for frequency response-calibration for ...",
+    "url": "https://www.diva-portal.org/smash/get/diva2:1762551/FULLTEXT01.pdf"
+   },
+   {
+    "id": 32,
+    "last_updated": "2025-12-05",
+    "snippet": "Generally speaking, any kind of excitation signal can be \nused to determine the impulse response and the respective \nfrequency response function of any linear and time-invariant \nsystem, provided that it contains enough energy at every \nfrequency of interest.\nThe impulse response can be obtained \nfrom the response to the excitation by deconvolution, or the\nfrequency response function can be obtained by dividing the \noutput spectrum of the system under test by the spectrum of \nthe input.\nThe last implies Fourier-transformation of the \ninput- and output-signal in order to perform the division in \nthe spectral domain.",
+    "source": "web",
+    "title": "[PDF] Building and Room Acoustics Measurements with Sine-Sweep ...",
+    "url": "https://pub.dega-akustik.de/DAGA_1999-2008/data/articles/001658.pdf"
+   },
+   {
+    "date": "2019-07-26",
+    "id": 33,
+    "last_updated": "2025-11-03",
+    "snippet": "Find the filter coefficient response and express the transfer function in terms of $H_2(z)$.\nOnce you know the transfer function, it is easy to determine the magnitude and phase response.\nAssuming that your microphones and speaker set up is such that you don't have echos or noise from external sources, you could use the cross FFT.\nIts output gives you the comparison of two signals.\nIf the two are identical, you get a flat line.\nMultiply that line with the known response of the reference microphone, and you have the response of your unknown microphone.\n...\nWhat I've also done is to use chirps.\nThat's basically a sine sweep, but at fairly high speed.\nYou sychronize the capture with the chirp so that you always get a block of audio that contains the entire chirp.\nYou do the cross FFT (or DFT because of the block length) on the entire block and the whole chirp at once.\n...\nIn general, if you squirt anything broadbanded at the two microphones, you can divide the FFT of the signal from the device under test (DUT) by the FFT of the signal from the reference microphone.\nThe logarithm of the magnitude (dB) of that result can be added to the known frequency response of the reference microphone.\nPink noise or an exponential swept sinusoid might be good candidates for the broadbanded squirts of sound that the two microphones simultaneously receive.",
+    "source": "web",
+    "title": "Frequency response of a microphone using a sine sweep",
+    "url": "https://dsp.stackexchange.com/questions/59756/frequency-response-of-a-microphone-using-a-sine-sweep"
+   },
+   {
+    "id": 34,
+    "last_updated": "2026-08-01",
+    "snippet": "Both are ISO 18233 deconvolution methods that recover the impulse response with 20–30 dB more effective signal-to-noise ratio than an impulsive source.\nPrefer the exponential sine sweep (Annex B): it places harmonic distortion at negative arrival times, where it is discarded.",
+    "source": "web",
+    "title": "index.md",
+    "url": "https://jmrplens.github.io/phonometry/guides/room-impulse-response/index.md"
+   },
+   {
+    "id": 35,
+    "last_updated": "2026-07-16",
+    "snippet": "An Exponential Sine Sweep (ESS) can be defined as [10]\ns(t) = K sin [K (exp(t/L) −1)] ,\n(1a)\nin which\nK =\n2πf1T\nln(f2/f1),\n(1b)\nL =\nT\nln(f2/f1),\n(1c)\nand f1 and f2 are the lower and upper frequencies of\nthe sweep, respectively.\nThis represents a sine function\nof amplitude K in which the argument exponentially\nincreases in time.\nThis sweep is played through a\nloudspeaker inside an enclosure and recorded by a\nmicrophone.\nThe deconvolution of the recorded signal\nthrough an inverse filter corresponding to the sweep\nresults in an impulse response that contains information\nabout the speaker, room and microphone.",
+    "source": "web",
+    "title": "Flat and curved parametric acoustic loudspeakers ...",
+    "url": "https://dael.euracoustics.org/confs/fa2025/data/articles/000405.pdf"
+   },
+   {
+    "id": 36,
+    "last_updated": "2025-11-07",
+    "snippet": "",
+    "source": "web",
+    "title": "Convention Paper - Angelo Farina",
+    "url": "https://www.angelofarina.it/Public/papers/226-AES122.pdf"
+   },
+   {
+    "id": 37,
+    "last_updated": "2026-08-06",
+    "snippet": "The ESS method uses an exponentially swept sinusoid for room excitation, and aperiodic \ndeconvolution to extract the impulse response from the recorded room response.",
+    "source": "web",
+    "title": "Surround-Sound-Impulse-Response. ...",
+    "url": "http://arqen.com/wp-content/docs/Surround-Sound-Impulse-Response.pdf"
+   },
+   {
+    "id": 38,
+    "last_updated": "2026-07-06",
+    "snippet": "The sinusoidal test signal shall not exceed the rated sinusoidal voltage (as defined in 17.4) at \nany frequency.\n...\nFor measurement using narrow-band noise, constant relative bandwidth filters in accordance\nwith  IEC 61260  shall  be  used  with  a  pink-noise  generator,  the  relative  bandwidth  being \nusually 1/3 octave.\n...\nMeasurements with band-filtered noise shall be performed either: \na)  by supplying the loudspeaker with a pink noise (limited to the effective frequency range of \nthe  loudspeaker)  and  analysing  the  microphone  output  signal  by means  of  1/3  octave\n...\nloudspeaker.\nThe input voltages chosen shall not exceed the rated sinusoidal voltage in \naccordance with 17.4.\nThe range of frequencies shall be covered by means of gliding tones,\nbecause a step-by-step method may cause important information to be missed.",
+    "source": "web",
+    "title": "[PDF] only for research purposes not for sale copyright www.psqca.com.pk",
+    "url": "https://psqca.com.pk/cs/newitems2021/electronics/28-PS%20IEC%2060268-5-2014_FINAL.pdf"
+   },
+   {
+    "date": "2007-09-11",
+    "id": 39,
+    "last_updated": "2025-05-09",
+    "snippet": "It gives the characteristics to be specified and the relevant methods of measurement for loudspeakers using sinusoidal or specified noise or impulsive signals.",
+    "source": "web",
+    "title": "IEC 60268-5:2003+AMD1:2007 CSV | IEC",
+    "url": "https://webstore.iec.ch/en/publication/1224"
+   },
+   {
+    "date": "2007-09-11",
+    "id": 40,
+    "last_updated": "2025-12-15",
+    "snippet": "Applies to sound system loudspeakers, treated as entirely passive elements.\nGives the characteristics to be specified and the relevant methods of measurement for loudspeakers using sinuidal or specified noise signals.",
+    "source": "web",
+    "title": "IEC 60268-5:1989+AMD1:1993 CSV",
+    "url": "https://webstore.iec.ch/en/publication/14422"
+   },
+   {
+    "id": 41,
+    "last_updated": "2026-03-22",
+    "snippet": "first method measures the frequency response of the\nstethoscope using a fluid-filled rubber ball that is excited \nby a mechanical shaker driven by broadband noise.\nThe \n...\nThe second method \nmeasures the acoustic impedance of the stethoscopes \nusing a standard acoustic impedance tube measurement\nsystem.\n...\nThe second method places the stethoscope on a phan-\ntom to approximate the vibrating condition of the chest.\nThe phantom is designed to approximate the impedance \nof the chest wall.\nA vibrating source is typically placed \ninside the source.\nThe output stethoscope voltage to the \nvibration measurement is recorded as the frequency \nresponse.\n...\nimpedance of the coupler, � = z/�c, is measured, where \n...\nThe acoustic impedance is measured using a two-\nmicrophone method with a standard impedance tube [8].\nThe sample is mounted on the end of a stainless steel tube \nof 0.001 m2 cross-sectional area.\nA direct radiator\nloudspeaker at the opposite end of the tube transmits \nwhite noise between 50 Hz-5 kHz.\nThe complex transfer \nfunction, H, is recorded from two ¼� PCB microphones \nspaced 3.18 cm apart.\nSpectronics software computes \nthe normalized specific acoustic impedance from the\ntransfer function.\n...\nnormalized specific impedance, �, is calculated from the \ncomplex reflection coefficient R as (1+R)/(1-R).",
+    "source": "web",
+    "title": "Methods and Results in Characterizing Electronic ...",
+    "url": "https://cinc.org/archives/2002/pdf/653.pdf"
+   },
+   {
+    "id": 42,
+    "last_updated": "2026-07-30",
+    "snippet": "Frequency response is a “transfer function” measurement.\nFor a device under test (DUT), it represents \nthe magnitude and phase of the output from the DUT per unit input, as a function of frequency.\n...\nIEC 60268-5 specifies that one of the following types of test signals be used: \n• \nA sinusoidal signal not exceeding the rated sinusoidal voltage at any frequency.\nThe voltage \nacross the loudspeaker input terminals should be kept constant at all frequencies.\n• \nA broadband noise signal with a crest factor between 3 and 4.\n• \nA narrow-band noise signal consisting of pink noise filtered in 1/3-octave bands.\n• \nAn impulsive signal (for impulse testing).\n...\nIEC 60268-1 specifies that a microphone with known calibration should be used.\nThe recommended\n...\nIn section 21, IEC 60268-5 indicates that the frequency response shall be specified as measured under \nfree field or half-space free field conditions at a stated position with respect to the reference axis and ",
+    "source": "web",
+    "title": "Loudspeaker Electroacoustic Measurements",
+    "url": "https://www.admess.de/tl_files/admess-2013/pdf/Audio%20Precision/AppNote%20-%20Loudspeaker%20EA%20Measurements-1.pdf"
+   },
+   {
+    "id": 43,
+    "last_updated": "2026-08-03",
+    "snippet": "",
+    "source": "web",
+    "title": "AcousticsCheck - Apps on Google Play",
+    "url": "https://play.google.com/store/apps/details?id=se.bllund.akustikkollen"
+   },
+   {
+    "id": 44,
+    "last_updated": "2025-05-03",
+    "snippet": "The ESS method uses an exponentially\nswept sinusoid for room excitation, and aperiodic deconvolution to extract the IR from the recorded room response.\nUnlike \n...\nBy convolving the room response r(t)  with the inverse filter f(t), the impulse response is extracted.\n...\nSuppose that r(t) denotes the room response to an exponen-\ntial reference sweep,  s(t).\nTo extract the IR from r(t), a decon-\nvolution is performed with the reference signal.\nThe result of \nthe deconvolution must achieve a flat spectrogram; however, \nthe time-reversed ESS signal exhibits a -3dB/octave decrease \nin its energy spectrum.",
+    "source": "web",
+    "title": "Surround Sound Impulse Response",
+    "url": "http://arqen.com/wp-content/docs/Surround-Sound-IR-Poster.pdf"
+   },
+   {
+    "date": "2022-03-16",
+    "id": 45,
+    "last_updated": "2025-08-22",
+    "snippet": "The resulting models are validated using experiments conducted on a phantom (a laboratory model representing the human chest).\nImpedance measurements on the phantom and on the human chest allow differences between these systems to be accounted for.",
+    "source": "web",
+    "title": "Stethoscope acoustics",
+    "url": "https://www.repository.cam.ac.uk/items/feadd88b-9e03-44fb-a875-c49f7c550259"
+   },
+   {
+    "date": "2024-06-26",
+    "id": 16,
+    "last_updated": "2024-12-23",
+    "snippet": "|Class / type|2|\n...\n|Frequency range|20 Hz ~ 16 kHz (complied with IEC 61672 Class 2 requirements at reference conditions)|",
+    "source": "web",
+    "title": "PMP22 Class 2 Measurement Microphone - PLACID Measurement microphones",
+    "url": "https://placidinstruments.com/product/pmp22-class-2-measurement-microphone/"
+   },
+   {
+    "date": "2005-01-01",
+    "id": 17,
+    "last_updated": "2025-08-07",
+    "snippet": "|Microphone and Preamplifier|Type 7052 Pre-Polarised ½” (13.2 mm) Free-Field, Electret Condenser Microphone: 20Hz – 8KHz ± 2dB –32 dB ± 3 dB re 1V/Pa Custom pre-amplifier design Typical actuator to free-field correction factor (based on 500Hz=0) is as follows|\n...\n|Frequency Range|20 Hz - 8 kHz (including microphone) 1 Hz - 20 kHz (electrical characteristics)|",
+    "source": "web",
+    "title": "Castle Sonus GA216I Class 2 Integrating Sound Level Meter",
+    "url": "https://www.castlegroup.co.uk/products/castle-sonus-ga216i-class-2-integrating-sound-level-meter.html"
+   },
+   {
+    "id": 18,
+    "last_updated": "2026-06-24",
+    "snippet": "The measurement microphones are optimized for a flat, free-field response in the frequency range 5 Hz – 20 kHz.\nModels for acoustic measurements of up to 155 dB are available.\n...\n- Frequency range 5 Hz – 20 kHz\n## Overview\n|Type|Classification IEC 61672 ANSI S1.4|Microphone Capsule|Intrinsic noise typical|Maximum sound pressure level @ distortion factor 3%, 1 kHz|Typical Applications|\n...\n|M4262|Class 2 / Type 2|1/4\" fixed|32 dB(A) SPL @ 16 mV/Pa|140 dBSPL|Noise Measurements STIPA Live Sound Installed Sound PA Rental|\n...\n- Frequency range 5 Hz – 20 kHz",
+    "source": "web",
+    "title": "Cost-effective Measurement Microphone I NTi Audio",
+    "url": "https://www.nti-audio.com/en/products/measurement-microphones/class-2"
+   },
+   {
+    "date": "2026-03-19",
+    "id": 19,
+    "last_updated": "2026-08-07",
+    "snippet": "|Parameter|Class 1|Class 2|\n...\n|Tolerance at 1 kHz reference|±1.1 dB|±1.4 dB|\n|Frequency range (lower limit)|16 Hz (-1.6/+1.0 dB)|20 Hz (-3.0/+3.5 dB)|",
+    "source": "web",
+    "title": "SonaVyx™ — IEC 61672-1 Complete Guide: Sound Level Meter ...",
+    "url": "https://sonavyx.com/en/insights/iec-61672-complete-guide"
+   },
+   {
+    "date": "2025-11-05",
+    "id": 20,
+    "last_updated": "2025-11-05",
+    "snippet": "Class 2:+/- 3.5dB @ 20Hz+/- 1.4dB @ 1kHz+/- 5.6dB @ 8kHz+5.6dB, -∞dB @ 10kHz+5.5dB, -∞dB @ 16kHz+6dB, -∞dB @ > 16kHz",
+    "source": "web",
+    "title": "Measurement Microphones Price List | PDF | Decibel | Sound",
+    "url": "https://www.scribd.com/document/535153905/Measurement-Microphones-2020"
+   },
+   {
+    "id": 21,
+    "last_updated": "2026-03-18",
+    "snippet": "Calibrate the microphone as described in the XL2 user man­\n• \nual using the NTi Audio Precision Calibrator.\n...\nThe battery-operated Class 2 Sound \nCalibrator is classified for the calibration \nof class 2 measurement microphones, \nsound level meters and other acoustic \nmeasurement equipment.\n...\nFlatness tolerance bands \ntypical\n±1 dB @ 5 Hz - 20 Hz \n±1 dB @ >20 Hz - 4 kHz\n±1.5 dB @ >4 kHz - 10 kHz\n±2 dB @ >10 kHz - 16 kHz\n±3 dB @ >16 kHz - 20 kHz\n+1/-4.5 dB @ 5 Hz - 20 Hz \n...\nFrequency Range\n5 Hz - 20 kHz\n...\nFree Field",
+    "source": "web",
+    "title": "OPERATING MANUAL",
+    "url": "https://images.thomann.de/pics/atg/atgdata/document/manual/242618_measurement_microphones_manual.pdf"
+   },
+   {
+    "id": 22,
+    "last_updated": "2025-02-12",
+    "snippet": "typical\n±1 dB @ 5 Hz - 20 Hz \n...\n5 Hz - 20 kHz\n...\nIdealized \nFree Field\n‐10\n‐9\n‐8\n‐7\n‐6\n‐5\n‐4\n‐3\n‐2\n‐1\n0\n1\n10\n100\n1000\n10000\nPressure\n...\n1",
+    "source": "web",
+    "title": "24",
+    "url": "https://www.belram.be/wp-content/uploads/2020/07/Measurement-Microphones-Specifications.pdf"
+   },
+   {
+    "id": 23,
+    "last_updated": "2026-04-03",
+    "snippet": "• \nComplies to IEC 61672/ANSI S1.4 Class 2; \n• \nFrequency Range: 20 Hz – 16 kHz; \n• \n...\nStandards \nIEC 61672-1 (2013) Class 2, Group X; \nANSI S1.4-1 (2014) Class 2, Group X; \nANSI S1.43 (2007) Type 2; \n...\n1/3 Octave Spectrum (PC software only) ",
+    "source": "web",
+    "title": "[PDF] Piccolo II",
+    "url": "https://www.norsonic.ch/wordpress/wp-content/uploads/Piccolo-II_Specsheet1.pdf"
+   },
+   {
+    "date": "2025-10-06",
+    "id": 24,
+    "last_updated": "2025-10-07",
+    "snippet": "- measurement range: 20 ...\n130 dB\n...\nFor calibration of a class 2 meter, a sound pressure of 94 dB 1000 Hz is generated in the chamber.",
+    "source": "web",
+    "title": "Sound Level Meter - Noise Level Meter",
+    "url": "https://www.pce-instruments.com/english/measuring-instruments/test-meters/sound-level-meter-noise-level-meter-kat_40095.htm?_start=37"
+   },
+   {
+    "id": 25,
+    "last_updated": "2025-09-30",
+    "snippet": "XL2+M2230: 24 dB(A) - 138 dB",
+    "source": "web",
+    "title": "18. Technical Data XL2",
+    "url": "https://images.thomann.de/pics/atg/atgdata/document/specs/technical_data_xl2.pdf"
+   },
+   {
+    "id": 26,
+    "last_updated": "2026-02-12",
+    "snippet": "",
+    "source": "web",
+    "title": "INTERNATIONAL STANDARD NORME INTERNATIONALE",
+    "url": "https://www.vde-verlag.de/iec-normen/preview-pdf/info_iec61672-1%7Bed2.0%7Db.pdf"
+   },
+   {
+    "id": 27,
+    "last_updated": "2025-11-23",
+    "snippet": "Measuring range\n30 to 130 dB\nFrequency range\n20 Hz to 8 kHz\nAccuracy",
+    "source": "web",
+    "title": "[PDF] Sound level meter",
+    "url": "https://www.instrukart.com/wp-content/uploads/2017/04/DS_Testo-816-1-Sound-Level-Meter_Ver1.0.pdf"
+   },
+   {
+    "date": "2013-01-01",
+    "id": 28,
+    "last_updated": "2025-03-24",
+    "snippet": "",
+    "source": "web",
+    "title": "IEC 61672-1 Ed. 2.0 b:2013",
+    "url": "https://webstore.ansi.org/standards/iec/iec61672ed2013"
+   },
+   {
+    "date": "2026-07-08",
+    "id": 29,
+    "last_updated": "2026-08-03",
+    "snippet": "|Frequency range|20 Hz to 12.5 kHz|",
+    "source": "web",
+    "title": "Class 2 Sound Level Meter ST-21D - Scarlet Tech",
+    "url": "https://scarlet-tech.com/products/class-2-sound-level-meter-st21d/"
+   },
+   {
+    "id": 30,
+    "last_updated": "2025-04-27",
+    "snippet": "Typically the frequency\nrange is from 20 Hz to 10 kHz for LS1 and 20 Hz to 20 kHz\n…\n...\nThe method is generally used between 20 Hz and\n100 kHz, but it can be used at both higher and lower fre-\nquencies.\nBut by low-frequency calibration, say f < 20 Hz,\nattention should be paid to the facts that any measure-\nment microphone has a static pressure equalization vent\nthat influences its low-frequency response and that the\neffect of this cannot, in all cases, be measured with an\nactuator.\nTherefore, when low-frequency calibration is re-\n...\nthat are calibrated by specific methods accounting for the\ninfluence of the microphone vents that equalize changes of\nstatic pressure.\nIt is important to be aware of that the microphone\nlow-frequency response depends very much on, if the vent\n– during measurements and calibration – is exposed to the\nsound pressure or not (see Fig. 13).\n...\nOne simple method\nthat is, however, not very precise, is to calculate the cut-off\nfrequency (the –3 dB point) from the decaying response to\na step-change of the ambient pressure.",
+    "source": "web",
+    "title": "Acoustic metrology – an overview of calibration methods and their uncertainties",
+    "url": "https://www.metrology-journal.org/articles/ijmqe/pdf/2013/02/ijmqe130045.pdf"
+   }
+  ]
+ }
+}

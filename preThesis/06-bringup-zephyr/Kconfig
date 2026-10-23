@@ -1,0 +1,20 @@
+mainmenu "Digital stethoscope evaluation"
+source "Kconfig.zephyr"
+menu "Stethoscope evaluation"
+config STETHO_POT_MAX_MV
+ int "Measured potentiometer full-scale millivolts"
+ range 1000 3300
+ default 3100
+config STETHO_CAPTURE_SECONDS
+ int "Volatile clip and fixture capacity in seconds"
+ range 1 20
+ default 5
+config STETHO_NETWORK
+ bool "Build optional Wi-Fi and verified TLS FHIR support"
+ default n
+ depends on WIFI && NET_SOCKETS_SOCKOPT_TLS
+config STETHO_CA_FILE
+ string "Absolute path to PEM root CA to embed (public certificate only)"
+ default ""
+ depends on STETHO_NETWORK
+endmenu

@@ -1,0 +1,1006 @@
+{
+ "run": {
+  "id": "R07-bruststueck-mems",
+  "topic": "Bruststueck-Kopplung an MEMS-Mikrofon + Bauteilauswahl",
+  "preset": "medium",
+  "prompt": "Kontext: Bachelorarbeit, digitales Stethoskop. Ein analoges Stethoskop-Bruststueck soll akustisch/mechanisch an ein MEMS-Mikrofon gekoppelt werden. Relevantes Band: ca. 20-600 Hz, inkl. S3/S4 bei ca. 20-60 Hz.\n\nHauptfrage: Wie koppelt man ein Stethoskop-Bruststueck praktisch an ein MEMS-Mikrofon, und welche konkreten Bauteile erfuellen die untere Grenzfrequenz?\n\nUnterfrage 1: Welche Kopplungsvarianten sind in Publikationen und Open-Source-Projekten zu digitalen Stethoskopen dokumentiert (Mikrofon direkt in der Schlauchkammer, kurzer Schlauchstummel mit abgeschlossenem Hohlraum, Membran-/Kavitaets-Ankopplung, Kontakt-/Vibrationsaufnehmer statt Luftschall)? Welche Effekte hat das Hohlraumvolumen auf den Frequenzgang (Helmholtz-Resonanz), und welche Fehler sind typisch (Leckage, Koerperschall, Reibgeraeusche)?\nUnterfrage 2: Welche konkreten, beschaffbaren MEMS-Mikrofone (Hersteller, Typenbezeichnung, digital I2S/PDM vs. analog) haben eine ausreichend tiefe untere Grenzfrequenz fuer 20 Hz - z. B. Infineon IM69D130, TDK/InvenSense ICS-40180 oder ICS-43434, Knowles-Typen - mit Angabe von -3 dB-Punkt, Rauschen (AOP/SNR) und Verfuegbarkeit als Breakout?\n\nAntwort auf Deutsch, mit Datenblatt-Links und konkreten Zahlenwerten."
+ },
+ "response": {
+  "id": "chatcmpl-b7c08f37dfe34c6bbf49fab7",
+  "object": "chat.completion",
+  "created": 1786462996,
+  "model": "preset/medium",
+  "choices": [
+   {
+    "index": 0,
+    "message": {
+     "role": "assistant",
+     "content": "## Kurzfazit\n\nFür eine Bachelorarbeit mit einem analogen Stethoskop-Bruststück würde ich **nicht** versuchen, das MEMS-Mikrofon über einen langen Schlauch und einen absichtlich kleinen Helmholtz-Hohlraum anzukoppeln. Die praktisch robusteste Lösung ist:\n\n1. **Membran des Bruststücks beibehalten**,\n2. auf der der Haut abgewandten Seite eine **sehr kleine, abgedichtete Mikrofonkammer** vorsehen,\n3. das MEMS-Mikrofon möglichst **direkt hinter der Membran** platzieren,\n4. den akustischen Weg kurz und mit großem Querschnitt ausführen,\n5. die komplette Konstruktion mit einem Lautsprecher oder Kalibriersignal von **10–1000 Hz** vermessen.\n\nDie Auswahl des Mikrofons ist für 20 Hz entscheidend: **ICS-40180 und ICS-43434 sind für 20 Hz nicht ausreichend spezifiziert**, da ihre untere Grenzfrequenz bei etwa 60 Hz liegt. Geeigneter sind beispielsweise **Infineon IM68A130**, **Infineon IM69D130** mit Einschränkung sowie mehrere **Knowles-Typen mit 17–25 Hz LFRO**.\n\n---\n\n# 1. Praktische Kopplung des Bruststücks an ein MEMS-Mikrofon\n\n## Empfohlener mechanischer Aufbau\n\nEin geeigneter Aufbau ist:\n\n```text\nBrust / Haut\n   │\n   ▼\nStethoskopmembran\n   │  sehr kleine Luftkammer\n   ▼\nakustische Öffnung des MEMS-Mikrofons\n   │\nMEMS-Mikrofon auf kleiner Leiterplatte\n   │\nPDM/I²S/Analog-Auswerteelektronik\n```\n\n### Konstruktive Empfehlungen\n\n- Das Mikrofon sollte **nicht lose im großen Innenraum des Bruststücks** liegen.\n- Die Mikrofonöffnung muss zur Membran zeigen; bei einem **Bottom-Port-Mikrofon** muss die Öffnung auf der Leiterplatte exakt mit einem akustischen Kanal fluchten.\n- Der Abstand zwischen Membran und Mikrofon sollte typischerweise nur wenige Millimeter betragen.\n- Die Kammer muss gegenüber der Umgebung möglichst gut abgedichtet werden.\n- Flexible Dichtungen aus Silikon oder weichem TPU sind geeigneter als harte, spielfreie Kunststoffkontakte.\n- Das Mikrofon selbst sollte mechanisch vom Gehäuse entkoppelt werden, beispielsweise durch eine dünne Elastomerlagerung. Andernfalls werden Griff-, Reib- und Körperschallgeräusche direkt auf das Mikrofon übertragen.\n- Für die Bachelorarbeit sollte die Mikrofonkammer austauschbare Einsätze besitzen, zum Beispiel mit 10, 50, 100 und 500 mm³ Volumen.\n\nDie grundlegenden akustischen Untersuchungen zu Stethoskopen zeigen, dass ein kleineres Kammervolumen den Schalldruck beziehungsweise die Übertragung verbessern kann, während Schläuche tiefe Frequenzen abschwächen und stehende Wellen erzeugen. Eine Membran kann die Übertragung dämpfen und Resonanzen verschieben, erlaubt aber kleinere Luftvolumina. [web:29]\n\n---\n\n# 2. Dokumentierte Kopplungsvarianten\n\n| Variante | Typischer Aufbau | Vorteile | Nachteile und typische Fehler |\n|---|---|---|---|\n| **Mikrofon direkt im Bruststück** | MEMS- oder Elektretmikrofon unmittelbar hinter der Stethoskopmembran | Kürzester akustischer Weg; geringe Schlauchverluste; gute Chancen für 20–600 Hz | Sehr empfindlich gegenüber Körperschall, Membrananschlag, Montageabweichungen und Leckagen |\n| **Kurzer Schlauchstummel mit Mikrofon am Ende** | Bruststück – kurzer Silikon-/Vinylschlauch – Mikrofonkammer | Einfach nachzubauen; Mikrofon bleibt außerhalb des Bruststücks | Schlauchdämpfung, stehende Wellen, zusätzliche Hohlraumresonanz und Reibegeräusche |\n| **Membran-/Kavitätsankopplung** | Stethoskopmembran speist eine definierte, abgedichtete Mikrofonkammer | Mechanisch gut reproduzierbar; Mikrofon kann geschützt im Gehäuse sitzen | Kammervolumen und Öffnung bestimmen den Frequenzgang stark; falsche Dimensionierung erzeugt Resonanzüberhöhungen |\n| **Mikrofon in Schlauchkammer** | MEMS-Mikrofon sitzt in einer vergrößerten Kammer am Schlauchende oder im Ersatz-Ohrstück | Einfacher Prototyp; geringe Änderung am Bruststück | Großer Totraum, Helmholtz-Resonanz, Verluste im Schlauch und erhöhte Empfindlichkeit gegenüber Handhabungsgeräuschen |\n| **Kontakt-/Vibrationsaufnehmer** | Piezoelement, piezoresistiver Sensor, Beschleunigungssensor oder Kontaktmikrofon direkt am Bruststück | Umgeht die Luftschallübertragung und ist weniger empfindlich gegenüber Umgebungslärm | Erfasst Körperschall statt ausschließlich Luftschall; starke Abhängigkeit von Anpressdruck und mechanischer Befestigung |\n| **Hybridaufbau** | MEMS-Mikrofon plus Piezo-/Beschleunigungssensor | Luft- und Körperschallsignal können verglichen oder fusioniert werden | Höherer Schaltungs- und Kalibrieraufwand |\n\nEin Open-Source-Beispiel ist das **Fioscope**. Dort wird ein vorhandenes Stethoskop-Bruststück mit einer etwa **5 cm langen Leitung mit 8 mm Innendurchmesser** verbunden; am anderen Ende sitzt ein kleines Mikrofon in einem 3D-gedruckten Gehäuse. Das Bruststück besitzt eine Kunststoffmembran mit etwa 40 mm Durchmesser und ungefähr 0,35 mm Dicke. [web:21]\n\nEin weiteres einfaches elektronisches Stethoskop verwendet ein gewöhnliches Bruststück, einen etwa **5 cm langen Schlauch mit 6 mm Innendurchmesser** und ein Kondensatormikrofon am Schlauchende. [web:27] Diese Lösung ist mechanisch einfach, ist aber für eine möglichst unverfälschte Übertragung unterhalb von 60 Hz nicht optimal.\n\nDie Literatur dokumentiert außerdem direkte elektronische Bruststücke mit Elektretmikrofonen, Sensorarrays sowie piezoelektrische, piezoresistive und beschleunigungsbasierte Kontaktaufnehmer. Beispielsweise werden ein PZT-Sensor mit einer Empfindlichkeit von 9,2 V/g unterhalb 1 kHz und ein Beschleunigungssensor als Kontaktmikrofon beschrieben. [web:16]\n\n---\n\n# 3. Einfluss des Hohlraumvolumens: Helmholtz-Resonanz\n\nEine abgeschlossene Kammer mit einer kleinen Öffnung beziehungsweise einem kurzen Hals verhält sich näherungsweise wie ein Helmholtz-Resonator:\n\n\\[\nf_H =\n\\frac{c}{2\\pi}\n\\sqrt{\\frac{A}{V L_\\mathrm{eff}}}\n\\]\n\nmit\n\n- \\(f_H\\): Resonanzfrequenz,\n- \\(c\\): Schallgeschwindigkeit, etwa 343 m/s,\n- \\(A\\): Querschnittsfläche des Halses,\n- \\(V\\): Hohlraumvolumen,\n- \\(L_\\mathrm{eff}\\): effektive Halslänge einschließlich Endkorrekturen.\n\nDie Abhängigkeit von Querschnitt, Volumen und Halslänge ist für Helmholtz-Resonatoren gut dokumentiert. [web:22]\n\n### Konsequenzen\n\n- Größeres Volumen \\(V\\) → **niedrigere Resonanzfrequenz**.\n- Größere Öffnung \\(A\\) → **höhere Resonanzfrequenz**.\n- Längerer Hals → **niedrigere Resonanzfrequenz**.\n- Eine Resonanz innerhalb von 20–600 Hz kann die Herzgeräusche stark verfälschen.\n- Eine Resonanz oberhalb des Nutzbands ist meist weniger problematisch, sofern ihre Flanken nicht bis in den Messbereich reichen.\n- Starke Dämpfung durch weiche Dichtungen und Verluste im Schlauch reduziert die Güte, senkt aber auch den Nutzpegel.\n\n### Zahlenbeispiel\n\nFür einen Hals mit\n\n- Innendurchmesser 6 mm,\n- Querschnitt \\(A \\approx 28,3\\,\\text{mm}^2\\),\n- effektiver Länge \\(L_\\mathrm{eff}=10\\) mm,\n\nwürde eine Helmholtz-Resonanz bei 20 Hz rechnerisch ein Volumen von ungefähr **21 ml** erfordern. Ein kleiner Hohlraum von beispielsweise 0,1–1 ml liegt bei denselben Halsabmessungen dagegen deutlich höher im Frequenzbereich.\n\nDas ist ein wichtiger praktischer Punkt: Eine kleine Kammer erzeugt nicht automatisch eine tiefe Resonanz. Für eine Resonanz bei 20 Hz wäre entweder ein sehr großes Volumen oder ein sehr kleiner beziehungsweise sehr langer Hals nötig. Eine absichtlich auf 20 Hz abgestimmte Kammer wäre deshalb konstruktiv relativ groß und würde den Frequenzgang wahrscheinlich stark verfärben.\n\nFür den beschriebenen Anwendungsfall ist daher besser:\n\n> **Die Helmholtz-Resonanz nicht in das Band 20–600 Hz legen, sondern den akustischen Weg kurz halten und die Kammer klein sowie stark bedämpft ausführen.**\n\n---\n\n# 4. Typische Fehlerquellen\n\n## Leckagen\n\nLeckagen zwischen Membran, Bruststück und Mikrofonkammer führen zu:\n\n- Verlust von statischem beziehungsweise niederfrequentem Druck,\n- zusätzlicher Hochpasswirkung,\n- veränderlichem Frequenzgang bei unterschiedlichem Anpressdruck,\n- erhöhter Empfindlichkeit gegenüber Außengeräuschen.\n\nFür 20-Hz-Signale ist die Abdichtung besonders kritisch. Eine kleine Leckage kann bei höheren Frequenzen kaum auffallen, aber den Bereich um 20–40 Hz deutlich abschwächen.\n\n## Körperschall\n\nTypische Quellen sind:\n\n- Berührung des Gehäuses,\n- Kabelbewegung,\n- Druckänderungen der Hand,\n- Reibung zwischen Membranring und Gehäuse,\n- Anschlagen der Membran,\n- Vibrationen der Leiterplatte.\n\nDer Membranring sollte deshalb weich gedichtet, das Mikrofon aber nicht starr mit einer großen Gehäusefläche gekoppelt werden.\n\n## Reibungs- und Handhabungsgeräusche\n\nBeim Verschieben des Bruststücks entstehen häufig impulsartige Geräusche mit großem Pegel. Diese sind nicht unbedingt akustische Herzsignale, sondern mechanisch eingekoppelte Störungen. Die Literaturübersicht nennt für die beschriebenen Systeme allerdings keine quantitative Messung von Reibegeräuschen oder Leckageeffekten; diese Punkte müssen im eigenen Aufbau experimentell untersucht werden. [web:16]\n\n## Schlauchverluste und stehende Wellen\n\nEin Schlauch ist nicht nur eine Leitung mit vernachlässigbarer Dämpfung. Er bildet zusammen mit Bruststück, Kammer und Mikrofon eine akustische Impedanz. In der Stethoskop-Akustik werden ausdrücklich eine Abschwächung tiefer Frequenzen und verzerrende stehende Wellen im Schlauch beschrieben. [web:29]\n\nFür einen ersten Prototyp würde ich daher zwei Varianten parallel bauen:\n\n1. **direkte Kammerankopplung**,  \n2. **5-cm-Schlauchankopplung**.\n\nBeide sollten mit demselben Mikrofon und derselben Elektronik vermessen werden.\n\n---\n\n# 5. Geeignete MEMS-Mikrofone\n\nDie Herstellerangabe **LFRO** beziehungsweise **low-frequency roll-off** entspricht dem unteren -3-dB-Punkt relativ zur Empfindlichkeit bei 1 kHz. [web:33]\n\n## Vergleich geeigneter und ungeeigneter Kandidaten\n\n| Hersteller | Typenbezeichnung | Ausgang | Untere Grenzfrequenz / LFRO | Rauschen beziehungsweise SNR | AOP | Breakout/Evaluation | Eignung für 20 Hz |\n|---|---|---:|---:|---:|---:|---|---|\n| **Infineon** | **IM68A130** | Analog, single-ended | **10 Hz**, -3 dB relativ zu 1 kHz | **68 dB(A) SNR**; näherungsweise etwa 22 dB(A) äquivalentes Rauschen | **130 dB SPL** bei 10 % THD | Infineon-Flex-Evaluationsboards; kein verbreitetes Arduino-Hobbybreakout bekannt | **Sehr gut** |\n| **Infineon** | **IM69D130** | Digital **PDM** | **28 Hz**, -3 dB | **69 dB(A) SNR**, äquivalenter Rauschboden etwa 25 dB SPL | **130 dB SPL** | Infineon **IM69D130 Microphone Shield2Go**, Flex-Evaluationboard | **Bedingt geeignet**; 20 Hz liegt bereits unterhalb des -3-dB-Punkts |\n| **TDK/InvenSense** | **ICS-40180** | Analog, single-ended | **60 Hz**, -3 dB | **65 dBA SNR** | **124 dB SPL** | SparkFun Analog MEMS Microphone Breakout verfügbar | **Nicht ausreichend für S3/S4 bei 20–60 Hz** |\n| **TDK/InvenSense** | **ICS-43434** | Digital **I²S** | **60 Hz**, untere Grenzfrequenz | **64 dBA SNR**, etwa 30 dBA SPL EIN | **120 dB SPL** | Breakout beispielsweise von EMMIC erhältlich | **Nicht ausreichend für 20 Hz** |\n| **Knowles** | **SPK01A0LR5H-1 Raptor** | Analog, single-ended | **17 Hz**, -3 dB | **72 dB(A) SNR** | 122 dB SPL bei 1 % THD; 130 dB SPL bei 10 % THD | KAS-700-0175 On-Flex; Evaluationsboard verfügbar | **Sehr gut** |\n| **Knowles** | **SPH21C3LR5H-1 Falcon** | Analog, differentiell | **18 Hz**, -3 dB | **68,5 dB(A) SNR** | 125/134 dB SPL bei 1/10 % THD | Knowles-Muskie-Evaluation; kein typisches Hobbybreakout | **Sehr gut** |\n| **Knowles** | **SPK18R1LM4H-1 Hyperion** | Digital **PDM** | **20 Hz**, -3 dB | **70,5 dB(A) SNR** | 125/128 dB SPL bei 1/10 % THD | KAS-700-0192 On-Flex; Muskie-Evaluation | **Sehr gut** |\n| **Knowles** | **SPH0655LM4H-1 Cornell II** | Digital **PDM** | **25 Hz**, -3 dB | **66 dB(A) SNR** | 130,5/132,5 dB SPL bei 1/10 % THD | KAS-700-0153 On-Flex; Muskie-Evaluation | **Gut, aber 20 Hz leicht gedämpft** |\n| **Knowles** | **SPH18R1LM4H-1 Titan** | Digital **PDM** | **30 Hz**, -3 dB | **68,5 dB(A) SNR** | 123/129 dB SPL bei 1/10 % THD | KAS-700-0172 On-Flex; Muskie-Evaluation | **Bedingt geeignet** |\n| **Knowles** | **SPH0645LM4H-1 Crawford** | Digital **I²S** | **45 Hz**, -3 dB | **65 dB(A) SNR** | 110/120 dB SPL bei 1/10 % THD | KAS-700-0137 On-Flex; verschiedene I²S-Module erhältlich | **Nicht ausreichend für 20–40 Hz** |\n\nDie Werte der Knowles-Typen stammen aus dem aktuellen Knowles-Mikrofon-Auswahlleitfaden; dort wird LFRO ausdrücklich als -3-dB-Punkt relativ zur Empfindlichkeit bei 1 kHz definiert. [web:33] Für den IM68A130 nennt Infineon 10 Hz LFRO, 68 dB(A) SNR und 130 dB SPL AOP. [web:47] Beim IM69D130 sind 28 Hz LFRO, 69 dB(A) SNR und 130 dB SPL AOP angegeben. [web:6][web:1]\n\n---\n\n# 6. Bewertung der vom Fragesteller genannten TDK-/Infineon-Kandidaten\n\n## Infineon IM69D130\n\nDer IM69D130 ist elektrisch attraktiv:\n\n- digitaler **PDM-Ausgang**,\n- 69 dB(A) SNR,\n- 130 dB SPL AOP,\n- 28-Hz-LFRO,\n- sehr kleine Bauform.\n\nEr ist für den Bereich ab etwa 30 Hz gut verwendbar, aber **nicht ideal, wenn 20 Hz mit voller Amplitude und ohne Korrektur erfasst werden sollen**. Bei 20 Hz befindet man sich bereits im Abfallbereich. Die Herstellerdaten nennen eine 28-Hz-Grenze. [web:6]\n\nFür einen Prototyp ist der IM69D130 trotzdem interessant, weil ein fertiges Shield2Go-Board existiert, das das PDM-Signal über einen ADAU7002 in I²S umsetzt. [web:55]\n\n## TDK/InvenSense ICS-40180\n\nDer ICS-40180 ist ein analoges Mikrofon mit:\n\n- 60 Hz unterem -3-dB-Punkt,\n- 65 dBA SNR,\n- etwa 124 dB SPL AOP,\n- analogem single-ended Ausgang.\n\nEin SparkFun-Breakout ist verfügbar. [web:43][web:44]\n\nFür normale Lungengeräusche und Herzkomponenten oberhalb etwa 80 Hz kann er brauchbar sein. Für **S3/S4 bei 20–60 Hz ist er jedoch keine gute Wahl**, weil gerade der obere Teil dieses Bereichs bereits am unteren Übertragungsrand liegt.\n\n## TDK/InvenSense ICS-43434\n\nDer ICS-43434 besitzt:\n\n- digitalen **I²S-Ausgang**,\n- 24-Bit-Datenpfad,\n- 64 dBA SNR,\n- 120 dB SPL AOP,\n- 60 Hz untere Grenzfrequenz.\n\nTDK und das Datenblatt geben einen Frequenzbereich von ungefähr 60 Hz bis 20 kHz an. [web:2][web:4] Ein kleines EMMIC-Breakout mit 2,54-mm-Anschlüssen ist erhältlich. [web:42]\n\nDer ICS-43434 ist deshalb für ein einfaches I²S-Projekt bequem, aber für die gestellte Anforderung **20–60 Hz nicht ausreichend**.\n\n---\n\n# 7. Meine konkrete Empfehlung\n\n## Beste analoge Lösung\n\n**Infineon IM68A130**\n\n- 10 Hz LFRO,\n- 68 dB(A) SNR,\n- 130 dB SPL AOP,\n- analoger Ausgang,\n- sehr gut für einen eigenen rauscharmen Vorverstärker und ADC.\n\nEr ist besonders geeignet, wenn die Bachelorarbeit die komplette analoge Signalkette untersuchen soll.\n\n## Beste digitale Lösung\n\n**Knowles SPK18R1LM4H-1 Hyperion**\n\n- PDM,\n- 20-Hz-LFRO,\n- 70,5 dB(A) SNR,\n- 128 dB SPL AOP bei 10 % THD.\n\nDie Beschaffung erfolgt eher über Knowles-Flexboards oder das Muskie-Evaluationssystem als über ein klassisches Hobbybreakout. [web:33]\n\n## Praktisch am einfachsten für ein digitales Entwicklungsboard\n\n**Infineon IM69D130**\n\n- fertige Shield2Go-Hardware,\n- PDM- beziehungsweise I²S-Anbindung,\n- ausreichend gute Rauschdaten,\n- aber leichte Dämpfung bei 20 Hz.\n\nFür die Arbeit sollte dann eine digitale Entzerrung untersucht werden. Eine Entzerrung kann den Amplitudenabfall korrigieren, aber **nicht das Mikrofonrauschen oder fehlende Signalanteile unterhalb der Grenzfrequenz zurückholen**.\n\n## Nicht als Hauptkandidat für S3/S4\n\n- TDK/InvenSense **ICS-40180**\n- TDK/InvenSense **ICS-43434**\n- Knowles **SPH0645LM4H-1**\n- Knowles **SPH18R1LM4H-1**\n\nDiese Bauteile sind für Sprache, Lungengeräusche und allgemeine Audioaufzeichnung interessant, liegen mit 30–60 Hz LFRO aber zu hoch für eine unverfälschte Erfassung des gesamten Bereichs 20–60 Hz.\n\n---\n\n# 8. Empfohlener Versuchsplan\n\nFür die Bachelorarbeit würde ich mindestens diese vier Messaufbauten vergleichen:\n\n| Aufbau | Mikrofonposition | Ziel |\n|---|---|---|\n| A | IM68A130 direkt hinter der Membran | Referenz für maximal kurze Luftankopplung |\n| B | IM69D130 direkt hinter der Membran | Vergleich analog gegen PDM |\n| C | IM68A130 über 5-cm-Schlauch | Einfluss des Schlauchs |\n| D | Piezo- oder Beschleunigungssensor am Bruststück | Vergleich Luftschall gegen Körperschall |\n\nZu messen wären:\n\n- Übertragungsfunktion von **10 Hz bis 1 kHz**,\n- -3-dB-Grenzfrequenz,\n- Resonanzfrequenzen,\n- Einfluss verschiedener Kammervolumina,\n- Einfluss einer definierten Leckage,\n- Einfluss des Anpressdrucks,\n- Körperschall bei Gehäuseberührung,\n- Reibegeräusche beim Verschieben,\n- SNR bei einem synthetischen 20-, 30-, 40- und 60-Hz-Signal.\n\nDie zentrale Designentscheidung lautet damit:\n\n> Für 20–600 Hz sollte das Mikrofon möglichst direkt und abgedichtet an die Bruststückmembran gekoppelt werden. Als erste Bauteile sind der **Infineon IM68A130** und der **Knowles SPK18R1LM4H-1** am überzeugendsten; der **IM69D130** ist eine praktikable digitale Alternative, während ICS-40180 und ICS-43434 für 20-Hz-Anteile zu hochpassig sind."
+    },
+    "finish_reason": "stop"
+   }
+  ],
+  "usage": {
+   "prompt_tokens": 75081,
+   "completion_tokens": 6611,
+   "total_tokens": 81692,
+   "cost": {
+    "cache_creation_cost": 0.00635,
+    "cache_read_cost": 0.00099,
+    "currency": "USD",
+    "input_cost": 0,
+    "output_cost": 0.00793,
+    "tool_calls_cost": 0.02798,
+    "tool_calls_cost_details": {
+     "fetch_url": 0.01548,
+     "search_web": 0.0125
+    },
+    "total_cost": 0.04325
+   },
+   "input_tokens_details": {
+    "cache_creation_input_tokens": 25407,
+    "cache_read_input_tokens": 49659,
+    "cached_tokens": 49659
+   },
+   "output_tokens_details": {
+    "reasoning_tokens": 618
+   },
+   "tool_calls_details": {
+    "fetch_url": {
+     "cost_usd": 0.01548,
+     "invocation": 7,
+     "token_usage": [
+      {
+       "input_tokens": 18731,
+       "input_tokens_details": {
+        "cache_creation_input_tokens": 18728,
+        "cached_tokens": 0
+       },
+       "model": "openai/gpt-5.6-luna",
+       "output_tokens": 3713,
+       "output_tokens_details": {
+        "reasoning_tokens": 382
+       }
+      },
+      {
+       "input_tokens": 3837,
+       "input_tokens_details": {
+        "cache_creation_input_tokens": 3834,
+        "cached_tokens": 0
+       },
+       "model": "openai/gpt-5.6-luna",
+       "output_tokens": 3028,
+       "output_tokens_details": {
+        "reasoning_tokens": 302
+       }
+      }
+     ]
+    },
+    "search_web": {
+     "invocation": 5
+    }
+   }
+  },
+  "citations": [
+   {
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11548498/",
+    "title": "MEMS and ECM Sensor Technologies for Cardiorespiratory ...",
+    "date": "2024-10-31"
+   },
+   {
+    "url": "https://eprints.bournemouth.ac.uk/39307/",
+    "title": "Design optimization of 3D printed digital stetheocope ...",
+    "date": "2023-12-28"
+   },
+   {
+    "url": "https://cris.unibo.it/retrieve/handle/11585/950564/15e85546-f2e7-4a1d-adcd-4e50b55b041b/micromachines-14-02092.pdf",
+    "title": "[PDF] Exploring Microphone Technologies for Digital Auscultation Devices",
+    "date": null
+   },
+   {
+    "url": "https://www.sciencedirect.com/science/article/abs/pii/S0022460X22003893",
+    "title": "Stethoscope acoustics",
+    "date": null
+   },
+   {
+    "url": "https://www.linkedin.com/posts/stive-gabin-7132571a9_esp32-inmp441-bpm-activity-7436112206229835776-RBpB",
+    "title": "stive gabin's Post",
+    "date": "2026-03-07"
+   },
+   {
+    "url": "https://github.com/Fioscopeco/Fioscope_3d_print_v1",
+    "title": "GitHub - Fioscopeco/Fioscope_3d_print_v1: An affordable, open-source, high-quality digital stethoscope accessible to everyone using 3D-printed, widely accessible parts, and your smartphone. Based on the medically approved glia-x Stethoscope.",
+    "date": "2020-10-11"
+   },
+   {
+    "url": "https://ressources.univ-lemans.fr/AccesLibre/UM/Pedago/physique/02/meca/resohelm.html",
+    "title": "Résonateur de Helmholtz",
+    "date": null
+   },
+   {
+    "url": "https://myrmanshelby.github.io/digital-stethoscope-landing-page/",
+    "title": "Don't Miss a Beat",
+    "date": null
+   },
+   {
+    "url": "https://scispace.com/pdf/measurements-on-quarterwavelength-tubes-and-helmholtz-1enc8keds8.pdf",
+    "title": "Measurements on quarterwavelength tubes and Helmholtz ...",
+    "date": null
+   },
+   {
+    "url": "https://ijrti.org/papers/IJRTI2504311.pdf",
+    "title": "© 2025 IJRTI | Volume 10, Issue 4 April 2025 | ISSN: 2456-3315",
+    "date": null
+   },
+   {
+    "url": "https://www.sciencedirect.com/science/article/abs/pii/S0263224119307079",
+    "title": "A bat-shape piezoresistor electronic stethoscope based on MEMS technology",
+    "date": null
+   },
+   {
+    "url": "https://journals.physiology.org/doi/pdf/10.1152/advan.00073.2012",
+    "title": "A simple electronic stethoscope for recording and playback of heart sounds",
+    "date": null
+   },
+   {
+    "url": "https://doaj.org/article/3016336f54954ef08db9f481e6e90905",
+    "title": "OMES: An Open-Source Multi-Sensor Modular Electronic Stethoscope",
+    "date": "2025-10-01"
+   },
+   {
+    "url": "https://www.repository.cam.ac.uk/items/feadd88b-9e03-44fb-a875-c49f7c550259",
+    "title": "Stethoscope acoustics",
+    "date": "2022-03-16"
+   },
+   {
+    "url": "https://www.edn.com/acoustic-design-for-mems-microphones/",
+    "title": "Acoustic Design for MEMS Microphones - EDN",
+    "date": "2014-03-10"
+   },
+   {
+    "url": "https://www.mouser.com/datasheet/2/196/Infineon-IM69D130-DS-v01_00-EN-1274301.pdf",
+    "title": "[PDF] IM69D130 - Mouser Electronics",
+    "date": "2017-12-19"
+   },
+   {
+    "url": "https://mm.digikey.com/Volume0/opasdata/d220001/medias/docus/8908/EV_ICS-43434-FX.pdf",
+    "title": "EV_ICS-43434-FX ICS-43434 TDK InvenSense Datasheet",
+    "date": null
+   },
+   {
+    "url": "https://invensense.tdk.com/download-pdf/ics-40180-datasheet/",
+    "title": "ICS-40180 Datasheet | TDK InvenSense",
+    "date": "2017-12-08"
+   },
+   {
+    "url": "https://product.tdk.com/en/search/sw_piezo/mic/mems-mic/info?part_no=ICS-43434",
+    "title": "ICS-43434 : Detailed Information - MEMS Microphones (Microphone)",
+    "date": null
+   },
+   {
+    "url": "https://www.allaboutcircuits.com/uploads/articles/Infineon-xensiv-mems-microphones-products-and-applications-presentation.pdf",
+    "title": "[PDF] Infineon-xensiv-mems-microphones-products-and-applications ...",
+    "date": null
+   },
+   {
+    "url": "https://www.infineon.com/part/IM69D130",
+    "title": "IM69D130 - MEMS microphones",
+    "date": "2026-07-13"
+   },
+   {
+    "url": "https://docs.cirkitdesigner.com/component/d7421ae3-66ea-459c-91fb-27eec1c310ab/ics-43434",
+    "title": "How to Use ICS-43434: Examples, Pinouts, and Specs",
+    "date": "2024-11-27"
+   },
+   {
+    "url": "https://www.cdiweb.com/datasheets/invensense/emmic-ics43434-ds.pdf",
+    "title": "EMMIC-ICS43434",
+    "date": null
+   },
+   {
+    "url": "https://product.tdk.com/de/search/sw_piezo/mic/mems-mic/info?part_no=ICS-43434",
+    "title": "ICS-43434 : Detaillierte Informationen",
+    "date": "2025-09-26"
+   },
+   {
+    "url": "https://product.tdk.com/en/search/sw_piezo/mic/mems-mic/info?part_no=ICS-40180",
+    "title": "ICS-40180 : Detailed Information - MEMS Microphones (Microphone)",
+    "date": "2022-11-09"
+   },
+   {
+    "url": "https://www.xonelec.com/mpn/tdk/ics40180",
+    "title": ".",
+    "date": "2025-01-14"
+   },
+   {
+    "url": "https://www.alldatasheet.com/datasheet-pdf/pdf/1137959/TDK/ICS-40180.html",
+    "title": "ICS-40180 Datasheet(PDF) - TDK Electronics - ALLDATASHEET.COM",
+    "date": null
+   },
+   {
+    "url": "https://www.partgenie.ai/parts/ics-43434-mfg-001194",
+    "title": "ICS-43434 Datasheet, Alternatives & Specs - PartGenie",
+    "date": null
+   },
+   {
+    "url": "https://www.worldictown.com/productdetail/ICS-40180",
+    "title": "ICS-40180 | TDK InvenSense - WorldICTown",
+    "date": null
+   },
+   {
+    "url": "https://www.teigfam.net/oyvind/home/technology/243-my-mems-microphones-notes/",
+    "title": "My MEMS microphones notes etc. | Øyvind Teig",
+    "date": "2024-12-29"
+   },
+   {
+    "url": "https://www.knowles.com/docs/default-source/default-document-library/mm20-33366-000.pdf?Status=Master&sfvrsn=5bb171b1_0",
+    "title": "[PDF] MEMS Microphone - Knowles",
+    "date": "2019-09-05"
+   },
+   {
+    "url": "https://www.knowles.com/docs/default-source/default-document-library/frequency-response-and-latency-of-mems-microphones---theory-and-practice.pdf?sfvrsn=4",
+    "title": "[PDF] frequency-response-and-latency-of-mems-microphones---theory ...",
+    "date": null
+   },
+   {
+    "url": "https://www.knowles.com/docs/default-source/default-document-library/mic-selection-guide-r5.pdf?sfvrsn=5fb74db1_7",
+    "title": "MEMS MICROPHONES FOR FULL RANGE AUDIO AND ULTRASONIC",
+    "date": null
+   },
+   {
+    "url": "https://pdf.directindustry.com/pdf/knowles-electronics-llc/sph0645lm4h-b-i2s-output-digital-microphone/127265-630002.html",
+    "title": "SPH0645LM4H-B I2S Output Digital Microphone - Catalogs",
+    "date": null
+   },
+   {
+    "url": "https://www.mouser.com/datasheet/2/218/kas-700-0137-crawford-mic-on-flex-product-brief-re-1624260.pdf",
+    "title": "[PDF] Knowles SPH0645LM4H-B SiSonic™ I2S digital microphone ...",
+    "date": null
+   },
+   {
+    "url": "https://www.knowles.com/docs/default-source/default-document-library/an-19-mm25-mems-microphone.pdf?sfvrsn=b1ff71b1_9",
+    "title": "[PDF] mm25 mems microphone high snr trimmable - Knowles",
+    "date": null
+   },
+   {
+    "url": "https://www.infineon.com/assets/row/public/documents/24/45/infineon-im69d130-pb--productbrief-en.pdf",
+    "title": "[PDF] IM69D130 - Infineon Technologies",
+    "date": null
+   },
+   {
+    "url": "https://siliconsemiconductor.net/article/94136/Knowles_slashes_power_consumption_in_MEMS_microphones",
+    "title": "Knowles slashes power consumption in MEMS microphones - News",
+    "date": "2014-06-29"
+   },
+   {
+    "url": "https://www.scribd.com/document/70478883/Mems-Microphone-Spm0408he5h",
+    "title": "Mems Microphone - Spm0408he5h | PDF",
+    "date": "2025-11-02"
+   },
+   {
+    "url": "https://audioxpress.com/news/knowles-debuts-trio-of-sisonic-mems-microphones-for-high-performance-tws-and-hearable-designs",
+    "title": "Knowles Debuts Trio of SiSonic MEMS Microphones for High ...",
+    "date": "2023-01-13"
+   },
+   {
+    "url": "https://mm.digikey.com/Volume0/opasdata/d220001/medias/docus/2859/MEMS_Microphone_Hookup_Guide_Web.pdf",
+    "title": "MEMS Microphone Hookup Guide  ",
+    "date": null
+   },
+   {
+    "url": "https://github.com/sparkfun/SparkFun_Analog_MEMS_Microphone_Breakout_ICS-40180",
+    "title": "GitHub - sparkfun/SparkFun_Analog_MEMS_Microphone_Breakout_ICS-40180: Breakout board for the ICS-40180 bottom-port analog MEMs microphone by InvenSense.",
+    "date": "2021-02-16"
+   },
+   {
+    "url": "https://www.robotshop.com/products/sparkfun-analog-mems-microphone-breakout-ics-40180",
+    "title": "SparkFun Analog MEMS Microphone Breakout - ICS-40180",
+    "date": null
+   },
+   {
+    "url": "https://cdn.thomasnet.com/ccp/30973684/351950.pdf",
+    "title": "[PDF] knowles mems microphones portfolio - Thomasnet",
+    "date": null
+   },
+   {
+    "url": "https://github.com/Infineon/IM69D130-Microphone-Shield2Go",
+    "title": "Infineon/IM69D130-Microphone-Shield2Go - GitHub",
+    "date": "2018-11-05"
+   },
+   {
+    "url": "https://www.infineon.com/evaluation-board/EVAL-IM69D130V01-FLEX",
+    "title": "EVAL-IM69D130V01-FLEX - Evaluation Boards | Infineon Technologies",
+    "date": "2000-01-01"
+   },
+   {
+    "url": "https://at.farnell.com/en-AT/infineon/s2gomemsmicim69dtobo1/eval-board-mems-microphone/dp/3014284",
+    "title": "Evaluation Board, Shield2Go MEMS Microphone, 2 x XENSIV ...",
+    "date": "2025-01-01"
+   },
+   {
+    "url": "https://www.newark.com/infineon/evalim69d130flexkittobo1/evaluation-kit-mems-microphone/dp/63AK1619",
+    "title": "EVALIM69D130FLEXKITTOBO1 INFINEON, Evaluation Kit ...",
+    "date": "2025-01-01"
+   },
+   {
+    "url": "https://www.mouser.ca/new/infineon/infineon-xensiv-mems-boards/",
+    "title": "Infineon Technologies XENSIV™ MEMS Microphone Flex Evaluation Boards",
+    "date": "2024-05-13"
+   },
+   {
+    "url": "https://uk.rs-online.com/web/p/sensor-development-tools/2601162",
+    "title": "Infineon S2GOMEMSMICIM69DTOBO1 Microphone Sensor Evaluation Board for IM69D130 IM69D130 Module",
+    "date": "2020-10-28"
+   },
+   {
+    "url": "https://www.digikey.com/en/products/detail/infineon-technologies/EVALIM69D130FLEXKITTOBO1/8638920",
+    "title": "EVALIM69D130FLEXKITTOBO1 Infineon Technologies - DigiKey",
+    "date": "2021-01-01"
+   },
+   {
+    "url": "https://www.industrybuying.com/controller-boards-infineon-IND.CON.536424592",
+    "title": "Buy Infineon Evaluation Board for IM69D130 ...",
+    "date": "2025-06-30"
+   },
+   {
+    "url": "https://www.knowles.com/docs/default-source/default-document-library/sph18r1lm4h-1_titan_datasheet.pdf",
+    "title": "SPH88R1LM4H-1",
+    "date": null
+   },
+   {
+    "url": "https://www.htelec.com/products/category/evaluation-boards-evaluation-and-demonstration-boards-and-kits/1338/all/1",
+    "title": "Evaluation and Demonstration Boards and Kits(31) - HT Electronics",
+    "date": null
+   },
+   {
+    "url": "https://www.codico.com/en/en/current/news/knowles-new-mems-microphone-evaluation-kit-muskie",
+    "title": "KNOWLES' MEMS Microphone Eval-Kit Muskie | CODICO.com",
+    "date": "2019-09-26"
+   },
+   {
+    "url": "https://www.knowles.com/docs/default-source/default-document-library/an18-knowles-flex-circuit-and-coupons-for-testing_updated.pdf",
+    "title": "[PDF] AN18 Knowles Flex Circuit and Coupons for Testing",
+    "date": null
+   },
+   {
+    "url": "https://item.szlcsc.com/24031738.html",
+    "title": "SPK01A0LR5H-1-7中文资料_最新报价",
+    "date": "2026-08-02"
+   },
+   {
+    "url": "https://www.knowles.com/docs/default-source/model-downloads/kc10143_muskie_mic_eval_bd.pdf?sfvrsn=402876b1_8",
+    "title": "kc10143-c_muskie_mic_eval_bd",
+    "date": null
+   },
+   {
+    "url": "https://www.mouser.com/datasheet/3/70/1/Infineon_IM68A130_DataSheet_v01_10_EN.pdf",
+    "title": "[PDF] IM68A130V01",
+    "date": "2022-12-02"
+   },
+   {
+    "url": "https://www.infineon.com/part/IM68A130",
+    "title": "IM68A130 - MEMS microphones - Infineon Technologies",
+    "date": "2026-06-26"
+   },
+   {
+    "url": "https://www.knowles.com/docs/default-source/default-document-library/mic-selection-guide-r5.pdf",
+    "title": "mems microphones digital (pdm) microphones",
+    "date": null
+   },
+   {
+    "url": "https://www.infineon.com/assets/row/public/documents/24/66/infineon-xensiv-mems-microphones-productselectionguide-en.pdf",
+    "title": "XENSIV™ MEMS microphones - Infineon Technologies",
+    "date": null
+   },
+   {
+    "url": "https://components101.com/news/xensiv-im68a130a-high-performance-analog-mems-microphone-for-automotive-anc-applications",
+    "title": "XENSIV IM68A130A: High-Performance Analog MEMS ...",
+    "date": "2023-06-29"
+   },
+   {
+    "url": "https://www.globalspec.com/ds/4869/areaspec/microphone_type_audio",
+    "title": "Audio Microphone Chips",
+    "date": null
+   },
+   {
+    "url": "https://seltech-international.com/product/spk01a0lr5h-1/",
+    "title": "SPK01A0LR5H-1 - Seltech",
+    "date": "2025-04-28"
+   },
+   {
+    "url": "https://www.infineon.cn/part/IM68A130",
+    "title": "IM68A130 - 消费类 MEMS 麦克风 | Infineon英飞凌官网",
+    "date": "2023-01-01"
+   }
+  ],
+  "search_results": [
+   {
+    "date": "2024-10-31",
+    "id": 16,
+    "last_updated": "2026-03-13",
+    "snippet": "These microphones can produce either analog or digital outputs.\nUnlike analog microphones, digital microphones utilize pulse density modulation (PDM) [85,86], time-division multiplexing (TDM) [87], or the I^2^S protocol [88,89] for communication, allowing them to transmit data directly to the processing unit without the need for analog-to-digital converter circuits (Figure 8d,e).\n...\n|Model|Output Type|Manufacturer|Size (L × W × H) (mm^3^)|Frequency Response (Hz)|Sensitivity (dB)|SNR (dB)|\n|--|--|--|--|--|--|--|",
+    "source": "web",
+    "title": "MEMS and ECM Sensor Technologies for Cardiorespiratory ...",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11548498/"
+   },
+   {
+    "date": "2023-12-28",
+    "id": 17,
+    "last_updated": "2026-03-16",
+    "snippet": "Goh, R. X., Loo, K. Q., Tan, Y. C., Wong, Z. Y., Lim, J., Welch, L., Heng, W. W., Ling, T. Y. and Pu, S. H., 2023.\nDesign optimization of 3D printed digital stetheocope for low-cost telemedicine.\n*In:* *2023 IEEE International Conference on Sensors and Nanotechnology (SENNANO).* New York, NY: IEEE, 137-140.",
+    "source": "web",
+    "title": "Design optimization of 3D printed digital stetheocope ...",
+    "url": "https://eprints.bournemouth.ac.uk/39307/"
+   },
+   {
+    "id": 18,
+    "last_updated": "2026-07-07",
+    "snippet": "Abstract: The aim of this work is to present a preliminary study for the design of a digital auscultation\nsystem, i.e., a novel wearable device for patient chest auscultation and a digital stethoscope.",
+    "source": "web",
+    "title": "[PDF] Exploring Microphone Technologies for Digital Auscultation Devices",
+    "url": "https://cris.unibo.it/retrieve/handle/11585/950564/15e85546-f2e7-4a1d-adcd-4e50b55b041b/micromachines-14-02092.pdf"
+   },
+   {
+    "id": 19,
+    "last_updated": "2025-09-25",
+    "snippet": "",
+    "source": "web",
+    "title": "Stethoscope acoustics",
+    "url": "https://www.sciencedirect.com/science/article/abs/pii/S0022460X22003893"
+   },
+   {
+    "date": "2026-03-07",
+    "id": 20,
+    "last_updated": "2026-04-01",
+    "snippet": "This project is a homemade digital stethoscope prototype built using an #ESP32 microcontroller, a round TFT display, and an #INMP441 MEMS digital microphone integrated directly into the chest piece.\nThe device captures heart sounds from the body, processes the signal in real time, and visualizes the heartbeat waveform and estimated #BPM on the display.\nUnlike traditional stethoscopes that rely purely on acoustic amplification through tubing and earpieces, this design converts the heart sounds into digital data.\nThe INMP441 MEMS microphone, mounted inside the stethoscope chest piece, acts as the acoustic sensor.\nThe chest piece diaphragm picks up vibrations from the body, and the microphone converts these vibrations into a digital audio signal.\nBecause the INMP441 outputs audio using the #I2S digital audio interface, it can be read directly by the ESP32 without analog amplification circuitry.",
+    "source": "web",
+    "title": "stive gabin's Post",
+    "url": "https://www.linkedin.com/posts/stive-gabin-7132571a9_esp32-inmp441-bpm-activity-7436112206229835776-RBpB"
+   },
+   {
+    "date": "2020-10-11",
+    "id": 21,
+    "last_updated": "2026-04-16",
+    "snippet": "This Github repository contains all the 3D-printed files needed to make the 3D-printed part, as well as a list of all materials needed to create the 3D-printed Fioscope.\n...\nNOTE: The stethoscope chestpiece is from an existing medically aproved open-source 3D-printed stehoscope created by Dr.Tarek Loubani.\n...\n1. First, take the 40mm diameter plastic sheet and place it over the chestpiece.\nThen secure it using the ring by snapping it onto the chest piece and plastic sheet.\n2. Next, Attach the chestpiece head to one end of the silicone/vinyl tube.\n3. Place the microphone into the microphone case then secure the top of the case using the case lid.\n4. Take the complete microphone housing and attach it to the other end of the silicone/vinyl tube.",
+    "source": "web",
+    "title": "GitHub - Fioscopeco/Fioscope_3d_print_v1: An affordable, open-source, high-quality digital stethoscope accessible to everyone using 3D-printed, widely accessible parts, and your smartphone. Based on the medically approved glia-x Stethoscope.",
+    "url": "https://github.com/Fioscopeco/Fioscope_3d_print_v1"
+   },
+   {
+    "id": 22,
+    "last_updated": "2025-11-03",
+    "snippet": "Un résonateur acoustique est une cavité de volume V ouverte par un tube de diamètre D (section S) et de longueur L.\nSi la longueur d'onde des ondes acoustiques est grande devant toutes les dimensions du résonateur, l'air contenu dans le tube se comporte comme un piston de masse m = μ.L.S qui agit sur l'air contenu dans la cavité (constante élastique K).\n...\nUn microphone placé dans la cavité délivre une tension qui est une fonction linéaire des variations de pression du gaz.\nIl y a résonance quand la fréquence du signal excitateur (produit par un haut parleur excité par un générateur basse fréquence) est égale à la fréquence propre du résonateur .",
+    "source": "web",
+    "title": "Résonateur de Helmholtz",
+    "url": "https://ressources.univ-lemans.fr/AccesLibre/UM/Pedago/physique/02/meca/resohelm.html"
+   },
+   {
+    "id": 23,
+    "last_updated": "2025-08-27",
+    "snippet": "ScopeFace features an integrated MEMS microphone precisely capturing vital heart and lung sounds while suppressing ambient noise.\nStrategically placed directly beneath the stethoscope diaphragm, it minimizes acoustic loss at the source.",
+    "source": "web",
+    "title": "Don't Miss a Beat",
+    "url": "https://myrmanshelby.github.io/digital-stethoscope-landing-page/"
+   },
+   {
+    "id": 24,
+    "last_updated": "2026-08-02",
+    "snippet": "",
+    "source": "web",
+    "title": "Measurements on quarterwavelength tubes and Helmholtz ...",
+    "url": "https://scispace.com/pdf/measurements-on-quarterwavelength-tubes-and-helmholtz-1enc8keds8.pdf"
+   },
+   {
+    "id": 25,
+    "last_updated": "2025-08-05",
+    "snippet": "The chest piece of stethoscope is used here to capture sound of the heart beats, MEMS \nmicrophone INMP441 is used to convert the sensed sound signals into electrical signals which is then sent to ESP32\n(microcontroller) and stored in SD card due to the large amount of data available.\n...\n2.1.\nStethoscope Chest Piece: The chest piece, often known as the head or diaphragm, is responsible for recording body noises.\n...\nThe tubing facilitates the conveyance of sound between the chest piece and the earpieces.\n...\n2.2.\nINMP441 Microphone: The INMP441 is a high-performance, low power, digital output, omnidirectional MEMS \nmicrophone with a bottom port.\nThe complete INMP441 solution consists of a MEMS sensor, signal conditioning, an analog-\nto-digital converter, anti-aliasing filters, power management, and an industry-standard 24-bit I²S interface.",
+    "source": "web",
+    "title": "© 2025 IJRTI | Volume 10, Issue 4 April 2025 | ISSN: 2456-3315",
+    "url": "https://ijrti.org/papers/IJRTI2504311.pdf"
+   },
+   {
+    "id": 26,
+    "last_updated": "2024-10-15",
+    "snippet": "A bat-shape piezoresistor electronic stethoscope based on MEMS technology\n## Authors",
+    "source": "web",
+    "title": "A bat-shape piezoresistor electronic stethoscope based on MEMS technology",
+    "url": "https://www.sciencedirect.com/science/article/abs/pii/S0263224119307079"
+   },
+   {
+    "id": 27,
+    "last_updated": "2025-04-14",
+    "snippet": "The following materials are required to create\nthe electronic stethoscope (Fig. 1):\n1. An ordinary stethoscope.\n2. Medical grade tubing.\n3. A condenser microphone with a 3.5-mm stereo plug.\n4. A laptop (Microsoft XP/Mac OS or later) with Thinklabs\nphonocardiography software.\nConstruction.\nRemove the stem of the stethoscope chest piece\n(Microtone, India) from the tubing.\nAttach a medical grade tube of\n5 cm length and 6-mm inner diameter to the stem of the chest piece.\nInsert a condenser microphone on the other end of the tube.\nThis end\nmay have to be heated to facilitate the proper fixing of the micro-\nphone.\nThe microphone is then connected to a 3.5-mm stereo plug.\nComputer microphones already connected to a stereo plug can also be\nused.\nThe electronic stethoscope is now ready for use.",
+    "source": "web",
+    "title": "A simple electronic stethoscope for recording and playback of heart sounds",
+    "url": "https://journals.physiology.org/doi/pdf/10.1152/advan.00073.2012"
+   },
+   {
+    "date": "2025-10-01",
+    "id": 28,
+    "last_updated": "2026-05-08",
+    "snippet": "Our novel device, called Open-source Modular Electronic Stethoscope (OMES), proposes a modular upgrade to an analog stethoscope that incorporates multiple sensor types and features microphone array capabilities.\nOMES has been tested for its performance in detecting heart beats but is designed to be applied to other auscultation sites as well.",
+    "source": "web",
+    "title": "OMES: An Open-Source Multi-Sensor Modular Electronic Stethoscope",
+    "url": "https://doaj.org/article/3016336f54954ef08db9f481e6e90905"
+   },
+   {
+    "date": "2022-03-16",
+    "id": 29,
+    "last_updated": "2025-08-22",
+    "snippet": "Minimising the cavity volume maximises the response, while tubing significantly attenuates low frequencies and introduces distorting standing-wave resonances.\nUsing a diaphragm attenuates the response and shifts the resonances to higher frequencies, but also allows smaller air cavities to be used.\nHolding a stethoscope against the chest sets the equilibrium position of the coupled system and provides a damping-dominated impedance load on the chestpiece.",
+    "source": "web",
+    "title": "Stethoscope acoustics",
+    "url": "https://www.repository.cam.ac.uk/items/feadd88b-9e03-44fb-a875-c49f7c550259"
+   },
+   {
+    "date": "2014-03-10",
+    "id": 30,
+    "last_updated": "2026-05-16",
+    "snippet": "A hollow cavity with a narrow sound inlet will resonate acoustically when excited.\nThis is what produces sound when blowing across the top of an empty bottle.\nThis type of structure is known as a Helmholtz resonator and is named for its inventor, Hermann von Helmholtz.\nHelmholtz used resonators with different resonant frequencies to identify the frequency components present in music and other complex sounds.\nThe center frequency of the Helmholtz resonance is given by the following equation:\nwhere  *c* is the speed of sound in air, *A~H~ * is the cross-sectional area of the sound inlet, *L~H~ * is the length of the inlet, and *V~C~ * is the volume of the cavity.\nThis equation assumes a simple structure comprised of a tube with a uniform cross-sectional area connected to a cavity.\n...\nThe response of a MEMS microphone at low frequencies is determined by the dimensions of the ventilation hole between the front and back sides of the sensor membrane and by the volume of its back chamber, while the high frequency response is determined by the Helmholtz resonance created by the front chamber of the microphone and its sound inlet.\n...\nThe following guidelines will help optimize the frequency response of a microphone’s acoustic path:\n- Keep the acoustic path as short and as wide as possible.\nWidening the sound path at the exterior end will help the frequency response but widening it next to the microphone will hurt the response.\n- Try to eliminate any cavities in the acoustic path.\nIf a cavity is unavoidable then it should not be directly adjacent to the microphone sound inlet.\n- Bends in the acoustic path do not seem to have a major effect on the frequency response.\n- Softer gasket materials damp the resonance and may improve the frequency response.",
+    "source": "web",
+    "title": "Acoustic Design for MEMS Microphones - EDN",
+    "url": "https://www.edn.com/acoustic-design-for-mems-microphones/"
+   },
+   {
+    "date": "2017-12-19",
+    "id": 1,
+    "last_updated": "2025-05-21",
+    "snippet": "The\nflat frequency response ( 28Hz low-frequency roll-off) and tight manufacturing tolerance result in close phase\nmatching of the microphones, which is important for multi-microphone (array) applications.\nWith its low equivalent noise floor of 25dBSPL (SNR 69dB(A)) the microphone is no longer the limiting factor in\nthe audio signal chain and enables higher performance of voice recognition algorithms.\n...\n<1% total harmonic distortions up to\n128dBSPL\n-\nAcoustic overload point at 130dBSPL\n•\nSensitivity (± 1dB) and phase (± 2° @1kHz)\nmatched\n•\nFlat frequency response with low frequency roll off\nat 28Hz\n•\n...\nIM69D130 acoustic specifications\nParameter\nSymbol\nValues\nUnit\nNote or Test condition\nMin.\n...\nAcoustic Overload Point\nAOP\n130\ndBSPL\nTHD = 10%, all operating\nmodes\nSignal to\n...\n20Hz to 8kHz bandwidth,\nA-Weighted\nNoise Floor\nfclock=3.072MHz\n-105\ndBFS(A)\n...\n20Hz to 8kHz bandwidth,\n...\nLow Frequency Cutoff Point\nfC LP\n28\nHz\n-3dB point relative to 1kHz\nGroup Delay\n250Hz\n70\nµs\n600Hz\n15\n1kHz\n6\n4kHz\n1\nPhase\nResponse\n75Hz\n19\n°\n1kHz\n2\n3kHz\n-1\n...\nFree field frequency response\nFigure 8\nIM69D130 free field frequency response\nTable 2\nIM69D130 free field frequency response, normalized to 1kHz sensitivity value\nFrequency (Hz)\nUpper Limit (dB)\nLower Limit (dB)\n25\n-2\n-5\n60\n+0.5\n-1.5\n800\n+1\n-1\n1000\n0\n0\n1200\n+1\n-1\n6000\n+1\n-2\n8000\n+4\n-2\n15000\n+9\n-2\nIM69D130",
+    "source": "web",
+    "title": "[PDF] IM69D130 - Mouser Electronics",
+    "url": "https://www.mouser.com/datasheet/2/196/Infineon-IM69D130-DS-v01_00-EN-1274301.pdf"
+   },
+   {
+    "id": 2,
+    "last_updated": "2026-08-03",
+    "snippet": "The ICS‐43434 has multiple modes of operation: High \nPerformance, Low Power (AlwaysOn) and Sleep.\nThe ICS‐\n43434 has high SNR and 120 dB SPL AOP in all operational \nmodes.\nThe ICS‐43434 has a high SNR of 64 dBA and a wideband\nfrequency response.\nThe sensitivity tolerance of the ICS‐43434 \nis ±1 dB, which enables high‐performance microphone arrays \nwithout the need for system calibration.\n...\nHIGH PERFORMANCE \nMODE \nLOW‐POWER \nMODE \nSensitivity \n−26 dB FS ±1 dB \n−26 dB FS ±1 dB \nSNR \n64 dBA \n64 dBA \nCurrent \n490 µA \n230 µA \nAOP\n120 dB SPL \n120 dB SPL \nSample Rate \n23 – 51.6 kHz \n6.25 – 18.75 kHz \n...\nDigital I²S interface with high precision 24‐bit data  \n \nWide frequency response from 60 Hz to 20 kHz \n\nHigh power supply rejection: −100 dB FS \n...\nSignal‐to‐Noise Ratio (SNR) \n20 kHz bandwidth, A‐weighted\n64 \ndBA \nEquivalent Input Noise (EIN) \n20 kHz bandwidth, A‐weighted \n30 \ndBA SPL \n...\nTotal Harmonic Distortion (THD) \n105 dB SPL  \n...\nAcoustic Overload Point \n10% THD \n120 \ndB SPL \nNoise Floor \n20 Hz to 20 kHz, A‐weighted, \nrms \n−90 \ndB FS \n...\nPSR (dB FS)\nFREQUENCY (Hz)\nLOW‐POWER MODE\nHIGH‐PERFORMANCE MODE",
+    "source": "web",
+    "title": "EV_ICS-43434-FX ICS-43434 TDK InvenSense Datasheet",
+    "url": "https://mm.digikey.com/Volume0/opasdata/d220001/medias/docus/8908/EV_ICS-43434-FX.pdf"
+   },
+   {
+    "date": "2017-12-08",
+    "id": 3,
+    "last_updated": "2025-03-17",
+    "snippet": "",
+    "source": "web",
+    "title": "ICS-40180 Datasheet | TDK InvenSense",
+    "url": "https://invensense.tdk.com/download-pdf/ics-40180-datasheet/"
+   },
+   {
+    "id": 4,
+    "last_updated": "2026-07-10",
+    "snippet": "|Sensitivity|- **-26dB FS ±1dB FS at 1kHz, 94dB SPL**|\n...\n|Total Harmonic Distortion [THD]|- **0.2% Typ.\nat 105dB SPL, 1kHz**|\n|Lower Cutoff Frequency (Min.)|- **60Hz**|",
+    "source": "web",
+    "title": "ICS-43434 : Detailed Information - MEMS Microphones (Microphone)",
+    "url": "https://product.tdk.com/en/search/sw_piezo/mic/mems-mic/info?part_no=ICS-43434"
+   },
+   {
+    "id": 5,
+    "last_updated": "2026-07-27",
+    "snippet": "Dynamic range\nAOP = 128 dBSPL (10% THD)\nNoise floor = 22 dBSPL\n72 dB SNR\n...\nAOP: Acoustic Overload Point \nUpper sound pressure level (SPL) limit beyond\nwhich the sound is heavily distorted; 10% total \nharmonic distortion (THD) “loudest sounds that \ncan be recorded without distortion”\n...\nCF: Corner frequency / Low frequency roll off point \n(LFRO)\n...\n128 dBSPL-\nAOP\n...\n-38 dBV\nAOP\n135 dBSPL\nSNR\n73 dB(A)\n...\nIM68A130 \nSEN\n-38 dBV\nAOP\n130 dBSPL\nSNR\n68 dB(A)\nIDD\n110 µA\nCF\n10 Hz\n3.35 mm x 2.5 mm x 1.0 mm\nUltra high \nSNR & very \n...\nLow CF in \nsmall package\n...\nIM69D130 \n4.0 x 3.0 x1.2 mm\nSEN\n-26 dBFS\nAOP\n120 dBSPL\nSNR\n69 dB(A)\nIDD\n980/300 µA\nCF\n28 Hz\nIM73D122 \n...\nProduct name (project name)\nPackage size\nSignal-to-noise \nRatio (SNR)\nAcoustic overload point \n(1/10% THD)\nCurrent \nconsumption\nSensitivity\nLFRO \n...\n128/130 dBSPL\n980 µA",
+    "source": "web",
+    "title": "[PDF] Infineon-xensiv-mems-microphones-products-and-applications ...",
+    "url": "https://www.allaboutcircuits.com/uploads/articles/Infineon-xensiv-mems-microphones-products-and-applications-presentation.pdf"
+   },
+   {
+    "date": "2026-07-13",
+    "id": 6,
+    "last_updated": "2026-07-14",
+    "snippet": "- AOP\n130 dBSPL\n- Current Consumption\n...\n- LFRO\n28 Hz\n- Package dimensions\n...\nIM69D130 is a high performance digital MEMS microphone making use of Infineon's Dual Backplate MEMS technology to deliver 105dB dynamic range and high output linearity up to 130dBSPL.\nThe application benefits are crystal clear audio signals, extended pick-up distance and sensitivity to both soft and loud signals - from whispered speech to rock concerts.\n...\n- 69 dB(A) signal-to-noise ratio\n- Below 1 percent distortions at 128 dBSPL (AOP - 130 dBSPL)\n- Digital (PDM) interface with 6 μs group delay at 1 kHz\n- Tight sensitivity (-36 ±1 dB) and phase (± 2 deg) tolerances\n- 28 Hz low frequency roll-off\n## Benefits",
+    "source": "web",
+    "title": "IM69D130 - MEMS microphones",
+    "url": "https://www.infineon.com/part/IM69D130"
+   },
+   {
+    "date": "2024-11-27",
+    "id": 7,
+    "last_updated": "2025-09-09",
+    "snippet": "Below are its key technical specifications:\n|Parameter|Value|\n...\n|Supply Voltage (VDD)|1.62V to 3.63V|\n|Signal-to-Noise Ratio (SNR)|65 dB|\n|Acoustic Overload Point (AOP)|120 dB SPL|\n|Frequency Response|50 Hz to 20 kHz|",
+    "source": "web",
+    "title": "How to Use ICS-43434: Examples, Pinouts, and Specs",
+    "url": "https://docs.cirkitdesigner.com/component/d7421ae3-66ea-459c-91fb-27eec1c310ab/ics-43434"
+   },
+   {
+    "id": 8,
+    "last_updated": "2026-07-10",
+    "snippet": "The ICS-43434 is a MEMS based, ultra-low noise, I²S interface microphone.\n...\nIt offers a SNR of 64 dBA with a \nfrequency response from 60Hz to 20KHz and a sensitivity tolerance of ±1 dB, allowing it to be used in high-\nperformance microphone arrays without the need for system calibration.",
+    "source": "web",
+    "title": "EMMIC-ICS43434",
+    "url": "https://www.cdiweb.com/datasheets/invensense/emmic-ics43434-ds.pdf"
+   },
+   {
+    "date": "2025-09-26",
+    "id": 9,
+    "last_updated": "2025-09-30",
+    "snippet": "|Untere Grenzfrequenz (Min.)||",
+    "source": "web",
+    "title": "ICS-43434 : Detaillierte Informationen",
+    "url": "https://product.tdk.com/de/search/sw_piezo/mic/mems-mic/info?part_no=ICS-43434"
+   },
+   {
+    "date": "2022-11-09",
+    "id": 10,
+    "last_updated": "2025-08-05",
+    "snippet": "|Lower Cutoff Frequency (Min.)||",
+    "source": "web",
+    "title": "ICS-40180 : Detailed Information - MEMS Microphones (Microphone)",
+    "url": "https://product.tdk.com/en/search/sw_piezo/mic/mems-mic/info?part_no=ICS-40180"
+   },
+   {
+    "date": "2025-01-14",
+    "id": 11,
+    "last_updated": "2025-06-28",
+    "snippet": "ICS-40180 RF-Hardened, Low-Noise Microphone with Bottom Port and Analog Output GENERAL DESCRIPTION APPLICATIONS * The ICS-40180 is an analog MEMS microphone with high SNR Smartphones and enhanced RF immunity.\n...\nStill and Video Cameras Bluetooth Headsets Notebook PCs Other high-performance specification include a linear Security and Surveillance response up to 124 dB SPL, tight 1 dB sensitivity tolerance, and enhanced immunity to both radiated and conducted RF interference.\n...\nExtended Frequency Response from 60 Hz to 20 kHz Enhanced RF Immunity 124 dB SPL Acoustic Overload Point Low Current Consumption: 190 A Single-Ended Analog Output High 78 dBV PSR 3.5 2.65 0.98 mm Surface-Mount Package Compatible with Sn",
+    "source": "web",
+    "title": ".",
+    "url": "https://www.xonelec.com/mpn/tdk/ics40180"
+   },
+   {
+    "id": 12,
+    "last_updated": "2025-08-31",
+    "snippet": "|Description|Hardened, Low-Noise Microphone with Bottom Port and Analog Output|",
+    "source": "web",
+    "title": "ICS-40180 Datasheet(PDF) - TDK Electronics - ALLDATASHEET.COM",
+    "url": "https://www.alldatasheet.com/datasheet-pdf/pdf/1137959/TDK/ICS-40180.html"
+   },
+   {
+    "id": 13,
+    "last_updated": "2026-08-10",
+    "snippet": "- **AOP**\n120 dB SPL\n- **Interface**\n...\nKey specs include a 65 dBA SNR, 120 dB SPL AOP, 60 Hz to 20 kHz frequency response, and a compact 3.50 mm x 2.65 mm x 0.98 mm package.",
+    "source": "web",
+    "title": "ICS-43434 Datasheet, Alternatives & Specs - PartGenie",
+    "url": "https://www.partgenie.ai/parts/ics-43434-mfg-001194"
+   },
+   {
+    "id": 14,
+    "last_updated": "2026-03-11",
+    "snippet": "- **FrequencyRange:**\n60 Hz ~ 20 kHz\n- **Sensitivity:**\n-38dB ±1dB @ 94dB SPL\n- **S/NRatio:**\n65dB\n- **Impedance:**",
+    "source": "web",
+    "title": "ICS-40180 | TDK InvenSense - WorldICTown",
+    "url": "https://www.worldictown.com/productdetail/ICS-40180"
+   },
+   {
+    "date": "2024-12-29",
+    "id": 15,
+    "last_updated": "2025-09-09",
+    "snippet": "- The TDK InvenSense ICS-40180 mic datasheet is here",
+    "source": "web",
+    "title": "My MEMS microphones notes etc. | Øyvind Teig",
+    "url": "https://www.teigfam.net/oyvind/home/technology/243-my-mems-microphones-notes/"
+   },
+   {
+    "date": "2019-09-05",
+    "id": 31,
+    "last_updated": "2026-08-10",
+    "snippet": "microphone with best SNR and extended dynamic range.\n...\nParameter \nMinimum \nNominal \nMaximum \n...\nInput-Referred Noise, A-Weighted \n- \n23.5 \n27 \ndB SPL \n20 Hz to 20kHz bandwidth \nSignal to Noise Ratio, A-Weighted \n- \n70.5\n- \ndB A \n20 Hz to 20kHz bandwidth ",
+    "source": "web",
+    "title": "[PDF] MEMS Microphone - Knowles",
+    "url": "https://www.knowles.com/docs/default-source/default-document-library/mm20-33366-000.pdf?Status=Master&sfvrsn=5bb171b1_0"
+   },
+   {
+    "id": 32,
+    "last_updated": "2026-08-07",
+    "snippet": "Frequencies of interest lay from 20 Hz to 20 kHz, which is the human audible range.",
+    "source": "web",
+    "title": "[PDF] frequency-response-and-latency-of-mems-microphones---theory ...",
+    "url": "https://www.knowles.com/docs/default-source/default-document-library/frequency-response-and-latency-of-mems-microphones---theory-and-practice.pdf?sfvrsn=4"
+   },
+   {
+    "id": 33,
+    "last_updated": "2026-08-09",
+    "snippet": "SIZE\n...\n3.00 × \n1.20mm\n70.5 dB(A)\n20Hz\n125 dBSPL | \n128 dBSPL\n360µW @ 768kHz,  \nVDD = 1.8V\n810µW @ 2.4MHz,  \nVDD = 1.8V\n...\n66 dB(A)\n25Hz\n130.5 dBSPL | \n132.5 dBSPL\n...\nMICROPHONE\nDESCRIPTION\nSIZE\nSNR*\nLFRO\n1% THD |  \n10% THD*\nPOWER\nANALOG\nRaptor  \nSPK01A0LR5H-1\nOn flex:  \nKAS-700-0175\n*NEW*\nHigh SNR,\n...\nsingle-ended\n4.00 ×\n3.00 ×\n1.20mm\n72 dB(A)\n17Hz\n122 dBSPL |\n130 dBSPL\n481μW\n@ VDD = 2.75V\n648μW\n@ VDD = 3.6V\n...\n32Hz, \n18Hz\n125 dBSPL | ",
+    "source": "web",
+    "title": "MEMS MICROPHONES FOR FULL RANGE AUDIO AND ULTRASONIC",
+    "url": "https://www.knowles.com/docs/default-source/default-document-library/mic-selection-guide-r5.pdf?sfvrsn=5fb74db1_7"
+   },
+   {
+    "id": 34,
+    "last_updated": "2026-03-17",
+    "snippet": "600µA I2S Output: Direct attach to µP Multi modes: standard >1MHz, 600uA / sleep <900kHz, 10uA Flat Frequency Response RF Shielded Supports Dual Microphones Ultra-Stable Performance Standard SMD Reflow Omnidirectional Zero-Height Mic™ Packaged in SPH 3.50 x 2.65 x 0.98 mm",
+    "source": "web",
+    "title": "SPH0645LM4H-B I2S Output Digital Microphone - Catalogs",
+    "url": "https://pdf.directindustry.com/pdf/knowles-electronics-llc/sph0645lm4h-b-i2s-output-digital-microphone/127265-630002.html"
+   },
+   {
+    "id": 35,
+    "last_updated": "2025-10-23",
+    "snippet": "Signal-to-noise ratio (SNR) \n65 dB (A)  \nAcoustic Overload Point (10% AOP)\n120 dB SPL \nLow Frequency Roll Off (LFRO) \n45 Hz \nBandwidth (±3dB) \n15 kHz ",
+    "source": "web",
+    "title": "[PDF] Knowles SPH0645LM4H-B SiSonic™ I2S digital microphone ...",
+    "url": "https://www.mouser.com/datasheet/2/218/kas-700-0137-crawford-mic-on-flex-product-brief-re-1624260.pdf"
+   },
+   {
+    "id": 36,
+    "last_updated": "2026-08-10",
+    "snippet": "Sensitivity (dB V/0.1 Pa)\nFrequency (Hz)\n0.45mm \nAcoustic Port\n0.25mm \nAcoustic Port\n0\n2\n4\n6\n8\n10\n12\n14\n16\n18\n20\n22\n24\n26\n28\n30\n100\n125\n160\n200\n250\n315\n400\n500\n630\n800\n1000\n1250\n1600\n2000\n2500\n3150\n4000\n5000\n6300\n8000\n10000\nEquivalent Noise (dB SPL)\n1/3 Octave Band (Hz)\n0.45mm AP, LFRO=60Hz\n0.25mm AP, LFRO=50Hz\n-50\n-48",
+    "source": "web",
+    "title": "[PDF] mm25 mems microphone high snr trimmable - Knowles",
+    "url": "https://www.knowles.com/docs/default-source/default-document-library/an-19-mm25-mems-microphone.pdf?sfvrsn=b1ff71b1_9"
+   },
+   {
+    "id": 37,
+    "last_updated": "2026-04-11",
+    "snippet": "The flat frequency response \n(28 Hz low-frequency roll-off) and tight manufacturing tolerance result in close\nphase matching of the microphones, which is important for multi-microphone (array) \napplications.",
+    "source": "web",
+    "title": "[PDF] IM69D130 - Infineon Technologies",
+    "url": "https://www.infineon.com/assets/row/public/documents/24/45/infineon-im69d130-pb--productbrief-en.pdf"
+   },
+   {
+    "date": "2014-06-29",
+    "id": 38,
+    "last_updated": "2025-10-25",
+    "snippet": "**Technical Data** *Signal-to-Noise Ratio: Nominal 64.3 dB(A)* *Flat Frequency Response: Up to 20 kHz* *Power consumption: 235ÂµA in low power mode* *Sensitivity matching: Â±1 dB* *Digital output: Serial PDM bit stream*The product began shipping in volume during the first quarter of 2014 and received a positive response from consumer electronics manufacturers.\n** **",
+    "source": "web",
+    "title": "Knowles slashes power consumption in MEMS microphones - News",
+    "url": "https://siliconsemiconductor.net/article/94136/Knowles_slashes_power_consumption_in_MEMS_microphones"
+   },
+   {
+    "date": "2025-11-02",
+    "id": 39,
+    "last_updated": "2026-01-19",
+    "snippet": "This document provides specifications for an amplified silicon microphone called SPM0408HE5H for use in handheld telecommunication devices.\nIt details the device's operating temperature range, acoustic and electrical specifications, mechanical dimensions, recommended circuitry, packaging, and reliability testing procedures.\nThe microphone is designed for surface mount applications with enhanced RF protection and has a frequency response range of 20Hz to 20kHz.",
+    "source": "web",
+    "title": "Mems Microphone - Spm0408he5h | PDF",
+    "url": "https://www.scribd.com/document/70478883/Mems-Microphone-Spm0408he5h"
+   },
+   {
+    "date": "2023-01-13",
+    "id": 40,
+    "last_updated": "2025-11-04",
+    "snippet": "The new Knowles Titan (digital) SPH18RILM4H device (pictured above) features a high signal-to-noise ratio (SNR) of 68.5dB with a high acoustic overload point (AOP) at 129dB SPL with 69dB SNR in the 20Hz-10kHz band.\nThe Falcon (analog) SPH11C3LR5H device offers a similar SNR with a higher AOP of 134dB SPL (2.75V), while the smaller Robin (analog) SPV61A0LR5H MEMS microphone device offers 66dB SNR and clean signals up to 130dB SPL with less than 1 percent distortion.\n...\nIn critical low frequency and speech band use cases, Falcon delivers 69dB.",
+    "source": "web",
+    "title": "Knowles Debuts Trio of SiSonic MEMS Microphones for High ...",
+    "url": "https://audioxpress.com/news/knowles-debuts-trio-of-sisonic-mems-microphones-for-high-performance-tws-and-hearable-designs"
+   },
+   {
+    "id": 41,
+    "last_updated": "2025-09-13",
+    "snippet": "ADMP401\nICS-10480\nHigh Signal-to-Noise Ratio (\"SNR\")\n62 dbA\n65 dbA\nSensitivity\nabout -42 dBV\nabout -38 dBV\nFlat Frequency Response\n100 Hz to 15 kHz\n60 Hz to 20 kHz\nLow Current Consumption\n<250 μA @ 3.3V\n<260 μA @ 3.3V",
+    "source": "web",
+    "title": "MEMS Microphone Hookup Guide  ",
+    "url": "https://mm.digikey.com/Volume0/opasdata/d220001/medias/docus/2859/MEMS_Microphone_Hookup_Guide_Web.pdf"
+   },
+   {
+    "id": 42,
+    "last_updated": "2026-07-10",
+    "snippet": "The ICS-43434 is a MEMS based, ultra-low noise, I²S interface microphone.\nIt is available in a small\n3.5x2.65x0.98mm LGA style package with the sound port on the bottom of the package.\nThe ICS-43434 is \ncomprised of a MEMS sensor, signal conditioning, 24bit A/D converter, on-board decimation and antialiasing \nfilters, power management, and a 24bit I²S interface.\n...\nIt offers a SNR of 64 dBA with a \nfrequency response from 60Hz to 20KHz and a sensitivity tolerance of ±1 dB, allowing it to be used in high-\nperformance microphone arrays without the need for system calibration.\nThe EMMIC-ICS43434 provides an easy to use, low-cost, very small breakout board for the ICS-43434.\nAll pins \nare all mapped to standard 2.54mm/0.1” headers.",
+    "source": "web",
+    "title": "EMMIC-ICS43434",
+    "url": "https://www.cdiweb.com/datasheets/invensense/emmic-ics43434-ds.pdf"
+   },
+   {
+    "date": "2021-02-16",
+    "id": 43,
+    "last_updated": "2026-04-17",
+    "snippet": "",
+    "source": "web",
+    "title": "GitHub - sparkfun/SparkFun_Analog_MEMS_Microphone_Breakout_ICS-40180: Breakout board for the ICS-40180 bottom-port analog MEMs microphone by InvenSense.",
+    "url": "https://github.com/sparkfun/SparkFun_Analog_MEMS_Microphone_Breakout_ICS-40180"
+   },
+   {
+    "id": 44,
+    "last_updated": "2025-06-28",
+    "snippet": "- -3 dB roll off at 60 Hz and 19.7 kHz\n...\n- Output impedance: 600Ω\n- SNR: 65 dBA",
+    "source": "web",
+    "title": "SparkFun Analog MEMS Microphone Breakout - ICS-40180",
+    "url": "https://www.robotshop.com/products/sparkfun-analog-mems-microphone-breakout-ics-40180"
+   },
+   {
+    "id": 45,
+    "last_updated": "2026-02-26",
+    "snippet": "MEMS microphones inherently have a very usable ultrasonic response from 20kHz to 80kHz or more.\n...\nANALOG MEMS MICROPHONE \n14\n...\nNM = Normal Mode / LP = Low Power Mode\nPart Number\n(PN)\nDescription / Application\nDimensions\n(mm)\nOutput Port \nLocation\nSNR*\n(dB)\n1% THD*\n(dB SPL)\nAOP \n(dB SPL)\nLFRO \n(Hz)\nSensitivity \n(dBV/Pa)\nCurrent (µA) \n...\nSPM0687LR5H-1\n...\nAnalog\n...\n69.5(Diff)\n113\n130\n...\nANALOG AUTOMOTIVE MEMS MIC.\nSPH1878LR5H-1 and -C\n20\nAEC-Q100/103 qualified for automotive robustness\nHigh Dynamic Range (66.5dB SNR, 134dB AOP) for\nhigh-quality voice pick-up\n7 Hz LFRO enables superior Active Noise \nCancellation (ANC) for a quieter cabin\nUltrasonic frequency response for proximity \ndetection\n±1 dB sensitivity matching, with an option to ",
+    "source": "web",
+    "title": "[PDF] knowles mems microphones portfolio - Thomasnet",
+    "url": "https://cdn.thomasnet.com/ccp/30973684/351950.pdf"
+   },
+   {
+    "date": "2018-11-05",
+    "id": 55,
+    "last_updated": "2026-04-17",
+    "snippet": "IM69D130-Microphone-Shield2Go ** Public\n...\nExample of Infineon's highly sensitive IM69D130 Microphone Shield2Go board for Arduino.\n...\nThe IM69D130 Microphone Shield2Go takes the PDM output of the IM69D130 and converts it to I2S using an ADAU7002 IC.\nThe voltage level of the Shield2Go is 3.3 V and it can be directly used with the XMC 2Go as it has the Shield2Go form factor with SPI replaced by I2S.\n...\nThe IM69D130 Microphone Shield2Go is a standalone break out board with Infineon's Shield2Go formfactor and pin out.\nYou can connect it easily to any microcontroller of your choice which is Arduino compatible and has 3.3 V logic level (please note that the Arduino UNO has 5 V logic level and cannot be used without level shifting).\n...\nThis board uses I2S and will block the SPI ports of the Shield2Go as they are redefined to be compatible with the Shield2Go formfactor.\nOverall, the following SPI - I2S pin matching is in place:\n- SPI:MISO -- I2S:DATA (INPUT)\n- SPI:SCK -- I2S:BCLK\n- SPI:SS -- I2S:LRCLK\nHowever, every Shield2Go is directly compatible with Infineon's XMC 2Go and the recommended quick start is to use an XMC 2Go for evaluation.\nTherefore, please install (if not already done) also the XMC-for-Arduino implementation and choose afterwards **XMC1100 XMC2Go** from the **Tools**>**Board** menu in the Arduino IDE if working with this evaluation board.\nTo use it, please plug the IM69D130 Microphone Shield2Go onto the XMC 2Go as shown below.\n...\nExamples for Infineon's MEMS microphone based evaluation board IM69D130 Microphone Shield2Go for Arduino.",
+    "source": "web",
+    "title": "Infineon/IM69D130-Microphone-Shield2Go - GitHub",
+    "url": "https://github.com/Infineon/IM69D130-Microphone-Shield2Go"
+   },
+   {
+    "date": "2000-01-01",
+    "id": 56,
+    "last_updated": "2025-07-18",
+    "snippet": "# EVAL_IM69D130V01_FLEX\n...\nThe IM69D130 flex board allows simple connection to audio testing setup and easy evaluation of XENSIV™ MEMS micophone IM69D130.",
+    "source": "web",
+    "title": "EVAL-IM69D130V01-FLEX - Evaluation Boards | Infineon Technologies",
+    "url": "https://www.infineon.com/evaluation-board/EVAL-IM69D130V01-FLEX"
+   },
+   {
+    "date": "2025-01-01",
+    "id": 57,
+    "last_updated": "2025-11-04",
+    "snippet": "|Quantity|Price (ex VAT)|\n...\n|1+|€49.580|\n...\nShield2Go board equipped with XENSIV™ MEMS microphones enables the fastest evaluation and gateways to external hardware solutions like Arduino and Raspberry PI.\nBoard is equipped with two high-performance digital MEMS Microphone IM69D130 and come with a ready to use Arduino library.\nCustomers can now develop their own system solutions by combining Shield2Go boards together with Infineon My IoT adapters.\n...\nTypical applications are voice user interface (VUI) (smart speakers, home automation and IoT devices), Active noise cancellation (ANC) headphones and earphones, high-quality audio capturing (cameras, camcorders, conference systems), audio pattern detection (industrial or home monitoring).\n- Dynamic range of 105dB (Signal to noise ratio of 69dB(A) SNR)\n- Power optimized modes determined by PDM clock frequency\n- Omnidirectional pickup pattern\n### Warnings\n...\nEval Board IM69D130 Module\nNo SVHC (21-Jan-2025)",
+    "source": "web",
+    "title": "Evaluation Board, Shield2Go MEMS Microphone, 2 x XENSIV ...",
+    "url": "https://at.farnell.com/en-AT/infineon/s2gomemsmicim69dtobo1/eval-board-mems-microphone/dp/3014284"
+   },
+   {
+    "date": "2025-01-01",
+    "id": 58,
+    "last_updated": "2025-10-20",
+    "snippet": "|Quantity|Price|\n...\n|1+|$83.130|\n...\nEVALIM69D130FLEXKITTOBO1 is a IM69D130 MEMS microphone flex evaluation kit that allows for evaluation with minimal effort.\nIts small size and flexibility enable direct placement of the flex board into a prototype.\nThe flex kit consists of five flex boards and one adapter board.\nThe digital flex board is equipped with a digital PDM output microphone and a 0.1µF supply bypass capacitor.\nIt can be connected to a 6-position ZIF connector with a 0.5 mm pin spacing, such as the Molex 0527450697, or wires can be soldered directly on the flex board.\nThe analog flex board is equipped only with the differential MEMS microphone.\nThe adapter board has a 6-position ZIF and a 2.54 mm board-to-board connector.\nThe adapter board provides the ability to configure the select pin of digital microphone to VDD or Ground.\n- Flex board equipped with XENSIV IM69D130 MEMS microphone\n- Quick and easy connection to evaluation system\n- Flex dimension is 25 x 4.5mm, adapter dimension is 20 x 15mm\n- Configurable select pin configuration for digital microphones\n...\nFive flex boards, One adapter board.\n...\n5 x Flex Board IM69D130, Adapter Board",
+    "source": "web",
+    "title": "EVALIM69D130FLEXKITTOBO1 INFINEON, Evaluation Kit ...",
+    "url": "https://www.newark.com/infineon/evalim69d130flexkittobo1/evaluation-kit-mems-microphone/dp/63AK1619"
+   },
+   {
+    "id": 59,
+    "last_updated": "2026-08-09",
+    "snippet": "MICROPHONE\nDESCRIPTION\nSIZE\n...\nANALOG\nRaptor  \nSPK01A0LR5H-1\nOn flex:  \nKAS-700-0175\n*NEW*\nHigh SNR,\nhigh AOP,\nsingle-ended\n4.00 ×\n3.00 ×\n1.20mm\n72 dB(A)\n17Hz\n122 dBSPL |\n130 dBSPL\n481μW\n@ VDD = 2.75V\n648μW\n@ VDD = 3.6V\n...\nThe Muskie microphone evaluation kit allows \nfor simple and easy evaluation of Knowles \nSiSonic™ MEMS microphones.\nMuskie\nimplements dual 6-pin Sullins connectors for \nstereo pairs of Analog/Differential microphones, \nDigital microphones, or I2S microphones.\nKAS-33100-0004 Evaluation platform ‘Muskie’\nBase PCB",
+    "source": "web",
+    "title": "MEMS MICROPHONES FOR FULL RANGE AUDIO AND ULTRASONIC",
+    "url": "https://www.knowles.com/docs/default-source/default-document-library/mic-selection-guide-r5.pdf?sfvrsn=5fb74db1_7"
+   },
+   {
+    "date": "2024-05-13",
+    "id": 60,
+    "last_updated": "2026-01-26",
+    "snippet": "# Infineon Technologies XENSIV™ MEMS Microphone Flex Evaluation BoardsInfineon Technologies XENSIV™ MEMS Microphone Flex Evaluation Boards allow simple and easy evaluation of XENSIV MEMS microphones IM69D120 or IM69D130.\nThese flex boards can be easily connected to an audio testing setup.\nThe evaluation kit includes five IM69D120 or five IM69D130 mounted on a flex board and one adapter board.\n...\n- Quick and easy evaluation of XENSIV MEMS microphones\n- Flex dimensions: 25x4.5mm\n- Adapter dimensions: 20x15mm\n## Learn More About",
+    "source": "web",
+    "title": "Infineon Technologies XENSIV™ MEMS Microphone Flex Evaluation Boards",
+    "url": "https://www.mouser.ca/new/infineon/infineon-xensiv-mems-boards/"
+   },
+   {
+    "date": "2020-10-28",
+    "id": 61,
+    "last_updated": "2025-06-11",
+    "snippet": "# Infineon S2GOMEMSMICIM69DTOBO1 Microphone Sensor Evaluation Board for IM69D130 IM69D130 ModuleView this category\nBulk discount available\n...\n- Infineon Flex Evaluation Kit Microphone Sensor Evaluation Board for IM69D130 IM69D130",
+    "source": "web",
+    "title": "Infineon S2GOMEMSMICIM69DTOBO1 Microphone Sensor Evaluation Board for IM69D130 IM69D130 Module",
+    "url": "https://uk.rs-online.com/web/p/sensor-development-tools/2601162"
+   },
+   {
+    "date": "2021-01-01",
+    "id": 62,
+    "last_updated": "2025-11-06",
+    "snippet": "",
+    "source": "web",
+    "title": "EVALIM69D130FLEXKITTOBO1 Infineon Technologies - DigiKey",
+    "url": "https://www.digikey.com/en/products/detail/infineon-technologies/EVALIM69D130FLEXKITTOBO1/8638920"
+   },
+   {
+    "date": "2025-06-30",
+    "id": 63,
+    "last_updated": "2025-12-16",
+    "snippet": "|Type|MEMS Microphone|\n...\n|Type of Product|Evaluation Board|\n|Country of Origin|India|\n|Application|Industrial Use|\n...\n|## Type of Product|## Evaluation Board|\n...\n|## Name of Manufacturer/Packer/Importer|## Infineon|\n|## Ordering ID|## 726-S2GOMEMSMICIM69D|\n|## Manufacturer Part Number|## S2GOMEMSMICIM69DTOBO1|\n...\n|## Data Sheet|## https://www.mouser.in/datasheet/3/70/1/Infineon_IM69D130_Microphone_Shield2Go_GS_v01_00_EN.pdf|\n|## Tool Is For Evaluation Of|## IM69D130|",
+    "source": "web",
+    "title": "Buy Infineon Evaluation Board for IM69D130 ...",
+    "url": "https://www.industrybuying.com/controller-boards-infineon-IND.CON.536424592"
+   },
+   {
+    "id": 64,
+    "last_updated": "2024-12-03",
+    "snippet": "",
+    "source": "web",
+    "title": "SPH88R1LM4H-1",
+    "url": "https://www.knowles.com/docs/default-source/default-document-library/sph18r1lm4h-1_titan_datasheet.pdf"
+   },
+   {
+    "id": 65,
+    "last_updated": "2026-06-09",
+    "snippet": "|Mfr|Series|Packaging|Product Status|Type|Function|Embedded|Utilized IC / Part|Primary Attributes|Secondary Attributes|Contents|\n...\n### KAS-700-0175\n#### Knowles\nEVAL BOARD FOR SPK01A0LR5H-1\n-\n**In Stock :** 3,260\nMinimum：1",
+    "source": "web",
+    "title": "Evaluation and Demonstration Boards and Kits(31) - HT Electronics",
+    "url": "https://www.htelec.com/products/category/evaluation-boards-evaluation-and-demonstration-boards-and-kits/1338/all/1"
+   },
+   {
+    "date": "2019-09-26",
+    "id": 66,
+    "last_updated": "2025-10-29",
+    "snippet": "The new Muskie Evalution Kit by KNOWLES is a simple and easy to use system to test and compare the various KNOWLES SiSonic™ MEMS microphones.\nIt allows without programming the performance analysis of analog, digital, Top or Bottom port microphones.\nThe kit has the ability to evaluate multiple microphones simultaneously.\nTwo independent audio channels allow the mix of different microphone types.\nThe kit contains the evaluation board USB A to USB Micro power cable and the flex adapter assembly.\nThe MEMS microphones are on flexible rays and can be purchased seperately.Download Datasheet\n...\n- 2 independent channels of audio supporting multiple MEMS microphone output formats\n- Supports analog, differential analog, digital PDM and digital I2S microphones\n- Configurable Selectable Voltages (Industry Standard Fixed Voltages 1.8V, 2.75V, 3.3V or Onboard Adjustable Voltage 1.65V to 3.6V)\n- Onboard Selectable Digital Clocks: 9 different selectable clock frequencies\n- Selectable Gains for Output Audio: 0db, +4db, +15db, +19db\n- Wide Dynamic Range (Analog: ~120dB or Digital: ~110dB)\n- Uses a generic Windows USB Audio driver",
+    "source": "web",
+    "title": "KNOWLES' MEMS Microphone Eval-Kit Muskie | CODICO.com",
+    "url": "https://www.codico.com/en/en/current/news/knowles-new-mems-microphone-evaluation-kit-muskie"
+   },
+   {
+    "id": 67,
+    "last_updated": "2025-10-27",
+    "snippet": "The following figure shows the KC10134-A01 “Muskie” microphone \nevaluation kit.\nThis implements dual 6-pin Sullins connectors for \nstereo pairs of Analog/Differential microphones, Digital microphones,\nor I2S microphones.\nThese are the blue 12-pin connectors on the top \nof the board.",
+    "source": "web",
+    "title": "[PDF] AN18 Knowles Flex Circuit and Coupons for Testing",
+    "url": "https://www.knowles.com/docs/default-source/default-document-library/an18-knowles-flex-circuit-and-coupons-for-testing_updated.pdf"
+   },
+   {
+    "date": "2026-08-02",
+    "id": 68,
+    "last_updated": "2026-08-02",
+    "snippet": "商品型号\nSPK01A0LR5H-1-7",
+    "source": "web",
+    "title": "SPK01A0LR5H-1-7中文资料_最新报价",
+    "url": "https://item.szlcsc.com/24031738.html"
+   },
+   {
+    "id": 69,
+    "last_updated": "2025-04-23",
+    "snippet": "KC10143 \"Muskie\" Microphone Evaluation Board\nOptional\nMIC_Vdd\n+5VA\n-5VA",
+    "source": "web",
+    "title": "kc10143-c_muskie_mic_eval_bd",
+    "url": "https://www.knowles.com/docs/default-source/model-downloads/kc10143_muskie_mic_eval_bd.pdf?sfvrsn=402876b1_8"
+   },
+   {
+    "date": "2022-12-02",
+    "id": 46,
+    "last_updated": "2026-03-05",
+    "snippet": "• Analog single-ended output\n• Flat frequency response with low-frequency roll-off at 10Hz\n• Acoustic overload point at 130dBSPL\n• Signal-to-noise ratio of 68dB(A) SNR\n...\nThe IM68A130V01 is a high performance, single-ended, analog MEMS microphone designed for applications which require a low\nLFRO (10Hz), a high SNR (low self-noise), and low distortion (high AOP).\nThe high signal-to-noise ratio (SNR) of 68dB(A) enables far field and low volume audio pick-up.\nThe flat frequency response and\n...\nSymbol\nValues\nUnit\n...\nCondition\n...\nSignal-to-noise ratio\nSNR\n68\ndB(A)\nA-Weighted\nLow-frequency roll-off\nLFRO\n10\nHz\n-3dB relative to\n1kHz sensitivity\nHigh frequency flatness\n...\nAcoustic overload point\n10 % THD\nAOP\n130\nPhase response\n...\nFrequency [Hz]\nUpper limit [dB]\n...\n-1.5\n...\n30",
+    "source": "web",
+    "title": "[PDF] IM68A130V01",
+    "url": "https://www.mouser.com/datasheet/3/70/1/Infineon_IM68A130_DataSheet_v01_10_EN.pdf"
+   },
+   {
+    "date": "2026-06-26",
+    "id": 47,
+    "last_updated": "2026-07-01",
+    "snippet": "High performance analog XENSIV™ MEMS microphone\n...\n- AOP\n130 dBSPL\n- Current Consumption\n110 µA\n- Green\n...\n- Interfaces\nAnalog single-ended\n- LFRO\n10 Hz\n- Package dimensions\n3.35 x 2.50 x 0.98 mm³\n- Sensitivity\n-38 dBV\n- SNR\n68 dB(A)\n- Supply Voltage\n2.40 - 3.60 V\n...\nThe IM68A130 is a high performance, single-ended, analog MEMS microphone designed for applications which require a low LFRO (10Hz), a high SNR (low self-noise), and low distortion (high AOP).The high signal-to-noise ratio (SNR) of 68dB(A) enables far field and low volume audio pick-up.\nThe flat frequency response and tight manufacturing tolerance improve the performance of Active Noise Cancellation (ANC) and multi-microphone array applications.The high performance analog microphone ASIC contains an extremely low noise preamplifier providing constant current consumption (110µA) over VDD.",
+    "source": "web",
+    "title": "IM68A130 - MEMS microphones - Infineon Technologies",
+    "url": "https://www.infineon.com/part/IM68A130"
+   },
+   {
+    "id": 48,
+    "last_updated": "2026-07-27",
+    "snippet": "AOP = 128 dBSPL (10% THD)\nNoise floor = 22 dBSPL\n72 dB SNR\n...\n-38 dBV\nAOP\n135 dBSPL\nSNR\n73 dB(A)\n...\nIM68A130 \nSEN\n-38 dBV\nAOP\n130 dBSPL\nSNR\n68 dB(A)\nIDD\n110 µA\nCF\n10 Hz\n3.35 mm x 2.5 mm x 1.0 mm\nUltra high \nSNR & very \nhigh AOP\nLow CF in \nsmall package\nHigh SNR & \nvery high AOP \nin small package \n...\nAnalog Differential\n...\n68/64 \ndB(A)\nLFRO\n10 Hz\nIF\nanalog SE\n3.50x2.65x0.98 mm³\n...\nIM68A130V01 \n3.35 x 2.50 x 0.98 mm³\n68 dB(A)\n118/130 dBSPL\n110 µA\n-38 dBV\n10 Hz\nAnalog Differential \nIM70A135V01 SDM\n3.50 x 2.65 x 0.98 mm³\n70 dB(A)\n132/135 dBSPL\n170 µA\n-38 dBV\n37 Hz",
+    "source": "web",
+    "title": "[PDF] Infineon-xensiv-mems-microphones-products-and-applications ...",
+    "url": "https://www.allaboutcircuits.com/uploads/articles/Infineon-xensiv-mems-microphones-products-and-applications-presentation.pdf"
+   },
+   {
+    "id": 49,
+    "last_updated": "2026-08-02",
+    "snippet": "SNR*\n...\nMICROPHONE\nDESCRIPTION\nSIZE\nSNR*\nLFRO\n1% THD |  \n10% THD*\nPOWER\nANALOG\nRaptor  \nSPK01A0LR5H-1\nOn flex:  \nKAS-700-0175\n*NEW*\nHigh SNR,\nhigh AOP,\nsingle-ended\n4.00 ×\n3.00 ×\n1.20mm\n72 dB(A)\n17Hz\n122 dBSPL |\n130 dBSPL\n481μW\n@ VDD = 2.75V\n648μW\n@ VDD = 3.6V\nFalcon ",
+    "source": "web",
+    "title": "mems microphones digital (pdm) microphones",
+    "url": "https://www.knowles.com/docs/default-source/default-document-library/mic-selection-guide-r5.pdf"
+   },
+   {
+    "id": 50,
+    "last_updated": "2026-08-05",
+    "snippet": "Classification\nInterfaces\nMain \nfeatures\nPackage \ndimen-\nsions \n[mm³] \nSNR \n[dB]\nAOP\n[dB]\nSensitivity \n[dBFS]\n...\nAEC-Q103-003\nOptimized for \n...\nmance use cases\nAnalog \nsingle-­\nended \n3.35 x 2.50 \nx 0.98\n64\n130\n-38\n105\nIP57\n-40 to +85\nIM68A130A\nAEC-Q103-003\nOptimized for \nANC\nAnalog \nsingle-­\nended \n3.35 x 2.50 \nx 0.98\n68\n130\n-38\n105\nIP57\n-40 to +105\n5\n...\nProduct\nMain features\nInterface\nPackage size\n[mm]\nSNR \n[dB(A)]\nAOP \n(1/10%THD) \n[dBSPL]\nCurrent \nSensitiv-\nity\nLFRO\n[Hz]\n...\nAnalog\nIM68A130\nSmall package and low LFRO\nSingle \nEnded\n3.35 x 2.5 x 0.98 \n68 \n118/130 \n110 µA at\n2.75 V\n-38 dBV\n10\nIM70A135\nHigh SNR and high AOP\nDifferential 3.5 x 2.65 x 1 \n70 \n132/135 \n170 µA at \n2.75 V\n-38 dBV\n37\nIM73A135",
+    "source": "web",
+    "title": "XENSIV™ MEMS microphones - Infineon Technologies",
+    "url": "https://www.infineon.com/assets/row/public/documents/24/66/infineon-xensiv-mems-microphones-productselectionguide-en.pdf"
+   },
+   {
+    "date": "2023-06-29",
+    "id": 51,
+    "last_updated": "2025-09-25",
+    "snippet": "The IM68A130A microphone boasts a flat frequency response, stable phase response, and a low frequency roll-off (LFRO = 10Hz).\nIt delivers excellent speech performance with a high signal-to-noise ratio (SNR = 68dB(A)) and an impressive acoustic overload point (AOP = 130 dBSPL).\n...\n- High Acoustic Overload Point (AOP) of 130 dBSPL\n- 10 Hz low frequency roll off\n- High Signal to Noise Ratio (SNR) of 68 dB(A)\n...\n- Tight sensitivity (-38±1 dB) tolerance ‒ Analog single ended output\n...\n**",
+    "source": "web",
+    "title": "XENSIV IM68A130A: High-Performance Analog MEMS ...",
+    "url": "https://components101.com/news/xensiv-im68a130a-high-performance-analog-mems-microphone-for-automotive-anc-applications"
+   },
+   {
+    "id": 52,
+    "last_updated": "2025-07-02",
+    "snippet": "High performance analog XENSIV ™ MEMS microphone.\nThe IM68A130 is a high performance, single-ended, analog MEMS microphone designed for applications which require a low LFRO (10Hz), a high SNR (low self-noise), and low distortion (high AOP).\nThe high signal-to-noise ratio (SNR) of 68dB(A)...\n[See More]",
+    "source": "web",
+    "title": "Audio Microphone Chips",
+    "url": "https://www.globalspec.com/ds/4869/areaspec/microphone_type_audio"
+   },
+   {
+    "date": "2025-04-28",
+    "id": 53,
+    "last_updated": "2025-06-25",
+    "snippet": "|SNR [dB]|71.8|\n|AOP [dB]|130|\n...\nThe SPK01A0LR5H-1 is a Bottom port MEMS Microphone, Analog Single Ended output, featuring a SNR of 71.8 dB, an AOP of 130 dB SPL and a LFRO of 17 Hz.\n...\nThe SPK01A0LR5H-1 is a Bottom port MEMS Microphone, Analog Single Ended output, featuring a SNR of 71.8 dB, an AOP of 130 dB SPL and a LFRO of 17 Hz.\n...\nThe SPK01A0LR5H-1 is a Bottom port MEMS Microphone, Analog Single Ended output, featuring a SNR of 71.8 dB, an AOP of 130 dB SPL and a LFRO of 17 Hz.",
+    "source": "web",
+    "title": "SPK01A0LR5H-1 - Seltech",
+    "url": "https://seltech-international.com/product/spk01a0lr5h-1/"
+   },
+   {
+    "date": "2023-01-01",
+    "id": 54,
+    "last_updated": "2025-08-18",
+    "snippet": "AOP130 dBSPL\nSNR68 dB(A)\nSupply Voltage2.40 - 3.60 V\nPackage dimensions3.35 x 2.50 x 0.98 mm³\nApplicationsTWS earbuds, Headphones, Home IoT, AR, VR, wearables, Industrial applications\nInterfacesAnalog single ended\nSensitivity-38 dBV\nCurrent Consumption110 µA\n...\nIM68A130 是一款高性能单端模拟 MEMS 麦克风，专为需要低 LFRO（10Hz）、高 SNR（低自噪声）和低失真（高 AOP）的应用而设计。68dB(A) 的高信噪比 (SNR) 可实现远场和低音量音频拾取。\n平坦的频率响应和严格的制造公差提高了主动降噪 (ANC) 和多麦克风阵列应用的性能。高性能模拟麦克风 ASIC 包含一个极低噪声前置放大器，可在 VDD 上提供恒定的电流消耗 (110µA)。\n...\n- 表面贴装封装：3.35mm x 2.5mm x 0.98mm\n- 模拟单端输出\n- 平坦频率响应，低频滚降频率为 10Hz\n- 声学过载点为 130dBSPL\n- 信噪比为 68dB(A) SNR\n- 灵敏度和相位公差较窄\n- 全向拾音模式",
+    "source": "web",
+    "title": "IM68A130 - 消费类 MEMS 麦克风 | Infineon英飞凌官网",
+    "url": "https://www.infineon.cn/part/IM68A130"
+   }
+  ]
+ }
+}

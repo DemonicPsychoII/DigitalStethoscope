@@ -1,0 +1,29 @@
+.vscode/*
+
+# Legacy Zephyr toolchain locations (retained for existing installations).
+# Current setup uses the ignored .ci-workspace below; recreate it with:
+#   python Development/system/testing/ci/setup_zephyr.py
+Development/system/coding/tools/zephyrproject/
+Development/Toolchain/zephyrproject/
+
+# Zephyr / CMake build output
+build/
+build-*/
+twister-out*/
+.ci-workspace/
+.ci-workspace
+.ci-hash-tmp/
+.ci-validation-tools/
+.ci-compiler-tools/
+.ci-ccache/
+.ci-ccache-benchmark/
+artifacts/
+*.elf
+*.map
+*.bin
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
