@@ -19,7 +19,7 @@ TICKET-98; the wider outlook is
 TICKET-198 through TICKET-207. They are planned mitigations, not implemented controls.
 Password protection also requires revisiting REQ-12 and the phone/QR setup flow.
 
-Source: Nico (surname not supplied), *DigitalStethoscope replay stack: round-7 owner
+Source: Nico, *DigitalStethoscope replay stack: round-7 owner
 answers*, personal communication, T3 Code, 24 October 2026, authoritative local brief
 `C:/Users/nicop/scratch/ds-vmodel-stack/round7/BRIEF.md` (read 24 October 2026).
 The exposure description is the accepted project threat model; likelihood and
