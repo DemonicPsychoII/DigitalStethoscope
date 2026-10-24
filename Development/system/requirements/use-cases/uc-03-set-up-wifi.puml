@@ -1,4 +1,4 @@
-@startuml uc_03_assign_patient
+@startuml uc_03_set_up_wifi
 skinparam shadowing false
 skinparam defaultFontName SansSerif
 title F3 Set up Wi-Fi (REQ-11, REQ-12)
