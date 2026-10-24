@@ -10,7 +10,7 @@ The [state diagram](../../architecture/COMMUNICATION/setup-state.puml),
 
 ### Entry, scan and recovery
 
-Only supported networks are listed and offered: open networks and WPA2-PSK. WPA1, WPA2-SHA256 and WPA3/SAE scan results are filtered rather than joined with a mismatched security type. Keep the strongest distinct SSIDs within the P23 cache limit.
+Only supported networks are listed and offered: open networks and WPA2-PSK. WPA1, WPA2-SHA256 and WPA3/SAE scan results are filtered rather than joined with a mismatched security type; support for WPA3 and WPA2-SHA256 is TICKET-200. Keep the strongest distinct SSIDs within the P23 cache limit.
 
 Initialize L1_STORAGE with `storage_init()` before any boot record read. If initialization fails, treat the record as unavailable and open setup; never join using failed-read output. Read settings through L1. At boot, join a stored network with four attempts total,
 5 s between failures. Exhaustion shows an error and waits for a 2 s hold in Idle.
