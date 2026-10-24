@@ -1,0 +1,35 @@
+@startuml portal_boundary
+!theme cyborg
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam backgroundColor #0b1018
+skinparam defaultFontColor #e6edf7
+skinparam ArrowColor #a9b8ca
+title PORTAL page and controller boundary
+actor "Operator / browser" as Browser
+participant "L1_PORTAL\nHTTP + page" as Portal
+participant "L2_COMMUNICATION\nSetup workflow" as Communication
+participant "L1_WIFI\nRadio operations" as Wifi
+database "L1_STORAGE" as Storage
+Communication -> Wifi : open setup hotspot
+Communication -> Portal : start; publish completed network list
+Browser -> Portal : load page; request current status
+Portal --> Browser : page / published status snapshot
+Browser -> Portal : submit setup command
+Portal -> Portal : validate fields/state and form ownership
+Portal --> Browser : accepted or rejected
+Communication -> Portal : read typed queued request
+Portal --> Communication : Connect / Rescan / Cancel / Activity
+Communication -> Wifi : requested radio operation
+opt selected network has an address
+ Communication -> Storage : save accepted credentials
+end
+Communication -> Portal : publish status, cause, list, address
+Browser -> Portal : request current status
+Portal --> Browser : updated snapshot
+Communication -> Portal : publish closing; stop server
+note over Portal, Communication
+ PORTAL never associates, retries or saves credentials.
+ COMMUNICATION owns workflow; CONTROL owns listening priority.
+end note
+@enduml
