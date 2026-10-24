@@ -1,0 +1,3 @@
+mainmenu "DigitalStethoscope"
+
+source "Kconfig.zephyr"

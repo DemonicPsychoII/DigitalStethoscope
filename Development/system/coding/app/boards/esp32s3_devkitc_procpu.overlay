@@ -1,0 +1,18 @@
+/*
+ * ESP32-S3-DevKitC-1 with the N16R8 module: 16 MB flash, 8 MB octal PSRAM.
+ * GPIO33..37 are reserved for the octal PSRAM and must not be assigned.
+ * Add application peripherals when their adapters are implemented.
+ */
+
+/* The board default describes the WROOM-N8 module; match the fitted N16R8. */
+&flash0 
+{ 
+    reg = <0x0 DT_SIZE_M(16)>; 
+    ranges = <0x0 0x0 DT_SIZE_M(16)>; 
+};
+
+&psram0 
+{ 
+    status = "okay"; 
+    size = <DT_SIZE_M(8)>; 
+};
