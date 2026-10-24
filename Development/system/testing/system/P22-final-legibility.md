@@ -47,7 +47,7 @@ procedure and signed run together. No run has been executed by this procedure's 
 3. At **1 m**, induce each specific error code and priority in the catalogue in
    the same light/direction matrix. Keep the injected identity hidden until Nico
    states the code, context and priority from the indicator. Pass each observation
-   only if the stated code and priority match the injected catalogue entry.
+   only if the stated code, context and priority all match the injected catalogue entry.
    Record expected and identified values separately; a visible but unreadable code fails.
 4. At **4 m**, repeat the error-state matrix. Pass each observation if Nico
    recognizes that an error is active. Record visibility separately from the

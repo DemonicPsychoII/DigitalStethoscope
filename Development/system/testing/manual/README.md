@@ -21,7 +21,7 @@ an incomplete run is blocked. Sign-off records the observed outcome, including a
 failed or blocked run; it does not claim independent review.
 
 Run `python Development/system/testing/ci/manual_test_records.py`. CI checks each
-JSON run under `manual/runs/` and rejects missing identities, observations, duplicate
+JSON run under `manual/runs/` and rejects missing identities and observations, unchanged template placeholders, duplicate
 step IDs, inconsistent outcomes or missing Nico sign-off. This checks record
 completeness and consistency; it cannot authenticate a signature or prove physical
 execution. Nico checks correspondence with all procedure steps during sign-off.

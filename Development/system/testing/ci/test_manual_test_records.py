@@ -1,9 +1,10 @@
 """Reject incomplete or misleading manual execution evidence."""
 
 from copy import deepcopy
+import json
 import unittest
 
-from manual_test_records import validate
+from manual_test_records import TEMPLATE, validate
 
 
 class ManualRecordTests(unittest.TestCase):
@@ -76,6 +77,28 @@ class ManualRecordTests(unittest.TestCase):
             record = deepcopy(self.record)
             record["sign_off"][field] = value
             self.assertTrue(validate(record))
+
+    def test_template_placeholders_fail(self):
+        template = json.loads(TEMPLATE.read_text(encoding="utf-8"))
+        for field in (
+            "test_id",
+            "procedure",
+            "device",
+            "firmware_build",
+            "configuration",
+        ):
+            record = deepcopy(self.record)
+            record[field] = template[field]
+            self.assertIn(
+                f"{field} still holds the template placeholder", validate(record)
+            )
+        for field in ("action", "expected", "observations"):
+            record = deepcopy(self.record)
+            record["steps"][0][field] = template["steps"][0][field]
+            self.assertIn(
+                f"step 1: {field} still holds the template placeholder",
+                validate(record),
+            )
 
     def test_wrong_shapes_fail(self):
         for record in (None, [], {"steps": "pass"}, {"steps": [None]}, {"steps": []}):
