@@ -1249,7 +1249,7 @@ MEMORY_CASES = [
         marks=pytest.mark.xfail(
             strict=True,
             raises=AssertionError,
-            reason="Implementation defect: a failed storage_read leaves its partially filled credential record in L2 working memory",
+            reason="Implementation defect: a failed storage_read leaves its partially filled credential record in L2 working memory; fix tracked in TICKET-196",
         ),
         id="stored-read-failure-erases-working-record",
     ),
