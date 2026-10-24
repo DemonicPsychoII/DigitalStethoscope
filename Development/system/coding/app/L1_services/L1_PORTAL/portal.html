@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Stethoscope Wi-Fi</title>
+  <style>
+    body { background: #000; color: #fff; font: 16px sans-serif; margin: 0 auto; padding: 16px; max-width: 420px; }
+    button, input { display: block; width: 100%; box-sizing: border-box; font-size: 16px; padding: 12px; margin: 0 0 8px;
+      background: #000; color: #fff; border: 1px solid #555; border-radius: 6px; text-align: left; }
+    .password-marker { float: right; }
+  </style>
+</head>
+<body>
+  <div id="portal-view"><p>Loading...</p></div>
+  <script>
+    // The device owns setup state. Local views preserve an in-progress password form between polls.
+    var viewElement = document.getElementById('portal-view');
+    var networks = [], selectedNetwork = null, view = 'busy', last = '', lastActivityTime = 0;
+
+    // Nearby access points control network names, so escape them before inserting HTML.
+    function escapeText(text) {
+      return text.replace(/[&<>'"]/g, function(character) { return '&#' + character.charCodeAt(0) + ';'; });
+    }
+
+    function post(path, body) {
+      return fetch(path, { method: 'POST', body: body || '' });
+    }
+
+    // Typing extends selection time with at most one activity request per second.
+    function activity() {
+      var currentTime = Date.now();
+      if (currentTime - lastActivityTime > 1000) {
+        lastActivityTime = currentTime;
+        post('/activity');
+      }
+    }
+
+    function showMessage(message, isComplete) {
+      view = isComplete ? 'done' : 'busy';
+      viewElement.innerHTML = '<p>' + message + '</p>';
+    }
+
+    function list(message) {
+      view = 'list';
+      selectedNetwork = null;
+      var markup = '<p>' + (message || 'Select a Wi-Fi network') + '</p>';
+      networks.forEach(function(network, index) {
+        markup += '<button onclick="pick(' + index + ')">' + escapeText(network.name)
+          + (network.password ? '<span class="password-marker" aria-label="Password required">&#128274;</span>' : '') + '</button>';
+      });
+      viewElement.innerHTML = markup + '<button onclick="rescan()">Rescan</button><button onclick="stop()">Cancel setup</button>';
+    }
+
+    function pick(index) {
+      activity();
+      selectedNetwork = networks[index];
+      view = 'form';
+      viewElement.innerHTML = '<p>' + escapeText(selectedNetwork.name) + '</p>'
+        + (selectedNetwork.password ? '<input id="password-input" type="password" placeholder="Password" oninput="activity()">' : '')
+        + '<button onclick="go()">Connect</button><button onclick="back()">Back</button>';
+    }
+
+    function back() {
+      activity();
+      list();
+    }
+
+    // URLSearchParams encodes SSID/password bytes. A rejected form returns to selection.
+    // Connection and save results arrive through polling rather than the POST response.
+    function go() {
+      var password = selectedNetwork.password ? document.getElementById('password-input').value : '';
+      showMessage('Connecting to ' + escapeText(selectedNetwork.name) + '...');
+      post('/connect', new URLSearchParams({ network: selectedNetwork.name, password: password }).toString())
+        .then(function(response) {
+          if (!response.ok) { list('The device did not accept the request.'); }
+        });
+    }
+
+    function rescan() {
+      showMessage('Scanning...');
+      post('/rescan');
+    }
+
+    function stop() {
+      showMessage('Closing setup...', true);
+      post('/cancel');
+    }
+
+    function show(data) {
+      var statusName = data.status;
+      var causeText = data.cause ? ' ' + escapeText(data.cause) : '';
+      var addressText = data.address ? ' Device address: ' + escapeText(data.address) + '.' : '';
+      var networkSnapshot = JSON.stringify(data.networks);
+      var hasNetworkChanges = networkSnapshot !== last;
+      networks = data.networks;
+      last = networkSnapshot;
+      if (statusName == 'scanning') {
+        if (view != 'form') { showMessage('Scanning...'); }
+      } else if (statusName == 'selecting') {
+        if (view == 'busy' || view == 'done' || (view == 'list' && hasNetworkChanges)) { list(); }
+      } else if (statusName == 'connect_failed') {
+        if (view == 'busy' || view == 'done' || (view == 'list' && hasNetworkChanges)) { list('Could not connect.' + causeText); }
+      } else if (statusName == 'connecting') {
+        if (view != 'busy') { showMessage('Connecting...'); }
+      } else if (statusName == 'connected') {
+        showMessage('Connected and saved.' + addressText + ' The setup hotspot closes now; you can close this page.', true);
+      } else if (statusName == 'save_failed') {
+        showMessage('Connected, but the network could not be saved; it is lost at the next restart.' + causeText + addressText, true);
+      } else {
+        showMessage('Setup closed.' + causeText, true);
+      }
+    }
+
+    // Channel changes can drop the hotspot. Show guidance on errors, then keep polling
+    // so a restored connection can replace the message with current device state.
+    function poll() {
+      fetch('/status').then(function(response) { return response.json(); }).then(show)
+        .catch(function() {
+          if (view != 'done') { showMessage('No answer from the device. If its hotspot is gone, setup has ended.', true); }
+        })
+        .then(function() { setTimeout(poll, 1000); });
+    }
+    poll();
+  </script>
+</body>
+</html>
