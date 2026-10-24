@@ -49,8 +49,8 @@ conformity or implemented firmware. Recovery and acknowledgement are separate.
   Automatic reconnect/portal recovery remains automatic; acknowledgement is not its gate.
 - **Restart** means the reset button or a power off/on cycle.
 - **Code naming.** `<SUBJECT>_<OUTCOME>` in upper case with underscores and no abbreviations, for example
-  `SCAN_FAILURE`. Outcome words: no suffix, `RUNNING`, `OPEN`, `PENDING` or `SENDING` for a normal status;
-  `SUCCESSFUL`, `RECEIVED`, `VALID` or `MINIMUM_REACHED` for a positive result; `REJECTED`, `FAILURE`, `STALL`, `INVALID` or `NOT_POSSIBLE` for a negative result.
+  `SCAN_FAILURE`. Outcome words: no suffix, `RUNNING`, `OPEN`, `PENDING`, `SENDING` or `CONNECTING` for a normal status;
+  `SUCCESSFUL`, `RECEIVED`, `VALID`, `CONNECTED`, `ACKNOWLEDGED` or `MINIMUM_REACHED` for a positive result; `REJECTED`, `FAILURE`, `STALL`, `INVALID`, `UNEXPECTED`, `CHANGE` or `NOT_POSSIBLE` for a negative result.
   The C enumerator adds the prefix `FEEDBACK_` (for example `FEEDBACK_SCAN_FAILURE`) to keep the global
   namespace clean. The catalogue is one enum. After the first implementation, new codes are only appended,
   so existing values never change.
@@ -85,7 +85,7 @@ conformity or implemented firmware. Recovery and acknowledgement are separate.
 | Error  | Wi-Fi boot join: 4 attempts used                             | COMMUNICATION     | JOIN_FAILURE                 | Low         | violet    | steady                               | 3 blinks, pause        | Short press |
 | Error  | Wi-Fi link loss: 4 attempts used                             | COMMUNICATION     | RECONNECT_FAILURE            | Low         | violet    | steady                               | 4 blinks, pause        | Short press |
 | Error  | Hotspot (AP) start failed                                    | COMMUNICATION     | HOTSPOT_START_FAILURE        | Low         | violet    | steady                               | 5 blinks, pause        | Short press |
-| Error | Wi-Fi cleanup stop failed | COMMUNICATION | WIFI_CLEANUP_FAILURE | Low | violet | steady | 6 blinks, pause | Restart |
+| Error  | Wi-Fi cleanup stop failed                                    | COMMUNICATION     | WIFI_CLEANUP_FAILURE         | Low         | violet    | steady                               | 6 blinks, pause        | Restart     |
 | Status | Sending                                                      | CONTROL           | DELIVERY_SENDING             | Information | blue      | breathing, slow                      | off                    |             |
 | Status | Delivery pending                                             | CONTROL           | DELIVERY_PENDING             | Information | blue      | blink, slow                          | off                    |             |
 | Status | Delivery received (201/200)                                  | COMMUNICATION     | DELIVERY_RECEIVED            | Information | blue      | 3 quick flashes                      | off                    |             |

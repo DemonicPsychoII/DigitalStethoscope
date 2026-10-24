@@ -7,7 +7,7 @@ secondary sources listed below, not from the standard texts. Check the cited cla
 standards before any conformity claim. This note is not a compliance statement; see the
 [product scope](../../spec/product-scope.md) for the open applicability of standards.
 
-Primary standard identification: International Electrotechnical Commission, *Medical electrical equipment — Part 1-8: General requirements for basic safety and essential performance — Collateral standard: General requirements, tests and guidance for alarm systems in medical electrical equipment and medical electrical systems*, IEC 60601-1-8:2006+AMD1:2012+AMD2:2020 CSV, edition 2.2, IEC, 2020. Catalogue search: <https://webstore.iec.ch/searchform&q=IEC%2060601-1-8> (accessed 2026-10-24). The purchased consolidated text has not been checked. Amendment 2 status of simultaneous-alarm suppression and the distinction between alarm and information signals remains unverified; earlier secondary-source summaries below cannot establish the current rule. No compliance claim or new suppression decision follows from updating the citation.
+Primary standard identification: International Electrotechnical Commission, *Medical electrical equipment — Part 1-8: General requirements for basic safety and essential performance — Collateral standard: General requirements, tests and guidance for alarm systems in medical electrical equipment and medical electrical systems*, IEC 60601-1-8:2006+AMD1:2012+AMD2:2020 CSV, edition 2.2, IEC, 2020. Publication record: <https://webstore.iec.ch/en/publication/67388> (accessed 2026-10-24). The purchased consolidated text has not been checked. Amendment 2 status of simultaneous-alarm suppression and the distinction between alarm and information signals remains unverified; earlier secondary-source summaries below cannot establish the current rule. No compliance claim or new suppression decision follows from updating the citation.
 
 ## Question
 
@@ -133,7 +133,10 @@ All colour-to-context mappings below (including blue for FHIR and white for sett
 1. Read the IEC 60601-1-8 Table 1 cell values and the Table 2 duty-cycle value in the standard text.
    The 50 % on-time of P22 lies inside the usual 20–60 % range if that value is correct.
 2. The red 2 Hz signal for medium- and low-priority errors and the equal-priority suppression are
-   documented deviations from IEC 60601-1-8 (see "Alarm priorities").
+   documented deviations from IEC 60601-1-8 (see "Alarm priorities"). Showing only the highest-priority
+   error is an unresolved, conditional deviation: IEC 60601-1-8 permits suppressing lower-priority
+   simultaneous signals only for an intelligent alarm system, and this design does not establish that
+   classification (TICKET-210).
 3. Specific error-code and priority identification at 1 m is a one-time manual final-system acceptance check in the catalogue, outside automated MVP verification. Pattern visibility is a separate observation. No reset-cause or colour-vision checks are planned for the MVP.
 4. Clause summaries checked: IEC 60601-1 7.8.1 Table 2 [S1]; IEC 60073 clause 4.2.3 [S4] [S6];
    IEC 60601-1-8 6.3.2.2 and Table 2 [S12] [S13]. The priority matrix, applicability and harm assessment also remain unverified; secondary-source clause summaries do not resolve them.
