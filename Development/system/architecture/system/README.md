@@ -18,5 +18,5 @@ Shared views remain at system level. The [viewer](review.html) presents the prod
 [Feedback ground rules](feedback-principles.md) define indication ownership and fault containment.
 
 Original board snapshots remain immutable source material.
-See COMMUNICATION, WIFI, PORTAL and the
-render instructions.
+See [COMMUNICATION](../COMMUNICATION/README.md), [WIFI](../WIFI/README.md), [PORTAL](../PORTAL/README.md) and the
+[render instructions](../README.md#render).

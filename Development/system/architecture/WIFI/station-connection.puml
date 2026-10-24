@@ -1,0 +1,26 @@
+@startuml station_connection
+!theme cyborg
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam backgroundColor #0b1018
+skinparam defaultFontColor #e6edf7
+skinparam ArrowColor #a9b8ca
+title General Wi-Fi station connection
+start
+:Scan for nearby access points;
+:Select network and obtain credentials
+when its security requires them;
+:Request association and authentication;
+if (Link established?) then (yes)
+ :Wait for an IP address
+(DHCP or configured addressing);
+ if (Usable address?) then (yes)
+  :Connected: application traffic may begin;
+ else (failed)
+  :Connection failed; report cause;
+ endif
+else (failed)
+ :Connection failed; report cause;
+endif
+stop
+@enduml
