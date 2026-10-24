@@ -26,7 +26,7 @@ direct writes into application state. MON observes bounded counters/events; it m
 unrestricted caller of every API.
 
 The components below are logical responsibilities, not folders; the module column shows where each one is realized.
-REC, STO and the display are optional and not part of the MVP.
+REC, STO and the display are optional and not part of the MVP (TICKET-202, TICKET-206).
 
 | Component | Module | Owns / writes | Inputs | Outputs / proposed operations |
 |---|---|---|---|---|
@@ -119,7 +119,7 @@ and needs justification. Candidate update 1 s and session 30 s are open. Define 
 mathematically and validate it; it is not probability of clinical correctness. Aggregate using a
 proposed median of accepted BPM estimates; coverage is the union of accepted window intervals
 clipped to session bounds, not number_of_windows × window_length. Warm-up treatment, temporal
-weighting, minimum windows and thresholds remain open. No window includes missing blocks.
+weighting, minimum windows and thresholds remain open (TICKET-192). No window includes missing blocks.
 
 Replay candidate is WSOLA with bounded overlap/search buffers. Output length should equal
 `ceil(valid_clip_frames / speed)` under a rounding policy that remains to be fixed, with final partial blocks
@@ -163,12 +163,12 @@ time, not send time; clock loss/skew makes the result ineligible until its mappi
 not rewritten. FHIR `effectiveDateTime` carries the end of the aggregate interval:
 This is a project representation choice. The earlier claim that `effectivePeriod` failed profile validation is unsupported: no validator version, input artifact or result record is available. The interval stays in the local result. Preserve the Device id, point (approved coding or
 evaluation-only metadata), value, interval and analysis settings in the immutable local result.
-The local profile/metadata mapping and decimal precision remain open.
+The local profile/metadata mapping and decimal precision remain open (TICKET-181).
 
 NET verifies CA/name/time and checks bounded status/body parsing. `201 Created` or `200` (existing conditional create) is the receipt and marks the result Sent; there is no readback.
 An uncertain response is retried within the same bounded job; a single matching identifier returns the existing resource; multiple matches fail with 412. Configuration/auth errors and server failures remain visible after the last attempt.
 SNTP is a clock synchronization mechanism, not inherently authenticated trusted time; approve the
-local network/clock trust assumptions; that decision remains open. David L. Mills, *Simple Network Time Protocol (SNTP) Version 4 for IPv4, IPv6 and OSI*, IETF RFC 4330, January 2006, §9, DOI: 10.17487/RFC4330, <https://www.rfc-editor.org/rfc/rfc4330#section-9> (accessed 2026-10-24), describes unauthenticated SNTP security limitations. Credentials are private deployment configuration.
+local network/clock trust assumptions; that decision remains open (TICKET-180, TICKET-209). David L. Mills, *Simple Network Time Protocol (SNTP) Version 4 for IPv4, IPv6 and OSI*, IETF RFC 4330, January 2006, §9, DOI: 10.17487/RFC4330, <https://www.rfc-editor.org/rfc/rfc4330#section-9> (accessed 2026-10-24), describes unauthenticated SNTP security limitations. Credentials are private deployment configuration.
 
 Active network work and live listening use an exclusive controller lease. Retain an
 established station association during listening; do not run setup/reconnect/delivery jobs.
@@ -200,13 +200,13 @@ CONTROL selects feedback under the architectural fault-containment rules. The de
 Time synchronization, secure server transport and Device registration are later FHIR
 work, not Wi-Fi setup completion conditions. The device does not select patients;
 it never sends a patient; external HAPI enrichment is a later FHIR test precondition. Existing persistent registration
-and delivery requirements remain for that later phase.
+and delivery requirements remain for that later phase (TICKET-180, TICKET-181, TICKET-194, TICKET-197).
 
 ## Design constraints
 
 The following constraints guide implementation.
 They are checked by design review and developer tests, not by the [system requirements](../../requirements/system-requirements.md).
-Values are in [design parameters](parameters.md). Optional parts (replay, Lung, display, touch, SD) are not listed.
+Values are in [design parameters](parameters.md). Optional parts (replay, Lung, display, touch, SD) are not listed; see TICKET-202, TICKET-203 and TICKET-206.
 
 | Area | Constraint |
 |---|---|
