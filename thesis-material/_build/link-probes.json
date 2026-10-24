@@ -1,0 +1,45 @@
+[
+  {
+    "url": "https://doi.org/10.4103/sjmms.sjmms_118_19",
+    "status": 200,
+    "final_url": "https://www.ovid.com/jnls/sjmm/fulltext/10.4103/sjmms.sjmms_118_19~frequency-responses-of-conventional-and-amplified",
+    "content_type": "text/html; charset=utf-8",
+    "excerpt": "<!DOCTYPE html><html lang=\"en\" cg3-theme=\"PDS-v3\"><head><meta charSet=\"utf-8\" data-next-head=\"\"/><meta name=\"viewport\" c",
+    "identity_tokens": [
+      "Alanazi",
+      "320"
+    ]
+  },
+  {
+    "url": "https://doi.org/10.1097/MLR.0000000000001664",
+    "error": "HTTP Error 403: Forbidden"
+  },
+  {
+    "url": "https://www.tha.de/Elektrotechnik/Welchen-Arbeitsumfang-hat-eine-Bachelorarbeit-und-wie-lange-dauert-deren-Bearbeitung.pdf",
+    "error": "HTTP Error 404: Not Found"
+  },
+  {
+    "url": "https://secure.aes.org/forum/pubs/conventions/?elib=14256",
+    "error": "The read operation timed out"
+  },
+  {
+    "url": "https://invensense.tdk.com/wp-content/uploads/2015/02/DS-000021-v1.22.pdf",
+    "error": "HTTP Error 404: Not Found"
+  },
+  {
+    "url": "https://www.infineon.com/assets/row/public/documents/24/49/infineon-im69d130-datasheet-en.pdf",
+    "error": "HTTP Error 404: Not Found"
+  },
+  {
+    "url": "https://www.tha.de/Wirtschaft/Informationen-zur-Abschlussarbeit.html",
+    "error": "HTTP Error 404: Not Found"
+  },
+  {
+    "url": "https://www.tha.de/Gestaltung/Interaktive-Medien/Abschlussarbeit.html",
+    "error": "HTTP Error 404: Not Found"
+  },
+  {
+    "url": "https://www.tha.de/Binaries/Binary89415/FAQ-Bachelorarbeit-02.26-clean.pdf",
+    "error": "HTTP Error 404: Not Found"
+  }
+]
