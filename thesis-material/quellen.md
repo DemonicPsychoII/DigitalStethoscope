@@ -1424,7 +1424,7 @@ Verhelst, W., & Roelands, M. (1993). An overlap-add technique based on waveform 
 <a id="nico_wifi_decisions_20261019"></a>
 ### nico_wifi_decisions_20261019
 
-Nico (full surname not supplied). *Wi-Fi, portal and feedback alignment: owner decisions*. Personal communication, T3 Code, 19 October 2026. [Conversation](t3-thread://v1/d5e44f69-2ecc-4a3e-917b-31a7b084c12b), accessed 19 October 2026. [Local decision record](../Development/system/planning/mvp-decisions-2026-10-19.md).
+Nico. *Wi-Fi, portal and feedback alignment: owner decisions*. Personal communication, T3 Code, 19 October 2026. [Conversation](t3-thread://v1/d5e44f69-2ecc-4a3e-917b-31a7b084c12b), accessed 19 October 2026. [Local decision record](../Development/system/planning/mvp-decisions-2026-10-19.md).
 
 **Source type:** Project decisions. No claim of implementation, measurement or standards conformity.
 
@@ -1595,7 +1595,7 @@ FHIR Release 4 (v4.0.1): RESTful API, Conditional create. Health Level Seven Int
 <a id="nico_replay_decisions_20261024"></a>
 ### nico_replay_decisions_20261024
 
-Nico (surname not supplied). *DigitalStethoscope replay stack: round-7 owner answers*. Personal communication, T3 Code, 24 October 2026. Authoritative local brief: `C:/Users/nicop/scratch/ds-vmodel-stack/round7/BRIEF.md`, read 24 October 2026. Project decisions, not measurements or conformity evidence.
+Nico. *DigitalStethoscope replay stack: round-7 owner answers*. Personal communication, T3 Code, 24 October 2026. Authoritative local brief: `C:/Users/nicop/scratch/ds-vmodel-stack/round7/BRIEF.md`, read 24 October 2026. Project decisions, not measurements or conformity evidence.
 
 <a id="ietf_http_semantics_2022"></a>
 ### ietf_http_semantics_2022
