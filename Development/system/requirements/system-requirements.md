@@ -35,5 +35,5 @@ Project decisions still needed: REQ-06 signal-validity criteria and the referenc
 ## Retired requirements
 
 SR-01â€¦SR-12 and the component requirements AUD, BPM, CTL, HW, INP, LIS, MON, NET, REC, STO and UI were retired on
-14 October 2026 by project scope decision. Decision identification: Nico (surname not supplied), *MVP scope decisions*, DigitalStethoscope project record, 14 October 2026, `Development/system/planning/mvp-decisions-2026-10-14.md` (Records stage). Their IDs are not reused. Internal constraints that remain relevant are inputs to the later design stage.
+14 October 2026 by project scope decision. Decision identification: Nico, *MVP scope decisions*, DigitalStethoscope project record, 14 October 2026, `Development/system/planning/mvp-decisions-2026-10-14.md` (Records stage). Their IDs are not reused. Internal constraints that remain relevant are inputs to the later design stage.
 Optional requirements (replay, Lung, display, touch, SD, on-device test playback) are removed for now.
