@@ -1,0 +1,20 @@
+{
+  "test_id": "COPY THE PROCEDURE TEST ID",
+  "procedure": "Development/system/testing/COMPONENT/procedure.md",
+  "procedure_sha": "FULL PROCEDURE COMMIT SHA",
+  "device": "DEVICE ID AND BOARD REVISION",
+  "firmware_build": "BOOT-REPORTED BUILD ID AND CONFIGURATION",
+  "firmware_sha": "FULL FIRMWARE SOURCE SHA",
+  "configuration": "EQUIPMENT, CONDITIONS AND SETUP; NO SECRETS OR PATIENT DATA",
+  "steps": [
+    {
+      "id": "1",
+      "action": "COPY THE ACTION FROM THE IDENTIFIED PROCEDURE",
+      "expected": "COPY THE OBSERVABLE PASS CRITERION",
+      "result": "not-run",
+      "observations": "REPLACE WITH OBSERVATIONS, DEVIATIONS AND EVIDENCE REFERENCES"
+    }
+  ],
+  "result": "blocked",
+  "sign_off": null
+}
