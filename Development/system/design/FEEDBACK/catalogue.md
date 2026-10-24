@@ -6,7 +6,7 @@ The [architectural ground rules](../../architecture/system/feedback-principles.m
 
 The RGB status light never shows red; the separate red button light shows error codes.
 Serial logs retain the detailed cause. Timing is in [P22](parameters.md).
-The pin map stays unchanged; there is no GPIO14 filter-switch move. The claimed GPIO38/BPM-contact conflict is an unsupported project wiring note: no dated carrier schematic or fitted-board evidence is available here. Confirm the board revision and carrier wiring before enabling the RGB LED driver; if either is unknown, leave that driver disabled pending owner-authorized inspection. This is a design precondition, not evidence that an implemented driver enforces it.
+The pin map stays unchanged; there is no GPIO14 filter-switch move. The claimed GPIO38/BPM-contact conflict is an unsupported project wiring note: no dated carrier schematic or fitted-board evidence is available here. Confirm the board revision and carrier wiring before enabling the RGB LED driver; if either is unknown, leave that driver disabled pending owner-authorized inspection (TICKET-186, TICKET-187). This is a design precondition, not evidence that an implemented driver enforces it.
 
 Vendor reference: Espressif Systems, *ESP32-S3-DevKitC-1 v1.1 User Guide*, ESP-Dev-Kits documentation, online revision not specified, <https://docs.espressif.com/projects/esp-dev-kits/en/latest/esp32s3/esp32-s3-devkitc-1/user_guide_v1.1.html> (accessed 2026-10-24). It identifies the board RGB LED connection; it does not establish the project's carrier wiring.
 
@@ -23,7 +23,7 @@ conformity or implemented firmware. Recovery and acknowledgement are separate.
 - **RGB LED = context.** The colour shows the context in which a status or error occurs, not the module that
   detects it. CONTROL decides what can run, so each context has one colour: white = device (startup,
   settings, session input), green = Idle, cyan = audio, violet = Wi-Fi, blue = FHIR.
-- **Standards working assumptions.** Applicability and primary clauses remain unverified. Project colour mappings are choices informed by secondary summaries of IEC 60601-1 7.8.1 (green only for Idle, no red, yellow or orange on
+- **Standards working assumptions.** Applicability and primary clauses remain unverified (TICKET-210). Project colour mappings are choices informed by secondary summaries of IEC 60601-1 7.8.1 (green only for Idle, no red, yellow or orange on
   the RGB LED). Flash rates follow IEC 60073: codes and quick flashes 2 Hz, slow blink 0.5 Hz. P22 defines
   pauses, breathing, dimming and visibility. Priorities follow the IEC 60601-1-8 approach. The research,
   sources and remaining gaps are in [LED indication standards](led-indication-standards.md). This design

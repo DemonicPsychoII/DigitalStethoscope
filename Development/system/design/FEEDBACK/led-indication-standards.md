@@ -78,7 +78,7 @@ Which colours, flash rates and patterns do the relevant standards require or rec
   [S11] [S16]
 - Table 1 cell values have not been verified against the standard. No matrix is
   reproduced here. The adopted priority labels below are provisional project
-  assignments pending hazard analysis and primary-source review.
+  assignments pending hazard analysis and primary-source review (TICKET-210).
 
 - Assessment for this device. The device does not monitor or treat; the clinician is present and can use
   another stethoscope. These are project assumptions, not a completed hazard analysis.
