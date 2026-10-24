@@ -1,0 +1,45 @@
+@startuml system_components
+!theme cyborg
+!pragma layout smetana
+skinparam shadowing false
+skinparam component {
+ BackgroundColor<<optional>> #273241
+ BorderColor<<optional>> #61738a
+ FontColor<<optional>> #b8c4d4
+}
+skinparam artifact {
+ BackgroundColor<<optional>> #273241
+ BorderColor<<optional>> #61738a
+ FontColor<<optional>> #b8c4d4
+}
+skinparam componentStyle rectangle
+skinparam defaultFontName SansSerif
+title System components
+left to right direction
+component "Chestpiece" as chest
+component "INMP441\nMicrophone" as mic
+node "ESP32-S3" as cpu
+component "PCM5102A\nDAC" as dac
+component "Headphone amplifier\n(outside project scope)" as amp <<external>>
+component "Headphones" as hp
+component "ILI9341 / XPT2046\nDisplay / touch" as ui <<optional>>
+component "Buttons / switches\nPotentiometer / LED" as controls
+artifact "SD card" as sd <<optional>>
+database "FHIR server" as server
+chest --> mic : sound
+mic --> cpu : I²S
+cpu --> dac : I²S
+dac --> amp : analog audio
+amp --> hp : analog audio
+controls --> cpu : controls
+cpu --> controls : status
+ui --> cpu : touch
+cpu --> ui : display
+sd --> cpu : SPI
+cpu --> server : Wi-Fi / HTTPS
+server --> cpu : status (receipt)
+legend bottom
+  Grey / optional = beyond MVP.
+  Display, touch, SD and capture / slower replay are optional.
+endlegend
+@enduml

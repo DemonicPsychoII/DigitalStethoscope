@@ -1,0 +1,41 @@
+@startuml architecture_choice
+!theme cyborg
+!pragma layout smetana
+skinparam shadowing false
+skinparam component {
+ BackgroundColor<<optional>> #273241
+ BorderColor<<optional>> #61738a
+ FontColor<<optional>> #b8c4d4
+}
+skinparam artifact {
+ BackgroundColor<<optional>> #273241
+ BorderColor<<optional>> #61738a
+ FontColor<<optional>> #b8c4d4
+}
+skinparam componentStyle rectangle
+skinparam defaultFontName SansSerif
+title Architecture
+top to bottom direction
+component "Layers (chosen)\n• Application orchestrates the work\n• Services: hardware adapters, C libraries\n• Zephyr drivers are the bottom layer" as layers #1c4036
+component "RTOS threads (chosen)\n• Workers run separately\n• Audio keeps moving\n• Messages coordinate work" as rt #1c4036
+component "Events (chosen)\n• Inputs become commands\n• Controller owns settings\n• Workers return results" as events #1c4036
+component "Superloop (not selected)\n• S04 project assessment: unsuitable for this audio workflow" as loop #492a34
+component "AUTOSAR (not selected)\n• S04 project assessment: setup effort outside scope" as auto #492a34
+component "Task isolation (optional)\n• S04 project option, not an MVP requirement" as mpu #273241
+layers -[hidden]right-> rt
+rt -[hidden]right-> events
+layers -[hidden]down-> loop
+rt -[hidden]down-> auto
+events -[hidden]down-> mpu
+loop -[hidden]right-> auto
+auto -[hidden]right-> mpu
+component "A/B firmware\n• S04 project option: separate update concern" as ab #273241
+auto -[hidden]down-> ab
+legend bottom
+Project alternatives and selection rationale: source board S04,
+Software-Architecture and Requirements, project board snapshot, 2026-10-05.
+Individual authorship unverified; S04 is project rationale.
+Source: sources/software-architecture-and-requirements.json (S04).
+These are project assessments, not general technical claims.
+endlegend
+@enduml

@@ -1,0 +1,42 @@
+@startuml system_context
+!theme cyborg
+!pragma layout smetana
+skinparam shadowing false
+skinparam component {
+ BackgroundColor<<optional>> #273241
+ BorderColor<<optional>> #61738a
+ FontColor<<optional>> #b8c4d4
+}
+skinparam artifact {
+ BackgroundColor<<optional>> #273241
+ BorderColor<<optional>> #61738a
+ FontColor<<optional>> #b8c4d4
+}
+skinparam componentStyle rectangle
+skinparam defaultFontName SansSerif
+title System context
+left to right direction
+actor "Operator" as operator
+actor "Patient / sound source" as source
+actor "Phone browser" as phone
+rectangle "Digital stethoscope" as device
+database "FHIR server" as fhir
+cloud "Network / time" as net
+source --> device : sound
+operator --> device : controls
+device --> operator : audio / optional display
+device --> fhir : BPM Observation (Device;\nno patient from device)\nWi-Fi / HTTPS
+fhir --> device : status (receipt)
+net --> device : connectivity / time
+phone --> device : Wi-Fi network + password\nhotspot page (Idle only)
+device --> fhir : Device registration\n(once, id kept in flash)
+legend bottom
+  Grey / optional = beyond MVP.
+  Display, touch, SD and capture / slower replay are optional.
+endlegend
+note right of fhir
+External test precondition:
+HAPI enriches Observation.subject
+from Device.patient.
+end note
+@enduml
