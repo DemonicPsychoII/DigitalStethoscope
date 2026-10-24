@@ -22,7 +22,10 @@ $archive = "openocd-esp32-win64-$($version.TrimStart('v')).zip"
 $url = "https://github.com/espressif/openocd-esp32/releases/download/$version/$archive"
 $marker = Join-Path $FwOpenOcdDir 'VERSION.txt'
 
-if ((Test-Path -LiteralPath $marker) -and ((Get-Content -LiteralPath $marker -Raw).Trim() -eq $version)) {
+$executable = Join-Path $FwOpenOcdDir 'bin\openocd.exe'
+
+if ((Test-Path -LiteralPath $marker) -and ((Get-Content -LiteralPath $marker -Raw).Trim() -eq $version) -and
+    (Test-Path -LiteralPath $executable -PathType Leaf)) {
     Write-Host "openocd-esp32 $version is already installed in $FwOpenOcdDir"
     return
 }
