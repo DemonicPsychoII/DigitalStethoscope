@@ -16,7 +16,7 @@ This table is authoritative for feedback. It defines feedback behavior, not stan
 conformity or implemented firmware. Recovery and acknowledgement are separate.
 
 - **One feedback catalogue.** Wi-Fi-only failures preserve working audio and permit
-  offline Start. Recovery follows the Wi-Fi rules and need not wait for error
+  offline Start. Recovery follows the [Wi-Fi rules](../COMMUNICATION/interfaces-and-behavior.md#wi-fi-setup-and-recovery) and need not wait for error
   acknowledgement. Other errors stop the active workflow, mute/cancel active audio
   and block Start until the catalogue clear rule is met. Restart means reset/power cycle.
   Generic device settings failures are distinct from Wi-Fi credential-save failures.

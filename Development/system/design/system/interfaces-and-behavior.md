@@ -10,7 +10,7 @@ Implementations must follow these contracts and name the design they implement.
 
 - **L0 is Zephyr:** drivers, DMA, interrupts and the devicetree overlay. No project code.
 - **L1 adapters** call Zephyr driver APIs directly: `L1_I2S` (microphone RX and DAC TX),
-  `L1_WIFI` (station, scan, hotspot and DHCP), `L1_PORTAL` (HTTP server of the Wi-Fi setup page; contract),
+  `L1_WIFI` (station, scan, hotspot and DHCP), `L1_PORTAL` (HTTP server of the Wi-Fi setup page; [contract](../PORTAL/interfaces-and-behavior.md)),
   `L1_STORAGE` (named records in flash through Zephyr settings),
   `L1_PHYSICALINTERFACE` (buttons, switches, potentiometer, LEDs).
 - **L1 libraries** are pure C with no RTOS, filesystem, UI or network includes: `L1_FILTER`,
@@ -177,14 +177,14 @@ Start during analysis, Delivery Pending or sending is rejected Busy, with no can
 If release cannot be proven, remain stopped and show the reason. Radio/driver background behavior
 must be measured; disabling application jobs alone is not proof of interference isolation.
 
-Wi-Fi setup and recovery and portal behavior define the communication-specific contracts.
+[Wi-Fi setup and recovery](../COMMUNICATION/interfaces-and-behavior.md#wi-fi-setup-and-recovery) and [portal behavior](../PORTAL/interfaces-and-behavior.md) define the communication-specific contracts.
 
 ## Failure contract
 
 Service operations return Accepted / Rejected(reason) / Busy for commands and emit one terminal
 outcome per accepted action ID. Essential audio faults mute; optional display/touch/SD failure
 degrades capability. Analysis gaps invalidate analysis, not all listening. No component formats SD
-or persists captured patient audio. No old result is relabelled with a new ID. Error indication and recovery follow the current catalogue, including its Wi-Fi-only audio exception and restart rules. Watchdog
+or persists captured patient audio. No old result is relabelled with a new ID. Error indication and recovery follow the current [catalogue](../FEEDBACK/catalogue.md#status-and-error-catalogue), including its Wi-Fi-only audio exception and restart rules. Watchdog
 detection thresholds and diagnostic cost are open; a bounded request is preferable to an implicit retry loop.
 
 ## MVP session baseline
@@ -217,7 +217,7 @@ Values are in [design parameters](parameters.md). Optional parts (replay, Lung, 
 | Listening | Raw, Murmur and BPM listening filters; Raw applies no band filter. Output saturates before integer conversion. Listening filter and volume never change the analysis input. DSP core in pure C without Zephyr headers or heap use per block. |
 | BPM | BPM analysis gets audio before the volume control. Which filter it uses (own analysis filter or a listening filter) is decided by the filter study (TICKET-189). Whole-cycle periodicity, not single S1/S2 peaks. Invalid windows carry a reason; an old BPM is never reused. Aggregation counts overlapping windows once and freezes value, interval and settings. Cancel discards the aggregation. No fixed numeric quality threshold. |
 | Network | Connection, time sync, TLS and HTTP only under the Idle lease. FHIR R4 Observation (LOINC 8867-4, UCUM /min, `effectiveDateTime` = interval end), conditional create with `device` reference, `subject` omitted by the device; external HAPI enrichment from Device.patient, up to 3 retries, `201`/`200` as receipt, no readback. HTTPS verifies chain, hostname and validity against the lab CA; no plain-HTTP fallback. Credentials stay out of source and logs. Wi-Fi credentials and the server-assigned Device id persist in the flash settings partition; Device registration creates the server resource once and reuses its stored id after restart. |
-| Indication | RGB LED shows the context colour and status pattern; during an error it keeps the colour of the context where the error occurred. The red button LED shows the blink code of the highest-priority error (see status and error catalogue). The catalogue is one append-only `FEEDBACK_` enum. Errors also go to the serial log, written by the component that detects them. Hotspot: open AP, setup at boot/Idle only, inactivity timeout, bounded clients; no credentials in logs. |
+| Indication | RGB LED shows the context colour and status pattern; during an error it keeps the colour of the context where the error occurred. The red button LED shows the blink code of the highest-priority error (see [status and error catalogue](../FEEDBACK/catalogue.md#status-and-error-catalogue)). The catalogue is one append-only `FEEDBACK_` enum. Errors also go to the serial log, written by the component that detects them. Hotspot: open AP, setup at boot/Idle only, inactivity timeout, bounded clients; no credentials in logs. |
 | Monitoring | Count stalls, dropped blocks, deadline misses, clipping, analysis gaps and queue saturation. Report stack/heap watermarks. A stalled required worker raises an Error with audio muted. Initialization alone never counts as verified operation. |
 
 ## Firmware layer structure

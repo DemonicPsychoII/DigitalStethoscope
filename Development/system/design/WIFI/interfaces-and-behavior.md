@@ -1,6 +1,6 @@
 # Wi-Fi interfaces and behavior
 
-L2_COMMUNICATION owns setup, retries and sequencing. `L1_WIFI` owns individual radio and address operations defined in the [service boundary](#service-boundary) below. The page, HTTP server and typed request/status contract belong to PORTAL.
+L2_COMMUNICATION owns setup, retries and sequencing. `L1_WIFI` owns individual radio and address operations defined in the [service boundary](#service-boundary) below. The page, HTTP server and typed request/status contract belong to [PORTAL](../PORTAL/interfaces-and-behavior.md).
 
 ## Service boundary
 
@@ -16,7 +16,7 @@ L2_COMMUNICATION owns setup, retries and sequencing. `L1_WIFI` owns individual r
 | Hotspot and DHCP functions | Start/stop requests from COMMUNICATION | Individual service outcomes; HTTP page serving remains in PORTAL. |
 | `wifi_getAddress()`, `wifi_isConnected()` | Address buffer or link query | Current station address or connection state. |
 
-A new radio request or cancellation rejects late results of the prior request. Each wait returns its result to COMMUNICATION; callbacks do not change controller state. [Shared system contracts](../system/interfaces-and-behavior.md) define mode ownership and feedback; [Wi-Fi parameters](parameters.md) define operation limits; COMMUNICATION defines sequencing and retries.
+A new radio request or cancellation rejects late results of the prior request. Each wait returns its result to COMMUNICATION; callbacks do not change controller state. [Shared system contracts](../system/interfaces-and-behavior.md) define mode ownership and feedback; [Wi-Fi parameters](parameters.md) define operation limits; [COMMUNICATION](../COMMUNICATION/interfaces-and-behavior.md) defines sequencing and retries.
 
 
 ## Supported networks
