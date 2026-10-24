@@ -60,8 +60,6 @@
 #define COMMUNICATION_CONNECTION_CHECK_INTERVAL_S (2 * 60) /**< Link check interval in Idle. */
 #define COMMUNICATION_EVENT_CHECK_INTERVAL_MS     (200)    /**< Wait interval; longest delay to see a Start. */
 
-#define COMMUNICATION_CLEANUP_ATTEMPTS (3)
-
 #define COMMUNICATION_NETWORK_RECORD "wifi/network" /**< Storage name of the joined network. */
 
 #define COMMUNICATION_WORK_SCAN       BIT(0) /**< Scan started. */
@@ -189,16 +187,39 @@ static void communication_runIdleCycle(void);
 static void communication_recoverConnection(void);
 
 /**
- * @brief Wait for the selected condition, preserving its wake and timeout behavior.
+ * @brief Wait until the selected condition is met, Start interrupts it or the time is over.
  *
- * @param[in] target Condition to observe; radio results check Start every 200 ms.
- * @param[in] timeout Maximum wait, with the existing radio poll granularity.
- * @return 0 on completion, or the cancellation, timeout or service error.
+ * @param[in] target  Condition to wait for.
+ * @param[in] timeout Longest wait.
+ *
+ * @return 0 when the condition is met, -ECANCELED if listening started,
+ *         -ETIMEDOUT if a join or scan gave no result in time,
+ *         -EAGAIN if Wi-Fi has not stopped in time, or a Wi-Fi error code.
  */
 static int communication_waitForCondition(enum communication_wait_target target, k_timeout_t timeout);
 
-/** Check the selected condition; radio checks wait for at most the supplied interval. */
-static int communication_checkWaitTarget(enum communication_wait_target target, k_timeout_t interval);
+/**
+ * @brief Check the selected condition once.
+ *
+ * Join and scan checks wait up to one event check interval for the radio.
+ *
+ * @param[in] target   Condition to check.
+ * @param[in] deadline End of the whole wait.
+ *
+ * @return 0 when the condition is met, -EAGAIN while it is pending, or the error that ended it.
+ */
+static int communication_checkWaitTarget(enum communication_wait_target target, k_timepoint_t deadline);
+
+/**
+ * @brief Pause before the next check of the selected condition.
+ *
+ * @param[in] target   Condition that is waited for.
+ * @param[in] deadline End of the whole wait.
+ */
+static void communication_pauseBeforeNextCheck(enum communication_wait_target target, k_timepoint_t deadline);
+
+/** @brief Take over the listening request that CONTROL posted last. */
+static void communication_updateListeningState(void);
 
 /**
  * @brief Tell whether a 2 s hold waits for setup.
@@ -217,7 +238,7 @@ static void communication_setState(enum communication_state state);
 /**
  * @brief Stop all pending Wi-Fi work; a connected station stays connected.
  *
- * Work that fails all bounded stop attempts latches a restart-required fault.
+ * Each pending stop is tried once; a failed stop latches a restart-required fault.
  *
  * @return True if no work is pending.
  */
@@ -617,112 +638,122 @@ static void communication_recoverConnection(void)
     }
 }
 
-static int communication_checkWaitTarget(enum communication_wait_target target, k_timeout_t interval)
-{
-    int result = -EAGAIN; /**< Selected condition is still pending. */
-    switch(target)
-    {
-    case COMMUNICATION_WAIT_CONTROL_EVENT:
-        result = 0;
-        break;
-    case COMMUNICATION_WAIT_DELAY:
-        break;
-    case COMMUNICATION_WAIT_CONNECTION:
-        result = wifi_waitForConnection(interval);
-        break;
-    case COMMUNICATION_WAIT_SCAN_LIST:
-        result = wifi_waitForScanResult(communication_ScanList, WIFI_SCAN_LIST_SIZE, interval);
-        if(result >= 0)
-        {
-            communication_ScanCount = (size_t)result;
-            result = 0;
-        }
-        break;
-    case COMMUNICATION_WAIT_WIFI_STOP:
-    {
-        k_spinlock_key_t key = k_spin_lock(&communication_ControlLock);
-        bool isStopped = communication_ListeningIsRequested &&
-                         ((communication_State == COMMUNICATION_STATE_STOPPED) ||
-                          (communication_State == COMMUNICATION_STATE_OFFLINE)); /**< Start has a stopped or offline network acknowledgement. */
-        k_spin_unlock(&communication_ControlLock, key);
-        if(isStopped)
-        {
-            result = 0;
-        }
-        break;
-    }
-    default:
-        result = -EINVAL; /**< Wait target is invalid. */
-        break;
-    }
-    return result;
-}
-
 static int communication_waitForCondition(enum communication_wait_target target, k_timeout_t timeout)
 {
     k_timepoint_t deadline = sys_timepoint_calc(timeout);
-    bool isRadioWait = (target == COMMUNICATION_WAIT_CONNECTION) ||
-                       (target == COMMUNICATION_WAIT_SCAN_LIST); /**< Radio results retain their event-wait interval and deadline priority. */
-    bool isWorkerWait = target != COMMUNICATION_WAIT_WIFI_STOP;
-    k_timeout_t eventTimeout = K_NO_WAIT;
-    if(target == COMMUNICATION_WAIT_CONTROL_EVENT)
-    {
-        eventTimeout = timeout;
-    }
-    int result = -EAGAIN; /**< Selected condition has not completed yet. */
+    int result = 0;
+    bool isWaiting = true;
 
-    while(result == -EAGAIN) /**< Only pending conditions need another check. */
+    while(isWaiting)
     {
-        if(isRadioWait && sys_timepoint_expired(deadline))
+        result = communication_checkWaitTarget(target, deadline);
+        isWaiting = (result == -EAGAIN) && !sys_timepoint_expired(deadline); /**< Condition still pending and time left. */
+        if(isWaiting)
         {
-            result = -ETIMEDOUT; /**< No radio result arrived before the total deadline. */
+            communication_pauseBeforeNextCheck(target, deadline);
         }
-        else
+    }
+
+    bool isRadioWait = (target == COMMUNICATION_WAIT_CONNECTION) || (target == COMMUNICATION_WAIT_SCAN_LIST); /**< Join or scan result from the radio. */
+    if(isRadioWait && (result == -EAGAIN))
+    {
+        result = -ETIMEDOUT; /**< No radio result arrived before the deadline. */
+    }
+
+    return result;
+}
+
+static int communication_checkWaitTarget(enum communication_wait_target target, k_timepoint_t deadline)
+{
+    int result = -EAGAIN;                                                                                                                                  /**< Condition is still pending. */
+    bool isStoppedByStart = (target == COMMUNICATION_WAIT_DELAY) || (target == COMMUNICATION_WAIT_CONNECTION) || (target == COMMUNICATION_WAIT_SCAN_LIST); /**< Start ends this wait early. */
+
+    if(isStoppedByStart)
+    {
+        (void)k_sem_take(&communication_ControlChanged, K_NO_WAIT);
+        communication_updateListeningState();
+    }
+
+    if(isStoppedByStart && communication_ListeningIsActive)
+    {
+        result = -ECANCELED; /**< Start takes priority over the wait. */
+    }
+    else
+    {
+        switch(target)
         {
-            if(isWorkerWait)
-            {
-                (void)k_sem_take(&communication_ControlChanged, eventTimeout);
-                k_spinlock_key_t key = k_spin_lock(&communication_ControlLock);
-                communication_ListeningIsActive = communication_ListeningIsRequested;
-                k_spin_unlock(&communication_ControlLock, key);
-            }
-            /* Start interrupts worker waits; the acknowledgement caller must keep waiting. */
-            if(isWorkerWait && (target != COMMUNICATION_WAIT_CONTROL_EVENT) && communication_ListeningIsActive)
-            {
-                result = -ECANCELED; /**< Start takes priority over the selected wait. */
-            }
-            else
-            {
-                result = communication_checkWaitTarget(target, K_MSEC(COMMUNICATION_EVENT_CHECK_INTERVAL_MS));
-            }
-        }
-        if((result == -EAGAIN) && !isRadioWait) /**< Radio checks already wait on their own event. */
-        {
+        case COMMUNICATION_WAIT_CONTROL_EVENT:
+            (void)k_sem_take(&communication_ControlChanged, sys_timepoint_timeout(deadline));
+            communication_updateListeningState();
+            result = 0;
+            break;
+        case COMMUNICATION_WAIT_DELAY:
             if(sys_timepoint_expired(deadline))
             {
-                if(target == COMMUNICATION_WAIT_DELAY)
-                {
-                    result = 0;
-                }
-                break;
+                result = 0;
             }
-            k_timeout_t interval = sys_timepoint_timeout(deadline);
-            if(target == COMMUNICATION_WAIT_DELAY)
+            break;
+        case COMMUNICATION_WAIT_CONNECTION:
+            result = wifi_waitForConnection(K_MSEC(COMMUNICATION_EVENT_CHECK_INTERVAL_MS));
+            break;
+        case COMMUNICATION_WAIT_SCAN_LIST:
+            result = wifi_waitForScanResult(communication_ScanList, WIFI_SCAN_LIST_SIZE, K_MSEC(COMMUNICATION_EVENT_CHECK_INTERVAL_MS));
+            if(result >= 0)
             {
-                /* Control events wake fixed delays, but only Start ends them early. */
-                (void)k_sem_take(&communication_ControlChanged, interval);
+                communication_ScanCount = (size_t)result;
+                result = 0;
             }
-            else
+            break;
+        case COMMUNICATION_WAIT_WIFI_STOP:
+        {
+            k_spinlock_key_t key = k_spin_lock(&communication_ControlLock);
+            bool isStopped = communication_ListeningIsRequested &&
+                             ((communication_State == COMMUNICATION_STATE_STOPPED) ||
+                              (communication_State == COMMUNICATION_STATE_OFFLINE)); /**< Start has a stopped or offline network acknowledgement. */
+            k_spin_unlock(&communication_ControlLock, key);
+            if(isStopped)
             {
-                if(K_TIMEOUT_EQ(interval, K_FOREVER) || (interval.ticks > K_MSEC(COMMUNICATION_EVENT_CHECK_INTERVAL_MS).ticks))
-                {
-                    interval = K_MSEC(COMMUNICATION_EVENT_CHECK_INTERVAL_MS);
-                }
-                (void)k_sleep(interval);
+                result = 0;
             }
+            break;
+        }
+        default:
+            result = -EINVAL; /**< Wait target is invalid. */
+            break;
         }
     }
+
     return result;
+}
+
+static void communication_pauseBeforeNextCheck(enum communication_wait_target target, k_timepoint_t deadline)
+{
+    k_timeout_t remaining = sys_timepoint_timeout(deadline);
+
+    if(target == COMMUNICATION_WAIT_DELAY)
+    {
+        /* Every control event wakes the delay, so a Start is seen at once. */
+        (void)k_sem_take(&communication_ControlChanged, remaining);
+    }
+    else if(target == COMMUNICATION_WAIT_WIFI_STOP)
+    {
+        if(K_TIMEOUT_EQ(remaining, K_FOREVER) || (remaining.ticks > K_MSEC(COMMUNICATION_EVENT_CHECK_INTERVAL_MS).ticks))
+        {
+            remaining = K_MSEC(COMMUNICATION_EVENT_CHECK_INTERVAL_MS);
+        }
+        (void)k_sleep(remaining);
+    }
+    else
+    {
+        /* Join and scan checks already waited for the radio. */
+    }
+}
+
+static void communication_updateListeningState(void)
+{
+    k_spinlock_key_t key = k_spin_lock(&communication_ControlLock);
+    communication_ListeningIsActive = communication_ListeningIsRequested;
+    k_spin_unlock(&communication_ControlLock, key);
 }
 
 static bool communication_isSetupRequested(void)
@@ -757,22 +788,15 @@ static bool communication_stopWiFiWork(void)
         return true;
     }
 
-    for(int pass = 0; (pass < COMMUNICATION_CLEANUP_ATTEMPTS) && (communication_PendingWork != 0U); pass++)
+    for(size_t index = 0U; index < ARRAY_SIZE(communication_WorkList); index++)
     {
-        if(pass != 0)
+        const struct communication_work *work = &communication_WorkList[index];
+        if((communication_PendingWork & work->bit) != 0U)
         {
-            k_sleep(K_SECONDS(pass));
-        }
-        for(size_t index = 0U; index < ARRAY_SIZE(communication_WorkList); index++)
-        {
-            const struct communication_work *work = &communication_WorkList[index];
-            if((communication_PendingWork & work->bit) != 0U)
+            int result = work->stop();
+            if(result == 0)
             {
-                int result = work->stop();
-                if(result == 0)
-                {
-                    communication_PendingWork &= ~work->bit;
-                }
+                communication_PendingWork &= ~work->bit;
             }
         }
     }
