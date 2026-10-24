@@ -10,7 +10,7 @@ Archived bring-up builds stay local and are not published by CI.
 
 ### Toolchain and commands
 
-The Zephyr, SDK and west pins live in toolchain.json;
+The Zephyr, SDK and west pins live in [toolchain.json](../../Development/system/testing/ci/toolchain.json);
 the Zephyr west manifest fixes the hal_espressif revision
 (`3d4d922a4d2994f844790ec031a584ec71240485` at the current Zephyr pin). See `Development/system/testing/ci/setup_zephyr.sh`
 for a fresh workspace. Work from an activated Zephyr environment (Python 3.12+,
