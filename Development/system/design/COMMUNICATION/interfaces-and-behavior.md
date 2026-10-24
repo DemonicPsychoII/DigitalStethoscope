@@ -1,6 +1,6 @@
 # COMMUNICATION setup workflow and recovery
 
-L2_COMMUNICATION owns setup sequencing and retry policy under CONTROL's network lease. It uses [WIFI operations](../WIFI/interfaces-and-behavior.md), the [STORAGE record interface](../STORAGE/interfaces-and-behavior.md) and the PORTAL request/status boundary.
+L2_COMMUNICATION owns setup sequencing and retry policy under CONTROL's network lease. It uses [WIFI operations](../WIFI/interfaces-and-behavior.md), the [STORAGE record interface](../STORAGE/interfaces-and-behavior.md) and the [PORTAL request/status boundary](../PORTAL/interfaces-and-behavior.md).
 
 ## Wi-Fi setup and recovery
 
@@ -21,7 +21,7 @@ Scan has four attempts total, 5 s between failures. Exhausted scan or AP-start f
 permits a manual 2 s setup retry. Link loss has four reconnect attempts, 5 s apart;
 exhaustion starts setup automatically in Idle. Defer all active recovery during listening.
 
-The portal interface queues typed requests for COMMUNICATION and publishes its status. The hotspot is open; the phone joins it manually before opening the page.
+The [portal interface](../PORTAL/interfaces-and-behavior.md) queues typed requests for COMMUNICATION and publishes its status. The hotspot is open; the phone joins it manually before opening the page.
 
 ### Join, persistence and result closure
 
