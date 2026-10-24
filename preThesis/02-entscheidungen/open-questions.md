@@ -21,7 +21,7 @@
 - Implementierungsbereitschaft:
   offene Entscheidungen D01–D14. Dies ist das führende Register für Detailentscheidungen;
   die folgende Übersicht ersetzt oder schließt diese D-Einträge nicht.
-- Geplante Verifikation: VT-01–VT-13,
+- Geplante Verifikation: VT-01–VT-15 (VT-05 und VT-13 zurückgezogen),
   noch keine ausgeführten Produkt-Abnahmetests.
 - [Evaluationsfirmware und Signalplan](../06-bringup-zephyr/README.md):
   implementierter Bring-up-Stand und Grenzen der Hardwarebestätigung.
