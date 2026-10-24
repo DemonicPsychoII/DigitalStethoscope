@@ -6,8 +6,8 @@ The table maps the application folders. L1 holds thin hardware adapters
 over Zephyr drivers and pure C libraries; L2 orchestrates them. [Detailed design](../../design/system/interfaces-and-behavior.md#static-dependency-and-module-map)
 maps its logical components to these folders.
 
-`L2_COMMUNICATION` implements the [Wi-Fi contract](../../design/WIFI/interfaces-and-behavior.md).
-`L1_PORTAL` declares the [portal contract](../../design/PORTAL/interfaces-and-behavior.md);
+`L1_WIFI` and `L2_COMMUNICATION` implement the [Wi-Fi contract](../../design/WIFI/interfaces-and-behavior.md).
+`L1_PORTAL` implements the [portal contract](../../design/PORTAL/interfaces-and-behavior.md);
 COMMUNICATION consumes its requests and publishes its state.
 
 | Folder | Contents | May depend on |
@@ -28,12 +28,11 @@ Display/UI, touch, SD storage and replay (WSOLA) are optional and not part of th
 
 This directory is a standalone Zephyr application. `common/main.c` returns to the idle
 thread; most component `.c` / `.h` files reserve places for implementation.
-`L1_WIFI` wraps the Wi-Fi driver and storage persists its settings.
-`L2_COMMUNICATION` implements the Wi-Fi workflow; the HTTP adapter remains unavailable.
-`common/types.h` reserves the shared data types.
+`L1_WIFI` and `L1_PORTAL` wrap the Zephyr Wi-Fi driver and HTTP server, and
+`L2_COMMUNICATION` implements the Wi-Fi workflow on top of them. `common/types.h` reserves the shared data types.
 The board overlay and `prj.conf` set the fitted N16R8 module (16 MB flash,
 8 MB octal PSRAM; GPIO33–37 stay reserved). The serial shell and deferred logging
-are enabled. The application has not yet been tested on the board.
+are enabled; Wi-Fi and the setup page are implemented but not yet tested on the board.
 No audio processing, SD storage, UI or monitoring is active.
 
 ### Shell and configuration
