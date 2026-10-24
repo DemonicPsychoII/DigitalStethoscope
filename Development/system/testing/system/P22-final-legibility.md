@@ -9,7 +9,7 @@ Basis: [P22](../../design/FEEDBACK/parameters.md#feedback-parameters), the
 [indication and error catalogue](../../design/FEEDBACK/catalogue.md)
 and the [system acceptance case](../specification-verification.md#system-acceptance).
 The distances and conditions below are the project's specified acceptance values;
-primary IEC applicability and clause verification remain open in the
+primary IEC applicability and clause verification remain open (TICKET-210) in the
 [source assessment](../../design/FEEDBACK/led-indication-standards.md).
 
 ## Device and software

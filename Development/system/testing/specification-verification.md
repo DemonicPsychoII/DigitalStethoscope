@@ -55,16 +55,16 @@ The [documentation check](ci/validate_docs.py) requires each VT ID to occur in a
 - VT-02: Not yet covered — target timing and resource procedures need to be added.
 - VT-03: Not yet covered — application DSP (digital signal processing) cases need to be added. Before final REQ-03 acceptance, the filter study (TICKET-189 / design decision D06) must freeze the listening coefficients, tone frequencies and expected pass/attenuated classifications in the run configuration. No approved study result or quantitative attenuation threshold exists in this baseline; that filter demonstration remains blocked. REQ-03 is an audible selector/filter demonstration, not a filter-superiority claim.
 - VT-04: Not yet covered — control and input cases need to be added.
-- VT-06: Not yet covered — BPM (beats per minute) session cases need to be added. Freeze signal-validity criteria and reference selection before recording or excluding sessions; REQ-06 acceptance is blocked until then.
-- VT-07: Not yet covered — application FHIR (Fast Healthcare Interoperability Resources) receipt cases need to be added. Freeze the clock reference, synchronization evidence and allowed measurement-end timestamp skew before acceptance; use REQ-06 for value accuracy. The delivery deadline does not define timestamp accuracy.
-- VT-08: Not yet covered — TLS (Transport Layer Security) and network fault cases need to be added.
+- VT-06: Not yet covered — BPM (beats per minute) session cases need to be added. Freeze signal-validity criteria and reference selection before recording or excluding sessions; REQ-06 acceptance is blocked until then (TICKET-208).
+- VT-07: Not yet covered — application FHIR (Fast Healthcare Interoperability Resources) receipt cases need to be added (TICKET-181, TICKET-209). Freeze the clock reference, synchronization evidence and allowed measurement-end timestamp skew before acceptance; use REQ-06 for value accuracy. The delivery deadline does not define timestamp accuracy.
+- VT-08: Not yet covered — TLS (Transport Layer Security) and network fault cases need to be added (TICKET-180).
 - VT-09: Not yet covered — fault containment cases need to be added.
 - VT-10: Not yet covered — filter comparison procedure needs to be added.
 - VT-11: Not yet covered — evidence and privacy procedure needs to be added.
 - VT-12: Not yet covered — electrical inspection procedure needs to be added.
 - VT-15: Not yet covered — persistent registration procedure needs to be added.
 
-VT-14 host cases are in [the communication batch](../coding/app/tests/host/test_communication.py). Target-only radio, phone/QR/page, restart persistence, retained-station audio and private-log checks are covered by the [Wi-Fi procedure](WIFI/VT-14-target.md) and [portal procedure](PORTAL/VT-14-target.md). Both procedures are unexecuted; target results remain pending.
+VT-14 host cases are in [the communication batch](../coding/app/tests/host/test_communication.py). Target-only radio, phone/QR/page, restart persistence, retained-station audio and private-log checks are covered by the [Wi-Fi procedure](WIFI/VT-14-target.md) and [portal procedure](PORTAL/VT-14-target.md). Both procedures are unexecuted; target results remain pending (TICKET-182).
 
 ## Case execution
 
