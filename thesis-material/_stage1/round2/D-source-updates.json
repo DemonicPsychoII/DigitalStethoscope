@@ -1,0 +1,959 @@
+{
+  "updates": [
+    {
+      "id": "U011",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "digital_stethoscope_characterization",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10753976/",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        },
+        {
+          "key": "frequency_response_stethoscopes",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7305673/",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        },
+        {
+          "key": "invitro_stethoscopes",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6339642/",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        },
+        {
+          "key": "digital_auscultation_review",
+          "link": "https://pubmed.ncbi.nlm.nih.gov/32420352/",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        }
+      ],
+      "sources_incomplete": false,
+      "removed": []
+    },
+    {
+      "id": "U030",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "fhir_r4_vitals",
+          "link": "https://www.hl7.org/fhir/R4/observation-vitalsigns.html",
+          "page": "Vital Signs table, Heart rate row"
+        },
+        {
+          "key": "loinc_8867",
+          "link": "https://loinc.org/8867-4/",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        },
+        {
+          "key": "fhir_hr_example",
+          "link": "https://www.hl7.org/fhir/R4/observation-example-heart-rate.json.html",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        },
+        {
+          "key": "fhir_tls_security",
+          "link": "https://www.hl7.org/fhir/R4/secpriv-module.html",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        }
+      ],
+      "sources_incomplete": false,
+      "removed": []
+    },
+    {
+      "id": "U041",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "digital_auscultation_review",
+          "link": "https://pubmed.ncbi.nlm.nih.gov/32420352/",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        },
+        {
+          "key": "digital_stethoscope_characterization",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10753976/",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        },
+        {
+          "key": "frequency_response_stethoscopes",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7305673/",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        }
+      ],
+      "sources_incomplete": true,
+      "removed": [
+        {
+          "key": "digital_auscultation_murmur",
+          "reason": "Broad algorithm paper does not establish a standardized filter-comparison metric; retain as background only, replaced in this set by technical characterization and frequency-response evidence."
+        }
+      ]
+    },
+    {
+      "id": "U042",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "open_heart_sound_database",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7199391/",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        },
+        {
+          "key": "circor_paper",
+          "link": "https://arxiv.org/abs/2108.00813",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        },
+        {
+          "key": "physionet_challenge_2022",
+          "link": "https://physionet.org/content/challenge-2022/1.0.0/",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        }
+      ],
+      "sources_incomplete": true,
+      "removed": []
+    },
+    {
+      "id": "U043",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "digital_auscultation_review",
+          "link": "https://pubmed.ncbi.nlm.nih.gov/32420352/",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        },
+        {
+          "key": "digital_auscultation_murmur",
+          "link": "https://link.springer.com/article/10.1007/s10439-008-9611-z",
+          "page": "Introduction, heart cycle/murmur description (web text lines 71–73; 85)."
+        },
+        {
+          "key": "frequency_response_stethoscopes",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7305673/",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        },
+        {
+          "key": "digital_stethoscope_characterization",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10753976/",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        }
+      ],
+      "sources_incomplete": false,
+      "removed": []
+    },
+    {
+      "id": "U044",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "circor_dataset",
+          "link": "https://physionet.org/content/circor-heart-sound/1.0.3/",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        },
+        {
+          "key": "circor_paper",
+          "link": "https://arxiv.org/abs/2108.00813",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        },
+        {
+          "key": "physionet_challenge_2022",
+          "link": "https://physionet.org/content/challenge-2022/1.0.0/",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        }
+      ],
+      "sources_incomplete": false,
+      "removed": []
+    },
+    {
+      "id": "U045",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "open_heart_sound_database",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7199391/",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        },
+        {
+          "key": "physionet_challenge_2022",
+          "link": "https://physionet.org/content/challenge-2022/1.0.0/",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        },
+        {
+          "key": "circor_paper",
+          "link": "https://arxiv.org/abs/2108.00813",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        }
+      ],
+      "sources_incomplete": false,
+      "removed": []
+    },
+    {
+      "id": "U046",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "circor_dataset",
+          "link": "https://physionet.org/content/circor-heart-sound/1.0.3/",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        }
+      ],
+      "sources_incomplete": true,
+      "removed": [
+        {
+          "key": "circor_dataset",
+          "reason": "The dataset publication has no relevance to simulator prices; retain only as an incomplete source set until dated manufacturer/vendor price pages are independently verified."
+        }
+      ]
+    },
+    {
+      "id": "U047",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "open_heart_sound_database",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7199391/",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        },
+        {
+          "key": "bland_altman",
+          "link": "https://doi.org/10.1016/S0140-6736(86)90837-8",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        },
+        {
+          "key": "heart_rate_validation_interlive",
+          "link": "https://bjsm.bmj.com/content/55/14/767",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        }
+      ],
+      "sources_incomplete": true,
+      "removed": [
+        {
+          "key": "hr_accuracy_review",
+          "reason": "Facial-video PPG is unrelated to PCG heart-rate reference validation; replaced with PCG dataset methodology and a wearable-validation expert statement."
+        }
+      ]
+    },
+    {
+      "id": "U048",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "ec13_standard",
+          "link": "https://webstore.ansi.org/standards/aami/ansiaamiec132002",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        },
+        {
+          "key": "fda_ec13_guidance",
+          "link": "https://www.fda.gov/media/71947/download",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        },
+        {
+          "key": "heart_rate_validation_interlive",
+          "link": "https://bjsm.bmj.com/content/55/14/767",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        }
+      ],
+      "sources_incomplete": true,
+      "removed": [
+        {
+          "key": "hr_accuracy_review",
+          "reason": "Facial-video PPG is off-topic for ECG monitor standards; the EC13/FDA references directly support only the explicitly qualified monitor tolerance."
+        }
+      ]
+    },
+    {
+      "id": "U049",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "digital_auscultation_review",
+          "link": "https://pubmed.ncbi.nlm.nih.gov/32420352/",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        },
+        {
+          "key": "digital_stethoscope_characterization",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10753976/",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        },
+        {
+          "key": "frequency_response_stethoscopes",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7305673/",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        }
+      ],
+      "sources_incomplete": true,
+      "removed": []
+    },
+    {
+      "id": "U050",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "pilot_guidelines",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8849521/",
+          "page": "Sections 1–2"
+        },
+        {
+          "key": "bland_altman",
+          "link": "https://doi.org/10.1016/S0140-6736(86)90837-8",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        },
+        {
+          "key": "open_heart_sound_database",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7199391/",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        }
+      ],
+      "sources_incomplete": true,
+      "removed": []
+    },
+    {
+      "id": "U051",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "wsola_roelands",
+          "link": "https://www.isca-archive.org/eurospeech_1993/roelands93_eurospeech.html",
+          "page": "Abstract and bibliographic record"
+        },
+        {
+          "key": "wsola_verhelst",
+          "link": "https://ieeexplore.ieee.org/document/319366",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        },
+        {
+          "key": "tsm_review",
+          "link": "https://www.mdpi.com/2076-3417/6/2/57",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        }
+      ],
+      "sources_incomplete": false,
+      "removed": []
+    },
+    {
+      "id": "U052",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "wsola_verhelst",
+          "link": "https://ieeexplore.ieee.org/document/319366",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        },
+        {
+          "key": "esp_dsp_benchmarks",
+          "link": "https://docs.espressif.com/projects/esp-dsp/en/latest/esp32/esp-dsp-benchmarks.html",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        }
+      ],
+      "sources_incomplete": true,
+      "removed": [
+        {
+          "key": "wsola_roelands",
+          "reason": "Algorithm paper supports WSOLA design, not the R04 numerical ESP32 cycle estimate; the published benchmark claim remains unverified."
+        }
+      ]
+    },
+    {
+      "id": "U053",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "digital_auscultation_review",
+          "link": "https://pubmed.ncbi.nlm.nih.gov/32420352/",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        },
+        {
+          "key": "open_heart_sound_database",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7199391/",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        },
+        {
+          "key": "pilot_guidelines",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8849521/",
+          "page": "Sections 1–2"
+        }
+      ],
+      "sources_incomplete": true,
+      "removed": []
+    },
+    {
+      "id": "U054",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "pilot_guidelines",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8849521/",
+          "page": "Sections 1–2"
+        },
+        {
+          "key": "pilot_studies",
+          "link": "https://www.bmj.com/content/355/bmj.i5239",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        },
+        {
+          "key": "pilot_tutorial",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC2824145/",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        }
+      ],
+      "sources_incomplete": true,
+      "removed": []
+    },
+    {
+      "id": "U055",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "pilot_guidelines",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8849521/",
+          "page": "Sections 1–2"
+        },
+        {
+          "key": "pilot_studies",
+          "link": "https://www.bmj.com/content/355/bmj.i5239",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        },
+        {
+          "key": "pilot_sample_size",
+          "link": "https://pubmed.ncbi.nlm.nih.gov/18183564/",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        }
+      ],
+      "sources_incomplete": false,
+      "removed": []
+    },
+    {
+      "id": "U056",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "ethics_gdpr",
+          "link": "https://eur-lex.europa.eu/eli/reg/2016/679/oj",
+          "page": "Articles 4, 9, 89"
+        },
+        {
+          "key": "health_data_guidance",
+          "link": "https://health.ec.europa.eu/system/files/2021-02/ms_rules_health-data_en_0.pdf",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        },
+        {
+          "key": "wp29_anonymisation",
+          "link": "https://ec.europa.eu/justice/article-29/documentation/opinion-recommendation/files/2014/wp216_en.pdf",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        }
+      ],
+      "sources_incomplete": true,
+      "removed": []
+    },
+    {
+      "id": "U057",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "ethics_gdpr",
+          "link": "https://eur-lex.europa.eu/eli/reg/2016/679/oj",
+          "page": "Articles 4, 9, 89"
+        },
+        {
+          "key": "health_data_guidance",
+          "link": "https://health.ec.europa.eu/system/files/2021-02/ms_rules_health-data_en_0.pdf",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        },
+        {
+          "key": "wp29_anonymisation",
+          "link": "https://ec.europa.eu/justice/article-29/documentation/opinion-recommendation/files/2014/wp216_en.pdf",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        }
+      ],
+      "sources_incomplete": false,
+      "removed": []
+    },
+    {
+      "id": "U058",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "digital_stethoscope_characterization",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10753976/",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        },
+        {
+          "key": "frequency_response_stethoscopes",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7305673/",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        },
+        {
+          "key": "invitro_stethoscopes",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6339642/",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        },
+        {
+          "key": "mems_microphones_review",
+          "link": "https://www.mdpi.com/2072-666X/14/11/2092",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        }
+      ],
+      "sources_incomplete": true,
+      "removed": []
+    },
+    {
+      "id": "U059",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "helmholtz_textbook",
+          "link": "https://archive.org/details/vibrationsound0000mors",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        },
+        {
+          "key": "mems_microphones_review",
+          "link": "https://www.mdpi.com/2072-666X/14/11/2092",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        },
+        {
+          "key": "invitro_stethoscopes",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6339642/",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        }
+      ],
+      "sources_incomplete": true,
+      "removed": []
+    },
+    {
+      "id": "U060",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "digital_stethoscope_characterization",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10753976/",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        },
+        {
+          "key": "frequency_response_stethoscopes",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7305673/",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        },
+        {
+          "key": "invitro_stethoscopes",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6339642/",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        }
+      ],
+      "sources_incomplete": true,
+      "removed": []
+    },
+    {
+      "id": "U061",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "mic_datasheet_tdk",
+          "link": "https://invensense.tdk.com/download-pdf/ics-40180-datasheet/",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        },
+        {
+          "key": "mic_datasheet_infineon",
+          "link": "https://www.infineon.com/part/IM69D130",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        },
+        {
+          "key": "mic_datasheet_knowles",
+          "link": "https://www.knowles.com/docs/default-source/default-document-library/mic-selection-guide-r5.pdf",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        }
+      ],
+      "sources_incomplete": true,
+      "removed": []
+    },
+    {
+      "id": "U062",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "mic_datasheet_infineon",
+          "link": "https://www.infineon.com/part/IM69D130",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        },
+        {
+          "key": "mic_datasheet_knowles",
+          "link": "https://www.knowles.com/docs/default-source/default-document-library/mic-selection-guide-r5.pdf",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        },
+        {
+          "key": "mems_microphones_review",
+          "link": "https://www.mdpi.com/2072-666X/14/11/2092",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        }
+      ],
+      "sources_incomplete": true,
+      "removed": []
+    },
+    {
+      "id": "U063",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "invitro_stethoscopes",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6339642/",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        },
+        {
+          "key": "digital_stethoscope_characterization",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10753976/",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        },
+        {
+          "key": "frequency_response_stethoscopes",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7305673/",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        }
+      ],
+      "sources_incomplete": true,
+      "removed": []
+    },
+    {
+      "id": "U064",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "digital_stethoscope_characterization",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10753976/",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        },
+        {
+          "key": "frequency_response_stethoscopes",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7305673/",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        },
+        {
+          "key": "invitro_stethoscopes",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6339642/",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        }
+      ],
+      "sources_incomplete": true,
+      "removed": []
+    },
+    {
+      "id": "U065",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "esp32_datasheet",
+          "link": "https://www.espressif.com/sites/default/files/documentation/esp32-s3_datasheet_en.pdf",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        },
+        {
+          "key": "esp_idf_i2s",
+          "link": "https://docs.espressif.com/projects/esp-idf/en/stable/esp32s3/api-reference/peripherals/i2s.html",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        },
+        {
+          "key": "esp_tls_docs",
+          "link": "https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/protocols/esp_tls.html",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        }
+      ],
+      "sources_incomplete": true,
+      "removed": []
+    },
+    {
+      "id": "U066",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "esp32_datasheet",
+          "link": "https://www.espressif.com/sites/default/files/documentation/esp32-s3_datasheet_en.pdf",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        },
+        {
+          "key": "esp_dsp_benchmarks",
+          "link": "https://docs.espressif.com/projects/esp-dsp/en/latest/esp32/esp-dsp-benchmarks.html",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        },
+        {
+          "key": "esp_idf_i2s",
+          "link": "https://docs.espressif.com/projects/esp-idf/en/stable/esp32s3/api-reference/peripherals/i2s.html",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        }
+      ],
+      "sources_incomplete": true,
+      "removed": []
+    },
+    {
+      "id": "U067",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "esp32_datasheet",
+          "link": "https://www.espressif.com/sites/default/files/documentation/esp32-s3_datasheet_en.pdf",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        },
+        {
+          "key": "esp_tls_docs",
+          "link": "https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/protocols/esp_tls.html",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        },
+        {
+          "key": "esp_cert_docs",
+          "link": "https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/protocols/esp_crt_bundle.html",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        }
+      ],
+      "sources_incomplete": true,
+      "removed": []
+    },
+    {
+      "id": "U068",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "fhir_r4_vitals",
+          "link": "https://www.hl7.org/fhir/R4/observation-vitalsigns.html",
+          "page": "Vital Signs table, Heart rate row"
+        },
+        {
+          "key": "loinc_8867",
+          "link": "https://loinc.org/8867-4/",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        },
+        {
+          "key": "fhir_hr_example",
+          "link": "https://www.hl7.org/fhir/R4/observation-example-heart-rate.json.html",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        }
+      ],
+      "sources_incomplete": false,
+      "removed": []
+    },
+    {
+      "id": "U069",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "esp_tls_docs",
+          "link": "https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/protocols/esp_tls.html",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        },
+        {
+          "key": "esp_cert_docs",
+          "link": "https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/protocols/esp_crt_bundle.html",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        },
+        {
+          "key": "esp32_datasheet",
+          "link": "https://www.espressif.com/sites/default/files/documentation/esp32-s3_datasheet_en.pdf",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        }
+      ],
+      "sources_incomplete": true,
+      "removed": []
+    },
+    {
+      "id": "U070",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "tha_bachelor_faq",
+          "link": "https://www.tha.de/Binaries/Binary89415/FAQ-Bachelorarbeit-02.26-clean.pdf",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        },
+        {
+          "key": "tha_bachelor_maschinenbau",
+          "link": "https://www.tha.de/Binaries/Binary77874/Merkblatt-Bachelorarbeit.pdf",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        },
+        {
+          "key": "tha_bachelor_gestaltung",
+          "link": "https://www.tha.de/Gestaltung/Interaktive-Medien/Abschlussarbeit.html",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        }
+      ],
+      "sources_incomplete": true,
+      "removed": []
+    },
+    {
+      "id": "U071",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "tha_bachelor_faq",
+          "link": "https://www.tha.de/Binaries/Binary89415/FAQ-Bachelorarbeit-02.26-clean.pdf",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        },
+        {
+          "key": "tha_bachelor_maschinenbau",
+          "link": "https://www.tha.de/Binaries/Binary77874/Merkblatt-Bachelorarbeit.pdf",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        },
+        {
+          "key": "tha_bachelor_gestaltung",
+          "link": "https://www.tha.de/Gestaltung/Interaktive-Medien/Abschlussarbeit.html",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        }
+      ],
+      "sources_incomplete": true,
+      "removed": []
+    },
+    {
+      "id": "U072",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "tha_bachelor_faq",
+          "link": "https://www.tha.de/Binaries/Binary89415/FAQ-Bachelorarbeit-02.26-clean.pdf",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        },
+        {
+          "key": "tha_bachelor_maschinenbau",
+          "link": "https://www.tha.de/Binaries/Binary77874/Merkblatt-Bachelorarbeit.pdf",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        },
+        {
+          "key": "tha_bachelor_gestaltung",
+          "link": "https://www.tha.de/Gestaltung/Interaktive-Medien/Abschlussarbeit.html",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        }
+      ],
+      "sources_incomplete": true,
+      "removed": []
+    },
+    {
+      "id": "U073",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "digital_auscultation_murmur",
+          "link": "https://link.springer.com/article/10.1007/s10439-008-9611-z",
+          "page": "Introduction, heart cycle/murmur description (web text lines 71–73; 85)."
+        },
+        {
+          "key": "digital_auscultation_review",
+          "link": "https://pubmed.ncbi.nlm.nih.gov/32420352/",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        },
+        {
+          "key": "open_heart_sound_database",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7199391/",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        }
+      ],
+      "sources_incomplete": false,
+      "removed": []
+    },
+    {
+      "id": "U074",
+      "needs_citation": true,
+      "sources": [
+        {
+          "key": "digital_auscultation_murmur",
+          "link": "https://link.springer.com/article/10.1007/s10439-008-9611-z",
+          "page": "Introduction, heart cycle/murmur description (web text lines 71–73; 85)."
+        },
+        {
+          "key": "digital_auscultation_review",
+          "link": "https://pubmed.ncbi.nlm.nih.gov/32420352/",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        },
+        {
+          "key": "open_heart_sound_database",
+          "link": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7199391/",
+          "page": "unverified",
+          "page_hint": "Relevant article section/table not verified in full text during this pass."
+        }
+      ],
+      "sources_incomplete": false,
+      "removed": []
+    }
+  ]
+}

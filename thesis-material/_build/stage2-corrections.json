@@ -1,0 +1,47 @@
+{
+  "_zweck": "Stage-2-Korrekturen an Einheiten und Quellenschlüsseln. _stage1/ bleibt als unveränderter Audit-Trail erhalten; der Generator wendet diese Korrekturen beim Lesen an und weist jede Korrektur sichtbar aus.",
+  "units": {
+    "U098": {
+      "date": "2026-10-12",
+      "origin": ["Development/system/testing/tha-baseline-traceability.json:1-10"],
+      "reason": "Ursprungsliste in inventory-merged.json/inventory.json war eine Kopie der U100-Ursprünge; inventory.md nennt die Traceability-JSON, die die Aussage tatsächlich belegt. Ursprüngliche Liste: preThesis/02-entscheidungen/widersprueche.md:1-4; preThesis/02-entscheidungen/open-questions.md:7-11; preThesis/05-hardware/hardware.md:32-34; Development/system/coding/bringup-zephyr/README.md:1-160."
+    },
+    "C032": {
+      "date": "2026-10-12",
+      "remove_sources": ["tha_faq_ba"],
+      "reason": "THA-FAQ zur Bachelorarbeit (DMS-Anmeldung, Fristen) belegt keine FHIR-Referenzsemantik. Quellenset bleibt als unvollständig markiert."
+    },
+    "U046": {
+      "date": "2026-10-12",
+      "remove_sources": ["circor_dataset"],
+      "reason": "circor_dataset stand zugleich in `sources` und `removed` (Begründung dort: keine Relevanz für Simulatorpreise). Quellenset jetzt leer und weiterhin unvollständig, bis datierte Hersteller-/Händlerpreise geprüft sind."
+    }
+  },
+  "split_sources": {
+    "pilot_sample_size": {
+      "date": "2026-10-12",
+      "reason": "Der Schlüssel bezeichnete in round2/B-sources.json Sim & Lewis (2012), in round2/D-sources.json Hertzog (2008); sources-merged.json behielt nur Hertzog, obwohl die B-Einheiten auf den Sim-&-Lewis-PubMed-Eintrag verlinken. Aufgeteilt nach Herkunftsrunde.",
+      "by_unit_prefix": {"B": "pilot_sample_size_sim_lewis", "U": "pilot_sample_size_hertzog"},
+      "into": {
+        "pilot_sample_size_sim_lewis": {
+          "reference": "Sim, J. & Lewis, M. (2012). The size of a pilot study for a clinical trial should be calculated in relation to considerations of precision and efficiency. Journal of Clinical Epidemiology 65(3), 301–308. DOI: 10.1016/j.jclinepi.2011.07.011.",
+          "doi": "https://doi.org/10.1016/j.jclinepi.2011.07.011",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/22169081/",
+          "verified": "PubMed record verified; title and metadata confirmed. (round2/B-sources.json)",
+          "page": "unverified",
+          "paywalled": true,
+          "link_check": "reachable-blocked-by-bot-protection (PubMed, 2026-10-12)"
+        },
+        "pilot_sample_size_hertzog": {
+          "reference": "Hertzog, M. A. (2008). Considerations in determining sample size for pilot studies. Research in Nursing & Health, 31(2), 180–191.",
+          "doi": "https://doi.org/10.1002/nur.20247",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/18183564/",
+          "verified": "PubMed bibliographic record searched; full text/page details not verified. (round2/D-sources.json)",
+          "paywalled": "May be paywalled.",
+          "page": "unverified",
+          "link_check": "reachable-blocked-by-bot-protection"
+        }
+      }
+    }
+  }
+}
