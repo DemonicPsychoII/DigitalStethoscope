@@ -16,7 +16,6 @@ twister-out*/
 .ci-validation-tools/
 .ci-compiler-tools/
 .ci-ccache/
-.ci-ccache-benchmark/
 artifacts/
 *.elf
 *.map

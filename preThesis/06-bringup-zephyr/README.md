@@ -5,7 +5,7 @@ Archived pre-thesis material. This firmware has no continuous integration (CI).
 Zephyr evaluation firmware for ESP32-S3-DevKitC-1 **N16R8** on carrier Rev A:
 INMP441 microphone, PCM5102A DAC, ILI9341/XPT2046 display/touch, physical
 controls and SD card. This implementation is separate from the
-proposed thesis design.
+[application development process](../../Development/system/README.md).
 
 **Offline by default:** no Wi-Fi or FHIR transmission. The optional network
 profile also boots without credentials, server configuration or automatic connection/send.
@@ -25,7 +25,7 @@ Zephyr environment, from this application directory:
 west build --pristine -b esp32s3_devkitc/esp32s3/procpu . -d build-eval
 ```
 
-The Zephyr revision and all other tool pins live in toolchain.json.
+The shared Zephyr and CI tool pins live in [toolchain.json](../../Development/system/testing/ci/toolchain.json).
 [Build and flash](BUILD-GUIDE.md) covers profiles, console ports, memory sizing,
 and build identity (`stetho version`). Hardware flashing, serial
 and device-network operations require owner authorization.
