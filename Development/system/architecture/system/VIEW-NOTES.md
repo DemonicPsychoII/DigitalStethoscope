@@ -5,7 +5,7 @@ the proposed thesis product.
 
 | View | Source | Review boundary |
 |---|---|---|
-| Architecture | [architecture-choice.puml](architecture-choice.puml) | Layers: L2 orchestrates, L1 adapts hardware or holds pure C libraries, L0 is Zephyr, RTOS workers and events; task isolation is optional protection. A/B firmware is an update/rollback concept, not a selected feature. |
+| Architecture | [architecture-choice.puml](architecture-choice.puml) | Layers: L2 orchestrates, L1 adapts hardware or holds pure C libraries, L0 is Zephyr, RTOS workers and events; task isolation is optional protection (TICKET-207). A/B firmware is an update/rollback concept, not a selected feature. |
 | System context | [system-context.puml](system-context.puml) | Device as a black box; the device initiates FHIR requests and receives status responses as the receipt. Test tooling is outside the normal-use view. |
 | System components | [system-components.puml](system-components.puml) | Hardware and external connections; ESP32 remains a black box. Networking is Wi-Fi plus HTTPS. |
 | Electrical interfaces | [electrical-interfaces.puml](electrical-interfaces.puml) | Product connection types and chip roles; the electrical baseline below defines the planned application wiring. Optional interfaces are outside MVP acceptance. |
@@ -60,7 +60,7 @@ The later design stage specifies contracts, parameter candidates and open implem
 
 ## Diagram notation
 
-Display, touch, SD-card storage and capture / slower replay are optional beyond the MVP.
+Display, touch, SD-card storage and capture / slower replay are optional beyond the MVP (TICKET-206, TICKET-202).
 Grey elements carry an explicit `optional` stereotype; mixed core/extension boxes
 name optional responsibilities in their labels. Existing evaluation capabilities
 remain visible without implying MVP scope. Component views use component syntax;
