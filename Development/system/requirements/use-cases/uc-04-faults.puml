@@ -1,0 +1,23 @@
+@startuml uc_04_faults
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+title F4 Handle faults (REQ-13, REQ-14)
+start
+:Detect fault; log cause;\nShow catalogue context and counted red code;
+if (Wi-Fi-only fault?) then (yes)
+ :Preserve working audio; permit offline Start;\nRun selected retry/setup/offline recovery;
+else (no)
+ :Halt active workflow; mute/cancel audio; block Start;
+ if (Catalogue requires restart?) then (yes)
+  :Restart; run startup checks;
+ else (no)
+  :Short press acknowledges; return to Idle;
+ endif
+endif
+stop
+floating note
+ Acknowledgement never starts listening or manually retries setup.
+ Wi-Fi setup retry: 2 s hold in Idle; automatic recovery remains automatic.
+ Wi-Fi save failure retains connection with unsaved credentials.
+end note
+@enduml
