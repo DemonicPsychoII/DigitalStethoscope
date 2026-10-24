@@ -22,7 +22,7 @@ COMMUNICATION will consume its requests and publish its state.
 | `MONITOR/` | Runtime supervision | All layers, read-only |
 | `common/` | Shared audio/event/result types | Nothing |
 
-Display/UI, touch, SD storage and replay (WSOLA) are optional and not part of the skeleton yet.
+Display/UI, touch, SD storage and replay (WSOLA) are optional and not part of the skeleton yet (TICKET-206, TICKET-202).
 
 ## Building the application
 
