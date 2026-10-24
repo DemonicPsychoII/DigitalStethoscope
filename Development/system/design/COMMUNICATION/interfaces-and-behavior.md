@@ -50,7 +50,7 @@ against join completion, reject stale callbacks and finish an atomic settings wr
 safely. Preserve the final requested Start/Stop state when commands coalesce.
 CONTROL serializes its commands with the release wait. No acknowledgement is
 valid until L1 confirms scan/connect cancellation and portal/DHCP/AP shutdown;
-cleanup follows the bounded P23 retry budget below; a latched Wi-Fi-only cleanup fault releases audio after exhaustion and prevents further Wi-Fi work until restart. This exception follows REQ-13; it does not assert that the radio is physically off. A new Start invalidates the
+cleanup tries each pending stop once (see below); a latched Wi-Fi-only cleanup fault releases audio and prevents further Wi-Fi work until restart. This exception follows REQ-13; it does not assert that the radio is physically off. A new Start invalidates the
 previous acknowledgement. The 200 ms wait interval is a candidate event-check
 interval, not a measured bound on total teardown or settings-write latency.
 Setup/reconnect/delivery work is prohibited during listening; retained radio
@@ -61,8 +61,9 @@ association and background traffic still require interference measurements.
 
 If the network list cannot be refreshed while the setup page is open, the device
 reports SCAN_FAILURE, shows Closing and ends setup. An existing Wi-Fi connection
-stays up. Setup restarts with a new 2 s button hold in Idle. Address retrieval failing
-after join is a failed join: do not save; publish its cause, rescan, return to selection.
+stays up. Setup restarts with a new 2 s button hold in Idle. The IPv4 address event
+confirms the join, so the network is saved before the address text is read for the page.
+If that text cannot be read, the join still counts and the page shows no address.
 An unreadable or invalid stored record is cleared from working memory, never used
 for a join, and opens initial setup; preserve flash for diagnosis until a valid save.
 `portal_start()` failure independently reports HOTSPOT_START_FAILURE with the HTTP
@@ -74,8 +75,9 @@ the four-attempt boot budget. Cancellation before issuing an attempt consumes no
 Wait the normal retry gap before resuming. Boot exhaustion remains JOIN_FAILURE
 with manual setup; it never becomes link-loss recovery or automatic setup.
 
-Cleanup runs each pending stop operation once, then at most twice more, with P23
-backoff. Completion within the budget releases audio normally. On exhaustion latch
+An interrupted or timed-out scan or join is cancelled once when it ends. Cleanup then
+tries each stop that is still pending once: scan, join, HTTP, DHCP and hotspot.
+If all stops succeed, audio is released normally. If any stop fails, latch
 WIFI_CLEANUP_FAILURE (restart to clear; indication follows the feedback catalogue), disable further Wi-Fi
 work until restart and release audio under REQ-13's Wi-Fi-only exception. Keep failed
 operations recorded; do not claim confirmed radio shutdown. Report the cleanup fault to CONTROL through the feedback event boundary.
