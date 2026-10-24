@@ -1,0 +1,22 @@
+# Thesis firmware style; the bring-up firmware keeps the repository root style.
+BasedOnStyle: LLVM
+# No limit: statements stay on one line. A call with more than 2 arguments may be
+# split by hand, one argument per line; clang-format keeps that layout.
+ColumnLimit: 0
+IndentWidth: 4
+ContinuationIndentWidth: 4
+UseTab: Never
+BreakBeforeBraces: Allman
+# if(x), for(;;), while(x) and function calls without a space before "(".
+SpaceBeforeParens: Never
+# A call that does not fit on one line gets one argument per line.
+BinPackArguments: false
+BinPackParameters: false
+AlignConsecutiveMacros: Consecutive
+AllowShortFunctionsOnASingleLine: None
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+SortIncludes: Never
+
+# Keep blank lines between function definitions; preserve manual statement groups.
+SeparateDefinitionBlocks: Always

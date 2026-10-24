@@ -1,0 +1,6 @@
+BasedOnStyle: LLVM
+BreakBeforeBraces: Linux
+ColumnLimit: 100
+IndentWidth: 8
+ContinuationIndentWidth: 8
+UseTab: ForIndentation
