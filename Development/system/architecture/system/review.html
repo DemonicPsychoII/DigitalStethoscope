@@ -1,0 +1,88 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>DigitalStethoscope Architecture</title><style>
+:root{color-scheme:dark}
+html,body{margin:0;background:#11151b!important;color:#e6edf3!important;font-family:system-ui,sans-serif}
+main{width:100%;margin:0}
+nav{display:flex;gap:8px;flex-wrap:wrap;padding:16px 0;background:#11151b}
+button{font:inherit;font-size:14px;border:1px solid #394451;border-radius:7px;padding:9px 12px;background:#1d2530;color:#d9e2ec;cursor:pointer}
+button:hover{background:#2b3746}
+button[aria-selected=true]{background:#224969;border-color:#71b7ee;color:#fff}
+button:focus-visible{outline:2px solid #91cbfa;outline-offset:3px}
+figure{position:relative;margin:0;background:#11151b;width:100%;min-height:0}
+.viewport{width:100%;height:100%;overflow:hidden}
+.stage{width:100%;height:100%;display:flex;align-items:center;justify-content:center}
+img{display:block;width:100%;height:100%;object-fit:contain;user-select:none}
+.zoom{position:absolute;top:8px;right:12px;display:flex;gap:6px;z-index:2}
+.zoom[hidden]{display:none}
+.viewport.zoomed{overflow:auto}
+.viewport.zoomed .stage{display:block}
+.viewport.zoomed img{object-fit:fill;max-width:none}
+</style></head><body><main><p>Display, touch, SD storage and capture / slower replay are optional beyond the MVP; grey elements and optional labels identify them.</p><nav role="tablist" aria-label="Architecture views"><button type="button" role="tab" id="view-0" aria-controls="diagram-panel" tabindex="0" data-index="0" aria-selected="true">Architecture</button><button type="button" role="tab" id="view-1" aria-controls="diagram-panel" tabindex="-1" data-index="1" aria-selected="false">System context</button><button type="button" role="tab" id="view-2" aria-controls="diagram-panel" tabindex="-1" data-index="2" aria-selected="false">System components</button><button type="button" role="tab" id="view-3" aria-controls="diagram-panel" tabindex="-1" data-index="3" aria-selected="false">Electrical interfaces</button><button type="button" role="tab" id="view-4" aria-controls="diagram-panel" tabindex="-1" data-index="4" aria-selected="false">Software components</button><button type="button" role="tab" id="view-5" aria-controls="diagram-panel" tabindex="-1" data-index="5" aria-selected="false">Threads</button><button type="button" role="tab" id="view-6" aria-controls="diagram-panel" tabindex="-1" data-index="6" aria-selected="false">Listening</button><button type="button" role="tab" id="view-7" aria-controls="diagram-panel" tabindex="-1" data-index="7" aria-selected="false">BPM measurement</button></nav><figure id="diagram-panel" role="tabpanel" aria-labelledby="view-0" tabindex="0"><div class="viewport"><div class="stage"><img id="diagram" src="rendered/architecture_choice.svg" alt="Architecture" aria-describedby="diagram-description" draggable="false"></div></div><div class="zoom" hidden aria-label="Flowchart zoom"><button id="zoom-out" type="button" aria-label="Zoom out">−</button><button id="zoom-in" type="button" aria-label="Zoom in">+</button><button id="zoom-fit" type="button">Fit</button></div></figure><details><summary>Text description of the selected diagram</summary><p id="diagram-description">The chosen design combines layers, RTOS threads and events. Application orchestrates the work, Services provide hardware adapters and pure C libraries, and Zephyr drivers form the bottom layer. Separate workers keep audio moving; messages coordinate work. Inputs become commands, the controller owns settings, and workers return results. Alternatives shown are a superloop, where slow tasks delay audio, and AUTOSAR, whose automotive module and generated-glue setup is excessive here. Optional MPU task isolation separates task memory when supported. A/B firmware stores two images chosen at boot for update and rollback; it is separate from task and core layout and is not a selected feature.</p></details></main><script>const views=[{"src": "rendered/architecture_choice.svg", "title": "Architecture", "flow": false, "description": "The chosen design combines layers, RTOS threads and events. Application orchestrates the work, Services provide hardware adapters and pure C libraries, and Zephyr drivers form the bottom layer. Separate workers keep audio moving; messages coordinate work. Inputs become commands, the controller owns settings, and workers return results. Alternatives shown are a superloop, where slow tasks delay audio, and AUTOSAR, whose automotive module and generated-glue setup is excessive here. Optional MPU task isolation separates task memory when supported. A/B firmware stores two images chosen at boot for update and rollback; it is separate from task and core layout and is not a selected feature."}, {"src": "rendered/system_context.svg", "title": "System context", "flow": false, "description": "The digital stethoscope is a black box between the patient or sound source, operator, network/time service and FHIR server. Sound enters the device. The operator supplies controls and receives audio and display output. Network/time supplies connectivity and time. The device sends BPM Observations to the FHIR server over Wi-Fi and HTTPS, linked to its Device, and to the patient only if the server has linked one; the server returns a status as the receipt. The device registers its Device resource once and keeps the id in flash. A phone browser sets the Wi-Fi network and password through the device hotspot page, only while the device is Idle."}, {"src": "rendered/system_components.svg", "title": "System components", "flow": false, "description": "The chestpiece transfers sound to the INMP441 microphone. The microphone sends I2S input to the ESP32-S3, which sends I2S output to the PCM5102A DAC. Analog audio passes from the DAC through a headphone amplifier to headphones. Buttons, switches and a potentiometer supply controls; the controller supplies status to the controls/LED group. The ILI9341/XPT2046 unit supplies touch input and receives display output. The SD card connects through SPI. The ESP32-S3 sends Wi-Fi/HTTPS requests to the FHIR server and receives status responses as the receipt."}, {"src": "rendered/electrical_interfaces.svg", "title": "Electrical interfaces", "flow": false, "description": "The INMP441 microphone connects to the ESP32-S3 through presentation interface I2S1; the ESP32-S3 drives the PCM5102A DAC through I2S2. These correspond to devicetree i2s0 for microphone and i2s1 for DAC. A shared SPI bus connects the ESP32-S3, ILI9341 display, XPT2046 touch controller and SD card. Buttons and switches use GPIO input, the potentiometer uses ADC input, LED status uses GPIO output, and backlight control uses PWM output. The planned application pin assignments are defined in the specification and architecture view notes. Optional interfaces are outside MVP acceptance; application peripheral wiring and physical verification remain pending."}, {"src": "rendered/software_components.svg", "title": "Software components", "flow": false, "description": "L2 Application orchestrates: L2_SHELL, L2_CONTROL (single writer of mode state), L2_AUDIO (audio path and BPM worker), L2_COMMUNICATION (send path and portal) and the optional UI dashboard. L1 Services holds hardware adapters (L1_PHYSICALINTERFACE for buttons and LEDs, L1_I2S for microphone and DAC, L1_WIFI for Wi-Fi, TLS and time, optional display/touch/SD) and pure C libraries (L1_FILTER, L1_BPM, L1_FHIR, optional WSOLA replay). L0 is Zephyr: drivers, DMA, interrupts and the devicetree overlay. Shell and physical interface send control events to CONTROL. CONTROL sends commands to AUDIO and grants the network lease to COMMUNICATION. AUDIO uses I2S, FILTER and BPM; COMMUNICATION uses FHIR and WIFI. Only the adapters make driver calls to Zephyr. MONITOR sends health events to CONTROL and observes the services."}, {"src": "rendered/runtime_ownership.svg", "title": "Threads", "flow": false, "description": "Proposed workers are Input, Shell (L2_SHELL), Main/controller (L2_CONTROL), Audio (L2_AUDIO with L1_I2S and L1_FILTER), the BPM worker (L2_AUDIO with L1_FILTER and L1_BPM), Storage, Display and Communication (L2_COMMUNICATION with L1_FHIR and L1_WIFI). GPIO ISR wakes Input using a semaphore; L1_PHYSICALINTERFACE touch/GPIO/ADC adapters provide input samples via driver reads. Input and Shell send control events to the controller through k_msgq, and Shell reads a copied state snapshot; the controller sends settings/commands to Audio. Audio sends original-rate sample block handles to BPM before listening filter/gain, and completion/fault events to the controller. BPM returns results to the controller. The controller sends file requests to Storage, which returns audio block handles to Audio. Display receives a copied UI-state snapshot. Communication receives BPM results and the network lease from the controller and returns delivery outcomes. Messages and block handles use k_msgq where indicated."}, {"src": "rendered/listening_workflow.svg", "title": "Listening", "flow": true, "description": "Listening starts from Idle. Each cycle bypasses filtering for Lung mode or Raw selection, otherwise applies the selected filter, then applies volume and plays audio. When optional replay is enabled and Heart mode is active, a capture request records while listening. Cancellation or a source/mode change discards the clip; a full clip is replayed until end or cancellation. Settings are updated each cycle. The loop continues until stop or fault, then mutes and enters Idle or Fault."}, {"src": "rendered/measurement_workflow.svg", "title": "BPM measurement", "flow": true, "description": "Measurement requires Heart mode, microphone source and ready audio; otherwise the command is rejected. The device freezes point and analysis settings, then analyzes while listening until Stop. Identity changes are rejected; SESSION_CONTEXT_CHANGE follows the catalogue halt/restart rule. A fault that affects audio invalidates active acquisition and follows the catalogue halt/clear rule; microphone and DAC faults require restart. Wi-Fi-only faults preserve working audio. Stop mutes listening and cancels without sending before 15 seconds; at or after 15 seconds, accepted estimates are aggregated subject to quality and coverage checks. Analysis and sending indicate Busy and reject Start without queuing. Invalid BPM latches a normal fault and has no numeric value. With configured Wi-Fi and ready Device id, clock, trust and endpoint, the device makes one HTTPS/FHIR attempt for a valid numeric result or a separately validated invalid-result error report. The server receipt (201 or 200) confirms delivery; there is no readback. A failed attempt is retried up to 3 times within 10 s, then the device latches a normal fault. Unconfigured Wi-Fi causes no send or Wi-Fi error. Each terminal path releases only the Busy state or network lease it acquired. Pre-15-second cancellation and muted-Error exits occur before Busy or network-lease acquisition. Normal faults have separate manual acknowledgement."}];
+views.forEach(view=>{view.description='Display, touch, SD storage and capture / slower replay are optional beyond the MVP. '+view.description;});
+const navigation=document.querySelector('nav');
+const frame=document.querySelector('figure');
+const viewport=document.querySelector('.viewport');
+const stage=document.querySelector('.stage');
+const diagram=document.getElementById('diagram');
+const zoomControls=document.querySelector('.zoom');
+let selected=0,zoom=1;
+function applyZoom(){
+ const allowed=views[selected].flow;
+ zoomControls.hidden=!allowed;
+ if(!allowed)zoom=1;
+ const enlarged=zoom>1;
+ viewport.classList.toggle('zoomed',enlarged);
+ if(enlarged&&diagram.naturalWidth){
+  const fit=Math.min(viewport.clientWidth/diagram.naturalWidth,viewport.clientHeight/diagram.naturalHeight);
+  const width=Math.round(diagram.naturalWidth*fit*zoom);
+  const height=Math.round(diagram.naturalHeight*fit*zoom);
+  stage.style.width=Math.max(viewport.clientWidth,width)+'px';
+  stage.style.height=Math.max(viewport.clientHeight,height)+'px';
+  diagram.style.width=width+'px';diagram.style.height=height+'px';
+ }else{
+  stage.style.width='100%';stage.style.height='100%';
+  diagram.style.width='100%';diagram.style.height='100%';
+  viewport.scrollTop=0;viewport.scrollLeft=0;
+ }
+ document.getElementById('zoom-out').disabled=zoom<=1;
+ document.getElementById('zoom-in').disabled=zoom>=6;
+}
+function fitDiagram(){
+ const embedded=window.self!==window.top;
+ frame.style.height=(embedded?620:Math.max(40,window.innerHeight-frame.getBoundingClientRect().top))+'px';
+ applyZoom();
+}
+document.querySelectorAll('button[data-index]').forEach(button=>button.addEventListener('click',()=>{
+ selected=Number(button.dataset.index);zoom=1;
+ diagram.src=views[selected].src;diagram.alt=views[selected].title;
+ document.getElementById("diagram-description").textContent=views[selected].description;
+ document.querySelectorAll('button[data-index]').forEach(tab=>{
+  tab.setAttribute('aria-selected',String(tab===button));
+  tab.tabIndex=tab===button?0:-1;
+ });
+ frame.setAttribute('aria-labelledby',button.id);
+ applyZoom();
+}));
+navigation.addEventListener('keydown',event=>{
+ const tabs=Array.from(navigation.querySelectorAll('[role=tab]'));
+ const index=tabs.indexOf(event.target);
+ if(index<0)return;
+ let next;
+ if(event.key==='ArrowRight')next=(index+1)%tabs.length;
+ else if(event.key==='ArrowLeft')next=(index+tabs.length-1)%tabs.length;
+ else if(event.key==='Home')next=0;
+ else if(event.key==='End')next=tabs.length-1;
+ else return;
+ event.preventDefault();tabs[next].focus();tabs[next].click();
+});
+diagram.addEventListener('load',applyZoom);
+document.getElementById('zoom-in').addEventListener('click',()=>{zoom=Math.min(6,zoom*1.5);applyZoom();});
+document.getElementById('zoom-out').addEventListener('click',()=>{zoom=Math.max(1,zoom/1.5);applyZoom();});
+document.getElementById('zoom-fit').addEventListener('click',()=>{zoom=1;applyZoom();});
+viewport.addEventListener('wheel',event=>{
+ if(!views[selected].flow||!event.ctrlKey)return;
+ event.preventDefault();zoom=Math.max(1,Math.min(6,zoom*(event.deltaY<0?1.2:1/1.2)));applyZoom();
+},{passive:false});
+fitDiagram();window.addEventListener('resize',fitDiagram);
+new ResizeObserver(fitDiagram).observe(navigation);
+</script><section><h2>Current session and error catalogue</h2><p>Busy blocks Start. Faults follow the current catalogue halt/clear rules; Wi-Fi-only faults preserve functioning audio. Numeric acceptance values remain proposals.</p><img src="rendered/mvp_session_state.svg" alt="MVP session and alarm state diagram" style="max-width:100%;height:auto"></section><section><h2>Wi-Fi setup and recovery</h2><p>Initial scan/cache precedes the open hotspot and portal. Rescans keep setup open. Join is queued and the browser polls; credentials are saved only after the selected network has an address. See <a href="../WIFI/wifi-workflows.html">the current overview, state and flow diagrams</a> for retries, exits and recovery. Time, secure transport and Device registration belong to later FHIR work.</p><img src="../WIFI/rendered/wifi_setup_sequence.svg" alt="Sequence: Wi-Fi scan, hotspot, portal, verified join, credential save and closure" style="max-width:100%;height:auto"></section>
+</body></html>
