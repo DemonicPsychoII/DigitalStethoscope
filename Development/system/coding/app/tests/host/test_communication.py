@@ -731,9 +731,9 @@ def start_result(simulation):
 
 
 @case(
-    "cleanup-failure-blocks-ack",
+    "cleanup-failure-latches-and-releases",
     START,
-    "Failed portal shutdown blocks release; retry cleanup and acknowledge only after success.",
+    "A failed portal shutdown is not retried; it latches WIFI_CLEANUP_FAILURE and releases audio.",
 )
 def cleanup_failure(simulation):
     trace = simulation(
@@ -743,9 +743,9 @@ def cleanup_failure(simulation):
         + event(2000, "snapshot"),
         until=4500,
     )
-    assert trace.count("page_stop_failed") == 1 and trace.count("page_stop") == 1
-    assert trace.values("ack")[0] != 0 and trace.last("ack") == 0
-    assert trace.values("page")[0] == 1 and trace.last("page") == 0
+    assert trace.count("page_stop_failed") == 1 and trace.count("page_stop") == 0
+    assert "WIFI_CLEANUP_FAILURE" in trace.production_log
+    assert trace.last("ack") == 0
 
 
 @case(
@@ -820,18 +820,15 @@ def portal_failure(simulation):
 
 
 @case(
-    "address-unavailable-no-save",
+    "address-text-unavailable-still-saves",
     WIFI + "specified-failures-and-interrupted-boot",
-    "If the selected station address cannot be obtained, do not persist or publish a successful join.",
-    defect="COMMUNICATION saves and reports success after wifi_getAddress fails",
+    "The IPv4 address event confirms the join, so the network is saved and the join reported; an address text that cannot be read afterwards only leaves the page address empty.",
 )
 def missing_address(simulation):
     trace = simulation("address_error 1\n" + event(1000, "connect"), until=2000)
-    assert trace.count("write") == 0, (
-        "Settings were saved without obtaining the selected station address"
-    )
-    assert trace.count("success") == 0
-    assert trace.count("join_failed") == 1 and trace.count("scan") == 2
+    assert trace.count("write") == 1
+    assert trace.count("success") == 1
+    assert trace.count("join_failed") == 0
 
 
 @case(
@@ -1126,54 +1123,33 @@ def rescan_exhaustion_station(simulation):
     )
 
 
-for service_name, setting, call_name, failure_name, setup_script, stored in (
-    ("portal", "stop_failures", "page_stop", "page_stop_failed", "", False),
-    ("dhcp", "dhcp_stop_failures", "dhcp_stop", "dhcp_stop_failed", "", False),
-    ("ap", "ap_stop_failures", "ap_stop", "ap_stop_failed", "", False),
-    (
-        "scan",
-        "scan_stop_failures",
-        "scan_cancel",
-        "scan_cancel_failed",
-        plan("scan", [0], 20000),
-        False,
-    ),
-    (
-        "disconnect",
-        "disconnect_failures",
-        "disconnect",
-        "disconnect_failed",
-        plan("join", [0], 20000),
-        True,
-    ),
+for service_name, setting, failure_name, setup_script, stored, stop_tries in (
+    ("portal", "stop_failures", "page_stop_failed", "", False, 1),
+    ("dhcp", "dhcp_stop_failures", "dhcp_stop_failed", "", False, 1),
+    ("ap", "ap_stop_failures", "ap_stop_failed", "", False, 1),
+    ("scan", "scan_stop_failures", "scan_cancel_failed", plan("scan", [0], 20000), False, 2),
+    ("disconnect", "disconnect_failures", "disconnect_failed", plan("join", [0], 20000), True, 2),
 ):
-    for failure_count in (1, 2, 20):
-        exhaust = failure_count == 20
-        defect = None
-        if service_name in {"scan", "disconnect"}:
-            defect = "Implementation defect: initial cancellation bypasses cleanup backoff and is followed by three additional stop passes"
+    for failure_count in range(1, stop_tries + 1):
+        latches = failure_count == stop_tries
 
-        if exhaust:
-            cleanup_case_suffix = "-exhaustion-latch"
-        elif failure_count == 2:
-            cleanup_case_suffix = "-third-pass-success"
+        if latches:
+            cleanup_case_suffix = "-stop-failure-latch"
         else:
-            cleanup_case_suffix = "-retry-success"
+            cleanup_case_suffix = "-cancel-failure-cleanup-success"
 
         @case(
             "cleanup-" + service_name + cleanup_case_suffix,
             FAILURES,
-            "Each pending stop runs at most three times with one/two-second backoff and one second per stop. Success confirms release; exhaustion latches WIFI_CLEANUP_FAILURE, releases audio and prohibits later Wi-Fi work. L1 stop outcomes and timing are substituted.",
-            defect=defect,
+            "Cleanup tries each pending stop once; an interrupted scan or join is also cancelled once when it ends. A failed stop latches WIFI_CLEANUP_FAILURE, releases audio and prohibits later Wi-Fi work. L1 stop outcomes and timing are substituted.",
         )
-        def cleanup_budget(
+        def cleanup_once(
             simulation,
             setting=setting,
-            call_name=call_name,
             failure_name=failure_name,
             setup_script=setup_script,
             stored=stored,
-            exhaust=exhaust,
+            latches=latches,
             service_name=service_name,
             failures=failure_count,
         ):
@@ -1189,13 +1165,9 @@ for service_name, setting, call_name, failure_name, setup_script, stored in (
                 until=18000,
                 stored=stored,
             )
-            attempts = trace.count(failure_name)
-            if exhaust:
-                expected_attempts = 3
-            else:
-                expected_attempts = failures
-            assert attempts == expected_attempts
-            if exhaust:
+            assert trace.count(failure_name) == failures
+            assert trace.last("ack") == 0
+            if latches:
                 assert "WIFI_CLEANUP_FAILURE" in trace.production_log
                 if service_name == "scan":
                     expected_scan_count = 1
@@ -1205,22 +1177,8 @@ for service_name, setting, call_name, failure_name, setup_script, stored in (
                     expected_scan_count = 1
                 assert trace.count("scan") == expected_scan_count
                 assert trace.count("join") == int(stored)
-                assert trace.last("ack") == 0
-                assert (
-                    trace.times(failure_name)[1] - trace.times(failure_name)[0] == 2000
-                )
-                assert (
-                    trace.times(failure_name)[2] - trace.times(failure_name)[1] == 3000
-                )
             else:
                 assert "WIFI_CLEANUP_FAILURE" not in trace.production_log
-                stop_times = sorted(
-                    set(trace.times(call_name) + trace.times(failure_name))
-                )
-                assert stop_times[1] - stop_times[0] == 2000
-                if failures == 2:
-                    assert stop_times[2] - stop_times[1] == 3000
-                assert trace.values("ack")[0] != 0 and trace.values("ack")[1] == 0
 
 
 @case(

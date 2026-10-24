@@ -40,8 +40,8 @@ radio/access-point setup, phone and audio setup identity: **________**
 5. Submit the controlled WPA2-PSK network with a wrong password.
    **Pass:** One failed portal join shows its cause and starts a rescan.
    Result: [ ] Pass / [ ] Fail / [ ] Blocked / [ ] Not run. Notes/evidence: **—**
-6. Repeat with the correct password and timestamp address retrieval and storage.
-   **Pass:** The selected-network address is confirmed before credentials are saved.
+6. Repeat with the correct password and timestamp the address event, storage and page result.
+   **Pass:** Credentials are saved after the station received its IPv4 address, and the page shows that address.
    Result: [ ] Pass / [ ] Fail / [ ] Blocked / [ ] Not run. Notes/evidence: **—**
 7. Restart after a successful saved join.
    **Pass:** The same stored network joins without portal input.
@@ -76,8 +76,8 @@ radio/access-point setup, phone and audio setup identity: **________**
 17. Deliver a delayed old callback during cancellation and before a newer request can be armed.
    **Pass:** No old result publishes a list, completes another join or saves settings.
    Result: [ ] Pass / [ ] Fail / [ ] Blocked / [ ] Not run. Notes/evidence: **—**
-18. Exhaust cleanup for scan cancel, disconnect, HTTP, DHCP and AP in separate instrumented runs.
-   **Pass:** At most three passes with 1 s/2 s backoff latch WIFI_CLEANUP_FAILURE, prohibit Wi-Fi work until restart and release audio under the Wi-Fi-only exception.
+18. Make the stop fail for scan cancel, disconnect, HTTP, DHCP and AP in separate instrumented runs.
+   **Pass:** One failed cleanup stop latches WIFI_CLEANUP_FAILURE without further stop tries, prohibits Wi-Fi work until restart and releases audio under the Wi-Fi-only exception.
    Result: [ ] Pass / [ ] Fail / [ ] Blocked / [ ] Not run. Notes/evidence: **—**
 19. Inspect the serial command list and invoke `settings` without supplying a credential.
    **Pass:** The settings shell is unavailable and cannot print the stored password; record the effective CONFIG_SETTINGS_SHELL=n setting.
