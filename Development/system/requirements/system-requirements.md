@@ -14,7 +14,7 @@ Methods: **T** test (measured), **D** demonstration (shown working).
 |---|---|---|---|---|
 | REQ-01 | After power-on the device stays silent until Start is pressed. | Power on with volume at maximum and headphones on. | D | Silence until Start. |
 | REQ-02 | After Start the operator hears heart sounds. | Chestpiece on own chest, Raw filter, press Start. | D | Heartbeat audible within 2 s of Start. |
-| REQ-03 | The 3-position switch selects the Raw, Murmur or BPM listening filter. | Play 100 Hz, 400 Hz and 2 kHz tones from a laptop through an earbud held on the chestpiece diaphragm, at one fixed laptop volume and device volume for all positions. First confirm each tone is clearly audible in Raw; Raw is the reference. Tones follow the bands chosen in the filter study; these fit the current candidates (Murmur 40â€“800 Hz, BPM 25â€“150 Hz). | D | Compared with Raw: Murmur keeps 100 Hz and 400 Hz, 2 kHz clearly quieter. BPM keeps 100 Hz, 400 Hz and 2 kHz clearly quieter. |
+| REQ-03 | The 3-position switch selects the Raw, Murmur or BPM listening filter. | Play 100 Hz, 400 Hz and 2 kHz tones from a laptop through an earbud held on the chestpiece diaphragm, at one fixed laptop volume and device volume for all positions. First confirm each tone is clearly audible in Raw; Raw is the reference. Tones follow the bands chosen in the filter study (TICKET-189); these fit the current candidates (Murmur 40–800 Hz, BPM 25–150 Hz). | D | Compared with Raw: Murmur keeps 100 Hz and 400 Hz, 2 kHz clearly quieter. BPM keeps 100 Hz, 400 Hz and 2 kHz clearly quieter. |
 | REQ-04 | The potentiometer sets the volume from silent to maximum. | Turn through the full range while listening. | D | Silent at minimum; loudest output at the maximum endpoint; no crackling throughout the sweep. |
 | REQ-05 | Listening has no noticeable delay. | Tap the chestpiece and listen. | D | Tap heard together with the touch; no echo or lag noticeable. |
 | REQ-06 | A heart session of at least 15 s gives a heart rate. | 10 sessions of 30 s and 3 sessions stopped at the 15 s boundary on own chest, pulse oximeter or smartwatch at the same time; use signals meeting the validity criteria. | T | Each result within Â±5 BPM or Â±10 % of the reference. |
@@ -30,10 +30,10 @@ Methods: **T** test (measured), **D** demonstration (shown working).
 
 ## Open acceptance inputs
 
-Project decisions still needed: REQ-06 signal-validity criteria and the reference-selection rule must be frozen before selecting the ten sessions; VT-06 cannot pass with operator-selected exclusions. REQ-09 requires a clock reference, synchronization evidence and an allowed measurement-end timestamp skew; the 10 s delivery budget is not that skew. These remain unresolved FHIR/BPM design inputs (D06/D08), not invented acceptance limits.
+Project decisions still needed: REQ-06 signal-validity criteria and the reference-selection rule must be frozen before selecting the ten sessions; VT-06 cannot pass with operator-selected exclusions. REQ-09 requires a clock reference, synchronization evidence and an allowed measurement-end timestamp skew; the 10 s delivery budget is not that skew. These remain unresolved FHIR/BPM design inputs (D06/D08), not invented acceptance limits. Tracked in TICKET-208 (REQ-06) and TICKET-209 (REQ-09).
 
 ## Retired requirements
 
-SR-01â€¦SR-12 and the component requirements AUD, BPM, CTL, HW, INP, LIS, MON, NET, REC, STO and UI were retired on
+SR-01…SR-12 and the component requirements AUD, BPM, CTL, HW, INP, LIS, MON, NET, REC, STO and UI were retired on
 14 October 2026 by project scope decision. Decision identification: Nico, *MVP scope decisions*, DigitalStethoscope project record, 14 October 2026, `Development/system/planning/mvp-decisions-2026-10-14.md` (Records stage). Their IDs are not reused. Internal constraints that remain relevant are inputs to the later design stage.
-Optional requirements (replay, Lung, display, touch, SD, on-device test playback) are removed for now.
+Optional requirements (replay, Lung, display, touch, SD, on-device test playback) are removed for now; they are backlog items TICKET-202, TICKET-203, TICKET-206 and TICKET-204.
