@@ -1,0 +1,266 @@
+{
+  "pilot_consort_extension": {
+    "reference": "Eldridge, S. M. et al. (2016). CONSORT 2010 statement: extension to randomised pilot and feasibility trials. BMJ 355:i5239. DOI: 10.1136/bmj.i5239.",
+    "doi": "https://doi.org/10.1136/bmj.i5239",
+    "url": "https://www.bmj.com/content/355/bmj.i5239",
+    "verified": "BMJ article opened; title, journal, DOI and reporting guidance verified.",
+    "page": "unverified",
+    "paywalled": false
+  },
+  "pilot_feasibility_guidelines": {
+    "reference": "Eldridge, S. M. et al. (2016). Defining Feasibility and Pilot Studies in Preparation for Randomised Controlled Trials: Development of a Conceptual Framework. PLOS ONE 11(3):e0150205. DOI: 10.1371/journal.pone.0150205.",
+    "doi": "https://doi.org/10.1371/journal.pone.0150205",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4775223/",
+    "verified": "Search result/record inspected; metadata and pilot/feasibility framework verified.",
+    "page": "unverified",
+    "paywalled": false
+  },
+  "pilot_sample_size": {
+    "reference": "Sim, J. & Lewis, M. (2012). The size of a pilot study for a clinical trial should be calculated in relation to considerations of precision and efficiency. Journal of Clinical Epidemiology 65(3), 301–308. DOI: 10.1016/j.jclinepi.2011.07.011.",
+    "doi": "https://doi.org/10.1016/j.jclinepi.2011.07.011",
+    "url": "https://pubmed.ncbi.nlm.nih.gov/22169081/",
+    "verified": "PubMed record verified; title and metadata confirmed.",
+    "page": "unverified",
+    "paywalled": true
+  },
+  "cardiac_auscultation_test": {
+    "reference": "Nielsen, T., Mølgaard, H., Ringsted, C. & Eika, B. (2010). The development of a new cardiac auscultation test: How do screening and diagnostic skills differ? Medical Teacher 32(1), 56–61. DOI: 10.3109/01421590802572767.",
+    "doi": "https://doi.org/10.3109/01421590802572767",
+    "url": "https://pubmed.ncbi.nlm.nih.gov/19241211/",
+    "verified": "PubMed record opened; title, authors, pages, DOI and abstract findings verified.",
+    "page": "pp. 56–61",
+    "paywalled": true
+  },
+  "murmur_agreement": {
+    "reference": "Interrater and intrarater agreement on heart murmurs. (2023). BMC Medical Education. PMC9848245.",
+    "doi": "unverified",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9848245/",
+    "verified": "Search result/abstract inspected; title and experience/intensity results verified.",
+    "page": "unverified",
+    "paywalled": false
+  },
+  "2afc_signal_detection": {
+    "reference": "Macmillan, N. A. & Creelman, C. D. (2006). Analysis of a two-alternative force-choice signal detection theory model. Journal of Mathematical Psychology 50(4), 411–420. DOI: 10.1016/j.jmp.2005.11.002.",
+    "doi": "https://doi.org/10.1016/j.jmp.2005.11.002",
+    "url": "https://www.sciencedirect.com/science/article/pii/S0022249605000921",
+    "verified": "Publisher page opened; title, journal, pages, DOI and abstract verified.",
+    "page": "pp. 411–420",
+    "paywalled": true
+  },
+  "abx_strategy": {
+    "reference": "Decision strategies in the ABX (matching-to-sample) psychophysical task. (2002). PubMed PMID 11916304.",
+    "doi": "unverified",
+    "url": "https://pubmed.ncbi.nlm.nih.gov/11916304/",
+    "verified": "PubMed record inspected; ABX decision strategies and d-prime abstract verified; exact citation metadata not verified.",
+    "page": "unverified",
+    "paywalled": true
+  },
+  "2afc_bias": {
+    "reference": "Likelihood Ratio, Optimal Decision Rules, and Relationship between Proportion Correct and d′ in the Dual-Pair AB vs BA identification Paradigm. PMC2811854.",
+    "doi": "unverified",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC2811854/",
+    "verified": "Search result excerpt inspected; forced-choice response-bias discussion verified.",
+    "page": "unverified",
+    "paywalled": false
+  },
+  "gehba_faq": {
+    "reference": "Gemeinsame Ethikkommission der Hochschulen Bayerns (GEHBa). GEHBa-FAQ 2.1 (07/2021).",
+    "doi": "unverified",
+    "url": "https://www.gehba.de/fileadmin/daten/Gehba/GEHBa-FAQ_2.1.pdf",
+    "verified": "PDF opened from search result; bachelor/master self-assessment, risk threshold and local-committee caveat verified.",
+    "page": "FAQ sections “Wann sollte man einen Ethikantrag stellen?” and “Wann muss man keinen Ethikantrag stellen?”",
+    "paywalled": false
+  },
+  "gehba_forms": {
+    "reference": "Gemeinsame Ethikkommission der Hochschulen Bayerns (GEHBa). Antrag und Dokumente.",
+    "doi": "unverified",
+    "url": "https://www.gehba.de/antrag-und-dokumente",
+    "verified": "GEHBa page opened; bachelor/master self-assessment and FAQ listed.",
+    "page": "“Antrag und Dokumente” page",
+    "paywalled": false
+  },
+  "gdpr_text": {
+    "reference": "European Parliament and Council. Regulation (EU) 2016/679 (General Data Protection Regulation).",
+    "doi": "unverified",
+    "url": "https://eur-lex.europa.eu/eli/reg/2016/679/oj",
+    "verified": "EUR-Lex official act page reached but robot check blocked text inspection.",
+    "page": "unverified",
+    "paywalled": false
+  },
+  "edpb_pseudonymisation": {
+    "reference": "European Data Protection Board. Guidelines 01/2025 on Pseudonymisation.",
+    "doi": "unverified",
+    "url": "https://www.edpb.europa.eu/our-work-tools/documents/public-consultations/2025/guidelines-012025-pseudonymisation_en",
+    "verified": "EDPB page and press release inspected; pseudonymised data remains personal data when re-attributable.",
+    "page": "unverified",
+    "paywalled": false
+  },
+  "physionet_dua": {
+    "reference": "PhysioNet. Credentialed Health Data Use Agreement 1.5.0.",
+    "doi": "unverified",
+    "url": "https://www.physionet.org/content/semeval2015/view-dua/1.0/",
+    "verified": "Agreement opened; no-identification, no-sharing, security and research-use clauses visible.",
+    "page": "clauses 1–10",
+    "paywalled": false
+  },
+  "mems_cardiorespiratory_review": {
+    "reference": "MEMS and ECM Sensor Technologies for Cardiorespiratory Sound Monitoring – A Comprehensive Review. (2024). arXiv:2406.12432.",
+    "doi": "unverified",
+    "url": "https://arxiv.org/abs/2406.12432",
+    "verified": "arXiv page opened; title and review scope verified.",
+    "page": "unverified",
+    "paywalled": false
+  },
+  "goh_chestpiece": {
+    "reference": "Goh, R. X. et al. (2023). Design optimization of 3D printed digital stethoscope for low-cost telemedicine. IEEE International Conference on Sensors and Nanotechnology, 137–140. DOI: 10.1109/SENNANO57767.2023.",
+    "doi": "https://doi.org/10.1109/SENNANO57767.2023",
+    "url": "https://staffprofiles.bournemouth.ac.uk/display/journal-article/388323",
+    "verified": "Institutional record opened; authors, title, venue, pages, DOI and abstract verified.",
+    "page": "pp. 137–140",
+    "paywalled": true
+  },
+  "pulmonary_acoustic_methods": {
+    "reference": "Acoustic Methods for Pulmonary Diagnosis. Peer-reviewed review, PMC6874908.",
+    "doi": "unverified",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6874908/",
+    "verified": "Search result excerpt inspected; air-coupled and contact transduction discussion verified; PMC full page blocked.",
+    "page": "unverified",
+    "paywalled": false
+  },
+  "farina_ess": {
+    "reference": "Farina, A. (2000). Simultaneous Measurement of Impulse Response and Distortion with a Swept-Sine Technique. AES Convention 108, paper 5093.",
+    "doi": "unverified",
+    "url": "https://aes.org/publications/elibrary-page/?id=10211",
+    "verified": "AES official page opened; author, title, date, method abstract and access conditions verified.",
+    "page": "Abstract; paper page unverified",
+    "paywalled": true
+  },
+  "iec60268_5": {
+    "reference": "IEC 60268-5:2003+A1:2007. Sound system equipment – Part 5: Loudspeakers.",
+    "doi": "unverified",
+    "url": "https://webstore.iec.ch/en/publication/1224",
+    "verified": "Official IEC page opened; title, scope, measurement signal types and lifecycle visible.",
+    "page": "Scope/product page",
+    "paywalled": true
+  },
+  "iec61672_1": {
+    "reference": "IEC 61672-1:2013. Electroacoustics – Sound level meters – Part 1: Specifications.",
+    "doi": "unverified",
+    "url": "https://webstore.ansi.org/standards/iec/iec61672ed2013",
+    "verified": "ANSI listing referenced by R08; bibliographic title/edition visible, standard text not opened.",
+    "page": "unverified",
+    "paywalled": true
+  },
+  "ecm_datasheet_im69d130": {
+    "reference": "Infineon Technologies. XENSIV IM69D130 high performance digital MEMS microphone datasheet.",
+    "doi": "unverified",
+    "url": "https://www.infineon.com/assets/row/public/documents/24/49/infineon-im69d130-datasheet-en.pdf",
+    "verified": "Manufacturer datasheet opened in search result; 28 Hz LFRO, 69 dB(A) SNR, 130 dB SPL AOP and PDM interface visible.",
+    "page": "Table 1, Acoustic specifications; datasheet p. 4",
+    "paywalled": false
+  },
+  "ecm_product_im69d130": {
+    "reference": "Infineon Technologies. IM69D130 product page.",
+    "doi": "unverified",
+    "url": "https://www.infineon.com/cms/de/product/sensor/mems-microphones/mems-microphones-for-consumer/im69d130/",
+    "verified": "Manufacturer page opened; product status, LFRO, SNR, AOP and PDM interface visible.",
+    "page": "Features/product specification",
+    "paywalled": false
+  },
+  "knowles_spk18_datasheet": {
+    "reference": "Knowles/Syntiant. SPK18R1LM4H-1 Hyperion digital PDM microphone datasheet.",
+    "doi": "unverified",
+    "url": "https://www.mouser.com/datasheet/3/6144/1/SPK18R1LM4H_1_Hyperion_Datasheet.pdf",
+    "verified": "Datasheet result inspected; 20 Hz LFRO, 70.5 dB(A) SNR, 128 dB SPL AOP visible.",
+    "page": "Table 3, acoustic characteristics",
+    "paywalled": false
+  },
+  "ics40180_datasheet": {
+    "reference": "TDK InvenSense. ICS-40180 RF-Hardened, Low-Noise Microphone with Bottom Port and Analog Output datasheet.",
+    "doi": "unverified",
+    "url": "https://invensense.tdk.com/wp-content/uploads/2015/02/ICS-40180_DS.pdf",
+    "verified": "Manufacturer datasheet inspected in search results; 60-Hz frequency response, 65-dBA SNR and 124-dB-SPL AOP confirmed.",
+    "page": "unverified",
+    "paywalled": false
+  },
+  "ics40180_product": {
+    "reference": "TDK Product Center. ICS-40180 detailed information.",
+    "doi": "unverified",
+    "url": "https://product.tdk.com/en/search/sw_piezo/mic/mems-mic/info?part_no=ICS-40180",
+    "verified": "Manufacturer product page opened; analog output, 60-Hz lower cutoff, 65-dBA SNR and 124-dB-SPL AOP confirmed.",
+    "page": "Electrical characteristics",
+    "paywalled": false
+  },
+  "ics43434_datasheet_verified": {
+    "reference": "TDK InvenSense. ICS-43434 Multi-Mode Microphone with I²S Digital Output datasheet, DS-000069 v1.2.",
+    "doi": "unverified",
+    "url": "https://invensense.tdk.com/wp-content/uploads/2016/02/DS-000069-ICS-43434-v1.2.pdf",
+    "verified": "Manufacturer datasheet inspected in search result; 60-Hz frequency response, 24-bit I²S, 65 dBA SNR high-performance / 64 dBA low-power and 120-dB-SPL AOP confirmed.",
+    "page": "unverified",
+    "paywalled": false
+  },
+  "ics43434_product": {
+    "reference": "TDK InvenSense. ICS-43434 product page.",
+    "doi": "unverified",
+    "url": "https://www.invensense.tdk.com/en-us/products/microphone/ics-43434",
+    "verified": "Manufacturer product page opened; I²S, 60-Hz to 20-kHz response, 65-dBA SNR, 120-dB-SPL AOP and EOL status shown.",
+    "page": "Product details/features",
+    "paywalled": false
+  },
+  "im68a130_datasheet": {
+    "reference": "Infineon Technologies. IM68A130V01 high performance analog XENSIV MEMS microphone datasheet.",
+    "doi": "unverified",
+    "url": "https://www.infineon.com/assets/row/public/documents/24/49/infineon-im68a130-datasheet-en.pdf",
+    "verified": "Manufacturer datasheet inspected in search result; analog output, 10-Hz LFRO, 68-dB(A) SNR and 130-dB-SPL AOP visible.",
+    "page": "unverified",
+    "paywalled": false
+  },
+  "im68a130_product": {
+    "reference": "Infineon Technologies. IM68A130 product page.",
+    "doi": "unverified",
+    "url": "https://www.infineon.com/part/IM68A130",
+    "verified": "Manufacturer product page opened; active/preferred status, analog output, 10-Hz LFRO, 68-dB(A) SNR and 130-dB-SPL AOP visible.",
+    "page": "Product details/features",
+    "paywalled": false
+  },
+  "nussbaumer_stethoscope_acoustics": {
+    "reference": "Nussbaumer, M. & Agarwal, A. (2022). Stethoscope acoustics. Journal of Sound and Vibration 539, 117194. DOI: 10.1016/j.jsv.2022.117194.",
+    "doi": "https://doi.org/10.1016/j.jsv.2022.117194",
+    "url": "https://www.repository.cam.ac.uk/items/feadd88b-9e03-44fb-a875-c49f7c550259",
+    "verified": "Cambridge repository and publisher search result verified article title, authors, journal, volume/article number and DOI; abstract states chest, stethoscope and hand are a coupled system.",
+    "page": "unverified",
+    "paywalled": "Publisher full text paywalled; Cambridge record is open."
+  },
+  "ciric_swept_sine": {
+    "reference": "Ćirić, D. G., Marković, M., Mijić, M. & Šumarac-Pavlović, D. (2013). On the effects of nonlinearities in room impulse response measurements with exponential sweeps. Applied Acoustics 74(3), 375–382. DOI: 10.1016/j.apacoust.2012.07.013.",
+    "doi": "https://doi.org/10.1016/j.apacoust.2012.07.013",
+    "url": "https://www.sciencedirect.com/science/article/abs/pii/S0003682X12002563",
+    "verified": "Publisher search result inspected; title, authors, date, pages, DOI and abstract on exponential sweep deconvolution/nonlinearity verified.",
+    "page": "pp. 375–382 (metadata verified)",
+    "paywalled": "Full text may be paywalled."
+  },
+  "nowak_stethoscope_method": {
+    "reference": "Nowak, L. J. & Nowak, K. M. (2017). Acoustic characterization of stethoscopes using auscultation sounds as test signals. Journal of the Acoustical Society of America 141(3), 1940. DOI: 10.1121/1.4978524.",
+    "doi": "https://doi.org/10.1121/1.4978524",
+    "url": "https://pubmed.ncbi.nlm.nih.gov/28372089/",
+    "verified": "PubMed record opened; authors, journal, volume, DOI and abstract on coupled chestpiece testing and measurement uncertainty verified.",
+    "page": "141(3), article p. 1940 (record verified)",
+    "paywalled": "Full text may be paywalled."
+  },
+  "knowles_sph0645_flex": {
+    "reference": "Knowles. KAS-700-0137 Crawford microphone on flex product brief (SPH0645LM4H-B).",
+    "doi": "unverified",
+    "url": "https://www.mouser.com/datasheet/2/218/kas-700-0137-crawford-mic-on-flex-product-brief-re-1624260.pdf",
+    "verified": "Manufacturer brief opened; I²S interface, 45-Hz LFRO, 65-dB(A) SNR and 120-dB SPL AOP verified.",
+    "page": "Key Parameters Specifications, PDF p. 1",
+    "paywalled": false
+  },
+  "knowles_portfolio_2023": {
+    "reference": "Seltech. Knowles MEMS Microphones Portfolio (January 2023).",
+    "doi": "unverified",
+    "url": "https://cdn.thomasnet.com/ccp/30973684/351950.pdf",
+    "verified": "34-page portfolio PDF opened; definitions and relevant model specifications visible in portfolio tables. The document is labeled SELTECH confidential/proprietary, so it is a distributor/representative portfolio source, not an academic source.",
+    "page": "LFRO definition p. 5; digital/analog portfolio tables pp. 13–14",
+    "paywalled": false
+  }
+}

@@ -18,7 +18,7 @@ Die damaligen Nutzerannotationen lehnen einen Kalibrieraufbau ab.
 
 Die [aktuelle Abgabefassung](../01-aufgabenbeschreibung/Aufgabenbeschreibung-Abgabe.md)
 schließt die messtechnische Charakterisierung ausdrücklich aus. Komponenten werden anhand
-von Datenblättern und Fachliteratur beurteilt. Der Produktscope
+von Datenblättern und Fachliteratur beurteilt. Der [Produktscope](../../Development/system/spec/product-scope.md)
 folgt dieser Quelle S05. R08 ist damit Hintergrundwissen, kein verpflichtendes Messverfahren.
 Die frühere Aussage „alle drei Aufgabenbeschreibungen fordern Q1“ trifft nicht mehr zu.
 
@@ -58,7 +58,7 @@ Kommunikation über begrenzte Events/Buffer-Handles.
 
 **Konsequenz:** Die Plattformwahl nicht erneut als unentschieden darstellen. Bring-up nutzt
 bereits Zephyr, implementiert aber nicht automatisch die vorgeschlagene Worker-/Controller-
-Architektur. Die Readiness-Entscheidungen
+Architektur. Die [Readiness-Entscheidungen](../../Development/system/planning/implementation-readiness.md)
 und D11 zur separaten Thesis-Struktur bleiben offen; kein neuer Firmware-Umbau durch diese Aktualisierung.
 
 ## W4 — Pflicht zur Murmur-/Hörverbesserung vs. aktuelle Evaluation
