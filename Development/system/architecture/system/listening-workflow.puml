@@ -1,0 +1,40 @@
+@startuml listening_workflow
+!theme cyborg
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+title Listening
+start
+:Idle;
+:Safely stop setup work; retain established station;
+:Start listening;
+repeat
+ if (Lung mode or Raw selected?) then (yes)
+  :Bypass filter;
+ else (no)
+  :Apply selected filter;
+ endif
+ :Apply volume;
+ :Play audio;
+ if (Optional replay enabled + Heart mode + capture request?) then (yes)
+  #273241:Record + listen (optional);
+  if (Cancelled / source or mode changed?) then (yes)
+   #273241:Discard clip (optional);
+  else (clip full)
+   #273241:Replay clip at selected slower speed (optional);
+   #273241:End / cancel (optional);
+  endif
+ endif
+ :Update listening filter / volume;
+ :Reject session identity changes;
+ :If SESSION_CONTEXT_CHANGE: halt, restart required;
+repeat while (Stop / halting fault?) is (no) not (yes)
+:Mute;
+:Idle / Fault;
+stop
+legend bottom
+  Wi-Fi-only faults preserve functioning audio.
+  Other faults follow catalogue halt/clear rules.
+  Grey / optional = beyond MVP.
+  Display, touch, SD and capture / slower replay are optional.
+endlegend
+@enduml
