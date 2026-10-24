@@ -1,0 +1,37 @@
+@startuml setup_sequence
+!theme cyborg
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam backgroundColor #0b1018
+skinparam defaultFontColor #e6edf7
+skinparam ArrowColor #a9b8ca
+title L2_COMMUNICATION setup ownership
+actor "Operator / phone" as Operator
+participant CONTROL
+participant COMMUNICATION
+participant WIFI
+participant PORTAL
+database STORAGE
+CONTROL -> COMMUNICATION : setup permitted under network lease
+COMMUNICATION -> STORAGE : read saved network
+alt usable record
+ COMMUNICATION -> WIFI : associate; await address
+else provisioning
+ COMMUNICATION -> WIFI : scan; return completed network list
+ COMMUNICATION -> WIFI : open hotspot and address service
+ COMMUNICATION -> PORTAL : publish list; start page
+ Operator -> WIFI : join device hotspot
+ Operator -> PORTAL : select network and submit credentials
+ PORTAL -> COMMUNICATION : typed Connect request
+ COMMUNICATION -> WIFI : associate; await selected-network address
+ alt connected
+  COMMUNICATION -> STORAGE : commit accepted network
+ else failed
+  COMMUNICATION -> WIFI : refresh network list
+ end
+ COMMUNICATION -> PORTAL : publish outcome
+ COMMUNICATION -> PORTAL : stop page
+ COMMUNICATION -> WIFI : stop hotspot; retain established station
+end
+COMMUNICATION --> CONTROL : connection / failure / lease release
+@enduml

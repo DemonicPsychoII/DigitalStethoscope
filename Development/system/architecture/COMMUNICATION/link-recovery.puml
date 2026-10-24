@@ -1,0 +1,26 @@
+@startuml link_recovery
+!theme cyborg
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam backgroundColor #0b1018
+skinparam defaultFontColor #e6edf7
+skinparam ArrowColor #a9b8ca
+title L2_COMMUNICATION link recovery boundary
+start
+:Detect lost station link;
+:Wait for CONTROL's Idle network lease;
+:Ask WIFI to reconnect to the saved network;
+if (Selected-network address available?) then (yes)
+ :Publish connected outcome;
+else (recovery exhausted)
+ :Report cause; enter provisioning in Idle;
+ :Scan through WIFI; start hotspot and PORTAL;
+endif
+:Release work to CONTROL;
+stop
+note right
+ Listening interrupts active recovery through safe teardown.
+ WIFI performs operations; COMMUNICATION decides recovery.
+ Retry budgets and re-entry policy belong to detailed design.
+end note
+@enduml
