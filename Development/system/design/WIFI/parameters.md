@@ -1,6 +1,6 @@
 # Wi-Fi operation parameters
 
-These are selected L1 operation limits; target measurements remain pending. Controller retry budgets are in COMMUNICATION, page limits in PORTAL.
+These are selected L1 operation limits; target measurements remain pending (TICKET-182). Controller retry budgets are in COMMUNICATION, page limits in PORTAL.
 
 | ID | Parameter | Value / candidate | Verification status | Owners |
 | --- | --- | --- | --- | --- |
