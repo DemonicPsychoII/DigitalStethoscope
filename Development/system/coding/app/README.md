@@ -32,7 +32,7 @@ thread; most component `.c` / `.h` files reserve places for implementation.
 `L2_COMMUNICATION` implements the Wi-Fi workflow on top of them. `common/types.h` reserves the shared data types.
 The board overlay and `prj.conf` set the fitted N16R8 module (16 MB flash,
 8 MB octal PSRAM; GPIO33–37 stay reserved). The serial shell and deferred logging
-are enabled; Wi-Fi and the setup page are implemented but not yet tested on the board.
+are enabled; Wi-Fi and the setup page are implemented but not yet tested on the board (TICKET-182).
 No audio processing, SD storage, UI or monitoring is active.
 
 ### Shell and configuration
