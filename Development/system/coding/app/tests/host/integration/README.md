@@ -25,9 +25,9 @@ posted events and advances simulated time; locks do not provide real concurrency
 | Refresh exhaustion | Four failed refresh attempts close setup with Closing, preserving the established station and requiring a new setup hold. |
 
 Production line/branch coverage and the JUnit scenario traces are retained by the
-host CI job. The existing strict L2 XFAIL cases continue to expose the known
-address/Closing/cleanup/record-erasure defects; these integration checks do not
-claim those defects fixed. Real HTTP sockets/routing, concurrent callbacks,
+host CI job. No L2 case is marked XFAIL at this head. The address, Closing, cleanup and
+record-erasure cases are ordinary passing cases, and these integration checks do
+not change their status. Real HTTP sockets/routing, concurrent callbacks,
 physical timing, flash atomicity across power loss and radio behavior require
 the identified device procedures and Nico's signed run.
 

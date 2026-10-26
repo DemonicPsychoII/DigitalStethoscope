@@ -6,7 +6,7 @@ Component test PRs add the suites. Concrete application checks are listed in ver
 
 ## Current state and target
 
-When present, the communication host suite runs production L2 (layer 2) with controlled L1 (layer 1) services and simulated time. Its expectations come from the identified design revision; known implementation defects remain strict expected failures. Unit tests, real-service integration, device verification and acceptance remain pending; the case catalogue records the gaps.
+When present, the communication host suite runs production L2 (layer 2) with controlled L1 (layer 1) services and simulated time. Its expectations come from the identified design revision; at this head no known implementation defect is recorded as a strict expected failure. Unit tests, real-service integration, device verification and acceptance remain pending; the case catalogue records the gaps.
 
 When the application entry point is present, its later implementation stages provide the Wi-Fi service, portal and COMMUNICATION workflow; other components contain placeholders. CI then builds, publishes and reuses only the `application` profile; without that entry point the application suite is disabled. The bring-up firmware and its source-pattern QC are archived under `preThesis/06-bringup-zephyr` and have no CI. The pinned application toolchain and compiler cache remain active. External cloud importer compatibility and device results remain unverified.
 

@@ -4,7 +4,8 @@ This AI-generated system verification catalogue derives cases from the agreed re
 
 ## Current state and target
 
-The catalogue defines the target cases. The [Wi-Fi/portal L2 batch](../coding/app/tests/host/README.md) covers the communication design with production L2 and controlled L1 services. The [host integration batch](../coding/app/tests/host/integration/README.md) also connects real L2 and L1 services at the Zephyr API boundary. Known implementation defects remain strict expected failures. Other cases still need a test or procedure reference, as listed below. Recorded results apply to their identified source and configuration. Full device acceptance remains pending.
+The catalogue defines the target cases. The [Wi-Fi/portal L2 batch](../coding/app/tests/host/README.md) covers the communication design with production L2 and controlled L1 services. The [host integration batch](../coding/app/tests/host/integration/README.md) also connects real L2 and L1 services at the Zephyr API boundary. At this head the host suites contain no strict expected failures, so no known
+implementation defect is recorded as an XFAIL. Other cases still need a test or procedure reference, as listed below. Recorded results apply to their identified source and configuration. Full device acceptance remains pending.
 
 ## System acceptance
 

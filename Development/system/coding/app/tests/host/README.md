@@ -1,7 +1,7 @@
 # Wi-Fi and portal host verification
 
 VT-14; REQ-11/REQ-12 with supporting REQ-13/REQ-14. Basis:
-`81c4528265828049e77012eae5f5f51e9ea4fb38` (`replay/11-project-records`).
+`07267b4ebef4cde952c296200bc428bc29d519c2` (`replay/11-project-records`).
 
 ## Run
 
@@ -112,7 +112,9 @@ Created by GPT-6.1-Sol on behalf of Nico running in codex.
 
 The [integration batch](integration/README.md) runs real L2 with real L1 services.
 It is selected in the same host job and reported with the `integration` level in
-JUnit. The existing deterministic L2 scenarios and strict XFAIL cases remain.
+JUnit. The existing deterministic L2 scenarios remain. No case is marked XFAIL at this head,
+so no known defect is recorded as an expected failure; the address, Closing, cleanup
+and stored-read record-erasure cases run as ordinary passing cases.
 
 On a Linux host with matching GCC/gcov, set
 `STETHO_COVERAGE_DIRECTORY=artifacts/ci/host-coverage` before running the complete

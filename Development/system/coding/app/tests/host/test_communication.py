@@ -11,6 +11,7 @@ import pytest
 HERE = Path(__file__).resolve().parent
 APP = HERE.parents[1]
 WIFI = "Development/system/design/WIFI/interfaces-and-behavior.md#"
+COMMUNICATION = "Development/system/design/COMMUNICATION/interfaces-and-behavior.md#"
 PARAMETERS = "Development/system/design/WIFI/parameters.md"
 # P21/P23: proposed target timings, used here as the design simulation baseline.
 RETRY = 5_000
@@ -23,19 +24,9 @@ JOIN_TIMEOUT = 15_000
 CASES = []
 
 
-def case(name, anchor, expected, defect=None):
+def case(name, anchor, expected):
     def register(function):
-        if defect is None:
-            marks = []
-        else:
-            marks = [
-                pytest.mark.xfail(
-                    strict=True, raises=AssertionError, reason=f"{defect}; see PR"
-                )
-            ]
-        CASES.append(
-            pytest.param(function, name, anchor, expected, id=name, marks=marks)
-        )
+        CASES.append(pytest.param(function, name, anchor, expected, id=name))
         return function
 
     return register
@@ -156,10 +147,10 @@ def create_simulation_runner(executable, record_property):
     return run
 
 
-ENTRY = WIFI + "entry-scan-and-recovery"
-JOIN = WIFI + "join-persistence-and-result-closure"
-CANCEL = WIFI + "cancellation-and-inactivity"
-START = WIFI + "listening-priority-and-safe-teardown"
+ENTRY = COMMUNICATION + "entry-scan-and-recovery"
+JOIN = COMMUNICATION + "join-persistence-and-result-closure"
+CANCEL = COMMUNICATION + "cancellation-and-inactivity"
+START = COMMUNICATION + "listening-priority-and-safe-teardown"
 
 
 @case(
@@ -821,7 +812,7 @@ def portal_failure(simulation):
 
 @case(
     "address-text-unavailable-still-saves",
-    WIFI + "specified-failures-and-interrupted-boot",
+    COMMUNICATION + "specified-failures-and-interrupted-boot",
     "The IPv4 address event confirms the join, so the network is saved and the join reported; an address text that cannot be read afterwards only leaves the page address empty.",
 )
 def missing_address(simulation):
@@ -938,7 +929,7 @@ def start_closing(simulation):
     assert trace.last("ack") == 0
 
 
-FAILURES = WIFI + "specified-failures-and-interrupted-boot"
+FAILURES = COMMUNICATION + "specified-failures-and-interrupted-boot"
 PORTAL_EXIT = "Development/system/design/PORTAL/interfaces-and-behavior.md#form-navigation-and-setup-exit"
 
 

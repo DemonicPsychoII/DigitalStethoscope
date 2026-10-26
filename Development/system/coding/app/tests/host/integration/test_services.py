@@ -86,7 +86,7 @@ def test_real_services(scenario, integration_executable, record_property):
         ("vt_id", "VT-14"),
         (
             "basis",
-            "Development/system/design/WIFI/interfaces-and-behavior.md#wi-fi-setup-and-recovery",
+            "Development/system/design/COMMUNICATION/interfaces-and-behavior.md#wi-fi-setup-and-recovery",
         ),
         ("compiler_version", compiler),
         ("compiler_command", subprocess.list2cmdline(command)),

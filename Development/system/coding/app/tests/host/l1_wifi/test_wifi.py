@@ -4,7 +4,8 @@ import pytest
 
 WIFI = "Development/system/design/WIFI/interfaces-and-behavior.md#"
 SERVICE = WIFI + "service-boundary"
-ENTRY = WIFI + "entry-scan-and-recovery"
+ENTRY = WIFI + "supported-networks"
+CACHE = WIFI + "failure-boundaries-and-bounded-results"
 DRIVER = "https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/drivers/wifi/esp32/src/esp_wifi_drv.c#L487-L528"
 DHCP = "https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/subsys/net/lib/dhcpv4/dhcpv4.c#L1997-L2023"
 CASES = []
@@ -77,7 +78,7 @@ for scenario, operation, basis, description in (
     (
         "wifi-strongest-distinct-cache",
         "strongest",
-        ENTRY,
+        CACHE,
         "Keep the strongest 16 distinct SSIDs; a stronger duplicate updates its entry and a weaker duplicate cannot replace it.",
     ),
     (
