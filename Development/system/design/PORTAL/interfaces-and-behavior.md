@@ -29,9 +29,10 @@ Status polls are not queued requests. Activity requests follow P24 while the use
 
 The [shared cancellation and inactivity rule](../COMMUNICATION/interfaces-and-behavior.md#cancellation-and-inactivity)
 owns form Back, setup Cancel and timer behavior. Publish `PORTAL_STATUS_CLOSING`
-before stopping the server on every closure: Cancel, timeout, success/save-warning
-closure and Start interruption. Start has no added notice delay. PORTAL must not
-invent this transition on behalf of COMMUNICATION.
+before stopping the server only on Cancel and inactivity timeout, as COMMUNICATION
+defines. Success/save-warning closure and Start interruption do not publish Closing,
+and Start has no added notice delay. PORTAL must not invent this transition on
+behalf of COMMUNICATION.
 
 Malformed requests, invalid network/passphrase fields and malformed URL encoding
 return HTTP 400. An oversized body returns 413. The Zephyr HTTP router returns 404
