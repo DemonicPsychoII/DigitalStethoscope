@@ -10,7 +10,7 @@ CODE_STEPS = frozenset(
         "Run static repository checks",
         "Validate maintained documentation",
         "Test build tooling",
-        "Test application L2 host scenarios",
+        "Test application unit, L2 and integration host scenarios",
         "Report application scenario results",
         "Test the agent merge gate",
         "Pristine firmware build",
