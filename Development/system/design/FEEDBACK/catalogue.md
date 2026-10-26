@@ -35,8 +35,6 @@ conformity or implemented firmware. Recovery and acknowledgement are separate.
   Muting is an audio action and does not switch the RGB LED off.
 - **Blink notation.** "N blinks, pause" repeats until the error is cleared. A pattern runs a limited number
   of times only when the table says so ("once").
-- **Sort order.** Sort rows by RGB colour, then by number of blinks ("off" first). "No change" rows are
-  overlays on the current colour and come last.
 - **RGB behaviour** is the light pattern of the colour: steady, blink, breathing or flashes. Timing is in
   [design parameters](parameters.md) P22.
 - **Statuses** end when the next status replaces them; the change of state is the visible clear.

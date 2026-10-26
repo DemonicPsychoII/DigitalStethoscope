@@ -10,8 +10,8 @@ the proposed thesis product.
 | System components | [system-components.puml](system-components.puml) | Hardware and external connections; ESP32 remains a black box. Networking is Wi-Fi plus HTTPS. |
 | Electrical interfaces | [electrical-interfaces.puml](electrical-interfaces.puml) | Product connection types and chip roles; the electrical baseline below defines the planned application wiring. Optional interfaces are outside MVP acceptance. |
 | Software components | [software-components.puml](software-components.puml) | Firmware modules: L2 orchestration, L1 hardware adapters and pure C libraries, L0 Zephyr. Libraries include no Zephyr headers; MONITOR observes across layers. |
-| Threads | [runtime-ownership.puml](runtime-ownership.puml) | Proposed workers, the modules they run and data/communication methods. Touch belongs to Input; the BPM worker belongs to `L2_AUDIO`; original-rate blocks reach BPM before the volume control; whether BPM uses its own filter or a listening filter is decided by the filter study. |
-| Listening | [listening-workflow.puml](listening-workflow.puml) | Selected filter or Raw bypass, volume, playback and optional bounded capture/replay. Lung is Raw; Heart can also select Raw. |
+| Threads | [runtime-ownership.puml](runtime-ownership.puml) | Proposed workers, the modules they run and data/communication methods. Touch belongs to Input; the BPM worker belongs to `L2_AUDIO`; original-rate blocks reach BPM before the volume control; BPM uses its own analysis filter, independent of the listening switch (S04 decision D5); the filter study decides the band. |
+| Listening | [listening-workflow.puml](listening-workflow.puml) | Selected filter or Raw bypass, volume, playback and optional bounded capture/replay. Heart can select Raw; optional Lung mode is Raw listening only (TICKET-203). |
 | BPM measurement | [measurement-workflow.puml](measurement-workflow.puml) | Freeze measurement settings and acquire until Stop; cancel without sending before 15 s, or finalize at or after 15 s subject to quality/coverage. Aggregate after listening stops, then deliver the result or validated error report. |
 
 ## Hardware naming
@@ -28,6 +28,8 @@ The application electrical baseline also assigns the Start/Stop button to GPIO16
 the Raw/Murmur/BPM switch to GPIO18/21/38, the volume potentiometer to GPIO1
 (ADC1 channel 0), and the button LED to GPIO17. Switch contacts and the button
 connect to ground with pull-ups; the button LED is active high.
+The GPIO38 switch assignment has an open board check against the RGB LED
+([specification baseline](../../spec/product-scope.md#electrical-interface-baseline)); this view does not resolve it.
 The [specification baseline](../../spec/product-scope.md#electrical-interface-baseline)
 defines these project assignments and their limits. The application overlay still
 needs these peripheral assignments; memory configuration alone does not establish
@@ -46,7 +48,7 @@ Editable product views define the system. Raw board snapshots are immutable sour
 - The thread methods shown are a proposed design. Queue sizes, priorities and exact
   wake-up mechanisms remain implementation choices subject to measured timing.
 - Measurement/session timing remains configurable. The 8 s window, 1 s update and
-  30 s session in the parameter register are candidates, not approved thresholds.
+  30 s session are candidates (preThesis/02-entscheidungen/open-questions.md, D03–D06), not approved thresholds.
 - FHIR is a device-initiated conditional create (`POST`) with up to 3 retries and a `201`/`200` receipt without readback; the server responds rather than polling or
   commanding the device. Network work waits until listening stops.
 - Start on one core; measure before assigning work to a second core. AMP can run
@@ -60,7 +62,7 @@ The later design stage specifies contracts, parameter candidates and open implem
 
 ## Diagram notation
 
-Display, touch, SD-card storage and capture / slower replay are optional beyond the MVP (TICKET-206, TICKET-202).
+Display, touch, SD-card storage, capture / slower replay and Lung mode are optional beyond the MVP (TICKET-206, TICKET-202, TICKET-203).
 Grey elements carry an explicit `optional` stereotype; mixed core/extension boxes
 name optional responsibilities in their labels. Existing evaluation capabilities
 remain visible without implying MVP scope. Component views use component syntax;
