@@ -14,7 +14,7 @@ if (Selected-network address available?) then (yes)
  :Publish connected outcome;
 else (recovery exhausted)
  :Report cause; enter provisioning in Idle;
- :Scan through WIFI; start hotspot and PORTAL;
+ :Run provisioning flow (setup-flow.puml) under the held lease;
 endif
 :Release work to CONTROL;
 stop

@@ -176,14 +176,21 @@ substantiation.
 
 ## Wi-Fi workflow verification
 
-CONTROL posts `COMMUNICATION_EVENT_LISTENING_STARTED` and waits for
-`communication_waitForWiFiStop()` before it starts audio. If the wait times out,
-audio stays off. The communication thread stops scans, connect requests and the
-setup services, but keeps a connected station. If a service does not stop, the
-thread tries again and does not confirm the stop.
+Planned: CONTROL posts `COMMUNICATION_EVENT_LISTENING_STARTED` and waits for
+`communication_waitForWiFiStop()` before it starts audio. These names are not yet in
+the code or the design. The design requires the acknowledgement to follow L1 confirmation
+of scan and connect cancellation and of portal, DHCP and AP shutdown, and a new Start
+invalidates the previous acknowledgement. The communication thread stops scans, connect
+requests and the setup services, but preserves an established station association.
 
-The thread checks for a Start every 200 ms. The total time until audio can start
-also includes a settings write and the driver shutdown; it is not yet measured.
+Cleanup tries each pending stop once. If all stops succeed, audio is released normally.
+If any stop fails, the thread latches WIFI_CLEANUP_FAILURE, disables further Wi-Fi work
+until restart and releases audio under the REQ-13 Wi-Fi-only exception. It does not
+claim confirmed radio shutdown.
+
+The thread uses a candidate 200 ms check interval for Start events. That interval is not
+a bound on teardown latency: the time until audio can start also includes the atomic
+settings write and the driver shutdown, which are not yet measured.
 CONTROL does not call this interface yet.
 
 No application test suite is included yet. The separate test stage will generate communication scenarios from the [Wi-Fi design](../../design/WIFI/interfaces-and-behavior.md) and [portal design](../../design/PORTAL/interfaces-and-behavior.md). CI skips application host execution while that suite is absent; the result reporter remains available for the test stage. Verification case VT-14 remains uncovered. Target timing and CONTROL integration are also pending.

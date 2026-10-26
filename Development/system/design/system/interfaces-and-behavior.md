@@ -89,19 +89,19 @@ Candidate memory accounting:
 | Region / state | Entry | Process | Exit / cancellation |
 |---|---|---|---|
 | Playback Boot | zero gain, capability checks, silent TX prime | bounded adapter initialization | Idle on essential readiness; Fault otherwise |
-| Idle | mute; no active transport/listening operation | allow configuration and network lease | Start is Busy while a result is pending; otherwise start only after lease released |
+| Idle | mute; no active transport/listening operation | allow configuration and network lease | Start is Busy during analysis and sending; otherwise start only after lease released |
 | Live | reset source-dependent state on source generation change | 128-frame normalized fan-out; selected listening filter; gain/saturation; TX | stop/fault mute; capture keeps live path |
 | Capture | allocate/claim bounded clip and ID; LED active | copy raw prefilter/pregain; normal live listening continues | full → Replay; cancel → Live; stop/fault → Idle/Fault, incomplete clip invalid |
 | Replay | freeze valid clip; initialize speed stage; LED active | raw clip → filter → WSOLA → gain/saturation; fresh mic still feeds analysis | end/cancel → Live; release clip cursor; stop/fault mutes |
 | Measurement Acquiring | freeze context/config/ID and clear aggregation | original-rate windows; independent filter; valid estimates | Stop <15 s cancels; Stop ≥15 s → Finalizing; identity change rejected; an Error with audio muted invalidates the session |
 | Finalizing | stop accepting windows for that interval | aggregate and union valid temporal coverage | freeze valid/invalid result once; late blocks cannot mutate result |
-| Delivery Pending | retain completed result and unsent identity | wait for Idle/prerequisites; do not force stop | reject Start with Busy until delivery succeeds or fails visibly; grant job once; full slot leaves visible Pending |
-| Sending | acquire exclusive Idle lease; snapshot payload | bounded connect/TLS/conditional POST, receipt | outcome event + release lease; Start is Busy, never queued |
+| Delivery decision (end of Analysing) | after the valid/invalid latch, check Wi-Fi configuration and Device id, clock, trust and endpoint once at Stop; no waiting | Wi-Fi unconfigured: no send, Wi-Fi-only error indication, result not retained. Prerequisites fail: latch DELIVERY_NOT_POSSIBLE and release Busy at once. Prerequisites pass: grant the one job to Sending |
+| Sending | acquire exclusive Idle lease; snapshot payload | bounded connect/TLS/conditional POST, receipt | outcome event + release lease; Start is Busy, never queued; terminal failure latches DELIVERY_FAILURE and releases Busy |
 | Error, audio affected | mute and invalidate active acquisition; block Start | expose latched cause on the red LED and serial log | use the catalogue clear rule; restart-required faults remain halted until restart |
 
 Changing Heart/Lung, source or point during a session leaves the frozen context unchanged and raises SESSION_CONTEXT_CHANGE with the catalogue halt/restart rule. Outside a session the controller may accept configuration changes and reset source-dependent histories. Generation checks reject stale completions. Separate acknowledgement clears the indication of an Error that the catalogue allows to clear, without starting, retrying or changing an active workflow. A halted Error follows the catalogue clear rule; a short press cannot clear a restart-required fault.
 
-While a completed result is Delivery Pending, CONTROL rejects Start before acquisition with Busy. Keep the sole pending result and its frozen identity unchanged; do not queue Start or a second result. Admission resumes only after delivery succeeds or terminates with a visible failure and the network lease is released; the normal error-clear rules still apply. This preserves the one-slot/no-retry-queue contract and the bounded delivery outcomes of REQ-09/REQ-10: success confirms the result, terminal failure visibly loses it. A later measurement needs a fresh Start; the failed result cannot be reconstructed or retried.
+A completed result does not wait for delivery prerequisites. When they fail at Stop, CONTROL releases Busy at once and latches DELIVERY_NOT_POSSIBLE; the result is not retained. When they hold, the single job is granted to Sending, CONTROL rejects Start before acquisition with Busy, and it does not queue Start or a second result. Admission resumes only after delivery succeeds or terminates with DELIVERY_FAILURE and the network lease is released; the normal error-clear rules still apply to these latches. This preserves the one-slot/no-retry-queue contract and the bounded delivery outcomes of REQ-09/REQ-10: success confirms the result, failure visibly loses it. A later measurement needs a fresh Start; the lost result cannot be reconstructed or retried.
 
 ## DSP and measurement design
 
@@ -136,7 +136,7 @@ the persisted server Device id, a colon, and the immutable interval end formatte
 the end time or identity on retry. One device must not finalize two measurements with
 the same end timestamp. Send `POST /Observation`, `Content-Type: application/fhir+json`,
 with `identifier: [{"system":"urn:stethoscope:measurement","value":"<value>"}]` in the body
-and `If-None-Exist: identifier=urn:stethoscope:measurement|<value>`.
+and, for the example value below, `If-None-Exist: identifier=urn%3Astethoscope%3Ameasurement|device-42%3A2026-10-23T12%3A00%3A00.000Z`.
 Percent-encode each search value using UTF-8 URI query encoding before constructing
 the header; the separator `|` separates system and value. For example the logical value
 `device-42:2026-10-23T12:00:00.000Z` is encoded as
@@ -155,15 +155,14 @@ v4.0.1, HTTP, Conditional create, 2019,
 Patient enrichment is external: the device never serializes Observation.subject or
 a patient reference. The test HAPI deployment must explicitly enrich
 Observation.subject from Device.patient. This is a deployment precondition,
-not a built-in HAPI behavior claimed here. One delivery job starts automatically
-when a result and Idle/config prerequisites coincide; P13 bounds its attempts.
+not a built-in HAPI behavior claimed here. One delivery job is granted at Stop
+when prerequisites hold; otherwise DELIVERY_NOT_POSSIBLE is latched at once. P13 bounds its attempts.
 
 Map sample/monotonic measurement interval to UTC from an approved clock anchor. Use measurement
 time, not send time; clock loss/skew makes the result ineligible until its mapping is resolved,
-not rewritten. FHIR `effectiveDateTime` carries the end of the aggregate interval:
-This is a project representation choice. The earlier claim that `effectivePeriod` failed profile validation is unsupported: no validator version, input artifact or result record is available. The interval stays in the local result. Preserve the Device id, point (approved coding or
+not rewritten. FHIR `effectiveDateTime` carries the end of the aggregate interval. This is a project representation choice. The interval stays in the local result. Preserve the Device id, point (approved coding or
 evaluation-only metadata), value, interval and analysis settings in the immutable local result.
-The local profile/metadata mapping and decimal precision remain open (TICKET-181).
+The local profile/metadata mapping, validation of `effectiveDateTime` against `effectivePeriod`, and decimal precision remain open (TICKET-181).
 
 NET verifies CA/name/time and checks bounded status/body parsing. `201 Created` or `200` (existing conditional create) is the receipt and marks the result Sent; there is no readback.
 An uncertain response is retried within the same bounded job; a single matching identifier returns the existing resource; multiple matches fail with 412. Configuration/auth errors and server failures remain visible after the last attempt.
@@ -173,7 +172,7 @@ local network/clock trust assumptions; that decision remains open (TICKET-180, T
 Active network work and live listening use an exclusive controller lease. Retain an
 established station association during listening; do not run setup/reconnect/delivery jobs.
 Start during Wi-Fi setup requests safe teardown before audio; stop audio before granting network;
-Start during analysis, Delivery Pending or sending is rejected Busy, with no cancellation or queued start. A fresh Start after release primes/starts audio.
+Start during analysis or sending is rejected Busy, with no cancellation or queued start. A fresh Start after release primes/starts audio.
 If release cannot be proven, remain stopped and show the reason. Radio/driver background behavior
 must be measured; disabling application jobs alone is not proof of interference isolation.
 
@@ -213,7 +212,7 @@ Values are in [design parameters](parameters.md). Optional parts (replay, Lung, 
 | Hardware | ESP32-S3 N16R8, INMP441 on I2S0, PCM5102A on I2S1, maintained carrier pin map, potentiometer on ADC1. The device ends at the DAC line output; the amplifier is outside the project scope. Document chestpiece coupling and the microphone low-frequency limit. |
 | Audio | Convert INMP441 signed 24-bit left-channel data into normalized mono blocks with sequence numbers. DMA buffers in internal RAM, TX primed with silence, mono duplicated to both DAC channels. Listening continues when analysis cannot accept a block; the gap invalidates the affected BPM window. On microphone/DAC failure: silence, cancel the session, Error with audio muted; restore the cause and restart as required by the catalogue. |
 | Input | Debounced, timestamped events, one per stable transition. Interrupt handlers only signal deferred work. Volume clamped to 0–100 %. On potentiometer ADC failure or an invalid switch position: safe value, then CONTROL_INPUT_FAILURE (restart). A long press (≥2 s) is a distinct event and suppresses the ordinary press. |
-| Controller | Only writer of mode, filter and workflow state; others send events and read snapshots. Context changes during a session are rejected with SESSION_CONTEXT_CHANGE halt/restart handling. Active network work only at boot/Idle; Start cancels Wi-Fi setup safely; Start during analysis, Delivery Pending or sending is Busy. Start/Stop and acknowledgement are separate. Portal only from Idle. |
+| Controller | Only writer of mode, filter and workflow state; others send events and read snapshots. Context changes during a session are rejected with SESSION_CONTEXT_CHANGE halt/restart handling. Active network work only at boot/Idle; Start cancels Wi-Fi setup safely; Start during analysis or sending is Busy. Start/Stop and acknowledgement are separate. Portal only from Idle. |
 | Listening | Raw, Murmur and BPM listening filters; Raw applies no band filter. Output saturates before integer conversion. Listening filter and volume never change the analysis input. DSP core in pure C without Zephyr headers or heap use per block. |
 | BPM | BPM analysis gets audio before the volume control. Which filter it uses (own analysis filter or a listening filter) is decided by the filter study (TICKET-189). Whole-cycle periodicity, not single S1/S2 peaks. Invalid windows carry a reason; an old BPM is never reused. Aggregation counts overlapping windows once and freezes value, interval and settings. Cancel discards the aggregation. No fixed numeric quality threshold. |
 | Network | Connection, time sync, TLS and HTTP only under the Idle lease. FHIR R4 Observation (LOINC 8867-4, UCUM /min, `effectiveDateTime` = interval end), conditional create with `device` reference, `subject` omitted by the device; external HAPI enrichment from Device.patient, up to 3 retries, `201`/`200` as receipt, no readback. HTTPS verifies chain, hostname and validity against the lab CA; no plain-HTTP fallback. Credentials stay out of source and logs. Wi-Fi credentials and the server-assigned Device id persist in the flash settings partition; Device registration creates the server resource once and reuses its stored id after restart. |
