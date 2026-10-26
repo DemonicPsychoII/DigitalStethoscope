@@ -319,6 +319,7 @@ int main(int argument_count, char **arguments)
            communication_waitForWiFiStop(K_NO_WAIT),
            communication_CleanupFaultIsLatched,
            maximum_hotspot_clients);
+    printf("not_connected_error %d\n", -ENOTCONN);
     printf("first_join_milliseconds %lld\nlast_join_milliseconds %lld\nboot_attempts %d\njoin_failure %d\n",
            (long long)integration_first_join_milliseconds,
            (long long)integration_last_join_milliseconds,

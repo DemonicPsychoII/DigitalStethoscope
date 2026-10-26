@@ -115,12 +115,18 @@ def test_real_services(scenario, integration_executable, record_property):
         assert observed["last_join_milliseconds"] == 15600
         assert observed["scan_calls"] == 0 and observed["writes"] == 0
         assert observed["connected"] == 0 and observed["page"] == 0
-        assert observed["record_old"] == 1 and observed["join_failure"] == -107
+        assert (
+            observed["record_old"] == 1
+            and observed["join_failure"] == observed["not_connected_error"]
+        )
     elif scenario == "page-disconnect-before-ipv4":
         assert observed["connect_calls"] == 1 and observed["scan_calls"] == 2
         assert observed["first_join_milliseconds"] == 1500
         assert observed["writes"] == 0 and observed["page"] == 1
-        assert observed["connected"] == 0 and observed["join_failure"] == -107
+        assert (
+            observed["connected"] == 0
+            and observed["join_failure"] == observed["not_connected_error"]
+        )
     elif scenario == "boot-record":
         assert observed["connect_calls"] == 1 and observed["scan_calls"] == 0
         assert (

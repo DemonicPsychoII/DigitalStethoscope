@@ -352,6 +352,11 @@ static void run_wifi_case(const char *scenario, const char *argument)
         abort();
 }
 
+static void publish_failed_join(void)
+{
+    portal_setStatus(PORTAL_STATUS_CONNECT_FAILED, -EACCES);
+}
+
 static void run_portal_case(const char *scenario, const char *argument)
 {
     if(strcmp(scenario, "form-open") == 0)
@@ -410,6 +415,18 @@ static void run_portal_case(const char *scenario, const char *argument)
         assert(is_zero(portal_Form, sizeof(portal_Form)) && portal_FormClient == NULL);
         struct http_response_ctx response = connect_fragment(&second_client, "network=selected-network&password=test-password", HTTP_SERVER_REQUEST_DATA_FINAL);
         assert(response.status == HTTP_202_ACCEPTED);
+    }
+    else if(strcmp(scenario, "activity-state-race") == 0)
+    {
+        host_mutex_unlock_hook = publish_failed_join;
+        assert(command_request(PORTAL_REQUEST_ACTIVITY) == HTTP_202_ACCEPTED);
+        assert(portal_Status == PORTAL_STATUS_CONNECT_FAILED);
+        assert(portal_Error == -EACCES);
+        assert(portal_SelectionIsReady);
+        struct portal_request request = {0};
+        assert(portal_waitForRequest(&request, K_NO_WAIT) == 0);
+        assert(request.type == PORTAL_REQUEST_ACTIVITY);
+        assert(command_request(PORTAL_REQUEST_RESCAN) == HTTP_202_ACCEPTED);
     }
     else if(strcmp(scenario, "queue-full") == 0)
     {

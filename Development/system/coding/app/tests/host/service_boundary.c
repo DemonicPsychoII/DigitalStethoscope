@@ -53,6 +53,7 @@ static bool has_stored_network;
 static struct wifi_network stored_network;
 static int settings_write_failures;
 static int settings_write_calls;
+static void (*host_mutex_unlock_hook)(void);
 
 static void emit_event(uint64_t event, const void *information)
 {
@@ -180,6 +181,12 @@ int k_mutex_lock(struct k_mutex *mutex, k_timeout_t timeout)
 int k_mutex_unlock(struct k_mutex *mutex)
 {
     (void)mutex;
+    if(host_mutex_unlock_hook != NULL)
+    {
+        void (*callback)(void) = host_mutex_unlock_hook;
+        host_mutex_unlock_hook = NULL;
+        callback();
+    }
     return 0;
 }
 

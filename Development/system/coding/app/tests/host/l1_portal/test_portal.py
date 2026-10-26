@@ -119,6 +119,12 @@ for scenario, operation, basis, description in (
         "Abort erases the form and releases ownership for another client.",
     ),
     (
+        "portal-activity-preserves-concurrent-state",
+        "activity-state-race",
+        REQUESTS,
+        "Publish a failed join at the handler mutex-release boundary; Activity must preserve its state and error and leave rescan available. Scheduling is substituted.",
+    ),
+    (
         "portal-queue-four-full-503",
         "queue-full",
         EXIT,
