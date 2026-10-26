@@ -18,7 +18,7 @@ Migration has three stages:
    # Inspect the JSON, then repeat with --apply.
    ```
 
-   The added protection requires one approving review and resolved conversations. Pushes dismiss stale approvals. CodeRabbit must issue an approving review; a comment or progress check does not satisfy this rule.
+   The added protection requires one approving review and resolved conversations, so merges wait for a native approval from stage 1 onward while `agent-gate` still runs. Pushes dismiss stale approvals. CodeRabbit must issue an approving review; a comment or progress check does not satisfy this rule.
 
 2. **Verify both reviewer identities.** Two probe PRs demonstrate approval by CodeRabbit and by the separate fallback reviewer. Each probe needs `reviewDecision=APPROVED` and the tested reviewer's approval of its current head. The helper rejects other approving reviewers, including retained older approvals, so each probe tests one identity. Comment-only verdicts cannot satisfy native approval.
 

@@ -57,6 +57,6 @@ legend bottom
   Wi-Fi-only failures preserve functioning audio.
   Streaming BPM requires no saved raw-session audio.
   Duration/windows/filter/quality targets remain proposals.
-  Lung = listening only; no measurement/FHIR/error report.
+  Lung (optional) = listening only; no measurement/FHIR/error report.
 endlegend
 @enduml
