@@ -25,6 +25,8 @@ Procedure copied from the [tested-revision procedure](https://github.com/Demonic
 - Only fully supported observable criteria are marked Pass. Partial observations remain in the relevant notes; all other checks are skipped / Not run. Reported execution outcome: successful for the checked flow; no overall procedure pass is claimed.
 - Signature entered as Nico at Nico's explicit request: “Update the manual tests for me, check what's checked, skip the rest, sign with my Name `Nico`”.
 
+Record-format deviation: Nico explicitly requested these signed manual records, then requested that they be committed to the test PR. These are human-readable Markdown reports, not validator-accepted JSON exports. JSON completeness/sign-off validation has not been performed. Missing setup metadata, signature-reference evidence and an execution time with timezone are not invented; the supplied date and explicit signature authorization are retained above.
+
 ## Reported manual execution — successful
 
 - [x] Flash with erase flag; device boots and opens a visible setup hotspot.
@@ -64,7 +66,7 @@ These reported checks passed. The full procedures remain partially executed; unc
 8. Start a join and attempt cancellation during connecting, saving and result display in separate runs. Pass: Cancellation is unavailable or ignored from Connect through automatic closure.
    Result: [ ] Pass / [ ] Fail / [ ] Blocked / [x] Not run. Notes/evidence: Skipped at Nico's request; execution not reported.
 9. Join a controlled network and capture the result. Pass: Its station IPv4 address is visible throughout the 10 s result display.
-   Result: [x] Pass / [ ] Fail / [ ] Blocked / [ ] Not run. Notes/evidence: Nico reported a connection attempt followed by success, with device IPv4 displayed on the setup page during the reported 10-second result period. No timestamped capture was supplied.
+   Result: [ ] Pass / [ ] Fail / [ ] Blocked / [x] Not run. Notes/evidence: Nico reported a connection attempt followed by success and a displayed device IPv4 address. Visibility throughout the full 10-second period was not explicitly confirmed; the point observation does not establish this complete criterion.
 10. Observe the end of success or save-warning display in separate runs. Pass: Closing precedes portal/DHCP/AP teardown while the established station remains.
    Result: [ ] Pass / [ ] Fail / [ ] Blocked / [x] Not run. Notes/evidence: After the reported 10-second success period, setup closed, the phone browser could no longer refresh the page and the hotspot was no longer visible. Closing-before-teardown ordering, DHCP shutdown, retained station association and the save-warning variant were not checked.
 11. Join with a wrong password. Pass: The cause remains available while the AP stays open and the refreshed list permits another selection.
@@ -106,7 +108,7 @@ These reported checks passed. The full procedures remain partially executed; unc
 
 ## Completion
 
-Overall result: [ ] Pass / [ ] Fail / [ ] Blocked / [x] Not run. Partial execution; remaining steps skipped.
+Overall result: [ ] Pass / [ ] Fail / [x] Blocked / [ ] Not run. Partial execution; remaining steps skipped. The reported flow succeeded; full-procedure verification is incomplete.
 Date: **2026-10-26**
 
 Name (signature): **Nico**
