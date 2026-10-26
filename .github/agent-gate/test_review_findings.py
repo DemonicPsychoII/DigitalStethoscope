@@ -31,12 +31,6 @@ class FindingSeverityTests(unittest.TestCase):
         summary = (Path(__file__).parent / "fixtures/coderabbit-minor-summary.md").read_text(encoding="utf-8")
         self.assertTrue(nonblocking_review(summary, [MINOR] * 6))
 
-    def test_picture_only_prompt_icon(self):
-        summary = ('**Actionable comments posted: 1**\n\n---\n\n<details><summary>'
-                   '<picture><source media="dark"><img src="icon.svg"></picture> Prompt to fix review comments'
-                   '</summary>\n```\nRepeated finding\n```\n</details>')
-        self.assertTrue(nonblocking_review(summary, [MINOR]))
-        self.assertFalse(nonblocking_review(summary, [MAJOR]))
         self.assertFalse(nonblocking_review(summary, [MINOR] * 5))
         self.assertFalse(nonblocking_review(summary, [MINOR] * 5 + [MAJOR]))
         self.assertFalse(nonblocking_review(summary.replace(" Trivial**", " Major**"), [MINOR] * 6))
@@ -44,6 +38,13 @@ class FindingSeverityTests(unittest.TestCase):
         self.assertFalse(nonblocking_review(summary + "\nUnclassified concern", [MINOR] * 6))
         summary = summary.replace("🤖 Prompt to fix review comments", '<picture><img src="icon.svg"></picture>🤖 Prompt to fix review comments')
         self.assertTrue(nonblocking_review(summary, [MINOR] * 6))
+
+    def test_picture_only_prompt_icon(self):
+        summary = ('**Actionable comments posted: 1**\n\n---\n\n<details><summary>'
+                   '<picture><source media="dark"><img src="icon.svg"></picture> Prompt to fix review comments'
+                   '</summary>\n```\nRepeated finding\n```\n</details>')
+        self.assertTrue(nonblocking_review(summary, [MINOR]))
+        self.assertFalse(nonblocking_review(summary, [MAJOR]))
 
     def test_explicit_minor_and_nitpick_are_nonblocking(self):
         for header in (MINOR, "_🧹 Nitpick_ | _🔵 Trivial_\n\nOptional refactoring."):
