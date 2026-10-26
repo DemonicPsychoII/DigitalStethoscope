@@ -7,6 +7,7 @@ A complete specification draft is not the same as permission to implement unagre
 
 ## Decision register
 
+The [current baseline](README.md#current-baseline) names the decision in force for each topic.
 The original register below is historical preparation context. [11 October owner decisions](mvp-decisions-2026-10-11.md) supersede D02/D03/D08/D12/D14 workflow and scope proposals; [13 October decisions](mvp-decisions-2026-10-13.md) settle the firmware layer layout; the [14 October decisions](mvp-decisions-2026-10-14.md) close D05, D07, D09, D11 and D13 as marked. Numeric criteria remain proposals; [the component timeline](mvp-implementation-timeline.md) replaces the old audio-first implementation sequence.
 
 | ID | Decision / conflict | Proposed draft treatment | Blocks |
@@ -34,7 +35,7 @@ The original register below is historical preparation context. [11 October owner
 | Misleading BPM from S1/S2, noise, stale/missing audio | Whole-cycle estimator, coverage/gap rules, error instead of a number | REQ-06, REQ-08; VT-06/VT-09 |
 | Wrong time or wrong device transmitted | Validated clock, Device id stored in flash and reused, frozen result | REQ-09, REQ-15; VT-07 |
 | Result linked to the wrong patient | Moved to the server workflow outside the MVP (15 October); the device never selects a patient and passes on only a patient that the server has linked (16 October). The server workflow must show device, time and value before linking. | — (server workflow) |
-| Credentials exposed through the hotspot | Open hotspot (owner decision), boot/Idle setup with inactivity timeout, write-only credential field, no credential logs; no patient selection on the device | REQ-11, REQ-12; VT-14/VT-11 |
+| Credentials exposed through the hotspot | Open hotspot (owner decision), boot/Idle setup with inactivity timeout, candidate one client (P21), write-only credential field, no credential logs; no patient selection on the device. Residual risk: the open hotspot and HTTP portal send the network password unencrypted, so a passive listener in radio range during setup can capture it. Formal acceptance of this residual risk is not yet recorded. | REQ-11, REQ-12; VT-14/VT-11 |
 | Duplicate or lost result after a lost response | Conditional create with stable identifier, up to 3 retries | REQ-10; VT-07 |
 | Audio stalls due to TLS or memory pressure | Bounded workers, internal DMA, network lease, monitored deadlines | REQ-02, REQ-05; VT-02/VT-08 |
 | Peripheral absent or failed | Startup checks; mute/restart and acknowledgement per current feedback catalogue (19 October) | REQ-13; VT-01/VT-12 |
@@ -66,7 +67,7 @@ Follow the [component timeline](mvp-implementation-timeline.md): release/contrac
 - [ ] Each P row has an approved value or explicitly deferred dependency with no invented pass criterion.
 - [ ] Unconfirmed carrier wiring has an authorized verification plan.
 - [ ] Interfaces, ownership, failure outcomes and timing/resource budgets reviewed.
-- [ ] Every system requirement (REQ-01…REQ-15) has a test Nico can run and a pass criterion.
+- [ ] Every system requirement has a test Nico can run and a pass criterion.
 - [ ] Classification/SOUP/risk claims are separated from demonstrated compliance and device safety.
 - [ ] Estimate includes familiarization, meetings, documentation, reviews and correction/test iterations.
 - [ ] Specification, diagrams and detailed design agree after review edits.

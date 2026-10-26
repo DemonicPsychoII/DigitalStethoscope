@@ -1,20 +1,23 @@
 # MVP component implementation timeline
 
-**Current plan (Jira, decided 14 October 2026):** TICKET-178…TICKET-197 under [TICKET-129](https://nfrie.atlassian.net/browse/TICKET-129), one implementer (Nico), up to 8 h per weekday from 16 October to 2 December. 271 h planned effort (200 h base + 71 h allowance) plus 12 h for the hotspot page and Device registration ([TICKET-197](https://nfrie.atlassian.net/browse/TICKET-197)) on Saturdays and the slack before the carrier board arrives. Jira is the source of truth for dates; [14 October decisions](mvp-decisions-2026-10-14.md) define scope, with the [15 October changes](mvp-decisions-2026-10-15.md) (no patient selection on the device, minimal delivery). Acceptance is the [system requirements](../requirements/system-requirements.md).
+**Current plan (Jira, decided 14 October 2026):** TICKET-178…TICKET-197 under [TICKET-129](https://nfrie.atlassian.net/browse/TICKET-129), one implementer (Nico), up to 8 h per weekday from 16 October to 2 December. 271 h planned effort (200 h base + 71 h allowance) plus 12 h for the hotspot page and Device registration ([TICKET-197](https://nfrie.atlassian.net/browse/TICKET-197)) on Saturdays and the slack before the carrier board arrives. Jira holds the current titles, dates and status; the [current baseline](README.md#current-baseline) names the scope decisions in force. Acceptance is the [system requirements](../requirements/system-requirements.md).
 
 **Realism (14 October):** the weekday plan has about 1 h of slack. It holds only if Saturdays cover TICKET-197 and meetings, documentation and illness stay small. Hours exceed the registered software, hardware and integration budget (156 h) by more than the 64 h buffer. Writing runs 3–30 December; submission is 11 January 2027, with writing and proofreading finished by 4 January at the latest, ideally 28 December.
 
-## Timeline submitted for implementation-start approval
+## Baseline submitted for implementation-start approval
 
 ![Digital Stethoscope implementation timeline, 11 October 2026 snapshot](implementation-timeline-2026-10-11.png)
 
 The chart is an 11 October snapshot of the Jira timeline (TICKET-178 to TICKET-196) and does not include TICKET-197.
+The table below is the frozen 14 October baseline. It is not updated when Jira changes;
+compare progress against it in Jira. Later scope moves are in the [decision log](README.md#decision-log),
+for example Device registration moved to the FHIR phase on 19 October.
 
 | Jira | Task | Effort | Start → due | Section below |
 |---|---|---|---|---|
 | [TICKET-178](https://nfrie.atlassian.net/browse/TICKET-178) | Zephyr project structure, board configuration, reproducible build | 5 h | 10-16 → 10-16 | BASE |
 | [TICKET-179](https://nfrie.atlassian.net/browse/TICKET-179) | Wi-Fi connection, hotspot page and saved credentials | 24 h | 10-16 → 10-21 | WIFI |
-| [TICKET-197](https://nfrie.atlassian.net/browse/TICKET-197) | Wi-Fi setup portal (19 October: registration moved to FHIR; Jira title not updated here) | 12 h | 10-17 → 10-27 (Saturdays) | PORTAL |
+| [TICKET-197](https://nfrie.atlassian.net/browse/TICKET-197) | Hotspot Wi-Fi setup page and Device registration | 12 h | 10-17 → 10-27 (Saturdays) | PORTAL |
 | [TICKET-180](https://nfrie.atlassian.net/browse/TICKET-180) | Clock synchronization and HTTPS certificate validation | 5 h | 10-21 → 10-22 | WIFI |
 | [TICKET-181](https://nfrie.atlassian.net/browse/TICKET-181) | FHIR delivery with retries, error reporting, matching readback (readback dropped 15 October) | 20 h | 10-22 → 10-26 | FHIR |
 | [TICKET-182](https://nfrie.atlassian.net/browse/TICKET-182) | Verify Wi-Fi/FHIR communication on the ESP32-S3 | 10 h | 10-26 → 10-27 | NETTEST |

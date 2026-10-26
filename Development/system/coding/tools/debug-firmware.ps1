@@ -62,7 +62,8 @@ foreach ($file in @($boardCfg, $gdb)) {
     if (-not (Test-Path -LiteralPath $file -PathType Leaf)) { throw "Missing $file. Run setup-toolchain.ps1 first." }
 }
 
-$server = Start-Process -FilePath $openocd -PassThru -NoNewWindow -ArgumentList @(
+# A separate console keeps GDB's Ctrl+C from also shutting down OpenOCD.
+$server = Start-Process -FilePath $openocd -PassThru -WindowStyle Minimized -ArgumentList @(
     '-s', "`"$scripts`"", '-f', "`"$($boardCfg -replace '\\', '/')`"",
     '-c', '"gdb port 3333"', '-c', 'init')
 # Without an open handle, Windows PowerShell 5.1 reports no exit code later.

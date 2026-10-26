@@ -8,6 +8,7 @@
 6. [Interface contracts, design constraints](design/interfaces-and-behavior.md) and [design parameters](design/parameters.md)
 7. [Verification and evidence](testing/specification-verification.md)
 8. [Review decisions and implementation readiness](planning/implementation-readiness.md)
+9. [Current baseline and decision log](planning/README.md)
 
 The linked documents distinguish source-backed behavior, proposed parameters and
 open choices. The evaluation firmware is a separate implementation.
@@ -19,5 +20,9 @@ device verification remains planned.
 **Editing:** requirements must stay testable by Nico on the device ([14 October decisions](planning/mvp-decisions-2026-10-14.md));
 design decisions belong in `design/`. Edit `.puml` diagrams;
 original board snapshots remain immutable provenance.
+New decisions follow [recording a new decision](planning/README.md#recording-a-new-decision).
+State implementation status and test results only in dated evidence records, not in
+descriptive documents. Before pushing documentation, run
+`python Development/system/testing/ci/validate_docs.py` from the repository root.
 
 Updated by Claude-Opus-5.5 on behalf of Nico running in T3 Code through Claude Code.

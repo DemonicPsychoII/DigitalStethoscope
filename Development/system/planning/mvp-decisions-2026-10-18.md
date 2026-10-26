@@ -1,8 +1,7 @@
 # Wi-Fi and portal — decision log, 18 October 2026
 
-> **Superseded in part (19 October 2026):** current Wi-Fi setup, recovery and feedback
-> follow the [19 October resolutions](mvp-decisions-2026-10-19.md). Earlier text below
-> is historical where it conflicts; unrelated delivery decisions remain separate.
+> **Superseded in part:** the [current baseline](README.md#current-baseline) names the
+> decision in force for each topic. Text below is historical where it conflicts.
 
 Owner: Nico. Scope: ESP32-S3 Wi-Fi setup and recovery. This records project decisions,
 not implemented or hardware-verified behaviour. This save adds only the decision log;
@@ -167,3 +166,5 @@ change. This log is the current Wi-Fi/portal reference; saving it does not make 
 older repository view consistent with it.
 
 Recorded by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.
+
+Updated by Claude-Opus-5.5 on behalf of Nico running in T3 Code through Claude Code.

@@ -5,6 +5,48 @@ reviews:
   request_changes_workflow: true
   # Authors must not manufacture the bot approval trusted by the review gate.
   allow_author_approval: false
+  # Keep only inline findings and review status. Summaries, walkthrough extras and
+  # metadata dropdowns add reading load without improving the review.
+  # The AI-agent prompt stays because agents implement the findings.
+  enable_prompt_for_ai_agents: true
+  high_level_summary: false
+  review_info: false
+  review_details: false
+  changed_files_summary: false
+  sequence_diagrams: false
+  estimate_code_review_effort: false
+  assess_linked_issues: false
+  related_issues: false
+  related_prs: false
+  suggested_labels: false
+  suggested_reviewers: false
+  in_progress_fortune: false
+  poem: false
+  # Agents make the code changes; CodeRabbit must not commit or offer to.
+  finishing_touches:
+    docstrings:
+      enabled: false
+    unit_tests:
+      enabled: false
+    simplify:
+      enabled: false
+    autofix:
+      enabled: false
+    fix_ci:
+      enabled: false
+    resolve_merge_conflict:
+      enabled: false
+  # Generic checks fit no project rule here, and with request_changes_workflow a
+  # failing check withholds the approval that the review gate relies on.
+  pre_merge_checks:
+    docstrings:
+      mode: "off"
+    title:
+      mode: "off"
+    description:
+      mode: "off"
+    issue_assessment:
+      mode: "off"
   auto_review:
     enabled: true
     drafts: false
@@ -49,3 +91,5 @@ reviews:
         Check that requirements are clear, measurable, consistent, and traceable.
         Distinguish goals from verified behavior. Flag contradictions with the
         specification or implementation and identify evidence for the finding.
+chat:
+  art: false

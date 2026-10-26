@@ -24,9 +24,7 @@ Zephyr environment, from this application directory:
 west build --pristine -b esp32s3_devkitc/esp32s3/procpu . -d build-eval
 ```
 
-Pinned Zephyr revision: 357467a011cd2557a1a3f0b4be83d817c4addc9b
-
-Other tool pins live in [toolchain.json](../../testing/ci/toolchain.json).
+The Zephyr revision and all other tool pins live in [toolchain.json](../../testing/ci/toolchain.json).
 [Build and flash](BUILD-GUIDE.md) covers profiles, console ports, memory sizing,
 cloud downloads and build identity (`stetho version`). Hardware flashing, serial
 and device-network operations require owner authorization.
@@ -77,3 +75,5 @@ Historical component evidence is not automatically acceptance of this firmware.
 Use annotated/reference signals and report invalid-result coverage with BPM error.
 
 Updated by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.
+
+Updated by Claude-Opus-5.5 on behalf of Nico running in T3 Code through Claude Code.

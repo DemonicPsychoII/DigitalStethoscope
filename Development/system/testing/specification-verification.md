@@ -8,7 +8,7 @@ but they are not requirements.
 
 ## Acceptance tests
 
-Run REQ-01…REQ-15 as written in the [requirement table](../requirements/system-requirements.md). Record each run with
+Run every requirement as written in the [requirement table](../requirements/system-requirements.md). Record each run with
 the evidence template below.
 
 ## Developer checks (internal)
@@ -59,7 +59,7 @@ functional demonstration under one configuration does not establish acceptance f
 5. Evaluate filter variants on identical approved material and reference; report outcome even if no
    filter wins. Optional exploratory hearing study is separate and does not replace functional checks.
 6. After review-driven arithmetic, interface or configuration changes, rerun affected tests.
-7. Run the acceptance tests REQ-01…REQ-15 on the finished device. Formal acceptance requires reviewed results; this draft supplies no acceptance claim.
+7. Run the acceptance test of every system requirement on the finished device. Formal acceptance requires reviewed results; this draft supplies no acceptance claim.
 
 Created by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.
 
@@ -69,8 +69,9 @@ Updated by Claude-Opus-5.5 on behalf of Nico running in T3 Code through Claude C
 
 ## Wi-Fi workflow host evidence — 19 October 2026
 
-Source: local implementation based on `10fde50`, with the workflow, service
-contracts and tests committed with this record. No target firmware revision or
+Source: local implementation based on `10fde50`. This branch holds only the
+service contracts; the workflow and the host tests are in the stacked PR #50
+(`feature/implement-wifi-service`). No target firmware revision or
 hardware measurement is claimed.
 
 - `python -m pytest -q Development/system/coding/app/tests/host`: 17 passed using

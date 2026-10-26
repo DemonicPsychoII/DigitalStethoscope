@@ -35,7 +35,9 @@ R04 schätzt 20–50 Mio. Zyklen/s für WSOLA und 10–30 Mio. Zyklen/s für Pha
 
 Firmware README says software diagnostics count 8 ms deadline misses and RX/TX/allocation failures, but slab use is not exact hardware FIFO depth; end-to-end acoustic/electrical latency must be measured separately.
 
-**Ursprung:** [Development/system/coding/bringup-zephyr/README.md:217-222](../../Development/system/coding/bringup-zephyr/README.md#L217)
+> **Neuerer Stand (Stand integration, 2026-10-22):** Eine getrennte Messung der akustisch-elektrischen End-to-End-Latenz ist im Projekt nicht vorgesehen. Aktuell: Latenz wird nach Gehör geprüft (REQ-05), da kein Zweikanal-Aufnahmeaufbau verfügbar ist (14.10.). – siehe [MVP-Entscheidungen 14.10. (Umfang)](../../Development/system/planning/mvp-decisions-2026-10-14.md#scope).
+
+**Ursprung:** [Development/system/coding/bringup-zephyr/README.md:217-222](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/23c1ea492270b897532896179e35f873eee823be/Development/system/coding/bringup-zephyr/README.md?plain=1#L217) (**Herkunft verschoben:** seit b2c3dde zu einem kurzen Einstiegs-README verdichtet; die Zeilenangaben gelten nur für die zitierte Fassung. Link zeigt diese historische Fassung. Aktuell: [Bring-up-README](../../Development/system/coding/bringup-zephyr/README.md))
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
 
 <a id="c015"></a>
@@ -120,7 +122,7 @@ THA-baseline-traceability.json bindet den institutionalisierten Vergleich an Rev
 
 The evaluation protocol requires server readback to match Patient, LOINC, quantity, unit, timestamp and resource ID; TLS negative cases must not transfer successfully, audio must continue, and retry is explicit.
 
-> **Überholt (Stand integration, 2026-10-12):** „Retry is explicit“ gilt für das MVP nicht mehr. Aktuell: Fehlgeschlagene Sendungen werden angezeigt und abgebrochen; keine automatische oder manuelle Wiederholungswarteschlange; Zeitüberschreitung nach Server-Commit gilt als „Unverified“. Readback-Abgleich bleibt. – siehe [MVP-Entscheidungen 11.10.](../../Development/system/planning/mvp-decisions-2026-10-11.md#confirmed-scope-and-behavior).
+> **Überholt (Stand integration, 2026-10-22):** „Retry is explicit“ und der Readback-Abgleich gelten für das MVP nicht mehr; ein Patient steht nur bei serverseitiger Verknüpfung in der Observation. Aktuell: Fehlgeschlagene Sendung: bis zu 3 Wiederholungen (4 Versuche) etwa 2 s auseinander, alle innerhalb 10 s, danach Fehleranzeige; bedingtes Anlegen (`If-None-Exist`) verhindert Duplikate (14.10.). Kein Readback, `201`/`200` gilt als Quittung (15.10.). Prüfung über die HAPI-Webseite (REQ-09, REQ-10). WLAN-Fehler unterbrechen funktionierendes Audio nicht (19.10.). – siehe [MVP-Entscheidungen 14.10.](../../Development/system/planning/mvp-decisions-2026-10-14.md#behavior), [MVP-Entscheidungen 15.10.](../../Development/system/planning/mvp-decisions-2026-10-15.md#resulting-behavior), [Systemanforderungen](../../Development/system/requirements/system-requirements.md#system-requirements-mvp).
 
 **Ursprung:** [Development/system/coding/bringup-zephyr/EVAL-GUIDE.md:84-85](../../Development/system/coding/bringup-zephyr/EVAL-GUIDE.md#L84)
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.

@@ -49,6 +49,8 @@ R12 nennt digitale DMS-Anmeldung, formale Vorprüfung, vier Monate Bearbeitungsz
 
 Interne Terminplanung nennt Anmeldung Ende September, Bearbeitungsstart 20. Oktober und Abgabe Ende Januar; der formale Ausgang hängt von tatsächlicher Anmeldung und Fakultätsregeln ab.
 
+> **Überholt (Stand integration, 2026-10-22):** Die Abgabe Ende Januar ist ersetzt. Aktuell: Abgabe am 11. Januar 2027; Schreiben und Korrekturlesen enden mindestens eine Woche vorher (4. Januar), besser zwei Wochen vorher (28. Dezember). – siehe [MVP-Entscheidungen 14.10. (Zeitplan)](../Development/system/planning/mvp-decisions-2026-10-14.md#schedule).
+
 **Ursprung:** [preThesis/01-aufgabenbeschreibung/Aufgabenbeschreibung-Intern.md:54](../preThesis/01-aufgabenbeschreibung/Aufgabenbeschreibung-Intern.md#L54)
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
 
@@ -66,6 +68,8 @@ R12 berichtet einen kontextabhängigen Unterschied der Bearbeitungszeit (vier Mo
 **U082 · OFFENE FRAGE · OFFEN**
 
 Zu beschaffen/klären: Kopfhörer bzw. Verstärkerstufe hinter PCM5102A sowie Verkabelung/Adapterplatine und Steckbrett- oder Lötaufbau.
+
+> **Überholt (Stand integration, 2026-10-22):** Eine Verstärkerstufe hinter dem PCM5102A gehört nicht mehr zum Projekt. Aktuell: Das Gerät endet am DAC-Line-Ausgang; der Verstärker liegt außerhalb des Umfangs des digitalen Stethoskops (14.10.). – siehe [MVP-Entscheidungen 14.10. (Umfang)](../Development/system/planning/mvp-decisions-2026-10-14.md#scope), [Produktumfang](../Development/system/spec/product-scope.md#goal-and-boundary).
 
 **Ursprung:** [preThesis/05-hardware/hardware.md:28-30](../preThesis/05-hardware/hardware.md#L28)
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
