@@ -1246,11 +1246,6 @@ MEMORY_CASES = [
         "stored_buffer_cleared",
         FAILURES,
         "An unreadable partially returned record is cleared from L2 working memory, never joined and preserves flash for diagnosis. Storage failure and clock are substituted; a white-box probe observes erasure.",
-        marks=pytest.mark.xfail(
-            strict=True,
-            raises=AssertionError,
-            reason="Implementation defect: a failed storage_read leaves its partially filled credential record in L2 working memory; fix tracked in TICKET-196",
-        ),
         id="stored-read-failure-erases-working-record",
     ),
     pytest.param(
