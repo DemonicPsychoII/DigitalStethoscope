@@ -423,8 +423,6 @@ int wifi_waitForScanResult(struct wifi_scan_entry *list, size_t listSize, k_time
 
         (void)memcpy(list, wifi_ScanList, count * sizeof(list[0]));
 
-        wifi_ScanResultsAreAccepted = false;
-
         k_spin_unlock(&wifi_ScanLock, key);
 
         if(isAccepted)
@@ -470,7 +468,6 @@ int wifi_startHotspot(void)
             else
             {
                 (void)net_if_ipv4_set_netmask_by_addr(wifi_HotspotInterface, &address, &netmask);
-                net_if_ipv4_set_gw(wifi_HotspotInterface, &address);
             }
         }
     }

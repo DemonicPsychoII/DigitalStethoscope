@@ -3,11 +3,11 @@
 !pragma layout smetana
 skinparam shadowing false
 skinparam defaultFontName SansSerif
-title MVP session and error transitions
+title MVP session and error transitions (Lung transitions optional)
 [*] --> Boot
 Boot --> Idle : software-observable startup checks pass
 Boot --> Muted : non-Wi-Fi startup check fails / Error, mute
-Idle --> Listening : Start / Heart or Lung
+Idle --> Listening : Start / Heart or Lung (optional)
 Idle --> Portal : long press >= 2 s, or automatically when no Wi-Fi credentials are stored / Idle network lease, scan then open hotspot
 Portal --> Idle : verified join + save (or save warning) / 10 s result, close AP/server, retain station
 Portal --> Idle : cancel or inactivity / notice, teardown, retain station if connected
@@ -15,7 +15,7 @@ Portal --> Listening : Start / safe setup teardown first; retain established sta
 Listening --> Measuring : Heart session begins / freeze context
 Listening --> Muted : catalogue halting fault / mute
 Measuring --> Muted : catalogue halting fault / mute, invalidate
-Listening --> Idle : Stop in Lung / mute, no BPM or send
+Listening --> Idle : Stop in Lung (optional) / mute, no BPM or send
 Measuring --> Idle : Stop before 15 s / cancel, no send
 Measuring --> Analysing : Stop at or after 15 s / mute, finalize
 Analysing --> Sending : valid BPM + configured prerequisites

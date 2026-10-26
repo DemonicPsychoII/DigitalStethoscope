@@ -8,7 +8,8 @@
  * @file
  * Implementation of the COMMUNICATION module: the Wi-Fi workflow thread.
  *
- * Workflow (architecture/wifi-flow.puml and wifi-state.puml):
+ * Workflow (architecture/COMMUNICATION/setup-state.puml, setup-flow.puml and
+ * link-recovery.puml):
  * - Boot: join the stored network, 4 attempts, 5 s apart. Without a stored
  *   network, run setup. If all attempts fail, wait for a 2 s button hold.
  * - Setup: scan, then open the hotspot, the DHCP server and the page.
@@ -240,7 +241,9 @@ static void communication_setState(enum communication_state state);
  *
  * Each pending stop is tried once; a failed stop latches a restart-required fault.
  *
- * @return True if no work is pending.
+ * @return True when audio may be released. This is also true after a latched
+ *         cleanup fault (REQ-13 Wi-Fi-only exception), while services may still be
+ *         pending; it does not assert radio shutdown.
  */
 static bool communication_stopWiFiWork(void);
 
@@ -556,11 +559,6 @@ static void communication_runIdleCycle(void)
             /* Back in Idle: continue a recovery that listening interrupted. */
             communication_recoverConnection();
         }
-    }
-    else if(!isStopped)
-    {
-        /* Retry the cleanup before any new work. */
-        (void)communication_waitForCondition(COMMUNICATION_WAIT_CONTROL_EVENT, K_MSEC(COMMUNICATION_EVENT_CHECK_INTERVAL_MS));
     }
     else if(communication_CleanupFaultIsLatched)
     {

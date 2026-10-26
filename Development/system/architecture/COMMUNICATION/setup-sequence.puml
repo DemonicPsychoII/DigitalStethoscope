@@ -21,15 +21,18 @@ else provisioning
  COMMUNICATION -> WIFI : open hotspot and address service
  COMMUNICATION -> PORTAL : publish list; start page
  Operator -> WIFI : join device hotspot
- Operator -> PORTAL : select network and submit credentials
- PORTAL -> COMMUNICATION : typed Connect request
- COMMUNICATION -> WIFI : associate; await selected-network address
- alt connected
-  COMMUNICATION -> STORAGE : commit accepted network
- else failed
-  COMMUNICATION -> WIFI : refresh network list
+ loop until connected
+  Operator -> PORTAL : select network and submit credentials
+  PORTAL -> COMMUNICATION : typed Connect request
+  COMMUNICATION -> WIFI : associate; await selected-network address
+  alt connected
+   COMMUNICATION -> STORAGE : commit accepted network
+   COMMUNICATION -> PORTAL : publish outcome
+  else failed
+   COMMUNICATION -> WIFI : refresh network list
+   COMMUNICATION -> PORTAL : publish cause and refreshed list
+  end
  end
- COMMUNICATION -> PORTAL : publish outcome
  COMMUNICATION -> PORTAL : stop page
  COMMUNICATION -> WIFI : stop hotspot; retain established station
 end
