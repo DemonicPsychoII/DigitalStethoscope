@@ -608,6 +608,10 @@ static const char *portal_describeError(int error)
         text = "";
         break;
 
+    case -EINVAL:
+        text = "Invalid network name or password length.";
+        break;
+
     case -EACCES:
         text = "Wrong password.";
         break;
