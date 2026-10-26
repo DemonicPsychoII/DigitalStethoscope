@@ -73,7 +73,9 @@ int communication_postEvent(enum communication_event event);
  *
  * CONTROL calls this after LISTENING_STARTED and before audio starts, and
  * sends no other event during the wait. A connected station stays connected.
- * On timeout, CONTROL keeps audio stopped.
+ * On timeout, CONTROL keeps audio stopped. After a latched Wi-Fi cleanup fault this
+ * returns 0 while services may still be pending: audio is released under REQ-13,
+ * and radio shutdown is not asserted.
  *
  * @param[in] timeout Maximum time to wait.
  *
