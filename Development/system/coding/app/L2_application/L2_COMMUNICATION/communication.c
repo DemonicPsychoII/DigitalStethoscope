@@ -484,6 +484,9 @@ static void communication_connectAtBoot(void)
 
     if(result != 0)
     {
+        (void)memset(&communication_StoredNetwork, 0, sizeof(communication_StoredNetwork));
+        communication_StoredNetworkIsValid = false;
+
         if(result != -ENOENT) /**< Requested record or network was not found. */
         {
             LOG_ERR("Stored Wi-Fi network load failed (%d)", result);

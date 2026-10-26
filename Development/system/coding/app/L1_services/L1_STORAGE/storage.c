@@ -135,7 +135,7 @@ static int storage_loadRecord(const char *key, size_t length, settings_read_cb r
         {
             ssize_t readLength = read(readArgument, context->data, context->size);
 
-            if((readLength == (ssize_t)context->size))
+            if(readLength == (ssize_t)context->size)
             {
                 context->result = 0;
             }
