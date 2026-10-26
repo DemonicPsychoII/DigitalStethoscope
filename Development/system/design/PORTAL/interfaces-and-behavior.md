@@ -52,7 +52,7 @@ These response meanings follow Roy T. Fielding, Mark Nottingham and Julian Resch
 15.5.10, 15.5.14 and 15.6.4, DOI 10.17487/RFC9110,
 https://www.rfc-editor.org/rfc/rfc9110.html (accessed 24 October 2026).
 
-The open-hotspot transport is an accepted MVP limitation; the dated risk acceptance and TICKET-198/199 follow-up are retained in project records. It adds no requirement. [COMMUNICATION](../COMMUNICATION/interfaces-and-behavior.md) owns setup, retry, save and teardown policy; PORTAL displays its published snapshot.
+The open-hotspot transport is an accepted MVP limitation; the [dated risk acceptance](../../planning/security-risk-acceptance.md) and TICKET-198/199 follow-up are retained in project records. It adds no requirement. [COMMUNICATION](../COMMUNICATION/interfaces-and-behavior.md) owns setup, retry, save and teardown policy; PORTAL displays its published snapshot.
 
 ## Page behavior design
 
@@ -108,5 +108,7 @@ The active connect form belongs to its initiating HTTP client until completion o
 | `cause` | Human-readable string describing the controller error; empty if none. Never a secret. |
 | `address` | Station IPv4 text supplied by COMMUNICATION after a successful selected-network join; otherwise empty. It is distinct from the fixed hotspot address. |
 | `networks` | Completed scan-cache array, bounded by P23-WIFI. Each item has a `name` string (SSID) and `password` boolean indicating whether input is required. No passphrase is returned. |
+
+Worst-case body size excluding the `cause` text: 16 entries of 32-byte SSIDs, each quote or backslash escaped to two bytes, give 92 bytes per entry (64 name bytes, 28 bytes of JSON syntax). With 15 separators and an 80-byte envelope holding a 15-byte address, the body is at most 1567 bytes before cause text. The `cause` string has no length bound in this design; once that bound is set, the response buffer must cover the total.
 
 Publish a coherent status/cause/address/list snapshot under the PORTAL data boundary. Escape quotes and backslashes for JSON and replace raw control bytes with `?`; HTML text escaping remains necessary after JSON parsing. A poll can show the previous completed list while scanning; Connect admission also requires the controller's selection-ready condition, not merely a nonempty array.

@@ -15,8 +15,8 @@ Shared views remain at system level. The [viewer](review.html) presents the prod
 | MVP session / alarms | [mvp-session-state.puml](mvp-session-state.puml) | [SVG](rendered/mvp_session_state.svg) |
 | BPM measurement | [measurement-workflow.puml](measurement-workflow.puml) | [SVG](rendered/measurement_workflow.svg) |
 
+Lung mode is optional beyond the MVP (TICKET-203); its paths are marked optional in the listening and MVP session views.
+
 [Feedback ground rules](feedback-principles.md) define indication ownership and fault containment.
 
 Original board snapshots remain immutable source material.
-See [COMMUNICATION](../COMMUNICATION/README.md), [WIFI](../WIFI/README.md), [PORTAL](../PORTAL/README.md) and the
-[render instructions](../README.md#render).
