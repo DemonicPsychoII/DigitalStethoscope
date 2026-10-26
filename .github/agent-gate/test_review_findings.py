@@ -1,6 +1,7 @@
 """Keep optional findings nonblocking without losing review identity or blocking evidence."""
 
 import unittest
+from pathlib import Path
 from unittest.mock import Mock
 
 import agent_gate as gate
@@ -26,6 +27,17 @@ def decision(body="**Actionable comments posted: 1**", findings=None, **changes)
 
 
 class FindingSeverityTests(unittest.TestCase):
+    def test_published_minor_summary_formats(self):
+        summary = (Path(__file__).parent / "fixtures/coderabbit-minor-summary.md").read_text(encoding="utf-8")
+        self.assertTrue(nonblocking_review(summary, [MINOR] * 6))
+        self.assertFalse(nonblocking_review(summary, [MINOR] * 5))
+        self.assertFalse(nonblocking_review(summary, [MINOR] * 5 + [MAJOR]))
+        self.assertFalse(nonblocking_review(summary.replace(" Trivial**", " Major**"), [MINOR] * 6))
+        self.assertFalse(nonblocking_review(summary.replace("comments: 1", "comments: 2"), [MINOR] * 6))
+        self.assertFalse(nonblocking_review(summary + "\nUnclassified concern", [MINOR] * 6))
+        summary = summary.replace("🤖 Prompt to fix review comments", '<picture><img src="icon.svg"></picture>🤖 Prompt to fix review comments')
+        self.assertTrue(nonblocking_review(summary, [MINOR] * 6))
+
     def test_explicit_minor_and_nitpick_are_nonblocking(self):
         for header in (MINOR, "_🧹 Nitpick_ | _🔵 Trivial_\n\nOptional refactoring."):
             self.assertTrue(nonblocking_finding(header))
