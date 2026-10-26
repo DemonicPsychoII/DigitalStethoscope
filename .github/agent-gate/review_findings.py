@@ -34,6 +34,9 @@ def nonblocking_review(body: str, findings: list[str]) -> bool:
     remaining = text[count.end():].strip()
     additional_findings = 0
     while remaining:
+        remaining = re.sub(r"\A---(?:\r?\n|$)\s*", "", remaining)
+        if not remaining:
+            break
         if not remaining.startswith("<details>"):
             return False
         depth = 0
@@ -46,20 +49,24 @@ def nonblocking_review(body: str, findings: list[str]) -> bool:
         if end is None:
             return False
         block, remaining = remaining[:end], remaining[end:].strip()
-        summary = re.match(r"<details>\s*<summary>([^<]+)</summary>", block)
+        summary = re.match(r"<details>\s*<summary>(.*?)</summary>", block, re.DOTALL)
         if summary is None:
             return False
-        title = summary[1].strip()
+        title = re.sub(r"<[^>]+>", "", summary[1]).strip()
         content = block[summary.end():-len("</details>")]
-        headers = FINDING_HEADER.findall(re.sub(r"<[^>]+>", "", content))
+        classifications = re.sub(r"<[^>]+>", "", content)
+        classifications = re.sub(r"(?m)^`\d+(?:-\d+)?`: +", "", classifications)
+        headers = FINDING_HEADER.findall(classifications)
         if any(severity not in {"Minor", "Trivial"} for severity in headers):
             return False
-        if title in {"📜 Review details", "🤖 Prompt for all review comments with AI agents"}:
+        if title in {"📜 Review details", "🤖 Prompt for all review comments with AI agents",
+                     "🤖 Prompt to fix review comments"}:
             continue
-        section = re.fullmatch(r"(?:🧹 Nitpick|⚠️ Outside diff range|♻️ Duplicate) comments \((\d+)\)", title)
+        section = re.fullmatch(
+            r"(?:🧹 Nitpick|⚠️ Outside diff range|♻️ Duplicate) comments(?: \((\d+)\)|: (\d+))", title)
         if section is None:
             return False
-        section_count = int(section[1])
+        section_count = int(section[1] or section[2])
         summary_classifies_nitpicks = title.startswith("🧹 Nitpick comments") and not headers
         if section_count and not summary_classifies_nitpicks and len(headers) != section_count:
             return False
