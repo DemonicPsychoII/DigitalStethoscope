@@ -359,7 +359,7 @@ def recorded_review_fallback(inputs: Inputs) -> bool:
     for comment in inputs.comments:
         if not trusted(comment):
             continue
-        for marker in re.finditer(r"^[ \t]*<!--[ \t]*review-fallback[ \t]+([^>]*?)[ \t]*-->",
+        for marker in re.finditer(r"^ {0,3}<!--[ \t]*review-fallback[ \t]+([^>]*?)[ \t]*-->",
                                   strip_code(comment.get("body") or ""), re.MULTILINE):
             attributes = parse_attrs(marker[1])
             if (attributes.get("sha") == inputs.head_sha
