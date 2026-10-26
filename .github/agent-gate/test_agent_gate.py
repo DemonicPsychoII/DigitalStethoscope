@@ -624,7 +624,8 @@ class AutomatedPolicyTests(unittest.TestCase):
                                    comment(marker, association="NONE"),
                                    comment(marker, login="github-actions[bot]"),
                                    comment("```\n" + marker + "\n```"),
-                                   comment("> " + marker)):
+                                   comment("> " + marker),
+                                   comment("    " + marker), comment("\t" + marker)):
                 self.assertNotEqual(g.evaluate(inputs(comments=[invalid_marker, review()], **options)).state, "success")
             for invalid_review in (review(sha=OLD), review(verdict="changes"),
                                    review(session="auth-1"), review(association="NONE")):
