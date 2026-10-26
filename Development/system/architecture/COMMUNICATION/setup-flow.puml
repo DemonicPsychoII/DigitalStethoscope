@@ -13,25 +13,29 @@ if (Usable saved network?) then (yes)
   :Return connection outcome to CONTROL;
   stop
  endif
- :Report boot failure; await manual setup request in Idle;
+ :Report boot failure; release partial setup resources;
+ :Return outcome to CONTROL;
  stop
 endif
 :Scan through WIFI and publish completed cache;
 if (Scan and hotspot start succeed?) then (yes)
  :Start PORTAL after WIFI hotspot/address service;
- :Read typed page requests; publish progress;
- if (Connect requested?) then (yes)
-  :Join through WIFI; await selected-network address;
-  if (Connected?) then (yes)
-   :Commit credentials through STORAGE;
-   :Publish success or save warning;
-  else (failed)
-   :Publish cause; refresh selection through a new scan;
-   stop
+ while (Setup session open?) is (yes)
+  :Read typed page requests; publish progress;
+  if (Connect requested?) then (yes)
+   :Join through WIFI; await selected-network address;
+   if (Connected?) then (yes)
+    :Commit credentials through STORAGE;
+    :Publish success or save warning;
+    :Close setup session;
+   else (failed)
+    :Publish cause; refresh selection through a new scan;
+   endif
+  else (Cancel or inactivity)
+   :Publish closing;
+   :Close setup session;
   endif
- else (Cancel or inactivity)
-  :Publish closing;
- endif
+ endwhile (no)
  :Stop PORTAL and hotspot services; retain established station;
 else (failed)
  :Report cause; release partial setup resources;

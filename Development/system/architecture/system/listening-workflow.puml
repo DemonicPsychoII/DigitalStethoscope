@@ -8,7 +8,9 @@ start
 :Safely stop setup work; retain established station;
 :Start listening;
 repeat
- if (Lung mode or Raw selected?) then (yes)
+ if (Lung mode (optional)?) then (yes)
+  #273241:Bypass filter (optional);
+ elseif (Raw selected?) then (yes)
   :Bypass filter;
  else (no)
   :Apply selected filter;
