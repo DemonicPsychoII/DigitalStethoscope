@@ -24,7 +24,8 @@ Portal --> Scan : typed Rescan request
 Portal --> Close : Cancel or inactivity
 Join --> Save : selected network has address [portal]
 Join --> Connected : selected network has address [boot/recovery]
-Join --> Failure : failed
+Join --> Scan : recovery exhausted; provisioning under held lease
+Join --> Failure : failed [boot]
 Scan --> Failure : failed
 Save --> Close : result or save warning published
 Failure --> Scan : portal join failure / refresh
