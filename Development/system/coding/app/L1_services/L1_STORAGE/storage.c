@@ -107,7 +107,16 @@ int storage_read(const char *name, void *data, size_t size)
 
 int storage_write(const char *name, const void *data, size_t size)
 {
-    return settings_save_one(name, data, size);
+    int result = -EINVAL; /**< Invalid argument or unsupported input. */
+
+    /* A zero-length save makes the settings backend delete the record and
+     * report success, so reject it before the backend call. */
+    if((data != NULL) && (size != 0U))
+    {
+        result = settings_save_one(name, data, size);
+    }
+
+    return result;
 }
 
 /***********************************************************************/
