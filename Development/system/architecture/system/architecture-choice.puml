@@ -29,7 +29,7 @@ rt -[hidden]down-> auto
 events -[hidden]down-> mpu
 loop -[hidden]right-> auto
 auto -[hidden]right-> mpu
-component "A/B firmware\n• S04 project option: separate update concern" as ab #273241
+component "A/B firmware\n• Not a selected feature: separate update concern\n• Basis: preThesis/02-entscheidungen/open-questions.md" as ab #273241
 auto -[hidden]down-> ab
 legend bottom
 Project alternatives and selection rationale: source board S04,
