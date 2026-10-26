@@ -7,7 +7,7 @@ skinparam defaultFontColor #e6edf7
 skinparam ArrowColor #a9b8ca
 title L2_COMMUNICATION provisioning flow
 start
-if (Usable saved network?) then (yes)
+if (Boot with usable saved network?) then (yes)
  :Ask WIFI to join; await selected-network address;
  if (Connected?) then (yes)
   :Return connection outcome to CONTROL;
