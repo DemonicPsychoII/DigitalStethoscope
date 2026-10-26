@@ -10,16 +10,20 @@ typedef struct
 {
     int64_t ticks;
 } k_timeout_t;
+
 typedef int64_t k_timepoint_t;
 typedef int k_spinlock_key_t;
+
 struct k_spinlock
 {
     int unused;
 };
+
 struct k_thread
 {
     int unused;
 };
+
 struct k_sem
 {
     unsigned int count;

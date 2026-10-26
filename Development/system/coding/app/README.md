@@ -29,11 +29,12 @@ Display/UI, touch, SD storage and replay (WSOLA) are optional and not part of th
 
 This directory is a standalone Zephyr application. `common/main.c` returns to the idle
 thread; most component `.c` / `.h` files reserve places for implementation.
-`L1_WIFI` and `L1_PORTAL` declare their APIs with placeholder bodies, and
+`L1_WIFI` and `L1_PORTAL` implement network provisioning and the setup page, and
 `L2_COMMUNICATION` implements the Wi-Fi workflow on top of them. `common/types.h` reserves the shared data types.
 The board overlay and `prj.conf` set the fitted N16R8 module (16 MB flash,
 8 MB octal PSRAM; GPIO33–37 stay reserved). The serial shell and deferred logging
-are enabled; no audio processing, networking, storage, UI or monitoring is active.
+are enabled. Wi-Fi provisioning, settings storage and the portal are implemented;
+audio processing and monitoring remain placeholders.
 
 ### Shell and configuration
 
@@ -187,8 +188,9 @@ CONTROL must serialize its commands with the wait. A timeout keeps audio stopped
 Waits check Start in 200 ms slices. Total release latency also includes atomic
 settings writes, driver cancellation and confirmed portal/hotspot shutdown; it is
 not yet measured. Failed cleanup withholds release and is retried by the worker.
-An established station is retained. L1 drivers and CONTROL integration remain
-placeholders; this does not establish functioning Wi-Fi or portal acceptance.
+An established station is retained. L1 Wi-Fi and portal services are implemented;
+CONTROL integration remains a placeholder. Target acceptance still requires
+measured Wi-Fi and portal evidence.
 
 Run the production workflow with deterministic kernel and service substitutes:
 

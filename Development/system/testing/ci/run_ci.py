@@ -91,12 +91,15 @@ def static() -> None:
     ARTIFACTS.joinpath("ci").mkdir(parents=True, exist_ok=True)
     run(["git", "diff", "--check", "HEAD"])
     tracked = subprocess.check_output(["git", "ls-files", "-z"], cwd=ROOT).split(b"\0")
-    forbidden = ("/build/", "/zephyr/", "/.west/", "twister-out")
+    forbidden = ("/build/", "/.west/", "twister-out")
     for raw in filter(None, tracked):
         rel = raw.decode("utf-8")
         normalized = "/" + rel.replace("\\", "/")
-        if any(token in normalized for token in forbidden) or normalized.endswith(
-            (".elf", ".bin", ".map")
+        host_headers = "/Development/system/coding/app/tests/host/include/zephyr/"
+        if (
+            any(token in normalized for token in forbidden)
+            or ("/zephyr/" in normalized and not normalized.startswith(host_headers))
+            or normalized.endswith((".elf", ".bin", ".map"))
         ):
             raise SystemExit(f"generated/build output is tracked: {rel}")
         path = ROOT / rel

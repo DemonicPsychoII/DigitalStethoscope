@@ -713,11 +713,6 @@ static bool wifi_isSupportedSecurity(enum wifi_security_type security)
     case WIFI_SECURITY_TYPE_NONE:
     case WIFI_SECURITY_TYPE_PSK:
     case WIFI_SECURITY_TYPE_PSK_SHA256:
-    case WIFI_SECURITY_TYPE_WPA_PSK:
-    case WIFI_SECURITY_TYPE_WPA_AUTO_PERSONAL:
-    case WIFI_SECURITY_TYPE_SAE:
-    case WIFI_SECURITY_TYPE_SAE_H2E:
-    case WIFI_SECURITY_TYPE_SAE_AUTO:
         isSupported = true;
         break;
 

@@ -541,12 +541,6 @@ static int portal_receiveCommand(struct http_client_ctx *client, enum http_trans
         struct portal_request request = {.type = *(const enum portal_request_type *)userData};
         enum portal_status newStatus = PORTAL_STATUS_SELECTING;
 
-        (void)k_mutex_lock(&portal_Lock, K_FOREVER);
-
-        newStatus = portal_Status;
-
-        (void)k_mutex_unlock(&portal_Lock);
-
         if(request.type == PORTAL_REQUEST_RESCAN)
         {
             newStatus = PORTAL_STATUS_SCANNING;
@@ -574,6 +568,11 @@ static enum http_status portal_queueRequest(const struct portal_request *request
     enum http_status response = HTTP_409_CONFLICT;
 
     (void)k_mutex_lock(&portal_Lock, K_FOREVER);
+
+    if(request->type == PORTAL_REQUEST_ACTIVITY)
+    {
+        newStatus = portal_Status;
+    }
 
     if(portal_IsOpen && ((portal_Status == PORTAL_STATUS_SELECTING) || (portal_Status == PORTAL_STATUS_CONNECT_FAILED)))
     {
