@@ -129,14 +129,20 @@ static uint16_t portal_HTTPPort = PORTAL_HTTP_PORT; /**< HTTP_SERVICE_DEFINE nee
 /***********************************************************************/
 
 /**
+ * @brief Overwrite a buffer with zeros so credentials do not stay in memory.
+ *
+ * @param[out] data Buffer to clear.
+ * @param[in]  size Size of @p data in bytes.
+ */
+static void portal_clearSecret(void *data, size_t size);
+
+/**
  * @brief Send the status, its cause and the network list as JSON.
  *
  * Parameters as http_resource_dynamic_cb_t.
  *
  * @return 0, as the HTTP server expects.
  */
-static void portal_clearSecret(void *data, size_t size);
-
 static int portal_sendStatus(struct http_client_ctx *client, enum http_transaction_status status, const struct http_request_ctx *requestContext, struct http_response_ctx *responseContext, void *userData);
 
 /**
@@ -403,10 +409,8 @@ void portal_setStatus(enum portal_status status, int error)
 {
     (void)k_mutex_lock(&portal_Lock, K_FOREVER);
 
-    if(status != PORTAL_STATUS_CONNECT_FAILED)
-    {
-        portal_SelectionIsReady = (status == PORTAL_STATUS_SELECTING);
-    }
+    /* A failed join keeps the last completed list selectable. */
+    portal_SelectionIsReady = (status == PORTAL_STATUS_SELECTING) || (status == PORTAL_STATUS_CONNECT_FAILED);
     portal_Status = status;
     portal_Error = error;
 
