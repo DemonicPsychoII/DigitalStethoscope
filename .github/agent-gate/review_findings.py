@@ -60,7 +60,7 @@ def nonblocking_review(body: str, findings: list[str]) -> bool:
         if any(severity not in {"Minor", "Trivial"} for severity in headers):
             return False
         if title in {"📜 Review details", "🤖 Prompt for all review comments with AI agents",
-                     "🤖 Prompt to fix review comments"}:
+                     "🤖 Prompt to fix review comments", "Prompt to fix review comments"}:
             continue
         section = re.fullmatch(
             r"(?:🧹 Nitpick|⚠️ Outside diff range|♻️ Duplicate) comments(?: \((\d+)\)|: (\d+))", title)
