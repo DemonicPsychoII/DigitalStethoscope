@@ -7,15 +7,20 @@ if (Boot with saved network?) then (yes)
  :Join; 4 attempts total, 5 s between failures;
  if (Address assigned?) then (yes)
   :Keep station connected;
-  stop
+ else (no)
+  :Show error;
  endif
- :Show error; wait for 2 s hold in Idle;
+ :Wait for 2 s hold in Idle;
 endif
 :Scan/cache, then open hotspot and portal;
 :Phone joins open hotspot; QR opens page;
+repeat
 :Select network; password only if protected;
 :Queue join; browser polls;
-if (Selected network address assigned?) then (yes)
+if (Selected network address assigned?) then (no)
+ :Show join error; rescan with AP open;
+endif
+repeat while (Join failed?) is (yes) not (no)
  :Store credentials; retry once;
  if (Saved?) then (yes)
   :Show success;
@@ -23,9 +28,6 @@ if (Selected network address assigned?) then (yes)
   :Show save error; remain connected;
  endif
  :Show result 10 s; close hotspot/server;\nKeep station connected;
-else (no)
- :Show join error; rescan with AP open;\nReturn to selection;
-endif
 stop
 floating note
  Cancel/timeout: notice then cleanup; retain an established station.
