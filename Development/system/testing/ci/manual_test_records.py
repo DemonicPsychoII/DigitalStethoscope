@@ -9,6 +9,22 @@ import re
 
 ROOT = Path(__file__).resolve().parents[4]
 RESULTS = {"pass", "fail", "blocked", "not-run"}
+TEMPLATE = ROOT / "Development/system/testing/manual/run-template.json"
+
+
+def template_placeholders() -> set[str]:
+    template = json.loads(TEMPLATE.read_text(encoding="utf-8"))
+    values = {value for value in template.values() if isinstance(value, str)}
+    for step in template["steps"]:
+        values.update(
+            value
+            for key, value in step.items()
+            if key != "id" and isinstance(value, str)
+        )
+    return values - RESULTS
+
+
+PLACEHOLDERS = template_placeholders()
 
 
 def validate(record: dict) -> list[str]:
@@ -18,6 +34,8 @@ def validate(record: dict) -> list[str]:
     for field in ("test_id", "procedure", "device", "firmware_build", "configuration"):
         if not isinstance(record.get(field), str) or not record[field].strip():
             errors.append(f"{field} is required")
+        elif record[field] in PLACEHOLDERS:
+            errors.append(f"{field} still holds the template placeholder")
     for field in ("firmware_sha", "procedure_sha"):
         if not re.fullmatch(r"[0-9a-f]{40}", str(record.get(field, ""))):
             errors.append(f"{field} must identify the full source commit")
@@ -47,6 +65,10 @@ def validate(record: dict) -> list[str]:
         for field in ("action", "expected", "observations"):
             if not isinstance(step.get(field), str) or not step[field].strip():
                 errors.append(f"step {identifier}: {field} is required")
+            elif step[field] in PLACEHOLDERS:
+                errors.append(
+                    f"step {identifier}: {field} still holds the template placeholder"
+                )
     expected = (
         "fail"
         if "fail" in outcomes
