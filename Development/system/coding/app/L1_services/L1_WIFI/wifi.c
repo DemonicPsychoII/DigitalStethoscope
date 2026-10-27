@@ -468,6 +468,7 @@ int wifi_startHotspot(void)
             else
             {
                 (void)net_if_ipv4_set_netmask_by_addr(wifi_HotspotInterface, &address, &netmask);
+                net_if_ipv4_set_gw(wifi_HotspotInterface, &address);
             }
         }
     }
