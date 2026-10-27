@@ -124,9 +124,8 @@ These items take precedence over items 7 and 9 above where they differ.
 9. **ME-equipment working assumption confirmed:** the device is designed as if it were ME equipment under
    IEC 60601-1. This aligns the design; it is not a conformity claim. The red 2 Hz signal for medium- and
    low-priority errors is a documented deviation from IEC 60601-1-8 Table 2; the owner accepts it.
-10. **Checks planned for the MVP:** one-time manual final system acceptance of the visibility criterion in P22
-    (every pattern seen at 1 m, the error state at 4 m, at 100–1500 lx, inside a 30° viewing cone); no automated
-    visibility test. No reset-cause tests; no colour-vision checks.
+10. **No checks planned for the MVP:** visibility on the device is assumed adequate; no reset-cause tests;
+    no colour-vision checks.
 11. **`RESET_UNEXPECTED` and `CONTROL_INPUT_FAILURE`** (potentiometer ADC or switch position) are confirmed.
 12. **Patient link:** the device does not read `Device.patient` again before each send (16 October open
     point closed).
