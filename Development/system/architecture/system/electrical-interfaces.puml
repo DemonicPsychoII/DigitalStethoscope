@@ -1,0 +1,45 @@
+@startuml electrical_interfaces
+!theme cyborg
+!pragma layout smetana
+skinparam shadowing false
+skinparam component {
+ BackgroundColor<<optional>> #273241
+ BorderColor<<optional>> #61738a
+ FontColor<<optional>> #b8c4d4
+}
+skinparam artifact {
+ BackgroundColor<<optional>> #273241
+ BorderColor<<optional>> #61738a
+ FontColor<<optional>> #b8c4d4
+}
+skinparam componentStyle rectangle
+skinparam defaultFontName SansSerif
+' Presentation I2S1 = devicetree i2s0 (mic); I2S2 = i2s1 (DAC).
+title Electrical interfaces
+left to right direction
+component "INMP441\nMic" as mic
+component "PCM5102A\nDAC" as dac
+node "ESP32-S3" as cpu
+component "ILI9341\nDisplay" as display <<optional>>
+component "XPT2046\nTouch" as touch <<optional>>
+artifact "SD card" as sd <<optional>>
+component "Shared SPI bus" as spi <<optional>>
+component "Button / switches" as controls
+component "Potentiometer" as pot
+component "LED" as led
+component "Backlight" as backlight <<optional>>
+mic --> cpu : I²S1
+cpu --> dac : I²S2
+cpu -- spi : SPI
+spi -- display
+spi -- touch
+spi -- sd
+controls --> cpu : GPIO
+pot --> cpu : ADC
+cpu --> led : GPIO
+cpu --> backlight : PWM
+legend bottom
+  Grey / optional = beyond MVP.
+  Display, touch, SD and capture / slower replay are optional.
+endlegend
+@enduml

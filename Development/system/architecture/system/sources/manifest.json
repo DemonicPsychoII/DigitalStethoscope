@@ -1,0 +1,35 @@
+{
+  "retrieved_on": "2026-10-06",
+  "method": "Read-only SCP from homelab:/vault/excalidraw; original boards unchanged.",
+  "watermark": "Created by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.",
+  "boards": [
+    {
+      "source_id": "S01",
+      "file": "system-architecture-digital-stethoscope.json",
+      "title": "System Architecture Digital Stethoscope",
+      "updated_at": "2026-10-05T09:09:56+00:00",
+      "sha256": "93dd0a719ccaf6c1ad98563de3e1e5c6da373e2548feac96b3bdc69bc37252b5"
+    },
+    {
+      "source_id": "S02",
+      "file": "software-architecture-and-requirements.json",
+      "title": "Software-Architecture and Requirements",
+      "updated_at": "2026-10-05T12:28:42+00:00",
+      "sha256": "07cd2f2d281449c83412a743467edcb90e5e2f5bbefec94b9a6c710dcf491f68"
+    },
+    {
+      "source_id": "S03",
+      "file": "software-architecture-parallel-audio-and-complete-flows.json",
+      "title": "Software Architecture \u2014 Parallel Audio and Complete Flows",
+      "updated_at": "2026-10-05T13:25:08+00:00",
+      "sha256": "4163ab513d71287d1fd6787be4ed418a0804596fc95da3739fd29e59fe2d2a7b"
+    },
+    {
+      "source_id": "S04",
+      "file": "software-architecture-options-and-decision.json",
+      "title": "Software Architecture \u2014 Options and Decision",
+      "updated_at": "2026-10-05T13:37:02+00:00",
+      "sha256": "6218f0ed65d614ecbdb09d48ac8475dd59d2c7ad76790032f71e5d6157357ebc"
+    }
+  ]
+}

@@ -1,0 +1,72 @@
+@startuml software_components
+!theme cyborg
+!pragma layout smetana
+skinparam shadowing false
+skinparam component {
+ BackgroundColor<<optional>> #273241
+ BorderColor<<optional>> #61738a
+ FontColor<<optional>> #b8c4d4
+}
+skinparam artifact {
+ BackgroundColor<<optional>> #273241
+ BorderColor<<optional>> #61738a
+ FontColor<<optional>> #b8c4d4
+}
+skinparam componentStyle rectangle
+skinparam defaultFontName SansSerif
+title Software components
+top to bottom direction
+component "MONITOR" as mon
+package "L2 Application (orchestration)" as app {
+ component "L2_SHELL" as shell
+ component "L2_CONTROL\nsingle writer of mode state" as ctl
+ component "L2_AUDIO\naudio path / BPM worker" as aud
+ component "L2_COMMUNICATION\nsend path / portal" as com
+ component "UI dashboard" as ui <<optional>>
+ shell -[hidden]right-> ctl
+ ctl -[hidden]right-> ui
+}
+package "L1 Services" as services {
+ package "Hardware adapters" as adapters {
+  component "L1_PHYSICALINTERFACE\nbuttons / LEDs" as phy
+  component "L1_I2S\nmic RX / DAC TX" as i2s
+  component "L1_WIFI\nWi-Fi / TLS / time" as wifi
+  component "L1_PORTAL\nsetup HTTP server" as portal
+  component "L1_STORAGE\nsettings records" as storage
+  component "Display / touch / SD" as spi <<optional>>
+  phy -[hidden]right-> i2s
+  i2s -[hidden]right-> wifi
+  wifi -[hidden]right-> spi
+ }
+ package "Pure C libraries" as libs {
+  component "L1_FILTER" as filter
+  component "L1_BPM" as bpm
+  component "L1_FHIR" as fhir
+  component "Replay (WSOLA)" as wsola <<optional>>
+  filter -[hidden]right-> bpm
+  bpm -[hidden]right-> fhir
+  fhir -[hidden]right-> wsola
+ }
+}
+package "L0 Zephyr" as platform {
+ component "Drivers / DMA / interrupts\nDevicetree overlay" as zephyr
+}
+shell -right-> ctl : control events
+phy -up-> ctl : control events
+ctl -down-> aud : commands
+ctl -down-> com : network lease
+aud -down-> i2s
+aud -down-> filter
+aud -down-> bpm
+com -down-> fhir
+com -down-> portal : requests / page status
+com -down-> wifi
+com -down-> storage : stored network
+adapters -down-> zephyr : driver calls
+mon -down-> ctl : health events
+mon ..> services : monitoring
+legend bottom
+  Grey / optional = beyond MVP; not in the skeleton.
+  Libraries include no Zephyr headers.
+endlegend
+@enduml
