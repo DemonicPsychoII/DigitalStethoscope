@@ -43,8 +43,8 @@ audio --> ctl : completion / fault · k_msgq
 ctl --> storage : file request · k_msgq
 storage --> audio : file audio · block handles / k_msgq
 ctl --> display : UI state · snapshot copy
-ctl --> net : Wi-Fi requested state · k_msgq\nLater: BPM result + network lease · k_msgq
-net --> ctl : confirmed Wi-Fi release · k_msgq\nLater: send outcome · k_msgq
+ctl --> net : Wi-Fi requested state · spinlock + semaphore\nLater: BPM result + network lease · k_msgq
+net --> ctl : confirmed Wi-Fi release · synchronized flag\nLater: send outcome · k_msgq
 legend bottom
   Grey / optional = beyond MVP.
   Display, touch, SD and capture / slower replay are optional.
