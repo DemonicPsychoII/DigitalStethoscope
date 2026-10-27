@@ -26,8 +26,9 @@ retain their previous approval behavior until explicitly migrated. Agent markers
 must come from trusted collaborator accounts; native bot reviews additionally
 match the configured immutable user ID and Bot type. A CodeRabbit progress check
 is not an approval. Current-head native decisions take precedence. A stale native
-approval permits an independent current-head agent fallback; native changes requests
-and dismissals remain blocking or pending, including after a push.
+approval permits an independent current-head agent fallback. Other stale native
+decisions require a trusted current-head review-fallback record as well. Current-head
+native changes requests and dismissals remain blocking or pending.
 
 Everything is read from LIVE API state, never from the triggering event's payload: the gate is
 re-run on pushes, body edits, review comments and CI completion, and each run must judge the PR as
@@ -354,6 +355,19 @@ def owner_question_items(inputs: Inputs) -> list[tuple[str, str]]:
     return []
 
 
+def recorded_review_fallback(inputs: Inputs) -> bool:
+    for comment in inputs.comments:
+        if not trusted(comment):
+            continue
+        for marker in re.finditer(r"^ {0,3}<!--[ \t]*review-fallback[ \t]+([^>]*?)[ \t]*-->",
+                                  strip_code(comment.get("body") or ""), re.MULTILINE):
+            attributes = parse_attrs(marker[1])
+            if (attributes.get("sha") == inputs.head_sha
+                    and attributes.get("reason") in {"unavailable", "rate-limited", "failed", "stuck"}):
+                return True
+    return False
+
+
 def review_items(inputs: Inputs, author: dict[str, str] | None) -> list[tuple[str, str]]:
     # Native reviews come from the GitHub API, not text that a PR can imitate.
     bot_reviews = [r for r in inputs.native_reviews
@@ -366,9 +380,9 @@ def review_items(inputs: Inputs, author: dict[str, str] | None) -> list[tuple[st
         login = review["user"]["login"]
         if review.get("commit_id") != inputs.head_sha:
             fallback, _ = latest_review(inputs.comments, inputs.reviewer_logins)
-            if review.get("state") != "APPROVED" or fallback is None:
+            if fallback is None or (review.get("state") != "APPROVED" and not recorded_review_fallback(inputs)):
                 return [("pending", f"{login} must review the current head SHA")]
-            # A past approval cannot veto the separately validated current-head fallback.
+            # Validate the replacement review below; fallback never waives other gates.
 
         elif review.get("state") == "APPROVED":
             return [("ok", f"approved at {inputs.head_sha[:7]} by {login}")]
