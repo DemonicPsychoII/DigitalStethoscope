@@ -1,0 +1,43 @@
+@startuml setup_state
+!theme cyborg
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam backgroundColor #0b1018
+skinparam defaultFontColor #e6edf7
+skinparam ArrowColor #a9b8ca
+title L2_COMMUNICATION setup workflow
+hide empty description
+state "Read stored network" as Boot
+state "Scan networks" as Scan
+state "Portal selection" as Portal
+state "Join selected network" as Join
+state "Persist accepted network" as Save
+state "Close setup resources" as Close
+state "Station connected" as Connected
+state "Report failure" as Failure
+[*] --> Boot
+Boot --> Join : usable record
+Boot --> Scan : no usable record
+Scan --> Portal : completed list; open setup services
+Portal --> Join : typed Connect request
+Portal --> Scan : typed Rescan request
+Portal --> Close : Cancel or inactivity
+Join --> Save : selected network has address [portal]
+Join --> Connected : selected network has address [boot/recovery]
+Join --> Scan : recovery exhausted; provisioning under held lease
+Join --> Failure : failed [boot or portal]
+Scan --> Failure : failed
+Save --> Close : result or save warning published
+Failure --> Scan : portal join failure / refresh
+Failure --> Close : cannot continue setup
+Close --> Connected : station retained
+Close --> [*] : no station / offline
+Connected --> Join : Idle link-loss recovery
+Connected --> Scan : manual setup request in Idle
+Connected --> [*] : return to CONTROL
+note bottom
+ CONTROL owns mode admission and listening priority.
+ COMMUNICATION safely cancels setup before releasing the network lease.
+ Retry counts, deadlines and result display belong to detailed design.
+end note
+@enduml
