@@ -28,11 +28,7 @@ Status polls are not queued requests. Activity requests follow P24 while the use
 ## Form navigation and setup exit
 
 The [shared cancellation and inactivity rule](../COMMUNICATION/interfaces-and-behavior.md#cancellation-and-inactivity)
-owns form Back, setup Cancel and timer behavior. Publish `PORTAL_STATUS_CLOSING`
-before stopping the server only on Cancel and inactivity timeout, as COMMUNICATION
-defines. Success/save-warning closure and Start interruption do not publish Closing,
-and Start has no added notice delay. PORTAL must not invent this transition on
-behalf of COMMUNICATION.
+owns form Back, setup Cancel and timer behavior. COMMUNICATION publishes `PORTAL_STATUS_CLOSING` before teardown on every setup exit, including result/save-warning completion and Start. Only Cancel, inactivity and scan failure add the 2 s closing-notice delay; Start has no added notice delay.
 
 Malformed requests, invalid network/passphrase fields and malformed URL encoding
 return HTTP 400. An oversized body returns 413. The Zephyr HTTP router returns 404
@@ -110,6 +106,5 @@ The active connect form belongs to its initiating HTTP client until completion o
 | `address` | Station IPv4 text supplied by COMMUNICATION after a successful selected-network join; otherwise empty. It is distinct from the fixed hotspot address. |
 | `networks` | Completed scan-cache array, bounded by P23-WIFI. Each item has a `name` string (SSID) and `password` boolean indicating whether input is required. No passphrase is returned. |
 
-Worst-case body size excluding the `cause` text: 16 entries of 32-byte SSIDs, each quote or backslash escaped to two bytes, give 92 bytes per entry (64 name bytes, 28 bytes of JSON syntax). With 15 separators and an 80-byte envelope holding a 15-byte address, the body is at most 1567 bytes before cause text. The `cause` string has no length bound in this design; once that bound is set, the response buffer must cover the total.
 
 Publish a coherent status/cause/address/list snapshot under the PORTAL data boundary. Escape quotes and backslashes for JSON and replace raw control bytes with `?`; HTML text escaping remains necessary after JSON parsing. A poll can show the previous completed list while scanning; Connect admission also requires the controller's selection-ready condition, not merely a nonempty array.
