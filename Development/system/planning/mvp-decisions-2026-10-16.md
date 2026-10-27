@@ -1,5 +1,7 @@
 # MVP decisions — LED indication, single error type and patient pass-through, 16 October 2026
 
+> Patient handling clarified by Nico on 27 October 2026: the device only reuses a patient reference supplied with a server-requested examination, otherwise it sends no patient reference. The server-request mechanism remains an open integration design input; the boot-time lookup proposal below does not approve that mechanism. Source: Nico, project owner, [development-workflow review conversation](t3-thread://v1/d54752be-1ff7-4a2d-b1cd-e100649c273a), accessed 27 October 2026. The historical record below is preserved.
+
 > **Superseded in part:** the [current baseline](README.md#current-baseline) names the
 > decision in force for each topic. Text below is historical where it conflicts.
 
