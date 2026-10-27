@@ -25,7 +25,7 @@ cloud "Network / time" as net
 source --> device : sound
 operator --> device : controls
 device --> operator : audio / optional display
-device --> fhir : BPM Observation (Device;\nno patient from device)\nWi-Fi / HTTPS
+device --> fhir : BPM Observation (Device;\npatient only from requested examination)\nWi-Fi / HTTPS
 fhir --> device : status (receipt)
 net --> device : connectivity / time
 phone --> device : Wi-Fi network + password\nhotspot page (Idle only)
@@ -36,7 +36,8 @@ legend bottom
 endlegend
 note right of fhir
 External test precondition:
-HAPI enriches Observation.subject
-from Device.patient.
+Observation.subject reuses only the patient reference
+supplied with a server-requested examination.
+Otherwise no patient reference is sent.
 end note
 @enduml
