@@ -21,7 +21,7 @@
 - Implementierungsbereitschaft:
   offene Entscheidungen D01–D14. Dies ist das führende Register für Detailentscheidungen;
   die folgende Übersicht ersetzt oder schließt diese D-Einträge nicht.
-- Geplante Verifikation: VT-01–VT-13,
+- Geplante Verifikation: VT-01–VT-15 (VT-05 und VT-13 zurückgezogen),
   noch keine ausgeführten Produkt-Abnahmetests.
 - [Evaluationsfirmware und Signalplan](../06-bringup-zephyr/README.md):
   implementierter Bring-up-Stand und Grenzen der Hardwarebestätigung.
@@ -95,7 +95,7 @@
   Diese Werte sind Kandidaten, keine akzeptierten Thesis-Grenzen. Vorgeschlagene 30 s Sitzung,
   Fehler max(5 BPM, 10 %), Qualität ≥0,6 und Coverage ≥80 % ebenfalls noch offen.
   Periodizitätsqualität ist keine klinische Konfidenz.
-- [ ] **Latenz und Last (D10/VT-02/VT-13):** 16 kHz und 128 Frames ergeben 8 ms Blöcke;
+- [ ] **Latenz und Last (D10/VT-02; VT-13 zurückgezogen):** 16 kHz und 128 Frames ergeben 8 ms Blöcke;
   dies ist keine gemessene End-to-End-Latenz. Board-Ziele 8 ms/≤4 ms und Soak-Dauer sind im
   Detailentwurf zu prüfen. Frühere <30/<10-ms-Notizen sind nicht bestätigte Akzeptanzgrenzen.
   DMA-interner SRAM, PSRAM-Clip/Fixtures, Queue-/Heap-Margen und SPI-Contention messen.

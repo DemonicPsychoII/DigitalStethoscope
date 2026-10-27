@@ -612,6 +612,30 @@ class AutomatedPolicyTests(unittest.TestCase):
                                                  native_reviews=[self.bot(state=state, sha=sha)]))
                     self.assertNotEqual(decision.state, "success")
 
+    def test_recorded_fallback_replaces_only_stale_native_decisions(self):
+        marker = f"<!-- review-fallback sha={HEAD} reason=rate-limited -->"
+        options = {"review_bots": {"coderabbitai[bot]": 136622811}}
+        for state in ("CHANGES_REQUESTED", "DISMISSED"):
+            options["native_reviews"] = [self.bot(state=state, sha=OLD)]
+            comments = [comment(marker), review()]
+            self.assertEqual(g.evaluate(inputs(comments=comments, **options)).state, "success")
+            for invalid_marker in (comment(marker.replace(HEAD, OLD)),
+                                   comment(marker.replace("rate-limited", "optional")),
+                                   comment(marker, association="NONE"),
+                                   comment(marker, login="github-actions[bot]"),
+                                   comment("```\n" + marker + "\n```"),
+                                   comment("> " + marker),
+                                   comment("    " + marker), comment("\t" + marker)):
+                self.assertNotEqual(g.evaluate(inputs(comments=[invalid_marker, review()], **options)).state, "success")
+            for invalid_review in (review(sha=OLD), review(verdict="changes"),
+                                   review(session="auth-1"), review(association="NONE")):
+                self.assertNotEqual(g.evaluate(inputs(comments=[comment(marker), invalid_review], **options)).state, "success")
+            for changes in ({"unresolved_threads": 1}, {"check_runs": []}, {"draft": True},
+                            {"body": BODY + "\n<!-- owner-question id=open -->\nDecision?"}):
+                self.assertNotEqual(g.evaluate(inputs(comments=comments, **options, **changes)).state, "success")
+            options["native_reviews"] = [self.bot(state=state, sha=HEAD)]
+            self.assertNotEqual(g.evaluate(inputs(comments=comments, **options)).state, "success")
+
     def test_comment_only_bot_review_retains_independent_agent_fallback(self):
         options = {"review_bots": {"coderabbitai[bot]": 136622811},
                    "native_reviews": [self.bot(state="COMMENTED")]}

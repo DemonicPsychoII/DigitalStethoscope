@@ -12,5 +12,6 @@
   "required_checks_only": true,
   "review_bots": {
     "coderabbitai[bot]": 136622811
-  }
+  },
+  "allow_minor_coderabbit_findings": true
 }

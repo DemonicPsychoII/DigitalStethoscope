@@ -12,7 +12,7 @@ that status (from the GitHub Actions app), so this file is the merge policy. It 
      `<!-- owner-answer id=X -->` comment — resolving a thread is not an answer;
   5. an independent agent session or an allowlisted review bot approves the current SHA;
      a machine-verified pure revert needs no review;
-  6. every review conversation has a disposition and is resolved;
+  6. critical/major and unclassified conversations are resolved; explicit minor/nitpick findings may stay open;
   7. configured and GitHub-required checks pass. Optional checks are advisory when
      required_checks_only is enabled.
 
@@ -26,8 +26,11 @@ retain their previous approval behavior until explicitly migrated. Agent markers
 must come from trusted collaborator accounts; native bot reviews additionally
 match the configured immutable user ID and Bot type. A CodeRabbit progress check
 is not an approval. Current-head native decisions take precedence. A stale native
-approval permits an independent current-head agent fallback; native changes requests
-and dismissals remain blocking or pending, including after a push.
+approval permits an independent current-head agent fallback. Other stale native
+decisions require a trusted current-head review-fallback record as well. Current-head
+native changes requests and dismissals remain blocking or pending. A current-head
+CodeRabbit changes request with fully accounted explicit minor/nitpick findings is
+nonblocking when configured; unknown classification and missing evidence block.
 
 Everything is read from LIVE API state, never from the triggering event's payload: the gate is
 re-run on pushes, body edits, review comments and CI completion, and each run must judge the PR as
@@ -51,6 +54,8 @@ import urllib.request
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
+
+from review_findings import nonblocking_finding, nonblocking_review
 
 GATE_CONTEXT = "agent-gate"
 # The workflow jobs that run this script; their own check runs must not gate themselves.
@@ -230,6 +235,8 @@ class Inputs:
     required_checks_only: bool = False
     review_bots: dict[str, int] = field(default_factory=dict)
     native_reviews: list[dict[str, Any]] = field(default_factory=list)
+    allow_minor_coderabbit_findings: bool = False
+    review_comments: list[dict[str, Any]] = field(default_factory=list)
     # Compatibility for legacy owner-approval configurations.
     owner_label: bool = False
     owner_label_name: str = "approved"
@@ -354,6 +361,39 @@ def owner_question_items(inputs: Inputs) -> list[tuple[str, str]]:
     return []
 
 
+def authenticated_coderabbit(comment: dict[str, Any], review_bots: dict[str, int]) -> bool:
+    user = comment.get("user") or {}
+    expected_identifier = review_bots.get("coderabbitai[bot]")
+    # GraphQL omits REST's [bot] suffix; both still need the configured immutable ID.
+    return type(expected_identifier) is int and expected_identifier > 0 \
+        and user.get("login") in {"coderabbitai", "coderabbitai[bot]"} and user.get("type") == "Bot" \
+        and expected_identifier == user.get("id")
+
+
+def minor_only_review(inputs: Inputs, review: dict[str, Any]) -> bool:
+    if not inputs.allow_minor_coderabbit_findings or not authenticated_coderabbit(review, inputs.review_bots):
+        return False
+    findings = [comment for comment in inputs.review_comments
+                if comment.get("pull_request_review_id") == review.get("id")
+                and not comment.get("in_reply_to_id")]
+    if any(not authenticated_coderabbit(comment, inputs.review_bots) for comment in findings):
+        return False
+    return nonblocking_review(review.get("body") or "", [comment.get("body") or "" for comment in findings])
+
+
+def recorded_review_fallback(inputs: Inputs) -> bool:
+    for comment in inputs.comments:
+        if not trusted(comment):
+            continue
+        for marker in re.finditer(r"^ {0,3}<!--[ \t]*review-fallback[ \t]+([^>]*?)[ \t]*-->",
+                                  strip_code(comment.get("body") or ""), re.MULTILINE):
+            attributes = parse_attrs(marker[1])
+            if (attributes.get("sha") == inputs.head_sha
+                    and attributes.get("reason") in {"unavailable", "rate-limited", "failed", "stuck"}):
+                return True
+    return False
+
+
 def review_items(inputs: Inputs, author: dict[str, str] | None) -> list[tuple[str, str]]:
     # Native reviews come from the GitHub API, not text that a PR can imitate.
     bot_reviews = [r for r in inputs.native_reviews
@@ -366,13 +406,15 @@ def review_items(inputs: Inputs, author: dict[str, str] | None) -> list[tuple[st
         login = review["user"]["login"]
         if review.get("commit_id") != inputs.head_sha:
             fallback, _ = latest_review(inputs.comments, inputs.reviewer_logins)
-            if review.get("state") != "APPROVED" or fallback is None:
+            if fallback is None or (review.get("state") != "APPROVED" and not recorded_review_fallback(inputs)):
                 return [("pending", f"{login} must review the current head SHA")]
-            # A past approval cannot veto the separately validated current-head fallback.
+            # Validate the replacement review below; fallback never waives other gates.
 
         elif review.get("state") == "APPROVED":
             return [("ok", f"approved at {inputs.head_sha[:7]} by {login}")]
         elif review.get("state") == "CHANGES_REQUESTED":
+            if minor_only_review(inputs, review):
+                return [("ok", f"{login} reviewed {inputs.head_sha[:7]}; only minor/nitpick findings")]
             return [("fail", f"{login} requests changes on the current head")]
         else:
             return [("pending", f"{login} has not approved the current head")]
@@ -461,9 +503,9 @@ def evaluate(inputs: Inputs) -> Decision:
         items.extend(owner_approval_items(inputs, klass))
 
     if inputs.unresolved_threads:
-        items.append(("fail", f"{inputs.unresolved_threads} unresolved review thread(s)"))
+        items.append(("fail", f"{inputs.unresolved_threads} unresolved blocking or unclassified review thread(s)"))
     else:
-        items.append(("ok", "no unresolved review threads"))
+        items.append(("ok", "no unresolved blocking or unclassified review threads"))
 
     items.extend(ci_items(inputs))
 
@@ -582,16 +624,44 @@ class GitHub:
             raise RuntimeError(f"graphql: {data['errors']}")
         return data["data"]
 
-    def unresolved_threads(self, number: int) -> int:
+    def unresolved_threads(self, number: int, review_bots: dict[str, int] | None = None,
+                           review_comments: list[dict[str, Any]] | None = None) -> int:
         owner, name = self.repo.split("/")
         query = """query($o:String!,$n:String!,$p:Int!,$c:String){repository(owner:$o,name:$n){
           pullRequest(number:$p){reviewThreads(first:100,after:$c){
-            nodes{isResolved} pageInfo{hasNextPage endCursor}}}}}"""
+            nodes{isResolved comments(first:1){nodes{databaseId:fullDatabaseId body author{login __typename
+              ... on Bot{databaseId}}}}} pageInfo{hasNextPage endCursor}}}}}"""
         count, cursor = 0, None
         while True:
             threads = self.graphql(query, {"o": owner, "n": name, "p": number, "c": cursor})
             threads = threads["repository"]["pullRequest"]["reviewThreads"]
-            count += sum(1 for t in threads["nodes"] if not t["isResolved"])
+            for thread in threads["nodes"]:
+                if thread["isResolved"]:
+                    continue
+                comments = thread["comments"]["nodes"]
+                root = comments[0] if comments else {}
+                author = root.get("author") or {}
+                comment = {"user": {"login": author.get("login"), "id": author.get("databaseId"),
+                                    "type": author.get("__typename")}}
+                raw_identifier = root.get("databaseId")
+                root_identifier = int(raw_identifier) if str(raw_identifier).isdecimal() else None
+                descendants = {root_identifier} if root_identifier is not None else set()
+                replies = []
+                remaining = list(review_comments or [])
+                while remaining:
+                    children = [reply for reply in remaining if reply.get("in_reply_to_id") in descendants]
+                    if not children:
+                        break
+                    replies.extend(children)
+                    descendants.update(reply["id"] for reply in children)
+                    remaining = [reply for reply in remaining if reply not in children]
+                if review_bots and root_identifier is not None \
+                        and authenticated_coderabbit(comment, review_bots) \
+                        and nonblocking_finding(root.get("body") or "") \
+                        and all(not authenticated_coderabbit(reply, review_bots)
+                                or nonblocking_finding(reply.get("body") or "") for reply in replies):
+                    continue
+                count += 1
             if not threads["pageInfo"]["hasNextPage"]:
                 return count
             cursor = threads["pageInfo"]["endCursor"]
@@ -672,19 +742,28 @@ def gather(gh: GitHub, number: int, config: dict[str, Any], repo_dir: Path | Non
     labels = [lbl["name"] for lbl in pr.get("labels") or []]
     require_owner = config.get("require_owner_approval", True)
     review_bots = config.get("review_bots", {})
+    allow_minor = config.get("allow_minor_coderabbit_findings", False)
+    review_comments = gh.paginate(f"repos/{gh.repo}/pulls/{number}/comments") if allow_minor and review_bots else []
+    comments.extend(
+        {"id": comment["id"], "body": comment.get("body") or "", "created_at": comment["created_at"],
+         "login": (comment.get("user") or {}).get("login", ""),
+         "association": comment.get("author_association", "")}
+        for comment in review_comments
+    )
     native_reviews = gh.paginate(f"repos/{gh.repo}/pulls/{number}/reviews") if review_bots else []
     return Inputs(
         number=number, state=pr["state"], draft=bool(pr.get("draft")), head_sha=head, body=body,
         comments=comments,
         check_runs=[{"id": r["id"], "name": r["name"], "status": r["status"], "conclusion": r["conclusion"]} for r in runs],
         statuses=[{"context": s["context"], "state": s["state"]} for s in statuses],
-        unresolved_threads=gh.unresolved_threads(number),
+        unresolved_threads=gh.unresolved_threads(number, review_bots if allow_minor else None, review_comments),
         required_checks=required,
         ignore_checks=frozenset(config.get("ignore_checks", [])),
         reviewer_logins=frozenset(config.get("reviewer_logins", [])),
         require_owner_approval=require_owner,
         required_checks_only=config.get("required_checks_only", False),
         review_bots=review_bots, native_reviews=native_reviews,
+        allow_minor_coderabbit_findings=allow_minor, review_comments=review_comments,
         owner_label=gh.owner_label(number, labels, label_name) if require_owner else False,
         owner_label_name=label_name,
         changed_files=gh.changed_files(number),
