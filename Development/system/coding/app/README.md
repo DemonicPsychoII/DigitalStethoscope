@@ -176,9 +176,8 @@ substantiation.
 
 ## Wi-Fi workflow verification
 
-Planned: CONTROL posts `COMMUNICATION_EVENT_LISTENING_STARTED` and waits for
-`communication_waitForWiFiStop()` before it starts audio. On wait timeout, CONTROL keeps audio stopped. These names are not yet in
-the code or the design. The design requires the acknowledgement to follow L1 confirmation
+CONTROL is expected to post `COMMUNICATION_EVENT_LISTENING_STARTED` and waits for
+`communication_waitForWiFiStop()` before it starts audio. On wait timeout, CONTROL keeps audio stopped. These interfaces are implemented by COMMUNICATION; CONTROL integration is still pending. The design requires the acknowledgement to follow L1 confirmation
 of scan and connect cancellation and of portal, DHCP and AP shutdown, and a new Start
 invalidates the previous acknowledgement. The communication thread stops scans, connect
 requests and the setup services, but preserves an established station association.
