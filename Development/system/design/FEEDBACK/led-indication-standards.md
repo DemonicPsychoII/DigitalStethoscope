@@ -137,14 +137,14 @@ All colour-to-context mappings below (including blue for FHIR and white for sett
    error is an unresolved, conditional deviation: IEC 60601-1-8 permits suppressing lower-priority
    simultaneous signals only for an intelligent alarm system, and this design does not establish that
    classification (TICKET-210).
-3. Specific error-code and priority identification at 1 m is a one-time manual final-system acceptance check under the P22 manual procedure (`testing/system/P22-final-legibility.md`), which is not yet in the repo, outside automated MVP verification. Pattern visibility is a separate observation. No reset-cause or colour-vision checks are planned for the MVP.
+3. P22 describes a manual visibility acceptance expectation, but the 19 October owner decision plans no MVP visibility checks. This conflict remains unresolved; no approved procedure or verification evidence is available. No reset-cause or colour-vision checks are planned for the MVP.
 4. Clause summaries checked: IEC 60601-1 7.8.1 Table 2 [S1]; IEC 60073 clause 4.2.3 [S4] [S6];
    IEC 60601-1-8 6.3.2.2 and Table 2 [S12] [S13]. The priority matrix, applicability and harm assessment also remain unverified; secondary-source clause summaries do not resolve them.
 
 ## Sources
 
 The sources are not yet registered in `thesis-material/quellen.bib` or `thesis-material/quellen.md`
-(neither file exists in this repository), so the citations are unsupported until they are registered.
+(neither file exists in this repository), so bibliography registration remains incomplete. Registration alone would not verify the cited claims.
 The inherited metadata and content have not been independently verified by this implementation review. Missing fields
 remain explicitly unverified.
 
