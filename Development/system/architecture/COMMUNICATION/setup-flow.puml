@@ -14,6 +14,7 @@ if (Boot with usable saved network?) then (yes)
   stop
  endif
  :Report boot failure; release partial setup resources;
+ :Await manual setup request in Idle after returning outcome;
  :Return outcome to CONTROL;
  stop
 endif
