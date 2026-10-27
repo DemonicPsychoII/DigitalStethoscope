@@ -19,6 +19,12 @@ L2_COMMUNICATION owns setup, retries and sequencing. `L1_WIFI` owns individual r
 A new radio request or cancellation rejects late results of the prior request. Each wait returns its result to COMMUNICATION; callbacks do not change controller state. [Shared system contracts](../system/interfaces-and-behavior.md) define mode ownership and feedback; [Wi-Fi parameters](parameters.md) define operation limits; [COMMUNICATION](../COMMUNICATION/interfaces-and-behavior.md) defines sequencing and retries.
 
 
+## Network record
+
+Project representation: `wifi_network` is the name/password record shared with STORAGE and COMMUNICATION. It contains `char name[33]` followed by `char password[65]`, for a complete persisted record of 98 bytes. There is no security-type field, version prefix or additional serialized metadata. These widths match the existing application interface; this documents its current record rather than introducing a new format.
+
+`name` holds 1–32 non-NUL SSID bytes followed by a NUL terminator. `password` holds an empty string for an open network, 8–63 passphrase bytes, or 64 ASCII hexadecimal key digits, followed by a NUL terminator. Each string must terminate within its array. Byte sequences are preserved without text normalization; lengths are byte counts, not Unicode character counts. Bytes after each terminator remain part of the fixed-size record but are not string content. `wifi_isValidNetwork()` checks this representation without mutation. Security-type eligibility is established by the supported-network scan/join path; this record alone cannot distinguish WPA2 from an unsupported secured network.
+
 ## Supported networks
 
 List and accept open networks and WPA2-PSK. Filter other security types instead of mapping them onto a supported type. Bound each operation and return its cause to the caller. Persistence belongs to L1_STORAGE; retries and listening interruption belong to L2_COMMUNICATION.
