@@ -1,0 +1,133 @@
+{
+  "circor_dataset": {
+    "reference": "Oliveira, J. et al. (2022). The CirCor DigiScope Phonocardiogram Dataset (version 1.0.3). PhysioNet. DOI: 10.13026/tshs-mw03.",
+    "doi": "https://doi.org/10.13026/tshs-mw03",
+    "url": "https://physionet.org/content/circor-heart-sound/1.0.3/",
+    "verified": "PhysioNet dataset page opened; citation/metadata visible.",
+    "paywalled": false,
+    "page": "unverified"
+  },
+  "circor_paper": {
+    "reference": "Oliveira, J. H. et al. (2022 online / 2022 issue). The CirCor DigiScope Dataset: From Murmur Detection to Murmur Classification. IEEE Journal of Biomedical and Health Informatics. DOI: 10.1109/JBHI.2021.3137048.",
+    "doi": "https://doi.org/10.1109/JBHI.2021.3137048",
+    "url": "https://arxiv.org/abs/2108.00813",
+    "verified": "PhysioNet dataset page identifies original paper/DOI; arXiv record found.",
+    "paywalled": "IEEE version may be paywalled; arXiv preprint is open.",
+    "page": "unverified"
+  },
+  "physionet_challenge_2022": {
+    "reference": "Reyna, M. A. et al. (2022). Heart Murmur Detection from Phonocardiogram Recordings: The George B. Moody PhysioNet Challenge 2022. Computing in Cardiology.",
+    "doi": "unverified",
+    "url": "https://physionet.org/content/challenge-2022/1.0.0/papers/",
+    "verified": "PhysioNet challenge paper page opened; source describes cohort/data.",
+    "paywalled": false,
+    "page": "unverified"
+  },
+  "digital_auscultation_murmur": {
+    "reference": "Delgado-Trejos, E., Quiceno-Manrique, A. F., Godino-Llorente, J. I., Blanco-Velasco, M., & Castellanos-Dominguez, G. (2009). Digital Auscultation Analysis for Heart Murmur Detection. Annals of Biomedical Engineering, 37, 337–353. DOI: 10.1007/s10439-008-9611-z.",
+    "doi": "https://doi.org/10.1007/s10439-008-9611-z",
+    "url": "https://link.springer.com/article/10.1007/s10439-008-9611-z",
+    "verified": "Springer article opened; title/date/authors/abstract and Introduction lines 69–85 inspected.",
+    "paywalled": false,
+    "page": "Introduction, heart cycle/murmur description (web text lines 71–73; 85)."
+  },
+  "digital_stethoscope_characterization": {
+    "reference": "Maharjan, S. et al. (2024). Technical Characterization of Digital Stethoscopes: Toward Scalable Artificial Intelligence-Based Auscultation. Sensors.",
+    "doi": "unverified",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10753976/",
+    "verified": "Search result content inspected; direct open returned bot challenge.",
+    "paywalled": false,
+    "page": "unverified"
+  },
+  "frequency_response_stethoscopes": {
+    "reference": "Frequency Responses of Conventional and Amplified Stethoscopes for Measuring Heart Sounds. Peer-reviewed article indexed in PubMed Central (PMC7305673); full author/journal metadata to verify.",
+    "doi": "unverified",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7305673/",
+    "verified": "Search result excerpt inspected; direct open returned bot challenge.",
+    "paywalled": false,
+    "page": "unverified"
+  },
+  "invitro_stethoscopes": {
+    "reference": "Auscultation Science article (2019). An in vitro acoustic analysis and comparison of popular stethoscopes.",
+    "doi": "unverified",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6339642/",
+    "verified": "Search result content inspected; direct open returned bot challenge.",
+    "paywalled": false,
+    "page": "unverified"
+  },
+  "ec13_standard": {
+    "reference": "ANSI/AAMI EC13:2002. Cardiac monitors, heart rate meters, and alarms. Association for the Advancement of Medical Instrumentation.",
+    "doi": "unverified",
+    "url": "https://mdcpp.com/doc/standard/ANSIAAMIEC13-2002.pdf",
+    "verified": "Search result excerpt for clause 4.2.7 inspected; direct open failed.",
+    "paywalled": false,
+    "page": "unverified"
+  },
+  "hr_accuracy_review": {
+    "reference": "Facial video photoplethysmography for measuring average and quasi-instantaneous heart rate: a pilot validation study (2025). PMC.",
+    "doi": "unverified",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12505149/",
+    "verified": "Search result section 4.2 inspected; standard scope caveat shown.",
+    "paywalled": false,
+    "page": "unverified"
+  },
+  "fda_ec13_guidance": {
+    "reference": "U.S. FDA. Cardiac Monitor Guidance (including Cardiotachometer and Rate Alarm) - Guidance for Industry.",
+    "doi": "unverified",
+    "url": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/cardiac-monitor-guidance-including-cardiotachometer-and-rate-alarm-guidance-industry",
+    "verified": "Search result excerpt inspected for EC13 scope.",
+    "paywalled": false,
+    "page": "unverified"
+  },
+  "wsola_roelands": {
+    "reference": "Roelands, M. & Verhelst, W. (1993). Waveform similarity based overlap-add (WSOLA) for time-scale modification of speech: structures and evaluation. Eurospeech 1993, 337–340. DOI: 10.21437/Eurospeech.1993-59.",
+    "doi": "https://doi.org/10.21437/Eurospeech.1993-59",
+    "url": "https://www.isca-archive.org/eurospeech_1993/roelands93_eurospeech.html",
+    "verified": "ISCA full metadata and abstract opened, lines 4–18.",
+    "paywalled": false,
+    "page": "Abstract and bibliographic record (web text lines 4–18)."
+  },
+  "wsola_verhelst": {
+    "reference": "Verhelst, W. & Roelands, M. (1993). An Overlap-Add Technique Based on Waveform Similarity (WSOLA) for High Quality Time-Scale Modification of Speech. ICASSP-93, 554–557.",
+    "doi": "unverified",
+    "url": "https://researchportal.vub.be/en/publications/an-overlap-add-technique-based-on-waveform-similarity-wsola-for-h/",
+    "verified": "Publisher/institutional record seen in search result.",
+    "paywalled": false,
+    "page": "unverified"
+  },
+  "fhir_r4_vitals": {
+    "reference": "HL7. FHIR Release 4, Observation Vital Signs Profile (v4.0.1).",
+    "doi": "unverified",
+    "url": "https://hl7.org/fhir/R4/observation-vitalsigns.html",
+    "verified": "Official HL7 R4 profile opened; heart-rate code/unit and profile contents inspected.",
+    "paywalled": false,
+    "page": "Vital Signs table, Heart rate row (web text lines 50–51)."
+  },
+  "loinc_8867": {
+    "reference": "Regenstrief Institute. LOINC 8867-4: Heart rate.",
+    "doi": "unverified",
+    "url": "https://loinc.org/8867-4",
+    "verified": "Official LOINC page opened; term name and example units inspected.",
+    "paywalled": false,
+    "page": "LOINC term name lines 46–59; Example Units table lines 232–238."
+  },
+  "fhir_hr_example": {
+    "reference": "HL7. FHIR R5 Observation example: heart rate.",
+    "doi": "unverified",
+    "url": "https://fhir.hl7.org/fhir/observation-example-heart-rate.html",
+    "verified": "Official FHIR example found/opened via search excerpt; code and unit shown.",
+    "paywalled": false,
+    "page": "unverified"
+  },
+  "health_data_guidance": {
+    "reference": "European Commission. Assessment of Member States’ rules on health data in light of GDPR.",
+    "doi": "unverified",
+    "url": "https://health.ec.europa.eu/system/files/2021-02/ms_rules_health-data_en_0.pdf",
+    "verified": "Search result inspected for distinction of pseudonymous and anonymous data.",
+    "paywalled": false,
+    "page": "unverified"
+  },
+  "_metadata": {
+    "watermark": "created by GPT-6-Luna on behalf of Nico running in T3 Code through Codex."
+  }
+}

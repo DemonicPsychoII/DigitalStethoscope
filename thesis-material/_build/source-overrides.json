@@ -1,0 +1,150 @@
+{
+ "frequency_response_stethoscopes": {
+  "doi": "https://doi.org/10.4103/sjmms.sjmms_118_19",
+  "url": "https://doi.org/10.4103/sjmms.sjmms_118_19",
+  "link_check": "ok — HTTP 200 über korrigierten DOI am 2026-10-24; Titel geprüft",
+  "fix_reason": "Bindestriche im DOI durch Unterstriche ersetzt. PMC-Metadaten nennen den korrigierten DOI; direkter Abruf führt zum Ovid-Verlag mit passendem Titel und Alanazi. Alter DOI: https://doi.org/10.4103/sjmms.sjmms-118-19. Die PMC-URL bleibt als alternative Fundstelle, kann aber eine Browserprüfung verlangen.",
+  "evidence": [
+   "https://doi.org/10.4103/sjmms.sjmms_118_19"
+  ],
+  "bib": {
+   "author": "Alanazi, Ahmad A. and Atcherson, Samuel R. and Franklin, Clifford A. and Bryan, Melinda F.",
+   "title": "Frequency Responses of Conventional and Amplified Stethoscopes for Measuring Heart Sounds",
+   "year": "2020",
+   "journal": "Saudi Journal of Medicine and Medical Sciences",
+   "volume": "8",
+   "number": "2",
+   "pages": "112--117",
+   "doi": "10.4103/sjmms.sjmms_118_19"
+  },
+  "checked": "2026-10-24"
+ },
+ "fda_ec13_guidance": {
+  "url": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/cardiac-monitor-guidance-including-cardiotachometer-and-rate-alarm-guidance-industry",
+  "reference": "U.S. Food and Drug Administration. (1998). Cardiac Monitor Guidance (including Cardiotachometer and Rate Alarm) — Guidance for Industry.",
+  "link_check": "broken (HTTP 404) — exakte URL am 2026-10-24 erneut geprüft; Ersatzfundstelle unbestätigt",
+  "fix_reason": "Defekten PDF-Link durch die von der FDA-Guidance-Suche gelistete HTML-Seite desselben Dokuments ersetzt. FDA nennt dort laut Stage-2-Notiz das Ausgabedatum 5. November 1998; das im Ausgangseintrag genannte Jahr 2023 ist nicht das Publikationsjahr. Dass die HTML-Fassung den vollständigen Leitlinientext enthält, ist nicht unabhängig belegt: Die Öffnung wurde nur gemeldet, ein unabhängiger Abruf am 2026-10-05 und erneut am 2026-10-12 lieferte HTTP 404, und link-probes.json enthält keinen FDA-Abruf. Diese Leitlinie bezieht sich auf EC13-1992, nicht automatisch auf EC13:2002.",
+  "evidence": [
+   "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/cardiac-monitor-guidance-including-cardiotachometer-and-rate-alarm-guidance-industry"
+  ],
+  "bib": {
+   "author": "{U.S. Food and Drug Administration}",
+   "title": "Cardiac Monitor Guidance (including Cardiotachometer and Rate Alarm) — Guidance for Industry",
+   "year": "1998"
+  },
+  "checked": "2026-10-24"
+ },
+ "ec13": {
+  "url": "https://webstore.ansi.org/standards/aami/ansiaamiec132002",
+  "paywalled": true,
+  "link_check": "ok — offizieller ANSI-Katalog am 2026-10-05 geöffnet; Volltext kostenpflichtig",
+  "fix_reason": "Defekte PDF-Kopie durch offiziellen Katalogeintrag derselben Norm ANSI/AAMI EC13-2002 ersetzt. Titel und Ausgabe stimmen überein; der Katalog bestätigt keine numerischen Klauselinhalte. Originalnorm über Hochschulzugang beschaffen und Klausel prüfen.",
+  "evidence": [
+   "https://webstore.ansi.org/standards/aami/ansiaamiec132002"
+  ],
+  "bib": {
+   "author": "{Association for the Advancement of Medical Instrumentation}",
+   "title": "ANSI/AAMI EC13-2002: Cardiac Monitors, Heart Rate Meters, and Alarms",
+   "year": "2002"
+  }
+ },
+ "im68a130_datasheet": {
+  "url": "https://www.infineon.com/assets/row/public/documents/24/49/infineon-im68a130-datasheet-en.pdf?fileId=8ac78c8c85ecb34701860371623f1204",
+  "link_check": "ok — Hersteller-PDF am 2026-10-05 geöffnet, 16 Seiten",
+  "fix_reason": "Herstellerlink mit dokumentiertem fileId-Parameter ersetzt die defekte URL ohne Parameter. Geöffnetes PDF identifiziert IM68A130V01, Revision 1.10, 2024-01-19 und dieselben 10-Hz-/68-dB(A)-/130-dB-SPL-Spezifikationen. Seitenverweise der Einheiten bleiben unverändert ungeprüft.",
+  "evidence": [
+   "https://www.infineon.com/assets/row/public/documents/24/49/infineon-im68a130-datasheet-en.pdf?fileId=8ac78c8c85ecb34701860371623f1204"
+  ],
+  "bib": {
+   "author": "{Infineon Technologies}",
+   "title": "IM68A130V01: High performance analog XENSIV MEMS microphone",
+   "year": "2024"
+  }
+ },
+ "goh_chestpiece": {
+  "checked": "2026-10-12",
+  "reference": "Goh, R. X. et al. (2023). Design optimization of 3D printed digital stethoscope for low-cost telemedicine. IEEE International Conference on Sensors and Nanotechnology (SENNANO), 137–140. DOI: 10.1109/SENNANO57767.2023.10352567.",
+  "doi": "https://doi.org/10.1109/SENNANO57767.2023.10352567",
+  "url": "https://doi.org/10.1109/SENNANO57767.2023.10352567",
+  "link_check": "ok — DOI am 2026-10-12 aufgelöst (HTTP 302 zu IEEE Xplore 10352567); Crossref nennt Titel, Goh als Erstautor, S. 137–140",
+  "fix_reason": "Ausgangs-DOI 10.1109/SENNANO57767.2023 bezeichnet den Tagungsband, nicht den Artikel. Artikel-DOI per Crossref-Datensatz und doi.org-Auflösung geprüft. Bisherige Institutions-URL: https://staffprofiles.bournemouth.ac.uk/display/journal-article/388323.",
+  "evidence": [
+   "https://api.crossref.org/works/10.1109/SENNANO57767.2023.10352567",
+   "https://ieeexplore.ieee.org/document/10352567/"
+  ],
+  "bib": {
+   "author": "Goh, Rou Xuan and others",
+   "title": "Design Optimization of 3D Printed Digital Stethoscope for Low-Cost Telemedicine",
+   "year": "2023",
+   "booktitle": "IEEE International Conference on Sensors and Nanotechnology (SENNANO)",
+   "pages": "137--140",
+   "doi": "10.1109/SENNANO57767.2023.10352567"
+  }
+ },
+ "pilot_guidelines": {
+  "checked": "2026-10-24",
+  "reference": "Teresi, J. A., Yu, X., Stewart, A. L., & Hays, R. D. (2022). Guidelines for designing and evaluating feasibility pilot studies. Medical Care, 60(1), 95–103.",
+  "doi": "https://doi.org/10.1097/MLR.0000000000001664",
+  "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8849521/",
+  "link_check": "ok — HTTP 200 am 2026-10-24; Volltext als PMC-Seite abgerufen",
+  "fix_reason": "Titel und PMC-URL gehören zu Teresi et al. (2022); Referenz und DOI des Ausgangseintrags (Leon et al. 2011, 10.1177/0163278711410553) bezeichneten ein anderes Werk, dessen DOI am 2026-10-12 bei doi.org nicht auflöste (HTTP 404). Stage 1 hat den Inhalt am PMC-Volltext geprüft, daher wird das PMC-Werk übernommen. Ausgangsreferenz: Leon, A. C. et al. (2011). Evaluation & the Health Professions, 34(4), 452–476.",
+  "evidence": [
+   "https://pmc.ncbi.nlm.nih.gov/articles/PMC8849521/"
+  ],
+  "bib": {
+   "author": "Teresi, Jeanne A. and Yu, Xiaoying and Stewart, Anita L. and Hays, Ron D.",
+   "title": "Guidelines for Designing and Evaluating Feasibility Pilot Studies",
+   "journal": "Medical Care",
+   "year": "2022",
+   "volume": "60",
+   "number": "1",
+   "pages": "95--103",
+   "doi": "10.1097/MLR.0000000000001664"
+  }
+ },
+ "esp_dsp_benchmarks": {
+  "checked": "2026-10-12",
+  "reference": "Espressif Systems. ESP-DSP Library Benchmarks, ESP32S3 column.",
+  "url": "https://docs.espressif.com/projects/esp-dsp/en/latest/esp32/esp-dsp-benchmarks.html",
+  "verified": "Official Espressif ESP-DSP benchmark table opened; cycle-count method and S3 FIR, FFT, and biquad entries inspected.",
+  "page": "Benchmark table: FIR Filters, FFTs Radix-2, IIR Filters",
+  "link_check": "ok",
+  "fix_reason": "Schlüssel kam in round2/C-sources.json und round2/D-sources.json mit unterschiedlichen Metadaten vor; sources-merged.json behielt den allgemeineren D-Eintrag. Spezifischere C-Metadaten (ESP32-S3-Spalte, geprüfte Tabellen) übernommen; dieselbe Espressif-Seite.",
+  "evidence": [
+   "https://docs.espressif.com/projects/esp-dsp/en/latest/esp32/esp-dsp-benchmarks.html"
+  ],
+  "bib": {
+   "author": "{Espressif Systems}",
+   "title": "ESP-DSP Library Benchmarks"
+  }
+ },
+ "physionet_challenge_2022": {
+  "doi": "unverified",
+  "reference": "Reyna, M. A. et al. (2022). Heart Murmur Detection from Phonocardiogram Recordings: The George B. Moody PhysioNet Challenge 2022. Computing in Cardiology, 49, pagination unverified.",
+  "fix_reason": "DOI und Seitenzahlen sind nicht verifiziert; Stage-1-Audit bleibt unverändert.",
+  "url": "https://physionet.org/content/challenge-2022/1.0.0/",
+  "link_check": "ok",
+  "checked": "2026-10-24",
+  "evidence": [
+   "https://physionet.org/content/challenge-2022/1.0.0/"
+  ]
+ },
+ "tha_faq_ba": {
+  "url": "https://www.tha.de/index.php/Binaries/Binary89415/FAQ-Bachelorarbeit-02.26-clean.pdf",
+  "link_check": "broken (HTTP 404) — exakte URL am 2026-10-24 erneut geprüft; Ersatzfundstelle unbestätigt",
+  "checked": "2026-10-24",
+  "evidence": [
+   "https://www.tha.de/index.php/Binaries/Binary89415/FAQ-Bachelorarbeit-02.26-clean.pdf"
+  ],
+  "fix_reason": "Die historische URL ist weiterhin nicht erreichbar; keine ungeprüfte Ersatzquelle eingesetzt."
+ },
+ "tha_mb_merblatt": {
+  "url": "https://www.tha.de/Binaries/Binary77874/Merkblatt-Bachelorarbeit.pdf",
+  "link_check": "broken (HTTP 404) — exakte URL am 2026-10-24 erneut geprüft; Ersatzfundstelle unbestätigt",
+  "checked": "2026-10-24",
+  "evidence": [
+   "https://www.tha.de/Binaries/Binary77874/Merkblatt-Bachelorarbeit.pdf"
+  ],
+  "fix_reason": "Die historische URL ist weiterhin nicht erreichbar; keine ungeprüfte Ersatzquelle eingesetzt."
+ }
+}

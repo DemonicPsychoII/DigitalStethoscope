@@ -1,0 +1,336 @@
+{
+  "digital_stethoscope_characterization": {
+    "reference": "Maharjan, S. et al. (2023). Technical characterization of digital stethoscopes: Toward scalable artificial intelligence-based auscultation. Journal of Medical Engineering & Technology, 47(3), 165–178.",
+    "doi": "https://doi.org/10.1080/03091902.2023.2174198",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10753976/",
+    "verified": "PMC full-text search result and journal/DOI record verified; PDF/body text did not open in this session.",
+    "paywalled": false,
+    "page": "unverified",
+    "corrects_existing": true
+  },
+  "frequency_response_stethoscopes": {
+    "reference": "Alanazi, A., Atcherson, S., Franklin, C., & Bryan, M. (2020). Frequency responses of conventional and amplified stethoscopes for measuring heart sounds. Saudi Journal of Medicine & Medical Sciences, 8(2), 112–117.",
+    "doi": "https://doi.org/10.4103/sjmms.sjmms-118-19",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7305673/",
+    "verified": "PMC search result and university repository metadata verified title, authors, journal, pages and DOI; PMC returned reCAPTCHA on direct open.",
+    "paywalled": false,
+    "page": "unverified",
+    "corrects_existing": true
+  },
+  "invitro_stethoscopes": {
+    "reference": "Weiss, D. et al. (2019). An in vitro acoustic analysis and comparison of popular stethoscopes. Medical Devices: Evidence and Research, 12, 41–52.",
+    "doi": "https://doi.org/10.2147/MDER.S186076",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6339642/",
+    "verified": "Publisher record opened; metadata, open-access status, authors and pages verified.",
+    "paywalled": false,
+    "page": "unverified",
+    "corrects_existing": true
+  },
+  "digital_auscultation_review": {
+    "reference": "Li, S., Li, F., Tang, S., & Xiong, W. (2020). A Review of Computer-Aided Heart Sound Detection Techniques. BioMed Research International, 2020, 5846191.",
+    "doi": "https://doi.org/10.1155/2020/5846191",
+    "url": "https://pubmed.ncbi.nlm.nih.gov/32420352/",
+    "verified": "PubMed metadata opened/verified; PMC search result supports article scope.",
+    "paywalled": false,
+    "page": "unverified"
+  },
+  "circor_paper": {
+    "reference": "Oliveira, J. H. et al. (2022). The CirCor DigiScope Dataset: From Murmur Detection to Murmur Classification. IEEE Journal of Biomedical and Health Informatics, 26(6), 2524–2535.",
+    "doi": "https://doi.org/10.1109/JBHI.2021.3137048",
+    "url": "https://arxiv.org/abs/2108.00813",
+    "verified": "PhysioNet source page and arXiv record identify original article/DOI; publisher DOI landing did not open.",
+    "paywalled": "IEEE version may be paywalled; arXiv preprint is open.",
+    "page": "unverified",
+    "corrects_existing": true
+  },
+  "physionet_challenge_2022": {
+    "reference": "Reyna, M. A. et al. (2022). Heart Murmur Detection from Phonocardiogram Recordings: The George B. Moody PhysioNet Challenge 2022. Computing in Cardiology, 49, 1–4.",
+    "doi": "https://doi.org/10.22489/CinC.2022.049",
+    "url": "https://physionet.org/content/challenge-2022/1.0.0/",
+    "verified": "PhysioNet challenge page / primary source record searched; DOI and exact pagination remain unconfirmed.",
+    "paywalled": false,
+    "page": "unverified",
+    "corrects_existing": true
+  },
+  "open_heart_sound_database": {
+    "reference": "Liu, C. et al. (2016). An Open Access Database for the Evaluation of Heart Sound Algorithms. Physiological Measurement, 37(12), 2181–2213.",
+    "doi": "https://doi.org/10.1088/0967-3334/37/12/2181",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7199391/",
+    "verified": "PMC record opened; bibliographic/abstract page available; exact article pages not retrieved.",
+    "paywalled": false,
+    "page": "unverified"
+  },
+  "ec13_standard": {
+    "reference": "ANSI/AAMI EC13:2002. Cardiac monitors, heart rate meters, and alarms. Association for the Advancement of Medical Instrumentation.",
+    "doi": "unverified",
+    "url": "https://webstore.ansi.org/standards/aami/ansiaamiec132002",
+    "verified": "Official standards catalog record checked; full standard text not verified.",
+    "paywalled": true,
+    "page": "unverified",
+    "corrects_existing": true
+  },
+  "fda_ec13_guidance": {
+    "reference": "U.S. Food and Drug Administration. (2023). Cardiac Monitor Guidance (including Cardiotachometer and Rate Alarm): Guidance for Industry.",
+    "doi": "unverified",
+    "url": "https://www.fda.gov/media/71947/download",
+    "verified": "FDA primary guidance PDF listing found; numerical page location not verified.",
+    "paywalled": false,
+    "page": "unverified",
+    "corrects_existing": true
+  },
+  "heart_rate_validation_interlive": {
+    "reference": "Mühlen, J. M. et al. (2021). Recommendations for determining the validity of consumer wearable heart rate devices: expert statement and checklist of the INTERLIVE Network. British Journal of Sports Medicine, 55(14), 767–779.",
+    "doi": "https://doi.org/10.1136/bjsports-2020-103148",
+    "url": "https://bjsm.bmj.com/content/55/14/767",
+    "verified": "DOI, title, journal, pages and expert statement metadata found in publisher record/search result.",
+    "paywalled": false,
+    "page": "unverified"
+  },
+  "bland_altman": {
+    "reference": "Bland, J. M., & Altman, D. G. (1986). Statistical methods for assessing agreement between two methods of clinical measurement. The Lancet, 1(8476), 307–310.",
+    "doi": "https://doi.org/10.1016/S0140-6736(86)90837-8",
+    "url": "https://doi.org/10.1016/S0140-6736(86)90837-8",
+    "verified": "DOI/title/journal bibliographic record verified.",
+    "paywalled": "Publisher full text may be paywalled.",
+    "page": "unverified"
+  },
+  "hr_accuracy_review": {
+    "reference": "Facial video photoplethysmography for measuring average and quasi-instantaneous heart rate: a pilot validation study. (2025). Frontiers in Physiology, 16, 1638809.",
+    "doi": "https://doi.org/10.3389/fphys.2025.1638809",
+    "url": "https://www.frontiersin.org/journals/physiology/articles/10.3389/fphys.2025.1638809/full",
+    "verified": "Publisher full text opened; title, journal, DOI and study scope verified. This is facial-video PPG and not direct PCG validation.",
+    "paywalled": false,
+    "page": "unverified",
+    "corrects_existing": true
+  },
+  "wsola_verhelst": {
+    "reference": "Verhelst, W., & Roelands, M. (1993). An overlap-add technique based on waveform similarity (WSOLA) for high quality time-scale modification of speech. ICASSP-93, 554–557.",
+    "doi": "https://doi.org/10.1109/ICASSP.1993.319366",
+    "url": "https://ieeexplore.ieee.org/document/319366",
+    "verified": "IEEE Xplore title/record search result verified; full text not opened.",
+    "paywalled": true,
+    "page": "unverified",
+    "corrects_existing": true
+  },
+  "wsola_roelands": {
+    "reference": "Roelands, M., & Verhelst, W. (1993). Waveform similarity based overlap-add (WSOLA) for time-scale modification of speech: structures and evaluation. Eurospeech 1993, 337–340.",
+    "doi": "https://doi.org/10.21437/Eurospeech.1993-59",
+    "url": "https://www.isca-archive.org/eurospeech_1993/roelands93_eurospeech.html",
+    "verified": "ISCA archival record opened; title, authors, venue and pages verified.",
+    "paywalled": false,
+    "page": "Abstract and bibliographic record",
+    "corrects_existing": true
+  },
+  "tsm_review": {
+    "reference": "Driedger, J., & Müller, M. (2016). A review of time-scale modification of music signals. Applied Sciences, 6(2), 57.",
+    "doi": "https://doi.org/10.3390/app6020057",
+    "url": "https://www.mdpi.com/2076-3417/6/2/57",
+    "verified": "Publisher article record and open-access text located; bibliographic details verified.",
+    "paywalled": false,
+    "page": "unverified"
+  },
+  "tsm_phase_vocoder": {
+    "reference": "Driedger, J., & Müller, M. (2014). TSM Toolbox: MATLAB implementations of time-scale modification algorithms. Proceedings of DAFx-14, 249–256.",
+    "doi": "unverified",
+    "url": "https://www.audiolabs-erlangen.de/resources/MIR/TSMtoolbox",
+    "verified": "University research group publication/resource page located; DOI unverified.",
+    "paywalled": false,
+    "page": "unverified"
+  },
+  "pilot_studies": {
+    "reference": "Eldridge, S. M. et al. (2016). CONSORT 2010 statement: extension to randomised pilot and feasibility trials. BMJ, 355, i5239.",
+    "doi": "https://doi.org/10.1136/bmj.i5239",
+    "url": "https://www.bmj.com/content/355/bmj.i5239",
+    "verified": "BMJ article landing page searched; DOI/title verified.",
+    "paywalled": false,
+    "page": "unverified"
+  },
+  "pilot_tutorial": {
+    "reference": "Thabane, L. et al. (2010). A tutorial on pilot studies: the what, why and how. BMC Medical Research Methodology, 10, 1.",
+    "doi": "https://doi.org/10.1186/1471-2288-10-1",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC2824145/",
+    "verified": "PMC article search metadata verified; direct open returned reCAPTCHA.",
+    "paywalled": false,
+    "page": "unverified"
+  },
+  "pilot_guidelines": {
+    "reference": "Leon, A. C. et al. (2011). Guidelines for designing and evaluating feasibility pilot studies. Evaluation & the Health Professions, 34(4), 452–476.",
+    "doi": "https://doi.org/10.1177/0163278711410553",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8849521/",
+    "verified": "PMC full text opened; study aim, statistics, sample size and limitations verified in Sections 1–2.",
+    "paywalled": false,
+    "page": "Sections 1–2"
+  },
+  "pilot_sample_size": {
+    "reference": "Hertzog, M. A. (2008). Considerations in determining sample size for pilot studies. Research in Nursing & Health, 31(2), 180–191.",
+    "doi": "https://doi.org/10.1002/nur.20247",
+    "url": "https://pubmed.ncbi.nlm.nih.gov/18183564/",
+    "verified": "PubMed bibliographic record searched; full text/page details not verified.",
+    "paywalled": "May be paywalled.",
+    "page": "unverified"
+  },
+  "ethics_gdpr": {
+    "reference": "Regulation (EU) 2016/679 (General Data Protection Regulation), in particular Articles 4, 9 and 89.",
+    "doi": "unverified",
+    "url": "https://eur-lex.europa.eu/eli/reg/2016/679/oj",
+    "verified": "EUR-Lex official legal text identified; specific provisions can be consulted by article.",
+    "paywalled": false,
+    "page": "Articles 4, 9, 89"
+  },
+  "health_data_guidance": {
+    "reference": "European Commission. (2021). Assessment of the EU Member States’ rules on health data in the light of GDPR.",
+    "doi": "unverified",
+    "url": "https://health.ec.europa.eu/system/files/2021-02/ms_rules_health-data_en_0.pdf",
+    "verified": "Official Commission report opened in search result; relevance to member-state health-data rules verified.",
+    "paywalled": false,
+    "page": "unverified",
+    "corrects_existing": true
+  },
+  "wp29_anonymisation": {
+    "reference": "Article 29 Data Protection Working Party. (2014). Opinion 05/2014 on Anonymisation Techniques (WP216).",
+    "doi": "unverified",
+    "url": "https://ec.europa.eu/justice/article-29/documentation/opinion-recommendation/files/2014/wp216_en.pdf",
+    "verified": "Official working-party opinion record identified; page-level text not opened.",
+    "paywalled": false,
+    "page": "unverified"
+  },
+  "helmholtz_textbook": {
+    "reference": "Morse, P. M. (1948). Vibration and Sound (2nd ed.). McGraw-Hill.",
+    "doi": "unverified",
+    "url": "https://archive.org/details/vibrationsound0000mors",
+    "verified": "Catalog record only; exact relevant chapter/page not verified.",
+    "paywalled": false,
+    "page": "unverified"
+  },
+  "mems_microphones_review": {
+    "reference": "Exploring Microphone Technologies for Digital Auscultation Devices. (2023). Micromachines, 14(11), 2092.",
+    "doi": "https://doi.org/10.3390/mi14112092",
+    "url": "https://www.mdpi.com/2072-666X/14/11/2092",
+    "verified": "Publisher record/search result identifies peer-reviewed review; metadata verified, table/page details unverified.",
+    "paywalled": false,
+    "page": "unverified"
+  },
+  "esp32_datasheet": {
+    "reference": "Espressif Systems. ESP32-S3 Series Datasheet.",
+    "doi": "unverified",
+    "url": "https://www.espressif.com/sites/default/files/documentation/esp32-s3_datasheet_en.pdf",
+    "verified": "Manufacturer primary specification located; use only for chip facts.",
+    "paywalled": false,
+    "page": "unverified"
+  },
+  "esp_idf_i2s": {
+    "reference": "Espressif Systems. ESP-IDF Programming Guide: I2S Driver.",
+    "doi": "unverified",
+    "url": "https://docs.espressif.com/projects/esp-idf/en/stable/esp32s3/api-reference/peripherals/i2s.html",
+    "verified": "Manufacturer documentation page located; version-specific resource/behavior not recorded.",
+    "paywalled": false,
+    "page": "unverified"
+  },
+  "esp_tls_docs": {
+    "reference": "Espressif Systems. ESP-IDF Programming Guide: ESP-TLS.",
+    "doi": "unverified",
+    "url": "https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/protocols/esp_tls.html",
+    "verified": "Manufacturer documentation located; no specific numeric heap claim verified.",
+    "paywalled": false,
+    "page": "unverified"
+  },
+  "esp_dsp_benchmarks": {
+    "reference": "Espressif Systems. ESP-DSP Benchmarks.",
+    "doi": "unverified",
+    "url": "https://docs.espressif.com/projects/esp-dsp/en/latest/esp32/esp-dsp-benchmarks.html",
+    "verified": "Manufacturer benchmark page located; does not benchmark WSOLA/whole application.",
+    "paywalled": false,
+    "page": "unverified"
+  },
+  "mic_datasheet_tdk": {
+    "reference": "TDK InvenSense. ICS-40180 Datasheet.",
+    "doi": "unverified",
+    "url": "https://invensense.tdk.com/download-pdf/ics-40180-datasheet/",
+    "verified": "Manufacturer datasheet page located; frequency data not independently extracted in this round.",
+    "paywalled": false,
+    "page": "unverified"
+  },
+  "mic_datasheet_infineon": {
+    "reference": "Infineon Technologies. IM69D130 Product Brief / Datasheet.",
+    "doi": "unverified",
+    "url": "https://www.infineon.com/part/IM69D130",
+    "verified": "Manufacturer product page located; exact LFRO value not checked in datasheet text.",
+    "paywalled": false,
+    "page": "unverified"
+  },
+  "mic_datasheet_knowles": {
+    "reference": "Knowles. MEMS Microphones Selection Guide.",
+    "doi": "unverified",
+    "url": "https://www.knowles.com/docs/default-source/default-document-library/mic-selection-guide-r5.pdf",
+    "verified": "Manufacturer guide located; exact listed models/specifications not extracted in this round.",
+    "paywalled": false,
+    "page": "unverified"
+  },
+  "fhir_r4_vitals": {
+    "reference": "HL7. FHIR Release 4 (v4.0.1), Observation Vital Signs Profile.",
+    "doi": "unverified",
+    "url": "https://www.hl7.org/fhir/R4/observation-vitalsigns.html",
+    "verified": "HL7 official page opened; heart rate code 8867-4 and UCUM /min confirmed in table row.",
+    "paywalled": false,
+    "page": "Vital Signs table, Heart rate row",
+    "corrects_existing": true
+  },
+  "loinc_8867": {
+    "reference": "Regenstrief Institute. LOINC 8867-4: Heart rate.",
+    "doi": "unverified",
+    "url": "https://loinc.org/8867-4/",
+    "verified": "Official LOINC term page identified; page content not reopened in this round.",
+    "paywalled": false,
+    "page": "unverified",
+    "corrects_existing": true
+  },
+  "fhir_hr_example": {
+    "reference": "HL7. FHIR Release 4, Observation example: heart rate.",
+    "doi": "unverified",
+    "url": "https://www.hl7.org/fhir/R4/observation-example-heart-rate.json.html",
+    "verified": "Official HL7 R4 example page located; exact fields not independently checked.",
+    "paywalled": false,
+    "page": "unverified",
+    "corrects_existing": true
+  },
+  "esp_cert_docs": {
+    "reference": "Espressif Systems. ESP-IDF Programming Guide: Certificate Bundle and TLS Configuration.",
+    "doi": "unverified",
+    "url": "https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/protocols/esp_crt_bundle.html",
+    "verified": "Official documentation page located; no exact heap estimate verified.",
+    "paywalled": false,
+    "page": "unverified"
+  },
+  "tha_bachelor_faq": {
+    "reference": "Technische Hochschule Augsburg. FAQ zur Bachelorarbeit. (Version 02/2026).",
+    "doi": "unverified",
+    "url": "https://www.tha.de/Binaries/Binary89415/FAQ-Bachelorarbeit-02.26-clean.pdf",
+    "verified": "THA primary document search result located; specific clauses and exact page numbers not extracted in this pass.",
+    "paywalled": false,
+    "page": "unverified"
+  },
+  "tha_bachelor_maschinenbau": {
+    "reference": "Technische Hochschule Augsburg, Fakultäten Maschinenbau und Verfahrenstechnik / Angewandte Natur- und Geisteswissenschaften. Merkblatt für Bachelorarbeiten.",
+    "doi": "unverified",
+    "url": "https://www.tha.de/Binaries/Binary77874/Merkblatt-Bachelorarbeit.pdf",
+    "verified": "THA primary document located from official site; page details not independently checked.",
+    "paywalled": false,
+    "page": "unverified"
+  },
+  "tha_bachelor_gestaltung": {
+    "reference": "Technische Hochschule Augsburg, Fakultät für Gestaltung. Abschlussarbeit: Termine und Vorgaben.",
+    "doi": "unverified",
+    "url": "https://www.tha.de/Gestaltung/Interaktive-Medien/Abschlussarbeit.html",
+    "verified": "THA official faculty page located; details are faculty-specific and not a university-wide rule.",
+    "paywalled": false,
+    "page": "unverified"
+  },
+  "fhir_tls_security": {
+    "reference": "HL7. FHIR Release 4, Security and Privacy Module.",
+    "doi": "unverified",
+    "url": "https://www.hl7.org/fhir/R4/secpriv-module.html",
+    "verified": "Official HL7 R4 specification located; details not page-verified.",
+    "paywalled": false,
+    "page": "unverified"
+  }
+}

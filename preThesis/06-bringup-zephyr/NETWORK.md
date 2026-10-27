@@ -41,4 +41,4 @@ is reported without stopping audio. See the [evaluation protocol](EVAL-GUIDE.md#
 
 Device-network operations require owner authorization. These instructions describe
 the current evaluation firmware; the proposed thesis delivery contract is in
-detailed design.
+[detailed design](../../Development/system/design/system/interfaces-and-behavior.md#delivery-clock-and-configuration).
