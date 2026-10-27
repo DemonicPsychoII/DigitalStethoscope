@@ -14,8 +14,7 @@ if (Boot with usable saved network?) then (yes)
   stop
  endif
  :Report boot failure; release partial setup resources;
- :Await manual setup request in Idle after returning outcome;
- :Return outcome to CONTROL;
+ :Return outcome to CONTROL; manual setup required in Idle;
  stop
 endif
 :Scan through WIFI and publish completed cache;
@@ -37,6 +36,7 @@ if (Scan and hotspot start succeed?) then (yes)
    :Close setup session;
   endif
  endwhile (no)
+ :Publish Closing before teardown;
  :Stop PORTAL and hotspot services; retain established station;
 else (failed)
  :Report cause; release partial setup resources;
