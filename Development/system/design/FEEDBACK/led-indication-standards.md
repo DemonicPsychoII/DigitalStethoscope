@@ -143,8 +143,7 @@ All colour-to-context mappings below (including blue for FHIR and white for sett
 
 ## Sources
 
-The sources are not yet registered in `thesis-material/quellen.bib` or `thesis-material/quellen.md`
-(neither file exists in this repository), so bibliography registration remains incomplete. Registration alone would not verify the cited claims.
+The project-records layer supplies `thesis-material/quellen.bib` and `thesis-material/quellen.md`. Registration of each source below has not been independently verified; bibliography presence alone does not verify the cited claims.
 The inherited metadata and content have not been independently verified by this implementation review. Missing fields
 remain explicitly unverified.
 
