@@ -30,7 +30,7 @@ address. A stale existing link is not a successful new join. On failure show the
 cause, rescan and return to selection. On success save the network as the
 `wifi/network` record with `storage_write()` in `L1_STORAGE`; retry saving once.
 Preserve the old valid record on failure. Show success or save warning, with the
-station IPv4 address from `wifi_getAddress()`, for 10 s. Publish Closing before teardown on Cancel and inactivity exits; only Cancel, inactivity and scan failure add the closing-notice delay. Then close AP/server and keep
+station IPv4 address from `wifi_getAddress()`, for 10 s. Publish Closing before teardown on every setup exit, including result/save-warning completion and Start; only Cancel, inactivity and scan failure add the 2 s closing-notice delay. Then close AP/server and keep
 the station, including with unsaved credentials. At boot L2 reads the record with
 `storage_read()` and checks it with `wifi_isValidNetwork()`; L2 owns workflow policy.
 
