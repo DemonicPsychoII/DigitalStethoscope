@@ -1,0 +1,38 @@
+@startuml uc_03_set_up_wifi
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+title F3 Set up Wi-Fi (REQ-11, REQ-12)
+start
+if (Boot with saved network?) then (yes)
+ :Join; 4 attempts total, 5 s between failures;
+ if (Address assigned?) then (yes)
+  :Keep station connected;
+ else (no)
+  :Show error;
+ endif
+ :Wait for 2 s hold in Idle;
+endif
+:Scan/cache, then open hotspot and portal;
+:Phone joins open hotspot; QR opens page;
+repeat
+:Select network; password only if protected;
+:Queue join; browser polls;
+if (Selected network address assigned?) then (no)
+ :Show join error; rescan with AP open;
+endif
+repeat while (Join failed?) is (yes) not (no)
+ :Store credentials; retry once;
+ if (Saved?) then (yes)
+  :Show success;
+ else (no)
+  :Show save error; remain connected;
+ endif
+ :Show result 10 s; close hotspot/server;\nKeep station connected;
+stop
+floating note
+ Cancel/timeout: notice then cleanup; retain an established station.
+ Start takes priority: stop setup safely before audio.
+ Wi-Fi-only errors preserve audio. Detailed retries/recovery: wifi-flow.
+ Time, secure transport and Device registration are later FHIR acceptance.
+end note
+@enduml

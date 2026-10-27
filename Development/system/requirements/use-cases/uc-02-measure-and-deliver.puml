@@ -1,0 +1,31 @@
+@startuml uc_02_measure_and_deliver
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+title F2 Measure heart rate and deliver it (REQ-06..REQ-10)
+start
+:Operator presses Start and listens;
+:Operator presses Stop;
+if (Session shorter than 15 s?) then (yes)
+ :No result;
+ stop
+endif
+if (Signal good enough for a heart rate?) then (yes)
+ :Heart rate result;
+else (no)
+ :Error result;
+ :Device shows error;
+endif
+:Send result with the device-id to the FHIR server;
+if (Delivered?) then (yes)
+ :Result visible on the server;
+ stop
+else (no)
+ :Retry up to 3 times;
+ if (Delivered?) then (yes)
+  :Result visible on the server;
+ else (no)
+  :Device shows error;
+ endif
+ stop
+endif
+@enduml
