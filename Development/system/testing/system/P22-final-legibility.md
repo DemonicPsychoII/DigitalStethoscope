@@ -1,7 +1,6 @@
 # P22 — one-time final indication and legibility acceptance
 
-AI-drafted procedure; execution and sign-off by Nico. Execute once on the final
-assembled system baseline. Repeat affected observations if the indication hardware,
+Proposed procedure, deferred pending resolution of the P22 verification conflict. The 19 October owner decision plans no MVP visibility checks; this draft does not add a required MVP acceptance step. See the [recorded conflict](../../design/FEEDBACK/parameters.md). If adopted later, execution and sign-off belong to Nico on the final assembled system baseline. Repeat affected observations if the indication hardware,
 enclosure, brightness, timing or catalogue changes afterward. This is a project
 acceptance check, not a standards-conformity claim.
 

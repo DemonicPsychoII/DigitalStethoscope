@@ -191,7 +191,7 @@ a bound on teardown latency: the time until audio can start also includes the at
 settings write and the driver shutdown, which are not yet measured.
 CONTROL does not call this interface yet.
 
-No application test suite is included yet. The separate test stage will generate communication scenarios from the [Wi-Fi design](../../design/WIFI/interfaces-and-behavior.md) and [portal design](../../design/PORTAL/interfaces-and-behavior.md). CI skips application host execution while that suite is absent; the result reporter remains available for the test stage. Verification case VT-14 remains uncovered. Target timing and CONTROL integration are also pending.
+The [application host suite](tests/host/README.md) verifies communication, Wi-Fi and portal scenarios against substituted boundaries. VT-14 target timing, radio behavior and CONTROL integration remain pending; host results do not establish device behavior.
 
 ## Coding conventions
 
