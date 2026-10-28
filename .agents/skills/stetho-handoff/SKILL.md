@@ -50,7 +50,8 @@ revision; results from another revision are historical, not a current pass.
 
 Prepare the review/<component>/<stage>/<YYYY-MM-DD>-<sequence> tag and record
 the full source hash. Never move a reviewed tag; changed baselines get new tags.
-Link the corresponding GitHub PR and automated review evidence.
+Record links to the corresponding GitHub PR and automated review evidence in
+the durable evidence index alongside the source hash and review tag.
 
 Collect case lists and expected results, JUnit reports, logs, gaps, configuration,
 firmware identity and completed manual records relevant to that stage. Preserve
@@ -63,6 +64,18 @@ with missing items. Creating/pushing tags, opening/updating MRs or posting
 comments requires authorization covering that action; drafting alone does not
 authorize contacting reviewers. When transfer is authorized, perform it and
 verify the destination and links. Do not fabricate approval or signed results.
+
+## GitLab MR presentation
+
+Use an action-oriented title describing the stage's intent. The description
+contains one short blockquoted paragraph explaining the intent and actual
+changes, followed by `**V-Model:** Architecture`, `Design`, `L2` or `L1`.
+Omit a Depends on line, device-verification status,
+baseline hashes, tag inventories and repeated process explanations from the MR
+description. Keep revision identities, dependencies, verification status and
+evidence links in the durable handoff record; the MR target preserves the stack
+dependency. Apply the required attribution below the description as an HTML
+comment. This format applies to GitLab human-review MRs, not GitHub development PRs.
 
 ## Handle findings
 
