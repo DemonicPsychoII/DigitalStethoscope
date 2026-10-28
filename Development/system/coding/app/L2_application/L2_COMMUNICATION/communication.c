@@ -400,7 +400,8 @@ int communication_waitForWiFiStop(k_timeout_t timeout)
 {
     k_timepoint_t deadline = sys_timepoint_calc(timeout);
     int result = -EAGAIN;
-    do
+    bool is_waiting = true;
+    while(is_waiting)
     {
         k_spinlock_key_t key = k_spin_lock(&communication_ControlLock);
         bool isStopped = communication_ListeningIsRequested &&
@@ -411,7 +412,8 @@ int communication_waitForWiFiStop(k_timeout_t timeout)
         {
             result = 0;
         }
-        else if(!sys_timepoint_expired(deadline))
+        is_waiting = (result == -EAGAIN) && !sys_timepoint_expired(deadline);
+        if(is_waiting)
         {
             k_timeout_t remaining = sys_timepoint_timeout(deadline);
             if(K_TIMEOUT_EQ(remaining, K_FOREVER) || (remaining.ticks > K_MSEC(COMMUNICATION_EVENT_CHECK_INTERVAL_MS).ticks))
@@ -420,7 +422,7 @@ int communication_waitForWiFiStop(k_timeout_t timeout)
             }
             (void)k_sleep(remaining);
         }
-    } while((result == -EAGAIN) && !sys_timepoint_expired(deadline));
+    }
     return result;
 }
 

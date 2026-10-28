@@ -67,6 +67,10 @@ simulation so it can observe private working-record and consumed-password erasur
 without changing firmware interfaces. Ordinary workflow cases retain the separate
 translation-unit boundary.
 
+The same white-box harness models a worker shutdown acknowledgement during a
+CONTROL sleep. Release-wait cases cover the final polling interval, the deadline,
+late acknowledgements and zero-time queries; they do not establish target scheduling.
+
 `l1_harness.c` includes the unchanged production WIFI, PORTAL and STORAGE units so
 it can inspect private form/queue erasure without adding firmware hooks. Small
 Zephyr/ESP-IDF/HTTP/settings substitutes drive their actual handlers and wait APIs.
