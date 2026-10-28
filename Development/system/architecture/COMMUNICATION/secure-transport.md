@@ -20,6 +20,16 @@ Retain the system allocation of Wi-Fi, TLS and time operations to L1_WIFI and wo
 
 Dependency direction: CONTROL leases network activity to COMMUNICATION; COMMUNICATION composes the serializer and WIFI operations; WIFI depends on Zephyr transport and deployment trust material. The remote HTTPS server remains outside the device boundary. This is a project allocation derived from the existing system design.
 
+## Agreed connection lifecycle
+
+Nico agreed the following direction during architecture grilling on 28 October 2026, recorded in [PR #80](https://github.com/DemonicPsychoII/DigitalStethoscope/pull/80). Prefer TLS 1.3, subject to verification of support in the pinned device stack and server. Retain and reuse a verified connection when available to reduce repeated connection setup. Connection reuse is an optimization, not a delivery prerequisite: connection loss is an expected recovery path within the existing delivery budget.
+
+Prepare secure transport automatically while Idle after acceptable clock preparation, then proceed to registration readiness. COMMUNICATION tracks network access, acceptable clock, verified transport and Device registration separately; an open connection does not establish all prerequisites.
+
+During listening, retain an existing connection without application requests, heartbeat messages or proactive reconnects. If it closes, defer reconnection until listening stops. WIFI retains ownership of the dormant connection; lease release means active network operations have ended, not that every retained socket must close. Connection reuse never authorizes active work without the lease. Target verification must establish the audio/resource impact of retained connections and underlying stack activity; application inactivity alone proves no isolation.
+
+Design must define retained-connection lifecycle, closure detection, cleanup and reconnect behavior. No indefinite connection lifetime or keepalive guarantee is assumed. TLS 1.3 compatibility and resource costs remain unverified; no version fallback policy is silently approved.
+
 ## Security and lifecycle boundaries
 
 Keep the existing CA, hostname and validity checks mandatory. Failed verification prevents sending the application request; neither plain-HTTP fallback nor a verification bypass is a recovery path. COMMUNICATION receives a terminal verification failure under the existing delivery policy. A station address alone does not establish server readiness.
@@ -30,7 +40,7 @@ Active connection work follows the exclusive network lease. WIFI owns connection
 
 ## Detailed-design inputs and gaps
 
-Define operation interfaces, endpoint/trust provisioning, credential handling, connection lifetime, resource budgets and failure mapping in Design. Retain existing delivery bounds; this architecture adds no TLS version, cipher list, rotation mechanism or timeout. Clock trust/freshness remain open (TICKET-180/TICKET-209). Server authentication/authorization and certificate deployment must be made concrete before service implementation. Transport verification does not settle examination-request authorization.
+Define operation interfaces, endpoint/trust provisioning, credential handling, connection lifetime, resource budgets and failure mapping in Design. Retain existing delivery bounds; TLS 1.3 is the preferred target, while cipher selection, rotation and timeout values remain Design inputs. Clock trust/freshness remain open (TICKET-180/TICKET-209). Server authentication/authorization and certificate deployment must be made concrete before service implementation. Transport verification does not settle examination-request authorization.
 
 ## Verification allocation
 
@@ -39,6 +49,8 @@ Define operation interfaces, endpoint/trust provisioning, credential handling, c
 | Untrusted issuer, wrong name, expired certificate or unavailable clock basis | REQ-11; VT-08 | Verification failure prevents sending; no insecure fallback. |
 | Handshake failure or incomplete response | REQ-09/REQ-10; VT-07/VT-08 | COMMUNICATION applies bounded outcome/retry policy; transport releases resources. |
 | Active transport requested during listening | REQ-02/REQ-13; VT-08/VT-09 | No active transport work; offline listening remains available. |
+| Retained connection closes during listening | REQ-02/REQ-10/REQ-13; VT-08/VT-09 | No proactive reconnect or application heartbeat; reconnect after listening within the delivery budget. |
+| Reuse and retained-stack load | REQ-02/REQ-09/REQ-11; VT-02/VT-08 | Reuse the verified connection when available; verify TLS 1.3 support and measure target audio/resource impact. |
 | Logs and repeated failure cleanup | REQ-10/REQ-13; VT-08/VT-11 | No secrets or patient data in logs; bounded cleanup/release are observable. |
 
 These allocate future verification, not test execution. [VT-08 coverage](../../testing/specification-verification.md) and target resource/interference evidence remain pending.
