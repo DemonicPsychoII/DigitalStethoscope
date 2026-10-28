@@ -13,9 +13,7 @@
  * walk all entries.
  */
 
-/***********************************************************************/
-/* INCLUDES                                                            */
-/***********************************************************************/
+/* INCLUDES */
 
 #include "storage.h"
 
@@ -24,13 +22,7 @@
 #include <zephyr/logging/log.h>
 #include <zephyr/settings/settings.h>
 
-/***********************************************************************/
-/* DEFINES                                                             */
-/***********************************************************************/
-
-/***********************************************************************/
-/* TYPES                                                               */
-/***********************************************************************/
+/* TYPES */
 
 /** Result of storage_read(), filled by the settings callback. */
 struct storage_read_context
@@ -40,25 +32,7 @@ struct storage_read_context
     int result;  /**< 0 when read, -ENOENT until found, or an error code. */
 };
 
-/***********************************************************************/
-/* GLOBAL CONSTANTS                                                    */
-/***********************************************************************/
-
-/***********************************************************************/
-/* LOCAL CONSTANTS                                                     */
-/***********************************************************************/
-
-/***********************************************************************/
-/* GLOBAL VARIABLES                                                    */
-/***********************************************************************/
-
-/***********************************************************************/
-/* LOCAL VARIABLES                                                     */
-/***********************************************************************/
-
-/***********************************************************************/
-/* LOCAL FUNCTION PROTOTYPES                                           */
-/***********************************************************************/
+/* LOCAL FUNCTION PROTOTYPES */
 
 /**
  * @brief Copy the requested record into the read context.
@@ -69,15 +43,11 @@ struct storage_read_context
  */
 static int storage_loadRecord(const char *key, size_t length, settings_read_cb read, void *readArgument, void *parameter);
 
-/***********************************************************************/
-/* MACROS                                                              */
-/***********************************************************************/
+/* MACROS */
 
 LOG_MODULE_REGISTER(storage, LOG_LEVEL_INF);
 
-/***********************************************************************/
-/* GLOBAL FUNCTIONS                                                    */
-/***********************************************************************/
+/* GLOBAL FUNCTIONS */
 
 int storage_init(void)
 {
@@ -119,9 +89,7 @@ int storage_write(const char *name, const void *data, size_t size)
     return result;
 }
 
-/***********************************************************************/
-/* LOCAL FUNCTIONS                                                     */
-/***********************************************************************/
+/* LOCAL FUNCTIONS */
 
 static int storage_loadRecord(const char *key, size_t length, settings_read_cb read, void *readArgument, void *parameter)
 {
@@ -144,14 +112,7 @@ static int storage_loadRecord(const char *key, size_t length, settings_read_cb r
         {
             ssize_t readLength = read(readArgument, context->data, context->size);
 
-            if(readLength == (ssize_t)context->size)
-            {
-                context->result = 0;
-            }
-            else
-            {
-                context->result = -EIO; /**< Input/output operation failed. */
-            }
+            context->result = (readLength == (ssize_t)context->size) ? 0 : -EIO;
         }
     }
 
