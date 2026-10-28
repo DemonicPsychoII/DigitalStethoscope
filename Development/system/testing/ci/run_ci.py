@@ -15,17 +15,10 @@ from pathlib import Path
 import firmware_release
 import yaml
 from build_support import BOARD, build_env
-from build_support import PROFILES as PROFILE_ARGS
 
 ROOT = Path(__file__).resolve().parents[4]
-APP = ROOT / "Development/system/coding/bringup-zephyr"
-THESIS_APP = ROOT / "Development/system/coding/app"
+APP = ROOT / "Development/system/coding/app"
 ARTIFACTS = ROOT / "artifacts"
-# (profile, build directory); each profile's CMake options live in build_support.
-PROFILES = tuple(
-    (profile, "build-ci" if profile == "offline" else f"build-ci-{profile}")
-    for profile in PROFILE_ARGS
-)
 
 
 def summary(line: str) -> None:
@@ -87,21 +80,31 @@ def west() -> str:
     )
 
 
+def generated_output(relative: str) -> bool:
+    path = "/" + relative.replace("\\", "/")
+    # These maintained headers substitute the Zephyr API in host scenarios.
+    host_headers = "/Development/system/coding/app/tests/host/include/zephyr/"
+    return (
+        any(
+            part == "build" or part.startswith("build-")
+            for part in path.split("/")[:-1]
+        )
+        or any(token in path for token in ("/.west/", "twister-out"))
+        or ("/zephyr/" in path and not path.startswith(host_headers))
+        or path.endswith((".elf", ".bin", ".map"))
+    )
+
+
 def static() -> None:
     ARTIFACTS.joinpath("ci").mkdir(parents=True, exist_ok=True)
     run(["git", "diff", "--check", "HEAD"])
     tracked = subprocess.check_output(["git", "ls-files", "-z"], cwd=ROOT).split(b"\0")
-    forbidden = ("/build/", "/.west/", "twister-out")
     for raw in filter(None, tracked):
         rel = raw.decode("utf-8")
-        normalized = "/" + rel.replace("\\", "/")
-        host_headers = "/Development/system/coding/app/tests/host/include/zephyr/"
-        if (
-            any(token in normalized for token in forbidden)
-            or ("/zephyr/" in normalized and not normalized.startswith(host_headers))
-            or normalized.endswith((".elf", ".bin", ".map"))
-        ):
+        if generated_output(rel):
             raise SystemExit(f"generated/build output is tracked: {rel}")
+        if rel.startswith("preThesis/06-bringup-zephyr/"):
+            continue
         path = ROOT / rel
         if not path.is_file():
             continue
@@ -126,35 +129,37 @@ def static() -> None:
         ]
     )
     clang_format = shutil.which("clang-format")
-    if clang_format:
+    if clang_format and (APP / "CMakeLists.txt").is_file():
         maintained_sources = sorted(
             str(path)
-            for area in (APP / "include", APP / "src")
-            for path in area.rglob("*")
-            if path.is_file() and path.suffix in {".c", ".h"}
-        )
-        maintained_sources.extend(
-            str(path)
-            for path in sorted(THESIS_APP.rglob("*"))
+            for path in APP.rglob("*")
             if path.is_file() and path.suffix in {".c", ".h"}
         )
         if not maintained_sources:
             raise SystemExit("no maintained C sources were discovered for formatting")
         run([clang_format, "--dry-run", "--Werror", *maintained_sources])
-    elif os.environ.get("CI"):
+    elif (APP / "CMakeLists.txt").is_file() and os.environ.get("CI"):
         raise SystemExit("clang-format is required in CI")
-    for tool in ("actionlint", "shellcheck"):
-        if not shutil.which(tool):
-            raise SystemExit(f"{tool} is required; run validation_tools.py first")
-    run(["actionlint", "-color"])
-    run(
-        [
+    workflow_validators()
+    summary("### Static checks: PASS")
+
+
+def workflow_validators() -> None:
+    commands = {
+        "actionlint": ["actionlint", "-color"],
+        "shellcheck": [
             "shellcheck",
             "Development/system/testing/ci/setup_zephyr.sh",
             ".github/agent-gate/revert-last-merge.sh",
-        ]
-    )
-    summary("### Static checks: PASS")
+        ],
+    }
+    for tool, command in commands.items():
+        if shutil.which(tool):
+            run(command)
+        elif sys.platform == "win32" and not os.environ.get("CI"):
+            print(f"SKIP {tool}: pinned installer supports Linux; CI runs this check.")
+        else:
+            raise SystemExit(f"{tool} is required; run validation_tools.py first")
 
 
 def publish_local_firmware(
@@ -192,34 +197,24 @@ def publish_local_firmware(
     run([publisher, "--retire", "local", "--keep", build_id])
 
 
-def build_application() -> None:
-    # Compile the future application without adding it to the bring-up release.
-    run(
-        [
-            west(),
-            "build",
-            "--pristine=always",
-            "-b",
-            BOARD,
-            str(THESIS_APP),
-            "-d",
-            str(ROOT / "build-ci-app"),
-        ],
-        log=ARTIFACTS / "firmware" / "app-build.log",
-    )
-
-
-def build(*, application: bool = True, firmware: bool = True) -> None:
-    if application:
-        build_application()
-    if not firmware:
-        summary("### Application build: PASS")
-        return
-    identity = firmware_release.identity(ROOT)
-    print(f"Firmware build identity: {identity.version('<profile>')}", flush=True)
-    out = ROOT / "build-ci"
-    evidence = ARTIFACTS / "firmware"
+def retain_firmware_evidence(build_dir: Path, evidence: Path) -> None:
     evidence.mkdir(parents=True, exist_ok=True)
+    for source, name in [
+        (build_dir / "zephyr/.config", ".config"),
+        (
+            build_dir / "zephyr/include/generated/zephyr/devicetree_generated.h",
+            "devicetree_generated.h",
+        ),
+        (build_dir / "zephyr/zephyr.elf", "zephyr.elf"),
+        (build_dir / "zephyr/zephyr.bin", "zephyr.bin"),
+        (build_dir / "zephyr/zephyr.map", "zephyr.map"),
+    ]:
+        if not source.is_file():
+            raise SystemExit(f"required firmware evidence missing: {source}")
+        shutil.copy2(source, evidence / name)
+
+
+def build_application(identity: firmware_release.Identity) -> None:
     run(
         [
             west(),
@@ -229,118 +224,46 @@ def build(*, application: bool = True, firmware: bool = True) -> None:
             BOARD,
             str(APP),
             "-d",
-            str(out),
+            str(ROOT / "build-ci-app"),
             "--",
-            "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
-            identity.cmake_arg("offline"),
+            identity.cmake_arg("application"),
         ],
-        log=evidence / "build.log",
+        log=ARTIFACTS / "firmware" / "app-build.log",
     )
-    run(
-        [west(), "build", "-d", str(out), "-t", "ram_report"],
-        log=evidence / "ram-report.txt",
+    retain_firmware_evidence(
+        ROOT / "build-ci-app", ARTIFACTS / "firmware" / "application"
     )
-    run(
-        [west(), "build", "-d", str(out), "-t", "rom_report"],
-        log=evidence / "rom-report.txt",
-    )
-    for source, name in [
-        (out / "zephyr/.config", ".config"),
-        (
-            out / "zephyr/include/generated/zephyr/devicetree_generated.h",
-            "devicetree_generated.h",
-        ),
-        (out / "zephyr/zephyr.elf", "zephyr.elf"),
-        (out / "zephyr/zephyr.bin", "zephyr.bin"),
-        (out / "zephyr/zephyr.map", "zephyr.map"),
-    ]:
-        if not source.is_file():
-            raise SystemExit(f"required firmware evidence missing: {source}")
-        shutil.copy2(source, evidence / name)
-    # Compile feature combinations too: the default offline image cannot cover
-    # TLS or the optional GPIO extension. These remain disconnected at boot.
-    for profile, directory in PROFILES:
-        if profile == "offline":
-            continue
+
+
+def build() -> None:
+    identity = firmware_release.identity(ROOT)
+    build_application(identity)
+    out = ROOT / "build-ci-app"
+    evidence = ARTIFACTS / "firmware" / "application"
+    for report in ("ram", "rom"):
         run(
-            [
-                west(),
-                "build",
-                "--pristine=always",
-                "-b",
-                BOARD,
-                str(APP),
-                "-d",
-                str(ROOT / directory),
-                "--",
-                *PROFILE_ARGS[profile],
-                identity.cmake_arg(profile),
-            ],
-            log=evidence / f"{profile}-build.log",
+            [west(), "build", "-d", str(out), "-t", f"{report}_report"],
+            log=evidence / f"{report}-report.txt",
         )
-    # CI uploads this directory for the homelab's firmware sync; local runs publish it.
     release = ARTIFACTS / "firmware-release"
     manifest = firmware_release.stage(
-        identity,
-        [
-            (profile, ROOT / directory / "zephyr/zephyr.bin")
-            for profile, directory in PROFILES
-        ],
-        release,
-        BOARD,
+        identity, [("application", out / "zephyr/zephyr.bin")], release, BOARD
     )
     publish_local_firmware(identity, manifest, release)
     summary(
-        "### Firmware build: PASS\n\n"
-        f"Build identity: `{identity.version('<profile>')}`. See RAM/ROM reports in "
-        "the firmware job log. Configured homelab builds also publish verified firmware to Personal Cloud."
+        "### Application build: PASS\n\n"
+        f"Build identity: `{identity.version('application')}`. "
+        "See the retained RAM/ROM reports and application evidence."
     )
-
-
-def qc() -> None:
-    evaluator = ROOT / "Development/system/testing/qc_eval.py"
-    output = ARTIFACTS / "qc"
-    output.mkdir(parents=True, exist_ok=True)
-    # A crashed evaluator must not reuse a previous run's passing report.
-    for name in ("qc-eval-results.json", "QC-EVALUATION.md"):
-        (output / name).unlink(missing_ok=True)
-    result_process = subprocess.run(
-        [sys.executable, str(evaluator), "--output-dir", str(output)], cwd=ROOT
-    )
-    result = json.loads((output / "qc-eval-results.json").read_text(encoding="utf-8"))
-    required = {"schema_version", "score", "maximum_score", "gate", "controls"}
-    if not required.issubset(result):
-        raise SystemExit(f"QC JSON missing fields: {sorted(required - result.keys())}")
-    if not isinstance(result["controls"], list) or not result["controls"]:
-        raise SystemExit("QC JSON schema violation: controls must be a non-empty array")
-    if not all(
-        isinstance(result[key], int)
-        for key in ("schema_version", "score", "maximum_score")
-    ):
-        raise SystemExit(
-            "QC JSON schema violation: schema version/scores must be integers"
-        )
-    disposition = "PASS" if result_process.returncode == 0 else "FAIL"
-    summary(
-        f"### QC evaluation: {disposition}\n\nScore: {result['score']}/"
-        f"{result['maximum_score']}; gate: {result['gate']}. "
-        "The scorecard is retained with the CI evidence; it is source-level evidence only."
-    )
-    if result_process.returncode != 0:
-        raise SystemExit(
-            f"QC evaluation failed: {result['score']}/{result['maximum_score']} "
-            f"({result['gate']})"
-        )
 
 
 def main() -> None:
-    stages = {"static": static, "build": build, "qc": qc}
+    stages = {"static": static, "build": build}
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("stage", nargs="?", choices=("all", *stages), default="all")
     parser.add_argument("--application", action="store_true")
-    parser.add_argument("--firmware", action="store_true")
     args = parser.parse_args()
-    if (args.application or args.firmware) and args.stage != "build":
+    if args.application and args.stage != "build":
         parser.error("component selection is supported only for build")
     requested = args.stage
     selected = list(stages) if requested == "all" else [requested]
@@ -350,10 +273,7 @@ def main() -> None:
                 f"usage: {Path(sys.argv[0]).name} [all|{'|'.join(stages)}]"
             )
         print(f"\n== {name} ==", flush=True)
-        if name == "build" and (args.application or args.firmware):
-            build(application=args.application, firmware=args.firmware)
-        else:
-            stages[name]()
+        stages[name]()
 
 
 if __name__ == "__main__":

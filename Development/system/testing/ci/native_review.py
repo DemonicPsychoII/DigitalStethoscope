@@ -122,20 +122,7 @@ def main() -> None:
     snapshot.parent.mkdir(parents=True, exist_ok=True)
     if not snapshot.exists():
         snapshot.write_text(json.dumps(source, indent=2) + "\n")
-    subprocess.run(
-        [
-            "gh",
-            "api",
-            "--method",
-            "PUT",
-            f"repos/{args.repo}/rulesets/{args.ruleset}",
-            "--input",
-            "-",
-        ],
-        input=json.dumps(proposed),
-        text=True,
-        check=True,
-    )
+    # Keep agent-gate required if the variable update is rejected.
     if args.mode == "finish":
         subprocess.run(
             [
@@ -150,6 +137,20 @@ def main() -> None:
             ],
             check=True,
         )
+    subprocess.run(
+        [
+            "gh",
+            "api",
+            "--method",
+            "PUT",
+            f"repos/{args.repo}/rulesets/{args.ruleset}",
+            "--input",
+            "-",
+        ],
+        input=json.dumps(proposed),
+        text=True,
+        check=True,
+    )
 
 
 if __name__ == "__main__":

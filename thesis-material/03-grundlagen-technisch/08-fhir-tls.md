@@ -25,7 +25,7 @@ FHIR-Semantik und Profilierung liegen auf Anwendungsebene; TLS sichert die darun
 
 Für Herzfrequenz empfiehlt der Bericht eine FHIR-`Observation` mit vital-signs-Kategorie, LOINC 8867-4, `subject`, Messzeitpunkt und numerischem `valueQuantity` mit UCUM-System und Code `/min`.
 
-> **Überholt (Stand integration, 2026-10-22):** Nur `subject` als feste Angabe ist überholt; Vital-Signs-Kategorie, LOINC 8867-4 und UCUM `/min` gelten weiter. Aktuell: Observation mit `device = Device/{id}` (vom Server vergebene ID); `subject` nur, wenn der Server einen Patienten mit dem Device verknüpft hat (16.10.); `effectiveDateTime` = Ende des Messintervalls (D08). Das Gerät wählt nie einen Patienten aus. – siehe [MVP-Entscheidungen 16.10.](../../Development/system/planning/mvp-decisions-2026-10-16.md#confirmed-decisions), [MVP-Entscheidungen 15.10.](../../Development/system/planning/mvp-decisions-2026-10-15.md#resulting-behavior).
+> **Überholt (Stand integration, 2026-10-22):** Nur `subject` als feste Angabe ist überholt; Vital-Signs-Kategorie, LOINC 8867-4 und UCUM `/min` gelten weiter. Aktuell: Observation mit `device = Device/{id}` (vom Server vergebene ID); `subject` nur, wenn der Server einen Patienten mit dem Device verknüpft hat (16.10.); `effectiveDateTime` = Ende des Messintervalls (D08). Das Gerät wählt nie einen Patienten aus. Ohne subject ist die Geräte-Nutzlast eine einfache FHIR-R4-Observation mit Vital-Signs-Kategorie, LOINC 8867-4 und UCUM /min; sie erfüllt nicht das Vital-Signs-Profil mit verpflichtender Patient-Referenz. Die serverseitige Anreicherung bleibt eine externe Voraussetzung. – siehe [MVP-Entscheidungen 16.10.](../../Development/system/planning/mvp-decisions-2026-10-16.md#confirmed-decisions), [MVP-Entscheidungen 15.10.](../../Development/system/planning/mvp-decisions-2026-10-15.md#resulting-behavior).
 
 **Ursprung:** [preThesis/03-recherche/R11-fhir-tls.md:22-49](../../preThesis/03-recherche/R11-fhir-tls.md#L22)
 **Weiterer Kapitelbezug:** Ethik/Datenschutz/Regulatorik
@@ -36,7 +36,7 @@ Für Herzfrequenz empfiehlt der Bericht eine FHIR-`Observation` mit vital-signs-
 
 R11 beschreibt Heart Rate Observation mit vital-signs, LOINC 8867-4, Patient-Referenz, effectiveDateTime, valueQuantity, UCUM /min.
 
-> **Neuerer Stand (Stand integration, 2026-10-22):** Die Patient-Referenz ist im Projekt nicht immer vorhanden. Aktuell: `subject` nur, wenn der Server einen Patienten mit dem Device verknüpft hat (16.10.); sonst ohne Patientendaten. `effectiveDateTime` = Ende des Messintervalls (D08). – siehe [MVP-Entscheidungen 16.10.](../../Development/system/planning/mvp-decisions-2026-10-16.md#confirmed-decisions), [Entscheidungsregister D08](../../Development/system/planning/implementation-readiness.md#decision-register).
+> **Neuerer Stand (Stand integration, 2026-10-22):** Die Patient-Referenz ist im Projekt nicht immer vorhanden. Aktuell: `subject` nur, wenn der Server einen Patienten mit dem Device verknüpft hat (16.10.); sonst ohne Patientendaten. `effectiveDateTime` = Ende des Messintervalls (D08). Ohne subject ist die Geräte-Nutzlast eine einfache FHIR-R4-Observation mit Vital-Signs-Kategorie, LOINC 8867-4 und UCUM /min; sie erfüllt nicht das Vital-Signs-Profil mit verpflichtender Patient-Referenz. Die serverseitige Anreicherung bleibt eine externe Voraussetzung. – siehe [MVP-Entscheidungen 16.10.](../../Development/system/planning/mvp-decisions-2026-10-16.md#confirmed-decisions), [Entscheidungsregister D08](../../Development/system/planning/implementation-readiness.md#decision-register).
 
 **Ursprung:** [preThesis/02-entscheidungen/open-questions.md:275-278](../../preThesis/02-entscheidungen/open-questions.md#L275)
 **Belege:** [HL7 · fhir_r4_vitals](https://www.hl7.org/fhir/R4/observation-vitalsigns.html) — Fundstelle: Vital Signs table, Heart rate row (aus Stage 1; am Original prüfen); [Regenstrief Institute · loinc_8867](https://loinc.org/8867-4/) — Seite prüfen (Hinweis: Relevant article section/table not verified in full text during this pass.); [HL7 · fhir_hr_example](https://www.hl7.org/fhir/R4/observation-example-heart-rate.json.html) — Seite prüfen (Hinweis: Relevant article section/table not verified in full text during this pass.)
@@ -79,7 +79,7 @@ R11 nennt `MBEDTLS_X509_BADCERT_FUTURE` und `MBEDTLS_X509_BADCERT_EXPIRED` als m
 ### Werte und dokumentierte Befunde
 
 <a id="c040"></a>
-**C040 · EIGENER ZIELWERT / VORLÄUFIGER VORSCHLAG**
+**C040 · LITERATUR- / HERSTELLERWERT**
 
 Die Espressif-FAQ schätzt, dass ein ESP32-TLS-Handshake typischerweise 40–50 kB freien Heap für temporäre Allokationen benötigt; Heap-Fragmentierung kann auch bei nominell ausreichendem freien Speicher zum Fehlschlag führen.
 

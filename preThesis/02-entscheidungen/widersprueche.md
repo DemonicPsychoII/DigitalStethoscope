@@ -34,8 +34,8 @@ Historisch: Intern/Originalannotationen nennen Schalter 1 = Speed und Schalter 2
 [hardware.md](../05-hardware/hardware.md) nennt die umgekehrte Nummerierung. Die Behauptung,
 die Firmware teste nur einen Schalter, ist überholt.
 
-Das aktuelle [Eval-README](../../Development/system/coding/bringup-zephyr/README.md) und
-[Overlay](../../Development/system/coding/bringup-zephyr/boards/esp32s3_devkitc_procpu.overlay)
+Das aktuelle [Eval-README](../06-bringup-zephyr/README.md) und
+[Overlay](../06-bringup-zephyr/boards/esp32s3_devkitc_procpu.overlay)
 ordnen die Funktionen verbindlich zu:
 
 - **Filter:** Raw/Murmur/BPM, GPIO18/21/38.
@@ -115,5 +115,3 @@ bis zur Bestätigung offen.
 und Firmendokumente nachtragen. Für Aufwand gelten 320 h Kernarbeit + 64 h Puffer und
 separate Firmeneinarbeitung 40–80 h; die alte AP-Gliederung ist historische Planung.
 Die Readiness-Schätzung 24–37 h umfasst verbleibende Vorbereitung, nicht die gesamte Thesis.
-
-Updated by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.

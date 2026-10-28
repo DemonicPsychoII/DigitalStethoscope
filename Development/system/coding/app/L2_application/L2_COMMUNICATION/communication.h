@@ -3,11 +3,13 @@
  * Project: DigitalStethoscope
  ***********************************************************************/
 
-/** @defgroup L2COMMUNICATION COMMUNICATION
+/** @defgroup L2_COMMUNICATION COMMUNICATION
  * @{
  * @file
- * L2 delivery: builds messages via FHIR, sends via WIFI under the
- * lease.
+ * L2 communication: Wi-Fi connection and setup. Later also builds the
+ * messages via FHIR and sends them via WIFI.
+ * Implements Development/system/design/WIFI/interfaces-and-behavior.md and
+ * Development/system/design/PORTAL/interfaces-and-behavior.md.
  */
 
 #ifndef L2_COMMUNICATION_H
@@ -57,10 +59,8 @@ void communication_init(void);
 /**
  * @brief Send an event from control to the communication thread.
  *
- * Does not block, so it can also be called from an interrupt. CONTROL is the
- * sole producer. Start and Stop update the requested state under a spinlock;
- * coalesced wakeups do not drop that state. A Start invalidates any earlier
- * stopped acknowledgement. Setup holds during listening or setup are ignored.
+ * Does not block, so it can also be called from an interrupt. Only CONTROL
+ * sends events. A setup request during listening or setup is ignored.
  *
  * @param[in] event Event to send.
  *
@@ -69,13 +69,13 @@ void communication_init(void);
 int communication_postEvent(enum communication_event event);
 
 /**
- * @brief Wait until Wi-Fi work has stopped after COMMUNICATION_EVENT_LISTENING_STARTED.
+ * @brief Wait until the Wi-Fi work has stopped after COMMUNICATION_EVENT_LISTENING_STARTED.
  *
- * Control posts LISTENING_STARTED and calls this before audio starts.
- * CONTROL must not post Stop or another Start concurrently with this wait.
- * The station association stays. Failed driver cancellation or teardown
- * withholds success; CONTROL must keep audio stopped on timeout.
- * Wait slicing is not a guarantee of total shutdown latency.
+ * CONTROL calls this after LISTENING_STARTED and before audio starts, and
+ * sends no other event during the wait. A connected station stays connected.
+ * On timeout, CONTROL keeps audio stopped. After a latched Wi-Fi cleanup fault this
+ * returns 0 while services may still be pending: audio is released under REQ-13,
+ * and radio shutdown is not asserted.
  *
  * @param[in] timeout Maximum time to wait.
  *

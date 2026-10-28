@@ -8,7 +8,7 @@
 Team discussion on 15 October, given by Nico in T3 Code. These decisions supersede the patient-assignment parts of the
 [12 October decisions](mvp-decisions-2026-10-12.md) and the related parts of the [13 October](mvp-decisions-2026-10-13.md)
 and [14 October](mvp-decisions-2026-10-14.md) records. Everything else from 14 October stands, including the retry rule.
-The [sequence diagram](../architecture/patient-assignment-workflow.puml) shows the complete flow.
+The [sequence diagram](../architecture/COMMUNICATION/setup-sequence.puml) shows the complete flow.
 This records decisions, not implemented firmware behavior.
 
 ## Confirmed decisions
@@ -45,7 +45,7 @@ This records decisions, not implemented firmware behavior.
 - REQ-09: the result reaches the server linked to this device (was: the assigned patient).
 - REQ-12: the hotspot page sets up Wi-Fi; credentials survive a restart (was: patient selection).
 - REQ-15 (new): the device keeps its server registration across restarts.
-- VT-07 and VT-14 follow; see [verification](../testing/specification-verification.md).
+- VT-07 and VT-14 follow; see verification.
 
 ## Superseded
 
@@ -65,5 +65,3 @@ This records decisions, not implemented firmware behavior.
   HAPI rejects an Observation with an unknown Device reference. Proposal: check `GET /Device/{id}` at boot,
   re-register on 404/410 and save the new id.
 - Whether to keep the full-payload readback as an optional diagnostic. Current decision: no.
-
-Created by Claude-Opus-5.5 on behalf of Nico running in T3 Code through Claude Code.

@@ -2,7 +2,7 @@
 
 [Zum Einstieg](README.md)
 
-350 Audit-IDs; aktive Aussagen erscheinen genau einmal in den Kapiteldateien. Ersetzte Aussagen werden nicht nochmals als aktueller Schreibbaustein gezeigt. Ihr Original bleibt im Audit erhalten.
+349 Audit-IDs; aktive Aussagen erscheinen genau einmal in den Kapiteldateien. Ersetzte Aussagen werden nicht nochmals als aktueller Schreibbaustein gezeigt. Ihr Original bleibt im Audit erhalten.
 
 | ID | Schreibstelle | Typ / Status | Ersatz |
 |---|---|---|---|
@@ -101,7 +101,6 @@
 | U093 | [U093](08-evaluation/07-firmware-funktion-ressourcen.md#u093) | method / confirmed | — |
 | U094 | [U094](08-evaluation/07-firmware-funktion-ressourcen.md#u094) | method / confirmed | — |
 | U095 | [U095](08-evaluation/07-firmware-funktion-ressourcen.md#u095) | method / confirmed | — |
-| U096 | [U096](08-evaluation/07-firmware-funktion-ressourcen.md#u096) | method / confirmed | — |
 | U097 | [U097](08-evaluation/07-firmware-funktion-ressourcen.md#u097) | measurement / confirmed | — |
 | U098 | [U098](08-evaluation/07-firmware-funktion-ressourcen.md#u098) | method / confirmed | — |
 | U099 | [U099](01-einleitung.md#u099) | fact / confirmed | — |

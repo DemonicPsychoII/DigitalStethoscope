@@ -38,7 +38,7 @@ $ErrorActionPreference = 'Stop'
 
 $sources = @{
     app     = 'Development\system\coding\app'
-    bringup = 'Development\system\coding\bringup-zephyr'
+    bringup = 'preThesis\06-bringup-zephyr'
 }
 $source = Join-Path $FwRepo $sources[$Target]
 $BuildDir = Resolve-FwBuildDir -Target $Target -BuildProfile $BuildProfile -BuildDir $BuildDir

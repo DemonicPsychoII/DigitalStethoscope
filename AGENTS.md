@@ -26,7 +26,7 @@ workflows may remain hosted. Preserve required check names and existing gate pol
 
 - Work on a branch and open a PR into `integration` using `.github/pull_request_template.md`.
 - **Merge authorization:** quick fixes, features and policy changes require independent automated
-  review of the current head, required CI, answered owner questions and resolved review threads.
+  review of the current head, required CI, answered owner questions and resolved critical/major or unclassified review threads; minor findings and nitpicks may remain open or be deferred.
   Human approval is not a prerequisite. Agents may apply a legacy `approved` label after review;
   never invent an owner quote. The required `agent-gate` status enforces this policy until native review migration is validated.
   Native mode requires one eligible GitHub approval and dismisses stale approvals; separate
@@ -36,7 +36,7 @@ workflows may remain hosted. Preserve required check names and existing gate pol
   `<!-- agent-author harness=<claude-code|codex> model=<id> session=<id> class=<quick-fix|feature|policy|revert> -->`
   and concrete `## Risk & rollback` evidence. Human and other bot PRs without an agent-author
   declaration do not need agent metadata; untouched template placeholders are ignored. They still
-  need current-head independent review, required CI, answered owner questions and resolved threads.
+  need current-head independent review, required CI, answered owner questions and resolved blocking or unclassified threads.
   Agents must declare their authorship even when using the owner's GitHub account. Another agent session records
   `<!-- agent-review verdict=<approve|changes> sha=<head sha> reviewer=<harness>/<model> session=<id> -->`.
   Prefer a different provider/model; a push invalidates the verdict. Configured CodeRabbit native
@@ -56,7 +56,7 @@ workflows may remain hosted. Preserve required check names and existing gate pol
   Fallback review must approve the current head and address any existing CodeRabbit blocking
   findings; it does not bypass CI, owner questions, or conversation resolution.
 - Only material correctness, safety, security or verification findings block review. Nitpicks are
-  optional: fix, acknowledge or decline them with a reason, then resolve the conversation.
+  optional: fix, acknowledge, decline or defer them; their conversations may remain open.
   Follow-up reviews focus on blocking fixes and regressions introduced by them.
 - Genuine owner questions still require an answer: post `<!-- owner-question id=<short-id> -->`
   with the question, then `<!-- owner-answer id=<short-id> -->` with the real answer. Thread
@@ -82,10 +82,15 @@ workflows may remain hosted. Preserve required check names and existing gate pol
   By hand: `bash .github/agent-gate/revert-last-merge.sh <pr|sha|last>...` (`--deploy` is not
   supported in this repository).
 - Before pushing, run `python Development/system/testing/ci/run_ci.py static`, the relevant
-  [local checks](Development/system/testing/CI-QUALITY-GATES.md#setup-and-local-checks), and
+  [local checks](Development/system/testing/ci/OPERATIONS.md#setup-and-local-checks), and
   for firmware changes `run_ci.py build`.
   Hardware flashing, serial and device-network operations still need the owner.
 
-See [CI operations](Development/system/testing/ci/README.md) for suite selection, artifacts,
-minutes savings and the staged native review migration. Owner questions remain mandatory;
+See [CI operations](Development/system/testing/ci/OPERATIONS.md) for suite selection, artifacts,
+minutes savings. See [native review migration](Development/system/testing/ci/NATIVE-REVIEW-MIGRATION.md)
+for the staged migration and rollback. Owner questions remain mandatory;
 in native mode keep the PR draft and auto-merge disabled until real answers are recorded.
+
+## Identifier naming
+
+Identifiers introduced by this project are fully written out, without abbreviations. Names required by external interfaces are exempt. Source comments explain non-obvious reasons; they contain no test status, progress markers or agent notes.

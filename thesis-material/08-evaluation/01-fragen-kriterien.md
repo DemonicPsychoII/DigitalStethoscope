@@ -15,7 +15,7 @@ Forschungsfragen → eigene Akzeptanzziele → Grenzen des Nachweises.
 
 Hardware report historic 2026-08 test had no verified end-to-end loopback, audible DAC output, or simultaneous full assembly; the microphone itself passed the reported 30-second input test.
 
-**Ursprung:** [Development/system/coding/bringup-zephyr/TEST-PROTOCOL.md:1439-1449](../../Development/system/coding/bringup-zephyr/TEST-PROTOCOL.md#L1439)
+**Ursprung:** [Development/system/coding/bringup-zephyr/TEST-PROTOCOL.md:1439-1449](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/1448340d265326e11b7a416960f35e0d2390cd6d/Development/system/coding/bringup-zephyr/TEST-PROTOCOL.md?plain=1#L1439) (**Herkunft verschoben:** als Vorstudienmaterial nach preThesis/06-bringup-zephyr verschoben. Die Zeilenangaben beziehen sich auf die zitierte historische Fassung. Aktuell: [TEST-PROTOCOL.md](../../preThesis/06-bringup-zephyr/TEST-PROTOCOL.md))
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
 
 <a id="u131"></a>
@@ -23,7 +23,7 @@ Hardware report historic 2026-08 test had no verified end-to-end loopback, audib
 
 Wiring-confirmation JSON records a user statement dated 2026-09-16 about the existing evaluation assembly; it has no board revision, captures or flashed-image hash and does not cover second-switch extension or new-firmware acceptance.
 
-**Ursprung:** [Development/system/coding/bringup-zephyr/evidence/wiring-confirmation.json:1-10](../../Development/system/coding/bringup-zephyr/evidence/wiring-confirmation.json#L1)
+**Ursprung:** [Development/system/coding/bringup-zephyr/evidence/wiring-confirmation.json:1-10](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/1448340d265326e11b7a416960f35e0d2390cd6d/Development/system/coding/bringup-zephyr/evidence/wiring-confirmation.json#L1) (**Herkunft verschoben:** als Vorstudienmaterial nach preThesis/06-bringup-zephyr verschoben. Die Zeilenangaben beziehen sich auf die zitierte historische Fassung. Aktuell: [wiring-confirmation.json](../../preThesis/06-bringup-zephyr/evidence/wiring-confirmation.json))
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
 
 ### Folgerungen, Entwurfsentscheidungen und Grenzen
@@ -51,7 +51,7 @@ Die BPM-Bestimmung wird quantitativ gegen eine geeignete Referenz evaluiert; Tes
 
 EVAL-GUIDE definiert physische Annahmekriterien und trennt Software-Build-Nachweis von Hardware-Funktion; ungeprüfte Positionen bleiben offen bzw. blockiert.
 
-**Ursprung:** [Development/system/coding/bringup-zephyr/EVAL-GUIDE.md:1-162](../../Development/system/coding/bringup-zephyr/EVAL-GUIDE.md#L1)
+**Ursprung:** [Development/system/coding/bringup-zephyr/EVAL-GUIDE.md:1-162](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/1448340d265326e11b7a416960f35e0d2390cd6d/Development/system/coding/bringup-zephyr/EVAL-GUIDE.md?plain=1#L1) (**Herkunft verschoben:** als Vorstudienmaterial nach preThesis/06-bringup-zephyr verschoben. Die Zeilenangaben beziehen sich auf die zitierte historische Fassung. Aktuell: [EVAL-GUIDE.md](../../preThesis/06-bringup-zephyr/EVAL-GUIDE.md))
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
 
 <a id="u109"></a>
@@ -59,7 +59,7 @@ EVAL-GUIDE definiert physische Annahmekriterien und trennt Software-Build-Nachwe
 
 EVAL-GUIDE labels filter coefficients and BPM thresholds as initial evaluation candidates rather than optimality claims, and distinguishes earlier confirmed wiring from acceptance of new firmware.
 
-**Ursprung:** [Development/system/coding/bringup-zephyr/EVAL-GUIDE.md:8-17](../../Development/system/coding/bringup-zephyr/EVAL-GUIDE.md#L8)
+**Ursprung:** [Development/system/coding/bringup-zephyr/EVAL-GUIDE.md:8-17](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/1448340d265326e11b7a416960f35e0d2390cd6d/Development/system/coding/bringup-zephyr/EVAL-GUIDE.md?plain=1#L8) (**Herkunft verschoben:** als Vorstudienmaterial nach preThesis/06-bringup-zephyr verschoben. Die Zeilenangaben beziehen sich auf die zitierte historische Fassung. Aktuell: [EVAL-GUIDE.md](../../preThesis/06-bringup-zephyr/EVAL-GUIDE.md))
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
 
 <a id="u112"></a>
@@ -67,7 +67,7 @@ EVAL-GUIDE labels filter coefficients and BPM thresholds as initial evaluation c
 
 EVAL-GUIDE notes host timing is not MCU CPU-load evidence and static memory-fit/linking does not establish heap peaks or runtime stack headroom.
 
-**Ursprung:** [Development/system/coding/bringup-zephyr/EVAL-GUIDE.md:38-43,93-98](../../Development/system/coding/bringup-zephyr/EVAL-GUIDE.md#L38)
+**Ursprung:** [Development/system/coding/bringup-zephyr/EVAL-GUIDE.md:38-43,93-98](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/1448340d265326e11b7a416960f35e0d2390cd6d/Development/system/coding/bringup-zephyr/EVAL-GUIDE.md?plain=1#L38) (**Herkunft verschoben:** als Vorstudienmaterial nach preThesis/06-bringup-zephyr verschoben. Die Zeilenangaben beziehen sich auf die zitierte historische Fassung. Aktuell: [EVAL-GUIDE.md](../../preThesis/06-bringup-zephyr/EVAL-GUIDE.md))
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
 
 <a id="u111"></a>
@@ -77,7 +77,7 @@ EVAL-GUIDE requires >=10 minutes of combined operation, zero audio processing de
 
 > **Überholt (Stand integration, 2026-10-22):** Die Dauerlaufprüfung von ≥10 Minuten ist ersetzt; ≥25 % Stack-/Heap-Reserve bleibt. Aktuell: Vorschlag: 30-Minuten-Soak mit Wasserständen während TLS und BPM, DMA-SRAM und PSRAM getrennt, zusätzlich kleinster größter freier Block und Allokationsfehlerpfade. – siehe [Latenzbudgets 11.10. (Resources)](../../Development/system/planning/mvp-decisions-2026-10-11.md#latency-research-and-proposed-budgets), [Entscheidungsregister D10](../../Development/system/planning/implementation-readiness.md#decision-register).
 
-**Ursprung:** [Development/system/coding/bringup-zephyr/EVAL-GUIDE.md:81-98](../../Development/system/coding/bringup-zephyr/EVAL-GUIDE.md#L81)
+**Ursprung:** [Development/system/coding/bringup-zephyr/EVAL-GUIDE.md:81-98](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/1448340d265326e11b7a416960f35e0d2390cd6d/Development/system/coding/bringup-zephyr/EVAL-GUIDE.md?plain=1#L81) (**Herkunft verschoben:** als Vorstudienmaterial nach preThesis/06-bringup-zephyr verschoben. Die Zeilenangaben beziehen sich auf die zitierte historische Fassung. Aktuell: [EVAL-GUIDE.md](../../preThesis/06-bringup-zephyr/EVAL-GUIDE.md))
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
 
 <a id="u119"></a>
@@ -85,7 +85,7 @@ EVAL-GUIDE requires >=10 minutes of combined operation, zero audio processing de
 
 EVAL-GUIDE says no integrated physical test was performed for the later firmware evaluation and records inherited wiring confirmation only; no new-firmware acceptance should be inferred.
 
-**Ursprung:** [Development/system/coding/bringup-zephyr/EVAL-GUIDE.md:13-17,117-120](../../Development/system/coding/bringup-zephyr/EVAL-GUIDE.md#L13)
+**Ursprung:** [Development/system/coding/bringup-zephyr/EVAL-GUIDE.md:13-17,117-120](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/1448340d265326e11b7a416960f35e0d2390cd6d/Development/system/coding/bringup-zephyr/EVAL-GUIDE.md?plain=1#L13) (**Herkunft verschoben:** als Vorstudienmaterial nach preThesis/06-bringup-zephyr verschoben. Die Zeilenangaben beziehen sich auf die zitierte historische Fassung. Aktuell: [EVAL-GUIDE.md](../../preThesis/06-bringup-zephyr/EVAL-GUIDE.md))
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
 
 <a id="u123"></a>
@@ -93,7 +93,7 @@ EVAL-GUIDE says no integrated physical test was performed for the later firmware
 
 EVAL-GUIDE says the INMP441 usable low-frequency band is a hardware constraint; separate listening/analysis branches allow shared-vs-separate filter comparison but do not establish improved clinical recognition.
 
-**Ursprung:** [Development/system/coding/bringup-zephyr/EVAL-GUIDE.md:153-157](../../Development/system/coding/bringup-zephyr/EVAL-GUIDE.md#L153)
+**Ursprung:** [Development/system/coding/bringup-zephyr/EVAL-GUIDE.md:153-157](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/1448340d265326e11b7a416960f35e0d2390cd6d/Development/system/coding/bringup-zephyr/EVAL-GUIDE.md?plain=1#L153) (**Herkunft verschoben:** als Vorstudienmaterial nach preThesis/06-bringup-zephyr verschoben. Die Zeilenangaben beziehen sich auf die zitierte historische Fassung. Aktuell: [EVAL-GUIDE.md](../../preThesis/06-bringup-zephyr/EVAL-GUIDE.md))
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
 
 <a id="u110"></a>
@@ -101,9 +101,9 @@ EVAL-GUIDE says the INMP441 usable low-frequency band is a hardware constraint; 
 
 EVAL-GUIDE sets engineering acceptance targets: measured live latency <30 ms; provisional BPM MAE ≤5 BPM with ≥90% valid windows on defined clean fixtures; playback retained pitch within 2% at 440 Hz; physical input response ≤35 ms.
 
-> **Überholt (Stand integration, 2026-10-22):** Mehrere EVAL-GUIDE-Zielwerte sind ersetzt: gemessene Live-Latenz <30 ms, BPM „≥90 % gültige Fenster“, Tonhöhe ±2 % bei 440 Hz und Eingabereaktion ≤35 ms. Aktuell: BPM (REQ-06): 10 Sitzungen à 30 s, jedes Ergebnis innerhalb ±5 BPM oder ±10 % gegen Pulsoximeter oder Smartwatch (14.10.). Latenz wird nach Gehör geprüft (REQ-05); <30 ms bleibt internes Designziel (P03). Replay ist keine Anforderung mehr (14.10.). Bedienreaktion ≤100 ms und Status ≤500 ms sind Kandidaten (P10). – siehe [MVP-Entscheidungen 14.10. (Verhalten)](../../Development/system/planning/mvp-decisions-2026-10-14.md#behavior), [Systemanforderungen](../../Development/system/requirements/system-requirements.md#system-requirements-mvp), [Designparameter P03/P10](../../Development/system/design/parameters.md#design-parameters-internal).
+> **Überholt (Stand integration, 2026-10-22):** Mehrere EVAL-GUIDE-Zielwerte sind ersetzt: gemessene Live-Latenz <30 ms, BPM „≥90 % gültige Fenster“, Tonhöhe ±2 % bei 440 Hz und Eingabereaktion ≤35 ms. Aktuell: BPM (REQ-06): 10 Sitzungen à 30 s, jedes Ergebnis innerhalb ±5 BPM oder ±10 % gegen Pulsoximeter oder Smartwatch (14.10.). Latenz wird nach Gehör geprüft (REQ-05); <30 ms bleibt internes Designziel (P03). Replay ist keine Anforderung mehr (14.10.). Bedienreaktion ≤100 ms und Status ≤500 ms sind Kandidaten (P10). – siehe [MVP-Entscheidungen 14.10. (Verhalten)](../../Development/system/planning/mvp-decisions-2026-10-14.md#behavior), [Systemanforderungen](../../Development/system/requirements/system-requirements.md#system-requirements-mvp), [Designparameter P03/P10](../../Development/system/design/system/parameters.md#design-parameters-internal).
 
-**Ursprung:** [Development/system/coding/bringup-zephyr/EVAL-GUIDE.md:67-79](../../Development/system/coding/bringup-zephyr/EVAL-GUIDE.md#L67)
+**Ursprung:** [Development/system/coding/bringup-zephyr/EVAL-GUIDE.md:67-79](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/1448340d265326e11b7a416960f35e0d2390cd6d/Development/system/coding/bringup-zephyr/EVAL-GUIDE.md?plain=1#L67) (**Herkunft verschoben:** als Vorstudienmaterial nach preThesis/06-bringup-zephyr verschoben. Die Zeilenangaben beziehen sich auf die zitierte historische Fassung. Aktuell: [EVAL-GUIDE.md](../../preThesis/06-bringup-zephyr/EVAL-GUIDE.md))
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
 
 <a id="u015"></a>

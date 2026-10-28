@@ -75,7 +75,7 @@ Untersucht wird der Einfluss wählbarer Filtervarianten auf Genauigkeit und Zuve
 
 Verlangsamung ist intern als Hörhilfe und nicht als diagnostischer Validitätsnachweis eingeordnet; WSOLA mit Stufen 1,0× / 0,75× / 0,5× ist vorgeschlagen, Originalgeschwindigkeit bleibt verfügbar.
 
-> **Überholt (Stand integration, 2026-10-22):** WSOLA-Stufen 1,0×/0,75×/0,5× sind kein MVP-Bestandteil. Seit 14.10. ist Replay auch keine optionale Anforderung mehr. Aktuell: Die Idee bleibt in den Entscheidungen vom 11.10. festgehalten; MVP-BPM arbeitet mit begrenztem Streaming-Zustand statt Sitzungsaufnahme. – siehe [MVP-Entscheidungen 14.10. (Anforderungen)](../Development/system/planning/mvp-decisions-2026-10-14.md#requirements), [Design: MVP-Sitzungsbasis](../Development/system/design/interfaces-and-behavior.md#mvp-session-baseline).
+> **Überholt (Stand integration, 2026-10-22):** WSOLA-Stufen 1,0×/0,75×/0,5× sind kein MVP-Bestandteil. Seit 14.10. ist Replay auch keine optionale Anforderung mehr. Aktuell: Die Idee bleibt in den Entscheidungen vom 11.10. festgehalten; MVP-BPM arbeitet mit begrenztem Streaming-Zustand statt Sitzungsaufnahme. – siehe [MVP-Entscheidungen 14.10. (Anforderungen)](../Development/system/planning/mvp-decisions-2026-10-14.md#requirements), [Design: MVP-Sitzungsbasis](../Development/system/design/system/interfaces-and-behavior.md#mvp-session-baseline).
 
 **Ursprung:** [preThesis/01-aufgabenbeschreibung/Aufgabenbeschreibung-Intern.md:41](../preThesis/01-aufgabenbeschreibung/Aufgabenbeschreibung-Intern.md#L41)
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.

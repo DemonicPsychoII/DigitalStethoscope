@@ -58,6 +58,95 @@ class ValidatorTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "regular file"):
             tools.binary(payload, hashlib.sha256(payload).hexdigest(), "validator")
 
+    def test_download_and_prepared_binary_respect_pin_size_limits(self):
+        archive = io.BytesIO()
+        with tarfile.open(fileobj=archive, mode="w:xz") as stream:
+            entry = tarfile.TarInfo("node")
+            entry.size = 6
+            stream.addfile(entry, io.BytesIO(b"binary"))
+        payload = archive.getvalue()
+        pin = {
+            "url": "https://example.invalid/node",
+            "member": "node",
+            "sha256": hashlib.sha256(payload).hexdigest(),
+            "maximum_archive_bytes": len(payload),
+            "maximum_binary_bytes": 6,
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            prepared = root / "prepared"
+            with patch.object(
+                tools.urllib.request, "urlopen", return_value=io.BytesIO(payload)
+            ):
+                tools.install({"node": pin}, prepared)
+            with patch.object(tools.urllib.request, "urlopen") as network:
+                tools.install({"node": pin}, root / "job", prepared)
+                network.assert_not_called()
+            self.assertEqual((root / "job/node").read_bytes(), b"binary")
+            with (
+                patch.object(
+                    tools.urllib.request, "urlopen", return_value=io.BytesIO(payload)
+                ),
+                self.assertRaisesRegex(ValueError, "archive exceeds size limit"),
+            ):
+                tools.install(
+                    {"node": pin | {"maximum_archive_bytes": len(payload) - 1}}, root
+                )
+            with (
+                patch.object(
+                    tools.urllib.request, "urlopen", return_value=io.BytesIO(payload)
+                ),
+                self.assertRaisesRegex(ValueError, "bounded regular file"),
+            ):
+                tools.install({"node": pin | {"maximum_binary_bytes": 5}}, root)
+            (prepared / "node").write_bytes(b"oversized")
+            self.assertIsNone(tools.prepared_binary(prepared, "node", pin))
+
+    def test_ci_uses_only_explicit_installed_node_path(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            bundled = root / "externals/node24_alpine/bin/node"
+            bundled.parent.mkdir(parents=True)
+            bundled.write_bytes(b"unusable musl runtime")
+            with (
+                patch.dict(
+                    tools.os.environ,
+                    {
+                        "CI": "true",
+                        "PATH": str(bundled.parent),
+                        "STETHO_NODE": str(bundled),
+                    },
+                    clear=True,
+                ),
+                patch.object(tools.sys, "platform", "win32"),
+            ):
+                with self.assertRaisesRegex(
+                    RuntimeError, "Node is required.*validation_tools"
+                ):
+                    tools.node_runtime(root)
+                installed = root / ".ci-validation-tools/node"
+                installed.parent.mkdir()
+                installed.write_bytes(b"pinned runtime")
+                self.assertEqual(tools.node_runtime(root), installed)
+
+    def test_windows_local_skip_and_explicit_runtime(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            with (
+                patch.dict(tools.os.environ, {}, clear=True),
+                patch.object(tools.sys, "platform", "win32"),
+            ):
+                self.assertIsNone(tools.node_runtime(root))
+                with patch.dict(tools.os.environ, {"STETHO_NODE": "node"}):
+                    with self.assertRaisesRegex(RuntimeError, "absolute path"):
+                        tools.node_runtime(root)
+                runtime = root / "node.exe"
+                with patch.dict(tools.os.environ, {"STETHO_NODE": str(runtime)}):
+                    with self.assertRaisesRegex(RuntimeError, "Node is required"):
+                        tools.node_runtime(root)
+                    runtime.touch()
+                    self.assertEqual(tools.node_runtime(root), runtime)
+
 
 if __name__ == "__main__":
     unittest.main()

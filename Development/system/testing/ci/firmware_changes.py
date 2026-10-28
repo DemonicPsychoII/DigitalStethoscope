@@ -5,8 +5,64 @@ import subprocess
 from pathlib import Path
 
 
+ROOT = Path(__file__).resolve().parents[4]
+# Register each implemented host suite with the component paths that affect it.
+COMPONENT_HOST_SUITES = {
+    "integration": {
+        "tests": "Development/system/coding/app/tests/host/integration",
+        "components": ("WIFI", "PORTAL", "L1_STORAGE", "L2_COMMUNICATION"),
+    },
+    "wifi": {
+        "tests": "Development/system/coding/app/tests/host/l1_wifi",
+        "components": ("WIFI", "L1_STORAGE"),
+    },
+    "portal": {
+        "tests": "Development/system/coding/app/tests/host/l1_portal",
+        "components": ("WIFI", "PORTAL"),
+    },
+    "communication": {
+        "tests": "Development/system/coding/app/tests/host",
+        "components": ("WIFI", "PORTAL", "L2_COMMUNICATION"),
+    },
+}
+
+
+def available_component_suites() -> tuple[str, ...]:
+    return tuple(
+        name
+        for name, suite in COMPONENT_HOST_SUITES.items()
+        if (ROOT / suite["tests"]).is_dir()
+    )
+
+
+def component_host_affected(paths: list[str], suite: str) -> bool:
+    components = COMPONENT_HOST_SUITES[suite]["components"]
+    for path in paths:
+        parts = path.split("/")
+        if any(
+            part in components or part.removeprefix("L1_") in components
+            for part in parts
+        ):
+            return True
+        if path.startswith(
+            (
+                "Development/system/requirements/",
+                "Development/system/design/system/",
+                "Development/system/architecture/system/",
+            )
+        ):
+            return True
+        if (
+            path.startswith(
+                ("Development/system/design/", "Development/system/architecture/")
+            )
+            and len(parts) == 4
+        ):
+            return True
+    return False
+
+
 def needs_build(paths: list[str], component: str) -> bool:
-    app = "Development/system/coding/bringup-zephyr/"
     ci = "Development/system/testing/ci/"
     thesis_app = "Development/system/coding/app/"
     for path in paths:
@@ -14,16 +70,9 @@ def needs_build(paths: list[str], component: str) -> bool:
             return True
         if path.startswith(thesis_app) and component == thesis_app:
             relative = path[len(thesis_app) :]
-            if relative.startswith("tests/host/") or relative.endswith(
+            if relative.startswith("tests/") or relative.endswith(
                 (".md", ".png", ".svg", ".puml", ".gitkeep")
             ):
-                continue
-            return True
-        if path.startswith(app) and component == app:
-            relative = path[len(app) :]
-            if relative.startswith(("tools/", "tests/", "evidence/")):
-                continue
-            if relative.endswith((".md", ".png", ".svg", ".puml")):
                 continue
             return True
         if path.startswith(ci):
@@ -34,16 +83,17 @@ def needs_build(paths: list[str], component: str) -> bool:
                 in {
                     "daily_build.py",
                     "firmware_changes.py",
-                    "benchmark_build.py",
                     "ci_results.py",
                     "ci_evidence.py",
-                    "native_tests.py",
                     "validation_tools.py",
                     "validation_tools.json",
                     "validate_docs.py",
                     "release_reuse.py",
                     "post_merge.py",
                     "native_review.py",
+                    "host_coverage.py",
+                    "manual_test_records.py",
+                    "application_host_results.py",
                 }
                 or relative.endswith(".md")
             ):
@@ -53,78 +103,87 @@ def needs_build(paths: list[str], component: str) -> bool:
 
 
 def needs_firmware(paths: list[str]) -> bool:
-    return any(
-        needs_build(paths, component)
-        for component in (
-            "Development/system/coding/app/",
-            "Development/system/coding/bringup-zephyr/",
-        )
-    )
+    return needs_build(paths, "Development/system/coding/app/")
 
 
 def suites(paths: list[str]) -> dict[str, bool]:
+    paths = [p for p in paths if not p.startswith("preThesis/06-bringup-zephyr/")]
     workflow = ".github/workflows/quality-gates.yml" in paths
-    firmware = needs_build(paths, "Development/system/coding/bringup-zephyr/")
-    application = needs_build(paths, "Development/system/coding/app/")
+    application = needs_firmware(paths)
     return {
-        "firmware": firmware,
         "application": application,
-        "native": firmware
-        or any(
-            p.startswith("Development/system/coding/bringup-zephyr/tests/logic/")
-            or p.endswith("/native_tests.py")
-            for p in paths
-        ),
         # Documentation checks compare docs with renders, pins, scripts and the thesis kit.
         "docs": workflow
         or any(
             p.endswith((".md", ".puml", ".svg"))
+            or "/tests/" in p
             or p.startswith(("thesis-material/", "Development/system/testing/ci/"))
             for p in paths
         ),
-        "host": workflow
-        or firmware
-        or application
-        or any(
-            p.startswith(
-                (
-                    "Development/system/coding/bringup-zephyr/",
-                    "Development/system/coding/app/",
-                )
-            )
-            and ("/tools/" in p or "/tests/host/" in p)
-            for p in paths
-        ),
         "tooling": workflow
-        or any(p.startswith("Development/system/testing/ci/") for p in paths)
-        or "Development/system/testing/qc_eval.py" in paths,
+        or any(p.startswith("Development/system/testing/ci/") for p in paths),
         "gate": workflow or any(p.startswith(".github/agent-gate/") for p in paths),
-        "qc": firmware
-        or application
-        or any(
-            p.startswith("Development/system/testing/")
-            or p.startswith("Development/system/requirements/")
-            for p in paths
+        "application_host": bool(available_component_suites())
+        and (
+            workflow
+            or application
+            or any(
+                component_host_affected(paths, suite)
+                for suite in available_component_suites()
+            )
+            or any(
+                p.startswith("Development/system/coding/app/tests/host/") for p in paths
+            )
         ),
     }
 
 
 def select(
-    paths: list[str], *, full: bool, daily: bool, reuse: bool
+    paths: list[str],
+    *,
+    full: bool,
+    daily: bool,
+    reuse: bool,
+    publish: bool = False,
+    retain: bool = False,
 ) -> dict[str, bool]:
     if full:
-        return dict.fromkeys(suites([]), True)
+        selected = dict.fromkeys(suites([]), True)
+        selected["application_host"] = bool(available_component_suites())
+        return selected
     selected = suites(paths)
     if daily:
-        # Publication verifies bring-up binaries; the weekly run also compiles the app.
+        # A reused application artifact already passed its selected verification.
         selected = dict.fromkeys(selected, False)
-        selected["qc"] = True
-        if not reuse:
-            selected.update(firmware=True, native=True, host=True)
+    if retain or ((daily or publish) and not reuse):
+        selected.update(
+            application=True,
+            application_host=bool(available_component_suites()),
+        )
     return selected
 
 
-def main() -> None:
+def changed_paths(base: str, head: str) -> list[str] | None:
+    # New-branch pushes have a zero base; force pushes can reference missing commits.
+    # Without a usable comparison, run every suite rather than omit verification.
+    if (
+        not base
+        or subprocess.run(
+            [
+                "git",
+                "rev-parse",
+                "--verify",
+                "--quiet",
+                "--end-of-options",
+                f"{base}^{{commit}}",
+            ],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=False,
+        ).returncode
+    ):
+        print("Base revision unavailable; selecting every verification suite.")
+        return None
     changed = subprocess.check_output(
         [
             "git",
@@ -132,18 +191,26 @@ def main() -> None:
             "--name-only",
             "--no-renames",
             "-z",
-            os.environ["BASE_SHA"],
-            os.environ["HEAD_SHA"],
+            base,
+            head,
             "--",
         ]
     )
-    paths = changed.decode("utf-8", errors="surrogateescape").split("\0")
+    return changed.decode("utf-8", errors="surrogateescape").split("\0")
+
+
+def main() -> None:
+    paths = changed_paths(os.environ.get("BASE_SHA", ""), os.environ["HEAD_SHA"])
     selected = select(
-        paths,
-        full=os.environ.get("CI_FULL") == "true",
+        paths or [],
+        full=paths is None or os.environ.get("CI_FULL") == "true",
         daily=os.environ.get("CI_DAILY") == "true",
         reuse=bool(os.environ.get("REUSE")),
+        publish=os.environ.get("CI_PUBLISH") == "true",
+        retain=os.environ.get("CI_RETAIN") == "true",
     )
+    if not (ROOT / "Development/system/coding/app/CMakeLists.txt").is_file():
+        selected["application"] = False
     with Path(os.environ["GITHUB_OUTPUT"]).open("a", encoding="utf-8") as output:
         for name, needed in selected.items():
             output.write(f"{name}={str(needed).lower()}\n")

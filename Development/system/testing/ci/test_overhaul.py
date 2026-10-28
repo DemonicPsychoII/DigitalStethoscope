@@ -11,15 +11,14 @@ import zipfile
 from pathlib import Path
 from unittest.mock import patch
 
+import native_review
 import release_reuse
 import post_merge
 
-from build_support import BOARD, PROFILES
+from build_support import BOARD, RELEASE_COMPONENTS
 from ci_results import problems
-from firmware_changes import suites
 from firmware_release import PROJECT
 from native_review import policy, probe
-from native_tests import report
 from post_merge import decision
 from release_reuse import eligible, extract
 
@@ -27,6 +26,77 @@ SHA = "a" * 40
 
 
 class OverhaulTests(unittest.TestCase):
+    def test_publication_cannot_require_an_absent_application(self):
+        self.assertEqual(
+            problems(
+                "success", "success", "skipped", "false", "true", application="false"
+            ),
+            [],
+        )
+
+    def test_migration_variable_failure_preserves_required_gate(self):
+        source = {
+            "name": "protect",
+            "target": "branch",
+            "enforcement": "active",
+            "conditions": {},
+            "rules": [
+                {
+                    "type": "pull_request",
+                    "parameters": {
+                        "required_approving_review_count": 1,
+                        "dismiss_stale_reviews_on_push": True,
+                    },
+                },
+                {
+                    "type": "required_status_checks",
+                    "parameters": {
+                        "required_status_checks": [{"context": "agent-gate"}]
+                    },
+                },
+            ],
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            previous = Path.cwd()
+            try:
+                os.chdir(directory)
+                with (
+                    patch(
+                        "sys.argv",
+                        [
+                            "native_review.py",
+                            "finish",
+                            "--repo",
+                            "owner/repo",
+                            "--ruleset",
+                            "1",
+                            "--apply",
+                            "--coderabbit-pr",
+                            "2",
+                            "--fallback-pr",
+                            "3",
+                            "--fallback-login",
+                            "reviewer",
+                        ],
+                    ),
+                    patch.object(native_review, "gh", return_value=source),
+                    patch.object(native_review, "probe") as review_probe,
+                    patch.object(
+                        native_review.subprocess,
+                        "run",
+                        side_effect=subprocess.CalledProcessError(1, "gh variable"),
+                    ) as apply,
+                ):
+                    with self.assertRaises(subprocess.CalledProcessError):
+                        native_review.main()
+                    self.assertEqual(
+                        review_probe.call_args_list[0].args[1], "coderabbitai"
+                    )
+                    self.assertEqual(len(apply.call_args_list), 1)
+                    self.assertEqual(apply.call_args.args[0][1:3], ["variable", "set"])
+            finally:
+                os.chdir(previous)
+
     def test_failed_rerun_request_emits_accurate_recovery_result(self):
         with tempfile.TemporaryDirectory() as directory:
             event = Path(directory) / "event.json"
@@ -60,76 +130,40 @@ class OverhaulTests(unittest.TestCase):
                 post_merge.main()
             self.assertEqual(output.read_text(), "result=rerun-request-failed\n")
 
-    def test_native_only_change_skips_target_profiles(self):
-        selected = suites(
-            ["Development/system/coding/bringup-zephyr/tests/logic/src/main.c"]
-        )
-        self.assertTrue(selected["native"])
-        self.assertFalse(selected["firmware"])
-        self.assertFalse(selected["host"])
-
     def test_accounting_rejects_missing_failed_cancelled_and_unexpected_work(self):
         for heavy in ("skipped", "cancelled", "failure"):
             self.assertTrue(
                 problems(
-                    "success",
-                    "success",
-                    heavy,
-                    "false",
-                    "false",
-                    "false",
-                    "true",
-                    application="true",
+                    "success", "success", heavy, "false", "true", application="true"
                 )
             )
         self.assertFalse(
             problems(
-                "success",
-                "success",
-                "success",
-                "false",
-                "false",
-                "false",
-                "true",
-                application="true",
+                "success", "success", "success", "false", "true", application="true"
             )
         )
         self.assertTrue(
-            problems(
-                "success",
-                "success",
-                "skipped",
-                "false",
-                "false",
-                "false",
-                "true",
-                application="",
-            )
+            problems("success", "success", "skipped", "false", "true", application="")
         )
+        self.assertFalse(problems("success", "success", "skipped", "false", "true"))
+        self.assertTrue(problems("failure", "success", "success", "false", "true"))
+        self.assertTrue(problems("success", "failure", "skipped", "false", "true"))
+        self.assertFalse(problems("success", "skipped", "skipped", "true", "false"))
         self.assertFalse(
-            problems("success", "success", "skipped", "false", "false", "false", "true")
+            problems("success", "success", "skipped", "true", "true", "123")
         )
-        for heavy in ("skipped", "failure", "cancelled"):
+        self.assertTrue(problems("success", "success", "skipped", "", "true"))
+        for suite in ("application_host", "tooling", "gate", "docs"):
             self.assertTrue(
-                problems("success", "success", heavy, "false", "true", "false", "true")
+                problems(
+                    "success",
+                    "success",
+                    "skipped",
+                    "false",
+                    "true",
+                    static_suites={suite: ""},
+                )
             )
-        self.assertTrue(
-            problems("success", "success", "skipped", "", "false", "false", "true")
-        )
-        self.assertTrue(
-            problems("failure", "success", "success", "true", "true", "false", "true")
-        )
-        self.assertTrue(
-            problems("success", "failure", "success", "true", "true", "false", "true")
-        )
-        self.assertFalse(
-            problems("success", "skipped", "skipped", "true", "true", "true", "false")
-        )
-        self.assertFalse(
-            problems(
-                "success", "success", "skipped", "false", "false", "true", "true", "123"
-            )
-        )
 
     def test_recovery_requires_repeated_verification_failure(self):
         failed = {"run_attempt": 1, "conclusion": "failure"}
@@ -224,15 +258,24 @@ class OverhaulTests(unittest.TestCase):
             "files": [
                 {
                     "profile": p,
+                    "component": RELEASE_COMPONENTS[p],
                     "name": p + ".bin",
                     "sha256": hashlib.sha256(p.encode()).hexdigest(),
                 }
-                for p in PROFILES
+                for p in RELEASE_COMPONENTS
             ],
         }
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            for bad in (None, "dirty", "checksum", "extra", "identity"):
+            for bad in (
+                None,
+                "dirty",
+                "checksum",
+                "extra",
+                "identity",
+                "missing-app",
+                "wrong-component",
+            ):
                 current = copy.deepcopy(manifest)
                 if bad == "dirty":
                     current["dirty"] = True
@@ -240,10 +283,16 @@ class OverhaulTests(unittest.TestCase):
                     current["files"][0]["sha256"] = "0" * 64
                 if bad == "identity":
                     current["commit"] = "b" * 40
+                if bad == "missing-app":
+                    current["files"] = [
+                        f for f in current["files"] if f["profile"] != "application"
+                    ]
+                if bad == "wrong-component":
+                    current["files"][-1]["component"] = "bringup"
                 archive = root / "test.zip"
                 with zipfile.ZipFile(archive, "w") as stream:
                     stream.writestr("manifest.json", json.dumps(current))
-                    for p in PROFILES:
+                    for p in RELEASE_COMPONENTS:
                         stream.writestr(p + ".bin", p)
                     if bad == "extra":
                         stream.writestr("../escape", "unexpected")
@@ -253,16 +302,7 @@ class OverhaulTests(unittest.TestCase):
                     self.assertFalse((root / bad).exists())
                 else:
                     extract(archive, root / "valid", SHA)
-                    self.assertTrue((root / "valid/offline.bin").is_file())
-
-    def test_empty_native_success_is_not_a_pass(self):
-        with tempfile.TemporaryDirectory() as directory:
-            target = Path(directory) / "junit.xml"
-            with self.assertRaises(RuntimeError):
-                report("PROJECT EXECUTION SUCCESSFUL", 0, target)
-            self.assertIn('failures="1"', target.read_text())
-            report("PASS - test_recovery\nPROJECT EXECUTION SUCCESSFUL", 0, target)
-            self.assertIn('failures="0"', target.read_text())
+                    self.assertTrue((root / "valid/application.bin").is_file())
 
     def test_native_migration_preserves_other_checks_and_requires_current_review(self):
         source = {

@@ -1397,18 +1397,6 @@
       "id": "U095"
     },
     {
-      "statement": "BUILD-TIMES beschreibt einen vergleichbaren Buildzeit-Benchmark über Geräte, mit Warm-up-Ausschluss, Median/Min/Max und Trennung nach Source-Hash, Toolpins, Board und Cachepolitik; Ergebnisdateien sollen für Thesis-Messungen erhalten bleiben.",
-      "origin": [
-        "Development/system/testing/BUILD-TIMES.md:1-89"
-      ],
-      "chapter": "Evaluation/Methodik",
-      "type": "method",
-      "status": "confirmed",
-      "needs_citation": false,
-      "sources": [],
-      "id": "U096"
-    },
-    {
       "statement": "QC-Ergebnis JSON dokumentiert 10 Kontrollen mit Score je 10 und Gate PASS; Verifikation basiert teils auf Heuristiken, und erforderliche Maßnahmen bleiben trotz PASS ausgewiesen.",
       "origin": [
         "Development/system/testing/qc-eval-results.json:1-92"

@@ -45,7 +45,7 @@ R12 nennt digitale DMS-Anmeldung, formale Vorprüfung, vier Monate Bearbeitungsz
 ### Werte und dokumentierte Befunde
 
 <a id="u033"></a>
-**U033 · EIGENER ZIELWERT / VORLÄUFIGER VORSCHLAG · ANNAHME**
+**U033 · PROJEKTDOKUMENTATION / BESTANDSWERT · ANNAHME**
 
 Interne Terminplanung nennt Anmeldung Ende September, Bearbeitungsstart 20. Oktober und Abgabe Ende Januar; der formale Ausgang hängt von tatsächlicher Anmeldung und Fakultätsregeln ab.
 
@@ -142,7 +142,7 @@ Für Anmeldeverfahren, Bearbeitungszeit, Titelformat und Abgabe sind institution
 ### Werte und dokumentierte Befunde
 
 <a id="u009"></a>
-**U009 · EIGENER ZIELWERT / VORLÄUFIGER VORSCHLAG**
+**U009 · PROJEKTDOKUMENTATION / BESTANDSWERT**
 
 Aufwandsschätzung: 320 h Kernarbeit (8 Personenwochen) plus etwa 64 h Puffer; eine Personenwoche entspricht 40 h.
 
@@ -150,7 +150,7 @@ Aufwandsschätzung: 320 h Kernarbeit (8 Personenwochen) plus etwa 64 h Puffer; e
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
 
 <a id="u036"></a>
-**U036 · EIGENER ZIELWERT / VORLÄUFIGER VORSCHLAG**
+**U036 · PROJEKTDOKUMENTATION / BESTANDSWERT**
 
 Kernaufwand intern auf 320 h verteilt: Phase 1 64 h, Phase 2 156 h, Phase 3 100 h.
 

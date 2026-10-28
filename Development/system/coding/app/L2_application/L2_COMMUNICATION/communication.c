@@ -8,51 +8,21 @@
  * @file
  * Implementation of the COMMUNICATION module: the Wi-Fi workflow thread.
  *
- * Workflow, as drawn in architecture/wifi-flow.puml, wifi-state.puml and
- * wifi-recovery.puml (rules: planning/mvp-decisions-2026-10-19.md):
- * - Boot: read the stored network and join it, 4 attempts, 5 s apart.
- *   No network stored: run setup. All attempts failed: wait for a 2 s hold.
- * - Setup: scan (4 attempts), then open the hotspot, DHCP server and page.
- *   The page sends Connect, Rescan, Cancel and activity requests:
- *   - Connect: one join attempt; requests sent meanwhile are dropped.
- *     Joined: save (2 attempts), show the result 10 s, close the page.
- *     Failed: show the cause, rescan, return to the selection.
+ * Workflow (architecture/COMMUNICATION/setup-state.puml, setup-flow.puml and
+ * link-recovery.puml):
+ * - Boot: join the stored network, 4 attempts, 5 s apart. Without a stored
+ *   network, run setup. If all attempts fail, wait for a 2 s button hold.
+ * - Setup: scan, then open the hotspot, the DHCP server and the page.
+ *   - Connect: one join attempt. On success, save the network and show the
+ *     result for 10 s. On failure, show the cause and scan again.
  *   - Rescan: scan again with the hotspot open.
- *   - Cancel or 5 min without activity: closing notice, then close.
- *   - A scan that fails 4 times shows its cause and closes setup.
- *   Closing keeps an established station, otherwise it disconnects.
- * - Idle: a 2 s hold runs setup. Every 2 min, check the link; if it is
- *   lost, join again (4 attempts) and run setup once if all fail.
- * - Listening: no Wi-Fi work; the station association stays. Every wait
- *   checks for Start in 200 ms wait slices. Driver cancellation, atomic
- *   settings writes and teardown must also finish before control may start
- *   audio. Their target latency is not yet measured.
+ *   - Cancel, or 5 min without activity: show a notice, then close.
+ *   - If a scan fails 4 times, setup closes with the cause.
+ * - Idle: a 2 s hold runs setup. Every 2 min, check the link. If it is
+ *   lost, join again (4 attempts) and run setup if all attempts fail.
+ * - Listening: no Wi-Fi work, but a connected station stays connected.
+ *   All waits run in 200 ms intervals, so a Start is seen quickly.
  *
- * Wi-Fi errors never mute audio or block offline Start, so this module
- * only logs them for now (catalogue names, for example SCAN_FAILURE). The
- * LED report goes to control when control has an interface for it.
- *
- * References used for the implementation:
- * - Threads (k_thread_create, stacks, priorities):
- *   https://docs.zephyrproject.org/latest/kernel/services/threads/index.html
- * - Semaphores, to wake the worker after control changes its requested state:
- *   https://docs.zephyrproject.org/latest/kernel/services/synchronization/semaphores.html
- * - Timeouts and timepoints (sys_timepoint_calc, sys_timepoint_expired):
- *   https://docs.zephyrproject.org/latest/kernel/services/timing/clocks.html
- * - Logging (LOG_MODULE_REGISTER, LOG_INF, deferred mode):
- *   https://docs.zephyrproject.org/latest/services/logging/index.html
- * - Wi-Fi, DHCP, HTTP server and settings: see wifi.c and portal.c.
- *
- * Where the included headers are:
- * - <zephyr/...>: the pinned Zephyr tree, .ci-workspace/zephyr/include/zephyr/,
- *   for example <zephyr/kernel.h> is .ci-workspace/zephyr/include/zephyr/kernel.h.
- *   These files match the build exactly; the web documentation can be newer.
- * - <errno.h>, <string.h>: the C library of the toolchain (picolibc) in
- *   .ci-workspace/zephyr-sdk-1.0.1/gnu/<target>/<target>/include/.
- * - "wifi.h", "portal.h": the module folders that CMakeLists.txt lists in
- *   target_include_directories.
- * - Any other header: build-app/compile_commands.json lists every include
- *   path (-I) that the compiler searches, in order.
  */
 
 /***********************************************************************/
@@ -68,6 +38,7 @@
 #include <zephyr/logging/log.h>
 
 #include "portal.h"
+#include "storage.h"
 #include "wifi.h"
 
 /***********************************************************************/
@@ -77,26 +48,51 @@
 #define COMMUNICATION_THREAD_STACK_SIZE (4096) /**< Size of the communication thread stack. */
 #define COMMUNICATION_THREAD_PRIORITY   (10)   /**< Priority of the communication thread. */
 
-#define COMMUNICATION_STORED_CONNECT_ATTEMPTS     (4)                        /**< P23: boot and recovery. */
-#define COMMUNICATION_PAGE_CONNECT_ATTEMPTS       (1)                        /**< P23: request from the page. */
-#define COMMUNICATION_SCAN_ATTEMPTS               (4)                        /**< P23: scans in total. */
-#define COMMUNICATION_SAVE_ATTEMPTS               (2)                        /**< P23: settings saves in total. */
-#define COMMUNICATION_RETRY_DELAY_S               (5)                        /**< P23: after a failed attempt. */
-#define COMMUNICATION_CONNECT_TIMEOUT_S           (15)                       /**< Candidate: until online. */
-#define COMMUNICATION_SCAN_TIMEOUT_S              (10)                       /**< Candidate: one scan. */
-#define COMMUNICATION_SETUP_INACTIVITY_TIMEOUT_S  (5 * 60)                   /**< P21: without page activity. */
-#define COMMUNICATION_RESULT_DISPLAY_S            (10)                       /**< P23: success or save warning. */
-#define COMMUNICATION_CLOSE_NOTICE_DISPLAY_S      (2)                        /**< Candidate: Cancel or timeout. */
-#define COMMUNICATION_CONNECTION_CHECK_INTERVAL_S (2 * 60)                   /**< Candidate: in Idle only. */
-#define COMMUNICATION_SCAN_LIST_SIZE              (16)                       /**< Candidate: networks on the page. */
-#define COMMUNICATION_EVENT_CHECK_INTERVAL_MS     (200)                      /**< Longest delay to see a Start. */
-K_THREAD_STACK_DEFINE(communication_Stack, COMMUNICATION_THREAD_STACK_SIZE); /**< Communication stack. */
-K_SEM_DEFINE(communication_ControlChanged, 0, 1);                            /**< Wakeup; state is held under ControlLock. */
+#define COMMUNICATION_STORED_CONNECT_ATTEMPTS     (4)      /**< Join attempts at boot and after a link loss. */
+#define COMMUNICATION_PAGE_CONNECT_ATTEMPTS       (1)      /**< Join attempts for a Connect from the page. */
+#define COMMUNICATION_SCAN_ATTEMPTS               (4)      /**< Scan attempts in total. */
+#define COMMUNICATION_SAVE_ATTEMPTS               (2)      /**< Save attempts for the joined network. */
+#define COMMUNICATION_RETRY_DELAY_S               (5)      /**< Delay after a failed attempt. */
+#define COMMUNICATION_CONNECT_TIMEOUT_S           (15)     /**< Longest wait for one join. */
+#define COMMUNICATION_SCAN_TIMEOUT_S              (10)     /**< Longest wait for one scan. */
+#define COMMUNICATION_SETUP_INACTIVITY_TIMEOUT_S  (5 * 60) /**< Setup closes after this time without page activity. */
+#define COMMUNICATION_RESULT_DISPLAY_S            (10)     /**< Time the page shows the join result. */
+#define COMMUNICATION_CLOSE_NOTICE_DISPLAY_S      (2)      /**< Time the page shows the closing notice. */
+#define COMMUNICATION_CONNECTION_CHECK_INTERVAL_S (2 * 60) /**< Link check interval in Idle. */
+#define COMMUNICATION_EVENT_CHECK_INTERVAL_MS     (200)    /**< Wait interval; longest delay to see a Start. */
+
+#define COMMUNICATION_NETWORK_RECORD "wifi/network" /**< Storage name of the joined network. */
+
+#define COMMUNICATION_WORK_SCAN       BIT(0) /**< Scan started. */
+#define COMMUNICATION_WORK_CONNECTION BIT(1) /**< Connect request pending. */
+#define COMMUNICATION_WORK_PORTAL     BIT(2) /**< Setup page served. */
+#define COMMUNICATION_WORK_DHCP       BIT(3) /**< DHCP server running. */
+#define COMMUNICATION_WORK_HOTSPOT    BIT(4) /**< Hotspot open. */
 
 /***********************************************************************/
 /* TYPES                                                               */
 /***********************************************************************/
 
+/** State of the communication thread, as seen by CONTROL. */
+enum communication_state
+{
+    COMMUNICATION_STATE_RUNNING, /**< Boot, Idle or recovery. */
+    COMMUNICATION_STATE_SETUP,   /**< Setup runs; a 2 s hold is ignored. */
+    COMMUNICATION_STATE_STOPPED, /**< Wi-Fi work stopped for listening. */
+    COMMUNICATION_STATE_OFFLINE, /**< Wi-Fi init failed; the thread has ended. */
+};
+
+/** Condition observed by the shared bounded wait. */
+enum communication_wait_target
+{
+    COMMUNICATION_WAIT_CONTROL_EVENT, /**< Wait for a control event or the supplied timeout, then refresh the listening request. */
+    COMMUNICATION_WAIT_DELAY,         /**< Wait for the full delay; Start ends it immediately when observed. */
+    COMMUNICATION_WAIT_CONNECTION,    /**< Wait for a join result; completion, failure, deadline or Start ends it. */
+    COMMUNICATION_WAIT_SCAN_LIST,     /**< Wait for the complete scan list; completion, failure, deadline or Start ends it. */
+    COMMUNICATION_WAIT_WIFI_STOP,     /**< Wait for a stopped/offline acknowledgement of Start, or return pending at the deadline. */
+};
+
+/** How setup ended. */
 enum communication_setup_result
 {
     COMMUNICATION_SETUP_RUNNING,     /**< Setup still serves the page. */
@@ -104,6 +100,14 @@ enum communication_setup_result
     COMMUNICATION_SETUP_CANCELLED,   /**< Cancel on the page or 5 min without activity. */
     COMMUNICATION_SETUP_FAILED,      /**< A scan failed; setup cannot continue. */
     COMMUNICATION_SETUP_INTERRUPTED, /**< Listening started. */
+};
+
+/** Wi-Fi work that must be stopped before listening. */
+struct communication_work
+{
+    uint32_t bit;      /**< COMMUNICATION_WORK_* bit. */
+    int (*stop)(void); /**< Stops the work; 0 on success. */
+    const char *name;  /**< Name for the log. */
 };
 
 /***********************************************************************/
@@ -114,6 +118,15 @@ enum communication_setup_result
 /* LOCAL CONSTANTS                                                     */
 /***********************************************************************/
 
+/** Work in the order it is stopped: radio work first, then the setup services. */
+static const struct communication_work communication_WorkList[] = {
+    {COMMUNICATION_WORK_SCAN, wifi_cancelScan, "Scan"},
+    {COMMUNICATION_WORK_CONNECTION, wifi_disconnect, "Connect request"},
+    {COMMUNICATION_WORK_PORTAL, portal_stop, "Setup page"},
+    {COMMUNICATION_WORK_DHCP, wifi_stopDHCPServer, "DHCP server"},
+    {COMMUNICATION_WORK_HOTSPOT, wifi_stopHotspot, "Hotspot"},
+};
+
 /***********************************************************************/
 /* GLOBAL VARIABLES                                                    */
 /***********************************************************************/
@@ -122,33 +135,29 @@ enum communication_setup_result
 /* LOCAL VARIABLES                                                     */
 /***********************************************************************/
 
+K_THREAD_STACK_DEFINE(communication_Stack, COMMUNICATION_THREAD_STACK_SIZE); /**< Communication stack. */
+K_SEM_DEFINE(communication_ControlChanged, 0, 1);                            /**< Wakes the thread after an event. */
+
 static struct k_thread communication_ThreadData; /**< Communication thread. */
 
-static struct wifi_network communication_StoredNetwork;                             /**< Network for boot and recovery. */
-static bool communication_StoredNetworkIsValid;                                     /**< StoredNetwork holds a network. */
-static struct portal_request communication_PageRequest;                             /**< Last page request, with password. */
-static struct wifi_scan_entry communication_ScanList[COMMUNICATION_SCAN_LIST_SIZE]; /**< Networks for the page. */
-static size_t communication_ScanCount;                                              /**< Valid entries in ScanList. */
+/* Shared with CONTROL; protected by communication_ControlLock. */
+static struct k_spinlock communication_ControlLock;  /**< Protects the variables below. */
+static bool communication_ListeningIsRequested;      /**< CONTROL listens or is about to. */
+static bool communication_SetupIsRequested;          /**< 2 s hold not yet handled. */
+static enum communication_state communication_State; /**< State of the thread. */
 
-/* Only CONTROL changes the requested state. Coalesced wakeups cannot lose a
- * Start/Stop transition's final state. A Start invalidates an old acknowledgement. */
-static struct k_spinlock communication_ControlLock;
-static bool communication_ListeningIsRequested;
-static bool communication_SetupIsPending;
-static bool communication_SetupIsActive;
-static bool communication_WiFiIsStopped;
-static bool communication_WiFiIsUnavailable;
-
-/* Worker-owned resources remain pending until L1 confirms their release. */
-static bool communication_ScanIsPending;
-static bool communication_ConnectionIsPending;
-static bool communication_PortalIsActive;
-static bool communication_DHCPServerIsActive;
-static bool communication_HotspotIsActive;
-
-static bool communication_ListeningIsActive; /**< Control listens; no Wi-Fi work allowed during that time. */
-static bool communication_SetupIsRequested;  /**< 2 s hold in Idle not yet handled. */
-static bool communication_RecoveryIsAllowed; /**< A connection was up; no failed recovery since. */
+/* Used by the communication thread only. */
+static bool communication_ListeningIsActive;            /**< Copy of ListeningIsRequested from the last event check. */
+static uint32_t communication_PendingWork;              /**< COMMUNICATION_WORK_* bits not yet stopped. */
+static struct wifi_network communication_StoredNetwork; /**< Network for boot and recovery. */
+static bool communication_StoredNetworkIsValid;         /**< StoredNetwork holds a network. */
+static bool communication_CleanupFaultIsLatched;
+static bool communication_BootJoinIsPending;
+static int communication_BootAttemptsUsed;
+static bool communication_RecoveryIsAllowed;                               /**< A connection was up and no recovery has failed since. */
+static struct portal_request communication_PageRequest;                    /**< Last page request, with password. */
+static struct wifi_scan_entry communication_ScanList[WIFI_SCAN_LIST_SIZE]; /**< Networks for the page. */
+static size_t communication_ScanCount;                                     /**< Valid entries in ScanList. */
 
 /***********************************************************************/
 /* LOCAL FUNCTION PROTOTYPES                                           */
@@ -179,46 +188,98 @@ static void communication_runIdleCycle(void);
 static void communication_recoverConnection(void);
 
 /**
- * @brief Wait for events from control and handle them.
+ * @brief Wait until the selected condition is met, Start interrupts it or the time is over.
  *
- * Returns on a state-change wakeup or timeout and reads the latest control
- * state under a spinlock. K_NO_WAIT reads it without a delay. Fixed delays
- * use communication_waitForDelay(), so unrelated wakeups do not shorten them.
+ * @param[in] target  Condition to wait for.
+ * @param[in] timeout Longest wait.
  *
- * Afterwards, communication_ListeningIsActive tells whether Wi-Fi work
- * must stop.
- *
- * @param[in] timeout Maximum time to wait.
+ * @return 0 when the condition is met, -ECANCELED if listening started,
+ *         -ETIMEDOUT if a join or scan gave no result in time,
+ *         -EAGAIN if Wi-Fi has not stopped in time, or a Wi-Fi error code.
  */
-static void communication_waitForEvents(k_timeout_t timeout);
+static int communication_waitForCondition(enum communication_wait_target target, k_timeout_t timeout);
 
-/** @brief Keep a fixed delay unless listening requests an early exit. */
-static void communication_waitForDelay(k_timeout_t timeout);
+/**
+ * @brief Check the selected condition once.
+ *
+ * Join and scan checks wait up to one event check interval for the radio.
+ *
+ * @param[in] target   Condition to check.
+ * @param[in] deadline End of the whole wait.
+ *
+ * @return 0 when the condition is met, -EAGAIN while it is pending, or the error that ended it.
+ */
+static int communication_checkWaitTarget(enum communication_wait_target target, k_timepoint_t deadline);
 
-/** @brief Release setup and pending radio work, retaining a connected station.
- * @return True only when every active resource has confirmed release.
+/**
+ * @brief Pause before the next check of the selected condition.
+ *
+ * @param[in] target   Condition that is waited for.
+ * @param[in] deadline End of the whole wait.
+ */
+static void communication_pauseBeforeNextCheck(enum communication_wait_target target, k_timepoint_t deadline);
+
+/** @brief Take over the listening request that CONTROL posted last. */
+static void communication_updateListeningState(void);
+
+/**
+ * @brief Tell whether a 2 s hold waits for setup.
+ *
+ * @return True if setup is requested.
+ */
+static bool communication_isSetupRequested(void);
+
+/**
+ * @brief Set the state of the thread.
+ *
+ * @param[in] state New state.
+ */
+static void communication_setState(enum communication_state state);
+
+/**
+ * @brief Stop all pending Wi-Fi work; a connected station stays connected.
+ *
+ * Each pending stop is tried once; a failed stop latches a restart-required fault.
+ *
+ * @return True when audio may be released. This is also true after a latched
+ *         cleanup fault (REQ-13 Wi-Fi-only exception), while services may still be
+ *         pending; it does not assert radio shutdown.
  */
 static bool communication_stopWiFiWork(void);
 
 /**
- * @brief Wait in slices for the pending connect request.
+ * @brief Run an attempt function up to @p attempts times, COMMUNICATION_RETRY_DELAY_S apart.
  *
- * @return 0 when online, -ECANCELED if listening started, or the error code of the request.
+ * @param[in] tryOnce  One attempt; returns 0 on success.
+ * @param[in] network  Argument for @p tryOnce.
+ * @param[in] attempts Number of attempts in total.
+ * @param[in] workBit  Work of the attempt; no retry while it is still pending.
+ * @param[in] name     Name for the log.
+ *
+ * @return 0 on success, -ECANCELED if listening started, or the last error code.
  */
-static int communication_waitForConnection(void);
+static int communication_retry(int (*tryOnce)(const struct wifi_network *network), const struct wifi_network *network, int attempts, uint32_t workBit, const char *name);
 
 /**
- * @brief Wait in slices for the running scan and store its list.
+ * @brief Send one connect request and wait until online.
  *
- * @return 0 on success, -ECANCELED if listening started, or the error code of the scan.
+ * @param[in] network Network to join.
+ *
+ * @return 0 when online, -ECANCELED if listening started, or an error code.
  */
-static int communication_waitForScanResult(void);
+static int communication_tryConnect(const struct wifi_network *network);
+
+/**
+ * @brief Run one scan and wait for its list.
+ *
+ * @param[in] network Unused; the signature matches communication_retry().
+ *
+ * @return 0 on success, -ECANCELED if listening started, or an error code.
+ */
+static int communication_tryScan(const struct wifi_network *network);
 
 /**
  * @brief Connect to a network, with COMMUNICATION_RETRY_DELAY_S between failed attempts.
- *
- * Boot and recovery use COMMUNICATION_STORED_CONNECT_ATTEMPTS on the stored
- * network; a page request uses COMMUNICATION_PAGE_CONNECT_ATTEMPTS.
  *
  * @param[in] network  Network to join.
  * @param[in] attempts Number of attempts in total.
@@ -228,10 +289,9 @@ static int communication_waitForScanResult(void);
 static int communication_connectToNetwork(const struct wifi_network *network, int attempts);
 
 /**
- * @brief Scan into communication_ScanList and publish it for the page.
+ * @brief Scan into communication_ScanList and publish the list for the page.
  *
- * COMMUNICATION_SCAN_ATTEMPTS in total. The previous list stays if all
- * attempts fail. Publishing before the page starts is harmless.
+ * If all attempts fail, the previous list stays.
  *
  * @return 0 on success, -ECANCELED if listening started, or the last error code.
  */
@@ -243,7 +303,17 @@ static int communication_scanNetworks(void);
 static void communication_runSetup(void);
 
 /**
- * @brief Start the hotspot, the DHCP server and the page; undo the started steps on failure.
+ * @brief Start one setup service, unless listening has started.
+ *
+ * @param[in] workBit Work bit of the service.
+ * @param[in] start   Starts the service; 0 on success.
+ *
+ * @return 0 on success, -ECANCELED if listening started, or the error code of @p start.
+ */
+static int communication_startService(uint32_t workBit, int (*start)(void));
+
+/**
+ * @brief Start the hotspot, the DHCP server and the page.
  *
  * @return 0 on success, or the error code of the step that failed.
  */
@@ -282,7 +352,7 @@ static int communication_handleConnectRequest(void);
 static void communication_saveNetwork(const struct wifi_network *network);
 
 /**
- * @brief Drop page requests sent while a join ran; user cancel is locked then.
+ * @brief Drop page requests sent while a join ran.
  */
 static void communication_discardPageRequests(void);
 
@@ -330,26 +400,30 @@ int communication_postEvent(enum communication_event event)
     {
     case COMMUNICATION_EVENT_LISTENING_STARTED:
         communication_ListeningIsRequested = true;
-        communication_SetupIsPending = false;
-        communication_WiFiIsStopped = false;
+        communication_SetupIsRequested = false;
         break;
 
     case COMMUNICATION_EVENT_LISTENING_STOPPED:
         communication_ListeningIsRequested = false;
-        communication_WiFiIsStopped = false;
         break;
 
     case COMMUNICATION_EVENT_SETUP_REQUESTED:
-        if(!communication_ListeningIsRequested && !communication_SetupIsActive)
+        if(!communication_ListeningIsRequested && (communication_State != COMMUNICATION_STATE_SETUP))
         {
-            communication_SetupIsPending = true;
+            communication_SetupIsRequested = true;
         }
 
         break;
 
     default:
-        result = -EINVAL;
+        result = -EINVAL; /**< Invalid argument or unsupported input. */
         break;
+    }
+
+    /* A new Start or Stop needs a new confirmation from the thread. */
+    if((result == 0) && (event != COMMUNICATION_EVENT_SETUP_REQUESTED) && (communication_State == COMMUNICATION_STATE_STOPPED))
+    {
+        communication_State = COMMUNICATION_STATE_RUNNING;
     }
 
     k_spin_unlock(&communication_ControlLock, key);
@@ -364,41 +438,7 @@ int communication_postEvent(enum communication_event event)
 
 int communication_waitForWiFiStop(k_timeout_t timeout)
 {
-    k_timepoint_t deadline = sys_timepoint_calc(timeout);
-
-    int result = -EAGAIN;
-    bool waiting = true;
-
-    while(waiting)
-    {
-        k_spinlock_key_t key = k_spin_lock(&communication_ControlLock);
-        bool stopped = communication_ListeningIsRequested &&
-                       (communication_WiFiIsStopped || communication_WiFiIsUnavailable);
-
-        k_spin_unlock(&communication_ControlLock, key);
-
-        if(stopped)
-        {
-            result = 0;
-        }
-
-        waiting = (result != 0) && !sys_timepoint_expired(deadline);
-
-        if(waiting)
-        {
-            k_timeout_t remaining = sys_timepoint_timeout(deadline);
-            k_timeout_t slice = K_MSEC(COMMUNICATION_EVENT_CHECK_INTERVAL_MS);
-
-            if(!K_TIMEOUT_EQ(remaining, K_FOREVER) && (remaining.ticks < slice.ticks))
-            {
-                slice = remaining;
-            }
-
-            (void)k_sleep(slice);
-        }
-    }
-
-    return result;
+    return communication_waitForCondition(COMMUNICATION_WAIT_WIFI_STOP, timeout);
 }
 
 /***********************************************************************/
@@ -411,18 +451,16 @@ static void communication_thread(void *arg1, void *arg2, void *arg3)
     ARG_UNUSED(arg2);
     ARG_UNUSED(arg3);
 
+    /* On failure the stored network cannot be read either, so setup opens. */
+    (void)storage_init();
+
     int result = wifi_init();
 
     if(result != 0)
     {
-        /* Audio works without Wi-Fi; the thread ends and control never waits for it. */
+        /* Audio works without Wi-Fi, so control must not wait for this thread. */
         LOG_ERR("Wi-Fi init failed (%d); device stays offline", result);
-
-        k_spinlock_key_t key = k_spin_lock(&communication_ControlLock);
-
-        communication_WiFiIsUnavailable = true;
-
-        k_spin_unlock(&communication_ControlLock, key);
+        communication_setState(COMMUNICATION_STATE_OFFLINE);
     }
     else
     {
@@ -437,13 +475,24 @@ static void communication_thread(void *arg1, void *arg2, void *arg3)
 
 static void communication_connectAtBoot(void)
 {
-    int result = wifi_readSettings(&communication_StoredNetwork);
+    int result = storage_read(COMMUNICATION_NETWORK_RECORD, &communication_StoredNetwork, sizeof(communication_StoredNetwork));
+
+    if((result == 0) && !wifi_isValidNetwork(&communication_StoredNetwork))
+    {
+        /* A damaged record must not reach the connect request. */
+        (void)memset(&communication_StoredNetwork, 0, sizeof(communication_StoredNetwork));
+
+        result = -EINVAL; /**< Invalid argument or unsupported input. */
+    }
 
     if(result != 0)
     {
-        if(result != -ENOENT)
+        (void)memset(&communication_StoredNetwork, 0, sizeof(communication_StoredNetwork));
+        communication_StoredNetworkIsValid = false;
+
+        if(result != -ENOENT) /**< Requested record or network was not found. */
         {
-            LOG_ERR("Wi-Fi settings load failed (%d)", result);
+            LOG_ERR("Stored Wi-Fi network load failed (%d)", result);
         }
 
         LOG_INF("No stored Wi-Fi network; opening setup");
@@ -455,17 +504,18 @@ static void communication_connectAtBoot(void)
 
         LOG_INF("Connecting to \"%s\"", communication_StoredNetwork.name);
 
+        communication_BootJoinIsPending = true;
+        communication_BootAttemptsUsed = 0;
         result = communication_connectToNetwork(&communication_StoredNetwork, COMMUNICATION_STORED_CONNECT_ATTEMPTS);
+        communication_BootJoinIsPending = (result == -ECANCELED); /**< Start interrupted the network workflow. */
 
         if(result == 0)
         {
             LOG_INF("Wi-Fi connected");
         }
-        else if(result == -ECANCELED)
+        else if(result == -ECANCELED) /**< Start interrupted the network workflow. */
         {
-            /* Listening interrupted the attempts before they were used up, so recovery
-             * in Idle is still permitted. */
-            communication_RecoveryIsAllowed = true;
+            communication_RecoveryIsAllowed = false;
         }
         else
         {
@@ -476,47 +526,55 @@ static void communication_connectAtBoot(void)
 
 static void communication_runIdleCycle(void)
 {
-    communication_waitForEvents(K_NO_WAIT);
+    (void)communication_waitForCondition(COMMUNICATION_WAIT_CONTROL_EVENT, K_NO_WAIT);
 
-    bool stopped = communication_stopWiFiWork();
+    bool isStopped = communication_stopWiFiWork();
 
     if(communication_ListeningIsActive)
     {
         k_spinlock_key_t key = k_spin_lock(&communication_ControlLock);
 
-        communication_WiFiIsStopped = stopped && communication_ListeningIsRequested;
-
-        k_spin_unlock(&communication_ControlLock, key);
-
-        if(stopped)
+        if((isStopped && communication_ListeningIsRequested))
         {
-            communication_waitForEvents(K_FOREVER);
+            communication_State = COMMUNICATION_STATE_STOPPED;
         }
         else
         {
-            communication_waitForEvents(K_MSEC(COMMUNICATION_EVENT_CHECK_INTERVAL_MS));
+            communication_State = COMMUNICATION_STATE_RUNNING;
         }
 
-        if(stopped && !communication_ListeningIsActive)
+        k_spin_unlock(&communication_ControlLock, key);
+
+        if(isStopped)
         {
-            /* Resume deferred recovery as soon as CONTROL returns to Idle. */
+            (void)communication_waitForCondition(COMMUNICATION_WAIT_CONTROL_EVENT, K_FOREVER);
+        }
+        else
+        {
+            (void)communication_waitForCondition(COMMUNICATION_WAIT_CONTROL_EVENT, K_MSEC(COMMUNICATION_EVENT_CHECK_INTERVAL_MS));
+        }
+
+        if(isStopped && !communication_ListeningIsActive)
+        {
+            /* Back in Idle: continue a recovery that listening interrupted. */
             communication_recoverConnection();
         }
     }
-    else if(!stopped)
+    else if(communication_CleanupFaultIsLatched)
     {
-        /* Do not start another operation or release audio after failed cleanup. */
-        communication_waitForEvents(K_MSEC(COMMUNICATION_EVENT_CHECK_INTERVAL_MS));
+        (void)communication_waitForCondition(COMMUNICATION_WAIT_CONTROL_EVENT, K_FOREVER);
     }
-    else if(communication_SetupIsRequested)
+    else if(communication_isSetupRequested())
     {
-        communication_SetupIsRequested = false;
-
         communication_runSetup();
+    }
+    else if(communication_BootJoinIsPending)
+    {
+        communication_recoverConnection();
     }
     else
     {
-        communication_waitForEvents(K_SECONDS(COMMUNICATION_CONNECTION_CHECK_INTERVAL_S));
+        (void)communication_waitForCondition(COMMUNICATION_WAIT_CONTROL_EVENT, K_SECONDS(COMMUNICATION_CONNECTION_CHECK_INTERVAL_S));
 
         if(!communication_ListeningIsActive)
         {
@@ -527,7 +585,36 @@ static void communication_runIdleCycle(void)
 
 static void communication_recoverConnection(void)
 {
-    if(!communication_SetupIsRequested && communication_RecoveryIsAllowed && communication_StoredNetworkIsValid && !wifi_isConnected())
+    if(communication_CleanupFaultIsLatched)
+    {
+        return;
+    }
+
+    /* Resume interrupted boot attempts only while Idle and without a setup request. */
+    if(communication_BootJoinIsPending && !communication_ListeningIsActive && !communication_isSetupRequested())
+    {
+        (void)communication_waitForCondition(COMMUNICATION_WAIT_DELAY, K_SECONDS(COMMUNICATION_RETRY_DELAY_S));
+        int remainingAttempts = COMMUNICATION_STORED_CONNECT_ATTEMPTS - communication_BootAttemptsUsed;
+        int result;
+        if(communication_ListeningIsActive)
+        {
+            result = -ECANCELED; /**< Start interrupted the network workflow. */
+        }
+        else
+        {
+            result = communication_connectToNetwork(&communication_StoredNetwork, remainingAttempts);
+        }
+        communication_BootJoinIsPending = (result == -ECANCELED); /**< Start interrupted the network workflow. */
+        if((result != 0) && (result != -ECANCELED))               /**< Start interrupted the network workflow. */
+        {
+            communication_RecoveryIsAllowed = false;
+            LOG_ERR("JOIN_FAILURE (%d); hold the button 2 s for setup", result);
+        }
+        return;
+    }
+
+    /* Reconnect only an eligible stored station whose link has been lost. */
+    if(!communication_isSetupRequested() && communication_RecoveryIsAllowed && communication_StoredNetworkIsValid && !wifi_isConnected())
     {
         LOG_WRN("Wi-Fi link lost; reconnecting");
 
@@ -537,7 +624,7 @@ static void communication_recoverConnection(void)
         {
             LOG_INF("Wi-Fi reconnected");
         }
-        else if(result != -ECANCELED)
+        else if(result != -ECANCELED) /**< Start interrupted the network workflow. */
         {
             LOG_ERR("RECONNECT_FAILURE (%d); opening setup", result);
 
@@ -547,170 +634,288 @@ static void communication_recoverConnection(void)
         }
         else
         {
-            /* Listening has priority (P19); RecoveryIsAllowed stays set, so Idle resumes
-             * the recovery. */
+            /* Listening started; RecoveryIsAllowed stays set, so Idle tries again. */
         }
     }
 }
 
-static void communication_waitForEvents(k_timeout_t timeout)
+static int communication_waitForCondition(enum communication_wait_target target, k_timeout_t timeout)
 {
-    (void)k_sem_take(&communication_ControlChanged, timeout);
+    k_timepoint_t deadline = sys_timepoint_calc(timeout);
+    int result = 0;
+    bool isWaiting = true;
 
-    k_spinlock_key_t key = k_spin_lock(&communication_ControlLock);
-
-    communication_ListeningIsActive = communication_ListeningIsRequested;
-
-    if(communication_SetupIsPending && !communication_SetupIsActive && !communication_ListeningIsActive)
+    while(isWaiting)
     {
-        communication_SetupIsRequested = true;
+        result = communication_checkWaitTarget(target, deadline);
+        isWaiting = (result == -EAGAIN) && !sys_timepoint_expired(deadline); /**< Condition still pending and time left. */
+        if(isWaiting)
+        {
+            communication_pauseBeforeNextCheck(target, deadline);
+        }
     }
 
-    communication_SetupIsPending = false;
-
-    if(communication_ListeningIsActive)
+    bool isRadioWait = (target == COMMUNICATION_WAIT_CONNECTION) || (target == COMMUNICATION_WAIT_SCAN_LIST); /**< Join or scan result from the radio. */
+    if(isRadioWait && (result == -EAGAIN))
     {
+        result = -ETIMEDOUT; /**< No radio result arrived before the deadline. */
+    }
+
+    return result;
+}
+
+static int communication_checkWaitTarget(enum communication_wait_target target, k_timepoint_t deadline)
+{
+    int result = -EAGAIN;                                                                                                                                  /**< Condition is still pending. */
+    bool isStoppedByStart = (target == COMMUNICATION_WAIT_DELAY) || (target == COMMUNICATION_WAIT_CONNECTION) || (target == COMMUNICATION_WAIT_SCAN_LIST); /**< Start ends this wait early. */
+
+    if(isStoppedByStart)
+    {
+        (void)k_sem_take(&communication_ControlChanged, K_NO_WAIT);
+        communication_updateListeningState();
+    }
+
+    if(isStoppedByStart && communication_ListeningIsActive)
+    {
+        result = -ECANCELED; /**< Start takes priority over the wait. */
+    }
+    else
+    {
+        switch(target)
+        {
+        case COMMUNICATION_WAIT_CONTROL_EVENT:
+            (void)k_sem_take(&communication_ControlChanged, sys_timepoint_timeout(deadline));
+            communication_updateListeningState();
+            result = 0;
+            break;
+        case COMMUNICATION_WAIT_DELAY:
+            if(sys_timepoint_expired(deadline))
+            {
+                result = 0;
+            }
+            break;
+        case COMMUNICATION_WAIT_CONNECTION:
+            result = wifi_waitForConnection(K_MSEC(COMMUNICATION_EVENT_CHECK_INTERVAL_MS));
+            break;
+        case COMMUNICATION_WAIT_SCAN_LIST:
+            result = wifi_waitForScanResult(communication_ScanList, WIFI_SCAN_LIST_SIZE, K_MSEC(COMMUNICATION_EVENT_CHECK_INTERVAL_MS));
+            if(result >= 0)
+            {
+                communication_ScanCount = (size_t)result;
+                result = 0;
+            }
+            break;
+        case COMMUNICATION_WAIT_WIFI_STOP:
+        {
+            k_spinlock_key_t key = k_spin_lock(&communication_ControlLock);
+            bool isStopped = communication_ListeningIsRequested &&
+                             ((communication_State == COMMUNICATION_STATE_STOPPED) ||
+                              (communication_State == COMMUNICATION_STATE_OFFLINE)); /**< Start has a stopped or offline network acknowledgement. */
+            k_spin_unlock(&communication_ControlLock, key);
+            if(isStopped)
+            {
+                result = 0;
+            }
+            break;
+        }
+        default:
+            result = -EINVAL; /**< Wait target is invalid. */
+            break;
+        }
+    }
+
+    return result;
+}
+
+static void communication_pauseBeforeNextCheck(enum communication_wait_target target, k_timepoint_t deadline)
+{
+    k_timeout_t remaining = sys_timepoint_timeout(deadline);
+
+    if(target == COMMUNICATION_WAIT_DELAY)
+    {
+        /* Every control event wakes the delay, so a Start is seen at once. */
+        (void)k_sem_take(&communication_ControlChanged, remaining);
+    }
+    else if(target == COMMUNICATION_WAIT_WIFI_STOP)
+    {
+        if(K_TIMEOUT_EQ(remaining, K_FOREVER) || (remaining.ticks > K_MSEC(COMMUNICATION_EVENT_CHECK_INTERVAL_MS).ticks))
+        {
+            remaining = K_MSEC(COMMUNICATION_EVENT_CHECK_INTERVAL_MS);
+        }
+        (void)k_sleep(remaining);
+    }
+    else
+    {
+        /* Join and scan checks already waited for the radio. */
+    }
+}
+
+static void communication_updateListeningState(void)
+{
+    k_spinlock_key_t key = k_spin_lock(&communication_ControlLock);
+    communication_ListeningIsActive = communication_ListeningIsRequested;
+    k_spin_unlock(&communication_ControlLock, key);
+}
+
+static bool communication_isSetupRequested(void)
+{
+    k_spinlock_key_t key = k_spin_lock(&communication_ControlLock);
+    bool isRequested = communication_SetupIsRequested;
+
+    k_spin_unlock(&communication_ControlLock, key);
+
+    return isRequested;
+}
+
+static void communication_setState(enum communication_state state)
+{
+    k_spinlock_key_t key = k_spin_lock(&communication_ControlLock);
+
+    communication_State = state;
+
+    if(state == COMMUNICATION_STATE_SETUP)
+    {
+        /* Setup opens now, so a hold before this point is handled. */
         communication_SetupIsRequested = false;
     }
 
     k_spin_unlock(&communication_ControlLock, key);
 }
 
-static void communication_waitForDelay(k_timeout_t timeout)
-{
-    k_timepoint_t deadline = sys_timepoint_calc(timeout);
-
-    communication_waitForEvents(K_NO_WAIT);
-
-    while(!communication_ListeningIsActive && !sys_timepoint_expired(deadline))
-    {
-        communication_waitForEvents(sys_timepoint_timeout(deadline));
-    }
-}
-
 static bool communication_stopWiFiWork(void)
 {
-    if(communication_ScanIsPending)
+    if(communication_CleanupFaultIsLatched)
     {
-        int result = wifi_cancelScan();
-
-        communication_ScanIsPending = (result != 0);
-
-        if(result != 0)
-        {
-            LOG_ERR("Scan cancellation failed (%d); audio release withheld", result);
-        }
+        return true;
     }
 
-    if(communication_ConnectionIsPending)
+    for(size_t index = 0U; index < ARRAY_SIZE(communication_WorkList); index++)
     {
-        int result = wifi_disconnect();
-
-        communication_ConnectionIsPending = (result != 0);
-
-        if(result != 0)
+        const struct communication_work *work = &communication_WorkList[index];
+        if((communication_PendingWork & work->bit) != 0U)
         {
-            LOG_ERR("Connect cancellation failed (%d); audio release withheld", result);
+            int result = work->stop();
+            if(result == 0)
+            {
+                communication_PendingWork &= ~work->bit;
+            }
         }
     }
-
-    if(communication_PortalIsActive)
+    if(communication_PendingWork != 0U)
     {
-        int result = portal_stop();
-
-        communication_PortalIsActive = (result != 0);
-
-        if(result != 0)
-        {
-            LOG_ERR("Portal shutdown failed (%d); audio release withheld", result);
-        }
+        communication_CleanupFaultIsLatched = true;
+        communication_RecoveryIsAllowed = false;
+        communication_BootJoinIsPending = false;
+        LOG_ERR("WIFI_CLEANUP_FAILURE; pending services 0x%x, network disabled until restart", communication_PendingWork);
     }
-
-    if(communication_DHCPServerIsActive)
-    {
-        int result = wifi_stopDHCPServer();
-
-        communication_DHCPServerIsActive = (result != 0);
-
-        if(result != 0)
-        {
-            LOG_ERR("DHCP shutdown failed (%d); audio release withheld", result);
-        }
-    }
-
-    if(communication_HotspotIsActive)
-    {
-        int result = wifi_stopHotspot();
-
-        communication_HotspotIsActive = (result != 0);
-
-        if(result != 0)
-        {
-            LOG_ERR("Hotspot shutdown failed (%d); audio release withheld", result);
-        }
-    }
-
-    return !communication_ScanIsPending && !communication_ConnectionIsPending &&
-           !communication_PortalIsActive && !communication_DHCPServerIsActive && !communication_HotspotIsActive;
+    /* REQ-13 permits audio after a latched Wi-Fi-only fault, without claiming radio shutdown. */
+    return true;
 }
 
-static int communication_waitForConnection(void)
+static int communication_retry(int (*tryOnce)(const struct wifi_network *network), const struct wifi_network *network, int attempts, uint32_t workBit, const char *name)
 {
-    k_timepoint_t deadline = sys_timepoint_calc(K_SECONDS(COMMUNICATION_CONNECT_TIMEOUT_S));
-    int result = -EAGAIN;
+    int result = -ETIMEDOUT; /**< Operation exceeded its wait deadline. */
+    int attempt = 0;
+    bool isRetryDue = attempts > 0;
 
-    while((result == -EAGAIN) && !sys_timepoint_expired(deadline))
+    while(isRetryDue)
     {
-        communication_waitForEvents(K_NO_WAIT);
+        (void)communication_waitForCondition(COMMUNICATION_WAIT_CONTROL_EVENT, K_NO_WAIT);
 
         if(communication_ListeningIsActive)
         {
-            result = -ECANCELED;
+            result = -ECANCELED; /**< Start interrupted the network workflow. */
         }
         else
         {
-            result = wifi_waitForConnection(K_MSEC(COMMUNICATION_EVENT_CHECK_INTERVAL_MS));
+            attempt++;
+            /* Resume interrupted boot attempts only while Idle and without a setup request. */
+            if(communication_BootJoinIsPending && (tryOnce == communication_tryConnect))
+            {
+                communication_BootAttemptsUsed++;
+            }
+            result = tryOnce(network);
         }
-    }
 
-    if(result == -EAGAIN)
-    {
-        result = -ETIMEDOUT;
+        if((result != 0) && (result != -ECANCELED)) /**< Start interrupted the network workflow. */
+        {
+            LOG_WRN("%s attempt %d/%d failed (%d)", name, attempt, attempts, result);
+        }
+
+        /* Do not start again while the driver may still work on the last attempt. */
+        isRetryDue = (result != 0) && (result != -ECANCELED) && ((communication_PendingWork & workBit) == 0U) && (attempt < attempts); /**< Start interrupted the network workflow. */
+
+        if(isRetryDue)
+        {
+            (void)communication_waitForCondition(COMMUNICATION_WAIT_DELAY, K_SECONDS(COMMUNICATION_RETRY_DELAY_S));
+
+            if(communication_ListeningIsActive)
+            {
+                result = -ECANCELED; /**< Start interrupted the network workflow. */
+                isRetryDue = false;
+            }
+        }
     }
 
     return result;
 }
 
-static int communication_waitForScanResult(void)
+static int communication_tryConnect(const struct wifi_network *network)
 {
-    k_timepoint_t deadline = sys_timepoint_calc(K_SECONDS(COMMUNICATION_SCAN_TIMEOUT_S));
-    int result = -EAGAIN;
+    int result = wifi_connect(network);
 
-    while((result == -EAGAIN) && !sys_timepoint_expired(deadline))
+    if(result == 0)
     {
-        communication_waitForEvents(K_NO_WAIT);
+        communication_PendingWork |= COMMUNICATION_WORK_CONNECTION;
+        result = communication_waitForCondition(COMMUNICATION_WAIT_CONNECTION, K_SECONDS(COMMUNICATION_CONNECT_TIMEOUT_S));
 
-        if(communication_ListeningIsActive)
+        int cleanup = 0;
+
+        if(result != 0)
         {
-            result = -ECANCELED;
+            cleanup = wifi_disconnect();
+        }
+
+        if(cleanup == 0)
+        {
+            communication_PendingWork &= ~COMMUNICATION_WORK_CONNECTION;
         }
         else
         {
-            result = wifi_waitForScanResult(communication_ScanList,
-                                            COMMUNICATION_SCAN_LIST_SIZE,
-                                            K_MSEC(COMMUNICATION_EVENT_CHECK_INTERVAL_MS));
-
-            if(result >= 0)
-            {
-                communication_ScanCount = (size_t)result;
-                result = 0;
-            }
+            result = cleanup;
         }
     }
 
-    if(result == -EAGAIN)
+    return result;
+}
+
+static int communication_tryScan(const struct wifi_network *network)
+{
+    ARG_UNUSED(network);
+
+    int result = wifi_startScan();
+
+    if(result == 0)
     {
-        result = -ETIMEDOUT;
+        communication_PendingWork |= COMMUNICATION_WORK_SCAN;
+        result = communication_waitForCondition(COMMUNICATION_WAIT_SCAN_LIST, K_SECONDS(COMMUNICATION_SCAN_TIMEOUT_S));
+
+        int cleanup = 0;
+
+        /* Only an interrupted or timed-out scan can still run in the driver. */
+        if((result == -ECANCELED) || (result == -ETIMEDOUT)) /**< Operation was cancelled; Operation exceeded its wait deadline. */
+        {
+            cleanup = wifi_cancelScan();
+        }
+
+        if(cleanup == 0)
+        {
+            communication_PendingWork &= ~COMMUNICATION_WORK_SCAN;
+        }
+        else
+        {
+            result = cleanup;
+        }
     }
 
     return result;
@@ -718,71 +923,18 @@ static int communication_waitForScanResult(void)
 
 static int communication_connectToNetwork(const struct wifi_network *network, int attempts)
 {
-    int result = -ECANCELED;
-    int attempt = 0;
-    bool retry = true;
+    int result = communication_retry(communication_tryConnect, network, attempts, COMMUNICATION_WORK_CONNECTION, "Connect");
 
-    while(retry)
+    if(result == 0)
     {
-        attempt++;
+        char address[WIFI_ADDRESS_SIZE];
 
-        communication_waitForEvents(K_NO_WAIT);
+        communication_RecoveryIsAllowed = true;
 
-        if(communication_ListeningIsActive)
+        if(wifi_getAddress(address, sizeof(address)) == 0)
         {
-            result = -ECANCELED;
+            LOG_INF("Wi-Fi address %s", address);
         }
-        else
-        {
-            result = wifi_connect(network);
-
-            if(result == 0)
-            {
-                communication_ConnectionIsPending = true;
-                result = communication_waitForConnection();
-
-                if(result == 0)
-                {
-                    communication_ConnectionIsPending = false;
-                }
-            }
-        }
-
-        if(result == 0)
-        {
-            communication_RecoveryIsAllowed = true;
-        }
-        else
-        {
-            if(communication_ConnectionIsPending)
-            {
-                int cleanup = wifi_disconnect();
-
-                communication_ConnectionIsPending = (cleanup != 0);
-
-                if(cleanup != 0)
-                {
-                    result = cleanup;
-                }
-            }
-
-            if(result != -ECANCELED)
-            {
-                LOG_WRN("Connect attempt %d/%d failed (%d)", attempt, attempts, result);
-
-                if((attempt < attempts) && !communication_ConnectionIsPending)
-                {
-                    communication_waitForDelay(K_SECONDS(COMMUNICATION_RETRY_DELAY_S));
-
-                    if(communication_ListeningIsActive)
-                    {
-                        result = -ECANCELED;
-                    }
-                }
-            }
-        }
-
-        retry = (result != 0) && (result != -ECANCELED) && !communication_ConnectionIsPending && (attempt < attempts);
     }
 
     return result;
@@ -790,64 +942,7 @@ static int communication_connectToNetwork(const struct wifi_network *network, in
 
 static int communication_scanNetworks(void)
 {
-    int result = -ECANCELED;
-    int attempt = 0;
-    bool retry = true;
-
-    while(retry)
-    {
-        attempt++;
-
-        communication_waitForEvents(K_NO_WAIT);
-
-        if(communication_ListeningIsActive)
-        {
-            result = -ECANCELED;
-        }
-        else
-        {
-            result = wifi_startScan();
-
-            if(result == 0)
-            {
-                communication_ScanIsPending = true;
-                result = communication_waitForScanResult();
-
-                if((result != -ECANCELED) && (result != -ETIMEDOUT))
-                {
-                    communication_ScanIsPending = false;
-                }
-                else
-                {
-                    int cleanup = wifi_cancelScan();
-
-                    communication_ScanIsPending = (cleanup != 0);
-
-                    if(cleanup != 0)
-                    {
-                        result = cleanup;
-                    }
-                }
-            }
-        }
-
-        if((result != 0) && (result != -ECANCELED))
-        {
-            LOG_WRN("Scan attempt %d/%d failed (%d)", attempt, COMMUNICATION_SCAN_ATTEMPTS, result);
-
-            if((attempt < COMMUNICATION_SCAN_ATTEMPTS) && !communication_ScanIsPending)
-            {
-                communication_waitForDelay(K_SECONDS(COMMUNICATION_RETRY_DELAY_S));
-
-                if(communication_ListeningIsActive)
-                {
-                    result = -ECANCELED;
-                }
-            }
-        }
-
-        retry = (result != 0) && (result != -ECANCELED) && !communication_ScanIsPending && (attempt < COMMUNICATION_SCAN_ATTEMPTS);
-    }
+    int result = communication_retry(communication_tryScan, NULL, COMMUNICATION_SCAN_ATTEMPTS, COMMUNICATION_WORK_SCAN, "Scan");
 
     if(result == 0)
     {
@@ -859,24 +954,24 @@ static int communication_scanNetworks(void)
 
 static void communication_runSetup(void)
 {
-    k_spinlock_key_t key = k_spin_lock(&communication_ControlLock);
-
-    communication_SetupIsActive = true;
-
-    k_spin_unlock(&communication_ControlLock, key);
+    communication_BootJoinIsPending = false;
+    communication_setState(COMMUNICATION_STATE_SETUP);
     LOG_INF("Wi-Fi setup: scanning");
 
-    /* Scan before the hotspot opens, so the list is ready when the phone joins (item 1). */
+    /* Scan before the hotspot opens, so the list is ready when the phone joins. */
     int result = communication_scanNetworks();
 
-    if(result != 0)
+    if((result != 0) && (result != -ECANCELED)) /**< Start interrupted the network workflow. */
     {
-        if(result != -ECANCELED)
-        {
-            LOG_ERR("SCAN_FAILURE (%d); hold the button 2 s to retry", result);
-        }
+        LOG_ERR("SCAN_FAILURE (%d); hold the button 2 s to retry", result);
     }
-    else if(communication_openSetup() == 0)
+
+    if(result == 0)
+    {
+        result = communication_openSetup();
+    }
+
+    if(result == 0)
     {
         int error = 0;
         enum communication_setup_result outcome = communication_servePage(&error);
@@ -885,80 +980,58 @@ static void communication_runSetup(void)
     }
     else
     {
-        /* Release even partially started services; failed cleanup remains pending. */
+        portal_setStatus(PORTAL_STATUS_CLOSING, result);
     }
 
+    /* Also stops services that started before a failure. */
     (void)communication_stopWiFiWork();
 
-    key = k_spin_lock(&communication_ControlLock);
-    communication_SetupIsActive = false;
+    communication_setState(COMMUNICATION_STATE_RUNNING);
+}
 
-    k_spin_unlock(&communication_ControlLock, key);
+static int communication_startService(uint32_t workBit, int (*start)(void))
+{
+    int result = -ECANCELED; /**< Start interrupted the network workflow. */
+
+    (void)communication_waitForCondition(COMMUNICATION_WAIT_CONTROL_EVENT, K_NO_WAIT);
+
+    if(!communication_ListeningIsActive)
+    {
+        /* Set before the start, so a partly started service is stopped too. */
+        communication_PendingWork |= workBit;
+        result = start();
+    }
+
+    return result;
 }
 
 static int communication_openSetup(void)
 {
-    communication_waitForEvents(K_NO_WAIT);
+    portal_setStatus(PORTAL_STATUS_SELECTING, 0);
 
-    int result = -ECANCELED;
+    int result = communication_startService(COMMUNICATION_WORK_HOTSPOT, wifi_startHotspot);
 
-    if(!communication_ListeningIsActive)
+    if(result == 0)
     {
-        communication_HotspotIsActive = true;
-        result = wifi_startHotspot();
+        result = communication_startService(COMMUNICATION_WORK_DHCP, wifi_startDHCPServer);
     }
 
-    if(result != 0)
+    if(result == 0)
+    {
+        result = communication_startService(COMMUNICATION_WORK_PORTAL, portal_start);
+    }
+
+    if(result == 0)
+    {
+        LOG_INF("Wi-Fi setup open: join the hotspot and open http://%s", WIFI_HOTSPOT_ADDRESS);
+    }
+    else if(result != -ECANCELED) /**< Start interrupted the network workflow. */
     {
         LOG_ERR("HOTSPOT_START_FAILURE (%d); hold the button 2 s to retry", result);
     }
     else
     {
-        communication_waitForEvents(K_NO_WAIT);
-
-        communication_DHCPServerIsActive = !communication_ListeningIsActive;
-
-        if(communication_ListeningIsActive)
-        {
-            result = -ECANCELED;
-        }
-        else
-        {
-            result = wifi_startDHCPServer();
-        }
-
-        if(result != 0)
-        {
-            LOG_ERR("DHCP server start failed (%d); hold the button 2 s to retry", result);
-            /* runSetup performs checked teardown. */
-        }
-        else
-        {
-            portal_setStatus(PORTAL_STATUS_SELECTING, 0);
-
-            communication_waitForEvents(K_NO_WAIT);
-
-            communication_PortalIsActive = !communication_ListeningIsActive;
-
-            if(communication_ListeningIsActive)
-            {
-                result = -ECANCELED;
-            }
-            else
-            {
-                result = portal_start();
-            }
-
-            if(result != 0)
-            {
-                LOG_ERR("Setup page start failed (%d); hold the button 2 s to retry", result);
-                /* runSetup performs checked teardown. */
-            }
-            else
-            {
-                LOG_INF("Wi-Fi setup open: join the hotspot and open http://192.168.4.1");
-            }
-        }
+        /* Listening started. */
     }
 
     return result;
@@ -973,10 +1046,7 @@ static enum communication_setup_result communication_servePage(int *error)
 
     while(outcome == COMMUNICATION_SETUP_RUNNING)
     {
-        /* A hold during setup has no meaning; setup is already open. */
-        communication_SetupIsRequested = false;
-
-        communication_waitForEvents(K_NO_WAIT);
+        (void)communication_waitForCondition(COMMUNICATION_WAIT_CONTROL_EVENT, K_NO_WAIT);
 
         if(communication_ListeningIsActive)
         {
@@ -992,13 +1062,12 @@ static enum communication_setup_result communication_servePage(int *error)
         {
             outcome = communication_handlePageRequest(error);
 
-            /* Every request and the end of its work restart the timer, so it pauses
-             * during operations (P21). */
+            /* Restart the timer after the request is done, so it does not run during a join or scan. */
             idleDeadline = sys_timepoint_calc(K_SECONDS(COMMUNICATION_SETUP_INACTIVITY_TIMEOUT_S));
         }
         else
         {
-            /* Empty slices keep the Start and timeout checks running. */
+            /* No request in this interval. */
         }
     }
 
@@ -1017,7 +1086,7 @@ static enum communication_setup_result communication_handlePageRequest(int *erro
         break;
 
     case PORTAL_REQUEST_ACTIVITY:
-        /* The page sends it while the user types, so setup stays open during input (P21). */
+        /* Only restarts the inactivity timer. */
         break;
 
     case PORTAL_REQUEST_RESCAN:
@@ -1039,14 +1108,11 @@ static enum communication_setup_result communication_handlePageRequest(int *erro
         {
             outcome = COMMUNICATION_SETUP_CONNECTED;
         }
-        else if(result != -ECANCELED)
+
+        if((result != 0) && (result != -ECANCELED)) /**< Start interrupted the network workflow. */
         {
-            /* The page keeps showing the join cause while the list updates. */
+            /* Update the list; the page keeps showing the cause of the failed join. */
             result = communication_scanNetworks();
-        }
-        else
-        {
-            /* No rescan: listening has priority (P19). */
         }
 
         break;
@@ -1055,19 +1121,16 @@ static enum communication_setup_result communication_handlePageRequest(int *erro
         break;
     }
 
-    if(result == -ECANCELED)
+    if(result == -ECANCELED) /**< Start interrupted the network workflow. */
     {
         outcome = COMMUNICATION_SETUP_INTERRUPTED;
     }
-    else if(result != 0)
+
+    if((result != 0) && (result != -ECANCELED)) /**< Start interrupted the network workflow. */
     {
-        /* An exhausted scan ends setup with an error (wifi-flow.puml). */
+        /* Only a failed scan gets here; setup cannot continue without a list. */
         *error = result;
         outcome = COMMUNICATION_SETUP_FAILED;
-    }
-    else
-    {
-        /* Success needs no change: the request already set the outcome. */
     }
 
     return outcome;
@@ -1077,11 +1140,17 @@ static int communication_handleConnectRequest(void)
 {
     struct wifi_network *network = &communication_PageRequest.network;
 
+    if(!wifi_isValidNetwork(network))
+    {
+        portal_setStatus(PORTAL_STATUS_CONNECT_FAILED, -EINVAL); /**< Invalid argument or unsupported input. */
+        (void)memset(network->password, 0, sizeof(network->password));
+        return -EINVAL; /**< Invalid argument or unsupported input. */
+    }
+
     LOG_INF("Wi-Fi setup: joining \"%s\"", network->name);
     portal_setStatus(PORTAL_STATUS_CONNECTING, 0);
 
-    /* The hotspot stays open, so the phone keeps polling the status during the join
-     * (item 3). */
+    /* The hotspot stays open, so the phone can follow the status during the join. */
     int result = communication_connectToNetwork(network, COMMUNICATION_PAGE_CONNECT_ATTEMPTS);
 
     if(result == 0)
@@ -1092,7 +1161,7 @@ static int communication_handleConnectRequest(void)
     {
         communication_discardPageRequests();
 
-        if(result != -ECANCELED)
+        if(result != -ECANCELED) /**< Start interrupted the network workflow. */
         {
             LOG_WRN("Wi-Fi setup: join failed (%d)", result);
             portal_setStatus(PORTAL_STATUS_CONNECT_FAILED, result);
@@ -1103,9 +1172,8 @@ static int communication_handleConnectRequest(void)
 
     if(result == 0)
     {
-        /* Start during the result display ends setup at once. Requests stay
-         * unread until the page closes, so the user cannot cancel meanwhile. */
-        communication_waitForDelay(K_SECONDS(COMMUNICATION_RESULT_DISPLAY_S));
+        /* Let the page show the result. Requests stay unread meanwhile. */
+        (void)communication_waitForCondition(COMMUNICATION_WAIT_DELAY, K_SECONDS(COMMUNICATION_RESULT_DISPLAY_S));
     }
 
     return result;
@@ -1115,18 +1183,23 @@ static void communication_saveNetwork(const struct wifi_network *network)
 {
     int result = 0;
     int attempt = 0;
+    char address[WIFI_ADDRESS_SIZE];
 
-    /* Settings writes finish even if listening starts meanwhile (item 6). */
+    /* A flash write is short, so it finishes even if listening starts. */
     do
     {
         attempt++;
-        result = wifi_storeSettings(network);
+        result = storage_write(COMMUNICATION_NETWORK_RECORD, network, sizeof(*network));
 
         if(result != 0)
         {
             LOG_WRN("Save attempt %d/%d failed (%d)", attempt, COMMUNICATION_SAVE_ATTEMPTS, result);
         }
     } while((result != 0) && (attempt < COMMUNICATION_SAVE_ATTEMPTS));
+
+    /* The user needs the address to find the device on the clinic network. */
+    (void)wifi_getAddress(address, sizeof(address));
+    portal_setAddress(address);
 
     if(result == 0)
     {
@@ -1135,7 +1208,7 @@ static void communication_saveNetwork(const struct wifi_network *network)
     }
     else
     {
-        /* The connection stays; flash keeps the previous valid record (item 9). */
+        /* The connection stays; flash keeps the previous record. */
         LOG_ERR("WIFI_SETTINGS_SAVE_FAILURE (%d); network not saved", result);
         portal_setStatus(PORTAL_STATUS_SAVE_FAILED, result);
     }
@@ -1163,11 +1236,12 @@ static void communication_closeSetup(enum communication_setup_result outcome, in
         LOG_ERR("SCAN_FAILURE (%d); closing setup, hold the button 2 s to retry", error);
     }
 
-    /* Start must not wait for a notice; a joined page already showed its result. */
+    portal_setStatus(PORTAL_STATUS_CLOSING, error);
+
+    /* Joined results have already been displayed; Start must not add a notice delay. */
     if((outcome == COMMUNICATION_SETUP_CANCELLED) || (outcome == COMMUNICATION_SETUP_FAILED))
     {
-        portal_setStatus(PORTAL_STATUS_CLOSING, error);
-        communication_waitForDelay(K_SECONDS(COMMUNICATION_CLOSE_NOTICE_DISPLAY_S));
+        (void)communication_waitForCondition(COMMUNICATION_WAIT_DELAY, K_SECONDS(COMMUNICATION_CLOSE_NOTICE_DISPLAY_S));
     }
 
     (void)communication_stopWiFiWork();

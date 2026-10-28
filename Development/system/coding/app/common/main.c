@@ -51,7 +51,7 @@
 /* MACROS                                                              */
 /***********************************************************************/
 
-LOG_MODULE_REGISTER(stetho_main, LOG_LEVEL_INF);
+LOG_MODULE_REGISTER(stethoscope_main, LOG_LEVEL_INF);
 
 /***********************************************************************/
 /* GLOBAL FUNCTIONS                                                    */

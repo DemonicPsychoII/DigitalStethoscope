@@ -75,7 +75,7 @@ Unter der Helmholtz-Modellannahme sinkt die Resonanzfrequenz bei größerem Volu
 ### Werte und dokumentierte Befunde
 
 <a id="b044"></a>
-**B044 · EIGENER ZIELWERT / VORLÄUFIGER VORSCHLAG · ANNAHME**
+**B044 · LITERATUR- / HERSTELLERWERT · ANNAHME**
 
 R07 berechnet im vereinfachten Helmholtz-Modell für 6-mm-Halsdurchmesser, A ≈ 28,3 mm² und effektive Länge 10 mm ein Volumen von ungefähr 21 ml für eine 20-Hz-Resonanz; dies ist eine theoretische Abschätzung.
 
@@ -85,7 +85,7 @@ R07 berechnet im vereinfachten Helmholtz-Modell für 6-mm-Halsdurchmesser, A ≈
 **Belege:** [Weiss, D 2019 · invitro_stethoscopes](https://pmc.ncbi.nlm.nih.gov/articles/PMC6339642/) — Seite prüfen; [Alanazi, A., Atcherson, S., Franklin, C., & Bryan, M 2020 · frequency_response_stethoscopes](https://doi.org/10.4103/sjmms.sjmms_118_19) — Seite prüfen; [Nussbaumer, M 2022 · nussbaumer_stethoscope_acoustics](https://www.repository.cam.ac.uk/items/feadd88b-9e03-44fb-a875-c49f7c550259) — Seite prüfen · 🔒 Volltextzugang prüfen: Publisher full text paywalled; Cambridge record is open.
 
 <a id="u059"></a>
-**U059 · EIGENER ZIELWERT / VORLÄUFIGER VORSCHLAG · QUELLENSET UNVOLLSTÄNDIG**
+**U059 · LITERATUR- / HERSTELLERWERT · QUELLENSET UNVOLLSTÄNDIG**
 
 R07 gibt als Helmholtz-Resonanzabschätzung für 20 Hz ca. 21 ml bei üblichen Halsabmessungen an und empfiehlt eine kleine, kurze, bedämpfte Kammer, um Resonanz oberhalb des Bands 20–600 Hz zu legen.
 

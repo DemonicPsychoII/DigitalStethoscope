@@ -17,7 +17,7 @@ from build_support import PINS, ROOT, python_path
 STATIC_PYTHON = "3.12.10"
 STATIC_REQUIREMENTS = (
     "Development/system/testing/ci/requirements-ci.txt",
-    "Development/system/coding/bringup-zephyr/tools/requirements.txt",
+    "Development/system/testing/ci/requirements-host.txt",
 )
 MARKER = ".stethoscope-prepared.json"
 

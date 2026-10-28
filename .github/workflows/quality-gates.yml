@@ -2,13 +2,13 @@ name: Mandatory quality gates
 
 on:
   pull_request:
-    branches: [integration]
+    branches: [integration, test/v-model-from-start, 'replay/**']
     # `labeled` exists for the `firmware` label; jobs skip every other label below.
     types: [opened, synchronize, reopened, labeled]
   # Post-merge: re-run the gates on the merged result. A red run here makes
   # post-merge-revert.yml open a revert PR for the merge.
   push:
-    branches: [integration]
+    branches: [integration, test/v-model-from-start]
   schedule:
     # Daily integration firmware for Personal Cloud, off the hour.
     - cron: '17 3 * * *'
@@ -20,10 +20,6 @@ on:
         description: Run every verification suite with pristine builds
         type: boolean
         default: true
-      cache_benchmark:
-        description: Compare cold and warm pristine compiler-cache builds
-        type: boolean
-        default: false
 
 concurrency:
   # An unrelated label event gets its own group so it cannot cancel a real run.
@@ -37,14 +33,13 @@ permissions:
   contents: read
 
 env:
-  APP_DIR: Development/system/coding/bringup-zephyr
   BOARD: esp32s3_devkitc/esp32s3/procpu
 
 jobs:
   plan:
     name: CI / Select Checks
     if: github.event.action != 'labeled' || github.event.label.name == 'firmware'
-    # Lightweight routing only; static/QC suites and builds stay in disposable VMs.
+    # Lightweight routing only; static suites and builds stay in disposable VMs.
     runs-on: ubuntu-24.04
     timeout-minutes: 3
     permissions:
@@ -52,11 +47,9 @@ jobs:
       actions: read
     outputs:
       application: ${{ steps.changes.outputs.application }}
-      firmware: ${{ steps.changes.outputs.firmware }}
-      native: ${{ steps.changes.outputs.native }}
       docs: ${{ steps.changes.outputs.docs }}
       reuse: ${{ steps.reuse.outputs.run }}
-      host: ${{ steps.changes.outputs.host }}
+      application_host: ${{ steps.changes.outputs.application_host }}
       tooling: ${{ steps.changes.outputs.tooling }}
       gate: ${{ steps.changes.outputs.gate }}
       daily: ${{ steps.daily.outputs.build || 'true' }}
@@ -83,7 +76,10 @@ jobs:
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-          CI_FULL: ${{ (github.event_name == 'schedule' && github.event.schedule == '47 4 * * 0') || (github.event_name == 'workflow_dispatch' && (inputs.full || inputs.cache_benchmark)) }}
+          CI_FULL: ${{ (github.event_name == 'schedule' && github.event.schedule == '47 4 * * 0') || (github.event_name == 'workflow_dispatch' && inputs.full) }}
+          # Integration pushes verify a complete bundle for later exact-commit reuse.
+          CI_RETAIN: ${{ github.event_name == 'push' && github.ref_name == 'integration' }}
+          CI_PUBLISH: ${{ ((github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && github.ref_name == 'integration' && steps.daily.outputs.build != 'false') || (github.event.pull_request.head.repo.full_name == github.repository && contains(github.event.pull_request.labels.*.name, 'firmware')) }}
           CI_DAILY: ${{ github.event_name == 'schedule' && github.event.schedule == '17 3 * * *' }}
           REUSE: ${{ steps.reuse.outputs.run }}
         run: |
@@ -100,12 +96,9 @@ jobs:
     timeout-minutes: 10
     env:
       APPLICATION: ${{ needs.plan.outputs.application }}
-      FIRMWARE: ${{ needs.plan.outputs.firmware }}
-      NATIVE: ${{ needs.plan.outputs.native }}
-      HOST: ${{ needs.plan.outputs.host }}
+      APPLICATION_HOST: ${{ needs.plan.outputs.application_host }}
       TOOLING: ${{ needs.plan.outputs.tooling }}
       GATE: ${{ needs.plan.outputs.gate }}
-      QC: 'true'
       DOCS: ${{ needs.plan.outputs.docs }}
       DAILY: ${{ needs.plan.outputs.daily }}
       PUBLISH: ${{ needs.plan.outputs.publish }}
@@ -134,7 +127,7 @@ jobs:
           cache: pip
           cache-dependency-path: |
             Development/system/testing/ci/requirements-ci.txt
-            Development/system/coding/bringup-zephyr/tools/requirements.txt
+            Development/system/testing/ci/requirements-host.txt
       - run: python -m pip install --require-hashes -r Development/system/testing/ci/requirements-ci.txt
         if: steps.prepared.outputs.ready != 'true'
       - name: Install pinned workflow validators
@@ -144,21 +137,33 @@ jobs:
       - name: Validate maintained documentation
         if: needs.plan.outputs.docs == 'true'
         run: python Development/system/testing/ci/validate_docs.py
+      - name: Validate manual execution records
+        run: python Development/system/testing/ci/manual_test_records.py
       - name: Run static repository checks
         run: python Development/system/testing/ci/run_ci.py static
       - name: Test build tooling
         if: needs.plan.outputs.tooling == 'true'
         run: python -m unittest discover -s Development/system/testing/ci -p 'test_*.py'
-      - name: Install host evaluation dependencies
-        if: needs.plan.outputs.host == 'true' && steps.prepared.outputs.ready != 'true'
-        run: python -m pip install --require-hashes -r Development/system/coding/bringup-zephyr/tools/requirements.txt
-      - name: Test DSP, FHIR readback and communication workflow
-        if: needs.plan.outputs.host == 'true'
+      - name: Install application host dependencies
+        if: needs.plan.outputs.application_host == 'true' && steps.prepared.outputs.ready != 'true'
+        run: python -m pip install --require-hashes -r Development/system/testing/ci/requirements-host.txt
+      - name: Test application unit, L2 and integration host scenarios
+        if: needs.plan.outputs.application_host == 'true'
         env:
           STETHO_SANITIZERS: 'true'
-        run: python -m pytest -q --junitxml=artifacts/ci/host.xml Development/system/coding/bringup-zephyr/tests/host Development/system/coding/app/tests/host
-      - name: Run required QC evaluation
-        run: python Development/system/testing/ci/run_ci.py qc
+        run: python -m pytest -q -o junit_family=xunit1 --junitxml=artifacts/ci/application-host.xml Development/system/coding/app/tests/host
+      - name: Report application scenario results
+        if: always() && !cancelled() && needs.plan.outputs.application_host == 'true'
+        run: python Development/system/testing/ci/application_host_results.py artifacts/ci/application-host.xml
+      - name: Measure production host coverage
+        if: needs.plan.outputs.application_host == 'true'
+        env:
+          STETHO_SANITIZERS: 'false'
+          STETHO_COVERAGE_DIRECTORY: ${{ github.workspace }}/artifacts/ci/host-coverage
+        run: python -m pytest -q -o junit_family=xunit1 --junitxml=artifacts/ci/application-coverage.xml Development/system/coding/app/tests/host
+      - name: Report production line and branch coverage
+        if: always() && !cancelled() && needs.plan.outputs.application_host == 'true'
+        run: python Development/system/testing/ci/host_coverage.py artifacts/ci/host-coverage
       - name: Test the agent merge gate
         if: needs.plan.outputs.gate == 'true'
         run: python -m unittest discover -s .github/agent-gate -v
@@ -169,27 +174,23 @@ jobs:
           name: static-evidence-${{ github.run_attempt }}
           path: |
             artifacts/ci/
-            artifacts/qc/
           retention-days: 14
           if-no-files-found: warn
   firmware:
     name: ${{ github.event.action == 'labeled' && github.event.label.name != 'firmware' && 'Zephyr / Firmware Build (label ignored)' || 'Zephyr / Firmware Build' }}
     needs: [plan, static]
     if: always() && !cancelled() && needs.plan.result != 'skipped'
-    runs-on: ${{ needs.static.result == 'success' && (needs.plan.outputs.daily != 'false' && (needs.plan.outputs.application == 'true' || needs.plan.outputs.firmware == 'true' || needs.plan.outputs.native == 'true' || (needs.plan.outputs.publish == 'true' && needs.plan.outputs.reuse == ''))) && format('homelab-zephyr-{0}-{1}', github.run_id, github.run_attempt) || 'ubuntu-24.04' }}
+    runs-on: ${{ needs.static.result == 'success' && (needs.plan.outputs.daily != 'false' && needs.plan.outputs.application == 'true') && format('homelab-zephyr-{0}-{1}', github.run_id, github.run_attempt) || 'ubuntu-24.04' }}
     timeout-minutes: 60
     permissions:
       contents: read
       actions: read
     env:
-      HEAVY_REQUIRED: ${{ needs.static.result == 'success' && (needs.plan.outputs.daily != 'false' && (needs.plan.outputs.application == 'true' || needs.plan.outputs.firmware == 'true' || needs.plan.outputs.native == 'true' || (needs.plan.outputs.publish == 'true' && needs.plan.outputs.reuse == ''))) }}
+      HEAVY_REQUIRED: ${{ needs.static.result == 'success' && (needs.plan.outputs.daily != 'false' && needs.plan.outputs.application == 'true') }}
       APPLICATION: ${{ needs.plan.outputs.application }}
-      FIRMWARE: ${{ needs.plan.outputs.firmware }}
-      NATIVE: ${{ needs.plan.outputs.native }}
-      HOST: ${{ needs.plan.outputs.host }}
+      APPLICATION_HOST: ${{ needs.plan.outputs.application_host }}
       TOOLING: ${{ needs.plan.outputs.tooling }}
       GATE: ${{ needs.plan.outputs.gate }}
-      QC: 'true'
       DOCS: ${{ needs.plan.outputs.docs }}
       DAILY: ${{ needs.plan.outputs.daily }}
       PUBLISH: ${{ needs.plan.outputs.publish }}
@@ -247,18 +248,8 @@ jobs:
         if: env.HEAVY_REQUIRED == 'true'
         run: .ci-workspace/.venv/bin/python Development/system/testing/ci/ci_evidence.py
       - name: Pristine firmware build
-        if: env.HEAVY_REQUIRED == 'true' && (needs.plan.outputs.application == 'true' || needs.plan.outputs.firmware == 'true' || needs.plan.outputs.publish == 'true')
-        run: |
-          components=()
-          if [[ "$APPLICATION" == true ]]; then components+=(--application); fi
-          if [[ "$FIRMWARE" == true || "$PUBLISH" == true ]]; then components+=(--firmware); fi
-          .ci-workspace/.venv/bin/python Development/system/testing/ci/run_ci.py build "${components[@]}"
-      - name: Test audio recovery and application logic
-        if: env.HEAVY_REQUIRED == 'true' && (needs.plan.outputs.native == 'true' || needs.plan.outputs.publish == 'true')
-        run: .ci-workspace/.venv/bin/python Development/system/testing/ci/native_tests.py
-      - name: Benchmark cold and warm pristine compiler-cache builds
-        if: env.HEAVY_REQUIRED == 'true' && github.event_name == 'workflow_dispatch' && inputs.cache_benchmark
-        run: .ci-workspace/.venv/bin/python Development/system/testing/ci/benchmark_build.py run --profiles offline qc network-qc --jobs 2 --runs 1 --warmups 1 --cache-modes disabled cold warm
+        if: env.HEAVY_REQUIRED == 'true'
+        run: .ci-workspace/.venv/bin/python Development/system/testing/ci/run_ci.py build --application
       - name: Retain compiler-cache statistics
         if: env.HEAVY_REQUIRED == 'true' && always()
         run: |
@@ -270,7 +261,7 @@ jobs:
         with:
           path: .ci-ccache
           key: ${{ steps.compiler-cache.outputs.cache-primary-key }}
-      - name: Retain build and native evidence
+      - name: Retain application build evidence
         if: env.HEAVY_REQUIRED == 'true' && (always())
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
@@ -278,7 +269,6 @@ jobs:
           include-hidden-files: true
           path: |
             artifacts/ci/
-            artifacts/native/
             artifacts/build-times/
             artifacts/firmware/
             artifacts/firmware-release/manifest.json
@@ -286,7 +276,7 @@ jobs:
           retention-days: 14
           if-no-files-found: warn
       - name: Retain verified integration firmware for exact-commit promotion
-        if: env.HEAVY_REQUIRED == 'true' && (github.event_name == 'push' && github.ref_name == 'integration' && needs.plan.outputs.firmware == 'true')
+        if: env.HEAVY_REQUIRED == 'true' && (github.event_name == 'push' && github.ref_name == 'integration' && needs.plan.outputs.application == 'true')
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: verified-firmware-${{ github.run_attempt }}

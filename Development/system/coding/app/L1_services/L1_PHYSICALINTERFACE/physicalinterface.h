@@ -3,7 +3,7 @@
  * Project: DigitalStethoscope
  ***********************************************************************/
 
-/** @defgroup L1PHYSICALINTERFACE PHYSICALINTERFACE
+/** @defgroup L1_PHYSICALINTERFACE PHYSICALINTERFACE
  * @{
  * @file
  * L1 adapter for buttons and LEDs over the Zephyr GPIO/ADC drivers.

@@ -1,5 +1,7 @@
 # MVP decisions — LED indication, single error type and patient pass-through, 16 October 2026
 
+> Patient handling clarified by Nico on 27 October 2026: the device only reuses a patient reference supplied with a server-requested examination, otherwise it sends no patient reference. The server-request mechanism remains an open integration design input; the boot-time lookup proposal below does not approve that mechanism. Source: Nico, project owner, [development-workflow review conversation](t3-thread://v1/d54752be-1ff7-4a2d-b1cd-e100649c273a), accessed 27 October 2026. The historical record below is preserved.
+
 > **Superseded in part:** the [current baseline](README.md#current-baseline) names the
 > decision in force for each topic. Text below is historical where it conflicts.
 
@@ -13,7 +15,7 @@ This records decisions, not implemented firmware behavior.
 1. **Two LEDs.** The on-board RGB LED (WS2812) shows the workflow status; the red LED in the pushbutton shows
    errors. Red is never used on the RGB LED, so red always means "error, press the button". The serial log
    records every cause. The colour table is in the
-   [detailed design](../design/interfaces-and-behavior.md#led-indication-and-single-error-type--16-october).
+   [detailed design](../design/FEEDBACK/catalogue.md).
 2. **One error type.** Any detected fault latches an Error: the red LED blinks and the serial log records the
    cause. If audio is affected (microphone, DAC, stalled worker, failed startup check, potentiometer ADC), the
    device also mutes and blocks Start. A short press in Idle acknowledges the Error and runs the check again;
@@ -35,7 +37,7 @@ This records decisions, not implemented firmware behavior.
 - REQ-09: the result also carries the patient when the server has linked one.
 - REQ-13: a fault that affects audio mutes the device; a short press clears it only when the cause is gone
   (was: only a restart clears it).
-- VT-01, VT-07 and VT-09 follow; see [verification](../testing/specification-verification.md).
+- VT-01, VT-07 and VT-09 follow; see verification.
 
 ## Superseded
 
@@ -49,5 +51,3 @@ This records decisions, not implemented firmware behavior.
 - Whether the device also reads `Device.patient` again before each send, so a link made after boot is used
   without a restart.
 - Which fault classes count as "audio affected" in the startup check list.
-
-Created by Claude-Opus-5.5 on behalf of Nico running in T3 Code through Claude Code.

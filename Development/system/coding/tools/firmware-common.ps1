@@ -43,10 +43,12 @@ function Assert-FwBuild {
 function Invoke-FwWest {
     param([string[]]$Arguments)
     Assert-FwToolchain
+    $resolvedWorkspace = & (Join-Path $FwWorkspace '.venv\Scripts\python.exe') -c 'import pathlib, sys; print(pathlib.Path(sys.argv[1]).resolve())' $FwWorkspace
+    if ($LASTEXITCODE -ne 0) { throw 'Could not resolve the pinned toolchain workspace.' }
     $toolEnv = @{
         # The ESP32 runner starts esptool by name, so its pinned launcher must be on PATH.
         PATH                     = "$(Join-Path $FwWorkspace '.venv\Scripts');$env:PATH"
-        ZEPHYR_BASE              = Join-Path $FwWorkspace 'zephyr'
+        ZEPHYR_BASE              = Join-Path $resolvedWorkspace 'zephyr'
         ZEPHYR_SDK_INSTALL_DIR   = $FwSdk
         ZEPHYR_TOOLCHAIN_VARIANT = 'zephyr'
     }

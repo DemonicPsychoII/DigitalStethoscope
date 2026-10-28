@@ -4,7 +4,7 @@
 
 Prüfverfahren → Build/Host-Nachweise → historische Hardwarebefunde → offene Integration.
 
-**29 aktive Einheiten.** Schreibreihenfolge: Definition → Mechanismus → Werte → Folgerung. Die Aussagen sind Material, kein fertiger Fließtext.
+**28 aktive Einheiten.** Schreibreihenfolge: Definition → Mechanismus → Werte → Folgerung. Die Aussagen sind Material, kein fertiger Fließtext.
 
 ## Funktionstest und physische Annahmekriterien
 
@@ -21,7 +21,7 @@ R04 nennt ESP-DSP-Grundoperationsbenchmarks, aber keinen direkt vergleichbaren v
 ### Werte und dokumentierte Befunde
 
 <a id="a074"></a>
-**A074 · EIGENER ZIELWERT / VORLÄUFIGER VORSCHLAG · ANNAHME · ersetzt U052**
+**A074 · PROJEKTDOKUMENTATION / BESTANDSWERT · ANNAHME · ersetzt U052**
 
 R04 schätzt 20–50 Mio. Zyklen/s für WSOLA und 10–30 Mio. Zyklen/s für Phase-Vocoder auf ESP32-S3; dies sind Schätzungen, keine gemessenen Gesamtanwendungsbenchmarks.
 
@@ -37,7 +37,7 @@ Firmware README says software diagnostics count 8 ms deadline misses and RX/TX/a
 
 > **Neuerer Stand (Stand integration, 2026-10-22):** Eine getrennte Messung der akustisch-elektrischen End-to-End-Latenz ist im Projekt nicht vorgesehen. Aktuell: Latenz wird nach Gehör geprüft (REQ-05), da kein Zweikanal-Aufnahmeaufbau verfügbar ist (14.10.). – siehe [MVP-Entscheidungen 14.10. (Umfang)](../../Development/system/planning/mvp-decisions-2026-10-14.md#scope).
 
-**Ursprung:** [Development/system/coding/bringup-zephyr/README.md:217-222](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/23c1ea492270b897532896179e35f873eee823be/Development/system/coding/bringup-zephyr/README.md?plain=1#L217) (**Herkunft verschoben:** seit b2c3dde zu einem kurzen Einstiegs-README verdichtet; die Zeilenangaben gelten nur für die zitierte Fassung. Link zeigt diese historische Fassung. Aktuell: [Bring-up-README](../../Development/system/coding/bringup-zephyr/README.md))
+**Ursprung:** [Development/system/coding/bringup-zephyr/README.md:217-222](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/23c1ea492270b897532896179e35f873eee823be/Development/system/coding/bringup-zephyr/README.md?plain=1#L217) (**Herkunft verschoben:** seit b2c3dde zu einem kurzen Einstiegs-README verdichtet; die Zeilenangaben gelten nur für die zitierte Fassung. Link zeigt diese historische Fassung. Aktuell: [Bring-up-README](../../preThesis/06-bringup-zephyr/README.md))
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
 
 <a id="c015"></a>
@@ -53,27 +53,19 @@ Für die untersuchte Anwendung verlangt R10 vor Implementierungsfestlegung einen
 
 TEST-PROTOCOL definiert manuelle Hardwareprüfungen, Verdrahtungs-/Electrical-Safety-, Audio-, Display-, Touch-, GPIO-, SD-, Netzwerk-/FHIR-Prüfungen und PASS/FAIL/BLOCKED-Evidenz.
 
-**Ursprung:** [Development/system/coding/bringup-zephyr/TEST-PROTOCOL.md:1-1517](../../Development/system/coding/bringup-zephyr/TEST-PROTOCOL.md#L1)
+**Ursprung:** [Development/system/coding/bringup-zephyr/TEST-PROTOCOL.md:1-1517](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/1448340d265326e11b7a416960f35e0d2390cd6d/Development/system/coding/bringup-zephyr/TEST-PROTOCOL.md?plain=1#L1) (**Herkunft verschoben:** als Vorstudienmaterial nach preThesis/06-bringup-zephyr verschoben. Die Zeilenangaben beziehen sich auf die zitierte historische Fassung. Aktuell: [TEST-PROTOCOL.md](../../preThesis/06-bringup-zephyr/TEST-PROTOCOL.md))
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
 
 ## Build-, Host- und QC-Nachweise
 
 ### Folgerungen, Entwurfsentscheidungen und Grenzen
 
-<a id="u096"></a>
-**U096 · METHODENVORSCHLAG**
-
-BUILD-TIMES beschreibt einen vergleichbaren Buildzeit-Benchmark über Geräte, mit Warm-up-Ausschluss, Median/Min/Max und Trennung nach Source-Hash, Toolpins, Board und Cachepolitik; Ergebnisdateien sollen für Thesis-Messungen erhalten bleiben.
-
-**Ursprung:** [Development/system/testing/BUILD-TIMES.md:1-89](../../Development/system/testing/BUILD-TIMES.md#L1)
-**Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
-
 <a id="u094"></a>
 **U094 · METHODE / PRÜFVERFAHREN**
 
 CI-Hardwaregrenze: ESP32-S3-Build belegt Kompilierung/Linken und Ressourcen-Fit, aber nicht Mikrofon-, DAC-, Display-, Touch-, GPIO-, ADC-, PWM- oder Verdrahtungsfunktion.
 
-**Ursprung:** [Development/system/testing/CI-QUALITY-GATES.md:87-107](../../Development/system/testing/CI-QUALITY-GATES.md#L87)
+**Ursprung:** [Development/system/testing/CI-QUALITY-GATES.md:87-107](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/23c1ea492270b897532896179e35f873eee823be/Development/system/testing/CI-QUALITY-GATES.md?plain=1#L87) (**Herkunft verschoben:** durch die aktuelle CI-Betriebsdokumentation ersetzt. Die Zeilenangaben beziehen sich auf die zitierte historische Fassung. Aktuell: [OPERATIONS.md](../../Development/system/testing/ci/OPERATIONS.md))
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
 
 <a id="u093"></a>
@@ -81,7 +73,7 @@ CI-Hardwaregrenze: ESP32-S3-Build belegt Kompilierung/Linken und Ressourcen-Fit,
 
 CI-QUALITY-GATES dokumentiert gepinnte Zephyr- und Werkzeugversionen, wiederholbare lokale/CI-Prüfungen sowie getrennte Builds und statische Prüfungen; Quelle beschreibt Entwicklungs-/Verifikationsmethode, keine medizinische Evidenz.
 
-**Ursprung:** [Development/system/testing/CI-QUALITY-GATES.md:1-57](../../Development/system/testing/CI-QUALITY-GATES.md#L1)
+**Ursprung:** [Development/system/testing/CI-QUALITY-GATES.md:1-57](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/23c1ea492270b897532896179e35f873eee823be/Development/system/testing/CI-QUALITY-GATES.md?plain=1#L1) (**Herkunft verschoben:** durch die aktuelle CI-Betriebsdokumentation ersetzt. Die Zeilenangaben beziehen sich auf die zitierte historische Fassung. Aktuell: [OPERATIONS.md](../../Development/system/testing/ci/OPERATIONS.md))
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
 
 <a id="u132"></a>
@@ -89,7 +81,7 @@ CI-QUALITY-GATES dokumentiert gepinnte Zephyr- und Werkzeugversionen, wiederholb
 
 hardware-results.schema.json requires schema_version and records_by_firmware_commit, organizing hardware verdicts by firmware commit.
 
-**Ursprung:** [Development/system/coding/bringup-zephyr/evidence/hardware-results.schema.json:1-100](../../Development/system/coding/bringup-zephyr/evidence/hardware-results.schema.json#L1)
+**Ursprung:** [Development/system/coding/bringup-zephyr/evidence/hardware-results.schema.json:1-100](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/1448340d265326e11b7a416960f35e0d2390cd6d/Development/system/coding/bringup-zephyr/evidence/hardware-results.schema.json#L1) (**Herkunft verschoben:** als Vorstudienmaterial nach preThesis/06-bringup-zephyr verschoben. Die Zeilenangaben beziehen sich auf die zitierte historische Fassung. Aktuell: [hardware-results.schema.json](../../preThesis/06-bringup-zephyr/evidence/hardware-results.schema.json))
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
 
 <a id="u092"></a>
@@ -97,7 +89,7 @@ hardware-results.schema.json requires schema_version and records_by_firmware_com
 
 QC-EVALUATION nennt als offene Aktionen: I²S/LEDC-Pinmux und XPT2046-Kalibrierung validieren, Touch-Callback-Zustand absichern, Eingabepolling ≤20 ms dokumentieren, Laufzeitfehlerbehandlung prüfen sowie Ergebnisse an Firmware-Commit binden.
 
-**Ursprung:** [Development/system/testing/QC-EVALUATION.md:26-40](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/23c1ea492270b897532896179e35f873eee823be/Development/system/testing/QC-EVALUATION.md?plain=1#L26) (**Herkunft verschoben:** seit 89ca8b1 nicht mehr eingecheckt; wird von `qc_eval.py` nach `artifacts/qc/` erzeugt. Link zeigt die zitierte historische Fassung. Aktuell: [Testing-README: Source-level QC](../../Development/system/testing/README.md#source-level-qc))
+**Ursprung:** [Development/system/testing/QC-EVALUATION.md:26-40](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/23c1ea492270b897532896179e35f873eee823be/Development/system/testing/QC-EVALUATION.md?plain=1#L26) (**Herkunft verschoben:** seit 89ca8b1 nicht mehr eingecheckt; wird von `qc_eval.py` nach `artifacts/qc/` erzeugt. Link zeigt die zitierte historische Fassung. Aktuell: [Archived bring-up QC](../../preThesis/06-bringup-zephyr/README.md#source-level-qc))
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
 
 <a id="u095"></a>
@@ -105,7 +97,7 @@ QC-EVALUATION nennt als offene Aktionen: I²S/LEDC-Pinmux und XPT2046-Kalibrieru
 
 Testing-README unterscheidet QC-Score von funktionaler Evaluation; CI-Hosttests und Offline/QC/Netzwerk-QC-Builds schließen die physische Hardware-Abnahmematrix nicht ab.
 
-**Ursprung:** [Development/system/testing/README.md:27-40](../../Development/system/testing/README.md#L27)
+**Ursprung:** [Development/system/testing/README.md:27-40](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/23c1ea492270b897532896179e35f873eee823be/Development/system/testing/README.md?plain=1#L27) (**Herkunft verschoben:** durch die aktuelle CI-Betriebsdokumentation ersetzt. Die Zeilenangaben beziehen sich auf die zitierte historische Fassung. Aktuell: [OPERATIONS.md](../../Development/system/testing/ci/OPERATIONS.md))
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
 
 <a id="u098"></a>
@@ -113,7 +105,7 @@ Testing-README unterscheidet QC-Score von funktionaler Evaluation; CI-Hosttests 
 
 THA-baseline-traceability.json bindet den institutionalisierten Vergleich an Revision 4698995f203f73f4b264e4355ca30e2712163729 und drei SHA-256-Einträge.
 
-**Ursprung:** [Development/system/testing/tha-baseline-traceability.json:1-10](../../Development/system/testing/tha-baseline-traceability.json#L1)
+**Ursprung:** [Development/system/testing/tha-baseline-traceability.json:1-10](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/1448340d265326e11b7a416960f35e0d2390cd6d/Development/system/testing/tha-baseline-traceability.json#L1) (**Herkunft verschoben:** mit der Bring-up-QC archiviert. Die Zeilenangaben beziehen sich auf die zitierte historische Fassung. Aktuell: [tha-baseline-traceability.json](../../preThesis/06-bringup-zephyr/qc/tha-baseline-traceability.json))
 **Korrektur Stage 2 (2026-10-12):** Ursprungsliste in inventory-merged.json/inventory.json war eine Kopie der U100-Ursprünge; inventory.md nennt die Traceability-JSON, die die Aussage tatsächlich belegt. Ursprüngliche Liste: preThesis/02-entscheidungen/widersprueche.md:1-4; preThesis/02-entscheidungen/open-questions.md:7-11; preThesis/05-hardware/hardware.md:32-34; Development/system/coding/bringup-zephyr/README.md:1-160. Quelle: [_build/stage2-corrections.json](../_build/stage2-corrections.json).
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
 
@@ -124,7 +116,7 @@ The evaluation protocol requires server readback to match Patient, LOINC, quanti
 
 > **Überholt (Stand integration, 2026-10-22):** „Retry is explicit“ und der Readback-Abgleich gelten für das MVP nicht mehr; ein Patient steht nur bei serverseitiger Verknüpfung in der Observation. Aktuell: Fehlgeschlagene Sendung: bis zu 3 Wiederholungen (4 Versuche) etwa 2 s auseinander, alle innerhalb 10 s, danach Fehleranzeige; bedingtes Anlegen (`If-None-Exist`) verhindert Duplikate (14.10.). Kein Readback, `201`/`200` gilt als Quittung (15.10.). Prüfung über die HAPI-Webseite (REQ-09, REQ-10). WLAN-Fehler unterbrechen funktionierendes Audio nicht (19.10.). – siehe [MVP-Entscheidungen 14.10.](../../Development/system/planning/mvp-decisions-2026-10-14.md#behavior), [MVP-Entscheidungen 15.10.](../../Development/system/planning/mvp-decisions-2026-10-15.md#resulting-behavior), [Systemanforderungen](../../Development/system/requirements/system-requirements.md#system-requirements-mvp).
 
-**Ursprung:** [Development/system/coding/bringup-zephyr/EVAL-GUIDE.md:84-85](../../Development/system/coding/bringup-zephyr/EVAL-GUIDE.md#L84)
+**Ursprung:** [Development/system/coding/bringup-zephyr/EVAL-GUIDE.md:84-85](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/1448340d265326e11b7a416960f35e0d2390cd6d/Development/system/coding/bringup-zephyr/EVAL-GUIDE.md?plain=1#L84) (**Herkunft verschoben:** als Vorstudienmaterial nach preThesis/06-bringup-zephyr verschoben. Die Zeilenangaben beziehen sich auf die zitierte historische Fassung. Aktuell: [EVAL-GUIDE.md](../../preThesis/06-bringup-zephyr/EVAL-GUIDE.md))
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
 
 ## Laufzeit, Speicher und Netzwerkprüfung
@@ -164,7 +156,7 @@ R11 empfiehlt, den größten verfügbaren internen Heap zu beobachten und ihn w�
 
 Hardware-results evidence for commit 2cd6d4c (2026-08-14) records 4 PASS, 4 PARTIAL, 3 BLOCKED cases; record is retrospective and lacks flashed-binary hash.
 
-**Ursprung:** [Development/system/coding/bringup-zephyr/evidence/hardware-results.json:1-200](../../Development/system/coding/bringup-zephyr/evidence/hardware-results.json#L1)
+**Ursprung:** [Development/system/coding/bringup-zephyr/evidence/hardware-results.json:1-200](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/1448340d265326e11b7a416960f35e0d2390cd6d/Development/system/coding/bringup-zephyr/evidence/hardware-results.json#L1) (**Herkunft verschoben:** als Vorstudienmaterial nach preThesis/06-bringup-zephyr verschoben. Die Zeilenangaben beziehen sich auf die zitierte historische Fassung. Aktuell: [hardware-results.json](../../preThesis/06-bringup-zephyr/evidence/hardware-results.json))
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
 
 <a id="u130"></a>
@@ -172,7 +164,7 @@ Hardware-results evidence for commit 2cd6d4c (2026-08-14) records 4 PASS, 4 PART
 
 Hardware-results evidence for commit 418f9ba (2026-08-19) records all 11 physical cases BLOCKED because no board was attached/flashed; compile/simulation is not physical acceptance.
 
-**Ursprung:** [Development/system/coding/bringup-zephyr/evidence/hardware-results.json:1-200](../../Development/system/coding/bringup-zephyr/evidence/hardware-results.json#L1)
+**Ursprung:** [Development/system/coding/bringup-zephyr/evidence/hardware-results.json:1-200](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/1448340d265326e11b7a416960f35e0d2390cd6d/Development/system/coding/bringup-zephyr/evidence/hardware-results.json#L1) (**Herkunft verschoben:** als Vorstudienmaterial nach preThesis/06-bringup-zephyr verschoben. Die Zeilenangaben beziehen sich auf die zitierte historische Fassung. Aktuell: [hardware-results.json](../../preThesis/06-bringup-zephyr/evidence/hardware-results.json))
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
 
 <a id="u127"></a>
@@ -180,7 +172,7 @@ Hardware-results evidence for commit 418f9ba (2026-08-19) records all 11 physica
 
 Integrated build evidence dated 2026-09-24 records PASS for offline, QC and network-QC/second-switch ESP32-S3 builds with zero application compiler warnings; network-QC used 334,320 bytes internal DRAM segment and 2,089,472 bytes external DRAM window.
 
-**Ursprung:** [Development/system/coding/bringup-zephyr/evidence/integrated-build-results.json:1-200](../../Development/system/coding/bringup-zephyr/evidence/integrated-build-results.json#L1)
+**Ursprung:** [Development/system/coding/bringup-zephyr/evidence/integrated-build-results.json:1-200](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/1448340d265326e11b7a416960f35e0d2390cd6d/Development/system/coding/bringup-zephyr/evidence/integrated-build-results.json#L1) (**Herkunft verschoben:** als Vorstudienmaterial nach preThesis/06-bringup-zephyr verschoben. Die Zeilenangaben beziehen sich auf die zitierte historische Fassung. Aktuell: [integrated-build-results.json](../../preThesis/06-bringup-zephyr/evidence/integrated-build-results.json))
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
 
 <a id="u128"></a>
@@ -188,7 +180,7 @@ Integrated build evidence dated 2026-09-24 records PASS for offline, QC and netw
 
 Integrated host evidence records 73 passing tests for portable C DSP/FHIR functions, evaluation CLI and Python HTTPS readback (explicitly not the on-device TLS stack); Zephyr native_sim logic has 10 passing tests.
 
-**Ursprung:** [Development/system/coding/bringup-zephyr/evidence/integrated-build-results.json:1-200](../../Development/system/coding/bringup-zephyr/evidence/integrated-build-results.json#L1)
+**Ursprung:** [Development/system/coding/bringup-zephyr/evidence/integrated-build-results.json:1-200](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/1448340d265326e11b7a416960f35e0d2390cd6d/Development/system/coding/bringup-zephyr/evidence/integrated-build-results.json#L1) (**Herkunft verschoben:** als Vorstudienmaterial nach preThesis/06-bringup-zephyr verschoben. Die Zeilenangaben beziehen sich auf die zitierte historische Fassung. Aktuell: [integrated-build-results.json](../../preThesis/06-bringup-zephyr/evidence/integrated-build-results.json))
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
 
 <a id="u133"></a>
@@ -196,7 +188,7 @@ Integrated host evidence records 73 passing tests for portable C DSP/FHIR functi
 
 logic-tests.txt records 10 passing app_logic cases covering audio recovery, brightness, degraded-mode decisions, error handling, probe/retry transitions, status formatting, switch decoding and touch color transitions.
 
-**Ursprung:** [Development/system/coding/bringup-zephyr/evidence/logic-tests.txt:1-40](../../Development/system/coding/bringup-zephyr/evidence/logic-tests.txt#L1)
+**Ursprung:** [Development/system/coding/bringup-zephyr/evidence/logic-tests.txt:1-40](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/1448340d265326e11b7a416960f35e0d2390cd6d/Development/system/coding/bringup-zephyr/evidence/logic-tests.txt#L1) (**Herkunft verschoben:** als Vorstudienmaterial nach preThesis/06-bringup-zephyr verschoben. Die Zeilenangaben beziehen sich auf die zitierte historische Fassung. Aktuell: [logic-tests.txt](../../preThesis/06-bringup-zephyr/evidence/logic-tests.txt))
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
 
 <a id="u097"></a>
@@ -204,7 +196,7 @@ logic-tests.txt records 10 passing app_logic cases covering audio recovery, brig
 
 QC-Ergebnis JSON dokumentiert 10 Kontrollen mit Score je 10 und Gate PASS; Verifikation basiert teils auf Heuristiken, und erforderliche Maßnahmen bleiben trotz PASS ausgewiesen.
 
-**Ursprung:** [Development/system/testing/qc-eval-results.json:1-92](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/23c1ea492270b897532896179e35f873eee823be/Development/system/testing/qc-eval-results.json#L1) (**Herkunft verschoben:** seit 89ca8b1 nicht mehr eingecheckt; wird von `qc_eval.py` nach `artifacts/qc/` erzeugt. Link zeigt die zitierte historische Fassung. Aktuell: [Testing-README: Source-level QC](../../Development/system/testing/README.md#source-level-qc))
+**Ursprung:** [Development/system/testing/qc-eval-results.json:1-92](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/23c1ea492270b897532896179e35f873eee823be/Development/system/testing/qc-eval-results.json#L1) (**Herkunft verschoben:** seit 89ca8b1 nicht mehr eingecheckt; wird von `qc_eval.py` nach `artifacts/qc/` erzeugt. Link zeigt die zitierte historische Fassung. Aktuell: [Archived bring-up QC](../../preThesis/06-bringup-zephyr/README.md#source-level-qc))
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
 
 <a id="u091"></a>
@@ -212,7 +204,7 @@ QC-Ergebnis JSON dokumentiert 10 Kontrollen mit Score je 10 und Gate PASS; Verif
 
 QC-EVALUATION meldet 100/100 PASS für statischen THA-baseline-Vergleich, datiert 2026-09-24; der Bericht sagt ausdrücklich, dass dies keine Compilation, Instrumentierung, Elektroprüfung, Audiomessung oder manuelle Hardwareprüfung ersetzt.
 
-**Ursprung:** [Development/system/testing/QC-EVALUATION.md:1-9](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/23c1ea492270b897532896179e35f873eee823be/Development/system/testing/QC-EVALUATION.md?plain=1#L1) (**Herkunft verschoben:** seit 89ca8b1 nicht mehr eingecheckt; wird von `qc_eval.py` nach `artifacts/qc/` erzeugt. Link zeigt die zitierte historische Fassung. Aktuell: [Testing-README: Source-level QC](../../Development/system/testing/README.md#source-level-qc))
+**Ursprung:** [Development/system/testing/QC-EVALUATION.md:1-9](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/23c1ea492270b897532896179e35f873eee823be/Development/system/testing/QC-EVALUATION.md?plain=1#L1) (**Herkunft verschoben:** seit 89ca8b1 nicht mehr eingecheckt; wird von `qc_eval.py` nach `artifacts/qc/` erzeugt. Link zeigt die zitierte historische Fassung. Aktuell: [Archived bring-up QC](../../preThesis/06-bringup-zephyr/README.md#source-level-qc))
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
 
 <a id="u118"></a>
@@ -220,7 +212,7 @@ QC-EVALUATION meldet 100/100 PASS für statischen THA-baseline-Vergleich, datier
 
 TEST-PROTOCOL diagnosis: 240×320×2-byte screen fill at 10 MHz takes about 120 ms, exceeding audio RX ring budget and causing I²S error state; recovery work was identified.
 
-**Ursprung:** [Development/system/coding/bringup-zephyr/TEST-PROTOCOL.md:1468-1471](../../Development/system/coding/bringup-zephyr/TEST-PROTOCOL.md#L1468)
+**Ursprung:** [Development/system/coding/bringup-zephyr/TEST-PROTOCOL.md:1468-1471](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/1448340d265326e11b7a416960f35e0d2390cd6d/Development/system/coding/bringup-zephyr/TEST-PROTOCOL.md?plain=1#L1468) (**Herkunft verschoben:** als Vorstudienmaterial nach preThesis/06-bringup-zephyr verschoben. Die Zeilenangaben beziehen sich auf die zitierte historische Fassung. Aktuell: [TEST-PROTOCOL.md](../../preThesis/06-bringup-zephyr/TEST-PROTOCOL.md))
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
 
 <a id="u113"></a>
@@ -228,7 +220,7 @@ TEST-PROTOCOL diagnosis: 240×320×2-byte screen fill at 10 MHz takes about 120 
 
 TEST-PROTOCOL historical result: button/LED passed; fitted switch was only two-position (3PDT) and could not exercise the intended third position.
 
-**Ursprung:** [Development/system/coding/bringup-zephyr/TEST-PROTOCOL.md:1432-1434](../../Development/system/coding/bringup-zephyr/TEST-PROTOCOL.md#L1432)
+**Ursprung:** [Development/system/coding/bringup-zephyr/TEST-PROTOCOL.md:1432-1434](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/1448340d265326e11b7a416960f35e0d2390cd6d/Development/system/coding/bringup-zephyr/TEST-PROTOCOL.md?plain=1#L1432) (**Herkunft verschoben:** als Vorstudienmaterial nach preThesis/06-bringup-zephyr verschoben. Die Zeilenangaben beziehen sich auf die zitierte historische Fassung. Aktuell: [TEST-PROTOCOL.md](../../preThesis/06-bringup-zephyr/TEST-PROTOCOL.md))
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
 
 <a id="u115"></a>
@@ -236,7 +228,7 @@ TEST-PROTOCOL historical result: button/LED passed; fitted switch was only two-p
 
 TEST-PROTOCOL historical result: INMP441 microphone peak tracked real sound (81–32643) with zero errors over 30 s on documented pins.
 
-**Ursprung:** [Development/system/coding/bringup-zephyr/TEST-PROTOCOL.md:1439](../../Development/system/coding/bringup-zephyr/TEST-PROTOCOL.md#L1439)
+**Ursprung:** [Development/system/coding/bringup-zephyr/TEST-PROTOCOL.md:1439](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/1448340d265326e11b7a416960f35e0d2390cd6d/Development/system/coding/bringup-zephyr/TEST-PROTOCOL.md?plain=1#L1439) (**Herkunft verschoben:** als Vorstudienmaterial nach preThesis/06-bringup-zephyr verschoben. Die Zeilenangaben beziehen sich auf die zitierte historische Fassung. Aktuell: [TEST-PROTOCOL.md](../../preThesis/06-bringup-zephyr/TEST-PROTOCOL.md))
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
 
 <a id="u116"></a>
@@ -244,7 +236,7 @@ TEST-PROTOCOL historical result: INMP441 microphone peak tracked real sound (81�
 
 TEST-PROTOCOL historical result: PCM5102A passed I²S probe only; write-only I²S accepts a block even when module is unplugged, so this did not prove audible jack output.
 
-**Ursprung:** [Development/system/coding/bringup-zephyr/TEST-PROTOCOL.md:1440](../../Development/system/coding/bringup-zephyr/TEST-PROTOCOL.md#L1440)
+**Ursprung:** [Development/system/coding/bringup-zephyr/TEST-PROTOCOL.md:1440](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/1448340d265326e11b7a416960f35e0d2390cd6d/Development/system/coding/bringup-zephyr/TEST-PROTOCOL.md?plain=1#L1440) (**Herkunft verschoben:** als Vorstudienmaterial nach preThesis/06-bringup-zephyr verschoben. Die Zeilenangaben beziehen sich auf die zitierte historische Fassung. Aktuell: [TEST-PROTOCOL.md](../../preThesis/06-bringup-zephyr/TEST-PROTOCOL.md))
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
 
 <a id="u114"></a>
@@ -252,7 +244,7 @@ TEST-PROTOCOL historical result: PCM5102A passed I²S probe only; write-only I²
 
 TEST-PROTOCOL historical result: potentiometer measured 0–3083 mV monotonic; display/backlight was partial because touch generated several events per tap and audio stopped at first display redraw.
 
-**Ursprung:** [Development/system/coding/bringup-zephyr/TEST-PROTOCOL.md:1436-1437](../../Development/system/coding/bringup-zephyr/TEST-PROTOCOL.md#L1436)
+**Ursprung:** [Development/system/coding/bringup-zephyr/TEST-PROTOCOL.md:1436-1437](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/1448340d265326e11b7a416960f35e0d2390cd6d/Development/system/coding/bringup-zephyr/TEST-PROTOCOL.md?plain=1#L1436) (**Herkunft verschoben:** als Vorstudienmaterial nach preThesis/06-bringup-zephyr verschoben. Die Zeilenangaben beziehen sich auf die zitierte historische Fassung. Aktuell: [TEST-PROTOCOL.md](../../preThesis/06-bringup-zephyr/TEST-PROTOCOL.md))
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
 
 <a id="u117"></a>
@@ -260,5 +252,5 @@ TEST-PROTOCOL historical result: potentiometer measured 0–3083 mV monotonic; d
 
 TEST-PROTOCOL marked full assembly skipped because of the then-existing display/audio defect; later protocol sections record corrective findings and a subsequent no-board run where T00–T10 were blocked for lack of flash/physical measurements.
 
-**Ursprung:** [Development/system/coding/bringup-zephyr/TEST-PROTOCOL.md:1442,1499-1513](../../Development/system/coding/bringup-zephyr/TEST-PROTOCOL.md#L1442)
+**Ursprung:** [Development/system/coding/bringup-zephyr/TEST-PROTOCOL.md:1442,1499-1513](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/1448340d265326e11b7a416960f35e0d2390cd6d/Development/system/coding/bringup-zephyr/TEST-PROTOCOL.md?plain=1#L1442) (**Herkunft verschoben:** als Vorstudienmaterial nach preThesis/06-bringup-zephyr verschoben. Die Zeilenangaben beziehen sich auf die zitierte historische Fassung. Aktuell: [TEST-PROTOCOL.md](../../preThesis/06-bringup-zephyr/TEST-PROTOCOL.md))
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.

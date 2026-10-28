@@ -20,10 +20,7 @@ AREAS = (
 )
 SYSTEM = "Development/system/"
 WORKFLOW = ".github/workflows/quality-gates.yml"
-CI_DOCS = (
-    SYSTEM + "testing/CI-QUALITY-GATES.md",
-    SYSTEM + "testing/ci/OPERATIONS.md",
-)
+CI_DOCS = (SYSTEM + "testing/ci/OPERATIONS.md",)
 # Dated decision records keep the wording of their day.
 HISTORICAL = re.compile(r"planning/mvp-decisions-\d{4}-\d{2}-\d{2}\.md$")
 # PlantUML stores the diagram text in a deflated base64 variant with this alphabet.
@@ -126,14 +123,32 @@ def listed(paths: list[str], root: Path = ROOT) -> list[str]:
     """Hand-written indexes must name every file they index."""
     errors = []
     indexes = (
-        (SYSTEM + "testing/ci/", ".py", (SYSTEM + "testing/ci/README.md",)),
+        (SYSTEM + "testing/ci/", ".py", (SYSTEM + "testing/ci/OPERATIONS.md",)),
         (
             SYSTEM + "architecture/",
             ".puml",
-            (SYSTEM + "architecture/README.md", SYSTEM + "architecture/VIEW-NOTES.md"),
+            (
+                SYSTEM + "architecture/README.md",
+                SYSTEM + "architecture/system/VIEW-NOTES.md",
+            ),
         ),
     )
+    architecture = root / SYSTEM / "architecture"
+    indexes += tuple(
+        (
+            folder.relative_to(root).as_posix() + "/",
+            ".puml",
+            (readme.relative_to(root).as_posix(),),
+        )
+        for readme in architecture.glob("*/README.md")
+        for folder in (readme.parent,)
+    )
     for directory, suffix, docs in indexes:
+        if not any(
+            Path(path).parent.as_posix() + "/" == directory and path.endswith(suffix)
+            for path in paths
+        ):
+            continue
         text = "".join((root / doc).read_text(encoding="utf-8") for doc in docs)
         for path in paths:
             name = Path(path).name
@@ -156,10 +171,15 @@ def facts(paths: list[str], root: Path = ROOT) -> list[str]:
     )
     python = re.search(r"python-version: '([\d.]+)'", workflow).group(1)
     retention = set(re.findall(r"retention-days: (\d+)", workflow))
-    requirements = (root / SYSTEM / "requirements/system-requirements.md").read_text(
-        encoding="utf-8"
+    requirement_file = root / SYSTEM / "requirements/system-requirements.md"
+    requirements = (
+        requirement_file.read_text(encoding="utf-8")
+        if requirement_file.exists()
+        else ""
     )
-    last_requirement = max(re.findall(r"^\| REQ-(\d+)", requirements, re.MULTILINE))
+    last_requirement = max(
+        re.findall(r"^\| REQ-(\d+)", requirements, re.MULTILINE), default=None
+    )
     docs = [
         p
         for p in paths
@@ -179,7 +199,7 @@ def facts(paths: list[str], root: Path = ROOT) -> list[str]:
                     f"{path}: {tool} {version}, validation_tools.json pins {pinned}"
                 )
         for last in re.findall(r"REQ-01\s*(?:…|–|-|to)\s*REQ-(\d+)", text):
-            if last != last_requirement:
+            if last_requirement is not None and last != last_requirement:
                 errors.append(
                     f"{path}: REQ-01…REQ-{last}, last requirement is REQ-{last_requirement}"
                 )
@@ -190,24 +210,26 @@ def facts(paths: list[str], root: Path = ROOT) -> list[str]:
                 errors.append(f"{path}: {days} days is not a workflow retention period")
         # Every test suite CI runs must appear in the local check commands.
         for suite in re.findall(
-            r"(?:pytest|unittest discover -s)\s+(?:-\S+\s+)*([\w./-]+/[\w./-]+)",
+            r"(?:pytest|unittest discover -s)\s+(?:-o\s+\S+\s+|-\S+\s+)*([\w./-]+/[\w./-]+)",
             workflow,
         ):
             if suite not in text:
                 errors.append(f"{path}: local checks omit CI suite {suite}")
-    gates = (root / SYSTEM / "testing/CI-QUALITY-GATES.md").read_text(encoding="utf-8")
-    required = re.search(r"Required contexts remain:\n\n((?:- .*\n)+)", gates)
+    gates = (root / CI_DOCS[0]).read_text(encoding="utf-8")
+    required = re.search(r"The required check names remain ([^.]+)\.", gates)
+    if required is None or not re.findall(r"`([^`]+)`", required.group(1)):
+        errors.append(f"{CI_DOCS[0]}: missing required check names")
     github = "".join(
         p.read_text(encoding="utf-8")
         for p in (root / ".github").rglob("*")
         if p.suffix in (".yml", ".py")
     )
     for name in re.findall(
-        r"^- `([^`]+)`", required.group(1) if required else "", re.MULTILINE
+        r"`([^`]+)`", required.group(1) if required else "", re.MULTILINE
     ):
         if name not in github:
             errors.append(
-                f"CI-QUALITY-GATES.md: required context {name} not found in .github/"
+                f"{CI_DOCS[0]}: required context {name} not found in .github/"
             )
     return errors
 
@@ -255,6 +277,49 @@ def supplemental_sources(root: Path = ROOT) -> list[str]:
     ]
 
 
+def verification_coverage(root: Path = ROOT) -> list[str]:
+    """Require a test/procedure reference or an explicit gap for each VT ID."""
+    catalogue = root / "Development/system/testing/specification-verification.md"
+    text = catalogue.read_text(encoding="utf-8")
+    cases = set(re.findall(r"\bVT-\d{2}\b", text))
+    gaps = set(re.findall(r"^- (VT-\d{2}): Not yet covered .*\S", text, re.MULTILINE))
+    retired = set(re.findall(r"^- (VT-\d{2}): Retired — .*\S", text, re.MULTILINE))
+    referenced = set()
+    coding = root / "Development/system/coding"
+    testing = root / "Development/system/testing"
+    sources = list(coding.glob("**/tests/**/*")) + list(testing.rglob("*"))
+    for source in sources:
+        if not source.is_file() or source.suffix not in {
+            ".py",
+            ".c",
+            ".h",
+            ".md",
+            ".sh",
+        }:
+            continue
+        if source == catalogue or (
+            source.is_relative_to(testing)
+            and source.relative_to(testing).parts[0] in {"ci", "evidence"}
+        ):
+            continue
+        referenced.update(
+            re.findall(
+                r"\bVT-\d{2}\b", source.name + "\n" + source.read_text(encoding="utf-8")
+            )
+        )
+    errors = [
+        f"{catalogue.relative_to(root)}: {case} has no test/procedure reference; "
+        "add coverage or a '- VT-xx: Not yet covered ...' entry"
+        for case in sorted(cases - referenced - gaps - retired)
+    ]
+    errors.extend(
+        f"{catalogue.relative_to(root)}: {case} has a test/procedure reference; "
+        "remove its stale 'Not yet covered' entry"
+        for case in sorted(gaps & referenced)
+    )
+    return errors
+
+
 def main() -> None:
     paths = (
         subprocess.check_output(["git", "ls-files", "-z"], cwd=ROOT)
@@ -275,10 +340,19 @@ def main() -> None:
     errors.extend(renders(paths))
     errors.extend(listed(paths))
     errors.extend(facts(paths))
-    errors.extend(thesis())
+    completed = ["links", "renders", "indexes", "repeated facts"]
+    if (ROOT / SYSTEM / "testing/specification-verification.md").is_file():
+        errors.extend(verification_coverage())
+        completed.append("VT references")
+    if (ROOT / "thesis-material/_build/build.py").is_file():
+        errors.extend(thesis())
+        completed.append("thesis kit")
+    elif (ROOT / "thesis-material/_build/supplemental-sources.json").is_file():
+        errors.extend(supplemental_sources())
+        completed.append("supplemental sources")
     if errors:
         raise SystemExit("\n".join(errors))
-    print("Documentation links, renders, indexes, repeated facts and thesis kit: PASS")
+    print("Documentation " + ", ".join(completed) + ": PASS")
 
 
 if __name__ == "__main__":

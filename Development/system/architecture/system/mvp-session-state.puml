@@ -1,0 +1,59 @@
+@startuml mvp_session_state
+!theme cyborg
+!pragma layout smetana
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+title MVP session and error transitions (Lung transitions optional)
+[*] --> Boot
+Boot --> Idle : software-observable startup checks pass
+Boot --> Muted : non-Wi-Fi startup check fails / Error, mute
+Idle --> Listening : Start / Heart or Lung (optional)
+Idle --> Portal : long press >= 2 s, or automatically when no Wi-Fi credentials are stored / Idle network lease, scan then open hotspot
+Portal --> Idle : verified join + save (or save warning) / 10 s result, close AP/server, retain station
+Portal --> Idle : cancel or inactivity / notice, teardown, retain station if connected
+Portal --> Listening : Start / safe setup teardown first; retain established station
+Listening --> Measuring : Heart session begins / freeze context
+Listening --> Muted : catalogue halting fault / mute
+Measuring --> Muted : catalogue halting fault / mute, invalidate
+Listening --> Idle : Stop in Lung (optional) / mute, no BPM or send
+Measuring --> Idle : Stop before 15 s / cancel, no send
+Measuring --> Analysing : Stop at or after 15 s / mute, finalize
+Analysing --> Sending : valid BPM + Wi-Fi configured + delivery prerequisites (Device id, clock, trust, endpoint)
+Analysing --> ReportingError : invalid BPM + validated error contract + Wi-Fi configured + delivery prerequisites (Device id, clock, trust, endpoint)
+Analysing --> Idle : Wi-Fi unconfigured / no send or Wi-Fi error
+Analysing --> Idle : Wi-Fi configured + delivery prerequisites fail / latch DELIVERY_NOT_POSSIBLE
+Sending --> Idle : receipt 201 / 200
+Sending --> Idle : failed after 3 retries / latch DELIVERY_FAILURE
+ReportingError --> Idle : error report received / no numeric BPM
+ReportingError --> Idle : report failed after 3 retries / latch DELIVERY_FAILURE
+note as NormalFaultIndication
+  Error latch (red LED) is independent of workflow state.
+  Several errors: LEDs show the highest priority, then the first latched.
+  Short press acknowledges where catalogue permits; no implicit retry.
+  Wi-Fi recovery does not require acknowledgement.
+  Preserve the current workflow; no implicit Start.
+end note
+Muted --> Boot : restart required [catalogue]
+Muted --> Idle : short press [catalogue permits acknowledgement]
+note right of Analysing
+  Start = Busy, visible activity.
+  No cancellation or queued Start.
+end note
+note right of Sending
+  Same Busy rule during both send paths.
+  Exclusive network lease; audio stopped.
+end note
+note bottom of Measuring
+  Reject mode/context changes with SESSION_CONTEXT_CHANGE; halt/restart per catalogue.
+  Never apply the rejected identity; invalidate halted acquisition.
+  Wi-Fi-only faults preserve functioning audio.
+  Other faults follow catalogue halt/clear rules.
+  Normal-fault indication is latched separately from workflow;
+  acknowledgement does not change an active workflow.
+end note
+note bottom of Muted
+  Non-Wi-Fi faults halt according to current catalogue.
+  Mute; invalidate incomplete work; block Start.
+  Restart-required faults cannot be cleared by short press.
+end note
+@enduml

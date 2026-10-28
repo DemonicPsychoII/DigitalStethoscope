@@ -7,12 +7,12 @@ Other documents link here instead of naming the latest decision date.
 
 | Topic | Current decision | Applied in |
 |---|---|---|
-| MVP scope and session behaviour | [11 October](mvp-decisions-2026-10-11.md), scope reduced on [14 October](mvp-decisions-2026-10-14.md) | [Product scope](../spec/product-scope.md), [detailed design](../design/interfaces-and-behavior.md#mvp-session-baseline) |
+| MVP scope and session behaviour | [11 October](mvp-decisions-2026-10-11.md), scope reduced on [14 October](mvp-decisions-2026-10-14.md) | [Product scope](../spec/product-scope.md), [detailed design](../design/system/interfaces-and-behavior.md#mvp-session-baseline) |
 | System requirements | [14 October](mvp-decisions-2026-10-14.md), changed on [15 October](mvp-decisions-2026-10-15.md) and [16 October](mvp-decisions-2026-10-16.md) | [System requirements](../requirements/system-requirements.md) |
-| Firmware layer structure | [13 October](mvp-decisions-2026-10-13.md) | [Application README](../coding/app/README.md), [detailed design](../design/interfaces-and-behavior.md#firmware-layer-structure) |
-| FHIR delivery, Device and patient link | [12 October](mvp-decisions-2026-10-12.md) write contract, [15 October](mvp-decisions-2026-10-15.md) Device registration without readback, [16 October](mvp-decisions-2026-10-16.md) patient pass-through | [Detailed design](../design/interfaces-and-behavior.md#delivery-clock-and-configuration), [parameters](../design/parameters.md) |
-| Wi-Fi setup, portal and recovery | [19 October](mvp-decisions-2026-10-19.md); [18 October](mvp-decisions-2026-10-18.md) is the discussion record | [Detailed design](../design/interfaces-and-behavior.md#wi-fi-setup-and-recovery), [Wi-Fi views](../architecture/README.md) |
-| LED and error feedback | [19 October](mvp-decisions-2026-10-19.md) catalogue | [Detailed design](../design/interfaces-and-behavior.md#led-indication-and-error-handling), [LED standards](../design/led-indication-standards.md) |
+| Firmware layer structure | [13 October](mvp-decisions-2026-10-13.md) | [Application README](../coding/app/README.md), [detailed design](../design/system/interfaces-and-behavior.md#firmware-layer-structure) |
+| FHIR delivery, Device and patient link | [12 October](mvp-decisions-2026-10-12.md) write contract, [15 October](mvp-decisions-2026-10-15.md) Device registration without readback, [16 October record with 27 October clarification](mvp-decisions-2026-10-16.md): reuse only the patient reference supplied with a server-requested examination, otherwise omit it | Applied in [detailed design](../design/system/interfaces-and-behavior.md#delivery-clock-and-configuration), [parameters](../design/system/parameters.md) and [REQ-09](../requirements/system-requirements.md). The server-request mechanism remains an open integration design input |
+| Wi-Fi setup, portal and recovery | [19 October](mvp-decisions-2026-10-19.md); [18 October](mvp-decisions-2026-10-18.md) is the discussion record | [Detailed design](../design/COMMUNICATION/interfaces-and-behavior.md#wi-fi-setup-and-recovery), [Wi-Fi views](../architecture/README.md) |
+| LED and error feedback | [19 October](mvp-decisions-2026-10-19.md) catalogue | [Detailed design](../design/FEEDBACK/catalogue.md), [LED standards](../design/FEEDBACK/led-indication-standards.md) |
 | Schedule | [14 October](mvp-decisions-2026-10-14.md); Jira holds current dates | [Implementation timeline](mvp-implementation-timeline.md) |
 
 ## Decision log
@@ -41,4 +41,5 @@ Other planning records: [implementation readiness](implementation-readiness.md),
 [implementation timeline](mvp-implementation-timeline.md) and
 [framework and transport evaluation](framework-and-transport-evaluation.md).
 
-Created by Claude-Opus-5.5 on behalf of Nico running in T3 Code through Claude Code.
+
+[MVP security risk acceptance and known limitation](security-risk-acceptance.md) records the owner decision and post-MVP TICKET-198/199 follow-up.

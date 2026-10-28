@@ -1,28 +1,18 @@
-# Digital stethoscope — pre-implementation
+# Digital stethoscope development
 
-1. [Product scope, sources and terminology](spec/product-scope.md)
-2. [Use-case flows](requirements/use-cases.md)
-3. [System requirements and how each is tested](requirements/system-requirements.md)
-4. [Architecture diagrams, source fidelity and decisions](architecture/README.md)
-5. [Requirements overview](requirements/README.md)
-6. [Interface contracts, design constraints](design/interfaces-and-behavior.md) and [design parameters](design/parameters.md)
-7. [Verification and evidence](testing/specification-verification.md)
-8. [Review decisions and implementation readiness](planning/implementation-readiness.md)
-9. [Current baseline and decision log](planning/README.md)
+[Application development process](process/README.md) explains the V-model, component PRs, generated tests and human review.
 
-The linked documents distinguish source-backed behavior, proposed parameters and
-open choices. The evaluation firmware is a separate implementation.
+## Product documents
 
-Historical draft checks are recorded in
-[documentation validation](testing/evidence/2026-10-06-draft-validation.md);
-device verification remains planned.
+1. Scope and system boundary
+2. Operator flows and system requirements
+3. Architecture: system, WIFI and PORTAL
+4. Detailed design and parameters
+5. Application implementation
 
-**Editing:** requirements must stay testable by Nico on the device ([14 October decisions](planning/mvp-decisions-2026-10-14.md));
-design decisions belong in `design/`. Edit `.puml` diagrams;
-original board snapshots remain immutable provenance.
-New decisions follow [recording a new decision](planning/README.md#recording-a-new-decision).
-State implementation status and test results only in dated evidence records, not in
-descriptive documents. Before pushing documentation, run
-`python Development/system/testing/ci/validate_docs.py` from the repository root.
+## Verification
 
-Updated by Claude-Opus-5.5 on behalf of Nico running in T3 Code through Claude Code.
+- [Verification operations](testing/ci/OPERATIONS.md): test levels, execution, setup and evidence.
+- Verification cases: application checks and recorded results.
+
+Implementation readiness retains the design decisions and open choices. Documents distinguish agreed behavior, proposed parameters and executed evidence.

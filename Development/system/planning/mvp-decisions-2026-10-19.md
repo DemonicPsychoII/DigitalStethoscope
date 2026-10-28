@@ -50,7 +50,7 @@ Nico accepted the conflict-resolution suggestions with these explicit directions
    work during listening. Defer link recovery until Idle. Association does not prove
    zero background traffic or absence of audio interference: target evidence is required.
    Serialize late join callbacks against cancellation and finish atomic settings writes safely.
-7. **Feedback:** the current [catalogue](../design/interfaces-and-behavior.md#status-and-error-catalogue)
+7. **Feedback:** the current [catalogue](../design/FEEDBACK/catalogue.md#status-and-error-catalogue)
    supersedes the old light table and generic no-blink-code rule. RGB shows context:
    white device, green Idle, cyan audio, violet Wi-Fi, blue FHIR. The red button LED
    uses counted codes at 2 Hz with pauses; serial logs retain the detailed cause.
@@ -100,11 +100,10 @@ no push, pull request or merge is requested.
 
 Recorded by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.
 
-
 ## Catalogue review — later on 19 October 2026
 
 Further decisions given by Nico in the same conversation after the review of the catalogue against
-standards. Standards research and sources: [LED indication standards](../design/led-indication-standards.md).
+standards. Standards research and sources: [LED indication standards](../design/FEEDBACK/led-indication-standards.md).
 These items take precedence over items 7 and 9 above where they differ.
 
 1. **Catalogue applies as it is.** The RGB LED keeps the context colour; the red button LED shows the
@@ -134,7 +133,7 @@ These items take precedence over items 7 and 9 above where they differ.
     stays as it is. On DevKitC-1 v1.1 the RGB LED pin is shared with the BPM switch contact, so the fitted
     board revision must be confirmed before the RGB LED driver is enabled. This stays open for later.
 
-The repository page snapshot `architecture/wifi-workflows.html` carries the updated table. It is
+The repository page snapshot `architecture/COMMUNICATION/setup-workflows.html` carries the updated table. It is
 published as Pages revision 13 and was checked in the browser (table, diagrams, watermark):
 https://homelab-server.tail15fafc.ts.net:8092/p/stethoscope-wifi-workflows/v/13/
 

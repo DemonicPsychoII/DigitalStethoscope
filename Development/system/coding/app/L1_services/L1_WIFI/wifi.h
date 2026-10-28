@@ -6,11 +6,12 @@
 /** @defgroup L1_WIFI WIFI
  * @{
  * @file
- * L1 adapter over the Zephyr Wi-Fi driver: station, setup hotspot with
- * DHCP server, and the stored network credentials.
+ * L1 adapter over the Zephyr Wi-Fi driver: station and setup hotspot
+ * with DHCP server.
  *
  * Every function does one step and returns its result. Attempt counts,
  * delays and the order of steps belong to L2_COMMUNICATION.
+ * Implements Development/system/design/WIFI/interfaces-and-behavior.md.
  */
 
 #ifndef L1_WIFI_H
@@ -30,13 +31,15 @@
 /* DEFINES                                                             */
 /***********************************************************************/
 
-#define WIFI_HOTSPOT_ADDRESS "192.168.4.1" /**< Device address in the setup hotspot; the page is served here. */
+#define WIFI_HOTSPOT_ADDRESS "192.168.4.1"               /**< Device address in the setup hotspot; the page is served here. */
+#define WIFI_SCAN_LIST_SIZE  (16)                        /**< Strongest distinct networks kept per scan. */
+#define WIFI_ADDRESS_SIZE    (sizeof("255.255.255.255")) /**< Text of an IPv4 address with terminator. */
 
 /***********************************************************************/
 /* TYPES                                                               */
 /***********************************************************************/
 
-/** Network name and password, as stored in flash and entered on the setup page. */
+/** Network name and password, as entered on the setup page. */
 struct wifi_network
 {
     char name[WIFI_SSID_MAX_LEN + 1];    /**< Network name, 1 to 32 characters. */
@@ -66,37 +69,27 @@ struct wifi_scan_entry
  * @brief Initialize the Wi-Fi module.
  *
  * Register the Wi-Fi and IPv4 event callbacks. Call once, before any
- * other function of this module. An initialization failure leaves no active work.
+ * other function of this module.
  *
  * @return 0 on success, or a negative error code.
  */
 int wifi_init(void);
 
 /**
- * @brief Read the stored network from flash.
+ * @brief Check the lengths of a network name and password.
  *
- * @param[out] network Stored network.
+ * @param[in] network Network to check.
  *
- * @return 0 on success, -ENOENT if no network is stored, or a negative error code.
+ * @return True if both fit the Wi-Fi limits; an empty password means an open network.
  */
-int wifi_readSettings(struct wifi_network *network);
+bool wifi_isValidNetwork(const struct wifi_network *network);
 
 /**
- * @brief Store the network in flash.
- *
- * The previous record stays valid if the write fails.
- *
- * @param[in] network Network to store.
- *
- * @return 0 on success, or a negative error code.
- */
-int wifi_storeSettings(const struct wifi_network *network);
-
-/**
- * @brief Send a connect request for the station and return at once.
+ * @brief Drain any old disconnect and send a new station connect request.
  *
  * Wait for the result with wifi_waitForConnection(). A new request or
- * wifi_disconnect() discards late results of an earlier request.
+ * wifi_disconnect() drops late events of an earlier request. Disconnect confirmation
+ * is bounded to one second; a timeout rejects the new connect request.
  *
  * @param[in] network Network to join.
  *
@@ -107,20 +100,20 @@ int wifi_connect(const struct wifi_network *network);
 /**
  * @brief Wait for the connect result, then for an IPv4 address.
  *
- * The request stays pending after -EAGAIN, so the caller can wait in
- * short slices and check for other work in between.
+ * After -EAGAIN the request is still pending, so the caller can wait in
+ * short intervals and do other checks in between.
  *
  * @param[in] timeout Maximum time to wait in this call.
  *
- * @return 0 when online, -EAGAIN if still pending, or an error code that names the cause.
+ * @return 0 when online, -EAGAIN if still pending, or the cause of the failure.
  */
 int wifi_waitForConnection(k_timeout_t timeout);
 
 /**
  * @brief Disconnect the station and cancel a pending connect request.
  *
- * Success confirms completion, including rejection of late callbacks.
- * On error, the caller must not assume that connection work has stopped.
+ * Late events of the cancelled request are ignored. On error, the driver
+ * can still be connecting.
  *
  * @return 0 on success or if already disconnected, or a negative error code.
  */
@@ -134,20 +127,30 @@ int wifi_disconnect(void);
 bool wifi_isConnected(void);
 
 /**
+ * @brief Write the IPv4 address of the station as text, for example "10.0.0.17".
+ *
+ * @param[out] text Address text; "" on error.
+ * @param[in]  size Size of @p text, at least WIFI_ADDRESS_SIZE.
+ *
+ * @return 0 on success, -ENOTCONN if the station has no address, or -ENOSPC.
+ */
+int wifi_getAddress(char *text, size_t size);
+
+/**
  * @brief Start a scan for networks and return at once.
  *
- * Collect the result with wifi_waitForScanResult(). A new scan discards late
- * results of an earlier one. A rejected start leaves no scan pending.
+ * Collect the result with wifi_waitForScanResult(). A new scan drops late
+ * results of an earlier one.
  *
  * @return 0 if the scan started, or a negative error code.
  */
 int wifi_startScan(void);
 
 /**
- * @brief Cancel a scan and wait until the driver has stopped its work.
+ * @brief Cancel a scan and wait until the driver has stopped it.
  *
- * A zero result confirms completion and rejection of late scan callbacks.
- * Preserve an established station. On error, scanning may still be active.
+ * Late scan results are ignored. A connected station stays connected.
+ * On error, the driver can still be scanning.
  *
  * @return 0 when stopped or already idle, otherwise a negative error code.
  */
@@ -157,8 +160,8 @@ int wifi_cancelScan(void);
  * @brief Wait for the scan to finish and copy the networks found.
  *
  * Hidden and enterprise (802.1X) networks are left out. Each network name
- * is listed once. The scan stays running after -EAGAIN, so the caller can
- * wait in short slices.
+ * is listed once. After -EAGAIN the scan is still running, so the caller
+ * can wait in short intervals.
  *
  * @param[out] list      Found networks.
  * @param[in]  listSize Number of entries in @p list.
@@ -182,7 +185,7 @@ int wifi_startHotspot(void);
 /**
  * @brief Close the setup hotspot.
  *
- * Success confirms shutdown. On error, the hotspot may still be active.
+ * On error, the hotspot can still be open.
  *
  * @return 0 on success or if already closed, or a negative error code.
  */
@@ -200,7 +203,7 @@ int wifi_startDHCPServer(void);
 /**
  * @brief Stop the DHCP server of the hotspot.
  *
- * Success confirms shutdown. On error, the server may still be active.
+ * On error, the server can still be running.
  *
  * @return 0 on success or if already stopped, or a negative error code.
  */

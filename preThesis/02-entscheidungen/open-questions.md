@@ -5,7 +5,7 @@
 > Nachträge vom 2026-10-12 (Patientenzuordnung, FHIR-Schreibvertrag D08) sind im Text mit
 > „12.10.“ gekennzeichnet; der übrige Abgleich bleibt auf dem Stand vom 2026-10-07.
 > **Überholt (2026-10-15):** Die Patientenzuordnung auf dem Gerät und das Readback entfallen; siehe
-> [Entscheidungen 15. Oktober](../../Development/system/planning/mvp-decisions-2026-10-15.md).
+> Entscheidungen 15. Oktober.
 > **[x]** = durch aktuelle Quellen festgelegt; **[ ]** = noch zu entscheiden oder nachzuweisen.
 > Eine dokumentierte Architekturentscheidung ist weder eine freigegebene Implementierungsbaseline
 > noch ein bestandener Gerätetest. Die ursprünglichen Rechercheberichte wurden nicht neu recherchiert.
@@ -14,16 +14,16 @@
 
 - [Aktuelle Abgabefassung](../01-aufgabenbeschreibung/Aufgabenbeschreibung-Abgabe.md): Thesis-Scope,
   Evaluation und Aufwand. Sie hat Vorrang vor den älteren Q1–Q3-/AP-Fassungen.
-- [Produktscope und Quellenregister](../../Development/system/spec/product-scope.md): S04 für
+- Produktscope und Quellenregister: S04 für
   Softwareentscheidungen, S05 für Scope, S07 für konkrete Verdrahtung.
-- [Architektur](../../Development/system/architecture/README.md): ausgewählte Architektur und
+- Architektur: ausgewählte Architektur und
   Abgrenzung zur bestehenden Evaluationsfirmware.
-- [Implementierungsbereitschaft](../../Development/system/planning/implementation-readiness.md):
+- Implementierungsbereitschaft:
   offene Entscheidungen D01–D14. Dies ist das führende Register für Detailentscheidungen;
   die folgende Übersicht ersetzt oder schließt diese D-Einträge nicht.
-- [Geplante Verifikation](../../Development/system/testing/specification-verification.md): VT-01–VT-13,
+- Geplante Verifikation: VT-01–VT-15 (VT-05 und VT-13 zurückgezogen),
   noch keine ausgeführten Produkt-Abnahmetests.
-- [Evaluationsfirmware und Signalplan](../../Development/system/coding/bringup-zephyr/README.md):
+- [Evaluationsfirmware und Signalplan](../06-bringup-zephyr/README.md):
   implementierter Bring-up-Stand und Grenzen der Hardwarebestätigung.
 
 ## 1. Wissenschaftlicher Kern und Evaluation
@@ -89,13 +89,13 @@
   Verdrahtung, nicht die später ergänzten Speed-/SD-Verbindungen oder die aktuelle Firmware.
   Schalter-Kontakttabelle und Carrier-Revision prüfen. PCM5102A ist ein Line-DAC; der
   Kopfhörerverstärker liegt seit 14.10. außerhalb des Projektumfangs
-  (siehe [Entscheidungen 14.10.](../../Development/system/planning/mvp-decisions-2026-10-14.md#scope)).
+  (siehe Entscheidungen 14.10.).
 - [ ] **Filter-/BPM-/Replay-Parameter (D03–D06):** Bring-up nutzt 40–800 Hz bzw. 25–150 Hz,
   20 ms Crossfade, 8 s BPM-Fenster/1 s Update, 30–200 BPM und 5 s Clip mit WSOLA.
   Diese Werte sind Kandidaten, keine akzeptierten Thesis-Grenzen. Vorgeschlagene 30 s Sitzung,
   Fehler max(5 BPM, 10 %), Qualität ≥0,6 und Coverage ≥80 % ebenfalls noch offen.
   Periodizitätsqualität ist keine klinische Konfidenz.
-- [ ] **Latenz und Last (D10/VT-02/VT-13):** 16 kHz und 128 Frames ergeben 8 ms Blöcke;
+- [ ] **Latenz und Last (D10/VT-02; VT-13 zurückgezogen):** 16 kHz und 128 Frames ergeben 8 ms Blöcke;
   dies ist keine gemessene End-to-End-Latenz. Board-Ziele 8 ms/≤4 ms und Soak-Dauer sind im
   Detailentwurf zu prüfen. Frühere <30/<10-ms-Notizen sind nicht bestätigte Akzeptanzgrenzen.
   DMA-interner SRAM, PSRAM-Clip/Fixtures, Queue-/Heap-Margen und SPI-Contention messen.
@@ -116,10 +116,10 @@
   ~~**Patient entschieden (12.10.):** Auswahl über das Hotspot-Portal des Geräts, gespeichert in
   `Device.patient` auf dem FHIR-Server.~~ **Überholt (15.10.):** Das Gerät sendet nur mit seiner
   gespeicherten Device-ID und ohne Patient. Ein getrennter Server-Workflow außerhalb des MVP ordnet
-  Gerät und Messdaten dem Patienten zu; siehe [Entscheidungen 15. Oktober](../../Development/system/planning/mvp-decisions-2026-10-15.md).
+  Gerät und Messdaten dem Patienten zu; siehe Entscheidungen 15. Oktober.
   **Ergänzt (16.10.):** Hat der Server dem Gerät schon einen Patienten zugeordnet, übernimmt das Gerät
   ihn in die Observation. Das Gerät wählt nie selbst einen Patienten aus; siehe
-  [Entscheidungen 16. Oktober](../../Development/system/planning/mvp-decisions-2026-10-16.md).
+  Entscheidungen 16. Oktober.
 - [x] **Secrets außerhalb Git:** Echte Zugangsdaten ausschließlich lokal konfigurieren;
   Beispiele verwenden nicht geheime Platzhalter. Die frühere Hardcoding-Notiz ist überholt.
 - [x] **Bring-up offline als Default:** Optionaler Network-Build startet ohne automatische
@@ -142,8 +142,6 @@
   Aufgabenbeschreibung ist keine Freigabe aller späteren Anforderungen und Zahlenwerte.
   Offene D-/Parameter-Einträge vor Implementierungsabnahme klären, danach die betroffenen
   Verifikationsfälle mit tatsächlicher Evidenz dokumentieren.
-
-Updated by Claude-Opus-5.5 on behalf of Nico running in T3 Code through Claude Code.
 
 ## Historische Recherche und Originalannotation (August 2026)
 
