@@ -17,7 +17,9 @@
  * samples/net/wifi/apsta_mode.
  */
 
-/* INCLUDES */
+/***********************************************************************/
+/* INCLUDES                                                            */
+/***********************************************************************/
 
 #include "wifi.h"
 
@@ -36,7 +38,9 @@
 #include <zephyr/net/wifi_mgmt.h>
 #include <zephyr/sys/printk.h>
 
-/* DEFINES */
+/***********************************************************************/
+/* DEFINES                                                             */
+/***********************************************************************/
 
 #define WIFI_EVENT_DISCONNECTED BIT(3) /**< Wait for terminal disconnect confirmation; confirmation or the caller's deadline ends the wait. */
 
@@ -54,7 +58,25 @@
 #define WIFI_HOTSPOT_POOL_START (10)                    /**< Last address byte of the first DHCP lease. */
 #define WIFI_HOTSPOT_NAME_SIZE  (sizeof("Stetho-XXXX")) /**< Hotspot name with the last two MAC bytes. */
 
-/* LOCAL VARIABLES */
+/***********************************************************************/
+/* TYPES                                                               */
+/***********************************************************************/
+
+/***********************************************************************/
+/* GLOBAL CONSTANTS                                                    */
+/***********************************************************************/
+
+/***********************************************************************/
+/* LOCAL CONSTANTS                                                     */
+/***********************************************************************/
+
+/***********************************************************************/
+/* GLOBAL VARIABLES                                                    */
+/***********************************************************************/
+
+/***********************************************************************/
+/* LOCAL VARIABLES                                                     */
+/***********************************************************************/
 
 static struct net_if *wifi_StationInterface;                      /**< Joins the clinic network. */
 static struct net_if *wifi_HotspotInterface;                      /**< Serves the setup hotspot; NULL without AP support. */
@@ -73,7 +95,9 @@ static atomic_t wifi_ConnectionIsRequested; /**< Connect and IPv4 events belong 
 
 K_EVENT_DEFINE(wifi_Events); /**< WIFI_EVENT_* bits shared with the waiting thread. */
 
-/* LOCAL FUNCTION PROTOTYPES */
+/***********************************************************************/
+/* LOCAL FUNCTION PROTOTYPES                                           */
+/***********************************************************************/
 
 /**
  * @brief Handle Wi-Fi and IPv4 events of the station interface.
@@ -115,11 +139,21 @@ static bool wifi_isSupportedSecurity(enum wifi_security_type security);
 /** Roll back a partially started hotspot immediately; L2 retains responsibility for failed stops. */
 static void wifi_rollbackHotspot(void);
 
-/* MACROS */
+/***********************************************************************/
+/* MACROS                                                              */
+/***********************************************************************/
 
 LOG_MODULE_REGISTER(wifi, LOG_LEVEL_INF);
 
-/* GLOBAL FUNCTIONS */
+/***********************************************************************/
+/* GLOBAL FUNCTIONS                                                    */
+/***********************************************************************/
+
+/** Wait for the event mask selected by the owning operation. */
+static uint32_t wifi_waitForEvents(uint32_t eventMask, k_timeout_t timeout)
+{
+    return k_event_wait(&wifi_Events, eventMask, false, timeout);
+}
 
 int wifi_init(void)
 {
@@ -221,7 +255,7 @@ int wifi_connect(const struct wifi_network *network)
 int wifi_waitForConnection(k_timeout_t timeout)
 {
     int result = -EAGAIN; /**< Operation is still pending; try again. */
-    uint32_t events = k_event_wait(&wifi_Events, (WIFI_EVENT_CONNECTED | WIFI_EVENT_FAILED), false, timeout);
+    uint32_t events = wifi_waitForEvents((WIFI_EVENT_CONNECTED | WIFI_EVENT_FAILED), timeout);
 
     if((events & WIFI_EVENT_CONNECTED) != 0U)
     {
@@ -230,6 +264,10 @@ int wifi_waitForConnection(k_timeout_t timeout)
     else if((events & WIFI_EVENT_FAILED) != 0U)
     {
         result = (int)atomic_get(&wifi_FailureCause);
+    }
+    else
+    {
+        /* Still pending. */
     }
 
     return result;
@@ -247,7 +285,7 @@ int wifi_disconnect(void)
         result = net_mgmt(NET_REQUEST_WIFI_DISCONNECT, wifi_StationInterface, NULL, 0);
         if(result == 0)
         {
-            if(k_event_wait(&wifi_Events, WIFI_EVENT_DISCONNECTED, false, K_MSEC(1000)) == 0U)
+            if(wifi_waitForEvents(WIFI_EVENT_DISCONNECTED, K_MSEC(1000)) == 0U)
             {
                 result = -ETIMEDOUT; /**< Operation exceeded its wait deadline. */
             }
@@ -363,7 +401,7 @@ int wifi_cancelScan(void)
     k_spin_unlock(&wifi_ScanLock, key);
 
     /* The ESP32 driver cannot abort a scan, so wait for its end. */
-    if(isRunning && (k_event_wait(&wifi_Events, WIFI_EVENT_SCAN_DONE, false, K_MSEC(WIFI_SCAN_CANCEL_TIMEOUT_MS)) == 0U))
+    if(isRunning && (wifi_waitForEvents(WIFI_EVENT_SCAN_DONE, K_MSEC(WIFI_SCAN_CANCEL_TIMEOUT_MS)) == 0U))
     {
         LOG_ERR("Scan did not stop within %d ms", WIFI_SCAN_CANCEL_TIMEOUT_MS);
 
@@ -377,7 +415,7 @@ int wifi_waitForScanResult(struct wifi_scan_entry *list, size_t listSize, k_time
 {
     int result = -EAGAIN; /**< Operation is still pending; try again. */
 
-    if(k_event_wait(&wifi_Events, WIFI_EVENT_SCAN_DONE, false, timeout) != 0U)
+    if(wifi_waitForEvents(WIFI_EVENT_SCAN_DONE, timeout) != 0U)
     {
         k_spinlock_key_t key = k_spin_lock(&wifi_ScanLock);
         size_t count = MIN(wifi_ScanCount, listSize);
@@ -544,7 +582,9 @@ int wifi_stopDHCPServer(void)
     return result;
 }
 
-/* LOCAL FUNCTIONS */
+/***********************************************************************/
+/* LOCAL FUNCTIONS                                                     */
+/***********************************************************************/
 
 static void wifi_rollbackHotspot(void)
 {
@@ -732,7 +772,20 @@ static void wifi_addScanResult(const struct wifi_scan_result *result)
 
 static bool wifi_isSupportedSecurity(enum wifi_security_type security)
 {
-    return (security == WIFI_SECURITY_TYPE_NONE) || (security == WIFI_SECURITY_TYPE_PSK);
+    bool isSupported = false;
+
+    switch(security)
+    {
+    case WIFI_SECURITY_TYPE_NONE:
+    case WIFI_SECURITY_TYPE_PSK:
+        isSupported = true;
+        break;
+
+    default:
+        break;
+    }
+
+    return isSupported;
 }
 
 /** @} */
