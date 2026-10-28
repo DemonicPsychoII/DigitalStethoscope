@@ -4,7 +4,7 @@
 
 This Architecture-stage proposal refines the existing [system allocation](../system/software-components.puml) and [delivery/clock boundary](../../design/system/interfaces-and-behavior.md#delivery-clock-and-configuration). Its requirements basis is REQ-09, REQ-11 and REQ-13. It defines responsibilities and dependencies; clock interfaces, synchronization timing, accuracy and freshness belong to detailed design.
 
-The existing allocation places time operations in L1_WIFI and orchestration in L2_COMMUNICATION. The additional responsibilities below are proposed, not an accepted implementation baseline. The [current decision baseline](../../planning/README.md#current-baseline) identifies accepted project decisions.
+The existing allocation places time operations in L1_WIFI and orchestration in L2_COMMUNICATION. Nico agreed the preparation flow below during architecture grilling on 28 October 2026, recorded in [PR #78](https://github.com/DemonicPsychoII/DigitalStethoscope/pull/78). This architecture agreement does not approve detailed interfaces or clock trust. The [current decision baseline](../../planning/README.md#current-baseline) identifies earlier project decisions.
 
 ## Responsibilities and dependencies
 
@@ -19,6 +19,12 @@ The existing allocation places time operations in L1_WIFI and orchestration in L
 Dependency direction: CONTROL grants the lease to COMMUNICATION; COMMUNICATION requests time operations from WIFI; WIFI uses Zephyr networking to reach the external time server. Measurement mapping and TLS readiness depend on the clock policy rather than on station association alone. This is a project allocation, not a new independently scheduled component.
 
 Active exchanges remain outside live listening. Offline listening remains available when time preparation fails. Wi-Fi setup succeeds on its own address/persistence criteria; SNTP success is not an added setup prerequisite. Existing [network lease rules](../../design/system/interfaces-and-behavior.md#delivery-clock-and-configuration) continue to apply.
+
+## Agreed preparation flow
+
+After joining the configured network, COMMUNICATION automatically requests time synchronization while Idle. A failed exchange or unacceptable time basis blocks server readiness, not Wi-Fi setup completion or offline listening. After acceptable clock preparation, secure transport preparation and Device registration can proceed while Idle; Stop must not be the default trigger for all preparation from scratch.
+
+COMMUNICATION tracks network access, acceptable clock, verified transport and Device registration separately. A connected station or retained TLS connection alone does not establish delivery readiness. Clock readiness remains conditional on the policy that Design must define; synchronization success is not trust acceptance.
 
 ## Proposed trust boundary and open decisions
 
