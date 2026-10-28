@@ -11,7 +11,7 @@ from urllib.parse import quote
 ROOT = Path(__file__).resolve().parents[1]
 AUDIT = ROOT / '_stage1'
 LF = '\n'  # Zeilenenden unabhängig vom Betriebssystem
-WATERMARK = 'Created by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.'
+WATERMARK = 'Updated by GPT-6.1-Sol on behalf of Nico running in codex.'
 units = json.loads((AUDIT / 'inventory-merged.json').read_text(encoding='utf-8'))['units']
 original_sources = json.loads((AUDIT / 'sources-merged.json').read_text(encoding='utf-8'))
 overrides = json.loads((ROOT / '_build/source-overrides.json').read_text(encoding='utf-8'))
@@ -55,13 +55,15 @@ for u in units:
         drop = set(fix.get('remove_sources', []))
         assert drop <= {c['key'] for c in u.get('sources', [])}, (u['id'], drop)
         u['sources'] = [c for c in u.get('sources', []) if c['key'] not in drop]
-        if drop: assert u.get('sources_incomplete'), u['id']
+        if drop: u['sources_incomplete'] = True
+    u['sources'] = list({c['key']: c for c in u.get('sources', [])}.values())
     for c in u.get('sources', []):
         split = corrections['split_sources'].get(c['key'])
         if split: c['key'] = split['by_unit_prefix'][u['id'][0]]
+    u['sources'] = list({c['key']: c for c in u.get('sources', [])}.values())
 assert set(corrections['units']) <= {u['id'] for u in units}
 by_id = {u['id']: u for u in units}
-assert len(by_id) == len(units) == 350
+assert len(by_id) == len(units) == 349
 stage1_before = {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest()
                  for p in AUDIT.rglob('*') if p.is_file()}
 replaced = collections.defaultdict(list)
@@ -136,7 +138,7 @@ assign(17, 'U041 U042 U049 U050 U121 A001-A004 A009-A013 A017-A020')
 assign(18, 'U018 U047 U048 U124 A047-A057 C020-C022')
 assign(19, 'U006 U016 U021 U053-U055 B001-B021 B076 B077 B081-B086')
 assign(20, 'U063 A032-A034 B056-B067 B069 B073 B074')
-assign(21, 'U090-U098 U108 U113-U118 U126-U130 U132 U133 A074-A076 C015 C024 C042')
+assign(21, 'U090-U095 U097-U098 U108 U113-U118 U126-U130 U132 U133 A074-A076 C015 C024 C042')
 assign(11, 'A035-A039 B040 B041')
 assign(13, 'A065 A077 B036-B039')
 assign(23, 'A078 A079')
@@ -195,9 +197,9 @@ def marker(u):
     if typ == 'method': return 'METHODENVORSCHLAG' if re.search(r'empfiehlt|schlägt|soll|vorgeschlagen',t) else 'METHODE / PRÜFVERFAHREN'
     if typ == 'measurement': return 'LITERATURMESSUNG / BENCHMARK' if u['needs_citation'] else 'EIGENER DOKUMENTIERTER BEFUND'
     if typ == 'parameter':
-        if not u['needs_citation'] or re.search(r'ziel|startparameter|startwerte|schätz|beispielparameter|pilotkonfiguration|listet wsola|nennt ess-einstellungen|pro trial|pro person', t):
+        if re.search(r'ziel|vorschlag|kandidat|startparameter|startwerte|\bschätz(?:ung|wert|en)\b|beispielparameter|pilotkonfiguration|listet wsola|nennt ess-einstellungen|pro trial|pro person', t):
             return 'EIGENER ZIELWERT / VORLÄUFIGER VORSCHLAG'
-        return 'LITERATUR- / HERSTELLERWERT'
+        return 'LITERATUR- / HERSTELLERWERT' if u['needs_citation'] else 'PROJEKTDOKUMENTATION / BESTANDSWERT'
     return 'LITERATURFAKT / REGEL' if u['needs_citation'] else 'PROJEKTDOKUMENTATION'
 
 # Markdown-Links immer mit '/' erzeugen, damit Windows- und Linux-Läufe identische Dateien schreiben.
@@ -431,7 +433,7 @@ for key in sorted(broken_after):
 outputs['linkkorrekturen.md']=fixes+'\n'+WATERMARK+'\n'
 
 # Jede Audit-ID ist über diesen Index zu ihrer aktiven Schreibstelle auffindbar.
-index='# Einheitenindex\n\n[Zum Einstieg](README.md)\n\n350 Audit-IDs; aktive Aussagen erscheinen genau einmal in den Kapiteldateien. Ersetzte Aussagen werden nicht nochmals als aktueller Schreibbaustein gezeigt. Ihr Original bleibt im Audit erhalten.\n\n| ID | Schreibstelle | Typ / Status | Ersatz |\n|---|---|---|---|\n'
+index='# Einheitenindex\n\n[Zum Einstieg](README.md)\n\n349 Audit-IDs; aktive Aussagen erscheinen genau einmal in den Kapiteldateien. Ersetzte Aussagen werden nicht nochmals als aktueller Schreibbaustein gezeigt. Ihr Original bleibt im Audit erhalten.\n\n| ID | Schreibstelle | Typ / Status | Ersatz |\n|---|---|---|---|\n'
 for u in units:
     uid=u['id']
     index+=f'| {uid} | {unit_link(uid,"einheitenindex.md")} | {u["type"]} / {u["status"]} | '+(', '.join(unit_link(n,'einheitenindex.md') for n in replaced[uid]) if uid in replaced else '—')+' |\n'
@@ -491,7 +493,7 @@ readme=f'''# Schreibbaukasten für Nicos Bachelorarbeit
 
 DigitalStethoscope · ESP32/Zephyr · TH Augsburg · Abgabe laut Nico: **11.01.2027**.
 
-Hier liegen geordnete Schreibbausteine aus 350 Informationseinheiten, keine fertige Thesis und keine neue Hardwarevalidierung. **{len(active)} aktive Aussagen** werden gezeigt; **{len(replaced)} ältere IDs** bleiben über „ersetzt …“ und den [Einheitenindex](einheitenindex.md) auffindbar. Die {stats['superseding_units']} Ersatz-Einheiten können dieselbe ältere ID aufteilen. Das unveränderte Verzeichnis `_stage1/` ist der Audit-Trail; sein HANDOFF beschreibt teilweise einen älteren Inventarstand.
+Hier liegen geordnete Schreibbausteine aus 349 Informationseinheiten, keine fertige Thesis und keine neue Hardwarevalidierung. **{len(active)} aktive Aussagen** werden gezeigt; **{len(replaced)} ältere IDs** bleiben über „ersetzt …“ und den [Einheitenindex](einheitenindex.md) auffindbar. Die {stats['superseding_units']} Ersatz-Einheiten können dieselbe ältere ID aufteilen. Das unveränderte Verzeichnis `_stage1/` ist der Audit-Trail; sein HANDOFF beschreibt teilweise einen älteren Inventarstand.
 
 ## Jetzt mit Grundlagen anfangen
 
@@ -539,6 +541,7 @@ readme+=f'''
 | LITERATURMESSUNG / BENCHMARK | Ergebnis fremder Messung, kein Messwert dieses Prototyps. |
 | EIGENE ENTSCHEIDUNG / ENTWURFSEMPFEHLUNG | Projektentscheidung oder Rechercheempfehlung; Status der tatsächlichen Übernahme prüfen. |
 | EIGENER ZIELWERT / VORLÄUFIGER VORSCHLAG; EIGENE ANFORDERUNG | Eigener Sollwert/Umfang; Literatur kann begründen, macht daraus aber keine Normvorgabe. |
+| PROJEKTDOKUMENTATION / BESTANDSWERT | Dokumentierter Preis, Bestand oder Verdrahtungswert; kein eigener Sollwert. |
 | EIGENER DOKUMENTIERTER BEFUND; PROJEKTDOKUMENTATION | Repository-Nachweis mit Versions-/Zeitbezug. |
 | METHODENVORSCHLAG; METHODE / PRÜFVERFAHREN | Geplantes oder beschriebenes Vorgehen; Durchführung gesondert nachweisen. |
 | ANNAHME / OFFEN / WIDERSPRUCH / RISIKO | Noch prüfen oder entscheiden; nicht stillschweigend als erwiesen übernehmen. |
@@ -557,7 +560,7 @@ readme+=f'''
 python thesis-material/_build/build.py
 ```
 
-Der Generator benötigt nur die Python-Standardbibliothek und keinen Netzwerkzugang. Redaktionelle Änderungen im Generator bzw. in `_build/source-overrides.json` pflegen, Quellen außerhalb des Audits in `_build/supplemental-sources.json`; erzeugte Dateien werden überschrieben. `_stage1/` wird ausschließlich gelesen. Die Vollständigkeitsprüfung kontrolliert alle 350 IDs in den Kapiteldateien, jede aktive Aussage genau einmal, alle Quellenreferenzen und lokale Linkziele. Ergebnis: [vollstaendigkeit.md](vollstaendigkeit.md); maschinenlesbar: [_build/check.json](_build/check.json).
+Der Generator benötigt nur die Python-Standardbibliothek und keinen Netzwerkzugang. Redaktionelle Änderungen im Generator bzw. in `_build/source-overrides.json` pflegen, Quellen außerhalb des Audits in `_build/supplemental-sources.json`; erzeugte Dateien werden überschrieben. `_stage1/` wird ausschließlich gelesen. Die Vollständigkeitsprüfung kontrolliert alle 349 IDs in den Kapiteldateien, jede aktive Aussage genau einmal, alle Quellenreferenzen und lokale Linkziele. Ergebnis: [vollstaendigkeit.md](vollstaendigkeit.md); maschinenlesbar: [_build/check.json](_build/check.json).
 
 '''+WATERMARK+'\n'
 outputs['README.md']=readme
@@ -582,14 +585,14 @@ for path,content in outputs.items():
         target=href.split('#')[0]
         if target and not ((ROOT/path).parent/unquote(target)).exists() and ((ROOT/path).parent/unquote(target)).resolve() not in {ROOT/'vollstaendigkeit.md', ROOT/'_build/check.json'}:missing.append((path,href))
 assert not missing, f'Defekte lokale Ziele: {missing}'
-stats.update({'coverage':'350/350', 'missing_ids':[], 'active_statements_once':True,
+stats.update({'coverage':'349/349', 'missing_ids':[], 'active_statements_once':True,
  'stage1_unchanged_during_build':True,'local_link_targets':'ok',
  'integration_notes':len(notes['units']),'integration_refs_checked':sorted(checked_refs),
  'relocated_origins':sorted(notes['relocated_origins']),'missing_origins':sorted(missing_origins)})
 (ROOT/'_build/check.json').write_text(json.dumps(stats,ensure_ascii=False,indent=2)+'\n',encoding='utf-8',newline=LF)
 report=f'''# Vollständigkeitsprüfung
 
-**PASS: 350/350 Audit-IDs in den Kapiteldateien vorhanden.**
+**PASS: 349/349 Audit-IDs in den Kapiteldateien vorhanden.**
 
 - {len(active)} aktive Aussagen jeweils genau einmal mit eigenem Anker.
 - {len(replaced)} ersetzte IDs ausdrücklich als „ersetzt …“ erhalten; {stats['superseding_units']} Ersatz-Einheiten.

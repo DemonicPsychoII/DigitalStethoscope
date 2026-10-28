@@ -18,6 +18,8 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
+from build_support import RELEASE_COMPONENTS
+
 PROJECT = "Digital Stethoscope"
 COMMIT = re.compile(r"[0-9a-f]{40}")
 # Matches the CMake check on STETHO_BUILD_ID; anything else becomes "-".
@@ -36,7 +38,7 @@ class Identity:
     branch: str | None
 
     def version(self, profile: str) -> str:
-        """e.g. 'pr-12 1a2b3c4d5e6f+merge qc 20261002T031705Z'."""
+        """e.g. 'pr-12 1a2b3c4d5e6f+merge application 20261002T031705Z'."""
         commit = self.commit[:12]
         commit += "+merge" if self.merge_commit else ""
         commit += "-dirty" if self.dirty else ""
@@ -82,6 +84,8 @@ def stage(
     build: Identity, outputs: list[tuple[str, Path]], target: Path, board: str
 ) -> dict:
     """Copy each profile image under a descriptive name and write manifest.json."""
+    if [profile for profile, _ in outputs] != list(RELEASE_COMPONENTS):
+        raise ValueError("release requires the application profile only")
     shutil.rmtree(target, ignore_errors=True)
     target.mkdir(parents=True)
     slug = UNSAFE.sub("-", build.channel).replace("/", "-")[:48]
@@ -93,6 +97,7 @@ def stage(
             {
                 "name": name,
                 "profile": profile,
+                "component": RELEASE_COMPONENTS[profile],
                 "version": build.version(profile),
                 "sha256": hashlib.sha256((target / name).read_bytes()).hexdigest(),
             }

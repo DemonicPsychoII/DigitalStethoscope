@@ -6,81 +6,15 @@
 /** @addtogroup L1_WIFI
  * @{
  * @file
- * Implementation of the WIFI module: one Wi-Fi step per function.
+ * Implementation of the WIFI module.
  *
- * Role in the workflow (architecture/wifi-flow.puml): L2_COMMUNICATION
- * decides order, attempts and delays; this module does one step and
- * returns its result:
- * - Boot: wifi_readSettings(), then wifi_connect() and wifi_waitForConnection().
- * - Setup: wifi_startScan() and wifi_waitForScanResult(), wifi_startHotspot() and
- *   wifi_startDHCPServer(); after a join, wifi_storeSettings().
- * - Idle: wifi_isConnected() for the link check.
- * - Close: wifi_stopDHCPServer(), wifi_stopHotspot(), wifi_disconnect().
- * The wait functions return -EAGAIN while a request runs, so L2 can wait
- * in short slices and still react to Start. A new request discards late
- * results of an earlier one.
+ * Each function does one step; L2_COMMUNICATION decides the order, the
+ * attempts and the delays (see architecture/WIFI/wifi-flow.puml). The driver
+ * reports its results as net_mgmt events. The event handler only records
+ * them, and the wait functions hand them to the caller.
  *
- * Status: implemented, not yet tested on the board.
- *
- * Coding rules: one return per function (MISRA C:2012 Rule 15.5); unused
- * return values are cast to void (Rule 17.7).
- *
- * References, in the order the features build on each other:
- *
- * 1. Join a network and wait for an IPv4 address
- *    - Wi-Fi management API (connect, disconnect, scan, access point):
- *      https://docs.zephyrproject.org/latest/services/connectivity/networking/api/wifi.html
- *    - Network management events (CONNECT_RESULT, IPV4_ADDR_ADD, callbacks):
- *      https://docs.zephyrproject.org/latest/services/connectivity/networking/api/net_mgmt.html
- *    - Kernel events, to let a thread wait for the event handler:
- *      https://docs.zephyrproject.org/latest/kernel/services/synchronization/events.html
- *    - Small complete example (connect, events, DHCP):
- *      https://github.com/craigpeacock/Zephyr_WiFi
- *    - Try every step by hand first with the Wi-Fi shell
- *      (wifi scan / connect / status, net iface):
- *      https://docs.zephyrproject.org/latest/samples/net/wifi/shell/README.html
- *
- * 2. Open a hotspot for setup while the station stays usable
- *    - Access point and station at the same time, with a DHCP server:
- *      https://docs.zephyrproject.org/latest/samples/net/wifi/apsta_mode/README.html
- *      (code: .ci-workspace/zephyr/samples/net/wifi/apsta_mode/src/main.c)
- *    - DHCPv4 server API:
- *      https://docs.zephyrproject.org/latest/services/connectivity/networking/api/dhcpv4.html
- *
- * 3. Serve a setup page: see portal.c.
- *
- * 4. Keep the chosen network across reboots
- *    - Settings subsystem (settings_save_one, static handlers):
- *      https://docs.zephyrproject.org/latest/services/storage/settings/index.html
- *    - Zephyr Memory Storage, the flash backend for settings:
- *      https://docs.zephyrproject.org/latest/services/storage/zms/zms.html
- *
- * 5. ESP32-S3 specifics
- *    - Board (flash, PSRAM, Wi-Fi node in the devicetree):
- *      https://docs.zephyrproject.org/latest/boards/espressif/esp32s3_devkitc/doc/index.html
- *    - ESP32 Wi-Fi driver; its Kconfig lists access point and station
- *      (AP/STA) mode, buffer counts and the heap choice
- *      (ESP_WIFI_HEAP_SPIRAM):
- *      https://github.com/zephyrproject-rtos/zephyr/tree/main/drivers/wifi/esp32
- *    - Espressif Wi-Fi guide (buffers, channel behavior in AP/STA mode):
- *      https://docs.espressif.com/projects/esp-idf/en/latest/esp32s3/api-guides/wifi.html
- *    - Espressif external RAM (PSRAM) guide:
- *      https://docs.espressif.com/projects/esp-idf/en/latest/esp32s3/api-guides/external-ram.html
- *    - Setting Kconfig values (prj.conf, extra .conf files):
- *      https://docs.zephyrproject.org/latest/build/kconfig/setting.html
- *
- * Where the headers for these APIs are (the pinned Zephyr tree matches the
- * build exactly; the web documentation can be newer):
- * - <zephyr/X> is .ci-workspace/zephyr/include/zephyr/X, for example
- *   <zephyr/net/wifi_mgmt.h> (connect, scan, access point, events),
- *   <zephyr/net/net_mgmt.h> (event callbacks), <zephyr/net/net_if.h>
- *   (interfaces, IPv4 address), <zephyr/net/dhcpv4_server.h> and
- *   <zephyr/settings/settings.h>.
- * - The samples named above are in .ci-workspace/zephyr/samples/.
- * - <errno.h>: the C library of the toolchain (picolibc) in
- *   .ci-workspace/zephyr-sdk-1.0.1/gnu/<target>/<target>/include/.
- * - Any other header: build-app/compile_commands.json lists every include
- *   path (-I) that the compiler searches, in order.
+ * Station and hotspot run at the same time, as in the Zephyr sample
+ * samples/net/wifi/apsta_mode.
  */
 
 /***********************************************************************/
@@ -89,6 +23,9 @@
 
 #include "wifi.h"
 
+#include <esp_wifi.h>
+
+#include <ctype.h>
 #include <errno.h>
 #include <string.h>
 
@@ -99,41 +36,31 @@
 #include <zephyr/net/net_ip.h>
 #include <zephyr/net/net_mgmt.h>
 #include <zephyr/net/wifi_mgmt.h>
-#include <zephyr/settings/settings.h>
 #include <zephyr/sys/printk.h>
 
 /***********************************************************************/
 /* DEFINES                                                             */
 /***********************************************************************/
 
-#define WIFI_EVENT_CONNECTED BIT(0) /**< Station associated and IPv4 address assigned. */
-#define WIFI_EVENT_FAILED    BIT(1) /**< Access point rejected the connect request. */
-#define WIFI_EVENT_SCAN_DONE BIT(2) /**< Scan finished; results are complete. */
+#define WIFI_EVENT_DISCONNECTED BIT(3) /**< Wait for terminal disconnect confirmation; confirmation or the caller's deadline ends the wait. */
 
-#define WIFI_SCAN_CANCEL_TIMEOUT_MS (5000) /**< Candidate: longest driver scan after a cancel. */
+#define WIFI_EVENT_CONNECTED BIT(0) /**< Wait for association and IPv4; readiness, join failure or the caller's deadline ends the wait. */
+#define WIFI_EVENT_FAILED    BIT(1) /**< Wait for a join failure, including disconnect before IPv4; failure, readiness or the caller's deadline ends the wait. */
+#define WIFI_EVENT_SCAN_DONE BIT(2) /**< Wait for scan completion or cancellation acknowledgement; SCAN_DONE or the caller's deadline ends the wait. */
 
-/* Wi-Fi (L2) and IPv4 (L3) events belong to different layers, so each needs its own callback. */
-#define WIFI_L2_EVENTS (NET_EVENT_WIFI_CONNECT_RESULT | NET_EVENT_WIFI_DISCONNECT_RESULT | NET_EVENT_WIFI_SCAN_RESULT | NET_EVENT_WIFI_SCAN_DONE)
-#define WIFI_L3_EVENTS (NET_EVENT_IPV4_ADDR_ADD | NET_EVENT_IPV4_ADDR_DEL)
+#define WIFI_SCAN_CANCEL_TIMEOUT_MS (1000) /**< Longest wait for a running scan to end. */
 
-#define WIFI_SCAN_CAPACITY      (16)                    /**< Networks kept per scan; more are dropped. */
+/* Zephyr link-layer and network-layer events use separate callback masks. */
+#define WIFI_LINK_LAYER_EVENTS    (NET_EVENT_WIFI_CONNECT_RESULT | NET_EVENT_WIFI_DISCONNECT_RESULT | NET_EVENT_WIFI_SCAN_RESULT | NET_EVENT_WIFI_SCAN_DONE)
+#define WIFI_NETWORK_LAYER_EVENTS (NET_EVENT_IPV4_ADDR_ADD | NET_EVENT_IPV4_ADDR_DEL)
+
 #define WIFI_HOTSPOT_NETMASK    "255.255.255.0"         /**< Hotspot subnet. */
 #define WIFI_HOTSPOT_POOL_START (10)                    /**< Last address byte of the first DHCP lease. */
 #define WIFI_HOTSPOT_NAME_SIZE  (sizeof("Stetho-XXXX")) /**< Hotspot name with the last two MAC bytes. */
-#define WIFI_SETTINGS_SUBTREE   "wifi"                  /**< Settings subtree of this module. */
-#define WIFI_SETTINGS_KEY       "network"               /**< Key of the stored struct wifi_network. */
-#define WIFI_SETTINGS_NAME      "wifi/network"          /**< Full settings name of the stored network. */
 
 /***********************************************************************/
 /* TYPES                                                               */
 /***********************************************************************/
-
-/** Result of wifi_readSettings(), filled by the settings callback. */
-struct wifi_settings_read
-{
-    struct wifi_network *network; /**< Destination of the stored network. */
-    int result;                   /**< 0 when read, -ENOENT until found, or an error code. */
-};
 
 /***********************************************************************/
 /* GLOBAL CONSTANTS                                                    */
@@ -151,17 +78,20 @@ struct wifi_settings_read
 /* LOCAL VARIABLES                                                     */
 /***********************************************************************/
 
-static struct net_if *wifi_StationInterface;                     /**< Joins the clinic network. */
-static struct net_if *wifi_HotspotInterface;                     /**< Serves the setup hotspot; NULL without AP support. */
-static struct net_mgmt_event_callback wifi_L2Callback;           /**< Connect, disconnect and scan events. */
-static struct net_mgmt_event_callback wifi_L3Callback;           /**< IPv4 address events. */
-static atomic_t wifi_FailureCause;                               /**< Error code of the last rejected connect request. */
-static struct wifi_scan_entry wifi_ScanList[WIFI_SCAN_CAPACITY]; /**< Written by the event handler during a scan. */
-static size_t wifi_ScanCount;                                    /**< Valid entries in wifi_ScanList. */
-static struct k_spinlock wifi_ScanLock;                          /**< Protects the scan list and the scan flags. */
-static bool wifi_ScanIsRunning;                                  /**< The driver scans until NET_EVENT_WIFI_SCAN_DONE. */
-static bool wifi_ScanResultsAreAccepted;                         /**< Results belong to the scan the caller waits for. */
-static atomic_t wifi_ConnectionIsRequested;                      /**< Connect and IPv4 events belong to a request of this module. */
+static struct net_if *wifi_StationInterface;                      /**< Joins the clinic network. */
+static struct net_if *wifi_HotspotInterface;                      /**< Serves the setup hotspot; NULL without AP support. */
+static struct net_mgmt_event_callback wifi_LinkLayerCallback;     /**< Connect, disconnect and scan events. */
+static struct net_mgmt_event_callback wifi_NetworkLayerCallback;  /**< IPv4 address events. */
+static atomic_t wifi_FailureCause;                                /**< Error code of the last rejected connect request. */
+static struct wifi_scan_entry wifi_ScanList[WIFI_SCAN_LIST_SIZE]; /**< Written by the event handler during a scan. */
+static int wifi_ScanSignalStrength[WIFI_SCAN_LIST_SIZE];
+static size_t wifi_ScanCount;            /**< Valid entries in wifi_ScanList. */
+static struct k_spinlock wifi_ScanLock;  /**< Protects the scan list and the scan flags. */
+static bool wifi_ScanIsRunning;          /**< The driver scans until NET_EVENT_WIFI_SCAN_DONE. */
+static bool wifi_ScanResultsAreAccepted; /**< Results belong to the scan the caller waits for. */
+static atomic_t wifi_DisconnectIsPending;
+static atomic_t wifi_StationIsActive;       /**< A station join is pending or the station is associated. */
+static atomic_t wifi_ConnectionIsRequested; /**< Connect and IPv4 events belong to a request of this module. */
 
 K_EVENT_DEFINE(wifi_Events); /**< WIFI_EVENT_* bits shared with the waiting thread. */
 
@@ -206,23 +136,8 @@ static void wifi_addScanResult(const struct wifi_scan_result *result);
  */
 static bool wifi_isSupportedSecurity(enum wifi_security_type security);
 
-/**
- * @brief Copy the stored network into the read context.
- *
- * Parameters as settings_load_direct_cb.
- *
- * @return 0 to continue loading, as the settings subsystem expects.
- */
-static int wifi_loadSetting(const char *key, size_t length, settings_read_cb read, void *readArgument, void *parameter);
-
-/**
- * @brief Check the lengths of a network name and password.
- *
- * @param[in] network Network to check.
- *
- * @return True if both fit the Wi-Fi limits; an empty password means an open network.
- */
-static bool wifi_isValidNetwork(const struct wifi_network *network);
+/** Roll back a partially started hotspot immediately; L2 retains responsibility for failed stops. */
+static void wifi_rollbackHotspot(void);
 
 /***********************************************************************/
 /* MACROS                                                              */
@@ -233,6 +148,12 @@ LOG_MODULE_REGISTER(wifi, LOG_LEVEL_INF);
 /***********************************************************************/
 /* GLOBAL FUNCTIONS                                                    */
 /***********************************************************************/
+
+/** Wait for the event mask selected by the owning operation. */
+static uint32_t wifi_waitForEvents(uint32_t eventMask, k_timeout_t timeout)
+{
+    return k_event_wait(&wifi_Events, eventMask, false, timeout);
+}
 
 int wifi_init(void)
 {
@@ -245,69 +166,47 @@ int wifi_init(void)
     {
         LOG_ERR("No Wi-Fi station interface");
 
-        result = -ENODEV;
+        result = -ENODEV; /**< Required device interface is unavailable. */
     }
     else
     {
-        net_mgmt_init_event_callback(&wifi_L2Callback, wifi_handleEvent, WIFI_L2_EVENTS);
-        net_mgmt_add_event_callback(&wifi_L2Callback);
-        net_mgmt_init_event_callback(&wifi_L3Callback, wifi_handleEvent, WIFI_L3_EVENTS);
-        net_mgmt_add_event_callback(&wifi_L3Callback);
+        net_mgmt_init_event_callback(&wifi_LinkLayerCallback, wifi_handleEvent, WIFI_LINK_LAYER_EVENTS);
+        net_mgmt_add_event_callback(&wifi_LinkLayerCallback);
+        net_mgmt_init_event_callback(&wifi_NetworkLayerCallback, wifi_handleEvent, WIFI_NETWORK_LAYER_EVENTS);
+        net_mgmt_add_event_callback(&wifi_NetworkLayerCallback);
+    }
 
-        result = settings_subsys_init();
+    return result;
+}
 
-        if(result != 0)
+bool wifi_isValidNetwork(const struct wifi_network *network)
+{
+    if(network == NULL)
+    {
+        return false;
+    }
+
+    size_t nameLength = strnlen(network->name, sizeof(network->name));
+    size_t passwordLength = strnlen(network->password, sizeof(network->password));
+
+    /* strnlen() equal to the buffer size means the terminator is missing. */
+    bool isNameValid = (nameLength != 0U) && (nameLength < sizeof(network->name));
+    /* Allow an open network or a passphrase within the supported size range. */
+    bool isPasswordValid = (passwordLength == 0U) || ((passwordLength >= WIFI_PSK_MIN_LEN) && (passwordLength < sizeof(network->password)));
+
+    if(passwordLength == WIFI_PSK_MAX_LEN)
+    {
+        for(size_t index = 0U; index < passwordLength; index++)
         {
-            /* Wi-Fi still works; only the stored network is unavailable. */
-            LOG_ERR("Settings init failed (%d)", result);
-
-            result = 0;
+            isPasswordValid = isPasswordValid && (isxdigit((unsigned char)network->password[index]) != 0);
         }
     }
-
-    return result;
-}
-
-int wifi_readSettings(struct wifi_network *network)
-{
-    struct wifi_settings_read read = {.network = network, .result = -ENOENT};
-
-    int result = settings_load_subtree_direct(WIFI_SETTINGS_SUBTREE, wifi_loadSetting, &read);
-
-    if(result == 0)
-    {
-        result = read.result;
-    }
-
-    if((result == 0) && !wifi_isValidNetwork(network))
-    {
-        /* A damaged record must not reach the connect request. */
-        LOG_ERR("Stored network is invalid");
-        (void)memset(network, 0, sizeof(*network));
-
-        result = -EINVAL;
-    }
-
-    return result;
-}
-
-int wifi_storeSettings(const struct wifi_network *network)
-{
-    int result = -EINVAL;
-
-    if(wifi_isValidNetwork(network))
-    {
-        /* One record for name and password: ZMS writes it as a whole, so a failed
-         * write leaves the previous record valid. */
-        result = settings_save_one(WIFI_SETTINGS_NAME, network, sizeof(*network));
-    }
-
-    return result;
+    return isNameValid && isPasswordValid;
 }
 
 int wifi_connect(const struct wifi_network *network)
 {
-    int result = -EINVAL;
+    int result = -EINVAL; /**< Invalid argument or unsupported input. */
 
     if(wifi_isValidNetwork(network))
     {
@@ -317,29 +216,35 @@ int wifi_connect(const struct wifi_network *network)
             .ssid_length = (uint8_t)strlen(network->name),
             .psk = (const uint8_t *)network->password,
             .psk_length = (uint8_t)passwordLength,
-            .security = (passwordLength != 0U) ? WIFI_SECURITY_TYPE_PSK : WIFI_SECURITY_TYPE_NONE,
+            .security = WIFI_SECURITY_TYPE_NONE,
             .band = WIFI_FREQ_BAND_2_4_GHZ, /* The ESP32-S3 radio has no 5 GHz band. */
             .channel = WIFI_CHANNEL_ANY,
             .mfp = WIFI_MFP_OPTIONAL,
             .timeout = SYS_FOREVER_MS,
         };
 
-        if(wifi_isConnected())
+        /* Driver events carry no request identity. Drain the old disconnect before rearming. */
+        result = wifi_disconnect();
+        if(result != 0)
         {
-            /* A join from the page replaces the current network; its IPv4 event must
-             * not count as the result of the new request. */
-            (void)wifi_disconnect();
+            return result;
         }
 
-        (void)k_event_clear(&wifi_Events, WIFI_EVENT_CONNECTED | WIFI_EVENT_FAILED);
+        (void)k_event_clear(&wifi_Events, (WIFI_EVENT_CONNECTED | WIFI_EVENT_FAILED));
         atomic_set(&wifi_ConnectionIsRequested, 1);
+        atomic_set(&wifi_StationIsActive, 1);
+
+        if(passwordLength != 0U)
+        {
+            parameters.security = WIFI_SECURITY_TYPE_PSK;
+        }
 
         result = net_mgmt(NET_REQUEST_WIFI_CONNECT, wifi_StationInterface, &parameters, sizeof(parameters));
 
         if(result != 0)
         {
-            /* A rejected request leaves nothing pending whose events could count later. */
             atomic_set(&wifi_ConnectionIsRequested, 0);
+            atomic_set(&wifi_StationIsActive, 0);
             LOG_ERR("Connect request failed (%d)", result);
         }
     }
@@ -349,8 +254,8 @@ int wifi_connect(const struct wifi_network *network)
 
 int wifi_waitForConnection(k_timeout_t timeout)
 {
-    int result = -EAGAIN;
-    uint32_t events = k_event_wait(&wifi_Events, WIFI_EVENT_CONNECTED | WIFI_EVENT_FAILED, false, timeout);
+    int result = -EAGAIN; /**< Operation is still pending; try again. */
+    uint32_t events = wifi_waitForEvents((WIFI_EVENT_CONNECTED | WIFI_EVENT_FAILED), timeout);
 
     if((events & WIFI_EVENT_CONNECTED) != 0U)
     {
@@ -362,7 +267,7 @@ int wifi_waitForConnection(k_timeout_t timeout)
     }
     else
     {
-        /* Still pending: the caller decides whether to keep waiting. */
+        /* Still pending. */
     }
 
     return result;
@@ -370,18 +275,42 @@ int wifi_waitForConnection(k_timeout_t timeout)
 
 int wifi_disconnect(void)
 {
-    /* Rejected before the request, so no callback of the old attempt can count afterwards. */
     atomic_set(&wifi_ConnectionIsRequested, 0);
-
-    /* The driver stops retrying in the background, so a later scan or connect finds it idle. */
-    int result = net_mgmt(NET_REQUEST_WIFI_DISCONNECT, wifi_StationInterface, NULL, 0);
-
-    (void)k_event_clear(&wifi_Events, WIFI_EVENT_CONNECTED | WIFI_EVENT_FAILED);
-
-    if(result == -EALREADY)
+    (void)k_event_clear(&wifi_Events, (WIFI_EVENT_CONNECTED | WIFI_EVENT_FAILED));
+    int result = 0;
+    if(atomic_get(&wifi_StationIsActive) != 0)
     {
-        /* No connection to end is not an error for the caller. */
-        result = 0;
+        (void)k_event_clear(&wifi_Events, WIFI_EVENT_DISCONNECTED);
+        atomic_set(&wifi_DisconnectIsPending, 1);
+        result = net_mgmt(NET_REQUEST_WIFI_DISCONNECT, wifi_StationInterface, NULL, 0);
+        if(result == 0)
+        {
+            if(wifi_waitForEvents(WIFI_EVENT_DISCONNECTED, K_MSEC(1000)) == 0U)
+            {
+                result = -ETIMEDOUT; /**< Operation exceeded its wait deadline. */
+            }
+        }
+        else if(result == -EALREADY) /**< Requested state is already active. */
+        {
+            atomic_set(&wifi_StationIsActive, 0);
+            result = 0;
+        }
+    }
+    atomic_set(&wifi_DisconnectIsPending, 0);
+
+    if(result == 0)
+    {
+        /* The pinned DHCP client can retain its address when stopped while rebinding. */
+        const struct net_in_addr *address = net_if_ipv4_get_global_addr(wifi_StationInterface, NET_ADDR_PREFERRED);
+        while((address != NULL) && (result == 0))
+        {
+            struct net_in_addr previousAddress = *address;
+            if(!net_if_ipv4_addr_rm(wifi_StationInterface, &previousAddress))
+            {
+                result = -EIO; /**< Input/output operation failed. */
+            }
+            address = net_if_ipv4_get_global_addr(wifi_StationInterface, NET_ADDR_PREFERRED);
+        }
     }
 
     return result;
@@ -392,17 +321,58 @@ bool wifi_isConnected(void)
     return k_event_test(&wifi_Events, WIFI_EVENT_CONNECTED) != 0U;
 }
 
+int wifi_getAddress(char *text, size_t size)
+{
+    if((text == NULL) || (size == 0U))
+    {
+        return -EINVAL; /**< Invalid argument or unsupported input. */
+    }
+
+    int result = -ENOTCONN; /**< Station has no usable connection. */
+    const struct net_in_addr *address;
+    if(wifi_isConnected())
+    {
+        address = net_if_ipv4_get_global_addr(wifi_StationInterface, NET_ADDR_PREFERRED);
+    }
+    else
+    {
+        address = NULL;
+    }
+
+    text[0] = '\0';
+
+    if(address != NULL)
+    {
+        if(net_addr_ntop(NET_AF_INET, address, text, size) != NULL)
+        {
+            result = 0;
+        }
+        else
+        {
+            text[0] = '\0';
+            result = -ENOSPC; /**< Destination has insufficient space. */
+        }
+    }
+
+    return result;
+}
+
 int wifi_startScan(void)
 {
     k_spinlock_key_t key = k_spin_lock(&wifi_ScanLock);
 
-    /* Late results of an earlier scan must not mix into the new list. */
+    if(wifi_ScanIsRunning)
+    {
+        k_spin_unlock(&wifi_ScanLock, key);
+        return -EBUSY; /**< Service is busy with another operation. */
+    }
+
+    (void)k_event_clear(&wifi_Events, WIFI_EVENT_SCAN_DONE);
     wifi_ScanCount = 0;
     wifi_ScanIsRunning = true;
     wifi_ScanResultsAreAccepted = true;
 
     k_spin_unlock(&wifi_ScanLock, key);
-    (void)k_event_clear(&wifi_Events, WIFI_EVENT_SCAN_DONE);
 
     int result = net_mgmt(NET_REQUEST_WIFI_SCAN, wifi_StationInterface, NULL, 0);
 
@@ -430,12 +400,12 @@ int wifi_cancelScan(void)
 
     k_spin_unlock(&wifi_ScanLock, key);
 
-    /* The ESP32 driver cannot abort a scan, so completion means the scan has ended. */
-    if(isRunning && (k_event_wait(&wifi_Events, WIFI_EVENT_SCAN_DONE, false, K_MSEC(WIFI_SCAN_CANCEL_TIMEOUT_MS)) == 0U))
+    /* The ESP32 driver cannot abort a scan, so wait for its end. */
+    if(isRunning && (wifi_waitForEvents(WIFI_EVENT_SCAN_DONE, K_MSEC(WIFI_SCAN_CANCEL_TIMEOUT_MS)) == 0U))
     {
         LOG_ERR("Scan did not stop within %d ms", WIFI_SCAN_CANCEL_TIMEOUT_MS);
 
-        result = -ETIMEDOUT;
+        result = -ETIMEDOUT; /**< Operation exceeded its wait deadline. */
     }
 
     return result;
@@ -443,17 +413,15 @@ int wifi_cancelScan(void)
 
 int wifi_waitForScanResult(struct wifi_scan_entry *list, size_t listSize, k_timeout_t timeout)
 {
-    int result = -EAGAIN;
+    int result = -EAGAIN; /**< Operation is still pending; try again. */
 
-    if(k_event_wait(&wifi_Events, WIFI_EVENT_SCAN_DONE, false, timeout) != 0U)
+    if(wifi_waitForEvents(WIFI_EVENT_SCAN_DONE, timeout) != 0U)
     {
         k_spinlock_key_t key = k_spin_lock(&wifi_ScanLock);
         size_t count = MIN(wifi_ScanCount, listSize);
         bool isAccepted = wifi_ScanResultsAreAccepted;
 
         (void)memcpy(list, wifi_ScanList, count * sizeof(list[0]));
-
-        wifi_ScanResultsAreAccepted = false;
 
         k_spin_unlock(&wifi_ScanLock, key);
 
@@ -465,8 +433,8 @@ int wifi_waitForScanResult(struct wifi_scan_entry *list, size_t listSize, k_time
         }
         else
         {
-            /* The scan was cancelled; its list is incomplete. */
-            result = -ECANCELED;
+            /* Cancelled scan: the list is incomplete. */
+            result = -ECANCELED; /**< Operation was cancelled. */
         }
     }
 
@@ -481,11 +449,12 @@ int wifi_startHotspot(void)
 
     if(wifi_HotspotInterface == NULL)
     {
-        result = -ENODEV;
+        result = -ENODEV; /**< Required device interface is unavailable. */
     }
+    /* Both hotspot address and netmask must parse before configuring the interface. */
     else if((net_addr_pton(NET_AF_INET, WIFI_HOTSPOT_ADDRESS, &address) != 0) || (net_addr_pton(NET_AF_INET, WIFI_HOTSPOT_NETMASK, &netmask) != 0))
     {
-        result = -EINVAL;
+        result = -EINVAL; /**< Invalid argument or unsupported input. */
     }
     else
     {
@@ -494,7 +463,7 @@ int wifi_startHotspot(void)
         {
             if(net_if_ipv4_addr_add(wifi_HotspotInterface, &address, NET_ADDR_MANUAL, 0) == NULL)
             {
-                result = -ENOMEM;
+                result = -ENOMEM; /**< Required memory or network address slot is unavailable. */
             }
             else
             {
@@ -506,16 +475,16 @@ int wifi_startHotspot(void)
 
     if(result == 0)
     {
-        const uint8_t *mac = net_if_get_link_addr(wifi_StationInterface)->addr;
+        const uint8_t *hardwareAddress = net_if_get_link_addr(wifi_StationInterface)->addr;
         char name[WIFI_HOTSPOT_NAME_SIZE];
 
         /* The MAC bytes tell several devices in one room apart. */
-        (void)snprintk(name, sizeof(name), "Stetho-%02X%02X", mac[4], mac[5]);
+        (void)snprintk(name, sizeof(name), "Stetho-%02X%02X", hardwareAddress[4], hardwareAddress[5]);
 
         struct wifi_connect_req_params parameters = {
             .ssid = (const uint8_t *)name,
             .ssid_length = (uint8_t)strlen(name),
-            .security = WIFI_SECURITY_TYPE_NONE, /* Open hotspot: Development/system/design/parameters.md, P21. */
+            .security = WIFI_SECURITY_TYPE_NONE, /* The phone joins without a password. */
             .band = WIFI_FREQ_BAND_2_4_GHZ,
             .channel = WIFI_CHANNEL_ANY,
         };
@@ -524,7 +493,29 @@ int wifi_startHotspot(void)
 
         if(result == 0)
         {
+            /* The pinned ESP32 driver hardcodes five clients and lacks AP_CONFIG_PARAM. */
+            wifi_config_t hotspotConfiguration;
+            if(esp_wifi_get_config(WIFI_IF_AP, &hotspotConfiguration) != ESP_OK)
+            {
+                result = -EIO; /**< Input/output operation failed. */
+            }
+            else
+            {
+                hotspotConfiguration.ap.max_connection = 1;
+                if(esp_wifi_set_config(WIFI_IF_AP, &hotspotConfiguration) != ESP_OK)
+                {
+                    result = -EIO; /**< Input/output operation failed. */
+                }
+            }
+            (void)memset(&hotspotConfiguration, 0, sizeof(hotspotConfiguration));
+        }
+        if(result == 0)
+        {
             LOG_INF("Hotspot \"%s\" open at %s", name, WIFI_HOTSPOT_ADDRESS);
+        }
+        else
+        {
+            wifi_rollbackHotspot();
         }
     }
 
@@ -539,9 +530,8 @@ int wifi_stopHotspot(void)
     {
         result = net_mgmt(NET_REQUEST_WIFI_AP_DISABLE, wifi_HotspotInterface, NULL, 0);
 
-        if(result == -EALREADY)
+        if(result == -EALREADY) /**< Requested state is already active. */
         {
-            /* A closed hotspot is not an error for the caller. */
             result = 0;
         }
     }
@@ -551,18 +541,23 @@ int wifi_stopHotspot(void)
 
 int wifi_startDHCPServer(void)
 {
-    int result = -ENODEV;
+    int result = -ENODEV; /**< Required device interface is unavailable. */
     struct net_in_addr poolStart;
 
+    /* Start DHCP only with an available hotspot and a valid pool address. */
     if((wifi_HotspotInterface != NULL) && (net_addr_pton(NET_AF_INET, WIFI_HOTSPOT_ADDRESS, &poolStart) == 0))
     {
         poolStart.s4_addr[3] = WIFI_HOTSPOT_POOL_START;
 
         result = net_dhcpv4_server_start(wifi_HotspotInterface, &poolStart);
 
-        if(result == -EALREADY)
+        if(result == -EALREADY) /**< Requested state is already active. */
         {
             result = 0;
+        }
+        else if(result != 0)
+        {
+            wifi_rollbackHotspot();
         }
     }
 
@@ -577,9 +572,9 @@ int wifi_stopDHCPServer(void)
     {
         result = net_dhcpv4_server_stop(wifi_HotspotInterface);
 
-        if(result == -ENOENT)
+        if(result == -ENOENT) /**< Requested record or network was not found. */
         {
-            /* A stopped server is not an error for the caller. */
+            /* Not running. */
             result = 0;
         }
     }
@@ -590,6 +585,20 @@ int wifi_stopDHCPServer(void)
 /***********************************************************************/
 /* LOCAL FUNCTIONS                                                     */
 /***********************************************************************/
+
+static void wifi_rollbackHotspot(void)
+{
+    int result = wifi_stopDHCPServer();
+    if(result != 0)
+    {
+        LOG_ERR("Hotspot DHCP rollback failed (%d)", result);
+    }
+    result = wifi_stopHotspot();
+    if(result != 0)
+    {
+        LOG_ERR("Hotspot rollback failed (%d)", result);
+    }
+}
 
 static void wifi_handleEvent(struct net_mgmt_event_callback *callback, uint64_t event, struct net_if *iface)
 {
@@ -602,9 +611,23 @@ static void wifi_handleEvent(struct net_mgmt_event_callback *callback, uint64_t 
         {
             const struct wifi_status *status = callback->info;
 
-            if((status->status != 0) && (atomic_get(&wifi_ConnectionIsRequested) != 0))
+            if((status->status != 0) && (atomic_get(&wifi_DisconnectIsPending) != 0))
+            {
+                /* ESP32 reports cancellation before association as a failed connect. */
+                atomic_set(&wifi_StationIsActive, 0);
+                (void)k_event_post(&wifi_Events, WIFI_EVENT_DISCONNECTED);
+            }
+            /* A successful requested join becomes online only after an IPv4 address exists. */
+            else if((status->status == 0) && (atomic_get(&wifi_ConnectionIsRequested) != 0) &&
+                    (net_if_ipv4_get_global_addr(wifi_StationInterface, NET_ADDR_PREFERRED) != NULL))
+            {
+                (void)k_event_post(&wifi_Events, WIFI_EVENT_CONNECTED);
+            }
+            else if((status->status != 0) && (atomic_get(&wifi_ConnectionIsRequested) != 0))
             {
                 LOG_WRN("Connect rejected (%d)", status->status);
+                atomic_set(&wifi_StationIsActive, 0);
+                atomic_set(&wifi_ConnectionIsRequested, 0);
                 atomic_set(&wifi_FailureCause, wifi_mapFailure(status->status));
                 (void)k_event_post(&wifi_Events, WIFI_EVENT_FAILED);
             }
@@ -613,6 +636,23 @@ static void wifi_handleEvent(struct net_mgmt_event_callback *callback, uint64_t 
         }
 
         case NET_EVENT_WIFI_DISCONNECT_RESULT:
+        {
+            bool joinHasFailed = (atomic_get(&wifi_ConnectionIsRequested) != 0) &&
+                                 (atomic_get(&wifi_DisconnectIsPending) == 0) &&
+                                 (k_event_test(&wifi_Events, WIFI_EVENT_CONNECTED) == 0U); /**< An unsolicited disconnect ended the join before IPv4 readiness. */
+            atomic_set(&wifi_StationIsActive, 0);
+            atomic_set(&wifi_ConnectionIsRequested, 0);
+            /* Disconnect status carries a reason, including USER_REQUEST (2). */
+            (void)k_event_post(&wifi_Events, WIFI_EVENT_DISCONNECTED);
+            (void)k_event_clear(&wifi_Events, WIFI_EVENT_CONNECTED);
+            if(joinHasFailed)
+            {
+                atomic_set(&wifi_FailureCause, -ENOTCONN); /**< Station disconnected before the requested join obtained IPv4. */
+                (void)k_event_post(&wifi_Events, WIFI_EVENT_FAILED);
+            }
+            break;
+        }
+
         case NET_EVENT_IPV4_ADDR_DEL:
             (void)k_event_clear(&wifi_Events, WIFI_EVENT_CONNECTED);
             break;
@@ -627,14 +667,14 @@ static void wifi_handleEvent(struct net_mgmt_event_callback *callback, uint64_t 
 
             wifi_ScanIsRunning = false;
 
-            k_spin_unlock(&wifi_ScanLock, key);
             (void)k_event_post(&wifi_Events, WIFI_EVENT_SCAN_DONE);
+            k_spin_unlock(&wifi_ScanLock, key);
             break;
         }
 
         case NET_EVENT_IPV4_ADDR_ADD:
-            /* Online only with an address: association alone cannot reach the server.
-             * An address after wifi_disconnect() belongs to a cancelled attempt. */
+            /* Online only with an address. After wifi_disconnect() the address
+             * belongs to a cancelled request. */
             if(atomic_get(&wifi_ConnectionIsRequested) != 0)
             {
                 (void)k_event_post(&wifi_Events, WIFI_EVENT_CONNECTED);
@@ -650,20 +690,20 @@ static void wifi_handleEvent(struct net_mgmt_event_callback *callback, uint64_t 
 
 static int wifi_mapFailure(int status)
 {
-    int cause = -ECONNREFUSED;
+    int cause = -ECONNREFUSED; /**< Connection was refused. */
 
     switch(status)
     {
     case WIFI_STATUS_CONN_WRONG_PASSWORD:
-        cause = -EACCES;
+        cause = -EACCES; /**< Credentials or access were rejected. */
         break;
 
     case WIFI_STATUS_CONN_AP_NOT_FOUND:
-        cause = -ENOENT;
+        cause = -ENOENT; /**< Requested record or network was not found. */
         break;
 
     case WIFI_STATUS_CONN_TIMEOUT:
-        cause = -ETIMEDOUT;
+        cause = -ETIMEDOUT; /**< Operation exceeded its wait deadline. */
         break;
 
     default:
@@ -676,6 +716,7 @@ static int wifi_mapFailure(int status)
 static void wifi_addScanResult(const struct wifi_scan_result *result)
 {
     /* Hidden networks have no name to show; enterprise and WEP need more than a password. */
+    /* Keep only named networks with supported lengths and security. */
     if((result->ssid_length != 0U) && (result->ssid_length <= WIFI_SSID_MAX_LEN) && wifi_isSupportedSecurity(result->security))
     {
         struct wifi_scan_entry entry = {.needsPassword = (result->security != WIFI_SECURITY_TYPE_NONE)};
@@ -685,19 +726,44 @@ static void wifi_addScanResult(const struct wifi_scan_result *result)
 
         k_spinlock_key_t key = k_spin_lock(&wifi_ScanLock);
 
-        /* A cancelled scan reports nothing more; a full list counts as listed. */
+        /* Drop results of a cancelled scan. */
         isListed = !wifi_ScanResultsAreAccepted;
 
-        /* Several access points can share one name; the page lists it once. */
+        size_t weakestIndex = 0U;
         for(size_t index = 0; (index < wifi_ScanCount) && !isListed; index++)
         {
             isListed = (strcmp(wifi_ScanList[index].name, entry.name) == 0);
+            if(isListed && (result->rssi > wifi_ScanSignalStrength[index]))
+            {
+                wifi_ScanList[index] = entry;
+                wifi_ScanSignalStrength[index] = result->rssi;
+            }
+            if(wifi_ScanSignalStrength[index] < wifi_ScanSignalStrength[weakestIndex])
+            {
+                weakestIndex = index;
+            }
         }
-
-        if(!isListed && (wifi_ScanCount < WIFI_SCAN_CAPACITY))
+        if(!isListed)
         {
-            wifi_ScanList[wifi_ScanCount] = entry;
-            wifi_ScanCount++;
+            size_t destination;
+            if(wifi_ScanCount < WIFI_SCAN_LIST_SIZE)
+            {
+                destination = wifi_ScanCount;
+            }
+            else
+            {
+                destination = weakestIndex;
+            }
+            /* Fill unused scan slots, then replace only a weaker entry. */
+            if((wifi_ScanCount < WIFI_SCAN_LIST_SIZE) || (result->rssi > wifi_ScanSignalStrength[destination]))
+            {
+                wifi_ScanList[destination] = entry;
+                wifi_ScanSignalStrength[destination] = result->rssi;
+                if(wifi_ScanCount < WIFI_SCAN_LIST_SIZE)
+                {
+                    wifi_ScanCount++;
+                }
+            }
         }
 
         k_spin_unlock(&wifi_ScanLock, key);
@@ -712,7 +778,6 @@ static bool wifi_isSupportedSecurity(enum wifi_security_type security)
     {
     case WIFI_SECURITY_TYPE_NONE:
     case WIFI_SECURITY_TYPE_PSK:
-    case WIFI_SECURITY_TYPE_PSK_SHA256:
         isSupported = true;
         break;
 
@@ -721,40 +786,6 @@ static bool wifi_isSupportedSecurity(enum wifi_security_type security)
     }
 
     return isSupported;
-}
-
-static int wifi_loadSetting(const char *key, size_t length, settings_read_cb read, void *readArgument, void *parameter)
-{
-    struct wifi_settings_read *context = parameter;
-
-    if((key != NULL) && (settings_name_steq(key, WIFI_SETTINGS_KEY, NULL) != 0))
-    {
-        if(length != sizeof(*context->network))
-        {
-            /* A record of another size comes from another layout and cannot be trusted. */
-            context->result = -EINVAL;
-        }
-        else
-        {
-            ssize_t readLength = read(readArgument, context->network, sizeof(*context->network));
-
-            context->result = (readLength == (ssize_t)sizeof(*context->network)) ? 0 : -EIO;
-        }
-    }
-
-    return 0;
-}
-
-static bool wifi_isValidNetwork(const struct wifi_network *network)
-{
-    size_t nameLength = strnlen(network->name, sizeof(network->name));
-    size_t passwordLength = strnlen(network->password, sizeof(network->password));
-
-    /* strnlen() equal to the buffer size means the terminator is missing. */
-    bool isNameValid = (nameLength != 0U) && (nameLength < sizeof(network->name));
-    bool isPasswordValid = (passwordLength == 0U) || ((passwordLength >= WIFI_PSK_MIN_LEN) && (passwordLength < sizeof(network->password)));
-
-    return isNameValid && isPasswordValid;
 }
 
 /** @} */

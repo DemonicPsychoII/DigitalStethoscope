@@ -1,0 +1,52 @@
+@startuml runtime_ownership
+!theme cyborg
+!pragma layout smetana
+skinparam shadowing false
+skinparam component {
+ BackgroundColor<<optional>> #273241
+ BorderColor<<optional>> #61738a
+ FontColor<<optional>> #b8c4d4
+}
+skinparam artifact {
+ BackgroundColor<<optional>> #273241
+ BorderColor<<optional>> #61738a
+ FontColor<<optional>> #b8c4d4
+}
+skinparam componentStyle rectangle
+skinparam defaultFontName SansSerif
+title Threads
+top to bottom direction
+skinparam component {
+ BackgroundColor<<thread>> #DCEBFA
+ BorderColor<<thread>> #345E87
+ BackgroundColor<<interrupt>> #F0E5CF
+}
+component "GPIO ISR" as irq <<interrupt>>
+component "L1_PHYSICALINTERFACE\nGPIO / ADC adapters\nTouch adapter (optional)" as adapters
+component "Input\nButtons / switches\nTouch (optional)" as inp <<thread>>
+component "Shell\nL2_SHELL" as shell <<thread>>
+component "Main / controller\nL2_CONTROL" as ctl <<thread>>
+component "Audio · L2_AUDIO\nL1_I2S RX / TX, L1_FILTER\nCapture / slow replay (optional)" as audio <<thread>>
+component "BPM worker · L2_AUDIO\nL1_FILTER, L1_BPM\nWindow / aggregation" as bpm <<thread>>
+component "Storage\nOptional thread" as storage <<optional>>
+component "Display\nOptional thread" as display <<optional>>
+component "Communication\nL2_COMMUNICATION\nL1_FHIR, L1_WIFI, L1_PORTAL,\nL1_STORAGE" as net <<thread>>
+irq --> inp : wake-up · semaphore
+adapters --> inp : input samples · driver reads
+inp --> ctl : control events · k_msgq
+shell --> ctl : control events · k_msgq
+ctl --> shell : state · snapshot copy
+ctl --> audio : settings / commands · k_msgq
+audio --> bpm : original-rate sample blocks\nbefore filter / gain · handles / k_msgq
+bpm --> ctl : BPM result · k_msgq
+audio --> ctl : completion / fault · k_msgq
+ctl --> storage : file request · k_msgq
+storage --> audio : file audio · block handles / k_msgq
+ctl --> display : UI state · snapshot copy
+ctl --> net : Wi-Fi requested state · spinlock + semaphore\nLater: BPM result + network lease · k_msgq
+net --> ctl : confirmed Wi-Fi release · synchronized flag\nLater: send outcome · k_msgq
+legend bottom
+  Grey / optional = beyond MVP.
+  Display, touch, SD and capture / slower replay are optional.
+endlegend
+@enduml

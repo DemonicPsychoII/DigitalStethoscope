@@ -3,7 +3,7 @@
  * Project: DigitalStethoscope
  ***********************************************************************/
 
-/** @defgroup L1FHIR FHIR
+/** @defgroup L1_FHIR FHIR
  * @{
  * @file
  * L1 pure C library that serializes results into FHIR Observations.

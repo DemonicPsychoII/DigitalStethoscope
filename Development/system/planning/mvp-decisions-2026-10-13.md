@@ -10,7 +10,7 @@
 Nico's answers in T3 thread `d5e44f69-2ecc-4a3e-917b-31a7b084c12b` settle the thesis
 firmware layer structure in [`coding/app/`](../coding/app/README.md) and close the layout part of
 D11 in the [decision register](implementation-readiness.md#decision-register). They replace the
-capability-based service split in [detailed design](../design/interfaces-and-behavior.md#static-dependency-and-module-map)
+capability-based service split in [detailed design](../design/system/interfaces-and-behavior.md#static-dependency-and-module-map)
 (audio, input, storage, measurement and delivery services over separate L0 adapters). Earlier
 workflow, FHIR and patient-assignment decisions are unchanged. The skeleton reserves files only; no
 behavior is implemented.
@@ -64,5 +64,3 @@ behavior is implemented.
   responsibilities; detailed design maps them to the new modules. Their component requirement IDs
   are retired in favour of REQ-01…REQ-14.
 - Host tests in `tests/host/` target the L1 libraries only.
-
-Created by Claude-Opus-5.5 on behalf of Nico running in T3 Code through Claude Code.

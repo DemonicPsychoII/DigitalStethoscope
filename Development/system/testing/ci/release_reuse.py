@@ -9,7 +9,7 @@ import subprocess
 import zipfile
 from pathlib import Path
 
-from build_support import BOARD, PROFILES, ROOT
+from build_support import BOARD, RELEASE_COMPONENTS, ROOT
 from firmware_release import PROJECT
 
 ARTIFACT = re.compile(r"verified-firmware-[1-9][0-9]*$")
@@ -68,10 +68,12 @@ def extract(archive: Path, target: Path, sha: str) -> None:
                 "firmware identity does not match the exact integration commit"
             )
         files = manifest["files"]
-        if len(files) != len(PROFILES) or {f["profile"] for f in files} != set(
-            PROFILES
-        ):
-            raise ValueError("incomplete firmware profiles")
+        if len(files) != len(RELEASE_COMPONENTS) or {
+            f["profile"] for f in files
+        } != set(RELEASE_COMPONENTS):
+            raise ValueError("incomplete application firmware profiles")
+        if any(f.get("component") != RELEASE_COMPONENTS[f["profile"]] for f in files):
+            raise ValueError("firmware component does not match its profile")
         if len({f["name"] for f in files}) != len(files):
             raise ValueError("duplicate firmware names")
         expected = {"manifest.json", *(f["name"] for f in files)}

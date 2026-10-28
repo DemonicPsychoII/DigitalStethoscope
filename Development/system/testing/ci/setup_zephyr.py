@@ -122,7 +122,7 @@ def main() -> None:
     run([*west, "--version"])
     record("zephyr", ws)
     print(
-        f"\nReady. No activation required:\n{py} {Path(__file__).with_name('benchmark_build.py')} run --runs 3",
+        f"\nReady. No activation required:\n{py} {Path(__file__).with_name('run_ci.py')} build --application",
         flush=True,
     )
 

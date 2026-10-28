@@ -86,7 +86,7 @@ R01 führt Cohen-d-Richtwerte 0,2/0,5/0,8 als klein/mittel/groß auf; dies sind 
 AUC, Sensitivität, Spezifität, F1 und Balanced Accuracy benötigen Labels oder einen festgelegten Referenzdetektor.
 
 **Ursprung:** [preThesis/03-recherche/R01-murmur-metrik.md:56](../../preThesis/03-recherche/R01-murmur-metrik.md#L56)
-**Belege:** [Wen, H 2023 · murmur_filter](https://arxiv.org/abs/2303.02988) — Fundstelle: Section 2.1, preprocessing pipeline (arXiv text lines 13–26) (aus Stage 1; am Original prüfen); [Oliveira, J 2022 · circor_paper](https://arxiv.org/abs/2108.00813) — Seite prüfen (übernommene Angabe: Abstract, arXiv text lines 3–6; journal pages unverified) · 🔒 Volltextzugang prüfen: IEEE version may be paywalled; arXiv preprint is open.; [Reyna, M 2022 · physionet_challenge_2022](https://physionet.org/content/challenge-2022/1.0.0/papers/) — Fundstelle: Data Variables, lines 92–97 (aus Stage 1; am Original prüfen)
+**Belege:** [Wen, H 2023 · murmur_filter](https://arxiv.org/abs/2303.02988) — Fundstelle: Section 2.1, preprocessing pipeline (arXiv text lines 13–26) (aus Stage 1; am Original prüfen); [Oliveira, J 2022 · circor_paper](https://arxiv.org/abs/2108.00813) — Seite prüfen (übernommene Angabe: Abstract, arXiv text lines 3–6; journal pages unverified) · 🔒 Volltextzugang prüfen: IEEE version may be paywalled; arXiv preprint is open.; [Reyna, M 2022 · physionet_challenge_2022](https://physionet.org/content/challenge-2022/1.0.0/) — Fundstelle: Data Variables, lines 92–97 (aus Stage 1; am Original prüfen)
 
 <a id="a004"></a>
 **A004 · METHODE / PRÜFVERFAHREN · ANNAHME**
@@ -117,7 +117,7 @@ Eine SNR-Berechnung mit bekanntem Nutzsignal ist bei klinischen Aufnahmen nur mi
 
 EVAL-GUIDE host comparison can hold analysis filter fixed while changing listening filter, or use matched analysis/listening variants; matched mode changes two variables and must be interpreted accordingly.
 
-**Ursprung:** [Development/system/coding/bringup-zephyr/EVAL-GUIDE.md:31-35](../../Development/system/coding/bringup-zephyr/EVAL-GUIDE.md#L31)
+**Ursprung:** [Development/system/coding/bringup-zephyr/EVAL-GUIDE.md:31-35](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/1448340d265326e11b7a416960f35e0d2390cd6d/Development/system/coding/bringup-zephyr/EVAL-GUIDE.md?plain=1#L31) (**Herkunft verschoben:** als Vorstudienmaterial nach preThesis/06-bringup-zephyr verschoben. Die Zeilenangaben beziehen sich auf die zitierte historische Fassung. Aktuell: [EVAL-GUIDE.md](../../preThesis/06-bringup-zephyr/EVAL-GUIDE.md))
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
 
 <a id="a017"></a>

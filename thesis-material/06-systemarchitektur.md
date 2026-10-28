@@ -21,7 +21,7 @@ R07 unterscheidet direkte Mikrofonankopplung, kurzen Schlauchstummel, Membran-/K
 ### Werte und dokumentierte Befunde
 
 <a id="u076"></a>
-**U076 · EIGENER ZIELWERT / VORLÄUFIGER VORSCHLAG**
+**U076 · PROJEKTDOKUMENTATION / BESTANDSWERT**
 
 Bestandsliste: PCM5102A I²S-DAC zur Kopfhörerwiedergabe und INMP441 I²S-MEMS-Mikrofon zur Aufnahme.
 
@@ -87,13 +87,13 @@ R07 empfiehlt, die Bruststückmembran beizubehalten und das Mikrofon in einer kl
 
 README dokumentiert INMP441 als Audioeingang und PCM5102A als externen Audioausgang; die Verkabelung/Pinbelegung wird im README als Eval-Träger-Rev A geführt.
 
-**Ursprung:** [Development/system/coding/bringup-zephyr/README.md:1-160](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/23c1ea492270b897532896179e35f873eee823be/Development/system/coding/bringup-zephyr/README.md?plain=1#L1) (**Herkunft verschoben:** seit b2c3dde zu einem kurzen Einstiegs-README verdichtet; die Zeilenangaben gelten nur für die zitierte Fassung. Link zeigt diese historische Fassung. Aktuell: [Bring-up-README](../Development/system/coding/bringup-zephyr/README.md))
+**Ursprung:** [Development/system/coding/bringup-zephyr/README.md:1-160](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/23c1ea492270b897532896179e35f873eee823be/Development/system/coding/bringup-zephyr/README.md?plain=1#L1) (**Herkunft verschoben:** seit b2c3dde zu einem kurzen Einstiegs-README verdichtet; die Zeilenangaben gelten nur für die zitierte Fassung. Link zeigt diese historische Fassung. Aktuell: [Bring-up-README](../preThesis/06-bringup-zephyr/README.md))
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
 
 ### Werte und dokumentierte Befunde
 
 <a id="c018"></a>
-**C018 · EIGENER ZIELWERT / VORLÄUFIGER VORSCHLAG · ANNAHME**
+**C018 · LITERATUR- / HERSTELLERWERT · ANNAHME**
 
 Abgeleitet aus den Benchmarkzahlen schätzt R10 drei parallele 256-Tap-FIR-Filter bei 8 kHz auf rund 10,4 Mio. Zyklen/s beziehungsweise 4,3 % eines 240-MHz-Kerns.
 
@@ -159,9 +159,9 @@ R07 nennt beim IM69D130 ein einfach erhältliches Shield2Go mit ADAU7002, bei Kn
 
 Firmware README separates display, audio and optional network work into threads; input events do not wait for full-screen redraw, and failed GPIO event delivery retries.
 
-> **Neuerer Stand (Stand integration, 2026-10-22):** Beschreibt die Thread-Aufteilung der Bring-up-Firmware mit Display. Aktuell: `L2_AUDIO` führt den Audiopfad aus; BPM läuft in einem eigenen Worker unterhalb der Audio-Priorität. `L2_CONTROL` ist einziger Schreiber des Modus-Zustands; Netzwerkarbeit nur unter dessen exklusivem Lease. Display ist nicht im MVP. – siehe [Architekturentscheidungen 13.10.](../Development/system/planning/mvp-decisions-2026-10-13.md#confirmed-decisions), [Design: Firmware-Schichten](../Development/system/design/interfaces-and-behavior.md#firmware-layer-structure).
+> **Neuerer Stand (Stand integration, 2026-10-22):** Beschreibt die Thread-Aufteilung der Bring-up-Firmware mit Display. Aktuell: `L2_AUDIO` führt den Audiopfad aus; BPM läuft in einem eigenen Worker unterhalb der Audio-Priorität. `L2_CONTROL` ist einziger Schreiber des Modus-Zustands; Netzwerkarbeit nur unter dessen exklusivem Lease. Display ist nicht im MVP. – siehe [Architekturentscheidungen 13.10.](../Development/system/planning/mvp-decisions-2026-10-13.md#confirmed-decisions), [Design: Firmware-Schichten](../Development/system/design/system/interfaces-and-behavior.md#firmware-layer-structure).
 
-**Ursprung:** [Development/system/coding/bringup-zephyr/README.md:48-49](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/23c1ea492270b897532896179e35f873eee823be/Development/system/coding/bringup-zephyr/README.md?plain=1#L48) (**Herkunft verschoben:** seit b2c3dde zu einem kurzen Einstiegs-README verdichtet; die Zeilenangaben gelten nur für die zitierte Fassung. Link zeigt diese historische Fassung. Aktuell: [Bring-up-README](../Development/system/coding/bringup-zephyr/README.md))
+**Ursprung:** [Development/system/coding/bringup-zephyr/README.md:48-49](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/23c1ea492270b897532896179e35f873eee823be/Development/system/coding/bringup-zephyr/README.md?plain=1#L48) (**Herkunft verschoben:** seit b2c3dde zu einem kurzen Einstiegs-README verdichtet; die Zeilenangaben gelten nur für die zitierte Fassung. Link zeigt diese historische Fassung. Aktuell: [Bring-up-README](../preThesis/06-bringup-zephyr/README.md))
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
 
 <a id="u085"></a>
@@ -169,15 +169,15 @@ Firmware README separates display, audio and optional network work into threads;
 
 README beschreibt die Bring-up-Firmware als ESP32-S3-Zephyr-Anwendung mit Audio-, DSP-, FHIR/Netzwerk-, Display-/Touch-, GPIO- und SD-Speichermodulen; konkrete Datenflussdetails sind der README-Architektursektion zu entnehmen.
 
-> **Neuerer Stand (Stand integration, 2026-10-22):** Beschreibt die Bring-up-Firmware. Die neue Firmware hat eine andere Modulstruktur (13.10.). Aktuell: Neue Firmware in `coding/app/` (D11, 14.10.). L0 = Zephyr; L1 = dünne Hardware-Adapter (`L1_I2S`, `L1_WIFI`, `L1_PHYSICALINTERFACE`) und reine C-Bibliotheken (`L1_FILTER`, `L1_BPM`, `L1_FHIR`); L2 = Orchestrierung (`L2_CONTROL`, `L2_AUDIO`, `L2_COMMUNICATION`, `L2_SHELL`). Display/Touch, SD und Replay sind nicht im Gerüst. – siehe [Architekturentscheidungen 13.10.](../Development/system/planning/mvp-decisions-2026-10-13.md#confirmed-decisions), [Design: Firmware-Schichten](../Development/system/design/interfaces-and-behavior.md#firmware-layer-structure).
+> **Neuerer Stand (Stand integration, 2026-10-22):** Beschreibt die Bring-up-Firmware. Die neue Firmware hat eine andere Modulstruktur (13.10.). Aktuell: Neue Firmware in `coding/app/` (D11, 14.10.). L0 = Zephyr; L1 = dünne Hardware-Adapter (`L1_I2S`, `L1_WIFI`, `L1_PHYSICALINTERFACE`) und reine C-Bibliotheken (`L1_FILTER`, `L1_BPM`, `L1_FHIR`); L2 = Orchestrierung (`L2_CONTROL`, `L2_AUDIO`, `L2_COMMUNICATION`, `L2_SHELL`). Display/Touch, SD und Replay sind nicht im Gerüst. – siehe [Architekturentscheidungen 13.10.](../Development/system/planning/mvp-decisions-2026-10-13.md#confirmed-decisions), [Design: Firmware-Schichten](../Development/system/design/system/interfaces-and-behavior.md#firmware-layer-structure).
 
-**Ursprung:** [Development/system/coding/bringup-zephyr/README.md:1-120](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/23c1ea492270b897532896179e35f873eee823be/Development/system/coding/bringup-zephyr/README.md?plain=1#L1) (**Herkunft verschoben:** seit b2c3dde zu einem kurzen Einstiegs-README verdichtet; die Zeilenangaben gelten nur für die zitierte Fassung. Link zeigt diese historische Fassung. Aktuell: [Bring-up-README](../Development/system/coding/bringup-zephyr/README.md))
+**Ursprung:** [Development/system/coding/bringup-zephyr/README.md:1-120](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/23c1ea492270b897532896179e35f873eee823be/Development/system/coding/bringup-zephyr/README.md?plain=1#L1) (**Herkunft verschoben:** seit b2c3dde zu einem kurzen Einstiegs-README verdichtet; die Zeilenangaben gelten nur für die zitierte Fassung. Link zeigt diese historische Fassung. Aktuell: [Bring-up-README](../preThesis/06-bringup-zephyr/README.md))
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
 
 ### Werte und dokumentierte Befunde
 
 <a id="u077"></a>
-**U077 · EIGENER ZIELWERT / VORLÄUFIGER VORSCHLAG**
+**U077 · PROJEKTDOKUMENTATION / BESTANDSWERT**
 
 Bestandsliste: 10-kΩ-Potentiometer am ADC für Lautstärke; Fasizi ILI9341 240×320 TFT mit Touch über SPI.
 
@@ -185,15 +185,15 @@ Bestandsliste: 10-kΩ-Potentiometer am ADC für Lautstärke; Fasizi ILI9341 240�
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
 
 <a id="u106"></a>
-**U106 · EIGENER ZIELWERT / VORLÄUFIGER VORSCHLAG**
+**U106 · PROJEKTDOKUMENTATION / BESTANDSWERT**
 
 Firmware README gives default GPIO mapping for the filter switch as positions Raw/Murmur/BPM on GPIO 18/21/38; mapping is explicitly tied to evaluation carrier wiring.
 
-**Ursprung:** [Development/system/coding/bringup-zephyr/README.md:64-83](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/23c1ea492270b897532896179e35f873eee823be/Development/system/coding/bringup-zephyr/README.md?plain=1#L64) (**Herkunft verschoben:** seit b2c3dde zu einem kurzen Einstiegs-README verdichtet; die Zeilenangaben gelten nur für die zitierte Fassung. Link zeigt diese historische Fassung. Aktuell: [Bring-up-README](../Development/system/coding/bringup-zephyr/README.md))
+**Ursprung:** [Development/system/coding/bringup-zephyr/README.md:64-83](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/23c1ea492270b897532896179e35f873eee823be/Development/system/coding/bringup-zephyr/README.md?plain=1#L64) (**Herkunft verschoben:** seit b2c3dde zu einem kurzen Einstiegs-README verdichtet; die Zeilenangaben gelten nur für die zitierte Fassung. Link zeigt diese historische Fassung. Aktuell: [Bring-up-README](../preThesis/06-bringup-zephyr/README.md))
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
 
 <a id="u078"></a>
-**U078 · EIGENER ZIELWERT / VORLÄUFIGER VORSCHLAG**
+**U078 · PROJEKTDOKUMENTATION / BESTANDSWERT**
 
 Hardwaredokumentation führt zwei SP3T-THT-Schalter auf: Filterwahl Raw/Murmur/BPM und Wiedergabegeschwindigkeit 1,0×/0,75×/0,5×.
 
@@ -205,7 +205,7 @@ Hardwaredokumentation führt zwei SP3T-THT-Schalter auf: Filterwahl Raw/Murmur/B
 
 README-Update 2026-10-02 meldet Rev A-Verdrahtung für Geschwindigkeits-Schalter (GPIO2/39/47) und LCD-SD am geteilten SPI2 (CS GPIO48); Standard-Firmware bildet beides ab.
 
-**Ursprung:** [Development/system/coding/bringup-zephyr/README.md:1-160](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/23c1ea492270b897532896179e35f873eee823be/Development/system/coding/bringup-zephyr/README.md?plain=1#L1) (**Herkunft verschoben:** seit b2c3dde zu einem kurzen Einstiegs-README verdichtet; die Zeilenangaben gelten nur für die zitierte Fassung. Link zeigt diese historische Fassung. Aktuell: [Bring-up-README](../Development/system/coding/bringup-zephyr/README.md))
+**Ursprung:** [Development/system/coding/bringup-zephyr/README.md:1-160](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/23c1ea492270b897532896179e35f873eee823be/Development/system/coding/bringup-zephyr/README.md?plain=1#L1) (**Herkunft verschoben:** seit b2c3dde zu einem kurzen Einstiegs-README verdichtet; die Zeilenangaben gelten nur für die zitierte Fassung. Link zeigt diese historische Fassung. Aktuell: [Bring-up-README](../preThesis/06-bringup-zephyr/README.md))
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
 
 ### Folgerungen, Entwurfsentscheidungen und Grenzen
@@ -215,7 +215,7 @@ README-Update 2026-10-02 meldet Rev A-Verdrahtung für Geschwindigkeits-Schalter
 
 Bedienvorschlag: Potentiometer für Lautstärke, Schalter für Wiedergabegeschwindigkeit und Filter; optional Touchdisplay zur Konfiguration.
 
-> **Überholt (Stand integration, 2026-10-22):** Das MVP hat weder Display noch Touch; Geschwindigkeitsschalter und Replay sind seit 14.10. keine Anforderung mehr. Die Patientenauswahl über die Handyseite (12.10.) ist am 15.10. entfallen. Aktuell: Start/Stop über Taster, Filterschalter, Potentiometer. Kurzer Druck quittiert einen Fehler, wiederholt aber nichts und startet nie die Einrichtung; Halten ≥2 s im Idle öffnet die WLAN-Einrichtung. Der Geräte-Hotspot ist offen, ein QR-Code öffnet die Portalseite im Handy-Browser. Das Gerät wählt keinen Patienten aus. Die Handyseite dient nur der WLAN-Einrichtung; Zugangsdaten bleiben im Flash. Das Gerät registriert sich einmal am Server und speichert die Device-ID im Flash; die Zuordnung zum Patienten ist ein getrennter Server-Workflow außerhalb des MVP (15.10.). Hat der Server einen Patienten zugeordnet, übernimmt das Gerät ihn als `subject` (16.10.). WLAN-Ablauf (19.10.): Erstscan vor dem Öffnen des Hotspots, Verbindung und IP-Adresse vor dem Speichern, bestehende Verbindung beim Hören beibehalten, Einrichtung vor Hörbeginn sicher beenden; Zeitabgleich, sichere Serververbindung und Registrierung folgen in der FHIR-Phase. – siehe [MVP-Entscheidungen 19.10.](../Development/system/planning/mvp-decisions-2026-10-19.md#current-rules-and-amendments), [MVP-Entscheidungen 15.10.](../Development/system/planning/mvp-decisions-2026-10-15.md#confirmed-decisions), [Design: WLAN-Einrichtung](../Development/system/design/interfaces-and-behavior.md#wi-fi-setup-and-recovery), [MVP-Entscheidungen 16.10.](../Development/system/planning/mvp-decisions-2026-10-16.md#confirmed-decisions).
+> **Überholt (Stand integration, 2026-10-22):** Das MVP hat weder Display noch Touch; Geschwindigkeitsschalter und Replay sind seit 14.10. keine Anforderung mehr. Die Patientenauswahl über die Handyseite (12.10.) ist am 15.10. entfallen. Aktuell: Start/Stop über Taster, Filterschalter, Potentiometer. Kurzer Druck quittiert einen Fehler, wiederholt aber nichts und startet nie die Einrichtung; Halten ≥2 s im Idle öffnet die WLAN-Einrichtung. Der Geräte-Hotspot ist offen, ein QR-Code öffnet die Portalseite im Handy-Browser. Das Gerät wählt keinen Patienten aus. Die Handyseite dient nur der WLAN-Einrichtung; Zugangsdaten bleiben im Flash. Das Gerät registriert sich einmal am Server und speichert die Device-ID im Flash; die Zuordnung zum Patienten ist ein getrennter Server-Workflow außerhalb des MVP (15.10.). Hat der Server einen Patienten zugeordnet, übernimmt das Gerät ihn als `subject` (16.10.). WLAN-Ablauf (19.10.): Erstscan vor dem Öffnen des Hotspots, Verbindung und IP-Adresse vor dem Speichern, bestehende Verbindung beim Hören beibehalten, Einrichtung vor Hörbeginn sicher beenden; Zeitabgleich, sichere Serververbindung und Registrierung folgen in der FHIR-Phase. – siehe [MVP-Entscheidungen 19.10.](../Development/system/planning/mvp-decisions-2026-10-19.md#current-rules-and-amendments), [MVP-Entscheidungen 15.10.](../Development/system/planning/mvp-decisions-2026-10-15.md#confirmed-decisions), [Design: WLAN-Einrichtung](../Development/system/design/COMMUNICATION/interfaces-and-behavior.md#wi-fi-setup-and-recovery), [MVP-Entscheidungen 16.10.](../Development/system/planning/mvp-decisions-2026-10-16.md#confirmed-decisions).
 
 **Ursprung:** [preThesis/01-aufgabenbeschreibung/Aufgabenbeschreibung-Intern.md:53](../preThesis/01-aufgabenbeschreibung/Aufgabenbeschreibung-Intern.md#L53)
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
@@ -250,7 +250,7 @@ W2: Nummerierung der beiden SP3T-Schalter weicht ab: intern/open-questions ordne
 ### Werte und dokumentierte Befunde
 
 <a id="u075"></a>
-**U075 · EIGENER ZIELWERT / VORLÄUFIGER VORSCHLAG**
+**U075 · PROJEKTDOKUMENTATION / BESTANDSWERT**
 
 Bestandsliste: ESP32-S3 N16R8 DevKitC-1 mit 16 MB Flash und 8 MB PSRAM.
 

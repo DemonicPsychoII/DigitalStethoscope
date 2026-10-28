@@ -69,7 +69,7 @@ In einer Fahrsimulationsstudie lag die Audio-Haptik-Asynchronie-Detektionsschwel
 **Belege:** [Sharma, G., Yasuda, H 2023 · sharma_audio_haptic_2023](https://arxiv.org/abs/2307.05451) — Fundstelle: Abstract (aus Stage 1; am Original prüfen); [The influence of rhythm on detection of auditory and 2020 · rhythm_audio_vibrotactile_2020](https://pmc.ncbi.nlm.nih.gov/articles/PMC7181424/) — Seite prüfen (übernommene Angabe: Abstract; exact page unverified); [Lester, M 2007 · aes_lester_boley_2007](https://secure.aes.org/forum/pubs/conventions/?elib=14256) — Fundstelle: Abstract; AES Convention 123, Paper 7198 (aus Stage 1; am Original prüfen) · **LINK DEFEKT** · 🔒 Volltextzugang prüfen: unverified
 
 <a id="a039"></a>
-**A039 · EIGENER ZIELWERT / VORLÄUFIGER VORSCHLAG · ANNAHME**
+**A039 · PROJEKTDOKUMENTATION / BESTANDSWERT · ANNAHME**
 
 R02 nennt 3B-Handheld-Trainer mit Murmur-Soundkarte für 16 Aufnahmen, Händlerpreis etwa £226,68 inkl. VAT.
 
@@ -77,7 +77,7 @@ R02 nennt 3B-Handheld-Trainer mit Murmur-Soundkarte für 16 Aufnahmen, Händlerp
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
 
 <a id="a038"></a>
-**A038 · EIGENER ZIELWERT / VORLÄUFIGER VORSCHLAG · ANNAHME**
+**A038 · PROJEKTDOKUMENTATION / BESTANDSWERT · ANNAHME**
 
 R02 nennt Evo AuRA mit etwa 2.995 USD und empfiehlt, vor Beschaffung den Zugriff auf Soundausgänge für Messaufnahmen zu klären.
 
@@ -85,7 +85,7 @@ R02 nennt Evo AuRA mit etwa 2.995 USD und empfiehlt, vor Beschaffung den Zugriff
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
 
 <a id="a036"></a>
-**A036 · EIGENER ZIELWERT / VORLÄUFIGER VORSCHLAG · ANNAHME**
+**A036 · PROJEKTDOKUMENTATION / BESTANDSWERT · ANNAHME**
 
 R02 nennt Sakamoto Auscultation Simulator II mit 20 Herzschalloptionen und Richtpreis 9.000–10.000 USD.
 
@@ -93,7 +93,7 @@ R02 nennt Sakamoto Auscultation Simulator II mit 20 Herzschalloptionen und Richt
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
 
 <a id="a037"></a>
-**A037 · EIGENER ZIELWERT / VORLÄUFIGER VORSCHLAG · ANNAHME**
+**A037 · PROJEKTDOKUMENTATION / BESTANDSWERT · ANNAHME**
 
 R02 nennt SAM Basic Adult für etwa 3.500–5.000 USD und PAT Basic Pediatric für etwa 2.000–3.000 USD, jeweils abhängig von Ausstattung.
 

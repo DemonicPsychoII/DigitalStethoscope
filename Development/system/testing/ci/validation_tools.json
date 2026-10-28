@@ -5,6 +5,14 @@
     "sha256": "8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8",
     "member": "actionlint"
   },
+  "node": {
+    "version": "24.19.0",
+    "url": "https://nodejs.org/dist/v24.19.0/node-v24.19.0-linux-x64.tar.xz",
+    "sha256": "14b342e71204f811bde6153be8e04b62aef63c236fef92b55f9c83154b409647",
+    "member": "node-v24.19.0-linux-x64/bin/node",
+    "maximum_archive_bytes": 67108864,
+    "maximum_binary_bytes": 134217728
+  },
   "shellcheck": {
     "version": "0.11.0",
     "url": "https://github.com/koalaman/shellcheck/releases/download/v0.11.0/shellcheck-v0.11.0.linux.x86_64.tar.xz",

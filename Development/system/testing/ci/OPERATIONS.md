@@ -1,193 +1,179 @@
-# CI operations
+# Verification operations
 
-PRs keep two stable required quality contexts: **Quality / Static Checks** and
-**Zephyr / Firmware Build**. The legacy **agent-gate** remains required until the
-native approval migration below passes. Builds and tests stay on disposable
-homelab VMs; routing and artifact promotion use hosted runners. The firmware
-job retains the deployed controller identity (`firmware`, `Zephyr / Firmware Build`).
-It performs final accounting in the same VM when heavy work is selected, or on a
-hosted runner when no heavy verification is required.
+This is the execution guide for the [application development process](../../process/README.md). It defines the target test coverage, suite selection and evidence. The process document owns test generation, PR order, manual-test format and GitLab review.
+
+Component test PRs add the suites. Concrete application checks are listed in verification cases.
+
+## Current state and target
+
+When present, the communication host suite runs production L2 (layer 2) with controlled L1 (layer 1) services and simulated time. Its expectations come from the identified design revision; at this head no known implementation defect is recorded as a strict expected failure. Unit tests, real-service integration, device verification and acceptance remain pending; the case catalogue records the gaps.
+
+When the application entry point is present, its later implementation stages provide the Wi-Fi service, portal and COMMUNICATION workflow; other components contain placeholders. CI then builds, publishes and reuses only the `application` profile; without that entry point the application suite is disabled. The bring-up firmware and its source-pattern QC are archived under `preThesis/06-bringup-zephyr` and have no CI. The pinned application toolchain and compiler cache remain active. External cloud importer compatibility and device results remain unverified.
+
+Component routing for WIFI, PORTAL and L2_COMMUNICATION selects the communication suite when its test folder exists. Shared system pages and requirements also select it. Other suites are added with their test PRs. Application delivery follows receipt-based case VT-07.
+
+## Test levels
+
+| Level | Test basis | What runs |
+| --- | --- | --- |
+| Unit tests (target for the application) | Detailed design and interfaces | Individual functions, libraries and service logic, including boundaries and specified failures. Host tests cover portable code; hardware-dependent units require device runs. |
+| L2 deterministic simulation | Detailed design and interface contracts | Production L2 workflows with controlled L1 responses, simulated time and injected events. The cases check states, ordering, retries, cancellation and recovery. |
+| Host integration and target integration | Architecture and interface contracts | Connected production components: L2 with implemented L1 services, interacting services, and wrappers with Zephyr drivers. Reports identify any remaining substitutes. |
+| System verification (target) | Whole-system requirements | Complete operator flows and failure behavior. Automatable cases run in CI; physical behavior is checked on the device. |
+| Final system acceptance (target) | User needs and product scope | Manual runs on the complete device, with evidence and human sign-off. |
+
+CI means continuous integration. L2 simulation checks application behavior with substituted services. Integration tests use real L1 services. A simulated deadline checks time logic, while a device measurement checks physical timing.
+
+## CI selection and results
 
 ```mermaid
 flowchart LR
-    PR[PR update] --> Plan[Select affected suites]
-    Plan --> Static[Static VM: lint, selected tests, QC]
-    Static --> Heavy[Heavy VM if needed: ESP32 profiles, native logic]
-    Static --> Result[Required result: fail closed]
-    Heavy --> Result
-    PR --> Review[CodeRabbit automatic review]
-    Review --> Gate[Active review protection]
-    Result --> Gate
+    Change[Changed files] --> Select[Affected suites]
+    Select --> Host[Host tests]
+    Host --> Build[Builds and integration]
+    Build --> Evidence[Results and logs]
 ```
 
-| Change | Static VM | Heavy VM |
-| --- | --- | --- |
-| Markdown / PlantUML | Lint, local links / diagram envelopes, QC | None |
-| Host DSP tests or tools | Lint, ASan + UBSan host tests, QC | None |
-| Native logic tests | Lint, QC | ASan + UBSan native ztests only |
-| Application source | Lint, QC | Application compile only |
-| Bring-up firmware | Lint, host tests, QC | Three pristine ESP32 profiles + native ztests |
-| Shared toolchain / quality workflow | Lint, tooling and host tests, QC | Application compile, three ESP32 profiles + native ztests |
-| Daily publication with exact-SHA artifact | Lint, QC | None; validate and promote verified profiles |
-| Daily publication without artifact | Lint, host tests, QC | Three ESP32 profiles + native ztests |
-| Agent gate | Lint, gate unit tests, QC | None |
-| Weekly schedule / full manual run | Every suite | Every pristine build and native test |
+| Change | Implemented selection |
+| --- | --- |
+| Requirements, architecture or design | Document validation and available application host scenarios. |
+| Application source or configuration | Application build and available application host scenarios. |
+| Application host tests | Host scenarios and document validation, without a target build. |
+| Build toolchain or quality workflow | Application build and affected tooling/host regressions. |
+| Tooling-only edits | Tooling regressions; build input edits also select the application build. |
+| Merge-gate source | Merge-gate regression tests. |
+| Daily publication, integration dispatch or `firmware` label | Application build and available host scenarios, or daily reuse of an exact verified application artifact. |
+| Integration push | Application build and available host scenarios; retain the verified application artifact. |
+| Weekly or full dispatch | Every available suite and a pristine application build. |
+| Archived bring-up firmware | No build, host tests, native tests, QC evaluation or publication. |
 
-[`firmware_changes.py`](firmware_changes.py) is the authoritative selection; this table summarizes it.
+The [selector](firmware_changes.py) supplies every suite output. Static checks run on every active batch. An unchanged daily publication can skip the batch.
 
-Static lint always validates Actions with pinned actionlint and both CI shell
-scripts with pinned ShellCheck. Documentation checks validate local Markdown
-links and heading anchors, PlantUML start/end envelopes, that each committed SVG embeds
-the current `.puml` text, the hand-written file indexes, values repeated from pins and
-the workflow, and that the generated thesis kit is current. They do **not** render
-PlantUML or claim complete diagram syntax validation. QC is always evaluated.
-Native and host sanitizers improve software fault detection; simulated execution
-and a QC score are not hardware or medical-device validation.
+The host batch runs production unit/service tests, deterministic L2 scenarios and
+real-service integration together. The integration executable links production
+COMMUNICATION, WIFI, PORTAL and STORAGE; only Zephyr kernel/driver/network, HTTP
+server and settings APIs are substituted. The substitute follows the pinned ESP
+driver's scan completion and connected-versus-connecting disconnect behavior.
+It cannot prove target scheduling, socket transport, flash power-failure behavior
+or radio/audio interference. JUnit reports the level per scenario.
 
-## Prepared environments
+Coverage runs separately from ASan/UBSan so sanitizer-generated checks do not
+inflate the branch denominator. Both executions must pass. GCC instruments production C with `--coverage -O0` when
+`STETHO_COVERAGE_DIRECTORY` is set. `host_coverage.py` invokes the matching `gcov`
+with JSON line/branch output and reports unit, L2 and integration totals separately
+in `GITHUB_STEP_SUMMARY`. Raw counters, gcov JSON, per-source line/branch counts and
+`coverage.md` remain in `artifacts/ci/host-coverage/` inside the static evidence
+artifact. Missing selected levels or production counters fail collection. XFAIL
+execution can cover a branch without verifying its behavior. There is no numeric
+threshold: this baseline exposes gaps for review instead of choosing an arbitrary
+percentage. Host compilers and commands remain in JUnit; firmware build selection
+and the required firmware check remain in place.
 
-Static jobs reuse `/opt/stethoscope-ci` only when Python 3.12.10, installed package
-state and both hash-locked requirements match the preparation manifest. Otherwise
-they install the checked-out pins. Heavy jobs validate `/opt/zephyr-workspace`
-against the Zephyr/module revisions, packages, compiler and Espressif blob hashes;
-missing or changed state runs canonical setup. Every selected build stays pristine.
-Pinned actionlint and ShellCheck binaries are copied from the prepared image only
-when their pin records and binary SHA-256 match the checkout. Missing or changed
-binaries use checksum-verified downloads.
+`manual_test_records.py` validates completed JSON runs and reports the count in the
+job summary. An empty run directory explicitly means execution and Nico's sign-off
+are pending. The manual record format, reusable procedures and executed records
+are test-stage artifacts; the validator and workflow belong to Process/CI.
 
-PR and integration builds use pinned ccache with pristine CMake build trees. The
-512 MiB cache is partitioned by toolchain/cache pins. PRs restore previous outputs;
-only successful integration push verification saves new outputs. Disposable guest
-writes are discarded. Compiler contents are hashed, and source paths are normalized
-relative to the checkout. Weekly and full manual verification disable cache reuse.
-Use the optional `cache_benchmark` dispatch input to retain disabled/cold/warm
-measurements, cache statistics and binaries; see [build timing](../BUILD-TIMES.md).
-Static/heavy overlap remains deferred pending measurements on the two-core host.
+Application host scenarios run within `Quality / Static Checks` only when `available_component_suites()` finds the suite in the checkout. The communication suite, when present, writes `artifacts/ci/application-host.xml`. The following reporter lists each scenario, VT ID (verification-test identifier) and result in the job summary. Missing, empty, unmapped, skipped or unsuccessful selected results fail the required check. Documented pytest expected failures are shown as XFAIL and remain known defects; they are accepted by result accounting. Strict unexpected passes fail pytest and result accounting. Result accounting also rejects missing selector outputs.
 
-The host setup and rollback procedure remains in HomelabServer's
-`scripts/ci-runner/STETHOSCOPE.md`. These are read-only base images for disposable
-guests, not persistent writable runners or authorization for public forks.
+The required check names remain `Quality / Static Checks`, `Zephyr / Firmware Build` and `agent-gate`. Selected work must produce a result; missing outputs, failures and cancellations do not silently pass. Workflow-level path filters are avoided because even documentation-only PRs need required results. Protected branches need matching workflow triggers.
+
+Static checks cover formatting, configuration parsing, workflow and shell validation, and local Markdown links and anchors. PlantUML envelope checks confirm start/end markers; rendered diagrams are checked separately. Supported application host tests also use ASan (AddressSanitizer) and UBSan (UndefinedBehaviorSanitizer) to detect memory errors and undefined behavior.
+
+The portal page check executes JavaScript using Node 24.19.0 from
+`.ci-validation-tools/node`. The existing `validation_tools.py` workflow step
+installs the hash-pinned Linux x86-64 runtime alongside actionlint and ShellCheck;
+an older prepared image downloads it using the checked-out pin. A missing or
+unusable runtime fails CI. Windows local execution and its explicit skip/override
+are described in the host run instructions.
+
+## Execution environment
+
+Static checks and builds run in disposable home-lab VMs (virtual machines). GitHub-hosted runners handle routing, result accounting and artifact promotion. Heavy work has no hosted fallback. Fork builds receive no privileged credentials. Hardware flashing, serial access and device-network operations require owner authorization.
+
+The [quality workflow](../../../../.github/workflows/quality-gates.yml) runs for PRs into `integration`, integration pushes, scheduled verification and manual dispatch. Tool and board versions are defined by [toolchain.json](toolchain.json), the workflow and the hash-locked dependency files.
+
+### Prepared environments
+
+Static jobs validate `/opt/stethoscope-ci` against the required Python version, package state and dependency hashes. Firmware jobs validate `/opt/zephyr-workspace` against Zephyr/module revisions, compiler inputs and Espressif binary hashes. Missing or changed inputs trigger setup. Validators are checksum-checked before reuse or download.
+
+Every build starts with a clean CMake build tree. Compiler outputs can be reused through the pinned 512 MiB ccache, separated by toolchain/cache versions. PRs read entries; successful integration verification saves them. Weekly and full verification disable compiler-cache reuse. Disposable guest writes are discarded; the base images remain read-only.
 
 ## Evidence and publication
 
-Each executing VM retains commit/tree identity, run/attempt metadata and toolchain
-pins. Host/native tests produce JUnit; native logs and firmware logs, RAM/ROM
-reports, configuration, ELF/map and manifest are retained for 14 days. These
-artifacts are diagnostics, not release approval. Firmware binaries live for
-8 days, covering the weekly verification interval. Static failure prevents heavy work and publication.
+A result identifies the production source, test source, toolchain and configuration. Each suite supplies machine-readable reports plus a readable coverage summary: behavior checked, expected outcome, actual outcome, substituted boundaries and pending device cases. A failed case retains its inputs and logs for diagnosis and retest.
 
-Integration push builds retain `verified-firmware-<attempt>` only after all heavy
-verification passes. A daily run can promote that artifact only from a successful
-same-repository integration push of this workflow at the **exact current SHA**.
-Promotion rechecks run identity, complete three-profile layout, clean integration
-manifest, bounded archive size and every binary's SHA-256. A missing eligible
-artifact triggers a pristine build; a corrupt selected artifact fails publication.
-Weekly and full manual runs always rebuild. An unchanged daily run skips only
-when an earlier successful daily/manual run actually retained published firmware.
-Personal Cloud continues consuming `firmware-build-<attempt>`; guests receive no
-cloud credentials.
+Diagnostic artifacts are retained for 14 days; firmware artifacts for eight days. Review evidence is copied to its durable review record before expiry, as defined in the [GitLab review process](../../process/README.md#github-development-and-gitlab-human-review).
 
-## Action minutes saved
+Application publication requires successful selected verification and the single `application` profile, built from `coding/app/prj.conf`. The manifest entry has `component=application`, the version and SHA-256 (secure hash algorithm 256) checksum. The same version is printed at boot. Configuration, ELF (Executable and Linkable Format), binary, map, generated device tree and RAM/ROM reports are retained under `artifacts/firmware/application/`.
 
-| Reduction | Why it saves work | Limit |
-| --- | --- | --- |
-| Direct gate evaluation for known PR events | Avoids the resolve runner for PR updates and relevant comments | CI/review completion still resolves live PR state |
-| Independent application selection | Avoids unrelated application or bring-up compilation | Shared inputs and full verification build both |
-| Prepared validators and compiler caching | Avoids validator downloads and repeated compiler work | Pin/hash checks and uncached weekly verification remain |
-| Native-test-only routing | Runs the native tests without three ESP32 compilations | Firmware and toolchain edits still build all profiles |
-| Exact-SHA artifact promotion | Publishes already tested binaries instead of rebuilding for publication | Only complete, clean, successful integration artifacts qualify |
-| Skip unchanged daily publication | Avoids starting the verification VMs again | Weekly full verification remains |
-| Event-driven recovery | Exits after requesting one rerun; handles its completion in a new event | Failed verification is still rerun once |
-| PR cancellation and grouped updates | Stops obsolete PR runs; groups Actions dependency PRs | Integration verification is never cancelled by newer pushes |
+Daily builds, dispatches of `integration` and the `firmware` label publish only this application. Integration pushes retain `verified-firmware-<attempt>`. Exact-commit reuse accepts a successful same-repository integration run of this workflow, a clean matching manifest and exactly one application image with a valid checksum. Missing eligible artifacts trigger a build; corrupt selected artifacts fail publication. The bundle keeps the external artifact name `firmware-build-<attempt>`. Build guests hold no cloud credentials.
 
-The planning sample measured roughly **13–14 seconds total across the two gate jobs per evaluation**, **454 seconds
-for three firmware profiles**, and **32 seconds for native logic**. These are small
-sample timings, not guaranteed savings. Native-only routing avoids about 7.6 VM
-minutes per such run. Direct evaluation removes only the resolve job for known PR
-events; the required evaluation and review-signal workflows remain. Recovery removes the old polling
-wait of up to 85 minutes. Compare actual run durations and counts after rollout.
-For this public repository, standard GitHub-hosted runners have no billed Actions
-minutes; homelab VM time is also separate from billed GitHub minutes. The benefit
-here is less runner work, electricity and queueing, not a promised GitHub bill reduction.
-See [GitHub Actions billing](https://docs.github.com/en/billing/concepts/product-billing/github-actions)
-for minute and artifact-storage accounting.
-The final required accounting step deliberately remains: it catches missing outputs,
-skipped selected work, failed dependencies and cancellations.
+### External publication handoff
 
-## Native approval migration (requires a separate reviewer identity)
+The homelab importer and Personal Cloud service are outside this repository. Their owner must check that they accept `profile=application`, `component=application` and `--profile application --parts 1`, replace the previous download only after the upload succeeds, and display the application image. Importer compatibility and an end-to-end download remain unverified here.
 
-Native migration is deferred: Nico confirmed that fallback reviews run through
-his PR-author GitHub account. Independent sessions from a second provider satisfy
-the legacy gate policy, but cannot supply a native approval of their own author's
-PR. Keep `agent-gate` required and `CI_NATIVE_REVIEW` unset until a separate App
-or account exists and both approval probes below pass. Do not create reviewer
-credentials or enable paid reviews merely to retire the gate.
+## Review findings
 
-No live ruleset is changed by this optimization. The migration helper is dry-run by default.
-It preserves existing rules, required-check App pins and bypass actors. Use an
-admin-capable `gh` login; do not commit credentials.
+Critical and major review findings block delivery. Minor findings and nitpicks may remain open or be deferred. The merge gate exempts only explicitly classified CodeRabbit minor/nitpick findings from its configured immutable bot identity. Unknown severity, other unresolved reviewers' threads and unanswered owner questions still block. A current-head CodeRabbit changes request counts as a completed nonblocking review only when its structured summary and all associated findings account for minor/nitpick findings exclusively; missing, truncated, mixed or unrecognised evidence blocks. Native GitHub required approvals remain independent and cannot be replaced by this gate.
 
-1. Add native protection while **keeping agent-gate required**:
+Use automatic CodeRabbit reviews. Request manually only when none triggered; never duplicate a running review or assume a fixed subscription quota.
 
-   ```sh
-   python Development/system/testing/ci/native_review.py prepare \
-     --repo DemonicPsychoII/DigitalStethoscope --ruleset 21015545
-   # Inspect the JSON, then repeat with --apply.
-   ```
+## Failures and retests
 
-   This requires one approving review, dismisses stale approvals on pushes and
-   requires conversation resolution. Configure CodeRabbit approval behavior if
-   needed; a comment or green progress check is not an approving review.
+The failing test, input and environment remain part of the evidence. Corrections rerun affected unit, L2 and integration suites. Interface changes also affect callers and services. Device retests identify the hardware and firmware configuration and retain the earlier failed record.
 
-2. Use two real probe PRs to prove native protection accepts CodeRabbit and a
-   separate fallback reviewer App/account. Each must show `reviewDecision=APPROVED`
-   and that reviewer's native approval on its current head. The helper rejects
-   other approving reviewers, including retained older approvals so each probe isolates the tested identity. Shared
-   author credentials cannot approve their own PR. Provision the fallback identity
-   before proceeding; comment-only independent reviews cannot satisfy this rule.
+Post-merge recovery reruns failed jobs once. Only attempts 1 and 2 determine recovery: a green rerun reports recovery; the same recognized verification step failing twice proposes a revert. Setup, runner availability, upload and unclassified failures require inspection. Later manual reruns do not reopen the recovery decision. Revert PRs still pass the active protections.
 
-3. Retire the custom check only after both probes pass:
+## Setup and local checks
 
-   ```sh
-   python Development/system/testing/ci/native_review.py finish \
-     --repo DemonicPsychoII/DigitalStethoscope --ruleset 21015545 \
-     --coderabbit-pr CR_PROBE_NUMBER --fallback-pr FALLBACK_PROBE_NUMBER \
-     --fallback-login SEPARATE_REVIEWER_LOGIN
-   # Inspect the JSON and probes, then repeat with --apply.
-   ```
+New component suites are added through their test PRs. Use the following commands for the implemented checks.
 
-   The helper removes only `agent-gate` from required statuses, then sets
-   `CI_NATIVE_REVIEW=true` to stop custom gate/review-signal jobs. Its first apply
-   saves `artifacts/ci/native-review-before-<owner>_<repo>-<ruleset>.json`; keep that snapshot externally.
-   Native reviews do not enforce session markers, owner-question markers or a
-   CodeRabbit-only identity. Keep unanswered owner questions draft with auto-merge
-   disabled. Native mode requires approval on reverts too.
+Setup uses Python 3.12+, Git and, on Windows, 7-Zip. Linux also needs venv support, xz/tar and the [Zephyr host prerequisites](https://docs.zephyrproject.org/latest/develop/getting_started/index.html). A checkout path without parentheses avoids the pinned Zephyr Windows Kconfig path limitation.
 
-Rollback: delete `CI_NATIVE_REVIEW` to re-enable gate jobs, restore the saved
-ruleset using its writable fields (`name`, `target`, `enforcement`, `conditions`,
-`rules`, optional `bypass_actors`), then dispatch `agent-gate.yml` for open PRs.
-Leave protection in place throughout; a temporarily blocked merge is safe.
-
-## Failures and local checks
-
-Post-merge recovery reruns failed jobs once and exits. Only attempts 1 and 2
-participate; later manual reruns never reopen the recovery decision. A green rerun reports
-recovery. Only the same allowlisted verification step failing on both attempts
-proposes a revert. Setup, queued-runner, upload and unclassified failures prompt
-inspection without an automatic revert. Revert PRs still obey active protection.
-
-```sh
-python Development/system/testing/ci/validation_tools.py
-# Add .ci-validation-tools and the pinned Python environment to PATH.
-python Development/system/testing/ci/run_ci.py static
-python -m unittest discover -s Development/system/testing/ci
-python -m unittest discover -s .github/agent-gate
-STETHO_SANITIZERS=true python -m pytest -q Development/system/coding/bringup-zephyr/tests/host
-python Development/system/testing/ci/validate_docs.py
-python Development/system/testing/ci/native_tests.py
-GITHUB_ACTIONS=true python Development/system/testing/ci/run_ci.py build
+```powershell
+winget install --id 7zip.7zip -e --silent
+python Development/system/testing/ci/setup_zephyr.py
+.ci-workspace/.venv/Scripts/python.exe -m pip install --require-hashes -r Development/system/testing/ci/requirements-ci.txt
 ```
 
-Created by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.
+Commands below use the pinned environment's Python. On Linux that executable is `.ci-workspace/.venv/bin/python`; on Windows it is `.ci-workspace/.venv/Scripts/python.exe`. Static checks also need actionlint and ShellCheck from [validation_tools.json](validation_tools.json). `validation_tools.py` installs their pinned Linux x86-64 binaries; a local Windows run uses native tools when available and prints a skip message for missing validators. CI requires both validators on every run. Host tests need pytest and a C compiler selected through `CC` (GCC in CI). The workflow records their dependency setup.
 
-Updated by Claude-Opus-5.5 on behalf of Nico running in T3 Code through Claude Code.
+| Check | Command from the repository root |
+| --- | --- |
+| Static checks | `python Development/system/testing/ci/run_ci.py static` |
+| Documentation | `python -X utf8 Development/system/testing/ci/validate_docs.py` |
+| Application L2 host tests | `python -m pytest -q Development/system/coding/app/tests/host` |
+| Application build | `python Development/system/testing/ci/run_ci.py build --application` |
+| Tooling regression tests | `python -m unittest discover -s Development/system/testing/ci -p 'test_*.py'` |
+| Merge-gate regression tests | `python -m unittest discover -s .github/agent-gate` |
+
+`run_ci.py all` executes static checks and the application build. `build` and `build --application` are equivalent: both stage the single application image and identity manifest, and can publish locally when `cloud-publish` is installed. Available host scenarios, tooling and merge-gate tests have separate entry points. Install application host dependencies with `python -m pip install --require-hashes -r Development/system/testing/ci/requirements-host.txt` before running an available suite.
+
+The [archived bring-up](../../../../preThesis/06-bringup-zephyr/README.md) retains its local build guide and optional QC (quality control) evaluator. Its checks depend on named bring-up modules, optional display/touch wiring, `qc.conf` and historical bring-up evidence. They do not define application quality gates.
+
+## Tool reference
+
+| Tool | Responsibility |
+| --- | --- |
+| `run_ci.py`, `build_support.py` | Check/build entry points, paths and firmware profiles. |
+| `setup_zephyr.py`, `setup_zephyr.sh` | Pinned workspace setup; reruns complete interrupted setup and reuse downloads. |
+| `prepared_env.py`, `validation_tools.py`, `compiler_cache.py` | Validate and reuse prepared environments, validators and compiler cache. |
+| `firmware_changes.py` | Select affected suites. |
+| `ci_evidence.py`, `ci_results.py` | Record execution identity and account for results. |
+| `daily_build.py`, `release_reuse.py`, `firmware_release.py` | Daily selection, verified-artifact reuse and publication manifests. |
+| `application_host_results.py` | Per-scenario application JUnit summary and result validation. |
+| `native_review.py`, `post_merge.py` | Native protection migration and post-merge failure confirmation. |
+| `validate_docs.py` | Links, diagram renders, indexes, repeated facts, available thesis sources and VT references (reported separately when present). |
+| `test_*.py` | Regression tests for this tooling. |
+
+Optional infrastructure references are kept below so the application reading path ends with test execution and evidence.
+
+<details>
+<summary>Runner maintenance</summary>
+
+Host image setup and rollback live in HomelabServer's `scripts/ci-runner/STETHOSCOPE.md`. [GitHub Actions billing](https://docs.github.com/en/billing/concepts/product-billing/github-actions) describes hosted-runner accounting; home-lab runtime is separate.
+
+</details>
+
+[Native approval migration and rollback](NATIVE-REVIEW-MIGRATION.md) has a separate guide.

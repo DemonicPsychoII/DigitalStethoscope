@@ -1,4 +1,4 @@
-"""Shared pinned tools and firmware profiles for setup, CI and timing runs."""
+"""Shared pinned tools and firmware profiles for setup and CI."""
 
 from __future__ import annotations
 
@@ -8,18 +8,16 @@ import subprocess
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[4]
-APP = ROOT / "Development/system/coding/bringup-zephyr"
+APP = ROOT / "Development/system/coding/app"
 PINS = json.loads(Path(__file__).with_name("toolchain.json").read_text())
 BOARD = PINS["board"]
-PROFILES = {
-    "offline": [],
-    "qc": ["-DEXTRA_CONF_FILE=qc.conf"],
-    "network-qc": ["-DEXTRA_CONF_FILE=network.conf;qc.conf"],
-}
+PROFILES = {"application": []}
+
+RELEASE_COMPONENTS = dict.fromkeys(PROFILES, "application")
 
 
 def bin_dir(workspace: Path) -> Path:
-    return workspace / ".venv" / ("Scripts" if os.name == "nt" else "bin")
+    return workspace.resolve() / ".venv" / ("Scripts" if os.name == "nt" else "bin")
 
 
 def python_path(workspace: Path) -> Path:
@@ -27,6 +25,8 @@ def python_path(workspace: Path) -> Path:
 
 
 def build_env(workspace: Path) -> dict[str, str]:
+    # Zephyr computes linker include paths lexically; a workspace symlink breaks them.
+    workspace = workspace.resolve()
     env = os.environ.copy()
     env["PATH"] = os.pathsep.join((str(bin_dir(workspace)), env.get("PATH", "")))
     env["ZEPHYR_BASE"] = str(workspace / "zephyr")

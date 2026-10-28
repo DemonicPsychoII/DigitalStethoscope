@@ -38,13 +38,10 @@ def main() -> None:
         "selection": {
             key: os.environ.get(key)
             for key in (
-                "FIRMWARE",
                 "APPLICATION",
-                "NATIVE",
-                "HOST",
+                "APPLICATION_HOST",
                 "TOOLING",
                 "GATE",
-                "QC",
                 "DOCS",
                 "DAILY",
                 "PUBLISH",

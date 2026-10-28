@@ -1,14 +1,14 @@
 # Thesis firmware — layer structure
 
-This directory records the Zephyr/ESP32-S3 layer structure from the saved
-architecture decision. The thesis firmware lives here (decided 14 October,
-[D11](../../planning/implementation-readiness.md#decision-register)); the
-[evaluation firmware](../bringup-zephyr/README.md) remains separate.
+This is the Zephyr/ESP32-S3 thesis application. The [archived bring-up firmware](../../../../preThesis/06-bringup-zephyr/README.md) remains separate pre-thesis material.
 
-The table uses the existing skeleton folder names. L1 holds thin hardware adapters
-over Zephyr drivers and pure C libraries; L2 orchestrates them, as decided on
-[13 October](../../planning/mvp-decisions-2026-10-13.md). [Detailed design](../../design/interfaces-and-behavior.md#static-dependency-and-module-map)
+The table maps the application folders. L1 holds thin hardware adapters
+over Zephyr drivers and pure C libraries; L2 orchestrates them. [Detailed design](../../design/system/interfaces-and-behavior.md#static-dependency-and-module-map)
 maps its logical components to these folders.
+
+`L1_WIFI` and `L2_COMMUNICATION` implement the [Wi-Fi contract](../../design/WIFI/interfaces-and-behavior.md).
+`L1_PORTAL` implements the [portal contract](../../design/PORTAL/interfaces-and-behavior.md);
+COMMUNICATION consumes its requests and publishes its state.
 
 | Folder | Contents | May depend on |
 |---|---|---|
@@ -16,25 +16,24 @@ maps its logical components to these folders.
 | `L2_application/L2_AUDIO/` | Audio path and BPM worker, driven by control commands | L1, `common` |
 | `L2_application/L2_COMMUNICATION/` | Builds via FHIR, sends via WIFI under the lease; Device registration; hotspot Wi-Fi setup page | L1, `common` |
 | `L2_application/L2_SHELL/` | Shell commands and read-back through CONTROL | L2_CONTROL, `common` |
-| `L1_services/` adapters | `L1_I2S` (mic RX, DAC TX), `L1_WIFI`, `L1_PORTAL` (Wi-Fi setup page), `L1_PHYSICALINTERFACE` (buttons, LEDs) | Zephyr, `common` |
+| `L1_services/` adapters | `L1_I2S` (mic RX, DAC TX), `L1_WIFI`, `L1_PORTAL` (Wi-Fi setup page), `L1_STORAGE` (settings records in flash), `L1_PHYSICALINTERFACE` (buttons, LEDs) | Zephyr, `common` |
 | `L1_services/` libraries | `L1_FILTER`, `L1_BPM` (envelope, autocorrelation, aggregation), `L1_FHIR` (serialization); pure C | `common` |
 | `L0_platform/` | Empty: Zephyr drivers and the board overlay | — |
 | `MONITOR/` | Runtime supervision | All layers, read-only |
 | `common/` | Shared audio/event/result types | Nothing |
-| `tests/host/` | Library tests on recorded WAVs | L1 libraries, `common` |
 
-Display/UI, touch, SD storage and replay (WSOLA) are optional and not part of the skeleton yet.
+Display/UI, touch, SD storage and replay (WSOLA) are optional and not part of the skeleton yet (TICKET-206, TICKET-202).
 
-## Building the skeleton
+## Building the application
 
 This directory is a standalone Zephyr application. `common/main.c` returns to the idle
 thread; most component `.c` / `.h` files reserve places for implementation.
-`L1_WIFI` and `L1_PORTAL` implement network provisioning and the setup page, and
+`L1_WIFI` and `L1_PORTAL` wrap the Zephyr Wi-Fi driver and HTTP server, and
 `L2_COMMUNICATION` implements the Wi-Fi workflow on top of them. `common/types.h` reserves the shared data types.
 The board overlay and `prj.conf` set the fitted N16R8 module (16 MB flash,
 8 MB octal PSRAM; GPIO33–37 stay reserved). The serial shell and deferred logging
-are enabled. Wi-Fi provisioning, settings storage and the portal are implemented;
-audio processing and monitoring remain placeholders.
+are enabled; Wi-Fi and the setup page are implemented but not yet tested on the board (TICKET-182).
+No audio processing, SD storage, UI or monitoring is active.
 
 ### Shell and configuration
 
@@ -157,10 +156,7 @@ The script resolves PC (faulting instruction) and A0 (caller) to source lines wi
 `addr2line`. The pinned Zephyr cannot link `CONFIG_XTENSA_ENABLE_BACKTRACE` for the
 ESP32-S3 (`xthal_window_spill` is missing), so deeper frames need GDB.
 
-Without `--application`, `run_ci.py build` also compiles this skeleton to
-`build-ci-app`, before building and packaging the bring-up firmware. The skeleton
-is not packaged or published as the bring-up firmware. The pure C library placeholders
-will gain host tests in `tests/host` when their behavior is implemented.
+`run_ci.py build` and `run_ci.py build --application` both compile this application to `build-ci-app`, retain build evidence and stage the single application profile. Daily/dispatch and `firmware`-label publication use that profile. The archived bring-up firmware has local build instructions and no CI.
 
 ## Layer rules
 
@@ -171,36 +167,31 @@ Only L2_CONTROL writes mode state; SHELL commands go through it. L2_COMMUNICATIO
 the only path to a WIFI send (no pre-send assignment check since 15 October), while
 MON observes it. Start on one core and measure before adding another.
 
-[Detailed design](../../design/interfaces-and-behavior.md) defines contracts and
+[Detailed design](../../design/system/interfaces-and-behavior.md) defines contracts and
 ownership. [Product scope](../../spec/product-scope.md) and the
-[risk/readiness register](../../planning/implementation-readiness.md) qualify
+risk/readiness register qualify
 class B/SOUP intentions and monitoring controls; classification and hazards require
 substantiation.
 
 ## Wi-Fi workflow verification
 
-CONTROL posts `COMMUNICATION_EVENT_LISTENING_STARTED`, then waits for
-`communication_waitForWiFiStop()` before it starts audio. Start/Stop state is
-protected by a short spinlock because the posting interface permits interrupt
-callers. A semaphore wakes the worker; repeated wakeups cannot fill a queue.
-CONTROL must serialize its commands with the wait. A timeout keeps audio stopped.
+CONTROL is expected to post `COMMUNICATION_EVENT_LISTENING_STARTED` and waits for
+`communication_waitForWiFiStop()` before it starts audio. On wait timeout, CONTROL keeps audio stopped. These interfaces are implemented by COMMUNICATION; CONTROL integration is still pending. The design requires the acknowledgement to follow L1 confirmation
+of scan and connect cancellation and of portal, DHCP and AP shutdown, and a new Start
+invalidates the previous acknowledgement. The communication thread stops scans, connect
+requests and the setup services, but preserves an established station association.
 
-Waits check Start in 200 ms slices. Total release latency also includes atomic
-settings writes, driver cancellation and confirmed portal/hotspot shutdown; it is
-not yet measured. Failed cleanup withholds release and is retried by the worker.
-An established station is retained. L1 Wi-Fi and portal services are implemented;
-CONTROL integration remains a placeholder. Target acceptance still requires
-measured Wi-Fi and portal evidence.
+Cleanup tries each pending stop once. If all stops succeed, audio is released normally.
+If any stop fails, the thread latches WIFI_CLEANUP_FAILURE, disables further Wi-Fi work
+until restart and releases audio under the REQ-13 Wi-Fi-only exception. It does not
+claim confirmed radio shutdown.
 
-Run the production workflow with deterministic kernel and service substitutes:
+The thread uses a candidate 200 ms check interval for Start events. That interval is not
+a bound on teardown latency: the time until audio can start also includes the atomic
+settings write and the driver shutdown, which are not yet measured.
+CONTROL does not call this interface yet.
 
-```sh
-python -m pytest -q Development/system/coding/app/tests/host
-```
-
-The host tests need a C11 compiler (`gcc` by default; override with `CC`). They
-check orchestration and injected failures, not target radio or scheduler timing.
-The static quality job runs these tests when application code or tests change.
+The [application host suite](tests/host/README.md) verifies communication, Wi-Fi and portal scenarios against substituted boundaries. VT-14 target timing, radio behavior and CONTROL integration remain pending; host results do not establish device behavior.
 
 ## Coding conventions
 
@@ -218,7 +209,7 @@ Keep related declarations, assignments or calls together in their own groups.
 
 | Item | Rule | Example |
 |---|---|---|
-| Function | `module_camelCase`, verb first | `wifi_readSettings()`, `communication_waitForEvents()` |
+| Function | `module_camelCase`, verb first | `wifi_startScan()`, `communication_waitForCondition()` |
 | Waiting function | starts with `waitFor` and names what it waits for | `wifi_waitForConnection()` |
 | File-scope variable | `module_PascalCase` | `communication_ScanList` |
 | Flag (`bool`) | states what is true when set | `communication_StoredNetworkIsValid` |
@@ -233,5 +224,3 @@ and `communication_waitForWiFiStop()`. Every function has one `return` at its en
 condition (MISRA C:2012 Rules 15.4 and 15.5; no `continue`, MISRA C:2004 Rule 14.5).
 Every `if … else if` chain ends with `else` (Rule 15.7), and unused return values are
 cast to `void` (Rule 17.7). Doxygen comments use one short `@return` line.
-
-Updated by Claude-Opus-5.5 on behalf of Nico running in T3 Code through Claude Code.

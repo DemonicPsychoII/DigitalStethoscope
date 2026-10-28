@@ -10,7 +10,7 @@ uses vendor support, but this does **not** make arbitrary ESP-IDF application
 components drop-in Zephyr libraries. A framework migration would also require
 reworking device configuration, synchronization, networking and verification.
 
-Use HTTPS for BPM/FHIR delivery. The evaluation already contains verified TLS;
+Use HTTPS for BPM/FHIR delivery. The evaluation contains an existing TLS implementation; current-head TLS acceptance evidence remains pending (VT-08);
 switching to HTTP would remove transport confidentiality and server authentication
 without addressing the remaining application-level delivery verification work.
 Do not transmit patient-linked results over an unprotected HTTP connection.
@@ -43,10 +43,10 @@ already supports them.
 | Headphone amplifier | External analog stage | No software driver assumed; select/verify gain, output limits and load behavior. |
 | Wi-Fi + HTTP/HTTPS client | Zephyr Wi-Fi, DHCP, DNS, BSD-style sockets, TLS via Mbed TLS | Existing optional network configuration and FHIR sender. Requires target AP/DNS/time/certificate/server tests. The device is a FHIR client. Since [12 October](mvp-decisions-2026-10-12.md) it also serves a local hotspot portal (SoftAP + HTTP server) in Idle; verify both on target. |
 
-See the maintained [overlay](../coding/bringup-zephyr/boards/esp32s3_devkitc_procpu.overlay),
-[configuration](../coding/bringup-zephyr/prj.conf),
-[hardware evidence](../coding/bringup-zephyr/evidence/hardware-results.json) and
-[test protocol](../coding/bringup-zephyr/TEST-PROTOCOL.md). Historical passes are
+See the maintained [overlay](../../../preThesis/06-bringup-zephyr/boards/esp32s3_devkitc_procpu.overlay),
+[configuration](../../../preThesis/06-bringup-zephyr/prj.conf),
+[hardware evidence](../../../preThesis/06-bringup-zephyr/evidence/hardware-results.json) and
+[test protocol](../../../preThesis/06-bringup-zephyr/TEST-PROTOCOL.md). Historical passes are
 keyed to older firmware and must not be presented as current-head acceptance.
 
 ## Integrating external libraries
@@ -80,8 +80,8 @@ DNS, request serialization, response parsing, timeouts and the FHIR acknowledgem
 | Verification | Network failures and HTTP errors | Also reject unknown CA, wrong hostname, expired/not-yet-valid certificates; test missing clock/trust, handshake timeout, reconnection and memory pressure. Never fall back silently to HTTP or disable verification. |
 
 Incremental implementation effort is smaller here than in a blank project because
-[stetho_network.c](../coding/bringup-zephyr/src/stetho_network.c) and
-[network.conf](../coding/bringup-zephyr/network.conf) already implement the TLS path.
+[stetho_network.c](../../../preThesis/06-bringup-zephyr/src/stetho_network.c) and
+[network.conf](../../../preThesis/06-bringup-zephyr/network.conf) already implement the TLS path.
 The largest remaining uncertainty is provisioning and on-target interoperability,
 not the existence of S3 HTTPS support. Network work stays outside live listening;
 measure handshake resource use and recovery before accepting that separation.
@@ -109,7 +109,3 @@ sender's success logging must not be confused with the checked `201`/`200` recei
 - [ESP-IDF ESP32-S3 programming guide](https://docs.espressif.com/projects/esp-idf/en/stable/esp32s3/)
 - [Pinned Zephyr source](https://github.com/zephyrproject-rtos/zephyr/tree/357467a011cd2557a1a3f0b4be83d817c4addc9b)
 - [PlantUML component syntax](https://plantuml.com/component-diagram) and [activity syntax](https://plantuml.com/activity-diagram-beta)
-
-Created by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.
-
-Updated by Claude-Opus-5.5 on behalf of Nico running in T3 Code through Claude Code.

@@ -2,7 +2,7 @@
 
 DigitalStethoscope · ESP32/Zephyr · TH Augsburg · Abgabe laut Nico: **11.01.2027**.
 
-Hier liegen geordnete Schreibbausteine aus 350 Informationseinheiten, keine fertige Thesis und keine neue Hardwarevalidierung. **328 aktive Aussagen** werden gezeigt; **22 ältere IDs** bleiben über „ersetzt …“ und den [Einheitenindex](einheitenindex.md) auffindbar. Die 26 Ersatz-Einheiten können dieselbe ältere ID aufteilen. Das unveränderte Verzeichnis `_stage1/` ist der Audit-Trail; sein HANDOFF beschreibt teilweise einen älteren Inventarstand.
+Hier liegen geordnete Schreibbausteine aus 349 Informationseinheiten, keine fertige Thesis und keine neue Hardwarevalidierung. **327 aktive Aussagen** werden gezeigt; **22 ältere IDs** bleiben über „ersetzt …“ und den [Einheitenindex](einheitenindex.md) auffindbar. Die 26 Ersatz-Einheiten können dieselbe ältere ID aufteilen. Das unveränderte Verzeichnis `_stage1/` ist der Audit-Trail; sein HANDOFF beschreibt teilweise einen älteren Inventarstand.
 
 ## Jetzt mit Grundlagen anfangen
 
@@ -19,8 +19,8 @@ Pro Absatz eine Kernaussage wählen, Originalbeleg öffnen und die genaue Fundst
 
 - **Widersprüche:** W1 (Q1/AP 2.2 versus gestrichene Kettenmessung), W2 (Schalterzuordnung), CirCor 5.272/5.282, Helmholtz-Modell und Knowles-LFRO. Sie stehen zuerst in [offene-punkte.md](offene-punkte.md#widersprueche).
 - **Eigene Zielwerte:** 40–800 Hz / 25–150 Hz, <30 ms bzw. ≤10/≤5 ms und BPM-Akzeptanzgrenzen sind vorläufige Entwicklungsentscheidungen, keine allgemeingültigen Literaturgrenzen.
-- **Quellenstand des Audits:** 230 zitierbedürftige Einheiten, 210 davon mit mindestens drei Quellen, 46 unvollständige Quellensets. 327 von 674 Quellenverweisen haben exakt `page: unverified`. Nico muss diese Seiten prüfen.
-- **Defekte Links:** ursprünglich 15 Einträge, betroffen 72 Einheiten. 4 verifiziert repariert, 11 sichtbar defekt, 2 weitere Einträge nur in den Metadaten korrigiert; weiterhin betroffen: 27 Audit-Einheiten. [Korrekturprotokoll](linkkorrekturen.md). Der Leon-/Teresi-Metadatenkonflikt der Pilotstudienquelle ist in Stage 2 aufgelöst.
+- **Quellenstand des Audits:** 230 zitierbedürftige Einheiten, 207 davon mit mindestens drei Quellen, 49 unvollständige Quellensets. 323 von 670 Quellenverweisen haben exakt `page: unverified`. Nico muss diese Seiten prüfen.
+- **Defekte Links:** ursprünglich 15 Einträge, betroffen 72 Einheiten. 4 verifiziert repariert, 11 sichtbar defekt, 3 weitere Einträge nur in den Metadaten korrigiert; weiterhin betroffen: 27 Audit-Einheiten. [Korrekturprotokoll](linkkorrekturen.md). Der Leon-/Teresi-Metadatenkonflikt der Pilotstudienquelle ist in Stage 2 aufgelöst.
 - Build-/Host-/QC-Erfolg belegt keine integrierte physische Funktion. Historische Messungen nur mit Datum und Firmwarestand verwenden.
 - **Stand integration 2026-10-22:** W1 ist im Projekt entschieden: Abgabefassung ohne Kettenmessung (D09, 14.10.); die Abstimmung mit dem Betreuer ist offen. W2 betrifft den im MVP nicht geforderten Geschwindigkeitsschalter und die Trägerplatine. Latenz- und BPM-Ziele gelten seit 14.10. (REQ-05, REQ-06). Details: [Abgleich mit integration](#abgleich-mit-integration).
 
@@ -91,7 +91,7 @@ Die Zahlen zählen aktive Aussagen, nicht ersetzte IDs, Querverweise oder Quelle
 | [Evaluation: BPM-Validierung](08-evaluation/04-bpm-validierung.md) | 16 |
 | [Evaluation: Explorative Hörstudie](08-evaluation/05-hoerstudie.md) | 33 |
 | [Evaluation: Akustische Übertragungskette](08-evaluation/06-akustische-kette.md) | 18 |
-| [Evaluation: Firmware, Funktion und Ressourcen](08-evaluation/07-firmware-funktion-ressourcen.md) | 29 |
+| [Evaluation: Firmware, Funktion und Ressourcen](08-evaluation/07-firmware-funktion-ressourcen.md) | 28 |
 | [Ethik, Datenschutz und Regulatorik](09-ethik-datenschutz-regulatorik.md) | 17 |
 | [Diskussion und Ausblick](10-diskussion-ausblick.md) | 8 |
 | [Formales und Projektmanagement](11-formales-projektmanagement.md) | 18 |
@@ -104,6 +104,7 @@ Die Zahlen zählen aktive Aussagen, nicht ersetzte IDs, Querverweise oder Quelle
 | LITERATURMESSUNG / BENCHMARK | Ergebnis fremder Messung, kein Messwert dieses Prototyps. |
 | EIGENE ENTSCHEIDUNG / ENTWURFSEMPFEHLUNG | Projektentscheidung oder Rechercheempfehlung; Status der tatsächlichen Übernahme prüfen. |
 | EIGENER ZIELWERT / VORLÄUFIGER VORSCHLAG; EIGENE ANFORDERUNG | Eigener Sollwert/Umfang; Literatur kann begründen, macht daraus aber keine Normvorgabe. |
+| PROJEKTDOKUMENTATION / BESTANDSWERT | Dokumentierter Preis, Bestand oder Verdrahtungswert; kein eigener Sollwert. |
 | EIGENER DOKUMENTIERTER BEFUND; PROJEKTDOKUMENTATION | Repository-Nachweis mit Versions-/Zeitbezug. |
 | METHODENVORSCHLAG; METHODE / PRÜFVERFAHREN | Geplantes oder beschriebenes Vorgehen; Durchführung gesondert nachweisen. |
 | ANNAHME / OFFEN / WIDERSPRUCH / RISIKO | Noch prüfen oder entscheiden; nicht stillschweigend als erwiesen übernehmen. |
@@ -114,7 +115,7 @@ Die Zahlen zählen aktive Aussagen, nicht ersetzte IDs, Querverweise oder Quelle
 
 `confirmed` wird nicht eigens angezeigt: Es bedeutet im Inventar dokumentiert, nicht unabhängig wahrheitsgeprüft. Auch vorhandene Abschnitts-/Tabellenverweise sind aus Stage 1 übernommen. Alle Aussagen behalten exakt ihre Quellsprache; einzelne englische Firmwareeinheiten sind deshalb weiterhin Englisch.
 
-[Quellenverzeichnis](quellen.md) führt alle 105 Audit-Schlüssel mit zitierenden IDs sowie 17 Zusatzquellen außerhalb des Audits (Projektentscheidungen, LED-Recherche) ohne Audit-IDs. [quellen.bib](quellen.bib) enthält konservative Minimal-Einträge und kennzeichnet fehlende Metadaten; es ist noch kein abgabefertiges Literaturverzeichnis. [Einheitenindex](einheitenindex.md) führt jede Audit-ID zur Schreibstelle. [Offene Punkte](offene-punkte.md) sind die Arbeitsliste für Entscheidungen, Seiten und Quellenlücken.
+[Quellenverzeichnis](quellen.md) führt alle 105 Audit-Schlüssel mit zitierenden IDs sowie 29 Zusatzquellen außerhalb des Audits (Projektentscheidungen, LED-Recherche) ohne Audit-IDs. [quellen.bib](quellen.bib) enthält konservative Minimal-Einträge und kennzeichnet fehlende Metadaten; es ist noch kein abgabefertiges Literaturverzeichnis. [Einheitenindex](einheitenindex.md) führt jede Audit-ID zur Schreibstelle. [Offene Punkte](offene-punkte.md) sind die Arbeitsliste für Entscheidungen, Seiten und Quellenlücken.
 
 ## Regenerieren und prüfen
 
@@ -122,6 +123,6 @@ Die Zahlen zählen aktive Aussagen, nicht ersetzte IDs, Querverweise oder Quelle
 python thesis-material/_build/build.py
 ```
 
-Der Generator benötigt nur die Python-Standardbibliothek und keinen Netzwerkzugang. Redaktionelle Änderungen im Generator bzw. in `_build/source-overrides.json` pflegen, Quellen außerhalb des Audits in `_build/supplemental-sources.json`; erzeugte Dateien werden überschrieben. `_stage1/` wird ausschließlich gelesen. Die Vollständigkeitsprüfung kontrolliert alle 350 IDs in den Kapiteldateien, jede aktive Aussage genau einmal, alle Quellenreferenzen und lokale Linkziele. Ergebnis: [vollstaendigkeit.md](vollstaendigkeit.md); maschinenlesbar: [_build/check.json](_build/check.json).
+Der Generator benötigt nur die Python-Standardbibliothek und keinen Netzwerkzugang. Redaktionelle Änderungen im Generator bzw. in `_build/source-overrides.json` pflegen, Quellen außerhalb des Audits in `_build/supplemental-sources.json`; erzeugte Dateien werden überschrieben. `_stage1/` wird ausschließlich gelesen. Die Vollständigkeitsprüfung kontrolliert alle 349 IDs in den Kapiteldateien, jede aktive Aussage genau einmal, alle Quellenreferenzen und lokale Linkziele. Ergebnis: [vollstaendigkeit.md](vollstaendigkeit.md); maschinenlesbar: [_build/check.json](_build/check.json).
 
-Created by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.
+Updated by GPT-6.1-Sol on behalf of Nico running in codex.

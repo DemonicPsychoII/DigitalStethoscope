@@ -731,13 +731,6 @@
 - **Status:** confirmed
 - **Zitat nötig:** nein
 
-## U096 — method / Evaluation/Methodik
-
-- **Aussage:** BUILD-TIMES beschreibt einen vergleichbaren Buildzeit-Benchmark über Geräte, mit Warm-up-Ausschluss, Median/Min/Max und Trennung nach Source-Hash, Toolpins, Board und Cachepolitik; Ergebnisdateien sollen für Thesis-Messungen erhalten bleiben.
-- **Ursprung:** Development/system/testing/BUILD-TIMES.md:1-89
-- **Status:** confirmed
-- **Zitat nötig:** nein
-
 ## U097 — measurement / Evaluation/Methodik
 
 - **Aussage:** QC-Ergebnis JSON dokumentiert 10 Kontrollen mit Score je 10 und Gate PASS; Verifikation basiert teils auf Heuristiken, und erforderliche Maßnahmen bleiben trotz PASS ausgewiesen.

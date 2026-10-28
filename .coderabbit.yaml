@@ -48,6 +48,7 @@ reviews:
     issue_assessment:
       mode: "off"
   auto_review:
+    base_branches: ["integration", "test/v-model-from-start", "replay/.*"]
     enabled: true
     drafts: false
   path_instructions:

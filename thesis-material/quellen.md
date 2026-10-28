@@ -4,7 +4,7 @@
 
 103 Quellenschlüssel aus Stage 1, nach Stage-2-Aufteilung 105. Doppelte Werke unter verschiedenen Schlüsseln bleiben für die Rückverfolgung erhalten. Die Zuordnung ist thematisch; alle zitierenden IDs werden genannt, auch ersetzte. „ok“ bezeichnet Linkzugang, nicht die Tragfähigkeit jeder Aussage. Seitenangaben sind getrennt zu prüfen.
 
-**BibTeX:** Für 7 neu geprüfte Einträge stehen belegte Metadaten bereit. Die übrigen Minimal-Einträge enthalten nur die in Stage 1 überprüfte URL, wenn sie dort als erreichbar markiert ist, und eine als unsicher gekennzeichnete Arbeitsnotiz. Autoren, Titel, Jahre und DOIs werden dort nicht aus Freitext erraten. Vor der finalen Abgabe Originalmetadaten importieren.
+**BibTeX:** Für 10 neu geprüfte Einträge stehen belegte Metadaten bereit. Die übrigen Minimal-Einträge enthalten nur die in Stage 1 überprüfte URL, wenn sie dort als erreichbar markiert ist, und eine als unsicher gekennzeichnete Arbeitsnotiz. Autoren, Titel, Jahre und DOIs werden dort nicht aus Freitext erraten. Vor der finalen Abgabe Originalmetadaten importieren.
 
 ## Akustik, Bruststück und Messmethoden
 
@@ -52,7 +52,7 @@ Farina, A. (2000). Simultaneous Measurement of Impulse Response and Distortion w
 
 Alanazi, A., Atcherson, S., Franklin, C., & Bryan, M. (2020). Frequency responses of conventional and amplified stethoscopes for measuring heart sounds. Saudi Journal of Medicine & Medical Sciences, 8(2), 112–117.
 
-**Linkstatus:** ok — korrigierter DOI am 2026-10-05, HTTP 200 nach Weiterleitung zum Verlag
+**Linkstatus:** ok — HTTP 200 über korrigierten DOI am 2026-10-24; Titel geprüft
 
 **Fundstelle:** [Quelle öffnen](https://doi.org/10.4103/sjmms.sjmms_118_19) · DOI aus Arbeitsdatensatz: [https://doi.org/10.4103/sjmms.sjmms_118_19](https://doi.org/10.4103/sjmms.sjmms_118_19)
 
@@ -229,7 +229,7 @@ ANSI/AAMI EC13:2002. Cardiac monitors, heart rate meters, and alarms. Associatio
 
 U.S. Food and Drug Administration. (1998). Cardiac Monitor Guidance (including Cardiotachometer and Rate Alarm) — Guidance for Industry.
 
-**Linkstatus:** broken (HTTP 404) bei Nachprüfung am 2026-10-05 — Sol meldete die HTML-Fassung als geöffnet, ein unabhängiger Abruf lieferte 404; Dokument über FDA-Guidance-Suche manuell finden · **LINK DEFEKT**
+**Linkstatus:** broken (HTTP 404) — exakte URL am 2026-10-24 erneut geprüft; Ersatzfundstelle unbestätigt · **LINK DEFEKT**
 
 **Fundstelle:** [Quelle öffnen](https://www.fda.gov/regulatory-information/search-fda-guidance-documents/cardiac-monitor-guidance-including-cardiotachometer-and-rate-alarm-guidance-industry)
 
@@ -335,13 +335,15 @@ Liu, C. et al. (2016). Classification of Heart Sound Recordings: The PhysioNet/C
 <a id="physionet_challenge_2022"></a>
 ### physionet_challenge_2022
 
-Reyna, M. A. et al. (2022). Heart Murmur Detection from Phonocardiogram Recordings: The George B. Moody PhysioNet Challenge 2022. Computing in Cardiology, 49, 1–4.
+Reyna, M. A. et al. (2022). Heart Murmur Detection from Phonocardiogram Recordings: The George B. Moody PhysioNet Challenge 2022. Computing in Cardiology, 49, pagination unverified.
 
 **Linkstatus:** ok
 
-**Fundstelle:** [Quelle öffnen](https://physionet.org/content/challenge-2022/1.0.0/) · DOI aus Arbeitsdatensatz: [https://doi.org/10.22489/CinC.2022.049](https://doi.org/10.22489/CinC.2022.049)
+**Fundstelle:** [Quelle öffnen](https://physionet.org/content/challenge-2022/1.0.0/)
 
 **Prüfnachweis Stage 1:** PhysioNet challenge page / primary source record searched; DOI and exact pagination remain unconfirmed.
+
+**Korrektur Stage 2:** DOI und Seitenzahlen sind nicht verifiziert; Stage-1-Audit bleibt unverändert.
 
 **Zitiert von:** [U042](08-evaluation/03-filtervergleich-statistik.md#a018) (ersetzt), [U044](08-evaluation/02-datensaetze-referenz.md#a021) (ersetzt), [U045](08-evaluation/02-datensaetze-referenz.md#a028) (ersetzt), [A009](08-evaluation/03-filtervergleich-statistik.md#a009), [A021](08-evaluation/02-datensaetze-referenz.md#a021), [A022](08-evaluation/02-datensaetze-referenz.md#a022), [A023](08-evaluation/02-datensaetze-referenz.md#a023), [A024](08-evaluation/02-datensaetze-referenz.md#a024), [A025](08-evaluation/02-datensaetze-referenz.md#a025), [A026](08-evaluation/02-datensaetze-referenz.md#a026), [A027](08-evaluation/02-datensaetze-referenz.md#a027), [A028](08-evaluation/02-datensaetze-referenz.md#a028), [A029](08-evaluation/02-datensaetze-referenz.md#a029), [A031](08-evaluation/02-datensaetze-referenz.md#a031), [A032](08-evaluation/06-akustische-kette.md#a032), [A041](08-evaluation/02-datensaetze-referenz.md#a041), [A044](08-evaluation/02-datensaetze-referenz.md#a044)
 
@@ -384,7 +386,7 @@ Espressif Systems. ESP-DSP Library API Reference.
 
 **Prüfnachweis Stage 1:** Official ESP-DSP API documentation opened; library/API reference verified.
 
-**Zitiert von:** [C008](03-grundlagen-technisch/03-i2s-audiopfad.md#c008), [C009](03-grundlagen-technisch/03-i2s-audiopfad.md#c009), [C011](03-grundlagen-technisch/03-i2s-audiopfad.md#c011), [C016](03-grundlagen-technisch/04-dsp-filter.md#c016), [C017](03-grundlagen-technisch/04-dsp-filter.md#c017), [C018](06-systemarchitektur.md#c018), [C019](03-grundlagen-technisch/04-dsp-filter.md#c019)
+**Zitiert von:** [C016](03-grundlagen-technisch/04-dsp-filter.md#c016), [C017](03-grundlagen-technisch/04-dsp-filter.md#c017), [C018](06-systemarchitektur.md#c018), [C019](03-grundlagen-technisch/04-dsp-filter.md#c019)
 
 <a id="esp_dsp_benchmarks"></a>
 ### esp_dsp_benchmarks
@@ -776,11 +778,13 @@ Technische Hochschule Augsburg, Fakultät Elektrotechnik. Welchen Arbeitsumfang 
 
 Technische Hochschule Augsburg. FAQs zur Bachelorarbeit, version 02.26.
 
-**Linkstatus:** broken (HTTP 404) on 2026-10-05 check · **LINK DEFEKT**
+**Linkstatus:** broken (HTTP 404) — exakte URL am 2026-10-24 erneut geprüft; Ersatzfundstelle unbestätigt · **LINK DEFEKT**
 
 **Fundstelle:** [Quelle öffnen](https://www.tha.de/index.php/Binaries/Binary89415/FAQ-Bachelorarbeit-02.26-clean.pdf)
 
 **Prüfnachweis Stage 1:** Official THA FAQ PDF opened; DMS workflow, required initial fields, four-month period, August restriction, and submission sections inspected.
+
+**Korrektur Stage 2:** Die historische URL ist weiterhin nicht erreichbar; keine ungeprüfte Ersatzquelle eingesetzt.
 
 **Zitiert von:** [C044](11-formales-projektmanagement.md#c044), [C045](11-formales-projektmanagement.md#c045), [C046](11-formales-projektmanagement.md#c046), [C048](11-formales-projektmanagement.md#c048), [C050](11-formales-projektmanagement.md#c050), [C051](11-formales-projektmanagement.md#c051)
 
@@ -802,11 +806,13 @@ Technische Hochschule Augsburg, Fakultät Gestaltung. Abschlussarbeit (Interakti
 
 Technische Hochschule Augsburg. Merkblatt für Bachelorarbeiten Maschinenbau und Umwelt.
 
-**Linkstatus:** broken (HTTP 404) on 2026-10-05 check · **LINK DEFEKT**
+**Linkstatus:** broken (HTTP 404) — exakte URL am 2026-10-24 erneut geprüft; Ersatzfundstelle unbestätigt · **LINK DEFEKT**
 
 **Fundstelle:** [Quelle öffnen](https://www.tha.de/Binaries/Binary77874/Merkblatt-Bachelorarbeit.pdf)
 
 **Prüfnachweis Stage 1:** Direct PDF open failed, but a fresh official THA search result displayed Section 5 and the five-month maximum text; source existence and cited claim verified via indexed excerpt.
+
+**Korrektur Stage 2:** Die historische URL ist weiterhin nicht erreichbar; keine ungeprüfte Ersatzquelle eingesetzt.
 
 **Zitiert von:** [C049](11-formales-projektmanagement.md#c049), [C051](11-formales-projektmanagement.md#c051)
 
@@ -1001,7 +1007,7 @@ Eldridge, S. M. et al. (2016). Defining Feasibility and Pilot Studies in Prepara
 
 Teresi, J. A., Yu, X., Stewart, A. L., & Hays, R. D. (2022). Guidelines for designing and evaluating feasibility pilot studies. Medical Care, 60(1), 95–103.
 
-**Linkstatus:** ok — PMC-Seite am 2026-10-12 HTTP 200; citation_author-Metadaten nennen Teresi, Yu, Stewart, Hays
+**Linkstatus:** ok — HTTP 200 am 2026-10-24; Volltext als PMC-Seite abgerufen
 
 **Fundstelle:** [Quelle öffnen](https://pmc.ncbi.nlm.nih.gov/articles/PMC8849521/) · DOI aus Arbeitsdatensatz: [https://doi.org/10.1097/MLR.0000000000001664](https://doi.org/10.1097/MLR.0000000000001664)
 
@@ -1418,7 +1424,7 @@ Verhelst, W., & Roelands, M. (1993). An overlap-add technique based on waveform 
 <a id="nico_wifi_decisions_20261019"></a>
 ### nico_wifi_decisions_20261019
 
-Nico (full surname not supplied). *Wi-Fi, portal and feedback alignment: owner decisions*. Personal communication, T3 Code, 19 October 2026. [Conversation](t3-thread://v1/d5e44f69-2ecc-4a3e-917b-31a7b084c12b), accessed 19 October 2026. [Local decision record](../Development/system/planning/mvp-decisions-2026-10-19.md).
+Nico. *Wi-Fi, portal and feedback alignment: owner decisions*. Personal communication, T3 Code, 19 October 2026. [Conversation](t3-thread://v1/d5e44f69-2ecc-4a3e-917b-31a7b084c12b), accessed 19 October 2026. [Local decision record](../Development/system/planning/mvp-decisions-2026-10-19.md).
 
 **Source type:** Project decisions. No claim of implementation, measurement or standards conformity.
 
@@ -1431,7 +1437,7 @@ NKK Switches, "IEC 60601-1, Edition 3.1 (JIS T 0601-1:2017) compliant", Table 2 
 
 **Verification:** Inherited LED desk-research reference S1. Author, full publication title, venue/publisher, year/version and clause metadata remain unverified. Original reported access: 19 October 2026; not independently re-accessed in this implementation review.
 
-**Cited by:** [LED indication standards](../Development/system/design/led-indication-standards.md). Secondary evidence; no conformity or completed hazard-analysis claim.
+**Cited by:** [LED indication standards](../Development/system/design/FEEDBACK/led-indication-standards.md). Secondary evidence; no conformity or completed hazard-analysis claim.
 
 <a id="led_source_02"></a>
 ### led_source_02
@@ -1440,7 +1446,7 @@ Elsmar Cove forum, "Medical device warning lights colors" (P. Selvey). [Source](
 
 **Verification:** Inherited LED desk-research reference S2. Author, full publication title, venue/publisher, year/version and clause metadata remain unverified. Original reported access: 19 October 2026; not independently re-accessed in this implementation review.
 
-**Cited by:** [LED indication standards](../Development/system/design/led-indication-standards.md). Secondary evidence; no conformity or completed hazard-analysis claim.
+**Cited by:** [LED indication standards](../Development/system/design/FEEDBACK/led-indication-standards.md). Secondary evidence; no conformity or completed hazard-analysis claim.
 
 <a id="led_source_03"></a>
 ### led_source_03
@@ -1449,7 +1455,7 @@ MECA, "Alarm standards cross-reference" (2015). [Source](https://60601-1.com/wp-
 
 **Verification:** Inherited LED desk-research reference S3. Author, full publication title, venue/publisher, year/version and clause metadata remain unverified. Original reported access: 19 October 2026; not independently re-accessed in this implementation review.
 
-**Cited by:** [LED indication standards](../Development/system/design/led-indication-standards.md). Secondary evidence; no conformity or completed hazard-analysis claim.
+**Cited by:** [LED indication standards](../Development/system/design/FEEDBACK/led-indication-standards.md). Secondary evidence; no conformity or completed hazard-analysis claim.
 
 <a id="led_source_04"></a>
 ### led_source_04
@@ -1458,7 +1464,7 @@ PLCtalk forum, EN 60073 clause 4.2.3 quoted. [Source](https://www.plctalk.net/fo
 
 **Verification:** Inherited LED desk-research reference S4. Author, full publication title, venue/publisher, year/version and clause metadata remain unverified. Original reported access: 19 October 2026; not independently re-accessed in this implementation review.
 
-**Cited by:** [LED indication standards](../Development/system/design/led-indication-standards.md). Secondary evidence; no conformity or completed hazard-analysis claim.
+**Cited by:** [LED indication standards](../Development/system/design/FEEDBACK/led-indication-standards.md). Secondary evidence; no conformity or completed hazard-analysis claim.
 
 <a id="led_source_05"></a>
 ### led_source_05
@@ -1467,7 +1473,7 @@ IEEE P1621 draft standard for user interface elements (December 2002). [Source](
 
 **Verification:** Inherited LED desk-research reference S5. Author, full publication title, venue/publisher, year/version and clause metadata remain unverified. Original reported access: 19 October 2026; not independently re-accessed in this implementation review.
 
-**Cited by:** [LED indication standards](../Development/system/design/led-indication-standards.md). Secondary evidence; no conformity or completed hazard-analysis claim.
+**Cited by:** [LED indication standards](../Development/system/design/FEEDBACK/led-indication-standards.md). Secondary evidence; no conformity or completed hazard-analysis claim.
 
 <a id="led_source_06"></a>
 ### led_source_06
@@ -1476,7 +1482,7 @@ Rockwell Automation, document 140G-IN067 (LED signalling per IEC 60073). [Source
 
 **Verification:** Inherited LED desk-research reference S6. Author, full publication title, venue/publisher, year/version and clause metadata remain unverified. Original reported access: 19 October 2026; not independently re-accessed in this implementation review.
 
-**Cited by:** [LED indication standards](../Development/system/design/led-indication-standards.md). Secondary evidence; no conformity or completed hazard-analysis claim.
+**Cited by:** [LED indication standards](../Development/system/design/FEEDBACK/led-indication-standards.md). Secondary evidence; no conformity or completed hazard-analysis claim.
 
 <a id="led_source_07"></a>
 ### led_source_07
@@ -1485,7 +1491,7 @@ IDEC, LD6A signal tower datasheet. [Source](https://us.idec.com/idec-us/en/USD/m
 
 **Verification:** Inherited LED desk-research reference S7. Author, full publication title, venue/publisher, year/version and clause metadata remain unverified. Original reported access: 19 October 2026; not independently re-accessed in this implementation review.
 
-**Cited by:** [LED indication standards](../Development/system/design/led-indication-standards.md). Secondary evidence; no conformity or completed hazard-analysis claim.
+**Cited by:** [LED indication standards](../Development/system/design/FEEDBACK/led-indication-standards.md). Secondary evidence; no conformity or completed hazard-analysis claim.
 
 <a id="led_source_08"></a>
 ### led_source_08
@@ -1494,7 +1500,7 @@ Norstat, signalling catalogue 2019. [Source](https://norstat.com/wp-content/uplo
 
 **Verification:** Inherited LED desk-research reference S8. Author, full publication title, venue/publisher, year/version and clause metadata remain unverified. Original reported access: 19 October 2026; not independently re-accessed in this implementation review.
 
-**Cited by:** [LED indication standards](../Development/system/design/led-indication-standards.md). Secondary evidence; no conformity or completed hazard-analysis claim.
+**Cited by:** [LED indication standards](../Development/system/design/FEEDBACK/led-indication-standards.md). Secondary evidence; no conformity or completed hazard-analysis claim.
 
 <a id="led_source_09"></a>
 ### led_source_09
@@ -1503,7 +1509,7 @@ JBTH article (received September 2023), table after NBR IEC 60601-1-8:2022. [Sou
 
 **Verification:** Inherited LED desk-research reference S9. Author, full publication title, venue/publisher, year/version and clause metadata remain unverified. Original reported access: 19 October 2026; not independently re-accessed in this implementation review.
 
-**Cited by:** [LED indication standards](../Development/system/design/led-indication-standards.md). Secondary evidence; no conformity or completed hazard-analysis claim.
+**Cited by:** [LED indication standards](../Development/system/design/FEEDBACK/led-indication-standards.md). Secondary evidence; no conformity or completed hazard-analysis claim.
 
 <a id="led_source_10"></a>
 ### led_source_10
@@ -1512,7 +1518,7 @@ Elsmar Cove forum, "Light indication". [Source](https://elsmar.com/elsmarquality
 
 **Verification:** Inherited LED desk-research reference S10. Author, full publication title, venue/publisher, year/version and clause metadata remain unverified. Original reported access: 19 October 2026; not independently re-accessed in this implementation review.
 
-**Cited by:** [LED indication standards](../Development/system/design/led-indication-standards.md). Secondary evidence; no conformity or completed hazard-analysis claim.
+**Cited by:** [LED indication standards](../Development/system/design/FEEDBACK/led-indication-standards.md). Secondary evidence; no conformity or completed hazard-analysis claim.
 
 <a id="led_source_11"></a>
 ### led_source_11
@@ -1521,7 +1527,7 @@ IEC 60601-1-8:2006/Amd 1:2012 preview (iTeh). [Source](https://cdn.standards.ite
 
 **Verification:** Inherited LED desk-research reference S11. Author, full publication title, venue/publisher, year/version and clause metadata remain unverified. Original reported access: 19 October 2026; not independently re-accessed in this implementation review.
 
-**Cited by:** [LED indication standards](../Development/system/design/led-indication-standards.md). Secondary evidence; no conformity or completed hazard-analysis claim.
+**Cited by:** [LED indication standards](../Development/system/design/FEEDBACK/led-indication-standards.md). Secondary evidence; no conformity or completed hazard-analysis claim.
 
 <a id="led_source_12"></a>
 ### led_source_12
@@ -1530,7 +1536,7 @@ Har-El standards notes, IEC 60601-1-8 clause 6.3.2 "Visual alarm signals". [Sour
 
 **Verification:** Inherited LED desk-research reference S12. Author, full publication title, venue/publisher, year/version and clause metadata remain unverified. Original reported access: 19 October 2026; not independently re-accessed in this implementation review.
 
-**Cited by:** [LED indication standards](../Development/system/design/led-indication-standards.md). Secondary evidence; no conformity or completed hazard-analysis claim.
+**Cited by:** [LED indication standards](../Development/system/design/FEEDBACK/led-indication-standards.md). Secondary evidence; no conformity or completed hazard-analysis claim.
 
 <a id="led_source_13"></a>
 ### led_source_13
@@ -1539,7 +1545,7 @@ Elsmar Cove forum, "About the intelligent alarm system in IEC 60601-1-8" (Table 
 
 **Verification:** Inherited LED desk-research reference S13. Author, full publication title, venue/publisher, year/version and clause metadata remain unverified. Original reported access: 19 October 2026; not independently re-accessed in this implementation review.
 
-**Cited by:** [LED indication standards](../Development/system/design/led-indication-standards.md). Secondary evidence; no conformity or completed hazard-analysis claim.
+**Cited by:** [LED indication standards](../Development/system/design/FEEDBACK/led-indication-standards.md). Secondary evidence; no conformity or completed hazard-analysis claim.
 
 <a id="led_source_14"></a>
 ### led_source_14
@@ -1548,7 +1554,7 @@ Elsmar Cove forum, "About the intelligent alarm system in IEC 60601-1-8" (Table 
 
 **Verification:** Inherited LED desk-research reference S14. Author, full publication title, venue/publisher, year/version and clause metadata remain unverified. Original reported access: 19 October 2026; not independently re-accessed in this implementation review.
 
-**Cited by:** [LED indication standards](../Development/system/design/led-indication-standards.md). Secondary evidence; no conformity or completed hazard-analysis claim.
+**Cited by:** [LED indication standards](../Development/system/design/FEEDBACK/led-indication-standards.md). Secondary evidence; no conformity or completed hazard-analysis claim.
 
 <a id="led_source_15"></a>
 ### led_source_15
@@ -1557,7 +1563,7 @@ Eko Devices, Eko CORE Digital Attachment and Eko Digital Stethoscope Model E6 ma
 
 **Verification:** Inherited LED desk-research reference S15. Author, full publication title, venue/publisher, year/version and clause metadata remain unverified. Original reported access: 19 October 2026; not independently re-accessed in this implementation review.
 
-**Cited by:** [LED indication standards](../Development/system/design/led-indication-standards.md). Secondary evidence; no conformity or completed hazard-analysis claim.
+**Cited by:** [LED indication standards](../Development/system/design/FEEDBACK/led-indication-standards.md). Secondary evidence; no conformity or completed hazard-analysis claim.
 
 <a id="led_source_16"></a>
 ### led_source_16
@@ -1566,4 +1572,73 @@ iTeh catalogue entry, EN 60601-1-8:2007 (priority definitions, Table 1). [Source
 
 **Verification:** Inherited LED desk-research reference S16. Author, full publication title, venue/publisher, year/version and clause metadata remain unverified. Original reported access: 19 October 2026; not independently re-accessed in this implementation review.
 
-**Cited by:** [LED indication standards](../Development/system/design/led-indication-standards.md). Secondary evidence; no conformity or completed hazard-analysis claim.
+**Cited by:** [LED indication standards](../Development/system/design/FEEDBACK/led-indication-standards.md). Secondary evidence; no conformity or completed hazard-analysis claim.
+<a id="stethoscope_prethesis_wiring_2026"></a>
+### stethoscope_prethesis_wiring_2026
+
+DemonicPsychoII (repository owner; individual file authorship unverified), *DigitalStethoscope evaluation README and ESP32-S3 DevKitC overlay*. GitHub repository snapshot, revision `1448340d265326e11b7a416960f35e0d2390cd6d`, 2026. [README](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/1448340d265326e11b7a416960f35e0d2390cd6d/Development/system/coding/bringup-zephyr/README.md); [overlay](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/1448340d265326e11b7a416960f35e0d2390cd6d/Development/system/coding/bringup-zephyr/boards/esp32s3_devkitc_procpu.overlay).
+
+**Verification:** Historical pre-thesis evaluation material. Snapshot inspected locally with git on 2026-10-23; no new physical verification or application implementation is claimed.
+
+**Cited by:** [Product specification, S07 and electrical baseline](../Development/system/spec/product-scope.md#source-register-and-precedence).
+
+<a id="stethoscope_architecture_board_s04_2026"></a>
+### `stethoscope_architecture_board_s04_2026`
+
+Software-Architecture and Requirements. Project source board S04, snapshot created 2026-10-05T11:27:47+00:00, updated 2026-10-05T12:28:42+00:00. Individual authorship unverified. Repository snapshot inspected 2026-10-23; project assessments, not established general claims. URL: <https://github.com/DemonicPsychoII/DigitalStethoscope/blob/80906e643fa9cd61ca8a10483ae30dfb560c7b9e/Development/system/architecture/system/sources/software-architecture-and-requirements.json>. Accessed 2026-10-23.
+
+<a id="hl7_fhir_r4_conditional_create_2019"></a>
+### `hl7_fhir_r4_conditional_create_2019`
+
+FHIR Release 4 (v4.0.1): RESTful API, Conditional create. Health Level Seven International, FHIR specification, 2019, version 4.0.1. URL inspected 2026-10-23. No page number used. URL: <https://hl7.org/fhir/R4/http.html#ccreate>. Accessed 2026-10-23.
+
+<a id="nico_replay_decisions_20261024"></a>
+### nico_replay_decisions_20261024
+
+Nico. *DigitalStethoscope replay stack: round-7 owner answers*. Personal communication, T3 Code, 24 October 2026. Authoritative local brief: `C:/Users/nicop/scratch/ds-vmodel-stack/round7/BRIEF.md`, read 24 October 2026. Project decisions, not measurements or conformity evidence.
+
+<a id="ietf_http_semantics_2022"></a>
+### ietf_http_semantics_2022
+
+Roy T. Fielding, Mark Nottingham and Julian Reschke. *HTTP Semantics*. IETF, RFC 9110, June 2022. DOI: [10.17487/RFC9110](https://doi.org/10.17487/RFC9110). https://www.rfc-editor.org/rfc/rfc9110.html, accessed 24 October 2026. Sections 10.2.3 and 15 define Retry-After and response status semantics.
+
+<a id="espressif_wifi_driver_542"></a>
+### espressif_wifi_driver_542
+
+Espressif Systems, *Wi-Fi Driver — ESP32-S3*, ESP-IDF Programming Guide v5.4.2, sections “ESP32-S3 Wi-Fi Scan”, “Wi-Fi Station General Scenario” and “IP_EVENT_STA_GOT_IP”, version v5.4.2 (publication year not stated on the cited page), https://docs.espressif.com/projects/esp-idf/en/v5.4.2/esp32s3/api-guides/wifi.html (accessed 24 October 2026).
+
+<a id="espressif_wifi_provisioning_542"></a>
+### espressif_wifi_provisioning_542
+
+Espressif Systems, *Wi-Fi Provisioning*, ESP-IDF Programming Guide v5.4.2, section “Provisioning Manager”, version v5.4.2 (publication year not stated on the cited page), https://docs.espressif.com/projects/esp-idf/en/v5.4.2/esp32s3/api-reference/provisioning/wifi_provisioning.html (accessed 24 October 2026).
+
+
+<a id="ietf_sntp_4330_2006"></a>
+### ietf_sntp_4330_2006
+
+David L. Mills. *Simple Network Time Protocol (SNTP) Version 4 for IPv4, IPv6 and OSI*. IETF RFC 4330, January 2006, DOI 10.17487/RFC4330. 2006. <https://www.rfc-editor.org/rfc/rfc4330#section-9>. Accessed 2026-10-24. No page number claimed.
+
+
+<a id="iec_alarm_edition_22_2020"></a>
+### iec_alarm_edition_22_2020
+
+International Electrotechnical Commission. *Medical electrical equipment — Part 1-8: General requirements for basic safety and essential performance — Collateral standard: General requirements, tests and guidance for alarm systems in medical electrical equipment and medical electrical systems*. IEC 60601-1-8:2006+AMD1:2012+AMD2:2020 CSV, edition 2.2; consolidated clauses unverified. 2020. <https://webstore.iec.ch/en/products/>. Accessed 2026-10-24. No page number claimed.
+
+
+<a id="espressif_devkitc_v11"></a>
+### espressif_devkitc_v11
+
+Espressif Systems. *ESP32-S3-DevKitC-1 v1.1 User Guide*. ESP-Dev-Kits documentation; online revision and publication year not stated. . <https://docs.espressif.com/projects/esp-dev-kits/en/latest/esp32s3/esp32-s3-devkitc-1/user_guide_v1.1.html>. Accessed 2026-10-24. No page number claimed.
+
+
+<a id="hl7_fhir_r4_vitalsigns_2019"></a>
+### hl7_fhir_r4_vitalsigns_2019
+
+Health Level Seven International. *FHIR Release 4 (v4.0.1): Vital Signs Profile*. FHIR specification v4.0.1, Observation.subject cardinality. 2019. <https://hl7.org/fhir/R4/vitalsigns.html>. Accessed 2026-10-24. No page number claimed.
+
+<a id="zephyr_dhcpv4_kconfig_pinned"></a>
+### zephyr_dhcpv4_kconfig_pinned
+
+The Zephyr Project. *Zephyr DHCPv4 Kconfig*. Zephyr source repository, revision `357467a011cd2557a1a3f0b4be83d817c4addc9b`; publication year not verified. [Source](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/subsys/net/lib/dhcpv4/Kconfig), accessed 24 October 2026.
+
+**Cited by:** [WIFI operation parameters](../Development/system/design/WIFI/parameters.md), four-address default and consecutive DHCP lease pool; target behavior remains unverified.

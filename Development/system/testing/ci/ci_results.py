@@ -8,22 +8,22 @@ def problems(
     plan: str,
     static: str,
     heavy: str,
-    firmware: str,
-    native: str,
     publish: str,
     daily: str,
     reuse: str = "",
     application: str = "false",
+    static_suites: dict[str, str] | None = None,
 ) -> list[str]:
     if plan != "success":
         return [f"check selection did not succeed: {plan}"]
     if daily not in {"true", "false"}:
         return ["daily decision is missing or invalid"]
-    if any(
-        value not in {"true", "false"}
-        for value in (firmware, application, native, publish)
-    ):
+    if any(value not in {"true", "false"} for value in (application, publish)):
         return ["suite selection is missing or invalid"]
+    if static_suites is not None and any(
+        value not in {"true", "false"} for value in static_suites.values()
+    ):
+        return ["static suite selection is missing or invalid"]
     if daily == "false":
         return (
             []
@@ -33,12 +33,7 @@ def problems(
     errors = []
     if static != "success":
         errors.append(f"static verification did not succeed: {static}")
-    required = (
-        firmware == "true"
-        or application == "true"
-        or native == "true"
-        or (publish == "true" and not reuse)
-    )
+    required = application == "true"
     if heavy != ("success" if required else "skipped"):
         errors.append(
             f"selected heavy work did not produce its expected result: {heavy}"
@@ -56,12 +51,14 @@ def main() -> None:
         args.plan,
         args.static,
         args.heavy,
-        os.environ.get("FIRMWARE", ""),
-        os.environ.get("NATIVE", ""),
         os.environ.get("PUBLISH", ""),
         os.environ.get("DAILY", ""),
         os.environ.get("REUSE", ""),
         os.environ.get("APPLICATION", ""),
+        {
+            key: os.environ.get(key, "")
+            for key in ("APPLICATION_HOST", "TOOLING", "GATE", "DOCS")
+        },
     )
     if errors:
         raise SystemExit("; ".join(errors))

@@ -8,9 +8,21 @@
       "changed": "Verlangsamte Wiedergabe gehört nicht zum MVP-Umfang (Feedback 2026-10-07, Entscheidung 2026-10-11). Seit 14.10. sind alle optionalen Anforderungen vorerst entfernt, darunter verlangsamte Wiedergabe.",
       "current": "keine Anforderung; die Idee bleibt in den Entscheidungen vom 11.10. festgehalten. Der Wortlaut der Aufgabenbeschreibung selbst ist nicht angepasst, siehe offene Punkte.",
       "refs": [
-        ["MVP-Entscheidungen 14.10. (Anforderungen)", "Development/system/planning/mvp-decisions-2026-10-14.md", "requirements"],
-        ["MVP-Entscheidungen 11.10.", "Development/system/planning/mvp-decisions-2026-10-11.md", "confirmed-scope-and-behavior"],
-        ["Systemanforderungen: entfernte Anforderungen", "Development/system/requirements/system-requirements.md", "retired-requirements"]
+        [
+          "MVP-Entscheidungen 14.10. (Anforderungen)",
+          "Development/system/planning/mvp-decisions-2026-10-14.md",
+          "requirements"
+        ],
+        [
+          "MVP-Entscheidungen 11.10.",
+          "Development/system/planning/mvp-decisions-2026-10-11.md",
+          "confirmed-scope-and-behavior"
+        ],
+        [
+          "Systemanforderungen: entfernte Anforderungen",
+          "Development/system/requirements/system-requirements.md",
+          "retired-requirements"
+        ]
       ]
     },
     "U005": {
@@ -18,8 +30,16 @@
       "changed": "Reduzierte Wiedergabegeschwindigkeit ist kein Prüfgegenstand mehr. Seit 14.10. gilt eine Anforderung nur, wenn Nico sie am Gerät mit verfügbarer Ausrüstung eindeutig prüfen kann.",
       "current": "Abnahme über REQ-01…REQ-15: Audiopfad (REQ-01, REQ-02, REQ-04, REQ-05), Filterwahl (REQ-03), BPM (REQ-06…REQ-08), FHIR-Übertragung (REQ-09, REQ-10, REQ-15), WLAN und Serverzertifikat (REQ-11, REQ-12), Fehleranzeige (REQ-13, REQ-14).",
       "refs": [
-        ["Systemanforderungen", "Development/system/requirements/system-requirements.md", "system-requirements-mvp"],
-        ["MVP-Entscheidungen 14.10. (Anforderungen)", "Development/system/planning/mvp-decisions-2026-10-14.md", "requirements"]
+        [
+          "Systemanforderungen",
+          "Development/system/requirements/system-requirements.md",
+          "system-requirements-mvp"
+        ],
+        [
+          "MVP-Entscheidungen 14.10. (Anforderungen)",
+          "Development/system/planning/mvp-decisions-2026-10-14.md",
+          "requirements"
+        ]
       ]
     },
     "U020": {
@@ -27,8 +47,16 @@
       "changed": "WSOLA-Stufen 1,0×/0,75×/0,5× sind kein MVP-Bestandteil. Seit 14.10. ist Replay auch keine optionale Anforderung mehr.",
       "current": "Die Idee bleibt in den Entscheidungen vom 11.10. festgehalten; MVP-BPM arbeitet mit begrenztem Streaming-Zustand statt Sitzungsaufnahme.",
       "refs": [
-        ["MVP-Entscheidungen 14.10. (Anforderungen)", "Development/system/planning/mvp-decisions-2026-10-14.md", "requirements"],
-        ["Design: MVP-Sitzungsbasis", "Development/system/design/interfaces-and-behavior.md", "mvp-session-baseline"]
+        [
+          "MVP-Entscheidungen 14.10. (Anforderungen)",
+          "Development/system/planning/mvp-decisions-2026-10-14.md",
+          "requirements"
+        ],
+        [
+          "Design: MVP-Sitzungsbasis",
+          "Development/system/design/system/interfaces-and-behavior.md",
+          "mvp-session-baseline"
+        ]
       ]
     },
     "U032": {
@@ -36,10 +64,26 @@
       "changed": "Das MVP hat weder Display noch Touch; Geschwindigkeitsschalter und Replay sind seit 14.10. keine Anforderung mehr. Die Patientenauswahl über die Handyseite (12.10.) ist am 15.10. entfallen.",
       "current": "Start/Stop über Taster, Filterschalter, Potentiometer. Kurzer Druck quittiert einen Fehler, wiederholt aber nichts und startet nie die Einrichtung; Halten ≥2 s im Idle öffnet die WLAN-Einrichtung. Der Geräte-Hotspot ist offen, ein QR-Code öffnet die Portalseite im Handy-Browser. Das Gerät wählt keinen Patienten aus. Die Handyseite dient nur der WLAN-Einrichtung; Zugangsdaten bleiben im Flash. Das Gerät registriert sich einmal am Server und speichert die Device-ID im Flash; die Zuordnung zum Patienten ist ein getrennter Server-Workflow außerhalb des MVP (15.10.). Hat der Server einen Patienten zugeordnet, übernimmt das Gerät ihn als `subject` (16.10.). WLAN-Ablauf (19.10.): Erstscan vor dem Öffnen des Hotspots, Verbindung und IP-Adresse vor dem Speichern, bestehende Verbindung beim Hören beibehalten, Einrichtung vor Hörbeginn sicher beenden; Zeitabgleich, sichere Serververbindung und Registrierung folgen in der FHIR-Phase.",
       "refs": [
-        ["MVP-Entscheidungen 19.10.", "Development/system/planning/mvp-decisions-2026-10-19.md", "current-rules-and-amendments"],
-        ["MVP-Entscheidungen 15.10.", "Development/system/planning/mvp-decisions-2026-10-15.md", "confirmed-decisions"],
-        ["Design: WLAN-Einrichtung", "Development/system/design/interfaces-and-behavior.md", "wi-fi-setup-and-recovery"],
-        ["MVP-Entscheidungen 16.10.", "Development/system/planning/mvp-decisions-2026-10-16.md", "confirmed-decisions"]
+        [
+          "MVP-Entscheidungen 19.10.",
+          "Development/system/planning/mvp-decisions-2026-10-19.md",
+          "current-rules-and-amendments"
+        ],
+        [
+          "MVP-Entscheidungen 15.10.",
+          "Development/system/planning/mvp-decisions-2026-10-15.md",
+          "confirmed-decisions"
+        ],
+        [
+          "Design: WLAN-Einrichtung",
+          "Development/system/design/COMMUNICATION/interfaces-and-behavior.md",
+          "wi-fi-setup-and-recovery"
+        ],
+        [
+          "MVP-Entscheidungen 16.10.",
+          "Development/system/planning/mvp-decisions-2026-10-16.md",
+          "confirmed-decisions"
+        ]
       ]
     },
     "U031": {
@@ -47,8 +91,16 @@
       "changed": "Der Lungenmodus gehört nicht zum MVP. Seit 14.10. sind optionale Anforderungen vorerst entfernt, darunter Lung.",
       "current": "Nur Herz. Lung ist optional und braucht das Display.",
       "refs": [
-        ["MVP-Entscheidungen 14.10. (Umfang)", "Development/system/planning/mvp-decisions-2026-10-14.md", "scope"],
-        ["Produktumfang", "Development/system/spec/product-scope.md", "goal-and-boundary"]
+        [
+          "MVP-Entscheidungen 14.10. (Umfang)",
+          "Development/system/planning/mvp-decisions-2026-10-14.md",
+          "scope"
+        ],
+        [
+          "Produktumfang",
+          "Development/system/spec/product-scope.md",
+          "goal-and-boundary"
+        ]
       ]
     },
     "U028": {
@@ -56,8 +108,16 @@
       "changed": "Die Plattformentscheidung ist nicht mehr offen; die ESP-IDF-Präferenz der internen Fassung ist durch S04 ersetzt.",
       "current": "Zephyr wird für das MVP beibehalten, solange die On-Target-Prüfungen keinen konkreten Blocker zeigen.",
       "refs": [
-        ["Framework- und Transportbewertung", "Development/system/planning/framework-and-transport-evaluation.md", "recommendation-for-the-next-discussion"],
-        ["Quellenregister S04/S06", "Development/system/spec/product-scope.md", "source-register-and-precedence"]
+        [
+          "Framework- und Transportbewertung",
+          "Development/system/planning/framework-and-transport-evaluation.md",
+          "recommendation-for-the-next-discussion"
+        ],
+        [
+          "Quellenregister S04/S06",
+          "Development/system/spec/product-scope.md",
+          "source-register-and-precedence"
+        ]
       ]
     },
     "U035": {
@@ -65,7 +125,11 @@
       "changed": "Die Auswahl zwischen C/ESP-IDF und C/Zephyr ist getroffen.",
       "current": "C/Zephyr für das MVP; ein Frameworkwechsel würde Gerätekonfiguration, Synchronisation, Netzwerk und Verifikation erneut erfordern.",
       "refs": [
-        ["Framework- und Transportbewertung", "Development/system/planning/framework-and-transport-evaluation.md", "recommendation-for-the-next-discussion"]
+        [
+          "Framework- und Transportbewertung",
+          "Development/system/planning/framework-and-transport-evaluation.md",
+          "recommendation-for-the-next-discussion"
+        ]
       ]
     },
     "C013": {
@@ -73,8 +137,16 @@
       "changed": "Die R10-Empfehlung für ESP-IDF ist historischer Recherchekontext, keine Projektentscheidung.",
       "current": "Zephyr bleibt Plattform des MVP; ESP-IDF-Komponenten sind keine Drop-in-Bibliotheken unter Zephyr.",
       "refs": [
-        ["Framework- und Transportbewertung", "Development/system/planning/framework-and-transport-evaluation.md", "recommendation-for-the-next-discussion"],
-        ["Quellenregister S06", "Development/system/spec/product-scope.md", "source-register-and-precedence"]
+        [
+          "Framework- und Transportbewertung",
+          "Development/system/planning/framework-and-transport-evaluation.md",
+          "recommendation-for-the-next-discussion"
+        ],
+        [
+          "Quellenregister S06",
+          "Development/system/spec/product-scope.md",
+          "source-register-and-precedence"
+        ]
       ]
     },
     "U085": {
@@ -82,8 +154,16 @@
       "changed": "Beschreibt die Bring-up-Firmware. Die neue Firmware hat eine andere Modulstruktur (13.10.).",
       "current": "Neue Firmware in `coding/app/` (D11, 14.10.). L0 = Zephyr; L1 = dünne Hardware-Adapter (`L1_I2S`, `L1_WIFI`, `L1_PHYSICALINTERFACE`) und reine C-Bibliotheken (`L1_FILTER`, `L1_BPM`, `L1_FHIR`); L2 = Orchestrierung (`L2_CONTROL`, `L2_AUDIO`, `L2_COMMUNICATION`, `L2_SHELL`). Display/Touch, SD und Replay sind nicht im Gerüst.",
       "refs": [
-        ["Architekturentscheidungen 13.10.", "Development/system/planning/mvp-decisions-2026-10-13.md", "confirmed-decisions"],
-        ["Design: Firmware-Schichten", "Development/system/design/interfaces-and-behavior.md", "firmware-layer-structure"]
+        [
+          "Architekturentscheidungen 13.10.",
+          "Development/system/planning/mvp-decisions-2026-10-13.md",
+          "confirmed-decisions"
+        ],
+        [
+          "Design: Firmware-Schichten",
+          "Development/system/design/system/interfaces-and-behavior.md",
+          "firmware-layer-structure"
+        ]
       ]
     },
     "U105": {
@@ -91,8 +171,16 @@
       "changed": "Beschreibt die Thread-Aufteilung der Bring-up-Firmware mit Display.",
       "current": "`L2_AUDIO` führt den Audiopfad aus; BPM läuft in einem eigenen Worker unterhalb der Audio-Priorität. `L2_CONTROL` ist einziger Schreiber des Modus-Zustands; Netzwerkarbeit nur unter dessen exklusivem Lease. Display ist nicht im MVP.",
       "refs": [
-        ["Architekturentscheidungen 13.10.", "Development/system/planning/mvp-decisions-2026-10-13.md", "confirmed-decisions"],
-        ["Design: Firmware-Schichten", "Development/system/design/interfaces-and-behavior.md", "firmware-layer-structure"]
+        [
+          "Architekturentscheidungen 13.10.",
+          "Development/system/planning/mvp-decisions-2026-10-13.md",
+          "confirmed-decisions"
+        ],
+        [
+          "Design: Firmware-Schichten",
+          "Development/system/design/system/interfaces-and-behavior.md",
+          "firmware-layer-structure"
+        ]
       ]
     },
     "U104": {
@@ -100,7 +188,11 @@
       "changed": "Der Lungenmodus der Bring-up-Firmware ist kein MVP-Bestandteil.",
       "current": "MVP nur Herz; Lung ist optional und braucht das Display (14.10.).",
       "refs": [
-        ["MVP-Entscheidungen 14.10. (Umfang)", "Development/system/planning/mvp-decisions-2026-10-14.md", "scope"]
+        [
+          "MVP-Entscheidungen 14.10. (Umfang)",
+          "Development/system/planning/mvp-decisions-2026-10-14.md",
+          "scope"
+        ]
       ]
     },
     "U082": {
@@ -108,8 +200,16 @@
       "changed": "Eine Verstärkerstufe hinter dem PCM5102A gehört nicht mehr zum Projekt.",
       "current": "Das Gerät endet am DAC-Line-Ausgang; der Verstärker liegt außerhalb des Umfangs des digitalen Stethoskops (14.10.).",
       "refs": [
-        ["MVP-Entscheidungen 14.10. (Umfang)", "Development/system/planning/mvp-decisions-2026-10-14.md", "scope"],
-        ["Produktumfang", "Development/system/spec/product-scope.md", "goal-and-boundary"]
+        [
+          "MVP-Entscheidungen 14.10. (Umfang)",
+          "Development/system/planning/mvp-decisions-2026-10-14.md",
+          "scope"
+        ],
+        [
+          "Produktumfang",
+          "Development/system/spec/product-scope.md",
+          "goal-and-boundary"
+        ]
       ]
     },
     "U033": {
@@ -117,7 +217,11 @@
       "changed": "Die Abgabe Ende Januar ist ersetzt.",
       "current": "Abgabe am 11. Januar 2027; Schreiben und Korrekturlesen enden mindestens eine Woche vorher (4. Januar), besser zwei Wochen vorher (28. Dezember).",
       "refs": [
-        ["MVP-Entscheidungen 14.10. (Zeitplan)", "Development/system/planning/mvp-decisions-2026-10-14.md", "schedule"]
+        [
+          "MVP-Entscheidungen 14.10. (Zeitplan)",
+          "Development/system/planning/mvp-decisions-2026-10-14.md",
+          "schedule"
+        ]
       ]
     },
     "C001": {
@@ -125,9 +229,21 @@
       "changed": "≤10 ms bzw. ≤5 ms End-to-End sind nicht das Projektziel; die R09-Aussage einer universellen 10–15-ms-Grenze ist laut Literaturprüfung vom 11.10. nur eingeschränkt belastbar.",
       "current": "<30 ms Designziel, <10 ms Stretch-Ziel (P03). Laut 14.10. gibt es keinen Zweikanal-Aufnahmeaufbau; die Latenz wird nach Gehör geprüft (Demonstration, REQ-05), nicht gemessen.",
       "refs": [
-        ["MVP-Entscheidungen 14.10. (Umfang)", "Development/system/planning/mvp-decisions-2026-10-14.md", "scope"],
-        ["Latenzbudgets 11.10.", "Development/system/planning/mvp-decisions-2026-10-11.md", "latency-research-and-proposed-budgets"],
-        ["Designparameter P03", "Development/system/design/parameters.md", "design-parameters-internal"]
+        [
+          "MVP-Entscheidungen 14.10. (Umfang)",
+          "Development/system/planning/mvp-decisions-2026-10-14.md",
+          "scope"
+        ],
+        [
+          "Latenzbudgets 11.10.",
+          "Development/system/planning/mvp-decisions-2026-10-11.md",
+          "latency-research-and-proposed-budgets"
+        ],
+        [
+          "Designparameter P03",
+          "Development/system/design/system/parameters.md",
+          "design-parameters-internal"
+        ]
       ]
     },
     "C007": {
@@ -135,8 +251,16 @@
       "changed": "Eine Messung der End-to-End-Latenz ist im Projekt nicht vorgesehen.",
       "current": "Kein Zweikanal-Aufnahmeaufbau verfügbar; Prüfung nach Gehör (REQ-05: Klopfen am Bruststück ist zusammen mit der Berührung zu hören). <30 ms bleibt ungemessenes Designziel (P03).",
       "refs": [
-        ["MVP-Entscheidungen 14.10. (Umfang)", "Development/system/planning/mvp-decisions-2026-10-14.md", "scope"],
-        ["Systemanforderungen", "Development/system/requirements/system-requirements.md", "system-requirements-mvp"]
+        [
+          "MVP-Entscheidungen 14.10. (Umfang)",
+          "Development/system/planning/mvp-decisions-2026-10-14.md",
+          "scope"
+        ],
+        [
+          "Systemanforderungen",
+          "Development/system/requirements/system-requirements.md",
+          "system-requirements-mvp"
+        ]
       ]
     },
     "U015": {
@@ -144,7 +268,11 @@
       "changed": "Latenz ist keine gemessene Metrik mehr.",
       "current": "Latenz wird nach Gehör geprüft (REQ-05), da kein Zweikanal-Aufnahmeaufbau verfügbar ist (14.10.).",
       "refs": [
-        ["MVP-Entscheidungen 14.10. (Umfang)", "Development/system/planning/mvp-decisions-2026-10-14.md", "scope"]
+        [
+          "MVP-Entscheidungen 14.10. (Umfang)",
+          "Development/system/planning/mvp-decisions-2026-10-14.md",
+          "scope"
+        ]
       ]
     },
     "U108": {
@@ -152,7 +280,11 @@
       "changed": "Eine getrennte Messung der akustisch-elektrischen End-to-End-Latenz ist im Projekt nicht vorgesehen.",
       "current": "Latenz wird nach Gehör geprüft (REQ-05), da kein Zweikanal-Aufnahmeaufbau verfügbar ist (14.10.).",
       "refs": [
-        ["MVP-Entscheidungen 14.10. (Umfang)", "Development/system/planning/mvp-decisions-2026-10-14.md", "scope"]
+        [
+          "MVP-Entscheidungen 14.10. (Umfang)",
+          "Development/system/planning/mvp-decisions-2026-10-14.md",
+          "scope"
+        ]
       ]
     },
     "C027": {
@@ -160,8 +292,16 @@
       "changed": "Die 10–40-ms-DMA-Startwerte sind durch die gewählte Blockgröße ersetzt.",
       "current": "128 Frames bei 16 kHz (8 ms) je Block; Vorschlag ≤4 ms kritische Ausführung pro Block, Scheduling- und Wartezeiten getrennt messen.",
       "refs": [
-        ["Latenzbudgets 11.10.", "Development/system/planning/mvp-decisions-2026-10-11.md", "latency-research-and-proposed-budgets"],
-        ["Entscheidungsregister D10", "Development/system/planning/implementation-readiness.md", "decision-register"]
+        [
+          "Latenzbudgets 11.10.",
+          "Development/system/planning/mvp-decisions-2026-10-11.md",
+          "latency-research-and-proposed-budgets"
+        ],
+        [
+          "Entscheidungsregister D10",
+          "Development/system/planning/implementation-readiness.md",
+          "decision-register"
+        ]
       ]
     },
     "U110": {
@@ -169,9 +309,21 @@
       "changed": "Mehrere EVAL-GUIDE-Zielwerte sind ersetzt: gemessene Live-Latenz <30 ms, BPM „≥90 % gültige Fenster“, Tonhöhe ±2 % bei 440 Hz und Eingabereaktion ≤35 ms.",
       "current": "BPM (REQ-06): 10 Sitzungen à 30 s, jedes Ergebnis innerhalb ±5 BPM oder ±10 % gegen Pulsoximeter oder Smartwatch (14.10.). Latenz wird nach Gehör geprüft (REQ-05); <30 ms bleibt internes Designziel (P03). Replay ist keine Anforderung mehr (14.10.). Bedienreaktion ≤100 ms und Status ≤500 ms sind Kandidaten (P10).",
       "refs": [
-        ["MVP-Entscheidungen 14.10. (Verhalten)", "Development/system/planning/mvp-decisions-2026-10-14.md", "behavior"],
-        ["Systemanforderungen", "Development/system/requirements/system-requirements.md", "system-requirements-mvp"],
-        ["Designparameter P03/P10", "Development/system/design/parameters.md", "design-parameters-internal"]
+        [
+          "MVP-Entscheidungen 14.10. (Verhalten)",
+          "Development/system/planning/mvp-decisions-2026-10-14.md",
+          "behavior"
+        ],
+        [
+          "Systemanforderungen",
+          "Development/system/requirements/system-requirements.md",
+          "system-requirements-mvp"
+        ],
+        [
+          "Designparameter P03/P10",
+          "Development/system/design/system/parameters.md",
+          "design-parameters-internal"
+        ]
       ]
     },
     "U111": {
@@ -179,8 +331,16 @@
       "changed": "Die Dauerlaufprüfung von ≥10 Minuten ist ersetzt; ≥25 % Stack-/Heap-Reserve bleibt.",
       "current": "Vorschlag: 30-Minuten-Soak mit Wasserständen während TLS und BPM, DMA-SRAM und PSRAM getrennt, zusätzlich kleinster größter freier Block und Allokationsfehlerpfade.",
       "refs": [
-        ["Latenzbudgets 11.10. (Resources)", "Development/system/planning/mvp-decisions-2026-10-11.md", "latency-research-and-proposed-budgets"],
-        ["Entscheidungsregister D10", "Development/system/planning/implementation-readiness.md", "decision-register"]
+        [
+          "Latenzbudgets 11.10. (Resources)",
+          "Development/system/planning/mvp-decisions-2026-10-11.md",
+          "latency-research-and-proposed-budgets"
+        ],
+        [
+          "Entscheidungsregister D10",
+          "Development/system/planning/implementation-readiness.md",
+          "decision-register"
+        ]
       ]
     },
     "A056": {
@@ -188,9 +348,21 @@
       "changed": "Das R03-Entwicklungsziel (MAE ≤5 bpm, MAPE ≤10 %, ≥90 % der Fenster) und der Sitzungs-MAE-Vorschlag vom 11.10. sind nicht der Projektweg.",
       "current": "Vergleich mit gleichzeitig gemessenem Pulsoximeter oder Smartwatch, bestanden innerhalb ±5 BPM oder ±10 %; kein fester Signalqualitäts-Schwellwert (14.10.). REQ-06: 10 Sitzungen à 30 s, jedes Ergebnis innerhalb der Toleranz. Bereich 30–200 BPM ist Kandidat (P06).",
       "refs": [
-        ["MVP-Entscheidungen 14.10. (Verhalten)", "Development/system/planning/mvp-decisions-2026-10-14.md", "behavior"],
-        ["Systemanforderungen", "Development/system/requirements/system-requirements.md", "system-requirements-mvp"],
-        ["Designparameter P06", "Development/system/design/parameters.md", "design-parameters-internal"]
+        [
+          "MVP-Entscheidungen 14.10. (Verhalten)",
+          "Development/system/planning/mvp-decisions-2026-10-14.md",
+          "behavior"
+        ],
+        [
+          "Systemanforderungen",
+          "Development/system/requirements/system-requirements.md",
+          "system-requirements-mvp"
+        ],
+        [
+          "Designparameter P06",
+          "Development/system/design/system/parameters.md",
+          "design-parameters-internal"
+        ]
       ]
     },
     "U018": {
@@ -198,8 +370,16 @@
       "changed": "Die BPM-Referenz für die Abnahme ist festgelegt.",
       "current": "Pulsoximeter oder Smartwatch, gleichzeitig gemessen; bestanden innerhalb ±5 BPM oder ±10 % (14.10., REQ-06).",
       "refs": [
-        ["MVP-Entscheidungen 14.10. (Verhalten)", "Development/system/planning/mvp-decisions-2026-10-14.md", "behavior"],
-        ["Systemanforderungen", "Development/system/requirements/system-requirements.md", "system-requirements-mvp"]
+        [
+          "MVP-Entscheidungen 14.10. (Verhalten)",
+          "Development/system/planning/mvp-decisions-2026-10-14.md",
+          "behavior"
+        ],
+        [
+          "Systemanforderungen",
+          "Development/system/requirements/system-requirements.md",
+          "system-requirements-mvp"
+        ]
       ]
     },
     "A040": {
@@ -207,8 +387,16 @@
       "changed": "Synchron aufgezeichnetes EKG als primäre BPM-Referenz ist nicht der Abnahmeweg des Projekts; die R03-Empfehlung bleibt Recherchekontext.",
       "current": "Abnahme gegen gleichzeitig gemessenes Pulsoximeter oder Smartwatch, innerhalb ±5 BPM oder ±10 % (14.10., REQ-06). Anforderungen gelten nur, wenn Nico sie mit verfügbarer Ausrüstung am Gerät prüfen kann.",
       "refs": [
-        ["MVP-Entscheidungen 14.10.", "Development/system/planning/mvp-decisions-2026-10-14.md", "behavior"],
-        ["Systemanforderungen", "Development/system/requirements/system-requirements.md", "system-requirements-mvp"]
+        [
+          "MVP-Entscheidungen 14.10.",
+          "Development/system/planning/mvp-decisions-2026-10-14.md",
+          "behavior"
+        ],
+        [
+          "Systemanforderungen",
+          "Development/system/requirements/system-requirements.md",
+          "system-requirements-mvp"
+        ]
       ]
     },
     "A045": {
@@ -216,8 +404,16 @@
       "changed": "Synchrone PCG-/EKG-Aufnahme mit R-Zacken-Detektion ist nicht der Abnahmeweg des Projekts.",
       "current": "Abnahme gegen gleichzeitig gemessenes Pulsoximeter oder Smartwatch (REQ-06). Aufnahmen und Referenz für Host-Tests werden in der WLAN/FHIR-Phase entschieden (P06, P17).",
       "refs": [
-        ["MVP-Entscheidungen 14.10.", "Development/system/planning/mvp-decisions-2026-10-14.md", "behavior"],
-        ["Designparameter P06/P17", "Development/system/design/parameters.md", "design-parameters-internal"]
+        [
+          "MVP-Entscheidungen 14.10.",
+          "Development/system/planning/mvp-decisions-2026-10-14.md",
+          "behavior"
+        ],
+        [
+          "Designparameter P06/P17",
+          "Development/system/design/system/parameters.md",
+          "design-parameters-internal"
+        ]
       ]
     },
     "U107": {
@@ -225,10 +421,26 @@
       "changed": "Beschreibt die Bring-up-Firmware (gültiger aktueller BPM, Low-Priority-Worker, `PUT`, Server-Readback, Konfiguration nur im RAM). Das MVP-Zielverhalten ist anders festgelegt; Patientenprüfung, `PUT` und Readback vom 12.10. sind am 15.10. entfallen.",
       "current": "Nur eine abgeschlossene Messsitzung (≥15 s) ist sendefähig; kein Netzwerkverkehr während der Messung. Nach Stop `POST /Observation` mit `If-None-Exist` und Verweis auf das vom Server vergebene Device; `201`/`200` gilt als Quittung, kein Readback (15.10.). `subject` nur, wenn der Server einen Patienten mit dem Device verknüpft hat (16.10.). Fehlgeschlagene Sendung: bis zu 3 Wiederholungen innerhalb 10 s (14.10.). Ungültiger BPM: Fehler an den Server und Anzeige am Gerät (14.10.). WLAN-Zugangsdaten und Device-ID liegen persistent im Flash (Zephyr-Settings-Partition, 15.10.); gespeichert wird erst nach erfolgreichem Beitritt mit Adresse (19.10.).",
       "refs": [
-        ["MVP-Entscheidungen 15.10.", "Development/system/planning/mvp-decisions-2026-10-15.md", "resulting-behavior"],
-        ["MVP-Entscheidungen 16.10.", "Development/system/planning/mvp-decisions-2026-10-16.md", "confirmed-decisions"],
-        ["MVP-Entscheidungen 14.10.", "Development/system/planning/mvp-decisions-2026-10-14.md", "behavior"],
-        ["MVP-Entscheidungen 19.10.", "Development/system/planning/mvp-decisions-2026-10-19.md", "current-rules-and-amendments"]
+        [
+          "MVP-Entscheidungen 15.10.",
+          "Development/system/planning/mvp-decisions-2026-10-15.md",
+          "resulting-behavior"
+        ],
+        [
+          "MVP-Entscheidungen 16.10.",
+          "Development/system/planning/mvp-decisions-2026-10-16.md",
+          "confirmed-decisions"
+        ],
+        [
+          "MVP-Entscheidungen 14.10.",
+          "Development/system/planning/mvp-decisions-2026-10-14.md",
+          "behavior"
+        ],
+        [
+          "MVP-Entscheidungen 19.10.",
+          "Development/system/planning/mvp-decisions-2026-10-19.md",
+          "current-rules-and-amendments"
+        ]
       ]
     },
     "U126": {
@@ -236,9 +448,21 @@
       "changed": "„Retry is explicit“ und der Readback-Abgleich gelten für das MVP nicht mehr; ein Patient steht nur bei serverseitiger Verknüpfung in der Observation.",
       "current": "Fehlgeschlagene Sendung: bis zu 3 Wiederholungen (4 Versuche) etwa 2 s auseinander, alle innerhalb 10 s, danach Fehleranzeige; bedingtes Anlegen (`If-None-Exist`) verhindert Duplikate (14.10.). Kein Readback, `201`/`200` gilt als Quittung (15.10.). Prüfung über die HAPI-Webseite (REQ-09, REQ-10). WLAN-Fehler unterbrechen funktionierendes Audio nicht (19.10.).",
       "refs": [
-        ["MVP-Entscheidungen 14.10.", "Development/system/planning/mvp-decisions-2026-10-14.md", "behavior"],
-        ["MVP-Entscheidungen 15.10.", "Development/system/planning/mvp-decisions-2026-10-15.md", "resulting-behavior"],
-        ["Systemanforderungen", "Development/system/requirements/system-requirements.md", "system-requirements-mvp"]
+        [
+          "MVP-Entscheidungen 14.10.",
+          "Development/system/planning/mvp-decisions-2026-10-14.md",
+          "behavior"
+        ],
+        [
+          "MVP-Entscheidungen 15.10.",
+          "Development/system/planning/mvp-decisions-2026-10-15.md",
+          "resulting-behavior"
+        ],
+        [
+          "Systemanforderungen",
+          "Development/system/requirements/system-requirements.md",
+          "system-requirements-mvp"
+        ]
       ]
     },
     "C039": {
@@ -246,8 +470,16 @@
       "changed": "Die Wiederholung ist seit 14.10. festgelegt; Zertifikats-/Hostnamenprüfung und kein HTTP-Fallback gelten weiter.",
       "current": "bis zu 3 Wiederholungen innerhalb 10 s, danach Fehleranzeige; HTTPS mit Prüfung des Serverzertifikats gegen die Labor-CA (selbstsigniert); der Server authentisiert das Gerät im MVP nicht.",
       "refs": [
-        ["MVP-Entscheidungen 14.10.", "Development/system/planning/mvp-decisions-2026-10-14.md", "behavior"],
-        ["Design: Delivery", "Development/system/design/interfaces-and-behavior.md", "delivery-clock-and-configuration"]
+        [
+          "MVP-Entscheidungen 14.10.",
+          "Development/system/planning/mvp-decisions-2026-10-14.md",
+          "behavior"
+        ],
+        [
+          "Design: Delivery",
+          "Development/system/design/system/interfaces-and-behavior.md",
+          "delivery-clock-and-configuration"
+        ]
       ]
     },
     "C043": {
@@ -255,19 +487,43 @@
       "changed": "Der Pfad ist konkretisiert: bedingtes Anlegen statt einfachem `POST`, feste Wiederholungsgrenze statt Backoff. Der `PUT`-/Readback-Pfad vom 12.10. ist am 15.10. entfallen.",
       "current": "`POST /Observation` mit `If-None-Exist` auf der Geräte-/Boot-/Sitzungskennung, `device = Device/{id}`, `201`/`200` als Quittung, kein Readback (15.10.); bis zu 3 Wiederholungen etwa 2 s auseinander innerhalb 10 s (14.10.). Zeitsynchronisierung und gesicherter Servertransport gehören zur späteren FHIR-Phase (19.10.). `subject` nur, wenn der Server dem Gerät einen Patienten zugeordnet hat; das Gerät wählt nie selbst einen Patienten (16.10.).",
       "refs": [
-        ["MVP-Entscheidungen 15.10.", "Development/system/planning/mvp-decisions-2026-10-15.md", "resulting-behavior"],
-        ["MVP-Entscheidungen 14.10.", "Development/system/planning/mvp-decisions-2026-10-14.md", "behavior"],
-        ["MVP-Entscheidungen 19.10.", "Development/system/planning/mvp-decisions-2026-10-19.md", "current-rules-and-amendments"],
-        ["MVP-Entscheidungen 16.10.", "Development/system/planning/mvp-decisions-2026-10-16.md", "confirmed-decisions"]
+        [
+          "MVP-Entscheidungen 15.10.",
+          "Development/system/planning/mvp-decisions-2026-10-15.md",
+          "resulting-behavior"
+        ],
+        [
+          "MVP-Entscheidungen 14.10.",
+          "Development/system/planning/mvp-decisions-2026-10-14.md",
+          "behavior"
+        ],
+        [
+          "MVP-Entscheidungen 19.10.",
+          "Development/system/planning/mvp-decisions-2026-10-19.md",
+          "current-rules-and-amendments"
+        ],
+        [
+          "MVP-Entscheidungen 16.10.",
+          "Development/system/planning/mvp-decisions-2026-10-16.md",
+          "confirmed-decisions"
+        ]
       ]
     },
     "C029": {
       "label": "Überholt",
       "changed": "Nur `subject` als feste Angabe ist überholt; Vital-Signs-Kategorie, LOINC 8867-4 und UCUM `/min` gelten weiter.",
-      "current": "Observation mit `device = Device/{id}` (vom Server vergebene ID); `subject` nur, wenn der Server einen Patienten mit dem Device verknüpft hat (16.10.); `effectiveDateTime` = Ende des Messintervalls (D08). Das Gerät wählt nie einen Patienten aus.",
+      "current": "Observation mit `device = Device/{id}` (vom Server vergebene ID); `subject` nur, wenn der Server einen Patienten mit dem Device verknüpft hat (16.10.); `effectiveDateTime` = Ende des Messintervalls (D08). Das Gerät wählt nie einen Patienten aus. Ohne subject ist die Geräte-Nutzlast eine einfache FHIR-R4-Observation mit Vital-Signs-Kategorie, LOINC 8867-4 und UCUM /min; sie erfüllt nicht das Vital-Signs-Profil mit verpflichtender Patient-Referenz. Die serverseitige Anreicherung bleibt eine externe Voraussetzung.",
       "refs": [
-        ["MVP-Entscheidungen 16.10.", "Development/system/planning/mvp-decisions-2026-10-16.md", "confirmed-decisions"],
-        ["MVP-Entscheidungen 15.10.", "Development/system/planning/mvp-decisions-2026-10-15.md", "resulting-behavior"]
+        [
+          "MVP-Entscheidungen 16.10.",
+          "Development/system/planning/mvp-decisions-2026-10-16.md",
+          "confirmed-decisions"
+        ],
+        [
+          "MVP-Entscheidungen 15.10.",
+          "Development/system/planning/mvp-decisions-2026-10-15.md",
+          "resulting-behavior"
+        ]
       ]
     },
     "C031": {
@@ -275,17 +531,33 @@
       "changed": "Das Beispiel mit festem `Patient/123` als `subject` entspricht nicht dem Projektpfad.",
       "current": "`device = Device/{id}`; `subject` nur bei serverseitiger Patientenverknüpfung (16.10.); `effectiveDateTime` = Ende des Messintervalls (D08).",
       "refs": [
-        ["MVP-Entscheidungen 16.10.", "Development/system/planning/mvp-decisions-2026-10-16.md", "confirmed-decisions"],
-        ["MVP-Entscheidungen 15.10.", "Development/system/planning/mvp-decisions-2026-10-15.md", "resulting-behavior"]
+        [
+          "MVP-Entscheidungen 16.10.",
+          "Development/system/planning/mvp-decisions-2026-10-16.md",
+          "confirmed-decisions"
+        ],
+        [
+          "MVP-Entscheidungen 15.10.",
+          "Development/system/planning/mvp-decisions-2026-10-15.md",
+          "resulting-behavior"
+        ]
       ]
     },
     "U068": {
       "label": "Neuerer Stand",
       "changed": "Die Patient-Referenz ist im Projekt nicht immer vorhanden.",
-      "current": "`subject` nur, wenn der Server einen Patienten mit dem Device verknüpft hat (16.10.); sonst ohne Patientendaten. `effectiveDateTime` = Ende des Messintervalls (D08).",
+      "current": "`subject` nur, wenn der Server einen Patienten mit dem Device verknüpft hat (16.10.); sonst ohne Patientendaten. `effectiveDateTime` = Ende des Messintervalls (D08). Ohne subject ist die Geräte-Nutzlast eine einfache FHIR-R4-Observation mit Vital-Signs-Kategorie, LOINC 8867-4 und UCUM /min; sie erfüllt nicht das Vital-Signs-Profil mit verpflichtender Patient-Referenz. Die serverseitige Anreicherung bleibt eine externe Voraussetzung.",
       "refs": [
-        ["MVP-Entscheidungen 16.10.", "Development/system/planning/mvp-decisions-2026-10-16.md", "confirmed-decisions"],
-        ["Entscheidungsregister D08", "Development/system/planning/implementation-readiness.md", "decision-register"]
+        [
+          "MVP-Entscheidungen 16.10.",
+          "Development/system/planning/mvp-decisions-2026-10-16.md",
+          "confirmed-decisions"
+        ],
+        [
+          "Entscheidungsregister D08",
+          "Development/system/planning/implementation-readiness.md",
+          "decision-register"
+        ]
       ]
     },
     "U037": {
@@ -293,9 +565,21 @@
       "changed": "Der Entwurf folgt der Abgabefassung (S05): Komponenteneignung über Datenblätter/Literatur und funktionaler Audiotest, keine gemessene Aussage zur Übertragungskette. D09 ist seit 14.10. geschlossen.",
       "current": "keine Messung der akustischen Übertragungskette; laut 11.10. ist keine Messausrüstung/kein zweites Mikrofon verfügbar, laut 14.10. auch kein Zweikanal-Aufnahmeaufbau.",
       "refs": [
-        ["Entscheidungsregister D09", "Development/system/planning/implementation-readiness.md", "decision-register"],
-        ["MVP-Entscheidungen 14.10. (Umfang)", "Development/system/planning/mvp-decisions-2026-10-14.md", "scope"],
-        ["Produktumfang", "Development/system/spec/product-scope.md", "goal-and-boundary"]
+        [
+          "Entscheidungsregister D09",
+          "Development/system/planning/implementation-readiness.md",
+          "decision-register"
+        ],
+        [
+          "MVP-Entscheidungen 14.10. (Umfang)",
+          "Development/system/planning/mvp-decisions-2026-10-14.md",
+          "scope"
+        ],
+        [
+          "Produktumfang",
+          "Development/system/spec/product-scope.md",
+          "goal-and-boundary"
+        ]
       ]
     },
     "U038": {
@@ -303,8 +587,16 @@
       "changed": "Von den drei W1-Optionen gilt die Herausnahme der Kettenmessung (S05); D09 ist seit 14.10. geschlossen.",
       "current": "keine Kettenmessung; Q1/AP 2.2 qualitativ behandeln. Ob die Abstimmung mit dem Betreuer erfolgt ist, nennt D09 nicht, siehe offene Punkte.",
       "refs": [
-        ["Entscheidungsregister D09", "Development/system/planning/implementation-readiness.md", "decision-register"],
-        ["Produktumfang", "Development/system/spec/product-scope.md", "goal-and-boundary"]
+        [
+          "Entscheidungsregister D09",
+          "Development/system/planning/implementation-readiness.md",
+          "decision-register"
+        ],
+        [
+          "Produktumfang",
+          "Development/system/spec/product-scope.md",
+          "goal-and-boundary"
+        ]
       ]
     }
   },
@@ -313,25 +605,35 @@
       "label": "Vorbehalt",
       "date": "2026-10-12",
       "text": "Rechenfehler in R07: Mit A ≈ 28,3 mm², L = 10 mm, c ≈ 343 m/s und f = 20 Hz ergibt V = A·c²/(4π²·f²·L) ≈ 0,021 m³ (≈ 21 l), nicht 21 ml. Ein Volumen von 21 ml liefert mit diesen Halsmaßen etwa 634 Hz. Die Empfehlung einer kleinen Kammer mit Resonanz oberhalb des Nutzbands bleibt davon unberührt; der Zahlenwert darf so nicht zitiert werden.",
-      "ids": ["U059"]
+      "ids": [
+        "U059"
+      ]
     },
     "U059": {
       "label": "Vorbehalt",
       "date": "2026-10-12",
       "text": "Rechenfehler in R07: Mit A ≈ 28,3 mm², L = 10 mm, c ≈ 343 m/s und f = 20 Hz ergibt V = A·c²/(4π²·f²·L) ≈ 0,021 m³ (≈ 21 l), nicht 21 ml. Ein Volumen von 21 ml liefert mit diesen Halsmaßen etwa 634 Hz. Die Empfehlung einer kleinen Kammer mit Resonanz oberhalb des Nutzbands bleibt davon unberührt; der Zahlenwert darf so nicht zitiert werden.",
-      "ids": ["B044"]
+      "ids": [
+        "B044"
+      ]
     },
     "A059": {
       "label": "Vorbehalt",
       "date": "2026-10-12",
       "text": "Die Frequenzverschiebung auf 50 % bzw. 75 % gilt nur für Resampling (Wiedergabe mit veränderter Abtastrate). Tonhöhenerhaltende Time-Scale Modification wie WSOLA verlängert die Dauer ohne diese Verschiebung.",
-      "ids": ["A058"]
+      "ids": [
+        "A058"
+      ]
     },
     "B017": {
       "label": "Vorbehalt",
       "date": "2026-10-12",
       "text": "Exakter Binomialtest und sein Konfidenzintervall setzen unabhängige Trials voraus. Unabhängige Aufnahmen (B076) genügen dafür nicht, wenn derselbe Stimulus wiederholt wird (B011); Trials sind in Personen und Stimuli verschachtelt (B020). Bei wiederholten Stimuli das Binomialergebnis nur deskriptiv berichten oder ein Verfahren mit Stimulus-Clusterung wählen. Entscheidung offen, siehe offene Punkte.",
-      "ids": ["B076", "B011", "B020"]
+      "ids": [
+        "B076",
+        "B011",
+        "B020"
+      ]
     }
   },
   "conflicts": {
@@ -339,16 +641,34 @@
       "label": "Neuerer Stand",
       "changed": "Die Frameworkentscheidung ist dokumentiert.",
       "current": "Zephyr für das MVP beibehalten; Begründung in der Framework- und Transportbewertung.",
-      "refs": [["Framework- und Transportbewertung", "Development/system/planning/framework-and-transport-evaluation.md", "recommendation-for-the-next-discussion"]]
+      "refs": [
+        [
+          "Framework- und Transportbewertung",
+          "Development/system/planning/framework-and-transport-evaluation.md",
+          "recommendation-for-the-next-discussion"
+        ]
+      ]
     },
     "targets": {
       "label": "Neuerer Stand",
       "changed": "BPM-Abnahme und Latenzprüfung sind am 14.10. festgelegt.",
       "current": "BPM innerhalb ±5 BPM oder ±10 % gegen Pulsoximeter/Smartwatch (REQ-06); Latenz nach Gehör (REQ-05), <30 ms als ungemessenes Designziel (P03); Filter 40–800 Hz / 25–150 Hz bleiben Kandidaten und werden gewählt, wenn das Gerät funktioniert.",
       "refs": [
-        ["MVP-Entscheidungen 14.10.", "Development/system/planning/mvp-decisions-2026-10-14.md", "behavior"],
-        ["MVP-Entscheidungen 14.10. (Umfang)", "Development/system/planning/mvp-decisions-2026-10-14.md", "scope"],
-        ["Designparameter", "Development/system/design/parameters.md", "design-parameters-internal"]
+        [
+          "MVP-Entscheidungen 14.10.",
+          "Development/system/planning/mvp-decisions-2026-10-14.md",
+          "behavior"
+        ],
+        [
+          "MVP-Entscheidungen 14.10. (Umfang)",
+          "Development/system/planning/mvp-decisions-2026-10-14.md",
+          "scope"
+        ],
+        [
+          "Designparameter",
+          "Development/system/design/system/parameters.md",
+          "design-parameters-internal"
+        ]
       ]
     },
     "dma": {
@@ -356,68 +676,275 @@
       "changed": "Die Blockgröße ist auf 128 Frames/8 ms festgelegt.",
       "current": "Vorschlag ≤4 ms kritische Ausführung je 8-ms-Block; die End-to-End-Latenz wird laut 14.10. nur nach Gehör geprüft.",
       "refs": [
-        ["Latenzbudgets 11.10.", "Development/system/planning/mvp-decisions-2026-10-11.md", "latency-research-and-proposed-budgets"],
-        ["MVP-Entscheidungen 14.10. (Umfang)", "Development/system/planning/mvp-decisions-2026-10-14.md", "scope"]
+        [
+          "Latenzbudgets 11.10.",
+          "Development/system/planning/mvp-decisions-2026-10-11.md",
+          "latency-research-and-proposed-budgets"
+        ],
+        [
+          "MVP-Entscheidungen 14.10. (Umfang)",
+          "Development/system/planning/mvp-decisions-2026-10-14.md",
+          "scope"
+        ]
       ]
     }
   },
   "review_questions": [
     {
       "text": "Hörstudie: Ob die ausgewerteten Trials auf Antwortebene unabhängig sind, ist nicht festgelegt. Wiederholt sich ein Stimulus, ist der exakte Binomialtest nur deskriptiv oder durch ein Verfahren mit Stimulus-Clusterung zu ersetzen. Stimulusplan und Auswertung gemeinsam festlegen.",
-      "ids": ["B017", "B076", "B011", "B020"]
+      "ids": [
+        "B017",
+        "B076",
+        "B011",
+        "B020"
+      ]
     },
     {
       "text": "FHIR-Profil: Seit 15./16.10. sendet das Gerät eine Observation ohne `subject`, wenn der Server keinen Patienten verknüpft hat. Ob das FHIR-R4-Vital-Signs-Profil `subject` als Pflichtfeld verlangt und ob die Observation dann noch als profilkonform beschrieben werden darf, behandeln die Entscheidungen nicht. Vor dem Schreiben prüfen.",
-      "ids": ["C029", "C030", "U068"]
+      "ids": [
+        "C029",
+        "C030",
+        "U068"
+      ]
     }
   ],
   "open_questions": [
     {
       "text": "Aufgabenbeschreibung (U001–U005) nennt verlangsamte Wiedergabe weiterhin als Arbeitsinhalt. Das MVP führt sie seit dem Feedback vom 07.10. als optional, seit 14.10. ist sie auch keine optionale Anforderung mehr. Klären, ob die Thesis die Verlangsamung als Ausblick oder doch als Pflichtteil behandelt; ggf. mit Betreuer die Aufgabenbeschreibung abgleichen.",
-      "ids": ["U002", "U005", "U014", "U020"],
-      "refs": [["MVP-Entscheidungen 14.10. (Anforderungen)", "Development/system/planning/mvp-decisions-2026-10-14.md", "requirements"], ["Produktumfang", "Development/system/spec/product-scope.md", "goal-and-boundary"]]
+      "ids": [
+        "U002",
+        "U005",
+        "U014",
+        "U020"
+      ],
+      "refs": [
+        [
+          "MVP-Entscheidungen 14.10. (Anforderungen)",
+          "Development/system/planning/mvp-decisions-2026-10-14.md",
+          "requirements"
+        ],
+        [
+          "Produktumfang",
+          "Development/system/spec/product-scope.md",
+          "goal-and-boundary"
+        ]
+      ]
     },
     {
       "text": "W1/D09: D09 ist seit 14.10. geschlossen (keine Messung der akustischen Übertragungskette, S05). Ob die Abstimmung mit dem Betreuer zu Q1 und AP 2.2 erfolgt ist, nennt das Register nicht.",
-      "ids": ["U012", "U037", "U038"],
-      "refs": [["Entscheidungsregister D09", "Development/system/planning/implementation-readiness.md", "decision-register"]]
+      "ids": [
+        "U012",
+        "U037",
+        "U038"
+      ],
+      "refs": [
+        [
+          "Entscheidungsregister D09",
+          "Development/system/planning/implementation-readiness.md",
+          "decision-register"
+        ]
+      ]
     },
     {
       "text": "Testdaten für Host-Tests: Die Live-Abnahme der BPM ist festgelegt (Pulsoximeter/Smartwatch, 14.10.). Korpus, Referenzaufnahmen und Resampling werden laut 14.10. erst in der WLAN/FHIR-Phase entschieden. Bis dahin offen, ob CirCor-Playback und Datensätze mit unabhängigem Schlag-Timing genutzt werden.",
-      "ids": ["U017", "A029", "A044", "U122"],
-      "refs": [["MVP-Entscheidungen 14.10. (Umfang)", "Development/system/planning/mvp-decisions-2026-10-14.md", "scope"], ["Designparameter P06/P17", "Development/system/design/parameters.md", "design-parameters-internal"]]
+      "ids": [
+        "U017",
+        "A029",
+        "A044",
+        "U122"
+      ],
+      "refs": [
+        [
+          "MVP-Entscheidungen 14.10. (Umfang)",
+          "Development/system/planning/mvp-decisions-2026-10-14.md",
+          "scope"
+        ],
+        [
+          "Designparameter P06/P17",
+          "Development/system/design/system/parameters.md",
+          "design-parameters-internal"
+        ]
+      ]
     },
     {
       "text": "Schalter W2 und Pinbelegung: Der Geschwindigkeitsschalter ist seit 14.10. keine Anforderung mehr (Replay entfernt). Laut 19.10. bleibt die Pinbelegung unverändert; die GPIO14-Verlegung vom 16.10. ist verworfen. Auf DevKitC-1 v1.1 teilt sich die RGB-LED den Pin GPIO38 mit dem BPM-Kontakt des Filterschalters; die verbaute Board-Revision ist vor Aktivierung des RGB-LED-Treibers zu bestätigen. Ob die Rev-A-Zuordnung für die neue Trägerplatine gilt, ist offen (BOARD-Aufgabe).",
-      "ids": ["U039", "U040", "U078", "U087", "U106", "U120"],
-      "refs": [["MVP-Entscheidungen 19.10. (Katalogprüfung)", "Development/system/planning/mvp-decisions-2026-10-19.md", "catalogue-review--later-on-19-october-2026"], ["Design: LED-Anzeige", "Development/system/design/interfaces-and-behavior.md", "led-indication-and-error-handling"], ["Zeitplan BOARD", "Development/system/planning/mvp-implementation-timeline.md", "board--verify-latest-evaluation-carrier-and-component-wiring"]]
+      "ids": [
+        "U039",
+        "U040",
+        "U078",
+        "U087",
+        "U106",
+        "U120"
+      ],
+      "refs": [
+        [
+          "MVP-Entscheidungen 19.10. (Katalogprüfung)",
+          "Development/system/planning/mvp-decisions-2026-10-19.md",
+          "catalogue-review--later-on-19-october-2026"
+        ],
+        [
+          "Design: LED-Anzeige",
+          "Development/system/design/system/interfaces-and-behavior.md",
+          "led-indication-and-error-handling"
+        ],
+        [
+          "Zeitplan BOARD",
+          "Development/system/planning/mvp-implementation-timeline.md",
+          "board--verify-latest-evaluation-carrier-and-component-wiring"
+        ]
+      ]
     },
     {
       "text": "Aufwand: U009/U036 nennen 320 h Kernarbeit. Laut 14.10. gilt für die Umsetzung der neueste Jira-Plan (TICKET-178…196 unter TICKET-129, 271 h bei 8 h je Werktag, 16. Oktober bis 2. Dezember) plus ein Ticket von etwa 12 h. Ob dieser Plan die 320-h-Schätzung der Thesis ersetzt oder nur die Umsetzung abdeckt, ist nicht festgelegt.",
-      "ids": ["U009", "U036"],
-      "refs": [["MVP-Entscheidungen 14.10. (Zeitplan)", "Development/system/planning/mvp-decisions-2026-10-14.md", "schedule"]]
+      "ids": [
+        "U009",
+        "U036"
+      ],
+      "refs": [
+        [
+          "MVP-Entscheidungen 14.10. (Zeitplan)",
+          "Development/system/planning/mvp-decisions-2026-10-14.md",
+          "schedule"
+        ]
+      ]
     },
     {
       "text": "Ethik/Datenschutz: U022 setzt voraus, dass keine eigenen Patientenaufnahmen genutzt werden. REQ-02 und REQ-06 prüfen am eigenen Brustkorb, und laut 14.10. werden Testaufnahmen wie echte Patientendaten behandelt. Ob das die Ethik- und Datenschutzeinordnung der Thesis berührt, ist nicht entschieden.",
-      "ids": ["U022", "B035"],
-      "refs": [["MVP-Entscheidungen 14.10. (Anforderungen)", "Development/system/planning/mvp-decisions-2026-10-14.md", "requirements"], ["Systemanforderungen", "Development/system/requirements/system-requirements.md", "system-requirements-mvp"]]
+      "ids": [
+        "U022",
+        "B035"
+      ],
+      "refs": [
+        [
+          "MVP-Entscheidungen 14.10. (Anforderungen)",
+          "Development/system/planning/mvp-decisions-2026-10-14.md",
+          "requirements"
+        ],
+        [
+          "Systemanforderungen",
+          "Development/system/requirements/system-requirements.md",
+          "system-requirements-mvp"
+        ]
+      ]
     }
   ],
   "relocated_origins": {
     "Development/system/coding/bringup-zephyr/README.md": {
       "commit": "23c1ea492270b897532896179e35f873eee823be",
       "note": "seit b2c3dde zu einem kurzen Einstiegs-README verdichtet; die Zeilenangaben gelten nur für die zitierte Fassung. Link zeigt diese historische Fassung.",
-      "current": ["Bring-up-README", "Development/system/coding/bringup-zephyr/README.md", ""]
+      "current": [
+        "Bring-up-README",
+        "preThesis/06-bringup-zephyr/README.md",
+        ""
+      ]
     },
     "Development/system/testing/QC-EVALUATION.md": {
       "commit": "23c1ea492270b897532896179e35f873eee823be",
       "note": "seit 89ca8b1 nicht mehr eingecheckt; wird von `qc_eval.py` nach `artifacts/qc/` erzeugt. Link zeigt die zitierte historische Fassung.",
-      "current": ["Testing-README: Source-level QC", "Development/system/testing/README.md", "source-level-qc"]
+      "current": [
+        "Archived bring-up QC",
+        "preThesis/06-bringup-zephyr/README.md",
+        "source-level-qc"
+      ]
     },
     "Development/system/testing/qc-eval-results.json": {
       "commit": "23c1ea492270b897532896179e35f873eee823be",
       "note": "seit 89ca8b1 nicht mehr eingecheckt; wird von `qc_eval.py` nach `artifacts/qc/` erzeugt. Link zeigt die zitierte historische Fassung.",
-      "current": ["Testing-README: Source-level QC", "Development/system/testing/README.md", "source-level-qc"]
+      "current": [
+        "Archived bring-up QC",
+        "preThesis/06-bringup-zephyr/README.md",
+        "source-level-qc"
+      ]
+    },
+    "Development/system/coding/bringup-zephyr/EVAL-GUIDE.md": {
+      "commit": "1448340d265326e11b7a416960f35e0d2390cd6d",
+      "note": "als Vorstudienmaterial nach preThesis/06-bringup-zephyr verschoben. Die Zeilenangaben beziehen sich auf die zitierte historische Fassung.",
+      "current": [
+        "EVAL-GUIDE.md",
+        "preThesis/06-bringup-zephyr/EVAL-GUIDE.md",
+        ""
+      ]
+    },
+    "Development/system/coding/bringup-zephyr/TEST-PROTOCOL.md": {
+      "commit": "1448340d265326e11b7a416960f35e0d2390cd6d",
+      "note": "als Vorstudienmaterial nach preThesis/06-bringup-zephyr verschoben. Die Zeilenangaben beziehen sich auf die zitierte historische Fassung.",
+      "current": [
+        "TEST-PROTOCOL.md",
+        "preThesis/06-bringup-zephyr/TEST-PROTOCOL.md",
+        ""
+      ]
+    },
+    "Development/system/coding/bringup-zephyr/evidence/hardware-results.json": {
+      "commit": "1448340d265326e11b7a416960f35e0d2390cd6d",
+      "note": "als Vorstudienmaterial nach preThesis/06-bringup-zephyr verschoben. Die Zeilenangaben beziehen sich auf die zitierte historische Fassung.",
+      "current": [
+        "hardware-results.json",
+        "preThesis/06-bringup-zephyr/evidence/hardware-results.json",
+        ""
+      ]
+    },
+    "Development/system/coding/bringup-zephyr/evidence/hardware-results.schema.json": {
+      "commit": "1448340d265326e11b7a416960f35e0d2390cd6d",
+      "note": "als Vorstudienmaterial nach preThesis/06-bringup-zephyr verschoben. Die Zeilenangaben beziehen sich auf die zitierte historische Fassung.",
+      "current": [
+        "hardware-results.schema.json",
+        "preThesis/06-bringup-zephyr/evidence/hardware-results.schema.json",
+        ""
+      ]
+    },
+    "Development/system/coding/bringup-zephyr/evidence/integrated-build-results.json": {
+      "commit": "1448340d265326e11b7a416960f35e0d2390cd6d",
+      "note": "als Vorstudienmaterial nach preThesis/06-bringup-zephyr verschoben. Die Zeilenangaben beziehen sich auf die zitierte historische Fassung.",
+      "current": [
+        "integrated-build-results.json",
+        "preThesis/06-bringup-zephyr/evidence/integrated-build-results.json",
+        ""
+      ]
+    },
+    "Development/system/coding/bringup-zephyr/evidence/logic-tests.txt": {
+      "commit": "1448340d265326e11b7a416960f35e0d2390cd6d",
+      "note": "als Vorstudienmaterial nach preThesis/06-bringup-zephyr verschoben. Die Zeilenangaben beziehen sich auf die zitierte historische Fassung.",
+      "current": [
+        "logic-tests.txt",
+        "preThesis/06-bringup-zephyr/evidence/logic-tests.txt",
+        ""
+      ]
+    },
+    "Development/system/coding/bringup-zephyr/evidence/wiring-confirmation.json": {
+      "commit": "1448340d265326e11b7a416960f35e0d2390cd6d",
+      "note": "als Vorstudienmaterial nach preThesis/06-bringup-zephyr verschoben. Die Zeilenangaben beziehen sich auf die zitierte historische Fassung.",
+      "current": [
+        "wiring-confirmation.json",
+        "preThesis/06-bringup-zephyr/evidence/wiring-confirmation.json",
+        ""
+      ]
+    },
+    "Development/system/testing/CI-QUALITY-GATES.md": {
+      "commit": "23c1ea492270b897532896179e35f873eee823be",
+      "note": "durch die aktuelle CI-Betriebsdokumentation ersetzt. Die Zeilenangaben beziehen sich auf die zitierte historische Fassung.",
+      "current": [
+        "OPERATIONS.md",
+        "Development/system/testing/ci/OPERATIONS.md",
+        ""
+      ]
+    },
+    "Development/system/testing/README.md": {
+      "commit": "23c1ea492270b897532896179e35f873eee823be",
+      "note": "durch die aktuelle CI-Betriebsdokumentation ersetzt. Die Zeilenangaben beziehen sich auf die zitierte historische Fassung.",
+      "current": [
+        "OPERATIONS.md",
+        "Development/system/testing/ci/OPERATIONS.md",
+        ""
+      ]
+    },
+    "Development/system/testing/tha-baseline-traceability.json": {
+      "commit": "1448340d265326e11b7a416960f35e0d2390cd6d",
+      "note": "mit der Bring-up-QC archiviert. Die Zeilenangaben beziehen sich auf die zitierte historische Fassung.",
+      "current": [
+        "tha-baseline-traceability.json",
+        "preThesis/06-bringup-zephyr/qc/tha-baseline-traceability.json",
+        ""
+      ]
     }
   },
   "repository_url": "https://github.com/DemonicPsychoII/DigitalStethoscope"

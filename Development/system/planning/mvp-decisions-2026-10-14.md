@@ -12,12 +12,12 @@ Nico's review of the requirements and architecture in this T3 thread. These deci
 
 - **A requirement is valid only if Nico can test it on the device** with available equipment (headphones, phone,
   laptop, HAPI web page, pulse oximeter or smartwatch, test-tone audio) and gets a clear pass or fail.
-  Statements only checkable by reading code are design decisions and live in [detailed design](../design/interfaces-and-behavior.md).
+  Statements only checkable by reading code are design decisions and live in [detailed design](../design/system/interfaces-and-behavior.md).
 - [System requirements](../requirements/system-requirements.md) are replaced by REQ-01…REQ-14. SR-01…SR-12, all component
   requirements (AUD, BPM, CTL, HW, INP, LIS, MON, NET, REC, STO, UI) and the traceability CSV are retired.
 - All optional requirements are removed for now: slowed replay, clip capture, Lung, display, touch, SD storage and
   on-device test playback. Optional ideas stay recorded in the [11 October decisions](mvp-decisions-2026-10-11.md).
-- Numeric design values are internal [design parameters](../design/parameters.md), not requirements.
+- Numeric design values are internal [design parameters](../design/system/parameters.md), not requirements.
 - Use cases are shown as [abstract flow diagrams](../requirements/use-cases.md) instead of lists.
 - Test recordings are handled like real patient data. There is no separate "test data never sent" rule.
 - The smoothed-volume requirement is removed.
@@ -54,5 +54,3 @@ Nico's review of the requirements and architecture in this T3 thread. These deci
   (around 25 October), which goes to Wi-Fi, FHIR and the hotspot page.
 - Submission is **11 January 2027**. Writing and proofreading finish at least one week before (4 January),
   ideally two weeks before (28 December).
-
-Updated by Claude-Opus-5.5 on behalf of Nico running in T3 Code through Claude Code.

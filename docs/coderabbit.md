@@ -38,9 +38,9 @@ paid reviews or Agent usage to work around limits.
 3. Batch fixes before pushing. A push invalidates the previous head's verdict;
    request review of the new head once when ready. Do not assume an automatic
    incremental review will start.
-4. Resolve dispositioned threads and wait for required repository checks.
+4. Address critical/major and unclassified findings and wait for required repository checks. Minor findings and nitpicks may remain open or be deferred.
    The existing gate recognizes CodeRabbit's native approval of the current
-   head; a summary or progress check does not count as approval.
+   head or a fully accounted, explicitly minor/nitpick-only current-head changes request. A summary or progress check alone does not count as review.
 
 `request_changes_workflow` allows CodeRabbit to issue a native approval once
 its review is complete, comments are resolved, and its pre-merge checks are

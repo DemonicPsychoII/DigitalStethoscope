@@ -15,7 +15,7 @@ Widersprüche und Einschränkungen → Übertragbarkeit → begründete nächste
 
 widersprueche.md Stand 2026-08-15; offene Punkte zuletzt als Recherche-Stand 2026-08-11 ausgewiesen; die Arbeitskopie enthält spätere Updates (u. a. 2026-09-16/10-02) in Hardware-/README-Material.
 
-**Ursprung:** [preThesis/02-entscheidungen/widersprueche.md:1-4](../preThesis/02-entscheidungen/widersprueche.md#L1); [preThesis/02-entscheidungen/open-questions.md:7-11](../preThesis/02-entscheidungen/open-questions.md#L7); [preThesis/05-hardware/hardware.md:32-34](../preThesis/05-hardware/hardware.md#L32); [Development/system/coding/bringup-zephyr/README.md:1-160](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/23c1ea492270b897532896179e35f873eee823be/Development/system/coding/bringup-zephyr/README.md?plain=1#L1) (**Herkunft verschoben:** seit b2c3dde zu einem kurzen Einstiegs-README verdichtet; die Zeilenangaben gelten nur für die zitierte Fassung. Link zeigt diese historische Fassung. Aktuell: [Bring-up-README](../Development/system/coding/bringup-zephyr/README.md))
+**Ursprung:** [preThesis/02-entscheidungen/widersprueche.md:1-4](../preThesis/02-entscheidungen/widersprueche.md#L1); [preThesis/02-entscheidungen/open-questions.md:7-11](../preThesis/02-entscheidungen/open-questions.md#L7); [preThesis/05-hardware/hardware.md:32-34](../preThesis/05-hardware/hardware.md#L32); [Development/system/coding/bringup-zephyr/README.md:1-160](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/23c1ea492270b897532896179e35f873eee823be/Development/system/coding/bringup-zephyr/README.md?plain=1#L1) (**Herkunft verschoben:** seit b2c3dde zu einem kurzen Einstiegs-README verdichtet; die Zeilenangaben gelten nur für die zitierte Fassung. Link zeigt diese historische Fassung. Aktuell: [Bring-up-README](../preThesis/06-bringup-zephyr/README.md))
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
 
 ### Folgerungen, Entwurfsentscheidungen und Grenzen
@@ -59,7 +59,7 @@ R07 behandelt die Kavität näherungsweise als Helmholtz-Resonator; Nussbaumer u
 
 README distinguishes wiring confirmation dated 2026-09-16 from later speed-switch and SD-card mapping; Rev A speed switch GPIO2/39/47 is in default build but not covered by that wiring confirmation.
 
-**Ursprung:** [Development/system/coding/bringup-zephyr/README.md:3-8,64-83](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/23c1ea492270b897532896179e35f873eee823be/Development/system/coding/bringup-zephyr/README.md?plain=1#L3) (**Herkunft verschoben:** seit b2c3dde zu einem kurzen Einstiegs-README verdichtet; die Zeilenangaben gelten nur für die zitierte Fassung. Link zeigt diese historische Fassung. Aktuell: [Bring-up-README](../Development/system/coding/bringup-zephyr/README.md))
+**Ursprung:** [Development/system/coding/bringup-zephyr/README.md:3-8,64-83](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/23c1ea492270b897532896179e35f873eee823be/Development/system/coding/bringup-zephyr/README.md?plain=1#L3) (**Herkunft verschoben:** seit b2c3dde zu einem kurzen Einstiegs-README verdichtet; die Zeilenangaben gelten nur für die zitierte Fassung. Link zeigt diese historische Fassung. Aktuell: [Bring-up-README](../preThesis/06-bringup-zephyr/README.md))
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
 
 <a id="u038"></a>

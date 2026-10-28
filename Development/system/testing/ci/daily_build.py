@@ -1,4 +1,4 @@
-"""Skip the daily integration firmware build when integration has not moved.
+"""Skip the daily integration application firmware build when integration has not moved.
 
 Compares this scheduled run's commit with the newest successful scheduled or
 dispatched integration run of this workflow. Unreadable history builds anyway.
@@ -69,9 +69,9 @@ def main(environ: dict[str, str] = os.environ) -> None:
         previous = None
     build = previous != environ["GITHUB_SHA"]
     message = (
-        f"Daily firmware build: integration moved to {environ['GITHUB_SHA'][:12]}."
+        f"Daily application firmware build: integration moved to {environ['GITHUB_SHA'][:12]}."
         if build
-        else f"Daily firmware build skipped: {previous[:12]} was already built."
+        else f"Daily application firmware build skipped: {previous[:12]} was already built."
     )
     print(message)
     with Path(environ["GITHUB_OUTPUT"]).open("a", encoding="utf-8") as output:

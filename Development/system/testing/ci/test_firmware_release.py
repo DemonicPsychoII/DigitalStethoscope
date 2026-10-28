@@ -32,11 +32,12 @@ class IdentityTests(unittest.TestCase):
             ("local", HEAD, None, "feat/x"),
         )
         self.assertEqual(
-            build.version("qc"), f"local {HEAD[:12]}-dirty qc 20261002T031705Z"
+            build.version("application"),
+            f"local {HEAD[:12]}-dirty application 20261002T031705Z",
         )
         self.assertEqual(
-            build.cmake_arg("qc"),
-            f"-DSTETHO_BUILD_ID=local {HEAD[:12]}-dirty qc 20261002T031705Z",
+            build.cmake_arg("application"),
+            f"-DSTETHO_BUILD_ID=local {HEAD[:12]}-dirty application 20261002T031705Z",
         )
 
     def test_pr_build_names_the_head_commit_and_records_the_merged_tree(self):
@@ -47,7 +48,8 @@ class IdentityTests(unittest.TestCase):
             (build.commit, build.merge_commit, build.branch), ("a" * 40, HEAD, None)
         )
         self.assertEqual(
-            build.version("offline"), f"pr-12 {'a' * 12}+merge offline 20261002T031705Z"
+            build.version("application"),
+            f"pr-12 {'a' * 12}+merge application 20261002T031705Z",
         )
 
     def test_unusual_branch_channels_stay_within_the_cmake_character_set(self):
@@ -57,7 +59,7 @@ class IdentityTests(unittest.TestCase):
         }
         with patch.object(firmware_release, "git", fake_git(branch="feat@x#1")):
             build = firmware_release.identity(Path("."), environ, NOW)
-        self.assertRegex(build.version("qc"), r"^[A-Za-z0-9 ._:+/-]+$")
+        self.assertRegex(build.version("application"), r"^[A-Za-z0-9 ._:+/-]+$")
         self.assertIsNone(build.branch)
 
     def test_short_or_foreign_commit_is_refused(self):
@@ -76,7 +78,7 @@ class StageTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             outputs = []
-            for profile in ("offline", "qc"):
+            for profile in ("application",):
                 (root / profile).write_bytes(profile.encode())
                 outputs.append((profile, root / profile))
             (root / "release").mkdir()
@@ -89,14 +91,13 @@ class StageTests(unittest.TestCase):
             names,
             [
                 "manifest.json",
-                f"stethoscope-branch-feat-x-{HEAD[:12]}-offline.bin",
-                f"stethoscope-branch-feat-x-{HEAD[:12]}-qc.bin",
+                f"stethoscope-branch-feat-x-{HEAD[:12]}-application.bin",
             ],
         )
         self.assertEqual(
-            manifest["files"][1]["sha256"], hashlib.sha256(b"qc").hexdigest()
+            manifest["files"][0]["sha256"], hashlib.sha256(b"application").hexdigest()
         )
-        self.assertEqual(manifest["files"][1]["version"], build.version("qc"))
+        self.assertEqual(manifest["files"][0]["version"], build.version("application"))
         self.assertEqual(
             (manifest["commit"], manifest["merge_commit"], manifest["dirty"]),
             (HEAD, None, False),

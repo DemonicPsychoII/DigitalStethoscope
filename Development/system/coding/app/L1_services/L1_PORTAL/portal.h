@@ -11,6 +11,7 @@
  * The page sends requests (connect, rescan, cancel) and polls the status.
  * L2_COMMUNICATION takes the requests, does the Wi-Fi work and publishes
  * the network list and the status for the page.
+ * Implements Development/system/design/PORTAL/interfaces-and-behavior.md.
  */
 
 #ifndef L1_PORTAL_H
@@ -43,7 +44,7 @@ enum portal_status
     PORTAL_STATUS_CONNECT_FAILED, /**< Last connect failed; the page shows the cause. */
     PORTAL_STATUS_CONNECTED,      /**< Connected and network saved. */
     PORTAL_STATUS_SAVE_FAILED,    /**< Connected, but the network could not be saved. */
-    PORTAL_STATUS_CLOSING,        /**< Setup ends (cancel, timeout or error). */
+    PORTAL_STATUS_CLOSING,        /**< Setup ends on every closure, including success and Start. */
 };
 
 /** Kind of request from the page. */
@@ -87,10 +88,12 @@ int portal_start(void);
  * @brief Stop the HTTP server and drop pending requests.
  *
  * Publish PORTAL_STATUS_CLOSING first, so the page can show it before
- * the server stops. Success confirms that handlers have stopped and pending
- * credential requests have been erased. On error, the server may remain active.
+ * the server stops. After the call, no new request is queued, and unread
+ * requests are erased because they can hold a password. On error, the
+ * server can still be running.
  *
- * @return 0 when stopped or already idle, otherwise a negative error code.
+ * @return 0 only after confirmed socket shutdown or a previously confirmed idle state;
+ *         a shutdown-in-progress result still requires bounded confirmation.
  */
 int portal_stop(void);
 
@@ -110,6 +113,13 @@ void portal_setNetworks(const struct wifi_scan_entry *list, size_t count);
  *                   otherwise 0.
  */
 void portal_setStatus(enum portal_status status, int error);
+
+/**
+ * @brief Publish the device address shown after a successful join.
+ *
+ * @param[in] address IPv4 address text from wifi_getAddress(), or "".
+ */
+void portal_setAddress(const char *address);
 
 /**
  * @brief Wait for the next request from the page.
