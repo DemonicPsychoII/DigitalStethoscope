@@ -29,12 +29,12 @@ Display/UI, touch, SD storage and replay (WSOLA) are optional and not part of th
 
 This directory is a standalone Zephyr application. `common/main.c` returns to the idle
 thread; most component `.c` / `.h` files reserve places for implementation.
-`L1_WIFI` and `L1_PORTAL` declare their APIs with placeholder bodies.
-`L2_COMMUNICATION` starts its thread and calls `wifi_init()`; the Wi-Fi workflow on
-top of these APIs is not implemented yet. `common/types.h` reserves the shared data types.
+`L1_WIFI` and `L1_PORTAL` implement network provisioning and the setup page, and
+`L2_COMMUNICATION` implements the Wi-Fi workflow on top of them. `common/types.h` reserves the shared data types.
 The board overlay and `prj.conf` set the fitted N16R8 module (16 MB flash,
 8 MB octal PSRAM; GPIO33–37 stay reserved). The serial shell and deferred logging
-are enabled; no audio processing, networking, storage, UI or monitoring is active.
+are enabled. Wi-Fi provisioning, settings storage and the portal are implemented;
+audio processing and monitoring remain placeholders.
 
 ### Shell and configuration
 
@@ -176,6 +176,31 @@ ownership. [Product scope](../../spec/product-scope.md) and the
 [risk/readiness register](../../planning/implementation-readiness.md) qualify
 class B/SOUP intentions and monitoring controls; classification and hazards require
 substantiation.
+
+## Wi-Fi workflow verification
+
+CONTROL posts `COMMUNICATION_EVENT_LISTENING_STARTED`, then waits for
+`communication_waitForWiFiStop()` before it starts audio. Start/Stop state is
+protected by a short spinlock because the posting interface permits interrupt
+callers. A semaphore wakes the worker; repeated wakeups cannot fill a queue.
+CONTROL must serialize its commands with the wait. A timeout keeps audio stopped.
+
+Waits check Start in 200 ms slices. Total release latency also includes atomic
+settings writes, driver cancellation and confirmed portal/hotspot shutdown; it is
+not yet measured. Failed cleanup withholds release and is retried by the worker.
+An established station is retained. L1 Wi-Fi and portal services are implemented;
+CONTROL integration remains a placeholder. Target acceptance still requires
+measured Wi-Fi and portal evidence.
+
+Run the production workflow with deterministic kernel and service substitutes:
+
+```sh
+python -m pytest -q Development/system/coding/app/tests/host
+```
+
+The host tests need a C11 compiler (`gcc` by default; override with `CC`). They
+check orchestration and injected failures, not target radio or scheduler timing.
+The static quality job runs these tests when application code or tests change.
 
 ## Coding conventions
 
