@@ -19,9 +19,7 @@
  * cannot interrupt a join or a save.
  */
 
-/***********************************************************************/
-/* INCLUDES                                                            */
-/***********************************************************************/
+/* INCLUDES */
 
 #include "portal.h"
 
@@ -33,9 +31,7 @@
 #include <zephyr/net/http/service.h>
 #include <zephyr/sys/util.h>
 
-/***********************************************************************/
-/* DEFINES                                                             */
-/***********************************************************************/
+/* DEFINES */
 
 #define PORTAL_HTTP_PORT                        (80)  /**< Port of the setup page. */
 #define PORTAL_HTTP_BACKLOG                     (4)   /**< Connections waiting for a client slot. */
@@ -57,17 +53,7 @@
         .user_data = (void *)(data),                             \
     }
 
-/***********************************************************************/
-/* TYPES                                                               */
-/***********************************************************************/
-
-/***********************************************************************/
-/* GLOBAL CONSTANTS                                                    */
-/***********************************************************************/
-
-/***********************************************************************/
-/* LOCAL CONSTANTS                                                     */
-/***********************************************************************/
+/* LOCAL CONSTANTS */
 
 static const char portal_Page[] = {
 #include "portal.html.inc"
@@ -89,13 +75,7 @@ static const enum portal_request_type portal_CancelType = PORTAL_REQUEST_CANCEL;
 static const enum portal_request_type portal_ActivityType = PORTAL_REQUEST_ACTIVITY; /**< user_data of /activity. */
 static const struct http_header portal_RetryAfterHeader = {"Retry-After", "1"};
 
-/***********************************************************************/
-/* GLOBAL VARIABLES                                                    */
-/***********************************************************************/
-
-/***********************************************************************/
-/* LOCAL VARIABLES                                                     */
-/***********************************************************************/
+/* LOCAL VARIABLES */
 
 static struct portal_request portal_RequestQueue[PORTAL_REQUEST_QUEUE_LENGTH];
 static size_t portal_RequestReadIndex;
@@ -124,9 +104,7 @@ static bool portal_FormIsTooLong; /**< The body did not fit into portal_Form. */
 
 static uint16_t portal_HTTPPort = PORTAL_HTTP_PORT; /**< HTTP_SERVICE_DEFINE needs the port as a variable. */
 
-/***********************************************************************/
-/* LOCAL FUNCTION PROTOTYPES                                           */
-/***********************************************************************/
+/* LOCAL FUNCTION PROTOTYPES */
 
 /**
  * @brief Overwrite a buffer with zeros so credentials do not stay in memory.
@@ -135,6 +113,9 @@ static uint16_t portal_HTTPPort = PORTAL_HTTP_PORT; /**< HTTP_SERVICE_DEFINE nee
  * @param[in]  size Size of @p data in bytes.
  */
 static void portal_clearSecret(void *data, size_t size);
+
+/** Reset buffered form data while retaining its transaction owner; caller holds portal_Lock. */
+static void portal_reset_form(void);
 
 /**
  * @brief Send the status, its cause and the network list as JSON.
@@ -213,9 +194,7 @@ static void portal_appendName(size_t *length, const char *name);
  */
 static bool portal_readFormValue(const char *form, const char *key, char *value, size_t valueSize);
 
-/***********************************************************************/
-/* MACROS                                                              */
-/***********************************************************************/
+/* MACROS */
 
 LOG_MODULE_REGISTER(portal, LOG_LEVEL_INF);
 
@@ -262,9 +241,7 @@ HTTP_RESOURCE_DEFINE(portal_RescanResource, portal_service, "/rescan", &portal_R
 HTTP_RESOURCE_DEFINE(portal_CancelResource, portal_service, "/cancel", &portal_CancelDetail);
 HTTP_RESOURCE_DEFINE(portal_ActivityResource, portal_service, "/activity", &portal_ActivityDetail);
 
-/***********************************************************************/
-/* GLOBAL FUNCTIONS                                                    */
-/***********************************************************************/
+/* GLOBAL FUNCTIONS */
 
 enum portal_wait_target
 {
@@ -315,14 +292,12 @@ int portal_start(void)
     }
     (void)k_mutex_lock(&portal_Lock, K_FOREVER);
     (void)portal_clearSecret(portal_RequestQueue, sizeof(portal_RequestQueue));
-    (void)portal_clearSecret(portal_Form, sizeof(portal_Form));
     (void)memset(portal_Address, 0, sizeof(portal_Address));
     portal_RequestReadIndex = 0U;
     portal_RequestWriteIndex = 0U;
     portal_RequestCount = 0U;
     k_sem_reset(&portal_RequestAvailable);
-    portal_FormLength = 0U;
-    portal_FormIsTooLong = false;
+    portal_reset_form();
     portal_FormClient = NULL;
     portal_Error = 0;
     portal_Status = PORTAL_STATUS_SELECTING;
@@ -360,9 +335,7 @@ int portal_stop(void)
     (void)k_mutex_lock(&portal_Lock, K_FOREVER);
     portal_IsOpen = false;
     portal_SelectionIsReady = false;
-    (void)portal_clearSecret(portal_Form, sizeof(portal_Form));
-    portal_FormLength = 0U;
-    portal_FormIsTooLong = false;
+    portal_reset_form();
     portal_FormClient = NULL;
     (void)portal_clearSecret(portal_RequestQueue, sizeof(portal_RequestQueue));
     portal_RequestCount = 0U;
@@ -385,9 +358,7 @@ int portal_stop(void)
         return -ETIMEDOUT; /**< Operation exceeded its wait deadline. */
     }
     (void)k_mutex_lock(&portal_Lock, K_FOREVER);
-    (void)portal_clearSecret(portal_Form, sizeof(portal_Form));
-    portal_FormLength = 0U;
-    portal_FormIsTooLong = false;
+    portal_reset_form();
     portal_FormClient = NULL;
     portal_ServerStopIsConfirmed = true;
     (void)k_mutex_unlock(&portal_Lock);
@@ -448,9 +419,7 @@ int portal_waitForRequest(struct portal_request *request, k_timeout_t timeout)
     return result;
 }
 
-/***********************************************************************/
-/* LOCAL FUNCTIONS                                                     */
-/***********************************************************************/
+/* LOCAL FUNCTIONS */
 
 static void portal_clearSecret(void *data, size_t size)
 {
@@ -460,6 +429,25 @@ static void portal_clearSecret(void *data, size_t size)
     {
         destination[index] = 0U;
     }
+}
+
+static void portal_reset_form(void)
+{
+    portal_clearSecret(portal_Form, sizeof(portal_Form));
+    portal_FormLength = 0U;
+    portal_FormIsTooLong = false;
+}
+
+static void portal_finish_response(struct http_response_ctx *response_context)
+{
+    if(response_context->status == HTTP_503_SERVICE_UNAVAILABLE)
+    {
+        response_context->headers = &portal_RetryAfterHeader;
+        response_context->header_count = 1U;
+    }
+    response_context->body = (const uint8_t *)"{}";
+    response_context->body_len = 2U;
+    response_context->final_chunk = true;
 }
 
 static int portal_sendStatus(struct http_client_ctx *client, enum http_transaction_status status, const struct http_request_ctx *requestContext, struct http_response_ctx *responseContext, void *userData)
@@ -485,23 +473,9 @@ static int portal_sendStatus(struct http_client_ctx *client, enum http_transacti
 
         for(size_t index = 0U; index < portal_NetworkCount; index++)
         {
-            if(index == 0U)
-            {
-                portal_appendText(&length, "{\"name\":\"");
-            }
-            else
-            {
-                portal_appendText(&length, ",{\"name\":\"");
-            }
+            portal_appendText(&length, (index == 0U) ? "{\"name\":\"" : ",{\"name\":\"");
             portal_appendName(&length, portal_Networks[index].name);
-            if(portal_Networks[index].needsPassword)
-            {
-                portal_appendText(&length, "\",\"password\":true}");
-            }
-            else
-            {
-                portal_appendText(&length, "\",\"password\":false}");
-            }
+            portal_appendText(&length, portal_Networks[index].needsPassword ? "\",\"password\":true}" : "\",\"password\":false}");
         }
 
         (void)k_mutex_unlock(&portal_Lock);
@@ -534,9 +508,7 @@ static int portal_receiveConnect(struct http_client_ctx *client, enum http_trans
     }
     if(isCompletion)
     {
-        (void)portal_clearSecret(portal_Form, sizeof(portal_Form));
-        portal_FormLength = 0U;
-        portal_FormIsTooLong = false;
+        portal_reset_form();
         portal_FormClient = NULL;
         (void)k_mutex_unlock(&portal_Lock);
         return 0;
@@ -547,9 +519,7 @@ static int portal_receiveConnect(struct http_client_ctx *client, enum http_trans
     {
         responseContext->status = HTTP_409_CONFLICT;
         responseContext->final_chunk = true;
-        (void)portal_clearSecret(portal_Form, sizeof(portal_Form));
-        portal_FormLength = 0U;
-        portal_FormIsTooLong = false;
+        portal_reset_form();
         portal_FormClient = NULL;
         (void)k_mutex_unlock(&portal_Lock);
         return 0;
@@ -568,15 +538,7 @@ static int portal_receiveConnect(struct http_client_ctx *client, enum http_trans
     if(status == HTTP_SERVER_REQUEST_DATA_FINAL)
     {
         struct portal_request request = {.type = PORTAL_REQUEST_CONNECT};
-        enum http_status rejectionStatus;
-        if(portal_FormIsTooLong)
-        {
-            rejectionStatus = HTTP_413_PAYLOAD_TOO_LARGE;
-        }
-        else
-        {
-            rejectionStatus = HTTP_400_BAD_REQUEST;
-        }
+        enum http_status rejectionStatus = portal_FormIsTooLong ? HTTP_413_PAYLOAD_TOO_LARGE : HTTP_400_BAD_REQUEST;
         /* Accept only a bounded form with both decoded fields and a valid network. */
         bool isValid = !portal_FormIsTooLong &&
                        portal_readFormValue(portal_Form, "network", request.network.name, sizeof(request.network.name)) &&
@@ -591,9 +553,7 @@ static int portal_receiveConnect(struct http_client_ctx *client, enum http_trans
                 break;
             }
         }
-        (void)portal_clearSecret(portal_Form, sizeof(portal_Form));
-        portal_FormLength = 0U;
-        portal_FormIsTooLong = false;
+        portal_reset_form();
         (void)k_mutex_unlock(&portal_Lock);
         if((isValid && isListed))
         {
@@ -603,14 +563,7 @@ static int portal_receiveConnect(struct http_client_ctx *client, enum http_trans
         {
             responseContext->status = rejectionStatus;
         }
-        if(responseContext->status == HTTP_503_SERVICE_UNAVAILABLE)
-        {
-            responseContext->headers = &portal_RetryAfterHeader;
-            responseContext->header_count = 1U;
-        }
-        responseContext->body = (const uint8_t *)"{}";
-        responseContext->body_len = 2U;
-        responseContext->final_chunk = true;
+        portal_finish_response(responseContext);
         (void)portal_clearSecret(&request, sizeof(request));
         return 0;
     }
@@ -636,20 +589,9 @@ static int portal_receiveCommand(struct http_client_ctx *client, enum http_trans
         {
             newStatus = PORTAL_STATUS_CLOSING;
         }
-        else
-        {
-            /* Activity keeps the current status. */
-        }
 
         responseContext->status = portal_queueRequest(&request, newStatus);
-        if(responseContext->status == HTTP_503_SERVICE_UNAVAILABLE)
-        {
-            responseContext->headers = &portal_RetryAfterHeader;
-            responseContext->header_count = 1U;
-        }
-        responseContext->body = (const uint8_t *)"{}";
-        responseContext->body_len = 2U;
-        responseContext->final_chunk = true;
+        portal_finish_response(responseContext);
     }
 
     return 0;
@@ -785,50 +727,33 @@ static bool portal_readFormValue(const char *form, const char *key, char *value,
 {
     size_t keyLength = strlen(key);
     const char *field = form;
-    bool isFound = false;
     bool isValid = false;
 
     /* Fields are "key=value" pairs separated by '&'. */
-    while((field != NULL) && !isFound)
+    while((field != NULL) && !((strncmp(field, key, keyLength) == 0) && (field[keyLength] == '=')))
     {
-        if((strncmp(field, key, keyLength) == 0) && (field[keyLength] == '='))
+        field = strchr(field, '&');
+        if(field != NULL)
         {
-            isFound = true;
-        }
-        else
-        {
-            field = strchr(field, '&');
-            if((field != NULL))
-            {
-                field = (field + 1);
-            }
-            else
-            {
-                field = NULL;
-            }
+            field++;
         }
     }
-
-    if(isFound)
+    if(field != NULL)
     {
         const char *source = &field[keyLength + 1U];
         size_t length = 0U;
-
         isValid = true;
-
-        /* Decode one bounded form field until its separator or terminator. */
         while(isValid && (*source != '\0') && (*source != '&'))
         {
             char character = *source;
-            uint8_t high = 0U;
-            uint8_t low = 0U;
-
             if(character == '+')
             {
                 character = ' ';
             }
             else if(character == '%')
             {
+                uint8_t high = 0U;
+                uint8_t low = 0U;
                 /* A percent escape needs two present hexadecimal digits. */
                 isValid = (source[1] != '\0') && (source[2] != '\0') && (char2hex(source[1], &high) == 0) && (char2hex(source[2], &low) == 0);
                 character = (char)((high << 4) | low);
@@ -836,31 +761,17 @@ static bool portal_readFormValue(const char *form, const char *key, char *value,
                 {
                     source += 2;
                 }
-                else
-                {
-                    source += 0;
-                }
             }
-            else
-            {
-                /* Copy as it is. */
-            }
-
-            /* An embedded NUL would cut the value short without notice. */
             /* Keep room for the terminator and reject embedded null characters. */
             isValid = isValid && (character != '\0') && ((length + 1U) < valueSize);
-
             if(isValid)
             {
-                value[length] = character;
-                length++;
+                value[length++] = character;
                 source++;
             }
         }
-
         value[length] = '\0';
     }
-
     return isValid;
 }
 

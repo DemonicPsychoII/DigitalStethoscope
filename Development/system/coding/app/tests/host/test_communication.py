@@ -1118,8 +1118,22 @@ for service_name, setting, failure_name, setup_script, stored, stop_tries in (
     ("portal", "stop_failures", "page_stop_failed", "", False, 1),
     ("dhcp", "dhcp_stop_failures", "dhcp_stop_failed", "", False, 1),
     ("ap", "ap_stop_failures", "ap_stop_failed", "", False, 1),
-    ("scan", "scan_stop_failures", "scan_cancel_failed", plan("scan", [0], 20000), False, 2),
-    ("disconnect", "disconnect_failures", "disconnect_failed", plan("join", [0], 20000), True, 2),
+    (
+        "scan",
+        "scan_stop_failures",
+        "scan_cancel_failed",
+        plan("scan", [0], 20000),
+        False,
+        2,
+    ),
+    (
+        "disconnect",
+        "disconnect_failures",
+        "disconnect_failed",
+        plan("join", [0], 20000),
+        True,
+        2,
+    ),
 ):
     for failure_count in range(1, stop_tries + 1):
         latches = failure_count == stop_tries
@@ -1250,6 +1264,56 @@ MEMORY_CASES = [
         id="invalid-record-erases-working-record",
     ),
 ]
+
+
+@pytest.mark.parametrize(
+    "timeout_milliseconds,acknowledgement_milliseconds,expected_result,expected_elapsed",
+    [
+        (100, 50, 0, 100),
+        (250, 225, 0, 250),
+        (100, 100, 0, 100),
+        (250, 300, -11, 250),
+        (0, 0, 0, 0),
+        (0, -1, -11, 0),
+    ],
+)
+def test_release_wait_final_interval(
+    memory_executable,
+    record_property,
+    timeout_milliseconds,
+    acknowledgement_milliseconds,
+    expected_result,
+    expected_elapsed,
+):
+    record_property(
+        "scenario",
+        f"release-wait-{timeout_milliseconds}-ack-{acknowledgement_milliseconds}",
+    )
+    record_property("vt_id", "VT-14")
+    record_property("basis", COMMUNICATION + "listening-priority-and-safe-teardown")
+    record_property(
+        "expected",
+        "Observe shutdown acknowledgements through the final sleep interval; reject late or absent acknowledgements. The white-box harness models the worker acknowledgement during CONTROL sleep with a substituted clock.",
+    )
+    target, command, version, revision = memory_executable
+    record_property("source_revision", revision)
+    record_property("compiler_version", version)
+    record_property("compiler_command", subprocess.list2cmdline(command))
+    result = subprocess.run(
+        [
+            str(target),
+            "release-wait",
+            str(timeout_milliseconds),
+            str(acknowledgement_milliseconds),
+        ],
+        capture_output=True,
+        text=True,
+        timeout=10,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    trace = Trace(result.stdout)
+    assert trace.values("release_wait_result") == [expected_result]
+    assert trace.values("release_wait_elapsed") == [expected_elapsed]
 
 
 def test_coalesced_start_stop_resumes_boot(memory_executable, record_property):
