@@ -1,10 +1,9 @@
 # CodeRabbit reviews
 
-CodeRabbit's free public-repository offer covers DigitalStethoscope. Install its
-GitHub App for this repository at [CodeRabbit](https://app.coderabbit.ai), then
-confirm OSS access in the correct account. Leave optional usage-based reviews and
-paid agent services disabled to keep this workflow free. A trial banner alone
-does not prove permanent free access.
+Nico confirmed free OSS review access for DigitalStethoscope on 26 October 2026.
+The repository uses manual review requests rather than relying on automatic PR
+opening or push triggers. Keep the GitHub App installed and leave optional
+usage-based reviews and paid agent services disabled.
 
 [.coderabbit.yaml](../.coderabbit.yaml) applies different review guidance to:
 
@@ -31,12 +30,14 @@ current head and address any material CodeRabbit findings already posted; it can
 override unresolved findings, required CI, or owner questions. Do not enable
 paid reviews or Agent usage to work around limits.
 
-1. Open a focused, ready-for-review PR into `integration`. Automatic reviews
-   are enabled; draft PRs are excluded.
+1. Open a focused, ready-for-review PR into `integration`. Check for an active
+   or completed review of the current head; otherwise comment `@coderabbitai review`
+   once. Do not duplicate a running review. Use the app's PR watcher.
 2. Read the feedback. Fix material issues and explain false positives or
    declined optional suggestions in their original review threads.
-3. Batch fixes before pushing. CodeRabbit normally reviews new commits
-   incrementally. If needed, comment `@coderabbitai review`.
+3. Batch fixes before pushing. A push invalidates the previous head's verdict;
+   request review of the new head once when ready. Do not assume an automatic
+   incremental review will start.
 4. Resolve dispositioned threads and wait for required repository checks.
    The existing gate recognizes CodeRabbit's native approval of the current
    head; a summary or progress check does not count as approval.
@@ -53,6 +54,8 @@ trusted by the gate.
 Free OSS reviews still have rate limits. Comment `@coderabbitai rate limit`
 to check availability; wait rather than enabling paid continuation. Disable or
 pause unnecessary review triggers if repeated pushes consume the allowance.
+A green CodeRabbit status saying "Review rate limited" is not a completed review
+or an approval. Use the separate-session fallback above when throttled.
 
 For academic work, require evidence for claims and never accept invented
 references or measurements. CodeRabbit feedback supplements source verification,
@@ -69,4 +72,4 @@ A schema-valid configuration does not prove the quality of the live reviews.
 - [Path instructions](https://docs.coderabbit.ai/configuration/path-instructions)
 - [Review commands](https://docs.coderabbit.ai/reference/review-commands)
 
-Configured by GPT-6.1-Sol on behalf of Nico running in T3 Code through Codex.
+Updated by GPT-6.1-Sol on behalf of Nico running in codex.

@@ -41,9 +41,11 @@ workflows may remain hosted. Preserve required check names and existing gate pol
   `<!-- agent-review verdict=<approve|changes> sha=<head sha> reviewer=<harness>/<model> session=<id> -->`.
   Prefer a different provider/model; a push invalidates the verdict. Configured CodeRabbit native
   approval also counts when it approves the current head; a progress check alone does not.
-- **Primary reviewer:** use CodeRabbit for independent PR review in this repository. If no review
-  starts, request `@coderabbitai review` once and use the app's PR watcher while it runs.
-  Never request another review while an automatic review is running.
+- **Primary reviewer:** use CodeRabbit through the confirmed free OSS access. Request reviews
+  manually: once the PR head is ready, check for an active or completed current-head review,
+  then comment `@coderabbitai review` once if needed and use the app's PR watcher.
+  Do not rely on automatic opening/push triggers or request another review while one is running.
+  Batch fixes before pushing; a changed head needs a new independent verdict.
   If CodeRabbit is unavailable, rate-limited, fails, or remains stuck without completing a review
   across two watcher updates at least 15 minutes apart, use the existing GlobalAgentContext
   `rules/git.md` and `review` skill workflow with a separate agent session as the fallback.
