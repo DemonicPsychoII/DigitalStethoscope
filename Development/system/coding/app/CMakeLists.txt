@@ -38,4 +38,4 @@ target_sources(app PRIVATE
 
 # The setup page resources live in an iterable section named after its HTTP service.
 # Follows Zephyr's samples/net/sockets/http_server/CMakeLists.txt and sections-rom.ld.
-zephyr_linker_sources(SECTIONS L1_services/L1_PORTAL/portal-sections.ld)
+zephyr_linker_sources(SECTIONS ${CMAKE_CURRENT_SOURCE_DIR}/L1_services/L1_PORTAL/portal-sections.ld)
