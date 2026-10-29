@@ -19,6 +19,10 @@ L2_COMMUNICATION owns setup, retries and sequencing. `L1_WIFI` owns individual r
 A new radio request or cancellation rejects late results of the prior request. Each wait returns its result to COMMUNICATION; callbacks do not change controller state. [Shared system contracts](../system/interfaces-and-behavior.md) define mode ownership and feedback; [Wi-Fi parameters](parameters.md) define operation limits; [COMMUNICATION](../COMMUNICATION/interfaces-and-behavior.md) defines sequencing and retries.
 
 
+## Physical device identity
+
+The proposed `wifi_getDeviceIdentifier` returns the full-MAC-derived physical identifier defined by [server communication](../COMMUNICATION/server-communication.md#physical-identity-and-server-binding), or a cause. Use the stable factory station identity, not only the hotspot suffix or a runtime-overridden address. This local operation neither connects to a network nor registers a Device. Its target provenance remains unverified.
+
 ## Network record
 
 Project representation: `wifi_network` is the name/password record shared with STORAGE and COMMUNICATION. It contains `char name[33]` followed by `char password[65]`, for a complete persisted record of 98 bytes. There is no security-type field, version prefix or additional serialized metadata. These widths match the existing application interface; this documents its current record rather than introducing a new format.

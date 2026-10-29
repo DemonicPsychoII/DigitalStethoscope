@@ -15,7 +15,7 @@ Vendor reference: Espressif Systems, *ESP32-S3-DevKitC-1 v1.1 User Guide*, ESP-D
 This table is authoritative for feedback. It defines feedback behavior, not standards
 conformity or implemented firmware. Recovery and acknowledgement are separate.
 
-- **One feedback catalogue.** Wi-Fi-only failures preserve working audio and permit
+- **One feedback catalogue.** Wi-Fi-only failures and registration-only `DEVICE_REGISTRATION_FAILURE` preserve working audio and permit
   offline Start. Recovery follows the [Wi-Fi rules](../COMMUNICATION/interfaces-and-behavior.md#wi-fi-setup-and-recovery) and need not wait for error
   acknowledgement. Other errors stop the active workflow, mute/cancel active audio
   and block Start until the catalogue clear rule is met. Restart means reset/power cycle.
@@ -46,6 +46,7 @@ conformity or implemented firmware. Recovery and acknowledgement are separate.
 - **Clear and retry are separate.** A short press only clears errors whose catalogue row permits acknowledgement. It does not repeat the failed
   workflow. A separate 2 s hold in Idle starts Wi-Fi setup again, even with a Wi-Fi error latched.
   Automatic reconnect/portal recovery remains automatic; acknowledgement is not its gate.
+- **Device registration.** [Registration recovery](../COMMUNICATION/server-communication.md#registration-flow-and-recovery) covers request, response and registration-record failures. Standalone listening remains available. Acknowledgement clears only the indication; recovery is automatic, and repeated failures in the same unavailable episode do not re-latch an acknowledged indication. Start cancellation alone raises no registration error. Resource-release faults retain the existing cleanup/restart policy.
 - **Restart** means the reset button or a power off/on cycle.
 - **Code naming.** `<SUBJECT>_<OUTCOME>` in upper case with underscores and no abbreviations, for example
   `SCAN_FAILURE`. Outcome words: no suffix, `RUNNING`, `OPEN`, `PENDING`, `SENDING` or `CONNECTING` for a normal status;
