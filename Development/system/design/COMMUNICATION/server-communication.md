@@ -4,7 +4,7 @@
 
 This Design-stage contract refines [server-communication Architecture PR #81](https://github.com/DemonicPsychoII/DigitalStethoscope/pull/81), revision `a9f37ccb1d6f5037037eade0571c4d2ad0b0c2d7`, and requirements/shared design at `3d989815b4cbded9bf64ec7c9934894f95cc68e5`. Dependencies are [SNTP Design #99](https://github.com/DemonicPsychoII/DigitalStethoscope/pull/99), revision `4982df57f4db9396d16e9e2357ff8ac459fda456`, and [TLS Design #100](https://github.com/DemonicPsychoII/DigitalStethoscope/pull/100), revision `707643e54273c048dbd1a9bc391cd17343602de6`. This branch is stacked on #100, which is stacked on #99. No firmware, server configuration or generated test changes are included here.
 
-Nico accepted persistent server-bound registration, conditional recovery, full-MAC-derived physical identity, registration readiness only after flash save, ten-second registration attempts with 60-second Idle recovery, and connection reuse. He accepted one pending examination request, consumption/context freezing at local Start, no automatic patient-context reuse after cancellation/failure, standalone measurements without subject, and adaptation of PulsOxy JSON without unverified profile declarations, and poor-signal Observations with `dataAbsentReason=error` and no numeric value [1]. Proposed interface names, record encoding and buffer limits below refine these decisions; they are not measured target guarantees. This covers REQ-02, REQ-07, REQ-08, REQ-09, REQ-10, REQ-11, REQ-12, REQ-13 and REQ-14; verification allocation is VT-07, VT-08, VT-09 and VT-11.
+Nico accepted persistent server-bound registration, conditional recovery, full-MAC-derived physical identity, registration readiness only after flash save, ten-second registration attempts with 60-second Idle recovery, and connection reuse. He accepted one pending examination request, consumption/context freezing at local Start, no automatic patient-context reuse after cancellation/failure, standalone measurements without subject, and adaptation of PulsOxy JSON without unverified profile declarations, and poor-signal Observations with `dataAbsentReason=error` and no numeric value [1]. Proposed interface names, record encoding and buffer limits below refine these decisions; they are not measured target guarantees. This covers REQ-02, REQ-07, REQ-08, REQ-09, REQ-10, REQ-11, REQ-12, REQ-13, REQ-14 and REQ-15; verification allocation is VT-07, VT-08, VT-09, VT-11 and VT-15.
 
 ## Responsibilities and proposed interfaces
 
@@ -114,14 +114,15 @@ The read-only 29 October 2026 desktop probe reports HAPI FHIR Server 8.12.0, FHI
 
 | Scenario | Trace | Expected result |
 | --- | --- | --- |
-| Initial creation, lost receipt, one/multiple matches | REQ-09/11/12; VT-07/08 | One stable conditional identity; validated server id; 412 never falls back to unconditional creation |
-| Flash failure, restart and corrupt/mismatched record | REQ-09/12/13; VT-08/11 | Not ready until committed; safe recovery with the same physical identity; old committed data preserved on failure |
-| Wi-Fi change, server change and missing Device | REQ-09/11/12; VT-07/08 | Network changes preserve registration; server binding changes reconcile while Idle; frozen result never relabelled |
+| Initial creation, lost receipt, one/multiple matches | REQ-09/11/15; VT-07/08/15 | One stable conditional identity; validated server id; 412 never falls back to unconditional creation |
+| Flash failure, restart and corrupt/mismatched record | REQ-09/13/15; VT-08/11/15 | Not ready until committed; safe recovery with the same physical identity; old committed data preserved on failure |
+| Wi-Fi change, server change and missing Device | REQ-09/11/12/15; VT-07/08/15 | Network changes preserve registration; server binding changes reconcile while Idle; frozen result never relabelled |
 | Local Start, request duplication and context changes | REQ-02/09/13; VT-07/08/09 | Local authority, one consumed context, immutable subject; no next-session patient reuse after cancellation/failure |
 | JSON fields, escaping, precision and overflow | REQ-09/10/11; VT-07/08 | Valid bounded base-FHIR representation; patient absent when unsupplied; no unverified profile claim |
 | Early Stop and poor signal | REQ-07/08; VT-07/09 | Early Stop sends nothing; poor signal uses an Observation with `dataAbsentReason=error`, no `valueQuantity`, and the frozen context |
 | Reconnect, uncertain receipt and terminal failure | REQ-09/10; VT-07/08 | P13 bounds; identical retries; receipt only on 201/200; visible terminal loss without delayed queue |
-| Target identity, flash interruption and listening | REQ-02/12/13; VT-08/09/11 | Stable factory identity, demonstrated persistence/cancellation bounds and no active network jobs during audio |
+| Persistent registration across three restarts | REQ-15; VT-15 | First registration stores the server id; each of three restarts reuses that same id without a new Device, and a session after each restart references it; the HAPI page shows one Device for this device |
+| Target identity, flash interruption and listening | REQ-02/13/15; VT-08/09/11/15 | Stable factory identity, demonstrated persistence/cancellation bounds and no active network jobs during audio |
 
 This allocates future verification, not generated tests or target acceptance. The external adapter, request replay durability, optional metadata/profile mapping, numeric precision and deployed write/reference-validation behavior remain explicit gaps. Proposed record/buffer values require later implementation and evidence. Do not claim complete REQ-08 verification before implementation and integration evidence exist.
 
