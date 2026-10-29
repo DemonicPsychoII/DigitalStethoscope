@@ -2,7 +2,7 @@
 
 ## Basis
 
-This Design-stage contract refines [SNTP architecture PR #78](https://github.com/DemonicPsychoII/DigitalStethoscope/pull/78) at `4c25ba2ea12d718541f2ec3f00653ea3bc2d5823` and requirements/shared design at `3d989815b4cbded9bf64ec7c9934894f95cc68e5`. It covers REQ-02, REQ-09, REQ-10, REQ-11, REQ-13 and REQ-14; verification uses VT-07, VT-08, VT-09 and VT-11. No firmware or generated tests are included.
+This Design-stage contract refines [SNTP architecture PR #78](https://github.com/DemonicPsychoII/DigitalStethoscope/pull/78) at `d64347e5a03eef95b1db4ea5df15bc984095a547` and requirements/shared design at `3d989815b4cbded9bf64ec7c9934894f95cc68e5`. It covers REQ-02, REQ-09, REQ-10, REQ-11, REQ-13 and REQ-14; verification uses VT-07, VT-08, VT-09 and VT-11. No firmware or generated tests are included.
 
 Nico accepted the source/trust assumption, Zephyr uncertainty estimate, boot synchronization, shared certificate/measurement clock basis, monotonic durations, cancellation, timing values and failure behavior during the SNTP grilling rounds [1]. Agreement on those behaviors is distinct from approval of the proposed interfaces below or target verification.
 
