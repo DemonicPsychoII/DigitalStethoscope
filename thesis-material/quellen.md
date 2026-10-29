@@ -1735,6 +1735,6 @@ Ian Fette and Alexey Melnikov, *The WebSocket Protocol*, IETF RFC 6455, December
 <a id="hl7_fhir_r4_data_absent_reason_2019"></a>
 ### hl7_fhir_r4_data_absent_reason_2019
 
-Health Level Seven International, *FHIR R4 DataAbsentReason code system*, version 4.0.1, 2019, <https://hl7.org/fhir/R4/codesystem-data-absent-reason.html>, accessed 29 October 2026. The selected use of `error` for poor-signal reporting is a project proposal, not prescribed by this source.
+Health Level Seven International, *FHIR R4 DataAbsentReason code system*, version 4.0.1, 2019, <https://hl7.org/fhir/R4/codesystem-data-absent-reason.html>, accessed 29 October 2026. The selected use of `error` for poor-signal reporting is an accepted project decision (Nico, 29 October 2026), not prescribed by this source.
 
 **Cited by:** [Server communication design](../Development/system/design/COMMUNICATION/server-communication.md).
