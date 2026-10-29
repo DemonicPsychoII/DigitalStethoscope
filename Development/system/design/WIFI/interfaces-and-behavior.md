@@ -4,6 +4,8 @@ L2_COMMUNICATION owns setup, retries and sequencing. `L1_WIFI` owns individual r
 
 ## Service boundary
 
+The proposed [SNTP service extension](../COMMUNICATION/time-synchronization.md#ownership-and-proposed-interfaces) defines cancellable DNS/exchange, result normalization and clock application. Existing station/provisioning operations below remain the firmware baseline until the separate time-service implementation PRs.
+
 | Interface | Inputs | Outputs and ownership |
 | --- | --- | --- |
 | `wifi_init()` | One initialization call before other operations | Registers driver callbacks. |
@@ -18,6 +20,10 @@ L2_COMMUNICATION owns setup, retries and sequencing. `L1_WIFI` owns individual r
 
 A new radio request or cancellation rejects late results of the prior request. Each wait returns its result to COMMUNICATION; callbacks do not change controller state. [Shared system contracts](../system/interfaces-and-behavior.md) define mode ownership and feedback; [Wi-Fi parameters](parameters.md) define operation limits; [COMMUNICATION](../COMMUNICATION/interfaces-and-behavior.md) defines sequencing and retries.
 
+
+## Secure server operations
+
+Secure server operations follow the proposed [TLS service contracts](../COMMUNICATION/secure-transport.md#ownership-and-proposed-service-contracts): WIFI owns DNS/TCP/TLS resources and mandatory verification; COMMUNICATION owns deadlines and retry scheduling. These operations require CONTROL's network lease and quiescent cancellation before audio. They are later interface/L2 and L1 work, not implemented radio-service behavior.
 
 ## Physical device identity
 
