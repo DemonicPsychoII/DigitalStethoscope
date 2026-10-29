@@ -1655,7 +1655,7 @@ The Zephyr Project. *SNTP API, uncertainty configuration, implementation and DNS
 <a id="nico_sntp_design_20261028"></a>
 ### nico_sntp_design_20261028
 
-Nico. *SNTP detailed-design decisions*. Personal communication, T3 Code, 2026. <t3-thread://v1/d5e44f69-2ecc-4a3e-917b-31a7b084c12b>. Accessed 28 October 2026.
+Nico. *SNTP detailed-design decisions*. Personal communication, T3 Code, 2026. <t3-thread://v2/d5e44f69-2ecc-4a3e-917b-31a7b084c12b/576e10df-527c-41cc-86cd-4e7c0ff0c290>. Accessed 28 October 2026.
 
 **Verification:** Numbered owner answers: pool.ntp.org trust assumption, Zephyr uncertainty, fresh boot sync, Start cancellation, 5 s attempt, 60 s recovery, 15 min refresh, 1 h expiry and failure indication. Project decisions, not measurements.
 
@@ -1665,7 +1665,7 @@ Nico. *SNTP detailed-design decisions*. Personal communication, T3 Code, 2026. <
 <a id="nico_tls_design_20261029"></a>
 ### nico_tls_design_20261029
 
-Nico. *TLS detailed-design decisions*. Personal communication, T3 Code, 29 October 2026. [Conversation](t3-thread://v1/d5e44f69-2ecc-4a3e-917b-31a7b084c12b), accessed 29 October 2026. Project decisions, not target acceptance.
+Nico. *TLS detailed-design decisions*. Personal communication, T3 Code, 29 October 2026. [Conversation](t3-thread://v2/d5e44f69-2ecc-4a3e-917b-31a7b084c12b/576e10df-527c-41cc-86cd-4e7c0ff0c290), accessed 29 October 2026. Project decisions, not target acceptance.
 
 **Cited by:** [TLS design](../Development/system/design/COMMUNICATION/secure-transport.md).
 
@@ -1706,5 +1706,13 @@ nt-medlink contributors (individual authors unverified). *PulsOxy FhirService im
 ### zephyr_tls_socket_pinned
 
 Zephyr Project contributors. *TLS socket implementation*. Zephyr Project, revision `357467a011cd2557a1a3f0b4be83d817c4addc9b`; publication year unverified. [Source](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/subsys/net/lib/sockets/sockets_tls.c), accessed 29 October 2026. Presence of a TLS 1.3 path is not ESP32-S3 interoperability evidence.
+
+**Cited by:** [TLS design](../Development/system/design/COMMUNICATION/secure-transport.md).
+
+
+<a id="nico_tls_keepalive_20261029"></a>
+### nico_tls_keepalive_20261029
+
+Nico. *TLS keep-alive and reconnect decisions*. Personal communication, T3 Code, 29 October 2026. [Conversation](t3-thread://v2/d5e44f69-2ecc-4a3e-917b-31a7b084c12b/e4e74eaa-efe8-48c5-8071-2589f46555a2), accessed 29 October 2026. Project decisions, not target acceptance.
 
 **Cited by:** [TLS design](../Development/system/design/COMMUNICATION/secure-transport.md).
