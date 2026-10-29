@@ -30,11 +30,11 @@ Each accepted operation produces one terminal result. Cancellation invalidates i
 3. Start one five-second monotonic attempt deadline before DNS submission. DNS, request, response, normalization and clock application share the remaining budget. Short waits never reset it. Failed submission counts as an issued attempt; absence of connectivity/lease does not. Cancellation cleanup has the separate P23 stop bound.
 4. Accept only a current-generation result while holding the lease; apply the clock, then publish readiness. Clock-set failure is attempt failure. Successful application starts the refresh/expiry timers and enables later secure-server preparation; this page does not implement TLS or registration.
 5. On failure, retain an unexpired previous anchor and schedule recovery no earlier than 60 seconds after failure completion. No total recovery-attempt cap applies. Missing connectivity and listening defer issuance without catch-up bursts.
-6. Refresh becomes due 15 minutes after successful application. Defer its network work during listening. Expire readiness at one hour even when refresh is deferred/failing; failed attempts never extend anchor age. Expiry does not stop audio. A new successful application restarts both timers.
+6. Refresh becomes due 15 minutes after successful application. Defer its network work during listening. Expire readiness at one hour even when refresh is deferred/failing; failed attempts never extend anchor age. Expiry does not stop audio; its indication is held until listening ends (see failure indication). A new successful application restarts both timers.
 
 Start cancels DNS or exchange work before audio begins. Ignore a completion racing with Start unless it was accepted/applied before CONTROL withdrew the lease. Cancellation is not time-sync failure. An interrupted issued attempt observes the normal 60-second gap before reissuance while Idle; an already-running gap is not reset by listening transitions. Cancellation before issuance consumes no attempt.
 
-A failed cancellation is a resource-release fault, not merely unavailable time: report the existing cleanup/failure outcome, never claim quiescence or admit overlapping audio/network work on unproven release. Later L1 work must demonstrate cancellation bounds; a blocking five-second helper or forced worker abort is not a substitute.
+A failed cancellation is a resource-release fault, not merely unavailable time. Follow the P23 Wi-Fi cleanup outcome under REQ-13: latch `WIFI_CLEANUP_FAILURE`, disable network work until restart and release audio. Record the failed operation and never claim quiescence. Later L1 work must demonstrate cancellation bounds; a blocking five-second helper or forced worker abort is not a substitute.
 
 ## Clock mapping and native behavior
 
@@ -48,7 +48,7 @@ Pinned-source caveat [2]: the uncertainty-enabled parser assigns `fraction` as a
 
 ## Failure indication and acknowledgement
 
-Initial failed synchronization or anchor expiry with no usable anchor latches `TIME_SYNCHRONIZATION_FAILURE`, while preserving offline Start/listening. Failed refresh with an unexpired anchor records the cause and schedules recovery without a new operator error. Diagnostics contain cause, age and estimate, never credentials/patient context.
+Initial failed synchronization or anchor expiry with no usable anchor latches `TIME_SYNCHRONIZATION_FAILURE`, while preserving offline Start/listening. The running examination wins: expiry during listening is logged at once, but the error latches only when the listening stop condition occurs, then shows blue with 1 blink. The LEDs keep the listening indication meanwhile, so the error cannot be read as cyan with 1 blink (`AUDIO_WORKER_STALL`). Failed refresh with an unexpired anchor records the cause and schedules recovery without a new operator error. Diagnostics contain cause, age and estimate, never credentials/patient context.
 
 Acknowledgement clears the indication only: no clock-validity change or immediate retry. Automatic recovery proceeds independently. Follow the existing latched-error model: success restores readiness but does not itself acknowledge the indication. After acknowledgement while unavailable, do not re-latch on every scheduled failure; successful recovery followed by another loss starts a new failure episode. Start cancellation alone does not create one.
 
@@ -72,10 +72,10 @@ The initial source requires usable DNS and reachable public UDP/123; Wi-Fi alone
 | Boot and successful exchange | REQ-09/11; VT-07/08 | No persisted ready clock; normalize uncertainty and apply UTC/monotonic anchor before readiness. |
 | DNS failure, blocked UDP, rejected response | REQ-09/13; VT-08/09 | Bounded attempt and 60-second recovery; visible initial failure without blocking listening. |
 | Start during DNS/wait/completion race | REQ-02/13; VT-08/09 | Quiesce before audio; stale completion cannot apply time; cancellation raises no time-sync error. |
-| Refresh/expiry boundaries and failed refresh | REQ-09/13/14; VT-07/08/09 | Keep unexpired anchor, defer active work during listening, expire at one hour; acknowledgement changes neither readiness nor scheduling. |
+| Refresh/expiry boundaries and failed refresh | REQ-09/13/14; VT-07/08/09 | Keep unexpired anchor, defer active work during listening, expire at one hour; expiry during listening latches its indication only after the stop condition; acknowledgement changes neither readiness nor scheduling. |
 | Correction and frozen measurement | REQ-09/10; VT-07 | Monotonic duration and frozen UTC/identity stay unchanged; no remapping or delayed resend. |
 | Native units, unset time, subsecond carry | REQ-09/11; VT-07/08 | Consistent UTC conversion and independently sampled monotonic anchor. |
-| Repeated failures, recovery and cleanup fault | REQ-13/14; VT-08/09/11 | No per-retry indication storm after acknowledgement; never report unproven release. |
+| Repeated failures, recovery and cleanup fault | REQ-13/14; VT-08/09/11 | No per-retry indication storm after acknowledgement; failed cancellation latches `WIFI_CLEANUP_FAILURE`, disables network work and releases audio without reporting quiescence. |
 
 These allocate future verification, not generated tests or execution. DNS/socket integration, target cancellation latency, drift/reference comparison and audio interference remain pending. Timestamp acceptance evidence is not replaced by a reported estimate.
 
