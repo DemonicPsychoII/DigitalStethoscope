@@ -15,7 +15,7 @@ Vendor reference: Espressif Systems, *ESP32-S3-DevKitC-1 v1.1 User Guide*, ESP-D
 This table is authoritative for feedback. It defines feedback behavior, not standards
 conformity or implemented firmware. Recovery and acknowledgement are separate.
 
-- **One feedback catalogue.** Wi-Fi-only failures preserve working audio and permit
+- **One feedback catalogue.** Wi-Fi-only failures and clock-only `TIME_SYNCHRONIZATION_FAILURE` preserve working audio and permit
   offline Start. Recovery follows the [Wi-Fi rules](../COMMUNICATION/interfaces-and-behavior.md#wi-fi-setup-and-recovery) and need not wait for error
   acknowledgement. Other errors stop the active workflow, mute/cancel active audio
   and block Start until the catalogue clear rule is met. Restart means reset/power cycle.
@@ -46,6 +46,7 @@ conformity or implemented firmware. Recovery and acknowledgement are separate.
 - **Clear and retry are separate.** A short press only clears errors whose catalogue row permits acknowledgement. It does not repeat the failed
   workflow. A separate 2 s hold in Idle starts Wi-Fi setup again, even with a Wi-Fi error latched.
   Automatic reconnect/portal recovery remains automatic; acknowledgement is not its gate.
+- **Time readiness.** [SNTP design](../COMMUNICATION/time-synchronization.md#failure-indication-and-acknowledgement) raises `TIME_SYNCHRONIZATION_FAILURE` on initial failed preparation or anchor expiry, not on a failed refresh while the old anchor is usable. Exception to "Where the error occurred": the running examination wins, so expiry during listening latches only when listening stops and then shows blue, never cyan with 1 blink (`AUDIO_WORKER_STALL`). Acknowledgement neither marks time valid nor triggers an attempt. Automatic clock recovery remains independent of acknowledgement; repeated failures in the same unavailable episode do not re-latch an acknowledged indication.
 - **Restart** means the reset button or a power off/on cycle.
 - **Code naming.** `<SUBJECT>_<OUTCOME>` in upper case with underscores and no abbreviations, for example
   `SCAN_FAILURE`. Outcome words: no suffix, `RUNNING`, `OPEN`, `PENDING`, `SENDING` or `CONNECTING` for a normal status;

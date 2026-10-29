@@ -753,3 +753,21 @@
   urldate = {2026-10-24},
   note = {Publication year not verified. Default address count and consecutive-pool semantics; no target DHCP verification claim.}
 }
+
+@misc{zephyr_sntp_pinned,
+  author = {The Zephyr Project},
+  title = {SNTP API, uncertainty configuration, implementation and DNS resolver API},
+  howpublished = {Zephyr source repository},
+  url = {https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/subsys/net/lib/sntp/sntp.c},
+  urldate = {2026-10-28},
+  note = {Revision 357467a011cd2557a1a3f0b4be83d817c4addc9b; publication year unverified. Inspected SNTP header, Kconfig, parser, convenience helper and DNS resolver header. Native unit semantics and helper retries inspected; target behavior unverified.}
+}
+
+@misc{nico_sntp_design_20261028,
+  author = {Nico},
+  title = {SNTP detailed-design decisions},
+  howpublished = {Personal communication, T3 Code, 2026},
+  url = {t3-thread://v2/d5e44f69-2ecc-4a3e-917b-31a7b084c12b/576e10df-527c-41cc-86cd-4e7c0ff0c290},
+  urldate = {2026-10-28},
+  note = {Numbered owner answers: pool.ntp.org trust assumption, Zephyr uncertainty, fresh boot sync, Start cancellation, 5 s attempt, 60 s recovery, 15 min refresh, 1 h expiry and failure indication. Project decisions, not measurements.}
+}
