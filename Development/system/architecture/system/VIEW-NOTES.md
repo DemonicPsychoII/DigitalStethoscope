@@ -49,8 +49,7 @@ Editable product views define the system. Raw board snapshots are immutable sour
   wake-up mechanisms remain implementation choices subject to measured timing.
 - Measurement/session timing remains configurable. The 8 s window, 1 s update and
   30 s session are candidates (preThesis/02-entscheidungen/open-questions.md, D03–D06), not approved thresholds.
-- FHIR is a device-initiated conditional create (`POST`) with up to 3 retries and a `201`/`200` receipt without readback; the server responds rather than polling or
-  commanding the device. Network work waits until listening stops.
+- FHIR result delivery is a device-initiated conditional create (`POST`) with up to 3 retries and a `201`/`200` receipt without readback. The [examination-request boundary](../COMMUNICATION/server-communication.md) is separate and its protocol remains unspecified; the delivery view does not rule it out. Network work waits until listening stops.
 - Start on one core; measure before assigning work to a second core. AMP can run
   separate images concurrently on separate cores; SMP shares one OS across cores.
 - Task isolation protects memory domains inside the runtime. A/B firmware instead
