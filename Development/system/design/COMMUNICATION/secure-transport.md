@@ -2,7 +2,7 @@
 
 ## Basis and accepted decisions
 
-This Design-stage contract refines [TLS architecture PR #80](https://github.com/DemonicPsychoII/DigitalStethoscope/pull/80) at `a552192c96e4ae5881f872a7ad288c94815903df` and requirements/shared design at `3d989815b4cbded9bf64ec7c9934894f95cc68e5`. It depends on [SNTP Design PR #99](https://github.com/DemonicPsychoII/DigitalStethoscope/pull/99) at `4982df57f4db9396d16e9e2357ff8ac459fda456`. Covered requirements are REQ-02, REQ-09, REQ-10, REQ-11, REQ-13 and REQ-14; verification allocation is VT-07, VT-08, VT-09 and VT-11. No firmware, server configuration or generated tests change here.
+This Design-stage contract refines [TLS architecture PR #80](https://github.com/DemonicPsychoII/DigitalStethoscope/pull/80) at `a552192c96e4ae5881f872a7ad288c94815903df` and requirements/shared design at `3d989815b4cbded9bf64ec7c9934894f95cc68e5`. It depends on [SNTP Design PR #99](https://github.com/DemonicPsychoII/DigitalStethoscope/pull/99) at `36ffb0ec45dab9a4cde7cf8882505fb7bf1415bc`. Covered requirements are REQ-02, REQ-09, REQ-10, REQ-11, REQ-13 and REQ-14; verification allocation is VT-07, VT-08, VT-09 and VT-11. No firmware, server configuration or generated tests change here.
 
 Nico accepted TLS 1.3 only, server-only authentication, a separate public server certificate embedded at build time, connection reuse, bounded preparation and recovery, offline listening, delivery-budget interaction and clock invalidation in this conversation [1]. Connection keep-alive, reconnect timing and the P13 setup budget were decided in a follow-up review on 29 October 2026 [7]. The service interfaces below are proposed refinements; agreement on behavior is not target acceptance.
 
