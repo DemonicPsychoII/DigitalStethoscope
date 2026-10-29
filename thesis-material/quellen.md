@@ -1721,7 +1721,7 @@ Nico. *TLS keep-alive and reconnect decisions*. Personal communication, T3 Code,
 <a id="nico_fhir_design_20261029"></a>
 ### nico_fhir_design_20261029
 
-Nico, *FHIR registration and examination-context design decisions*, personal communication, T3 Code, 29 October 2026, [conversation](t3-thread://v1/d5e44f69-2ecc-4a3e-917b-31a7b084c12b), accessed 29 October 2026. Project decisions, not target measurements.
+Nico, *FHIR registration and examination-context design decisions*, personal communication, T3 Code, 29 October 2026, [conversation](t3-thread://v2/d5e44f69-2ecc-4a3e-917b-31a7b084c12b/576e10df-527c-41cc-86cd-4e7c0ff0c290), accessed 29 October 2026. Project decisions, not target measurements.
 
 **Cited by:** [Server communication design](../Development/system/design/COMMUNICATION/server-communication.md).
 
@@ -1777,7 +1777,7 @@ Health Level Seven International, *FHIR R4 Task* and *ServiceRequest*, version 4
 <a id="stetho_hapi_capabilities_20261029"></a>
 ### stetho_hapi_capabilities_20261029
 
-GPT-6.1-Sol on behalf of Nico, *Read-only HAPI FHIR capability and request-delivery investigation*, own desktop observations, 29 October 2026, recorded above and in the [conversation](t3-thread://v1/d5e44f69-2ecc-4a3e-917b-31a7b084c12b). Python desktop HTTPS probes, no device firmware revision. Capability and count-query results do not establish write/notification behavior.
+GPT-6.1-Sol on behalf of Nico, *Read-only HAPI FHIR capability and request-delivery investigation*, own desktop observations, 29 October 2026, recorded above and in the [conversation](t3-thread://v2/d5e44f69-2ecc-4a3e-917b-31a7b084c12b/576e10df-527c-41cc-86cd-4e7c0ff0c290). Python desktop HTTPS probes, no device firmware revision. Capability and count-query results do not establish write/notification behavior.
 
 **Cited by:** [Server communication design](../Development/system/design/COMMUNICATION/server-communication.md).
 
