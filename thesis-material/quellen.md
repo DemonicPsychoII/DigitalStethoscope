@@ -1643,6 +1643,24 @@ The Zephyr Project. *Zephyr DHCPv4 Kconfig*. Zephyr source repository, revision 
 
 **Cited by:** [WIFI operation parameters](../Development/system/design/WIFI/parameters.md), four-address default and consecutive DHCP lease pool; target behavior remains unverified.
 
+<a id="zephyr_sntp_pinned"></a>
+### zephyr_sntp_pinned
+
+The Zephyr Project. *SNTP API, uncertainty configuration, implementation and DNS resolver API*. Zephyr source repository. <https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/subsys/net/lib/sntp/sntp.c>. Accessed 28 October 2026.
+
+**Verification:** Revision 357467a011cd2557a1a3f0b4be83d817c4addc9b; publication year unverified. Inspected SNTP header, Kconfig, parser, convenience helper and DNS resolver header. Native unit semantics and helper retries inspected; target behavior unverified.
+
+**Cited by:** [SNTP design](../Development/system/design/COMMUNICATION/time-synchronization.md).
+
+<a id="nico_sntp_design_20261028"></a>
+### nico_sntp_design_20261028
+
+Nico. *SNTP detailed-design decisions*. Personal communication, T3 Code, 2026. <t3-thread://v1/d5e44f69-2ecc-4a3e-917b-31a7b084c12b>. Accessed 28 October 2026.
+
+**Verification:** Numbered owner answers: pool.ntp.org trust assumption, Zephyr uncertainty, fresh boot sync, Start cancellation, 5 s attempt, 60 s recovery, 15 min refresh, 1 h expiry and failure indication. Project decisions, not measurements.
+
+**Cited by:** [SNTP design](../Development/system/design/COMMUNICATION/time-synchronization.md).
+
 
 <a id="nico_tls_design_20261029"></a>
 ### nico_tls_design_20261029

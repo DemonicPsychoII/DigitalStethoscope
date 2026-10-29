@@ -4,6 +4,8 @@ L2_COMMUNICATION owns setup, retries and sequencing. `L1_WIFI` owns individual r
 
 ## Service boundary
 
+The proposed [SNTP service extension](../COMMUNICATION/time-synchronization.md#ownership-and-proposed-interfaces) defines cancellable DNS/exchange, result normalization and clock application. Existing station/provisioning operations below remain the firmware baseline until the separate time-service implementation PRs.
+
 | Interface | Inputs | Outputs and ownership |
 | --- | --- | --- |
 | `wifi_init()` | One initialization call before other operations | Registers driver callbacks. |

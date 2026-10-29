@@ -10,4 +10,10 @@ Selected workflow values. Radio operation limits are allocated in WIFI; HTTP/pag
 
 P23 owns the retry, result-display, close-notice and cleanup limits. Its radio wait/cache limits are allocated to P23-WIFI and HTTP readiness/stop limits to P24. A 200 ms event-check interval is not a total teardown latency guarantee.
 
-[P26 TLS parameters](secure-transport.md#parameters) select TLS 1.3 only, a build-embedded public server certificate, ten-second Idle preparation and ongoing 60-second recovery gaps. Delivery reconnects retain P13's one-second attempt and ten-second total limits. COMMUNICATION owns scheduling; service operations add no workflow retries. Attempt 1 is the first issued operation; retry gaps run from failure completion using monotonic time. Missing prerequisites consume no attempt. Timing values are project decisions pending target evidence.
+## Retry conventions
+
+COMMUNICATION owns workflow retry scheduling. Attempt 1 is the initial issued request; retry gaps run from failure completion using monotonic time. Each policy specifies its attempt deadline, gap, total cap or ongoing-recovery behavior, and terminal outcomes. Shared conventions do not impose common numbers: retain P23 for Wi-Fi and P13 for delivery. Lower services do not add workflow retries.
+
+[P25 SNTP parameters](time-synchronization.md#parameters) specify a five-second attempt, 60-second ongoing recovery while Idle, 15-minute refresh and one-hour expiry. These are owner-selected project settings, not Zephyr defaults or measured drift bounds.
+
+[P26 TLS parameters](secure-transport.md#parameters) select TLS 1.3 only, a build-embedded public server certificate, ten-second Idle preparation and ongoing 60-second recovery gaps. Delivery reconnects retain P13's one-second attempt and ten-second total limits. The retry conventions above apply. Missing prerequisites consume no attempt. Timing values are project decisions pending target evidence.
