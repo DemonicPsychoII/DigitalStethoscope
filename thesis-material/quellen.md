@@ -1660,3 +1660,59 @@ Nico. *SNTP detailed-design decisions*. Personal communication, T3 Code, 2026. <
 **Verification:** Numbered owner answers: pool.ntp.org trust assumption, Zephyr uncertainty, fresh boot sync, Start cancellation, 5 s attempt, 60 s recovery, 15 min refresh, 1 h expiry and failure indication. Project decisions, not measurements.
 
 **Cited by:** [SNTP design](../Development/system/design/COMMUNICATION/time-synchronization.md).
+
+
+<a id="nico_tls_design_20261029"></a>
+### nico_tls_design_20261029
+
+Nico. *TLS detailed-design decisions*. Personal communication, T3 Code, 29 October 2026. [Conversation](t3-thread://v2/d5e44f69-2ecc-4a3e-917b-31a7b084c12b/576e10df-527c-41cc-86cd-4e7c0ff0c290), accessed 29 October 2026. Project decisions, not target acceptance.
+
+**Cited by:** [TLS design](../Development/system/design/COMMUNICATION/secure-transport.md).
+
+
+<a id="ietf_tls13_8446_2018"></a>
+### ietf_tls13_8446_2018
+
+Eric Rescorla. *The Transport Layer Security (TLS) Protocol Version 1.3*. IETF RFC 8446, August 2018. DOI: [10.17487/RFC8446](https://doi.org/10.17487/RFC8446), accessed 29 October 2026.
+
+**Cited by:** [TLS design](../Development/system/design/COMMUNICATION/secure-transport.md).
+
+
+<a id="ietf_tls_identity_9525_2023"></a>
+### ietf_tls_identity_9525_2023
+
+Peter Saint-Andre and Rich Salz. *Service Identity in TLS*. IETF RFC 9525, November 2023. DOI: [10.17487/RFC9525](https://doi.org/10.17487/RFC9525), accessed 29 October 2026.
+
+**Cited by:** [TLS design](../Development/system/design/COMMUNICATION/secure-transport.md).
+
+
+<a id="stetho_hapi_tls_probe_20261029"></a>
+### stetho_hapi_tls_probe_20261029
+
+GPT-6.1-Sol on behalf of Nico. *Local HAPI TLS investigation*. Own desktop observations, 29 October 2026. [Evidence and limitations](../Development/system/design/COMMUNICATION/secure-transport.md#investigation-basis-and-limitations). Python desktop probe, no device firmware revision; public certificate fingerprint and image content ID recorded; registry manifest digest not captured. Read-only metadata success is not write authorization evidence.
+
+**Cited by:** [TLS design](../Development/system/design/COMMUNICATION/secure-transport.md).
+
+
+<a id="pulsoxy_fhirservice_pinned"></a>
+### pulsoxy_fhirservice_pinned
+
+nt-medlink contributors (individual authors unverified). *PulsOxy FhirService implementation*. NewTec GitLab, revision `e38b98fc8b881af01e23a8f4935567e73d00de28`; publication year unverified. [Source](https://gitlab.newtec.zz/newtec/student-projects/nt-medlink/ntmedlinkremdev/-/blob/e38b98fc8b881af01e23a8f4935567e73d00de28/lib/FhirService/src/FhirService.cpp), accessed 29 October 2026.
+
+**Cited by:** [TLS design](../Development/system/design/COMMUNICATION/secure-transport.md).
+
+
+<a id="zephyr_tls_socket_pinned"></a>
+### zephyr_tls_socket_pinned
+
+Zephyr Project contributors. *TLS socket implementation*. Zephyr Project, revision `357467a011cd2557a1a3f0b4be83d817c4addc9b`; publication year unverified. [Source](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/subsys/net/lib/sockets/sockets_tls.c), accessed 29 October 2026. Presence of a TLS 1.3 path is not ESP32-S3 interoperability evidence.
+
+**Cited by:** [TLS design](../Development/system/design/COMMUNICATION/secure-transport.md).
+
+
+<a id="nico_tls_keepalive_20261029"></a>
+### nico_tls_keepalive_20261029
+
+Nico. *TLS keep-alive and reconnect decisions*. Personal communication, T3 Code, 29 October 2026. [Conversation](t3-thread://v2/d5e44f69-2ecc-4a3e-917b-31a7b084c12b/e4e74eaa-efe8-48c5-8071-2589f46555a2), accessed 29 October 2026. Project decisions, not target acceptance.
+
+**Cited by:** [TLS design](../Development/system/design/COMMUNICATION/secure-transport.md).

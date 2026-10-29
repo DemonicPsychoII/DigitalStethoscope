@@ -15,7 +15,7 @@ Vendor reference: Espressif Systems, *ESP32-S3-DevKitC-1 v1.1 User Guide*, ESP-D
 This table is authoritative for feedback. It defines feedback behavior, not standards
 conformity or implemented firmware. Recovery and acknowledgement are separate.
 
-- **One feedback catalogue.** Wi-Fi-only failures and clock-only `TIME_SYNCHRONIZATION_FAILURE` preserve working audio and permit
+- **One feedback catalogue.** Wi-Fi-only failures, clock-only `TIME_SYNCHRONIZATION_FAILURE` and server-preparation `SERVER_CONNECTION_FAILURE` preserve working audio and permit
   offline Start. Recovery follows the [Wi-Fi rules](../COMMUNICATION/interfaces-and-behavior.md#wi-fi-setup-and-recovery) and need not wait for error
   acknowledgement. Other errors stop the active workflow, mute/cancel active audio
   and block Start until the catalogue clear rule is met. Restart means reset/power cycle.
@@ -47,6 +47,7 @@ conformity or implemented firmware. Recovery and acknowledgement are separate.
   workflow. A separate 2 s hold in Idle starts Wi-Fi setup again, even with a Wi-Fi error latched.
   Automatic reconnect/portal recovery remains automatic; acknowledgement is not its gate.
 - **Time readiness.** [SNTP design](../COMMUNICATION/time-synchronization.md#failure-indication-and-acknowledgement) raises `TIME_SYNCHRONIZATION_FAILURE` on initial failed preparation or anchor expiry, not on a failed refresh while the old anchor is usable. Exception to "Where the error occurred": the running examination wins, so expiry during listening latches only when listening stops and then shows blue, never cyan with 1 blink (`AUDIO_WORKER_STALL`). Acknowledgement neither marks time valid nor triggers an attempt. Automatic clock recovery remains independent of acknowledgement; repeated failures in the same unavailable episode do not re-latch an acknowledged indication.
+- **Server preparation.** [TLS failure handling](../COMMUNICATION/secure-transport.md#failure-indication) latches `SERVER_CONNECTION_FAILURE` after failed preparation. Acknowledgement clears only its indication; automatic recovery continues independently. Repeated failed retries in one unavailable episode do not re-latch after acknowledgement. Start cancellation alone raises no error. Delivery failures retain their separate catalogue behavior.
 - **Restart** means the reset button or a power off/on cycle.
 - **Code naming.** `<SUBJECT>_<OUTCOME>` in upper case with underscores and no abbreviations, for example
   `SCAN_FAILURE`. Outcome words: no suffix, `RUNNING`, `OPEN`, `PENDING`, `SENDING` or `CONNECTING` for a normal status;
@@ -67,6 +68,7 @@ conformity or implemented firmware. Recovery and acknowledgement are separate.
 | Error  | Device registration failed                                   | COMMUNICATION     | DEVICE_REGISTRATION_FAILURE  | Low         | blue      | steady                               | 2 blinks, pause        | Short press |
 | Error  | Terminal delivery failure, including first-attempt conditional-create rejection, or exhausted bounded retries                                  | COMMUNICATION     | DELIVERY_FAILURE             | Low         | blue      | steady                               | 3 blinks, pause        | Short press |
 | Error  | Result cannot be sent (offline or no clock)                  | CONTROL           | DELIVERY_NOT_POSSIBLE        | Low         | blue      | steady                               | 4 blinks, pause        | Short press |
+| Error  | Secure server preparation failed                            | COMMUNICATION     | SERVER_CONNECTION_FAILURE   | Low         | blue      | steady                               | 5 blinks, pause        | Short press |
 | Status | Listening                                                    | CONTROL           | LISTENING                    | Information | cyan      | steady                               | off                    |             |
 | Status | Measuring, < 15 s                                            | CONTROL           | MEASUREMENT_RUNNING          | Information | cyan      | blink, slow                          | off                    |             |
 | Status | Measuring, ≥ 15 s                                            | CONTROL           | MEASUREMENT_MINIMUM_REACHED  | Information | cyan      | steady                               | off                    |             |
