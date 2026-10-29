@@ -115,7 +115,7 @@ Die Zahlen zählen aktive Aussagen, nicht ersetzte IDs, Querverweise oder Quelle
 
 `confirmed` wird nicht eigens angezeigt: Es bedeutet im Inventar dokumentiert, nicht unabhängig wahrheitsgeprüft. Auch vorhandene Abschnitts-/Tabellenverweise sind aus Stage 1 übernommen. Alle Aussagen behalten exakt ihre Quellsprache; einzelne englische Firmwareeinheiten sind deshalb weiterhin Englisch.
 
-[Quellenverzeichnis](quellen.md) führt alle 105 Audit-Schlüssel mit zitierenden IDs sowie 29 Zusatzquellen außerhalb des Audits (Projektentscheidungen, LED-Recherche) ohne Audit-IDs. [quellen.bib](quellen.bib) enthält konservative Minimal-Einträge und kennzeichnet fehlende Metadaten; es ist noch kein abgabefertiges Literaturverzeichnis. [Einheitenindex](einheitenindex.md) führt jede Audit-ID zur Schreibstelle. [Offene Punkte](offene-punkte.md) sind die Arbeitsliste für Entscheidungen, Seiten und Quellenlücken.
+[Quellenverzeichnis](quellen.md) führt alle 105 Audit-Schlüssel mit zitierenden IDs sowie 35 Zusatzquellen außerhalb des Audits (Projektentscheidungen, LED-Recherche) ohne Audit-IDs. [quellen.bib](quellen.bib) enthält konservative Minimal-Einträge und kennzeichnet fehlende Metadaten; es ist noch kein abgabefertiges Literaturverzeichnis. [Einheitenindex](einheitenindex.md) führt jede Audit-ID zur Schreibstelle. [Offene Punkte](offene-punkte.md) sind die Arbeitsliste für Entscheidungen, Seiten und Quellenlücken.
 
 ## Regenerieren und prüfen
 
