@@ -2,9 +2,9 @@
 
 ## Basis and scope
 
-This Architecture-stage proposal refines the existing [system allocation](../system/software-components.puml) and [delivery/clock boundary](../../design/system/interfaces-and-behavior.md#delivery-clock-and-configuration). Its requirements basis is REQ-09, REQ-11 and REQ-13. It defines responsibilities and dependencies; clock interfaces, synchronization timing, accuracy and freshness belong to detailed design.
+This Architecture-stage proposal refines the existing [system allocation](../system/software-components.puml) and [delivery/clock boundary](../../design/system/interfaces-and-behavior.md#delivery-clock-and-configuration). Its requirements basis is REQ-02, REQ-09, REQ-10, REQ-11 and REQ-13. It defines responsibilities and dependencies; clock interfaces, synchronization timing, accuracy and freshness belong to detailed design.
 
-The existing allocation places time operations in L1_WIFI and orchestration in L2_COMMUNICATION. Nico agreed the preparation flow below during architecture grilling on 28 October 2026, recorded in [PR #78](https://github.com/DemonicPsychoII/DigitalStethoscope/pull/78). This architecture agreement does not approve detailed interfaces or clock trust. The [current decision baseline](../../planning/README.md#current-baseline) identifies earlier project decisions.
+The existing allocation places time operations in L1_WIFI and orchestration in L2_COMMUNICATION. Nico agreed the preparation flow below during architecture grilling on 28 October 2026, recorded in [PR #78](https://github.com/DemonicPsychoII/DigitalStethoscope/pull/78). This architecture agreement does not approve detailed interfaces. The clock trust decision was taken later in detailed design and is recorded below. The [current decision baseline](../../planning/README.md#current-baseline) identifies earlier project decisions.
 
 ## Responsibilities and dependencies
 
@@ -26,11 +26,11 @@ After joining the configured network, COMMUNICATION automatically requests time 
 
 COMMUNICATION tracks network access, acceptable clock, verified transport and Device registration separately. A connected station or retained TLS connection alone does not establish delivery readiness. Clock readiness remains conditional on the policy that Design must define; synchronization success is not trust acceptance.
 
-## Proposed trust boundary and open decisions
+## Trust boundary and open decisions
 
-Propose a configured SNTP server on a trusted project network. Acceptance of that trust assumption remains open: unauthenticated SNTP does not authenticate the source [1]. Synchronization success alone must not be represented as authenticated time.
+The time source is an external SNTP server reached through the station's network. During SNTP detailed design on 28 October 2026, Nico selected the public `pool.ntp.org` service and accepted unauthenticated SNTP time as an MVP trust assumption, recorded in [SNTP Design PR #99](https://github.com/DemonicPsychoII/DigitalStethoscope/pull/99). Unauthenticated SNTP does not authenticate the source [1]; synchronization success must not be represented as authenticated time. A local time source for networks without internet access is deferred to [GitHub #85](https://github.com/DemonicPsychoII/DigitalStethoscope/issues/85).
 
-Detailed design must resolve the reference clock, synchronization evidence, allowed measurement-end timestamp skew, clock freshness and invalidation, and the mapping across clock corrections before/after a measurement. It must also define when preparation occurs without extending the delivery budget or creating network work during listening. TICKET-180 and TICKET-209 remain open. This proposal sets no new numeric acceptance limit and makes no claim of target accuracy.
+Detailed design defines synchronization timing, freshness, invalidation and the mapping across clock corrections before/after a measurement, without extending the delivery budget or creating network work during listening. Reference-clock comparison and the allowed measurement-end timestamp skew remain open under TICKET-209. This architecture sets no numeric acceptance limit and makes no claim of target accuracy.
 
 ## Verification allocation
 
@@ -38,7 +38,7 @@ These scenarios allocate future verification; they do not add a generated test b
 
 | Scenario | Trace | Expected outcome |
 | --- | --- | --- |
-| No clock, failed exchange or unapproved mapping | REQ-09/REQ-11; VT-07/VT-08 | No delivery with an invented measurement timestamp or bypassed certificate checks; readiness failure is reported. |
+| No clock, failed exchange or unapproved mapping | REQ-09/REQ-11; VT-07/VT-08 | Delivery is blocked until an approved mapping exists; no invented measurement timestamp or bypassed certificate checks; readiness failure is reported. |
 | Synchronization requested while listening | REQ-02/REQ-13; VT-08/VT-09 | No active time exchange; working offline audio remains available. |
 | Clock correction around a completed measurement | REQ-09/REQ-10; VT-07 | Measurement interval and frozen delivery identity remain unchanged; mapping eligibility follows the agreed design. |
 | Reference comparison on target | REQ-09; VT-07 | Evidence identifies the reference, firmware revision and measured skew; acceptance waits for the approved limits. |
