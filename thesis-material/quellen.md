@@ -1655,7 +1655,7 @@ The Zephyr Project. *SNTP API, uncertainty configuration, implementation and DNS
 <a id="nico_sntp_design_20261028"></a>
 ### nico_sntp_design_20261028
 
-Nico. *SNTP detailed-design decisions*. Personal communication, T3 Code, 2026. <t3-thread://v1/d5e44f69-2ecc-4a3e-917b-31a7b084c12b>. Accessed 28 October 2026.
+Nico. *SNTP detailed-design decisions*. Personal communication, T3 Code, 2026. <t3-thread://v2/d5e44f69-2ecc-4a3e-917b-31a7b084c12b/576e10df-527c-41cc-86cd-4e7c0ff0c290>. Accessed 28 October 2026.
 
 **Verification:** Numbered owner answers: pool.ntp.org trust assumption, Zephyr uncertainty, fresh boot sync, Start cancellation, 5 s attempt, 60 s recovery, 15 min refresh, 1 h expiry and failure indication. Project decisions, not measurements.
 
