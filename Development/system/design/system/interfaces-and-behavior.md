@@ -168,7 +168,7 @@ Active network work and live listening use an exclusive controller lease. Retain
 established station association during listening; do not run setup/reconnect/delivery jobs.
 Start during Wi-Fi setup requests safe teardown before audio; stop audio before granting network;
 Start during analysis or sending is rejected Busy, with no cancellation or queued start. A fresh Start after release primes/starts audio.
-If release cannot be proven, remain stopped and show the reason. Radio/driver background behavior
+If release cannot be proven, remain stopped and show the reason. Exception under REQ-13: a failed network-service stop or SNTP cancellation follows P23 instead: latch WIFI_CLEANUP_FAILURE, disable network work until restart and release audio without claiming quiescence. Radio/driver background behavior
 must be measured; disabling application jobs alone is not proof of interference isolation.
 
 [Wi-Fi setup and recovery](../COMMUNICATION/interfaces-and-behavior.md#wi-fi-setup-and-recovery), [SNTP synchronization](../COMMUNICATION/time-synchronization.md) and [portal behavior](../PORTAL/interfaces-and-behavior.md) define the communication-specific contracts. Start cancels pending synchronization before audio; clock-only failure preserves offline listening. Other failure/cleanup rules remain as specified.
