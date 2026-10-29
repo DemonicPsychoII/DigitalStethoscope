@@ -15,7 +15,7 @@ Vendor reference: Espressif Systems, *ESP32-S3-DevKitC-1 v1.1 User Guide*, ESP-D
 This table is authoritative for feedback. It defines feedback behavior, not standards
 conformity or implemented firmware. Recovery and acknowledgement are separate.
 
-- **One feedback catalogue.** Wi-Fi-only failures, clock-only `TIME_SYNCHRONIZATION_FAILURE` and server-preparation `SERVER_CONNECTION_FAILURE` preserve working audio and permit
+- **One feedback catalogue.** Wi-Fi-only failures, clock-only `TIME_SYNCHRONIZATION_FAILURE`, server-preparation `SERVER_CONNECTION_FAILURE` and registration-only `DEVICE_REGISTRATION_FAILURE` preserve working audio and permit
   offline Start. Recovery follows the [Wi-Fi rules](../COMMUNICATION/interfaces-and-behavior.md#wi-fi-setup-and-recovery) and need not wait for error
   acknowledgement. Other errors stop the active workflow, mute/cancel active audio
   and block Start until the catalogue clear rule is met. Restart means reset/power cycle.
@@ -48,6 +48,7 @@ conformity or implemented firmware. Recovery and acknowledgement are separate.
   Automatic reconnect/portal recovery remains automatic; acknowledgement is not its gate.
 - **Time readiness.** [SNTP design](../COMMUNICATION/time-synchronization.md#failure-indication-and-acknowledgement) raises `TIME_SYNCHRONIZATION_FAILURE` on initial failed preparation or anchor expiry, not on a failed refresh while the old anchor is usable. Exception to "Where the error occurred": the running examination wins, so expiry during listening latches only when listening stops and then shows blue, never cyan with 1 blink (`AUDIO_WORKER_STALL`). Acknowledgement neither marks time valid nor triggers an attempt. Automatic clock recovery remains independent of acknowledgement; repeated failures in the same unavailable episode do not re-latch an acknowledged indication.
 - **Server preparation.** [TLS failure handling](../COMMUNICATION/secure-transport.md#failure-indication) latches `SERVER_CONNECTION_FAILURE` after failed preparation. Acknowledgement clears only its indication; automatic recovery continues independently. Repeated failed retries in one unavailable episode do not re-latch after acknowledgement. Start cancellation alone raises no error. Delivery failures retain their separate catalogue behavior.
+- **Device registration.** [Registration recovery](../COMMUNICATION/server-communication.md#registration-flow-and-recovery) covers request, response and registration-record failures. Standalone listening remains available. Acknowledgement clears only the indication; recovery is automatic, and repeated failures in the same unavailable episode do not re-latch an acknowledged indication. Start cancellation alone raises no registration error. Resource-release faults retain the existing cleanup/restart policy.
 - **Restart** means the reset button or a power off/on cycle.
 - **Code naming.** `<SUBJECT>_<OUTCOME>` in upper case with underscores and no abbreviations, for example
   `SCAN_FAILURE`. Outcome words: no suffix, `RUNNING`, `OPEN`, `PENDING`, `SENDING` or `CONNECTING` for a normal status;

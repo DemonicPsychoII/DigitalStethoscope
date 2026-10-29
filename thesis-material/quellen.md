@@ -1716,3 +1716,99 @@ Zephyr Project contributors. *TLS socket implementation*. Zephyr Project, revisi
 Nico. *TLS keep-alive and reconnect decisions*. Personal communication, T3 Code, 29 October 2026. [Conversation](t3-thread://v2/d5e44f69-2ecc-4a3e-917b-31a7b084c12b/e4e74eaa-efe8-48c5-8071-2589f46555a2), accessed 29 October 2026. Project decisions, not target acceptance.
 
 **Cited by:** [TLS design](../Development/system/design/COMMUNICATION/secure-transport.md).
+
+
+<a id="nico_fhir_design_20261029"></a>
+### nico_fhir_design_20261029
+
+Nico, *FHIR registration and examination-context design decisions*, personal communication, T3 Code, 29 October 2026, [conversation](t3-thread://v2/d5e44f69-2ecc-4a3e-917b-31a7b084c12b/576e10df-527c-41cc-86cd-4e7c0ff0c290), accessed 29 October 2026. Project decisions, not target measurements.
+
+**Cited by:** [Server communication design](../Development/system/design/COMMUNICATION/server-communication.md).
+
+
+<a id="stetho_hotspot_identity_2026"></a>
+### stetho_hotspot_identity_2026
+
+DigitalStethoscope contributors, *WIFI hotspot identity implementation*, project source, integration revision `3d989815b4cbded9bf64ec7c9934894f95cc68e5`, 2026, [wifi.c](../Development/system/coding/app/L1_services/L1_WIFI/wifi.c), lines 478–482, inspected 29 October 2026. This proves the source expression, not factory-MAC provenance on target.
+
+**Cited by:** [Server communication design](../Development/system/design/COMMUNICATION/server-communication.md).
+
+
+<a id="hl7_fhir_r4_device_2019"></a>
+### hl7_fhir_r4_device_2019
+
+Health Level Seven International, *FHIR R4 Device*, version 4.0.1, 2019, <https://hl7.org/fhir/R4/device.html>, accessed 29 October 2026.
+
+**Cited by:** [Server communication design](../Development/system/design/COMMUNICATION/server-communication.md).
+
+
+<a id="hl7_fhir_r4_datatypes_2019"></a>
+### hl7_fhir_r4_datatypes_2019
+
+Health Level Seven International, *FHIR R4 Data Types*, version 4.0.1, 2019, Identifier and id definitions, <https://hl7.org/fhir/R4/datatypes.html>, accessed 29 October 2026.
+
+**Cited by:** [Server communication design](../Development/system/design/COMMUNICATION/server-communication.md).
+
+
+<a id="pulsoxy_fhir_lifecycle_pinned"></a>
+### pulsoxy_fhir_lifecycle_pinned
+
+nt-medlink contributors (individual authors unverified), *PulsOxy InitState, MeasuringState and FhirResourceFactory*, NewTec GitLab, revision `e38b98fc8b881af01e23a8f4935567e73d00de28`, publication year unverified, [initialization](https://gitlab.newtec.zz/newtec/student-projects/nt-medlink/ntmedlinkremdev/-/blob/e38b98fc8b881af01e23a8f4935567e73d00de28/lib/App_PulsOxy/src/InitState.cpp), [sending](https://gitlab.newtec.zz/newtec/student-projects/nt-medlink/ntmedlinkremdev/-/blob/e38b98fc8b881af01e23a8f4935567e73d00de28/lib/App_PulsOxy/src/MeasuringState.cpp), [builder](https://gitlab.newtec.zz/newtec/student-projects/nt-medlink/ntmedlinkremdev/-/blob/e38b98fc8b881af01e23a8f4935567e73d00de28/lib/FhirService/src/FhirResourceFactory.cpp), accessed 29 October 2026. Initialization PUTs Patient/Device; measurement sends Observations without registration per message.
+
+**Cited by:** [Server communication design](../Development/system/design/COMMUNICATION/server-communication.md).
+
+
+<a id="hl7_fhir_r4_observation_2019"></a>
+### hl7_fhir_r4_observation_2019
+
+Health Level Seven International, *FHIR R4 Observation*, version 4.0.1, 2019, <https://hl7.org/fhir/R4/observation.html>, accessed 29 October 2026.
+
+**Cited by:** [Server communication design](../Development/system/design/COMMUNICATION/server-communication.md).
+
+
+<a id="hl7_fhir_r4_request_workflow_2019"></a>
+### hl7_fhir_r4_request_workflow_2019
+
+Health Level Seven International, *FHIR R4 Task* and *ServiceRequest*, version 4.0.1, 2019, <https://hl7.org/fhir/R4/task.html> and <https://hl7.org/fhir/R4/servicerequest.html>, accessed 29 October 2026.
+
+**Cited by:** [Server communication design](../Development/system/design/COMMUNICATION/server-communication.md).
+
+
+<a id="stetho_hapi_capabilities_20261029"></a>
+### stetho_hapi_capabilities_20261029
+
+GPT-6.1-Sol on behalf of Nico, *Read-only HAPI FHIR capability and request-delivery investigation*, own desktop observations, 29 October 2026, recorded above and in the [conversation](t3-thread://v2/d5e44f69-2ecc-4a3e-917b-31a7b084c12b/576e10df-527c-41cc-86cd-4e7c0ff0c290). Python desktop HTTPS probes, no device firmware revision. Capability and count-query results do not establish write/notification behavior.
+
+**Cited by:** [Server communication design](../Development/system/design/COMMUNICATION/server-communication.md).
+
+
+<a id="hapi_websocket_812"></a>
+### hapi_websocket_812
+
+HAPI FHIR contributors, *WebsocketDispatcherConfig*, HAPI FHIR 8.12.0, 2026 (source copyright year), [source](https://github.com/hapifhir/hapi-fhir/blob/v8.12.0/hapi-fhir-jpaserver-subscription/src/main/java/ca/uhn/fhir/jpa/subscription/match/config/WebsocketDispatcherConfig.java), accessed 29 October 2026. Source capability, not deployment enablement.
+
+**Cited by:** [Server communication design](../Development/system/design/COMMUNICATION/server-communication.md).
+
+
+<a id="hl7_fhir_r4_subscription_2019"></a>
+### hl7_fhir_r4_subscription_2019
+
+Health Level Seven International, *FHIR R4 Subscription*, version 4.0.1, 2019, <https://hl7.org/fhir/R4/subscription.html>, accessed 29 October 2026. Subscription channels and polling/history alternative.
+
+**Cited by:** [Server communication design](../Development/system/design/COMMUNICATION/server-communication.md).
+
+
+<a id="ietf_websocket_6455_2011"></a>
+### ietf_websocket_6455_2011
+
+Ian Fette and Alexey Melnikov, *The WebSocket Protocol*, IETF RFC 6455, December 2011, sections 1.3 and 1.7, DOI [10.17487/RFC6455](https://doi.org/10.17487/RFC6455), accessed 29 October 2026.
+
+**Cited by:** [Server communication design](../Development/system/design/COMMUNICATION/server-communication.md).
+
+
+<a id="hl7_fhir_r4_data_absent_reason_2019"></a>
+### hl7_fhir_r4_data_absent_reason_2019
+
+Health Level Seven International, *FHIR R4 DataAbsentReason code system*, version 4.0.1, 2019, <https://hl7.org/fhir/R4/codesystem-data-absent-reason.html>, accessed 29 October 2026. The selected use of `error` for poor-signal reporting is an accepted project decision (Nico, 29 October 2026), not prescribed by this source.
+
+**Cited by:** [Server communication design](../Development/system/design/COMMUNICATION/server-communication.md).
