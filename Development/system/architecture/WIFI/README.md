@@ -16,6 +16,8 @@ L1_WIFI owns scan, station association/address readiness, disconnect and setup-h
 
 The controller's [setup workflow](../COMMUNICATION/README.md) maps the general model onto this device. [PORTAL](../PORTAL/README.md) defines the page boundary. Detailed design supplies operation limits, retries and parameter values.
 
+The proposed [secure transport boundary](../COMMUNICATION/secure-transport.md) refines the system allocation of TLS operations to L1_WIFI, separately from the station/provisioning interfaces.
+
 ## Sources
 
 [1] Espressif Systems, *Wi-Fi Driver — ESP32-S3*, ESP-IDF Programming Guide v5.4.2, sections “ESP32-S3 Wi-Fi Scan”, “Wi-Fi Station General Scenario” and “IP_EVENT_STA_GOT_IP”, version v5.4.2 (publication year not stated on the cited page), https://docs.espressif.com/projects/esp-idf/en/v5.4.2/esp32s3/api-guides/wifi.html (accessed 24 October 2026).
