@@ -162,24 +162,23 @@ The local profile/metadata mapping, validation of `effectiveDateTime` against `e
 
 NET verifies CA/name/time and checks bounded status/body parsing. `201 Created` or `200` (existing conditional create) is the receipt and marks the result Sent; there is no readback.
 An uncertain response is retried within the same bounded job; a single matching identifier returns the existing resource; multiple matches fail with 412. Configuration/auth errors and server failures remain visible after the last attempt.
-SNTP is a clock synchronization mechanism, not inherently authenticated trusted time; approve the
-local network/clock trust assumptions; that decision remains open (TICKET-180, TICKET-209). David L. Mills, *Simple Network Time Protocol (SNTP) Version 4 for IPv4, IPv6 and OSI*, IETF RFC 4330, January 2006, §9, DOI: 10.17487/RFC4330, <https://www.rfc-editor.org/rfc/rfc4330#section-9> (accessed 2026-10-24), describes unauthenticated SNTP security limitations. Credentials are private deployment configuration.
+The [SNTP contract](../COMMUNICATION/time-synchronization.md) records the accepted MVP use of unauthenticated `pool.ntp.org` time, Zephyr uncertainty estimation, fresh boot synchronization, Idle refresh/recovery and one-hour expiry. This is a deployment trust assumption, not authenticated time. Reference/drift and timestamp acceptance evidence remain pending (TICKET-180, TICKET-209). David L. Mills, *Simple Network Time Protocol (SNTP) Version 4 for IPv4, IPv6 and OSI*, IETF RFC 4330, January 2006, §9, DOI: 10.17487/RFC4330, <https://www.rfc-editor.org/rfc/rfc4330#section-9> (accessed 2026-10-24), describes unauthenticated SNTP security limitations. Credentials are private deployment configuration.
 
 Active network work and live listening use an exclusive controller lease. Retain an
 established station association during listening; do not run setup/reconnect/delivery jobs.
 Start during Wi-Fi setup requests safe teardown before audio; stop audio before granting network;
 Start during analysis or sending is rejected Busy, with no cancellation or queued start. A fresh Start after release primes/starts audio.
-If release cannot be proven, remain stopped and show the reason. Radio/driver background behavior
+If release cannot be proven, remain stopped and show the reason. Exception under REQ-13: a failed network-service stop or SNTP cancellation follows P23 instead: latch WIFI_CLEANUP_FAILURE, disable network work until restart and release audio without claiming quiescence. Radio/driver background behavior
 must be measured; disabling application jobs alone is not proof of interference isolation.
 
-[Wi-Fi setup and recovery](../COMMUNICATION/interfaces-and-behavior.md#wi-fi-setup-and-recovery) and [portal behavior](../PORTAL/interfaces-and-behavior.md) define the communication-specific contracts.
+[Wi-Fi setup and recovery](../COMMUNICATION/interfaces-and-behavior.md#wi-fi-setup-and-recovery), [SNTP synchronization](../COMMUNICATION/time-synchronization.md) and [portal behavior](../PORTAL/interfaces-and-behavior.md) define the communication-specific contracts. Start cancels pending synchronization before audio; clock-only failure preserves offline listening. Other failure/cleanup rules remain as specified.
 
 ## Failure contract
 
 Service operations return Accepted / Rejected(reason) / Busy for commands and emit one terminal
 outcome per accepted action ID. Essential audio faults mute; optional display/touch/SD failure
 degrades capability. Analysis gaps invalidate analysis, not all listening. No component formats SD
-or persists captured patient audio. No old result is relabelled with a new ID. Error indication and recovery follow the current [catalogue](../FEEDBACK/catalogue.md#status-and-error-catalogue), including its Wi-Fi-only audio exception and restart rules. Watchdog
+or persists captured patient audio. No old result is relabelled with a new ID. Error indication and recovery follow the current [catalogue](../FEEDBACK/catalogue.md#status-and-error-catalogue), including its Wi-Fi-only and clock-only audio exceptions and restart rules. Watchdog
 detection thresholds and diagnostic cost are open; a bounded request is preferable to an implicit retry loop.
 
 ## MVP session baseline
