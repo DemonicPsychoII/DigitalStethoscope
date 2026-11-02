@@ -1812,3 +1812,35 @@ Ian Fette and Alexey Melnikov, *The WebSocket Protocol*, IETF RFC 6455, December
 Health Level Seven International, *FHIR R4 DataAbsentReason code system*, version 4.0.1, 2019, <https://hl7.org/fhir/R4/codesystem-data-absent-reason.html>, accessed 29 October 2026. The selected use of `error` for poor-signal reporting is an accepted project decision (Nico, 29 October 2026), not prescribed by this source.
 
 **Cited by:** [Server communication design](../Development/system/design/COMMUNICATION/server-communication.md).
+
+
+<a id="summerer_design_review_20261102"></a>
+### summerer_design_review_20261102
+
+Andreas Summerer and Nico, *Design review of time, TLS and FHIR*, review meeting, 2 November 2026, 10:30–11:30, notes by Nico with resolutions in the [T3 conversation](t3-thread://v1/d5e44f69-2ecc-4a3e-917b-31a7b084c12b), accessed 2 November 2026. Project decisions, not measurements.
+
+**Cited by:** [Decision record 2 November 2026](../Development/system/planning/mvp-decisions-2026-11-02.md).
+
+
+<a id="espressif_esp32s3_wroom1_datasheet_v18"></a>
+### espressif_esp32s3_wroom1_datasheet_v18
+
+Espressif Systems, *ESP32-S3-WROOM-1 & ESP32-S3-WROOM-1U Datasheet*, version 1.8, 2 March 2026, section 8 *Module Schematics* (in-module crystal labelled 40 MHz ± 10 ppm), <https://documentation.espressif.com/esp32-s3-wroom-1_wroom-1u_datasheet_en.pdf>, accessed 2 November 2026. The label does not state whether temperature range and ageing are included.
+
+**Cited by:** [Decision record 2 November 2026, drift calculation](../Development/system/planning/mvp-decisions-2026-11-02.md#drift-calculation).
+
+
+<a id="zephyr_esp32s3_timer_clock_357467a"></a>
+### zephyr_esp32s3_timer_clock_357467a
+
+The Zephyr Project, *Xtensa system timer and ESP32-S3 devicetree*, source revision `357467a011cd2557a1a3f0b4be83d817c4addc9b`, [Kconfig.xtensa](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/drivers/timer/Kconfig.xtensa) and [esp32s3_common.dtsi](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/dts/xtensa/espressif/esp32s3/esp32s3_common.dtsi), accessed 2 November 2026. CCOUNT-based kernel timer on Xtensa; 240 MHz CPU clock from the PLL with a 40 MHz crystal.
+
+**Cited by:** [Decision record 2 November 2026, drift calculation](../Development/system/planning/mvp-decisions-2026-11-02.md#drift-calculation).
+
+
+<a id="zephyr_esp32s3_flash_layout_357467a"></a>
+### zephyr_esp32s3_flash_layout_357467a
+
+The Zephyr Project, *ESP32-S3-DevKitC devicetree, Espressif partition tables, Simple Boot and settings ZMS backend*, source revision `357467a011cd2557a1a3f0b4be83d817c4addc9b`, [esp32s3_devkitc_procpu.dts](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/boards/espressif/esp32s3_devkitc/esp32s3_devkitc_procpu.dts), [partitions_0x0_amp_4M.dtsi](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/dts/vendor/espressif/partitions_0x0_amp_4M.dtsi), [soc/espressif/common/Kconfig](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/soc/espressif/common/Kconfig) and [settings_zms.c](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/subsys/settings/src/settings_zms.c), accessed 2 November 2026.
+
+**Cited by:** [STORAGE flash layout](../Development/system/design/STORAGE/interfaces-and-behavior.md#flash-layout).

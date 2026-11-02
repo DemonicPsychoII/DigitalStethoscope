@@ -54,9 +54,9 @@
 #define WIFI_LINK_LAYER_EVENTS    (NET_EVENT_WIFI_CONNECT_RESULT | NET_EVENT_WIFI_DISCONNECT_RESULT | NET_EVENT_WIFI_SCAN_RESULT | NET_EVENT_WIFI_SCAN_DONE)
 #define WIFI_NETWORK_LAYER_EVENTS (NET_EVENT_IPV4_ADDR_ADD | NET_EVENT_IPV4_ADDR_DEL)
 
-#define WIFI_HOTSPOT_NETMASK    "255.255.255.0"         /**< Hotspot subnet. */
-#define WIFI_HOTSPOT_POOL_START (10)                    /**< Last address byte of the first DHCP lease. */
-#define WIFI_HOTSPOT_NAME_SIZE  (sizeof("Stetho-XXXX")) /**< Hotspot name with the last two MAC bytes. */
+#define WIFI_HOTSPOT_NETMASK    "255.255.255.0"                 /**< Hotspot subnet. */
+#define WIFI_HOTSPOT_POOL_START (10)                            /**< Last address byte of the first DHCP lease. */
+#define WIFI_HOTSPOT_NAME_SIZE  (sizeof("Stetho-XXXXXXXXXXXX")) /**< Hotspot name with all six MAC bytes. */
 
 /***********************************************************************/
 /* TYPES                                                               */
@@ -478,8 +478,8 @@ int wifi_startHotspot(void)
         const uint8_t *hardwareAddress = net_if_get_link_addr(wifi_StationInterface)->addr;
         char name[WIFI_HOTSPOT_NAME_SIZE];
 
-        /* The MAC bytes tell several devices in one room apart. */
-        (void)snprintk(name, sizeof(name), "Stetho-%02X%02X", hardwareAddress[4], hardwareAddress[5]);
+        /* The full MAC tells devices apart and matches the label used for the FHIR Device identity. */
+        (void)snprintk(name, sizeof(name), "Stetho-%02X%02X%02X%02X%02X%02X", hardwareAddress[0], hardwareAddress[1], hardwareAddress[2], hardwareAddress[3], hardwareAddress[4], hardwareAddress[5]);
 
         struct wifi_connect_req_params parameters = {
             .ssid = (const uint8_t *)name,

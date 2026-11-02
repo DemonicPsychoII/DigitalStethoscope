@@ -4,7 +4,7 @@
 
 This Design-stage contract refines [SNTP architecture PR #78](https://github.com/DemonicPsychoII/DigitalStethoscope/pull/78) at `d64347e5a03eef95b1db4ea5df15bc984095a547` and requirements/shared design at `3d989815b4cbded9bf64ec7c9934894f95cc68e5`. It covers REQ-02, REQ-09, REQ-10, REQ-11, REQ-13 and REQ-14; verification uses VT-07, VT-08, VT-09 and VT-11. No firmware or generated tests are included.
 
-Nico accepted the source/trust assumption, Zephyr uncertainty estimate, boot synchronization, shared certificate/measurement clock basis, monotonic durations, cancellation, timing values and failure behavior during the SNTP grilling rounds [1]. Agreement on those behaviors is distinct from approval of the proposed interfaces below or target verification.
+Nico accepted the source/trust assumption, Zephyr uncertainty estimate, shared certificate/measurement clock basis, monotonic durations and cancellation during the SNTP grilling rounds [1]. The design review of 2 November 2026 placed SNTP inside every TLS connection setup, replaced the Idle refresh schedule by a one-hour mapping limit and merged the time error into the server-connection error [4]. Agreement on those behaviors is distinct from approval of the proposed interfaces below or target verification.
 
 ## Ownership and proposed interfaces
 
@@ -26,42 +26,39 @@ Each accepted operation produces one terminal result. Cancellation invalidates i
 ## Flow and scheduling
 
 1. Boot starts without a valid anchor. A persisted timestamp does not establish freshness; offline listening remains available.
-2. After the selected station obtains an IPv4 address and CONTROL admits network work while Idle, request time directly from `pool.ntp.org`. No separate internet/HTTP probe is used.
-3. Start one five-second monotonic attempt deadline before DNS submission. DNS, request, response, normalization and clock application share the remaining budget. Short waits never reset it. Failed submission counts as an issued attempt; absence of connectivity/lease does not. Cancellation cleanup has the separate P23 stop bound.
-4. Accept only a current-generation result while holding the lease; apply the clock, then publish readiness. Clock-set failure is attempt failure. Successful application starts the refresh/expiry timers and enables later secure-server preparation; this page does not implement TLS or registration.
-5. On failure, retain an unexpired previous anchor and schedule recovery no earlier than 60 seconds after failure completion. No total recovery-attempt cap applies. Missing connectivity and listening defer issuance without catch-up bursts.
-6. Refresh becomes due 15 minutes after successful application. Defer its network work during listening. Expire readiness at one hour even when refresh is deferred/failing; failed attempts never extend anchor age. Expiry does not stop audio; its indication is held until listening ends (see failure indication). A new successful application restarts both timers.
+2. Every TLS connection setup under the [TLS design](secure-transport.md) begins with one SNTP exchange, so that only the server DNS lookup and TCP connection lie between the applied clock and the ClientHello. This applies to the Idle preparation and every delivery reconnect. Reusing an open verified connection sends no ClientHello and runs no SNTP. There is no separate SNTP schedule, refresh timer or internet/HTTP probe.
+3. The exchange shares the deadline of the connection setup that contains it: the ten-second Idle preparation (P26) or the P13 connection-setup budget. DNS, request, response, normalization and clock application share the remaining budget; short waits never reset it. Cancellation cleanup has the separate P23 stop bound.
+4. Accept only a current-generation result while holding the lease; apply the clock, then continue with the TCP connection and ClientHello. Clock-set failure, DNS failure, timeout or a rejected response fails that connection setup. Recovery follows the setup's owner: 60-second Idle recovery under P26, or P13 retries during delivery. No SNTP-specific retry, gap or attempt cap applies.
 
-Start cancels DNS or exchange work before audio begins. Ignore a completion racing with Start unless it was accepted/applied before CONTROL withdrew the lease. Cancellation is not time-sync failure. An interrupted issued attempt observes the normal 60-second gap before reissuance while Idle; an already-running gap is not reset by listening transitions. Cancellation before issuance consumes no attempt.
+Start cancels DNS or exchange work before audio begins. Ignore a completion racing with Start unless it was accepted/applied before CONTROL withdrew the lease. Cancellation is not a failure.
 
-A failed cancellation is a resource-release fault, not merely unavailable time. Follow the P23 Wi-Fi cleanup outcome under REQ-13: latch `WIFI_CLEANUP_FAILURE`, disable network work until restart and release audio. Record the failed operation and never claim quiescence. Later L1 work must demonstrate cancellation bounds; a blocking five-second helper or forced worker abort is not a substitute.
+A failed cancellation is a resource-release fault, not merely unavailable time. Follow the P23 Wi-Fi cleanup outcome under REQ-13: latch `WIFI_CLEANUP_FAILURE`, disable network work until restart and release audio. Record the failed operation and never claim quiescence. Later L1 work must demonstrate cancellation bounds; a blocking helper or forced worker abort is not a substitute.
 
 ## Clock mapping and native behavior
 
-Enable `CONFIG_SNTP_UNCERTAINTY` and retain Zephyr's estimate [2]. It estimates exchange/server uncertainty; it does not authenticate the source or independently bound subsequent clock drift and software latency. No arbitrary millisecond tolerance replaces it. Refresh/expiry values are project settings pending drift evidence, not measured accuracy claims.
+Enable `CONFIG_SNTP_UNCERTAINTY` and retain Zephyr's estimate [2]. It estimates exchange/server uncertainty; it does not authenticate the source or independently bound subsequent clock drift and software latency. The [drift calculation](../../planning/mvp-decisions-2026-11-02.md#drift-calculation) bounds the drift share from the datasheet crystal tolerance of ±10 ppm: at most 36 ms within the one-hour mapping limit. It is a calculation, not a measured accuracy claim.
 
-Set Zephyr's real-time software clock; no battery-backed RTC is assumed. Advance the receive-time estimate by elapsed kernel monotonic time before applying it. Preserve the usable clock anchor with measurement timing data and derive measurement-end UTC from that anchor plus monotonic elapsed time. Corrections occur outside listening and may step real time without changing duration or rewriting a frozen result. Delivery retries retain the original timestamp/identity; the existing uniqueness rule remains mandatory, including after backward corrections. Never invent a timestamp to avoid a collision.
+Set Zephyr's real-time software clock; no battery-backed RTC is assumed. Advance the receive-time estimate by elapsed kernel monotonic time before applying it. Keep the applied UTC/monotonic anchor and record the measurement end in monotonic time. Corrections occur outside listening and may step real time without changing duration or rewriting a frozen result.
 
-An expired anchor is insufficient for new server work. Do not remap a frozen result after resynchronization or wait beyond the delivery budget for a replacement. If its mapping or current prerequisites are ineligible at finalization, follow `DELIVERY_NOT_POSSIBLE`; no delayed delivery queue is introduced. This timing anchor is separate from the still-open examination-context attachment policy.
+Map the measurement end to UTC from an anchor at most one hour away from it in monotonic time. If the anchor held at Stop qualifies, freeze the UTC end at Stop. Otherwise, for example after listening for more than one hour, freeze it from the anchor applied by the delivery connection setup, before the first request. The UTC end and measurement identity are frozen exactly once; retries, later exchanges and backward corrections never change them. The existing uniqueness rule remains mandatory; never invent a timestamp to avoid a collision.
+
+A result without a qualifying anchor by the end of the P13 budget is not sent and latches `SERVER_CONNECTION_FAILURE`. No delayed delivery queue is introduced. A retained connection is reused for delivery only while the anchor of its handshake qualifies; otherwise delivery opens a new setup with a fresh exchange.
 
 Pinned-source caveat [2]: the uncertainty-enabled parser assigns `fraction` as a microsecond remainder, unlike the binary fraction on the ordinary path. The header calls `uptime_us` uptime, but the implementation derives it from real-time/NTP-epoch timestamps. WIFI must normalize the pinned units and independently sample kernel monotonic time rather than cast these fields or treat native `uptime_us` as kernel uptime. Verify unset initial time, subsecond carry and conversion before L1 acceptance. Recheck these semantics on a Zephyr revision change. This PR contains no upstream patch.
 
 ## Failure indication and acknowledgement
 
-Initial failed synchronization or anchor expiry with no usable anchor latches `TIME_SYNCHRONIZATION_FAILURE`, while preserving offline Start/listening. The running examination wins: expiry during listening is logged at once, but the error latches only when the listening stop condition occurs, then shows blue with 1 blink. The LEDs keep the listening indication meanwhile, so the error cannot be read as cyan with 1 blink (`AUDIO_WORKER_STALL`). Failed refresh with an unexpired anchor records the cause and schedules recovery without a new operator error. Diagnostics contain cause, age and estimate, never credentials/patient context.
-
-Acknowledgement clears the indication only: no clock-validity change or immediate retry. Automatic recovery proceeds independently. Follow the existing latched-error model: success restores readiness but does not itself acknowledge the indication. After acknowledgement while unavailable, do not re-latch on every scheduled failure; successful recovery followed by another loss starts a new failure episode. Start cancellation alone does not create one.
+There is no separate time-synchronization error. A failed exchange is a failed secure connection setup and follows the [TLS failure indication](secure-transport.md#failure-indication): `SERVER_CONNECTION_FAILURE`, blue with 1 blink, with offline Start/listening preserved. The same code marks a result that cannot be sent for lack of a qualifying anchor. Diagnostics name the time cause, anchor age and estimate, never credentials or patient context. The running examination wins: no time work and no time indication occur during listening.
 
 ## Parameters
 
 | ID | Value / meaning |
 | --- | --- |
 | P25-SERVER | `pool.ntp.org`, IPv4 DNS and SNTP over UDP/123 |
-| P25-ATTEMPT | 5 seconds beginning before DNS; separate existing one-second per-service cancellation bound |
-| P25-RETRY | 60 seconds after failed/interrupted issued attempt completes; ongoing recovery while Idle, no total attempt cap |
-| P25-REFRESH | 15 minutes after successful application; active work deferred during listening |
-| P25-EXPIRY | One hour after successful application; failure does not extend it |
-| P25-UNCERTAINTY | Zephyr `CONFIG_SNTP_UNCERTAINTY`; microseconds internally; no measured accuracy/drift guarantee |
+| P25-PLACEMENT | One exchange directly before every ClientHello; none for a reused connection; no separate schedule |
+| P25-BUDGET | Shares the containing setup deadline (P26 Idle preparation or P13 connection setup); separate existing one-second per-service cancellation bound |
+| P25-MAPPING | Measurement end mapped from an anchor at most one hour away in monotonic time; worst-case drift share 36 ms at 10 ppm |
+| P25-UNCERTAINTY | Zephyr `CONFIG_SNTP_UNCERTAINTY`; microseconds internally; no measured accuracy guarantee |
 
 ## Limitations and verification
 
@@ -69,13 +66,13 @@ The initial source requires usable DNS and reachable public UDP/123; Wi-Fi alone
 
 | Scenario | Trace | Expected result |
 | --- | --- | --- |
-| Boot and successful exchange | REQ-09/11; VT-07/08 | No persisted ready clock; normalize uncertainty and apply UTC/monotonic anchor before readiness. |
-| DNS failure, blocked UDP, rejected response | REQ-09/13; VT-08/09 | Bounded attempt and 60-second recovery; visible initial failure without blocking listening. |
+| Boot and successful exchange | REQ-09/11; VT-07/08 | No persisted ready clock; the first TLS setup applies the UTC/monotonic anchor before its ClientHello. |
+| DNS failure, blocked UDP, rejected response | REQ-09/13; VT-08/09 | The containing connection setup fails within its deadline and follows P26 or P13 recovery; `SERVER_CONNECTION_FAILURE` without blocking listening. |
 | Start during DNS/wait/completion race | REQ-02/13; VT-08/09 | Quiesce before audio; stale completion cannot apply time; cancellation raises no time-sync error. |
-| Refresh/expiry boundaries and failed refresh | REQ-09/13/14; VT-07/08/09 | Keep unexpired anchor, defer active work during listening, expire at one hour; expiry during listening latches its indication only after the stop condition; acknowledgement changes neither readiness nor scheduling. |
-| Correction and frozen measurement | REQ-09/10; VT-07 | Monotonic duration and frozen UTC/identity stay unchanged; no remapping or delayed resend. |
+| Mapping limit and long listening | REQ-09/10/13; VT-07/08/09 | An anchor within one hour freezes the end at Stop; listening longer than one hour freezes it from the delivery setup anchor; no qualifying anchor sends nothing and latches `SERVER_CONNECTION_FAILURE`. |
+| Correction and frozen measurement | REQ-09/10; VT-07 | Monotonic duration and frozen UTC/identity stay unchanged across retries and later exchanges; no delayed resend. |
 | Native units, unset time, subsecond carry | REQ-09/11; VT-07/08 | Consistent UTC conversion and independently sampled monotonic anchor. |
-| Repeated failures, recovery and cleanup fault | REQ-13/14; VT-08/09/11 | No per-retry indication storm after acknowledgement; failed cancellation latches `WIFI_CLEANUP_FAILURE`, disables network work and releases audio without reporting quiescence. |
+| Cleanup fault | REQ-13/14; VT-08/09/11 | Failed cancellation latches `WIFI_CLEANUP_FAILURE`, disables network work and releases audio without reporting quiescence. |
 
 These allocate future verification, not generated tests or execution. DNS/socket integration, target cancellation latency, drift/reference comparison and audio interference remain pending. Timestamp acceptance evidence is not replaced by a reported estimate.
 
@@ -86,3 +83,5 @@ These allocate future verification, not generated tests or execution. DNS/socket
 [2] The Zephyr Project, *SNTP API, Kconfig, implementation and DNS resolver API*, Zephyr source repository revision `357467a011cd2557a1a3f0b4be83d817c4addc9b`, publication year unverified; [SNTP header](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/include/zephyr/net/sntp.h), [Kconfig](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/subsys/net/lib/sntp/Kconfig), [parser](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/subsys/net/lib/sntp/sntp.c), [helper](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/subsys/net/lib/sntp/sntp_simple.c), [DNS header](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/include/zephyr/net/dns_resolve.h), accessed 28 October 2026. The convenience helper resolves before its exchange timeout and resends internally; split DNS/SNTP APIs underpin the proposed cancellable adapter. Target behavior remains unverified.
 
 [3] David L. Mills, *Simple Network Time Protocol (SNTP) Version 4 for IPv4, IPv6 and OSI*, IETF RFC 4330, January 2006, section 9, DOI: 10.17487/RFC4330, <https://www.rfc-editor.org/rfc/rfc4330#section-9>. Access recorded 24 October 2026 in the [source register](../../../../thesis-material/quellen.md#ietf_sntp_4330_2006); no new access claimed.
+
+[4] Andreas Summerer and Nico, *Design review of time, TLS and FHIR*, review meeting, 2 November 2026, with Nico's resolutions in the [decision record](../../planning/mvp-decisions-2026-11-02.md), accessed 2 November 2026. Project decisions; the drift figure is a datasheet calculation, not a measurement.
