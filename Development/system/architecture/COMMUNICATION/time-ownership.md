@@ -22,15 +22,15 @@ Active exchanges remain outside live listening. Offline listening remains availa
 
 ## Agreed preparation flow
 
-After joining the configured network, COMMUNICATION automatically requests time synchronization while Idle. A failed exchange or unacceptable time basis blocks server readiness, not Wi-Fi setup completion or offline listening. After acceptable clock preparation, secure transport preparation and Device registration can proceed while Idle; Stop must not be the default trigger for all preparation from scratch.
+After joining the configured network, COMMUNICATION starts every secure transport setup with one time synchronization directly before the TLS handshake ([review decisions, 2 November 2026](https://github.com/DemonicPsychoII/DigitalStethoscope/pull/104)). A failed exchange fails that setup and blocks server readiness, not Wi-Fi setup completion or offline listening. After verified transport, Device registration can proceed while Idle; Stop must not be the default trigger for all preparation from scratch.
 
-COMMUNICATION tracks network access, acceptable clock, verified transport and Device registration separately. A connected station or retained TLS connection alone does not establish delivery readiness. Clock readiness remains conditional on the policy that Design must define; synchronization success is not trust acceptance.
+COMMUNICATION tracks network access, verified transport, including the time applied by its setup, and Device registration separately. A connected station or retained TLS connection alone does not establish delivery readiness. Whether a time anchor qualifies for a measurement follows the mapping limit that Design defines; synchronization success is not trust acceptance.
 
 ## Trust boundary and open decisions
 
 The time source is an external SNTP server reached through the station's network. During SNTP detailed design on 28 October 2026, Nico selected the public `pool.ntp.org` service and accepted unauthenticated SNTP time as an MVP trust assumption, recorded in [SNTP Design PR #99](https://github.com/DemonicPsychoII/DigitalStethoscope/pull/99). Unauthenticated SNTP does not authenticate the source [1]; synchronization success must not be represented as authenticated time. A local time source for networks without internet access is deferred to [GitHub #85](https://github.com/DemonicPsychoII/DigitalStethoscope/issues/85).
 
-Detailed design defines synchronization timing, freshness, invalidation and the mapping across clock corrections before/after a measurement, without extending the delivery budget or creating network work during listening. Reference-clock comparison and the allowed measurement-end timestamp skew remain open under TICKET-209. This architecture sets no numeric acceptance limit and makes no claim of target accuracy.
+Detailed design defines synchronization timing, freshness, invalidation and the mapping across clock corrections before/after a measurement, without extending the delivery budget or creating network work during listening. Design sets the allowed measurement-end deviation; reference-clock comparison remains open under TICKET-209. This architecture sets no numeric acceptance limit and makes no claim of target accuracy.
 
 ## Verification allocation
 
