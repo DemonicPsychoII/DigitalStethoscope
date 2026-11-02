@@ -16,7 +16,7 @@ COMMUNICATION owns workflow retry scheduling. Attempt 1 is the initial issued re
 
 Every timing value is derived from a measured typical duration and a stated safety factor; the evidence records both. Until target measurements exist ([TICKET-213](https://nfrie.atlassian.net/browse/TICKET-213)), the current values are provisional project decisions. Attempt caps are fixed counts: P13 allows four attempts in total, and no extra rule applies when its deadline admits only two.
 
-[P25 SNTP parameters](time-synchronization.md#parameters) place one exchange directly before every ClientHello, inside the containing setup deadline, and map measurement ends only from anchors within one hour. The one-hour limit rests on a datasheet drift calculation, not on a measured drift bound.
+[P25 SNTP parameters](time-synchronization.md#parameters) place one exchange directly before every ClientHello, inside the containing setup deadline, and map measurement ends only from anchors whose uncertainty plus 20 ppm drift stays within 1 s. The limit rests on a datasheet drift calculation, not on a measured drift bound.
 
 [P26 TLS parameters](secure-transport.md#parameters) select TLS 1.3 only, one endpoint and public server certificate from the separate provisioning image, ten-second Idle preparation including SNTP and ongoing 60-second recovery gaps. Delivery reconnects use P13's three-second connection-setup and one-second write-and-receipt limits within ten seconds total; a device keep-alive timeout below the server's bounds connection reuse. The retry conventions above apply. Missing prerequisites consume no attempt. Timing values are project decisions pending target evidence.
 

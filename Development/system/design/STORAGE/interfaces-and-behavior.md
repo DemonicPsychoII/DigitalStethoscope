@@ -44,7 +44,7 @@ The provisioning image is the only source of the server endpoint and certificate
 
 Erased flash, an unknown magic or version, an out-of-range length, a CRC mismatch or an unparsable certificate make the image invalid. The image keeps settings and provisioning apart: erasing settings never removes the server, and rewriting the server never touches Wi-Fi credentials or the registration record.
 
-Target verification remains open: the firmware flash command must leave `0x400000` untouched, a settings erase must leave it intact, and a corrupted image must be rejected at boot.
+Own observation on 2 November 2026: flashing a test build (`feature/time-synchronization` at `b6cccb8` plus the full-MAC hotspot change) with `flash-firmware.ps1` wrote 671,744 bytes at `0x00000000`, and the device booted with Espressif Simple Boot. Only the image range was written. Target verification remains open: a read-back must show that the firmware flash command leaves `0x400000` untouched, a settings erase must leave it intact, and a corrupted image must be rejected at boot.
 
 [1] The Zephyr Project, *ESP32-S3-DevKitC board devicetree and Espressif partition tables*, source revision `357467a011cd2557a1a3f0b4be83d817c4addc9b`, [esp32s3_devkitc_procpu.dts](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/boards/espressif/esp32s3_devkitc/esp32s3_devkitc_procpu.dts) and [partitions_0x0_amp_4M.dtsi](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/dts/vendor/espressif/partitions_0x0_amp_4M.dtsi), accessed 2 November 2026; project [board overlay](../../coding/app/boards/esp32s3_devkitc_procpu.overlay).
 

@@ -7,7 +7,8 @@ and FHIR delivery with Nico on 2 November 2026, 10:30–11:30. The basis was the
 [#100](https://github.com/DemonicPsychoII/DigitalStethoscope/pull/100),
 [#101](https://github.com/DemonicPsychoII/DigitalStethoscope/pull/101)). Nico recorded the review notes,
 then classified and resolved them in the [T3 conversation](t3-thread://v1/d5e44f69-2ecc-4a3e-917b-31a7b084c12b)
-on the same day. These are project decisions, not measurements or standards conformity.
+on the same day; a follow-up in the same conversation replaced the fixed one-hour limit by a computed
+limit. These are project decisions, not measurements or standards conformity.
 
 ## Review notes
 
@@ -29,15 +30,18 @@ on the same day. These are project decisions, not measurements or standards conf
    reconnect, runs one SNTP exchange immediately before the ClientHello. SNTP shares the setup deadline.
    Reusing an open verified connection sends no ClientHello and needs no SNTP. The separate Idle refresh
    schedule (15 min refresh, 1 h expiry) is removed.
-2. **One-hour mapping limit.** The UTC measurement end is derived from a clock anchor at most 1 h away
-   from the measurement end, in monotonic time. If the anchor at Stop qualifies, the end is frozen at Stop.
-   Otherwise, for example after listening for more than 1 h, the end is frozen from the SNTP anchor of the
-   delivery connection setup, before the first request. A result without a qualifying anchor is not sent.
+2. **Computed mapping limit.** The UTC measurement end is derived only from a qualifying clock anchor:
+   its estimated SNTP uncertainty plus 20 ppm of the monotonic distance to the measurement end must not
+   exceed 1 s. 20 ppm is the datasheet tolerance with safety factor 2; 1 s follows the IHE Consistent
+   Time profile [3]. If the anchor at Stop qualifies, the end is frozen at Stop. Otherwise the end is
+   frozen from the SNTP anchor of the delivery connection setup, before the first request. A result
+   without a qualifying anchor is not sent. A retained connection is reused for delivery only while its
+   handshake anchor still qualifies. This replaces the review's fixed one-hour rule.
 3. **One server error.** `TIME_SYNCHRONIZATION_FAILURE` is removed. A failed SNTP exchange is a failed
    secure connection setup and latches `SERVER_CONNECTION_FAILURE`, also when a result cannot be sent
    for lack of a qualifying anchor. The serial log keeps the precise cause. `SERVER_CONNECTION_FAILURE` takes the freed blue code, one blink; no code was implemented yet, so no enumerator value changes.
 4. **Drift calculation instead of an experiment.** The worst-case clock drift is calculated from the
-   datasheet crystal tolerance; see [drift calculation](#drift-calculation). It justifies the one-hour limit.
+   datasheet crystal tolerance; see [drift calculation](#drift-calculation). It sets the mapping limit.
 5. **Hotspot name.** The hotspot is called `Stetho-AABBCCDDEEFF`, with all six station MAC bytes in
    upper-case hexadecimal. The FHIR Device identifier uses the same hexadecimal digits.
 6. **One server per device.** The device talks to exactly one HTTPS FHIR base URL. It offers no runtime
@@ -71,12 +75,27 @@ therefore the crystal's relative error. Worst case without a new SNTP exchange:
 | 1 h | 36 ms |
 | 24 h | 864 ms |
 
-The total error of a measurement end is the SNTP exchange uncertainty that Zephyr estimates, plus this
-drift over the distance to the anchor. With the one-hour limit the drift share stays at or below 36 ms.
-TLS certificate validity is not the binding limit: the device compares its clock with `notBefore` and
-`notAfter` of the certificate, a window of months to years. The local HAPI certificate is valid from
-17 June 2025 to 25 September 2027 ([TLS design](../design/COMMUNICATION/secure-transport.md#investigation-basis-and-limitations)).
-At 10 ppm, one day of error needs about 270 years; only an unset clock fails this check.
+The total error of a measurement end is the SNTP exchange uncertainty that Zephyr estimates, plus the
+drift over the distance to the anchor. With safety factor 2 the drift rate is 20 ppm, and with the 1 s
+maximum deviation the usable distance is `(1 s − uncertainty) / 20 ppm`:
+
+| SNTP uncertainty | Usable distance to the anchor |
+| --- | --- |
+| 15 ms (demo, 1 November 2026) | about 13.7 h |
+| 100 ms | 12.5 h |
+| 500 ms | about 6.9 h |
+
+**FHIR.** The limit protects the `effectiveDateTime` and the measurement identity. FHIR R4 asks for
+clocks synchronized by NTP/SNTP without a maximum deviation [4]; neither the FHIR data types nor HAPI
+document a tolerance. The IHE Consistent Time profile requires a median error of less than one second
+and names SNTP sufficient for that [3]. Using 1 s as a worst-case bound is a project decision.
+
+**TLS.** Certificate validity is not the binding limit: the device itself compares its clock with
+`notBefore` and `notAfter` of the server certificate, a window of months to years; the server does not
+check the device's time. The local HAPI certificate is valid from 17 June 2025 to 25 September 2027
+([TLS design](../design/COMMUNICATION/secure-transport.md#investigation-basis-and-limitations)).
+At 20 ppm, one day of error needs about 137 years; only an unset clock fails this check. Every TLS
+setup applies a fresh SNTP time anyway.
 
 Limitations: the datasheet labels the tolerance without stating whether it covers temperature range
 and ageing. The calculation assumes the device does not sleep, because a sleep phase would run on
@@ -90,10 +109,18 @@ another clock source. Reference measurements remain with
 - [STORAGE flash layout](../design/STORAGE/interfaces-and-behavior.md#flash-layout), [feedback catalogue](../design/FEEDBACK/catalogue.md),
   [shared design](../design/system/interfaces-and-behavior.md) and [parameters](../design/system/parameters.md)
 - Hotspot name in [`wifi.c`](../coding/app/L1_services/L1_WIFI/wifi.c)
+- Delivery prerequisites in the [measurement workflow](../architecture/system/measurement-workflow.puml), [session state](../architecture/system/mvp-session-state.puml) and [architecture viewer](../architecture/system/review.html); architecture PRs [#78](https://github.com/DemonicPsychoII/DigitalStethoscope/pull/78), [#80](https://github.com/DemonicPsychoII/DigitalStethoscope/pull/80) and [#81](https://github.com/DemonicPsychoII/DigitalStethoscope/pull/81)
 
-Follow-ups outside this record: the SNTP implementation on `feature/time-synchronization` still uses the
-removed Idle refresh and `TIME_SYNCHRONIZATION_FAILURE`; the provisioning partition, image tool and
-reader need implementation.
+## Follow-ups
+
+| Item | Tracking |
+| --- | --- |
+| Adapt the SNTP implementation on `feature/time-synchronization` (Idle refresh and `TIME_SYNCHRONIZATION_FAILURE` removed, SNTP before every ClientHello) | [TICKET-180](https://nfrie.atlassian.net/browse/TICKET-180), [#86](https://github.com/DemonicPsychoII/DigitalStethoscope/issues/86) |
+| Provisioning partition, image tool and reader | [TICKET-214](https://nfrie.atlassian.net/browse/TICKET-214), [#105](https://github.com/DemonicPsychoII/DigitalStethoscope/issues/105) |
+| Reference-clock comparison of the calculated drift | [TICKET-209](https://nfrie.atlassian.net/browse/TICKET-209), [#88](https://github.com/DemonicPsychoII/DigitalStethoscope/issues/88) |
+| Timing values from measured typical duration and safety factor, including SNTP in the setup budget | [TICKET-213](https://nfrie.atlassian.net/browse/TICKET-213), [#102](https://github.com/DemonicPsychoII/DigitalStethoscope/issues/102) |
+| Outlook: keep results after failed delivery for later sending | [TICKET-215](https://nfrie.atlassian.net/browse/TICKET-215), [#106](https://github.com/DemonicPsychoII/DigitalStethoscope/issues/106) |
+
 
 ## Sources
 
@@ -107,3 +134,11 @@ accessed 2 November 2026.
 enables the CCOUNT-based system timer by default on Xtensa, and
 [esp32s3_common.dtsi](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/dts/xtensa/espressif/esp32s3/esp32s3_common.dtsi)
 sets a 240 MHz CPU clock from the PLL with a 40 MHz crystal, accessed 2 November 2026.
+
+[3] IHE International, *IHE IT Infrastructure (ITI) Technical Framework*, Revision 20.0, Final Text,
+4 August 2023, Volume 1 section 7 *Consistent Time (CT)* and Volume 2 section 3.1.4.1.2 *Maintain Time [ITI-1]*,
+<https://profiles.ihe.net/ITI/TF/Volume1/ch-7.html> and <https://profiles.ihe.net/ITI/TF/Volume2/ITI-1.html>,
+accessed 2 November 2026.
+
+[4] Health Level Seven International, *FHIR R4 Security*, version 4.0.1, 2019, section 6.1.0, time keeping,
+<https://hl7.org/fhir/R4/security.html>, accessed 2 November 2026.

@@ -1844,3 +1844,19 @@ The Zephyr Project, *Xtensa system timer and ESP32-S3 devicetree*, source revisi
 The Zephyr Project, *ESP32-S3-DevKitC devicetree, Espressif partition tables, Simple Boot and settings ZMS backend*, source revision `357467a011cd2557a1a3f0b4be83d817c4addc9b`, [esp32s3_devkitc_procpu.dts](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/boards/espressif/esp32s3_devkitc/esp32s3_devkitc_procpu.dts), [partitions_0x0_amp_4M.dtsi](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/dts/vendor/espressif/partitions_0x0_amp_4M.dtsi), [soc/espressif/common/Kconfig](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/soc/espressif/common/Kconfig) and [settings_zms.c](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/subsys/settings/src/settings_zms.c), accessed 2 November 2026.
 
 **Cited by:** [STORAGE flash layout](../Development/system/design/STORAGE/interfaces-and-behavior.md#flash-layout).
+
+
+<a id="ihe_iti_consistent_time_rev20_2023"></a>
+### ihe_iti_consistent_time_rev20_2023
+
+IHE International, *IHE IT Infrastructure (ITI) Technical Framework*, Revision 20.0, Final Text, 4 August 2023, Volume 1 section 7 *Consistent Time (CT)* and Volume 2 section 3.1.4.1.2 *Maintain Time [ITI-1]*, <https://profiles.ihe.net/ITI/TF/Volume1/ch-7.html> and <https://profiles.ihe.net/ITI/TF/Volume2/ITI-1.html>, accessed 2 November 2026. Requires synchronization with a median error of less than one second and names SNTP sufficient for one-second time clients; its use as a worst-case bound is a project decision.
+
+**Cited by:** [Decision record 2 November 2026](../Development/system/planning/mvp-decisions-2026-11-02.md#drift-calculation), [SNTP design](../Development/system/design/COMMUNICATION/time-synchronization.md).
+
+
+<a id="hl7_fhir_r4_security_2019"></a>
+### hl7_fhir_r4_security_2019
+
+Health Level Seven International, *FHIR R4 Security*, version 4.0.1, 2019, section 6.1.0 (time keeping: clocks synchronized using NTP/SNTP, no maximum deviation stated), <https://hl7.org/fhir/R4/security.html>, accessed 2 November 2026.
+
+**Cited by:** [Decision record 2 November 2026](../Development/system/planning/mvp-decisions-2026-11-02.md#drift-calculation).
