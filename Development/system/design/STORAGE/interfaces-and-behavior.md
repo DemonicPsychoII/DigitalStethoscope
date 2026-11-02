@@ -12,24 +12,19 @@ The `wifi/network` record contains the complete 98-byte `wifi_network` record de
 
 ## Flash layout
 
-The ESP32-S3-WROOM-1-N16R8 has 16 MB flash. The board devicetree includes Zephyr's 4 MB Espressif default table (`partitions_0x0_amp.dtsi` → `partitions_0x0_amp_4M.dtsi`), and the application overlay widens `flash0` to 16 MB [1]. The application boots with Espressif Simple Boot, without MCUboot: a single image is flashed at an SoC-defined offset, and OTA and slot management are unavailable [2]. Settings (ZMS) use `storage_partition`, because no `zephyr,settings-partition` is chosen [3].
+The ESP32-S3-WROOM-1-N16R8 has 16 MB flash. The application overlay widens `flash0` to 16 MB, but the partitions still come from the board's 4 MB Espressif default table (`partitions_0x0_amp.dtsi` → `partitions_0x0_amp_4M.dtsi`) [1]. The application boots with Espressif Simple Boot, without MCUboot: a single image is flashed at an SoC-defined offset, and OTA and slot management are unavailable [2]; the build sets `CONFIG_FLASH_LOAD_OFFSET=0`. Settings (ZMS) use `storage_partition`, because no `zephyr,settings-partition` is chosen [3].
 
-| Offset | Size | Partition | Use |
+The project layout shows the whole 16 MB and defines only the partitions the firmware uses. The application overlay replaces the board's partition table; ranges without a partition stay unassigned and free for later use.
+
+| Range | Size | Partition | Content |
 | --- | --- | --- | --- |
-| `0x000000` | 64 KiB | `boot_partition` (`mcuboot`) | Board default; no MCUboot |
-| `0x010000` | 64 KiB | `sys_partition` | Board default |
-| `0x020000` | 1344 KiB | `slot0_partition` (`image-0`) | Application code partition (`zephyr,code-partition`) |
-| `0x170000` | 1344 KiB | `slot1_partition` (`image-1`) | Reserved by the board default; no OTA |
-| `0x2C0000` | 448 KiB | `slot0_appcpu_partition` | Reserved by the board default |
-| `0x330000` | 448 KiB | `slot1_appcpu_partition` | Reserved by the board default |
-| `0x3A0000` | 32 KiB | `slot0_lpcore_partition` | Reserved by the board default |
-| `0x3A8000` | 32 KiB | `slot1_lpcore_partition` | Reserved by the board default |
-| `0x3B0000` | 192 KiB | `storage_partition` | Settings: `wifi/network`, `fhir/device-registration` |
-| `0x3E0000` | 124 KiB | `scratch_partition` | Reserved by the board default |
-| `0x3FF000` | 4 KiB | `coredump_partition` | Board default |
-| `0x400000` | 64 KiB | `provisioning_partition` (proposed) | Provisioning image: server endpoint, keep-alive and certificate |
+| `0x000000`–`0x3AFFFF` | 3776 KiB | `slot0_partition` (`application`), `zephyr,code-partition` | Simple Boot image: header, loaded segments and flash-mapped code and data |
+| `0x3B0000`–`0x3DFFFF` | 192 KiB | `storage_partition` (`storage`) | Settings: `wifi/network`, `fhir/device-registration` |
+| `0x3E0000`–`0x3FFFFF` | 128 KiB | none | Unassigned |
+| `0x400000`–`0x40FFFF` | 64 KiB | `provisioning_partition` (`provisioning`) | Provisioning image: server endpoint, keep-alive and certificate |
+| `0x410000`–`0xFFFFFF` | 12224 KiB | none | Unassigned |
 
-The remaining flash above `0x410000` stays unassigned. The application overlay adds `provisioning_partition`; the board default rows stay unchanged.
+`storage_partition` keeps its current offset and size, so stored Wi-Fi credentials and the registration record survive the change. The board default's `boot`, `sys`, second image, second-core, low-power-core, scratch and core-dump partitions are not used: Simple Boot needs no MCUboot, there is no OTA, only one core runs the application and no core dump is configured. The observed image of 2 November 2026 places loaded segments at `0x20`, `0x4F2C` and `0x15BAC` and flash-mapped code and data at `0x20000` and `0x90000`; it occupies the start of the application partition. The overlay change, its build and boot belong to [TICKET-214](https://nfrie.atlassian.net/browse/TICKET-214).
 
 The provisioning image is the only source of the server endpoint and certificate ([TLS trust inputs](../COMMUNICATION/secure-transport.md#trust-and-provisioning-inputs)). A host tool builds it; a separate flash command writes it to `0x400000`. The firmware reads it through the flash map and never writes it. Proposed version 1 format, little-endian:
 
@@ -40,7 +35,7 @@ The provisioning image is the only source of the server endpoint and certificate
 | Base URL length, base URL | 2 bytes + at most 256 bytes | Canonical HTTPS FHIR base URL as defined by the [server binding](../COMMUNICATION/server-communication.md#physical-identity-and-server-binding) |
 | Server keep-alive | 4 bytes | Server idle timeout in seconds; the device subtracts 5 seconds |
 | Certificate length, certificate | 2 bytes + at most 8192 bytes | PEM public server certificate |
-| CRC-32 | 4 bytes | IEEE CRC-32 over all preceding bytes |
+| CRC-32 | 4 bytes | IEEE CRC-32 over all preceding bytes; detects corruption only. The MVP uses no signature. |
 
 Erased flash, an unknown magic or version, an out-of-range length, a CRC mismatch or an unparsable certificate make the image invalid. The image keeps settings and provisioning apart: erasing settings never removes the server, and rewriting the server never touches Wi-Fi credentials or the registration record.
 

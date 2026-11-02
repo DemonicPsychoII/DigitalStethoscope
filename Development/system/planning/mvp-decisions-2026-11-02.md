@@ -49,8 +49,10 @@ limit. These are project decisions, not measurements or standards conformity.
 7. **Provisioning image.** Base URL, server certificate and the server keep-alive value are delivered together in a separate
    provisioning image, written to its own flash partition by a separate flash command. A firmware update
    leaves it unchanged; a server or certificate change rewrites only the provisioning image. This replaces
-   the build-time embedding of #100 and refines note 4.
-8. **Flash layout.** The [STORAGE design](../design/STORAGE/interfaces-and-behavior.md#flash-layout) defines the partition layout including the provisioning partition.
+   the build-time embedding of #100 and refines note 4. The image carries a CRC-32 against corruption;
+   the MVP uses no signature.
+8. **Flash layout.** The [STORAGE design](../design/STORAGE/interfaces-and-behavior.md#flash-layout) shows the whole 16 MB and defines only the
+   partitions in use: application, settings and provisioning. The rest stays unassigned.
 9. **Newest examination request wins.** A new pending request replaces an older pending one. A request
    that arrives while a session context is frozen stays pending for the next examination.
 10. **Timing derivation.** Every timing parameter is derived from a measured typical duration and a stated
@@ -82,6 +84,7 @@ maximum deviation the usable distance is `(1 s − uncertainty) / 20 ppm`:
 | SNTP uncertainty | Usable distance to the anchor |
 | --- | --- |
 | 15 ms (demo, 1 November 2026) | about 13.7 h |
+| 53 ms (reported by Nico, 2 November 2026) | about 13.2 h |
 | 100 ms | 12.5 h |
 | 500 ms | about 6.9 h |
 
