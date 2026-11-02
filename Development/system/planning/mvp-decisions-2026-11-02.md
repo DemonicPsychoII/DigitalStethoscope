@@ -30,10 +30,10 @@ limit. These are project decisions, not measurements or standards conformity.
    reconnect, runs one SNTP exchange immediately before the ClientHello. SNTP shares the setup deadline.
    Reusing an open verified connection sends no ClientHello and needs no SNTP. The separate Idle refresh
    schedule (15 min refresh, 1 h expiry) is removed.
-2. **Computed mapping limit.** The UTC measurement end is derived only from a qualifying clock anchor:
-   its estimated SNTP uncertainty plus 20 ppm of the monotonic distance to the measurement end must not
-   exceed 1 s. 20 ppm is the datasheet tolerance with safety factor 2; 1 s follows the IHE Consistent
-   Time profile [3]. If the anchor at Stop qualifies, the end is frozen at Stop. Otherwise the end is
+2. **Computed mapping limit.** The UTC measurement end is derived only from a clock anchor at most
+   12.5 h away from it: (1 s − 100 ms) / 20 ppm. 1 s follows the IHE Consistent Time profile [3]; the
+   SNTP uncertainty budget of 100 ms is the observed about 50 ms with safety factor 2, and 20 ppm is
+   the datasheet tolerance with safety factor 2. An exchange reporting more than 100 ms fails. If the anchor at Stop qualifies, the end is frozen at Stop. Otherwise the end is
    frozen from the SNTP anchor of the delivery connection setup, before the first request. A result
    without a qualifying anchor is not sent. A retained connection is reused for delivery only while its
    handshake anchor still qualifies. This replaces the review's fixed one-hour rule.
@@ -51,8 +51,9 @@ limit. These are project decisions, not measurements or standards conformity.
    leaves it unchanged; a server or certificate change rewrites only the provisioning image. This replaces
    the build-time embedding of #100 and refines note 4. The image carries a CRC-32 against corruption;
    the MVP uses no signature.
-8. **Flash layout.** The [STORAGE design](../design/STORAGE/interfaces-and-behavior.md#flash-layout) shows the whole 16 MB and defines only the
-   partitions in use: application, settings and provisioning. The rest stays unassigned.
+8. **Flash layout.** The [STORAGE design](../design/STORAGE/interfaces-and-behavior.md#flash-layout) uses the whole 16 MB with only the
+   partitions in use: the provisioning image in the last 2 MB, settings directly in front of it and the
+   application in all remaining flash. Offsets follow from the sizes.
 9. **Newest examination request wins.** A new pending request replaces an older pending one. A request
    that arrives while a session context is frozen stays pending for the next examination.
 10. **Timing derivation.** Every timing parameter is derived from a measured typical duration and a stated
@@ -85,7 +86,7 @@ maximum deviation the usable distance is `(1 s − uncertainty) / 20 ppm`:
 | --- | --- |
 | 15 ms (demo, 1 November 2026) | about 13.7 h |
 | 53 ms (reported by Nico, 2 November 2026) | about 13.2 h |
-| 100 ms | 12.5 h |
+| **100 ms (budget: about 50 ms × safety factor 2)** | **12.5 h, the design limit** |
 | 500 ms | about 6.9 h |
 
 **FHIR.** The limit protects the `effectiveDateTime` and the measurement identity. FHIR R4 asks for

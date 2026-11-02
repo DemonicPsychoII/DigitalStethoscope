@@ -154,7 +154,7 @@ v4.0.1, HTTP, Conditional create, 2019,
 
 The device never selects or adds a patient ID. It serializes Observation.subject only from the patient reference supplied with a server-requested examination, and otherwise omits subject. The external server-request adapter remains open; [request context](../COMMUNICATION/server-communication.md#examination-request-boundary) is consumed and frozen on accepted local measurement Start, never automatically reused after cancellation or failure. A Device.patient lookup is not an approved substitute. One delivery job is granted after finalization when Wi-Fi is configured and delivery prerequisites hold; with configured Wi-Fi but failed prerequisites, latch DELIVERY_NOT_POSSIBLE at once. P13 bounds its attempts.
 
-Map sample/monotonic measurement interval to UTC from a qualifying clock anchor: uncertainty plus 20 ppm drift within 1 s of the
+Map sample/monotonic measurement interval to UTC from a clock anchor at most 12.5 hours away from the
 measurement end ([SNTP mapping](../COMMUNICATION/time-synchronization.md#clock-mapping-and-native-behavior)). Use measurement
 time, not send time; a result without a qualifying anchor is not sent, never rewritten. FHIR `effectiveDateTime` carries the end of the aggregate interval. This is a project representation choice. The interval stays in the local result. Preserve the Device id, point (approved coding or
 evaluation-only metadata), value, interval and analysis settings in the immutable local result.

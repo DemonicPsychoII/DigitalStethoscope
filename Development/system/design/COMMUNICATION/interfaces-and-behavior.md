@@ -21,7 +21,7 @@ Scan has four attempts total, 5 s between failures. Exhausted scan or AP-start f
 permits a manual 2 s setup retry. Link loss has four reconnect attempts, 5 s apart;
 exhaustion starts setup automatically in Idle. Defer all active recovery during listening.
 
-The [portal interface](../PORTAL/interfaces-and-behavior.md) queues typed requests for COMMUNICATION and publishes its status. The hotspot is open; the phone joins it manually before opening the page.
+The [portal interface](../PORTAL/interfaces-and-behavior.md) queues typed requests for COMMUNICATION and publishes its status. The hotspot is open; the phone joins it manually before opening the page. Its name is `Stetho-AABBCCDDEEFF`: all six station MAC bytes in upper-case hexadecimal, so devices in one room stay distinguishable ([design review of 2 November 2026](https://github.com/DemonicPsychoII/DigitalStethoscope/pull/104)).
 
 ### Join, persistence and result closure
 
