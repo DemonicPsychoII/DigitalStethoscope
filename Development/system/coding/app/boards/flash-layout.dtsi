@@ -1,0 +1,55 @@
+/*
+ * Project flash layout of the 16 MB module (design/STORAGE/interfaces-and-behavior.md#flash-layout).
+ * The provisioning image takes the last 2 MB, settings sit directly in front of it and the
+ * application gets everything before the settings. Every offset follows from the three sizes.
+ *
+ * Unit addresses cannot be computed; dtc's unit_address_vs_reg check rejects a node name
+ * that no longer matches its derived reg after a size change.
+ */
+
+#define FLASH_LAYOUT_FLASH_SIZE          DT_SIZE_M(16)
+#define FLASH_LAYOUT_PROVISIONING_SIZE   DT_SIZE_M(2)
+#define FLASH_LAYOUT_SETTINGS_SIZE       DT_SIZE_K(192)
+#define FLASH_LAYOUT_PROVISIONING_OFFSET (FLASH_LAYOUT_FLASH_SIZE - FLASH_LAYOUT_PROVISIONING_SIZE)
+#define FLASH_LAYOUT_SETTINGS_OFFSET     (FLASH_LAYOUT_PROVISIONING_OFFSET - FLASH_LAYOUT_SETTINGS_SIZE)
+#define FLASH_LAYOUT_APPLICATION_SIZE    FLASH_LAYOUT_SETTINGS_OFFSET
+
+&flash0
+{
+    reg = <0x0 FLASH_LAYOUT_FLASH_SIZE>;
+    ranges = <0x0 0x0 FLASH_LAYOUT_FLASH_SIZE>;
+
+    /* The board's 4 MB table also holds MCUboot, second-image, second-core and core-dump partitions. */
+    /delete-node/ partitions;
+
+    partitions
+    {
+        ranges;
+        #address-cells = <1>;
+        #size-cells = <1>;
+
+        /* Simple Boot reads the image header at boot_partition, so that label stays on the application. */
+        boot_partition: slot0_partition: partition@0
+        {
+            compatible = "zephyr,mapped-partition";
+            label = "application";
+            reg = <0x0 FLASH_LAYOUT_APPLICATION_SIZE>;
+        };
+
+        storage_partition: partition@dd0000
+        {
+            compatible = "zephyr,mapped-partition";
+            label = "storage";
+            reg = <FLASH_LAYOUT_SETTINGS_OFFSET FLASH_LAYOUT_SETTINGS_SIZE>;
+        };
+
+        /* Written only by tools/flash-provisioning.ps1. */
+        provisioning_partition: partition@e00000
+        {
+            compatible = "zephyr,mapped-partition";
+            label = "provisioning";
+            reg = <FLASH_LAYOUT_PROVISIONING_OFFSET FLASH_LAYOUT_PROVISIONING_SIZE>;
+            read-only;
+        };
+    };
+};

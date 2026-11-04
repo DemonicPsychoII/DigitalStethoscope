@@ -4,12 +4,8 @@
  * Add application peripherals when their adapters are implemented.
  */
 
-/* The board default describes the WROOM-N8 module; match the fitted N16R8. */
-&flash0 
-{ 
-    reg = <0x0 DT_SIZE_M(16)>; 
-    ranges = <0x0 0x0 DT_SIZE_M(16)>; 
-};
+/* The board default describes the WROOM-N8 module and its 4 MB table; match the fitted N16R8. */
+#include "flash-layout.dtsi"
 
 &psram0 
 { 
