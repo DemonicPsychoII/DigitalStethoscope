@@ -25,6 +25,7 @@ target_sources(app PRIVATE
     common/main.c
     L1_services/L1_I2S/i2s.c
     L1_services/L1_WIFI/wifi.c
+    L1_services/L1_WIFI/wifi_dns.c
     L1_services/L1_PORTAL/portal.c
     L1_services/L1_STORAGE/storage.c
     L1_services/L1_PHYSICALINTERFACE/physicalinterface.c
