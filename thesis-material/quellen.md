@@ -1860,3 +1860,19 @@ IHE International, *IHE IT Infrastructure (ITI) Technical Framework*, Revision 2
 Health Level Seven International, *FHIR R4 Security*, version 4.0.1, 2019, section 6.1.0 (time keeping: clocks synchronized using NTP/SNTP, no maximum deviation stated), <https://hl7.org/fhir/R4/security.html>, accessed 2 November 2026.
 
 **Cited by:** [Decision record 2 November 2026](../Development/system/planning/mvp-decisions-2026-11-02.md#drift-calculation).
+
+<a id="nico_flash_layout_decision_20261104"></a>
+### nico_flash_layout_decision_20261104
+
+Nico. *Flash layout decision*. Personal communication, T3 Code, 4 November 2026. Conversation link not recorded. Settings start at `0xE80000` (192 KiB), provisioning at `0xF00000` (192 KiB); both starts are fixed and independent of the other partition's size.
+
+**Source type:** Project decision. No claim of implementation, measurement or standards conformity.
+
+**Cited by:** [STORAGE flash layout](../Development/system/design/STORAGE/interfaces-and-behavior.md#flash-layout), [decision record 2 November 2026](../Development/system/planning/mvp-decisions-2026-11-02.md).
+
+<a id="zephyr_zms_sizing_357467a"></a>
+### zephyr_zms_sizing_357467a
+
+The Zephyr Project, *ZMS allocation table entry, settings ZMS entries and ESP32-S3 flash geometry*, source revision `357467a011cd2557a1a3f0b4be83d817c4addc9b`, [zms_priv.h](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/subsys/kvss/zms/zms_priv.h), [zms.c](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/subsys/kvss/zms/zms.c), [settings_zms.c](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/subsys/settings/src/settings_zms.c), [settings_zms.h](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/subsys/settings/include/settings/settings_zms.h) and [esp32s3_common.dtsi](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/dts/xtensa/espressif/esp32s3/esp32s3_common.dtsi), accessed 4 November 2026.
+
+**Cited by:** [STORAGE flash layout](../Development/system/design/STORAGE/interfaces-and-behavior.md#flash-layout).
