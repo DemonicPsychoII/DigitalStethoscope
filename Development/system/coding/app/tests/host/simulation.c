@@ -544,6 +544,39 @@ int wifi_applyTimeSynchronization(const struct normalised_time *time, struct app
     return -ENOSYS; /**< Not modelled by this host substitute. */
 }
 
+/* No server is configured here, so the existing scenarios keep their traces and timing. */
+int wifi_configureSecureServer(const char *baseUrl, const char *certificate, size_t certificateLength, struct wifi_secure_server *server)
+{
+    (void)baseUrl;
+    (void)certificate;
+    (void)certificateLength;
+    (void)server;
+    return -ENOSYS; /**< Not modelled by this host substitute. */
+}
+
+int wifi_startSecureConnection(k_timepoint_t deadline)
+{
+    (void)deadline;
+    return -ENOSYS; /**< Not modelled by this host substitute. */
+}
+
+int wifi_waitForSecureConnection(enum wifi_secure_connection_cause *cause, k_timeout_t timeout)
+{
+    (void)cause;
+    (void)timeout;
+    return -ENOSYS; /**< Not modelled by this host substitute. */
+}
+
+int wifi_cancelSecureConnection(void)
+{
+    return 0;
+}
+
+int wifi_closeSecureConnection(void)
+{
+    return 0;
+}
+
 int portal_start(void)
 {
     trace("page_start", 0);
