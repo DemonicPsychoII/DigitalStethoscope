@@ -65,17 +65,17 @@
 
 #define COMMUNICATION_NETWORK_RECORD "wifi/network" /**< Storage name of the joined network. */
 
-#define COMMUNICATION_WORK_SCAN       BIT(0) /**< Scan started. */
-#define COMMUNICATION_WORK_CONNECTION BIT(1) /**< Connect request pending. */
-#define COMMUNICATION_WORK_PORTAL     BIT(2) /**< Setup page served. */
-#define COMMUNICATION_WORK_DHCP       BIT(3) /**< DHCP server running. */
-#define COMMUNICATION_WORK_HOTSPOT    BIT(4) /**< Hotspot open. */
+#define COMMUNICATION_WORK_SCAN                 BIT(0) /**< Scan started. */
+#define COMMUNICATION_WORK_CONNECTION           BIT(1) /**< Connect request pending. */
+#define COMMUNICATION_WORK_PORTAL               BIT(2) /**< Setup page served. */
+#define COMMUNICATION_WORK_DHCP                 BIT(3) /**< DHCP server running. */
+#define COMMUNICATION_WORK_HOTSPOT              BIT(4) /**< Hotspot open. */
 #define COMMUNICATION_WORK_TIME_SYNCHRONIZATION BIT(5) /**< Time synchronization accepted and not yet released. */
 
-#define COMMUNICATION_PUBLIC_NTP_SERVER                    "pool.ntp.org" /**< Public NTP server for time synchronization. */
-#define COMMUNICATION_TIME_UNCERTAINTY_BUDGET_MICROSECONDS (100000)       /**< P25-UNCERTAINTY-BUDGET: largest accepted SNTP uncertainty. */
+#define COMMUNICATION_PUBLIC_NTP_SERVER                    "pool.ntp.org"   /**< Public NTP server for time synchronization. */
+#define COMMUNICATION_TIME_UNCERTAINTY_BUDGET_MICROSECONDS (100000)         /**< P25-UNCERTAINTY-BUDGET: largest accepted SNTP uncertainty. */
 #define COMMUNICATION_TIME_MAPPING_LIMIT_MICROSECONDS      (45000000000ULL) /**< P25-MAPPING: 12.5 h = (1 s - 100 ms) / 20 ppm between anchor and measurement end. */
-#define COMMUNICATION_JOIN_TIME_SYNCHRONIZATION_TIMEOUT_S  (5)              /**< P25-ATTEMPT: one 5 s exchange after a join, beginning before DNS. */
+#define COMMUNICATION_JOIN_TIME_SYNCHRONIZATION_TIMEOUT_S  (5)              /**< One standalone SNTP exchange after a join, beginning before DNS. */
 
 /***********************************************************************/
 /* TYPES                                                               */
@@ -198,11 +198,11 @@ static void communication_runIdleCycle(void);
  */
 static void communication_recoverConnection(void);
 
-/** 
- * @brief Run one time-synchronization attempt under CONTROL's network lease. 
- * 
+/**
+ * @brief Run one time-synchronization attempt under CONTROL's network lease.
+ *
  * @param[in] deadline The time by which the attempt must complete.
- * 
+ *
  * @return 0 on success, a negative error code on failure.
  */
 static int communication_synchronizeTime(k_timepoint_t deadline);
