@@ -1656,3 +1656,10 @@ Nico. *Provisioning deployment-file decisions*. Personal communication, T3 Code,
 Peter Saint-Andre and Rich Salz. *Service Identity in TLS*. IETF RFC 9525, November 2023, sections 4 and 6. DOI [10.17487/RFC9525](https://doi.org/10.17487/RFC9525). <https://www.rfc-editor.org/rfc/rfc9525>. Accessed 4 November 2026.
 
 **Cited by:** [Provisioning architecture](../Development/system/architecture/system/provisioning.md), identity check without Common Name fallback.
+
+<a id="summerer_design_review_20261102"></a>
+### summerer_design_review_20261102
+
+Andreas Summerer and Nico, *Design review of time, TLS and FHIR*, review meeting, 2 November 2026, 10:30–11:30, notes by Nico with resolutions in the [T3 conversation](t3-thread://v1/d5e44f69-2ecc-4a3e-917b-31a7b084c12b), accessed 2 November 2026. Project decisions, not measurements.
+
+**Cited by:** [Provisioning architecture](../Development/system/architecture/system/provisioning.md), separate provisioning image and physical-access trust assumption.
