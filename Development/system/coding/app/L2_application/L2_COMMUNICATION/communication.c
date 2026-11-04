@@ -86,7 +86,6 @@
 #define COMMUNICATION_PUBLIC_NTP_SERVER                    "pool.ntp.org"   /**< Public NTP server for time synchronization. */
 #define COMMUNICATION_TIME_UNCERTAINTY_BUDGET_MICROSECONDS (100000)         /**< P25-UNCERTAINTY-BUDGET: largest accepted SNTP uncertainty. */
 #define COMMUNICATION_TIME_MAPPING_LIMIT_MICROSECONDS      (45000000000ULL) /**< P25-MAPPING: 12.5 h = (1 s - 100 ms) / 20 ppm between anchor and measurement end. */
-#define COMMUNICATION_JOIN_TIME_SYNCHRONIZATION_TIMEOUT_S  (5)              /**< One standalone SNTP exchange after a join, beginning before DNS. */
 #define COMMUNICATION_SECURE_PREPARATION_TIMEOUT_S         (10)             /**< P26-ATTEMPT: SNTP, DNS, TCP, TLS and verification during Idle preparation. */
 #define COMMUNICATION_SECURE_RETRY_DELAY_S                 (60)             /**< P26-RETRY: gap after a failed or interrupted issued preparation. */
 
@@ -263,14 +262,6 @@ static int communication_prepareSecureConnection(k_timepoint_t deadline);
  * @return 0 with a verified connection, -ECANCELED if listening started, or a negative error code.
  */
 static int communication_connectSecurely(k_timepoint_t deadline, enum wifi_secure_connection_cause *cause);
-
-/**
- * @brief Synchronize the clock once after the station joined at boot or through setup.
- *
- * Kept besides the secure connection setup, whose own exchange #104 requires, so the
- * clock is also set without a provisioned server.
- */
-static void communication_synchronizeTimeAfterJoin(void);
 
 /** @brief Prepare the secure connection in Idle when due: one ten-second setup, then readiness or the retry gap. */
 static void communication_prepareTransportInIdle(void);
@@ -668,7 +659,6 @@ static void communication_connectAtBoot(void)
         if(result == 0)
         {
             LOG_INF("Wi-Fi connected");
-            communication_synchronizeTimeAfterJoin();
             communication_prepareTransportInIdle();
         }
         else if(result == -ECANCELED) /**< Start interrupted the network workflow. */
@@ -769,7 +759,6 @@ static void communication_recoverConnection(void)
         if(result == 0)
         {
             LOG_INF("Wi-Fi connected");
-            communication_synchronizeTimeAfterJoin();
             communication_prepareTransportInIdle();
         }
         else if(result != -ECANCELED) /**< Start interrupted the network workflow. */
@@ -856,6 +845,10 @@ static int communication_prepareSecureConnection(k_timepoint_t deadline)
         }
         return result;
     }
+    LOG_INF("Time synchronized: UTC %llu.%09u s, uncertainty %u us",
+            communication_AppliedTimeAnchor.utc_seconds,
+            communication_AppliedTimeAnchor.utc_fraction_nanoseconds,
+            communication_AppliedTimeAnchor.estimated_uncertainty_microseconds);
 
     /* Against this setup's fresh clock, before the ClientHello; mbedTLS checks the peer's dates again during the handshake. */
     const int64_t utcSeconds = (int64_t)(communication_AppliedTimeAnchor.utc_seconds + (communication_getAnchorAgeMicroseconds() / USEC_PER_SEC));
@@ -1170,23 +1163,6 @@ static int communication_synchronizeTime(k_timepoint_t deadline)
     }
 
     return result;
-}
-
-static void communication_synchronizeTimeAfterJoin(void)
-{
-    const int result = communication_synchronizeTime(sys_timepoint_calc(K_SECONDS(COMMUNICATION_JOIN_TIME_SYNCHRONIZATION_TIMEOUT_S)));
-
-    if(result == 0)
-    {
-        LOG_INF("Time synchronized: UTC %llu.%09u s, uncertainty %u us",
-                communication_AppliedTimeAnchor.utc_seconds,
-                communication_AppliedTimeAnchor.utc_fraction_nanoseconds,
-                communication_AppliedTimeAnchor.estimated_uncertainty_microseconds);
-    }
-    else if(result != -ECANCELED) /**< Start interrupted the exchange; listening wins. */
-    {
-        LOG_WRN("Time synchronization after join failed (%d)", result);
-    }
 }
 
 static int communication_mapMeasurementEndTime(uint64_t measurementEndMonotonicMicroseconds, struct timespec *utcEnd)
@@ -1593,7 +1569,6 @@ static void communication_runSetup(void)
         /* After closing, so the preparation no longer shares the radio with the setup hotspot. */
         if(outcome == COMMUNICATION_SETUP_CONNECTED)
         {
-            communication_synchronizeTimeAfterJoin();
             communication_prepareTransportInIdle();
         }
     }
