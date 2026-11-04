@@ -1663,3 +1663,12 @@ Peter Saint-Andre and Rich Salz. *Service Identity in TLS*. IETF RFC 9525, Novem
 Andreas Summerer and Nico, *Design review of time, TLS and FHIR*, review meeting, 2 November 2026, 10:30–11:30, notes by Nico with resolutions in the [T3 conversation](t3-thread://v1/d5e44f69-2ecc-4a3e-917b-31a7b084c12b), accessed 2 November 2026. Project decisions, not measurements.
 
 **Cited by:** [Provisioning architecture](../Development/system/architecture/system/provisioning.md), separate provisioning image and physical-access trust assumption.
+
+<a id="nico_flash_layout_decision_20261104"></a>
+### nico_flash_layout_decision_20261104
+
+Nico. *Flash layout decision*. Personal communication, T3 Code, 4 November 2026. Conversation link not recorded. Settings start at `0xE80000` (192 KiB), provisioning at `0xF00000` (192 KiB); both starts are fixed and independent of the other partition's size.
+
+**Source type:** Project decision. No claim of implementation, measurement or standards conformity.
+
+**Cited by:** [Provisioning architecture](../Development/system/architecture/system/provisioning.md).

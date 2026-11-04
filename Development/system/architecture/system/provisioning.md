@@ -2,7 +2,7 @@
 
 ## Basis and scope
 
-This Architecture-stage proposal allocates how a device receives its one server: endpoint, keep-alive and trusted certificate. It refines the [TLS trust boundary](https://github.com/DemonicPsychoII/DigitalStethoscope/pull/80) and the separate provisioning image and flash layout from the [design review of 2 November 2026](https://github.com/DemonicPsychoII/DigitalStethoscope/pull/104). Its requirements basis is REQ-09, REQ-11 and REQ-13. It defines components, responsibilities, boundaries and dependencies; the file format, image format, validation rules and commands belong to detailed design.
+This Architecture-stage proposal allocates how a device receives its one server: endpoint, keep-alive and trusted certificate. It refines the [TLS trust boundary](https://github.com/DemonicPsychoII/DigitalStethoscope/pull/80) the separate provisioning image from the [design review of 2 November 2026](https://github.com/DemonicPsychoII/DigitalStethoscope/pull/104) and the flash layout decision of 4 November 2026 [4]. Its requirements basis is REQ-09, REQ-11 and REQ-13. It defines components, responsibilities, boundaries and dependencies; the file format, image format, validation rules and commands belong to detailed design.
 
 Nico decided on 4 November 2026 that one file per server deployment holds everything the image needs, that this file is TOML with the certificate embedded as PEM text, that deployment files are versioned in the repository, and that one flash command validates, builds and writes the image [1]. These are project decisions, not measurements. The design review had already placed endpoint and certificate in an image separate from the firmware [2].
 
@@ -17,7 +17,7 @@ Editable source: [provisioning.puml](provisioning.puml).
 | Deployment file | The single reviewed source of one server deployment: base URL, server keep-alive and the public server certificate. | Public data only. Never a private key, keystore, password or patient context. |
 | Provisioning tool (developer PC) | Validate the file, canonicalize the base URL, check the certificate against the endpoint, build the versioned image with its checksum and check that it fits the partition. | Writes no firmware and no other partition. Does not obtain a certificate from the network. |
 | Flash command (developer PC) | Take one deployment file and one serial port, run the tool and write the image at the partition location taken from the firmware build. | The firmware image and the settings partition stay unchanged. |
-| Provisioning partition (device flash) | Hold exactly one image, independent of firmware updates and settings erasure. | The firmware reads it and never writes it. |
+| Provisioning partition (device flash) | Hold exactly one image at a fixed start, independent of firmware updates, the settings size and settings erasure. | The firmware reads it and never writes it. |
 | L1_STORAGE | Read the image once at boot and check its format, lengths and checksum. | Does not interpret the endpoint or the certificate. |
 | L2_COMMUNICATION | Load the image at boot, decide whether secure transport is available and report a configuration cause otherwise. | A missing or invalid image never blocks Wi-Fi setup or offline listening. |
 | L1_WIFI | Parse the endpoint, parse the certificate, require a Subject Alternative Name that matches the endpoint and make the certificate the only trust anchor. | No fallback endpoint, no fallback certificate and no insecure mode. |
@@ -34,7 +34,7 @@ The device trusts the provisioned certificate directly and verifies the server i
 
 ## Open and deferred decisions
 
-- The flash layout keeps the board's settings partition until [TICKET-214](https://nfrie.atlassian.net/browse/TICKET-214) moves it; the provisioning partition location is the same in both layouts.
+- The provisioning location is fixed at `0xF00000` and independent of the settings: a settings size change never moves it, and it never changes between firmware versions, so an updated firmware still finds an image flashed earlier. Settings get their own fixed start in front of it; [TICKET-214](https://nfrie.atlassian.net/browse/TICKET-214) moves them from the board's partition. This is a project decision of 4 November 2026 [4]; the [STORAGE flash layout](https://github.com/DemonicPsychoII/DigitalStethoscope/pull/104) defines addresses and sizes.
 - Signed images, several servers per device, network or portal enrollment and a project certificate authority remain outside this version, as in the design review [2].
 - Detailed design defines the file format, its validation, the image format and the command interface.
 
@@ -58,3 +58,5 @@ These scenarios allocate future verification; they do not add a generated test b
 [2] Andreas Summerer and Nico, *Design review of time, TLS and FHIR*, review meeting, 2 November 2026, 10:30–11:30, notes by Nico with resolutions in the [T3 conversation](t3-thread://v1/d5e44f69-2ecc-4a3e-917b-31a7b084c12b), accessed 2 November 2026; resolutions applied in [PR #104](https://github.com/DemonicPsychoII/DigitalStethoscope/pull/104). Recorded in the [source register](../../../../thesis-material/quellen.md#summerer_design_review_20261102). Project decisions, not measurements.
 
 [3] Peter Saint-Andre and Rich Salz, *Service Identity in TLS*, IETF RFC 9525, November 2023, sections 4 and 6, DOI [10.17487/RFC9525](https://doi.org/10.17487/RFC9525), <https://www.rfc-editor.org/rfc/rfc9525>, accessed 4 November 2026. Recorded in the [source register](../../../../thesis-material/quellen.md#ietf_service_identity_9525_2023).
+
+[4] Nico, *Flash layout decision*, personal communication, T3 Code, 4 November 2026. Recorded in the [source register](../../../../thesis-material/quellen.md#nico_flash_layout_decision_20261104). Project decision, not a measurement.
