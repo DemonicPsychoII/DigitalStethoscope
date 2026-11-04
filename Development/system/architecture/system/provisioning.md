@@ -26,9 +26,9 @@ Dependency direction: the deployment file feeds the host tool; the tool depends 
 
 ## Trust boundary
 
-Whoever can flash the device can change its server; physical access is the trust assumption of the design review [2]. The image checksum detects corruption, not tampering, and the MVP image carries no signature.
+Whoever can flash the device can change its server; physical access is the trust assumption of the design review [2]. The image checksum detects corruption, not tampering, and the MVP image carries no signature. Without secure boot the same physical access can replace the firmware itself, so an image signature alone would add no protection; signing is deferred together with secure boot (project decision, 4 November 2026 [1]).
 
-The deployment file contains only public information, so it can be versioned and reviewed like source code. A server change is visible in review as a changed endpoint or certificate. The server's private key and keystore stay with the server deployment.
+The deployment file contains only public information, so it can be versioned and reviewed like source code. The repository is public, so it holds test deployments only; a real deployment keeps its file with that deployment. A server change is visible in review as a changed endpoint or certificate. The server's private key and keystore stay with the server deployment.
 
 The device trusts the provisioned certificate directly and verifies the server identity against its Subject Alternative Names, without Common Name fallback [3]. The tool applies the same identity rule before flashing, so a certificate that cannot match the endpoint is rejected on the developer PC rather than at the next boot.
 
