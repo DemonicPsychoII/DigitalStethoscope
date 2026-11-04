@@ -632,6 +632,12 @@ int storage_read(const char *name, void *data, size_t size)
     return 0;
 }
 
+int storage_readProvisioning(struct storage_provisioning *provisioning)
+{
+    memset(provisioning, 0, sizeof(*provisioning));
+    return -ENOENT; /**< Erased provisioning partition in the host model. */
+}
+
 int storage_write(const char *name, const void *data, size_t size)
 {
     if(strcmp(name, "wifi/network") != 0 || size != sizeof(record))
