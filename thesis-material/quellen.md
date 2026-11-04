@@ -1642,3 +1642,17 @@ Health Level Seven International. *FHIR Release 4 (v4.0.1): Vital Signs Profile*
 The Zephyr Project. *Zephyr DHCPv4 Kconfig*. Zephyr source repository, revision `357467a011cd2557a1a3f0b4be83d817c4addc9b`; publication year not verified. [Source](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/subsys/net/lib/dhcpv4/Kconfig), accessed 24 October 2026.
 
 **Cited by:** [WIFI operation parameters](../Development/system/design/WIFI/parameters.md), four-address default and consecutive DHCP lease pool; target behavior remains unverified.
+
+<a id="nico_provisioning_decisions_20261104"></a>
+### nico_provisioning_decisions_20261104
+
+Nico. *Provisioning deployment-file decisions*. Personal communication, T3 Code, 4 November 2026: one TOML file per server deployment with the certificate embedded as PEM, versioned in the repository, and one flash command that validates, builds and writes the image. [Conversation](t3-thread://v2/d5e44f69-2ecc-4a3e-917b-31a7b084c12b/b0a0170f-70da-43f5-89a6-38c67da80e40), accessed 4 November 2026. Project decisions, not measurements.
+
+**Cited by:** [Provisioning architecture](../Development/system/architecture/system/provisioning.md), deployment file, format, location and flash command.
+
+<a id="ietf_service_identity_9525_2023"></a>
+### ietf_service_identity_9525_2023
+
+Peter Saint-Andre and Rich Salz. *Service Identity in TLS*. IETF RFC 9525, November 2023, sections 4 and 6. DOI [10.17487/RFC9525](https://doi.org/10.17487/RFC9525). <https://www.rfc-editor.org/rfc/rfc9525>. Accessed 4 November 2026.
+
+**Cited by:** [Provisioning architecture](../Development/system/architecture/system/provisioning.md), identity check without Common Name fallback.
