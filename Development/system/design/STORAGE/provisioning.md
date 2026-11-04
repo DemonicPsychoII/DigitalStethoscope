@@ -8,7 +8,7 @@ Nico decided on 4 November 2026 that one TOML file per server deployment, with t
 
 ## Deployment file
 
-Each server deployment has one file `Development/system/coding/provisioning/<deployment>.toml`. The name uses lowercase letters, digits and hyphens, for example `lab-hapi.toml`, and is the image name. The folder's README lists every deployment with its server and owner. A server change is a reviewed change of this file; no other input exists.
+Each server deployment has one file `Development/system/coding/provisioning/<deployment>.toml`. The name uses lowercase letters, digits and hyphens, for example `lab-hapi.toml`, and is the image name. The folder's README lists every deployment with its server and owner. A server change is a reviewed change of this file; no other input exists. The repository is public, so only test deployments are committed: no production endpoint and no credentials. A real deployment keeps its file with that deployment and uses the same tool.
 
 The file follows TOML v1.0.0 [2]. The tool reads it with Python's standard `tomllib` module [3] in the pinned toolchain environment, so no extra dependency is needed for parsing. Format 1:
 
@@ -35,6 +35,8 @@ MIID...
 -----END CERTIFICATE-----
 """
 ```
+
+A lab deployment names the server host by its IPv4 address on the network of the day. Before each test the address is read again; if it changed, the server certificate is reissued with that address in its Subject Alternative Names, the file is updated and the image is flashed again. A host name avoids this only where the network's DNS resolves it, which the phone hotspot does not.
 
 ### Canonical base URL
 
@@ -63,7 +65,7 @@ The image keeps format version 1 of the [flash layout](interfaces-and-behavior.m
 | Certificate length and certificate | `server.certificate` with LF line endings and one final newline. |
 | CRC-32 | Computed by the tool over all preceding bytes. |
 
-The tool rejects an image larger than the partition. It takes the partition offset and size from the `provisioning_partition` node of the firmware build's final devicetree (`<build>/zephyr/zephyr.dts`), so no offset is written twice. A build without that node is rejected.
+The tool rejects an image larger than the provisioning area. It takes the area's start and size from the `provisioning_partition` node of the firmware build's final devicetree (`<build>/zephyr/zephyr.dts`), so no offset is written twice. A build without that node is rejected.
 
 ## Commands
 
@@ -93,7 +95,7 @@ Boot reads and validates the image once, as the [flash layout](interfaces-and-be
 | P28-FILE | TOML v1.0.0 deployment file, format 1, at `Development/system/coding/provisioning/<deployment>.toml` |
 | P28-LIMITS | Canonical base URL at most 256 bytes; certificate at most 8,192 bytes; keep-alive 6 to 4,294,967,295 seconds |
 | P28-IMAGE | Image format version 1 of the flash layout; IEEE CRC-32 |
-| P28-PARTITION | `provisioning_partition`; offset and size read from the build devicetree, currently `0xE00000` and 2 MB |
+| P28-PARTITION | Provisioning area starting at `0xE00000`; the image occupies at most about 8.5 KB from that start; start and size come from the `provisioning_partition` node of the build devicetree |
 
 ## Verification allocation
 
@@ -106,7 +108,7 @@ These scenarios allocate future verification; they do not add a generated test b
 | Certificate not self-issued, without matching Subject Alternative Name, or with a DNS entry for an IPv4 host | REQ-11; VT-08 | Rejected by the tool; an image forced onto a device yields an invalid configuration at boot (missing or wrong-type SAN) or a failed verification at the handshake (not self-issued). |
 | Certificate expired or not yet valid | REQ-11; VT-08 | Rejected by the tool on the PC's date; on the device a valid image is accepted at boot and the setup fails its validity check after time synchronization, without a handshake. |
 | Private key or other PEM label in the file | VT-11 | Rejected; nothing written. |
-| Image larger than the partition, or build without the partition node | REQ-11; VT-08 | Rejected before writing. |
+| Image larger than the provisioning area, or build without the partition node | REQ-11; VT-08 | Rejected before writing. |
 | Flash command on a device | REQ-11/REQ-12; VT-08 | Only the provisioning range changes; saved network and firmware remain. |
 | Missing or corrupted image at boot | REQ-11/REQ-13; VT-08/VT-09 | Secure transport unavailable with a configuration cause; Wi-Fi and offline listening unaffected. |
 
