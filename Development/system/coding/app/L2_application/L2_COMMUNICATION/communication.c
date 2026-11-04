@@ -76,11 +76,14 @@
 #define COMMUNICATION_WORK_DHCP                 BIT(3) /**< DHCP server running. */
 #define COMMUNICATION_WORK_HOTSPOT              BIT(4) /**< Hotspot open. */
 #define COMMUNICATION_WORK_TIME_SYNCHRONIZATION BIT(5) /**< Time synchronization accepted and not yet released. */
+#define COMMUNICATION_WORK_SECURE_CONNECTION    BIT(6) /**< Secure connection accepted and not yet released; a retained connection is not work. */
 
 #define COMMUNICATION_PUBLIC_NTP_SERVER                    "pool.ntp.org"   /**< Public NTP server for time synchronization. */
 #define COMMUNICATION_TIME_UNCERTAINTY_BUDGET_MICROSECONDS (100000)         /**< P25-UNCERTAINTY-BUDGET: largest accepted SNTP uncertainty. */
 #define COMMUNICATION_TIME_MAPPING_LIMIT_MICROSECONDS      (45000000000ULL) /**< P25-MAPPING: 12.5 h = (1 s - 100 ms) / 20 ppm between anchor and measurement end. */
 #define COMMUNICATION_JOIN_TIME_SYNCHRONIZATION_TIMEOUT_S  (5)              /**< One standalone SNTP exchange after a join, beginning before DNS. */
+#define COMMUNICATION_SECURE_PREPARATION_TIMEOUT_S         (10)             /**< P26-ATTEMPT: SNTP, DNS, TCP, TLS and verification during Idle preparation. */
+#define COMMUNICATION_SECURE_RETRY_DELAY_S                 (60)             /**< P26-RETRY: gap after a failed or interrupted issued preparation. */
 
 #define COMMUNICATION_DEVICE_KEEP_ALIVE_MARGIN_S (5) /**< P26-KEEPALIVE: the device closes an idle connection this long before the server. */
 
@@ -145,6 +148,7 @@ struct communication_work
 /** Work in the order it is stopped: network work first, then the setup services. */
 static const struct communication_work communication_WorkList[] = {
     {COMMUNICATION_WORK_TIME_SYNCHRONIZATION, wifi_cancelTimeSynchronization, "Time synchronization"},
+    {COMMUNICATION_WORK_SECURE_CONNECTION, wifi_cancelSecureConnection, "Secure connection"},
     {COMMUNICATION_WORK_SCAN, wifi_cancelScan, "Scan"},
     {COMMUNICATION_WORK_CONNECTION, wifi_disconnect, "Connect request"},
     {COMMUNICATION_WORK_PORTAL, portal_stop, "Setup page"},
@@ -188,6 +192,12 @@ static bool communication_AppliedTimeAnchorIsValid;                        /**< 
 
 static struct storage_provisioning communication_Provisioning EXT_RAM_BSS_ATTR; /**< Boot copy of the provisioning image, in PSRAM. */
 static enum communication_provisioning_state communication_ProvisioningState;   /**< Boot result; secure transport requires PROVISIONED. */
+static bool communication_SecureServerIsConfigured;                             /**< A valid provisioning image was registered at boot. */
+static bool communication_TransportIsVerified;                                  /**< The last handshake verified the server with the clock of its own setup. */
+static bool communication_SecureConnectionIsRetained;                           /**< A verified connection stays open as a reuse candidate. */
+static k_timepoint_t communication_SecureConnectionIdleDeadline;                /**< The retained connection is closed at this time. */
+static k_timepoint_t communication_NextPreparationTime;                         /**< No Idle preparation before this time after a failed or interrupted attempt. */
+static bool communication_ServerConnectionFailureIsLatched;                     /**< SERVER_CONNECTION_FAILURE latched in the current unavailable episode. */
 
 /***********************************************************************/
 /* LOCAL FUNCTION PROTOTYPES                                           */
@@ -235,12 +245,43 @@ static void communication_recoverConnection(void);
 static int communication_synchronizeTime(k_timepoint_t deadline);
 
 /**
+ * @brief Prepare a verified secure connection under CONTROL's network lease.
+ * @param[in] deadline Enclosing Idle or delivery setup deadline, shared with SNTP.
+ * @return 0 only with a verified connection, or a negative error code.
+ */
+static int communication_prepareSecureConnection(k_timepoint_t deadline);
+
+/**
+ * @brief Run one secure connection inside the enclosing setup and wait for it.
+ * @param[in]  deadline Enclosing setup deadline.
+ * @param[out] cause    Failure cause from WIFI.
+ * @return 0 with a verified connection, -ECANCELED if listening started, or a negative error code.
+ */
+static int communication_connectSecurely(k_timepoint_t deadline, enum wifi_secure_connection_cause *cause);
+
+/**
  * @brief Synchronize the clock once after the station joined at boot or through setup.
  *
- * Interim placement: design #104 runs the exchange inside TLS setup, before each ClientHello.
- * Until that caller exists, this keeps the clock set; move the call there with TLS preparation.
+ * Kept besides the secure connection setup, whose own exchange #104 requires, so the
+ * clock is also set without a provisioned server.
  */
 static void communication_synchronizeTimeAfterJoin(void);
+
+/** @brief Prepare the secure connection in Idle when due: one ten-second setup, then readiness or the retry gap. */
+static void communication_prepareTransportInIdle(void);
+
+/** @brief Close the retained connection once its idle time reaches the device keep-alive timeout. */
+static void communication_closeIdleSecureConnection(void);
+
+/**
+ * @brief Time until the next Idle transport duty.
+ * @param[in] limit Longest wait the caller allows.
+ * @return The shorter of @p limit and the time to the next preparation or keep-alive close.
+ */
+static k_timeout_t communication_timeUntilTransportDuty(k_timeout_t limit);
+
+/** @brief Latch WIFI_CLEANUP_FAILURE: network work stays disabled until restart; audio may still start. */
+static void communication_latchCleanupFault(void);
 
 /**
  * @brief Map a measurement-end monotonic timestamp using the retained time anchor.
@@ -606,6 +647,7 @@ static void communication_connectAtBoot(void)
         {
             LOG_INF("Wi-Fi connected");
             communication_synchronizeTimeAfterJoin();
+            communication_prepareTransportInIdle();
         }
         else if(result == -ECANCELED) /**< Start interrupted the network workflow. */
         {
@@ -668,11 +710,14 @@ static void communication_runIdleCycle(void)
     }
     else
     {
-        (void)communication_waitForCondition(COMMUNICATION_WAIT_CONTROL_EVENT, K_SECONDS(COMMUNICATION_CONNECTION_CHECK_INTERVAL_S));
+        (void)communication_waitForCondition(COMMUNICATION_WAIT_CONTROL_EVENT,
+                                             communication_timeUntilTransportDuty(K_SECONDS(COMMUNICATION_CONNECTION_CHECK_INTERVAL_S)));
 
         if(!communication_ListeningIsActive)
         {
             communication_recoverConnection();
+            communication_closeIdleSecureConnection();
+            communication_prepareTransportInIdle();
         }
     }
 }
@@ -703,6 +748,7 @@ static void communication_recoverConnection(void)
         {
             LOG_INF("Wi-Fi connected");
             communication_synchronizeTimeAfterJoin();
+            communication_prepareTransportInIdle();
         }
         else if(result != -ECANCELED) /**< Start interrupted the network workflow. */
         {
@@ -736,6 +782,232 @@ static void communication_recoverConnection(void)
             /* Listening started; RecoveryIsAllowed stays set, so Idle tries again. */
         }
     }
+}
+
+static int communication_prepareSecureConnection(k_timepoint_t deadline)
+{
+    communication_updateListeningState();
+
+    if(communication_CleanupFaultIsLatched)
+    {
+        return -ENETDOWN; /**< Network work is disabled until restart; no attempt issued. */
+    }
+    if(communication_ListeningIsActive)
+    {
+        return -ECANCELED; /**< CONTROL holds the lease for listening; no attempt issued. */
+    }
+    if(!wifi_isConnected())
+    {
+        return -ENOTCONN; /**< Station has no IPv4 address; no attempt issued. */
+    }
+    if(!communication_SecureServerIsConfigured)
+    {
+        return -ENOENT; /**< No valid provisioning image; no attempt issued. */
+    }
+    if(sys_timepoint_expired(deadline))
+    {
+        return -ETIMEDOUT; /**< The containing setup has no budget left; no attempt issued. */
+    }
+
+    /* A new setup must verify the server again before any request. */
+    communication_TransportIsVerified = false;
+
+    if(communication_SecureConnectionIsRetained)
+    {
+        const int closeResult = wifi_closeSecureConnection();
+        if(closeResult != 0)
+        {
+            communication_latchCleanupFault();
+            LOG_ERR("WIFI_CLEANUP_FAILURE; retained secure connection close failed (%d), network disabled until restart", closeResult);
+            return closeResult;
+        }
+        communication_SecureConnectionIsRetained = false;
+    }
+
+    /* The clock comes from this setup's own exchange, never from an older anchor. */
+    int result = communication_synchronizeTime(deadline);
+    if(result != 0)
+    {
+        if(result != -ECANCELED)
+        {
+            LOG_WRN("Server connection: time synchronization failed (%d)", result);
+        }
+        return result;
+    }
+
+    enum wifi_secure_connection_cause cause = WIFI_SECURE_CONNECTION_CAUSE_NONE;
+    result = communication_connectSecurely(deadline, &cause);
+    if(result == 0)
+    {
+        communication_TransportIsVerified = true;
+        communication_SecureConnectionIsRetained = true;
+    }
+    else if(result != -ECANCELED)
+    {
+        LOG_WRN("Server connection: TLS setup failed (%d, cause %d)", result, (int)cause);
+    }
+
+    return result;
+}
+
+static int communication_connectSecurely(k_timepoint_t deadline, enum wifi_secure_connection_cause *cause)
+{
+    int result = wifi_startSecureConnection(deadline);
+    bool isPending = (result == 0);
+    if(isPending)
+    {
+        communication_PendingWork |= COMMUNICATION_WORK_SECURE_CONNECTION;
+    }
+    else
+    {
+        *cause = (result == -ENOENT) ? WIFI_SECURE_CONNECTION_CAUSE_CONFIGURATION : WIFI_SECURE_CONNECTION_CAUSE_NONE;
+    }
+
+    while(isPending)
+    {
+        /* Short waits only let Start be seen; they never extend the containing setup's deadline. */
+        k_timeout_t waitInterval = sys_timepoint_timeout(deadline);
+        if(waitInterval.ticks > K_MSEC(COMMUNICATION_EVENT_CHECK_INTERVAL_MS).ticks)
+        {
+            waitInterval = K_MSEC(COMMUNICATION_EVENT_CHECK_INTERVAL_MS);
+        }
+
+        result = wifi_waitForSecureConnection(cause, waitInterval);
+
+        communication_updateListeningState();
+
+        if(result != -EAGAIN)
+        {
+            /* Terminal completion: L1 has already released the operation's resources. */
+            communication_PendingWork &= ~COMMUNICATION_WORK_SECURE_CONNECTION;
+            isPending = false;
+        }
+        else if(communication_ListeningIsActive || sys_timepoint_expired(deadline))
+        {
+            const bool isInterrupted = communication_ListeningIsActive; /**< Start, not the deadline, ended the attempt. */
+            const int cancelResult = wifi_cancelSecureConnection();
+
+            if(cancelResult != 0)
+            {
+                /* The work stays pending; WIFI keeps Start blocked until release is proven. */
+                communication_latchCleanupFault();
+                LOG_ERR("WIFI_CLEANUP_FAILURE; secure connection cancel failed (%d), network disabled until restart", cancelResult);
+                result = cancelResult;
+            }
+            else
+            {
+                communication_PendingWork &= ~COMMUNICATION_WORK_SECURE_CONNECTION;
+                if(isInterrupted)
+                {
+                    result = -ECANCELED; /**< Start interrupted an issued attempt. */
+                    *cause = WIFI_SECURE_CONNECTION_CAUSE_CANCELLED;
+                }
+                else
+                {
+                    result = -ETIMEDOUT; /**< Not verified within the setup budget. */
+                    *cause = WIFI_SECURE_CONNECTION_CAUSE_TIMEOUT;
+                }
+            }
+            isPending = false;
+        }
+        else
+        {
+            /* Still pending with budget left: wait again. */
+        }
+    }
+
+    return result;
+}
+
+static void communication_prepareTransportInIdle(void)
+{
+    communication_updateListeningState();
+
+    /* Missing prerequisites defer preparation without consuming an attempt. */
+    const bool isAdmitted = communication_SecureServerIsConfigured && wifi_isConnected() && !communication_ListeningIsActive && !communication_CleanupFaultIsLatched;
+    const bool isDue = !communication_TransportIsVerified && sys_timepoint_expired(communication_NextPreparationTime);
+    if(!isAdmitted || !isDue)
+    {
+        return;
+    }
+
+    const int result = communication_prepareSecureConnection(sys_timepoint_calc(K_SECONDS(COMMUNICATION_SECURE_PREPARATION_TIMEOUT_S)));
+
+    if(result == 0)
+    {
+        /* Success ends the unavailable episode; a later failure latches again. */
+        communication_ServerConnectionFailureIsLatched = false;
+        LOG_INF("Server connection verified");
+    }
+    else if(!communication_CleanupFaultIsLatched)
+    {
+        /* Also after Start interrupted the issued attempt: the same gap applies, without an error. */
+        communication_NextPreparationTime = sys_timepoint_calc(K_SECONDS(COMMUNICATION_SECURE_RETRY_DELAY_S));
+
+        if((result != -ECANCELED) && !communication_ServerConnectionFailureIsLatched)
+        {
+            communication_ServerConnectionFailureIsLatched = true;
+            LOG_ERR("SERVER_CONNECTION_FAILURE (%d); retry in %d s, offline listening stays available", result, COMMUNICATION_SECURE_RETRY_DELAY_S);
+        }
+    }
+    else
+    {
+        /* WIFI_CLEANUP_FAILURE follows the restart policy, not the TLS recovery. */
+    }
+}
+
+static void communication_closeIdleSecureConnection(void)
+{
+    if(!communication_SecureConnectionIsRetained || communication_ListeningIsActive ||
+       !sys_timepoint_expired(communication_SecureConnectionIdleDeadline))
+    {
+        return;
+    }
+
+    const int result = wifi_closeSecureConnection();
+    if(result == 0)
+    {
+        /* Verification stays: the next use opens a new setup instead of a reconnect loop in Idle. */
+        communication_SecureConnectionIsRetained = false;
+    }
+    else
+    {
+        communication_latchCleanupFault();
+        LOG_ERR("WIFI_CLEANUP_FAILURE; idle secure connection close failed (%d), network disabled until restart", result);
+    }
+}
+
+static k_timeout_t communication_timeUntilTransportDuty(k_timeout_t limit)
+{
+    k_timeout_t timeout = limit;
+
+    if(communication_SecureConnectionIsRetained)
+    {
+        const k_timeout_t untilClose = sys_timepoint_timeout(communication_SecureConnectionIdleDeadline);
+        if(untilClose.ticks < timeout.ticks)
+        {
+            timeout = untilClose;
+        }
+    }
+
+    /* Only while preparation could run; otherwise an expired retry time would wake the thread at once, again and again. */
+    if(communication_SecureServerIsConfigured && !communication_TransportIsVerified && wifi_isConnected())
+    {
+        const k_timeout_t untilPreparation = sys_timepoint_timeout(communication_NextPreparationTime);
+        if(untilPreparation.ticks < timeout.ticks)
+        {
+            timeout = untilPreparation;
+        }
+    }
+
+    return timeout;
+}
+
+static void communication_latchCleanupFault(void)
+{
+    communication_CleanupFaultIsLatched = true;
+    communication_RecoveryIsAllowed = false;
+    communication_BootJoinIsPending = false;
 }
 
 static int communication_synchronizeTime(k_timepoint_t deadline)
@@ -800,9 +1072,7 @@ static int communication_synchronizeTime(k_timepoint_t deadline)
                 if(cancelResult != 0)
                 {
                     /* The work stays pending and the hostname borrowed; it is a string literal, so it outlives the fault. */
-                    communication_CleanupFaultIsLatched = true;
-                    communication_RecoveryIsAllowed = false;
-                    communication_BootJoinIsPending = false;
+                    communication_latchCleanupFault();
                     LOG_ERR("WIFI_CLEANUP_FAILURE; time synchronization cancel failed (%d), network disabled until restart", cancelResult);
                     result = cancelResult;
                 }
@@ -1101,9 +1371,7 @@ static bool communication_stopWiFiWork(void)
     }
     if(communication_PendingWork != 0U)
     {
-        communication_CleanupFaultIsLatched = true;
-        communication_RecoveryIsAllowed = false;
-        communication_BootJoinIsPending = false;
+        communication_latchCleanupFault();
         LOG_ERR("WIFI_CLEANUP_FAILURE; pending services 0x%x, network disabled until restart", communication_PendingWork);
     }
     /* REQ-13 permits audio after a latched Wi-Fi-only fault, without claiming radio shutdown. */
@@ -1276,10 +1544,11 @@ static void communication_runSetup(void)
 
         communication_closeSetup(outcome, error);
 
-        /* After closing, so the exchange no longer shares the radio with the setup hotspot. */
+        /* After closing, so the preparation no longer shares the radio with the setup hotspot. */
         if(outcome == COMMUNICATION_SETUP_CONNECTED)
         {
             communication_synchronizeTimeAfterJoin();
+            communication_prepareTransportInIdle();
         }
     }
     else
