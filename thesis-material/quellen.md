@@ -1917,7 +1917,7 @@ Nico. *Flash layout decision*. Personal communication, T3 Code, 4 November 2026.
 
 **Source type:** Project decision. No claim of implementation, measurement or standards conformity.
 
-**Cited by:** [STORAGE flash layout](../Development/system/design/STORAGE/interfaces-and-behavior.md#flash-layout), [decision record 2 November 2026](../Development/system/planning/mvp-decisions-2026-11-02.md).
+**Cited by:** [STORAGE flash layout](../Development/system/design/STORAGE/interfaces-and-behavior.md#flash-layout), [decision record 2 November 2026](../Development/system/planning/mvp-decisions-2026-11-02.md), [provisioning design](../Development/system/design/STORAGE/provisioning.md).
 
 <a id="zephyr_zms_sizing_357467a"></a>
 ### zephyr_zms_sizing_357467a

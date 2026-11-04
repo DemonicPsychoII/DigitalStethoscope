@@ -2,7 +2,7 @@
 
 ## Basis
 
-This Design-stage contract refines the [provisioning architecture](https://github.com/DemonicPsychoII/DigitalStethoscope/pull/108) at `f3e51eea104c30ea45697ce4d9d1c6ca2d2790bb` and the [flash layout and image format](interfaces-and-behavior.md#flash-layout) of the design review at `5c78b628fb0414a9adee76265a2cd684ab64880b`. It covers REQ-09, REQ-11 and REQ-13; verification uses VT-08, VT-09 and VT-11. No firmware, tool or generated tests change here.
+This Design-stage contract refines the [provisioning architecture](https://github.com/DemonicPsychoII/DigitalStethoscope/pull/108) at `29f0e8f4b73e2491430c9f633d62e39026f2863e` and the [flash layout and image format](interfaces-and-behavior.md#flash-layout) at `fb2c979760f562bcb371a1c13cbb2ded7b3f0821`, which applies the design review of 2 November 2026 and the flash layout decision of 4 November 2026 [8]. It covers REQ-09, REQ-11 and REQ-13; verification uses VT-08, VT-09 and VT-11. No firmware, tool or generated tests change here.
 
 Nico decided on 4 November 2026 that one TOML file per server deployment, with the certificate embedded as PEM text and versioned in the repository, is the only input, and that one flash command validates, builds and writes the image [1]. The image format of the design review stays unchanged; the deployment file is a host-side input only.
 
@@ -95,7 +95,7 @@ Boot reads and validates the image once, as the [flash layout](interfaces-and-be
 | P28-FILE | TOML v1.0.0 deployment file, format 1, at `Development/system/coding/provisioning/<deployment>.toml` |
 | P28-LIMITS | Canonical base URL at most 256 bytes; certificate at most 8,192 bytes; keep-alive 6 to 4,294,967,295 seconds |
 | P28-IMAGE | Image format version 1 of the flash layout; IEEE CRC-32 |
-| P28-PARTITION | Provisioning area starting at `0xE00000`; the image occupies at most about 8.5 KB from that start; start and size come from the `provisioning_partition` node of the build devicetree |
+| P28-PARTITION | Provisioning area with the fixed start `0xF00000` and 192 KiB, independent of the settings size (project decision [8]); the image occupies at most 8,465 bytes from that start; the tool takes start and size from the `provisioning_partition` node of the build devicetree |
 
 ## Verification allocation
 
@@ -127,3 +127,5 @@ These scenarios allocate future verification; they do not add a generated test b
 [6] Peter Saint-Andre and Rich Salz, *Service Identity in TLS*, IETF RFC 9525, November 2023, sections 4 and 6, DOI [10.17487/RFC9525](https://doi.org/10.17487/RFC9525), accessed 4 November 2026. [Source register](../../../../thesis-material/quellen.md#ietf_service_identity_9525_2023).
 
 [7] Espressif Systems, *esptool: Basic Commands (ESP32-S3)*, esptool documentation, latest; online revision and publication year not stated, <https://docs.espressif.com/projects/esptool/en/latest/esp32s3/esptool/basic-commands.html>, accessed 4 November 2026. [Source register](../../../../thesis-material/quellen.md#espressif_esptool_basic_commands).
+
+[8] Nico, *Flash layout decision*, personal communication, T3 Code, 4 November 2026. [Source register](../../../../thesis-material/quellen.md#nico_flash_layout_decision_20261104). Project decision, not a measurement.
