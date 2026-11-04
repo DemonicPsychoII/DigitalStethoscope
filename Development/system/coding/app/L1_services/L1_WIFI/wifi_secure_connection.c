@@ -28,14 +28,18 @@
 
 #include <errno.h>
 #include <string.h>
+#include <strings.h>
+#include <time.h>
 
 #include <esp_attr.h>
 #include <mbedtls/ssl.h>
+#include <mbedtls/x509_crt.h>
 #include <psa/crypto.h>
 
 #include <zephyr/logging/log.h>
 #include <zephyr/net/net_ip.h>
 #include <zephyr/net/socket.h>
+#include <zephyr/sys/timeutil.h>
 
 /***********************************************************************/
 /* DEFINES                                                             */
@@ -94,6 +98,8 @@ static char wifi_SecureHost[WIFI_SECURE_HOST_MAX_LENGTH + 1]; /**< Reference ide
 static uint16_t wifi_SecurePort;
 static bool wifi_SecureHostIsAddress;                 /**< wifi_SecureHost is an IPv4 literal. */
 static struct net_sockaddr_in wifi_SecureHostAddress; /**< Parsed literal when wifi_SecureHostIsAddress. */
+static struct wifi_secure_server wifi_SecureServer;
+static mbedtls_x509_crt wifi_TrustedCertificate EXT_RAM_BSS_ATTR;    /**< The provisioned certificate, the only trust anchor. */
 static mbedtls_ssl_config wifi_SecureConfiguration EXT_RAM_BSS_ATTR; /**< Client, TLS 1.3 only, verification required. */
 
 /* Owned by the worker during an operation, then by the retained connection. */
@@ -142,6 +148,15 @@ static int wifi_sendSecureData(void *context, const unsigned char *data, size_t 
 /** @brief mbedTLS receive callback over the non-blocking socket. */
 static int wifi_receiveSecureData(void *context, unsigned char *data, size_t length);
 
+/** @brief Split https://host:port/path into host and port. */
+static int wifi_parseBaseUrl(const char *baseUrl);
+
+/** @brief Require a DNS or IP Subject Alternative Name that matches the host. */
+static int wifi_checkSubjectAlternativeName(const mbedtls_x509_crt *certificate);
+
+/** @brief Convert an X.509 time to UTC seconds. */
+static int64_t wifi_convertCertificateTime(const mbedtls_x509_time *time);
+
 /***********************************************************************/
 /* MACROS                                                              */
 /***********************************************************************/
@@ -163,16 +178,42 @@ int wifi_configureSecureServer(const char *baseUrl, const char *certificate, siz
         return -EALREADY; /**< The image is validated once at boot. */
     }
 
+    int result = wifi_parseBaseUrl(baseUrl);
+    if(result != 0)
+    {
+        LOG_WRN("Provisioned base URL unusable (%d)", result);
+        return result;
+    }
+
     /* PSA must be ready before parsing keys; repeated initialization is harmless. */
     if(psa_crypto_init() != PSA_SUCCESS)
     {
         return -EIO; /**< Crypto subsystem unavailable. */
     }
 
-    mbedtls_ssl_config_init(&wifi_SecureConfiguration);
-    int result = mbedtls_ssl_config_defaults(&wifi_SecureConfiguration, MBEDTLS_SSL_IS_CLIENT, MBEDTLS_SSL_TRANSPORT_STREAM, MBEDTLS_SSL_PRESET_DEFAULT);
+    mbedtls_x509_crt_init(&wifi_TrustedCertificate);
+    /* Parsing copies the certificate, so the caller's buffer is not borrowed. */
+    result = mbedtls_x509_crt_parse(&wifi_TrustedCertificate, (const unsigned char *)certificate, certificateLength);
+    if((result != 0) || (wifi_TrustedCertificate.next != NULL))
+    {
+        LOG_WRN("Provisioned certificate unusable (-0x%04x)", (unsigned int)-result);
+        mbedtls_x509_crt_free(&wifi_TrustedCertificate);
+        return -EBADMSG; /**< Not exactly one parsable certificate. */
+    }
+
+    result = wifi_checkSubjectAlternativeName(&wifi_TrustedCertificate);
     if(result != 0)
     {
+        LOG_WRN("Provisioned certificate has no Subject Alternative Name for %s", wifi_SecureHost);
+        mbedtls_x509_crt_free(&wifi_TrustedCertificate);
+        return result;
+    }
+
+    mbedtls_ssl_config_init(&wifi_SecureConfiguration);
+    result = mbedtls_ssl_config_defaults(&wifi_SecureConfiguration, MBEDTLS_SSL_IS_CLIENT, MBEDTLS_SSL_TRANSPORT_STREAM, MBEDTLS_SSL_PRESET_DEFAULT);
+    if(result != 0)
+    {
+        mbedtls_x509_crt_free(&wifi_TrustedCertificate);
         mbedtls_ssl_config_free(&wifi_SecureConfiguration);
         return -ENOMEM; /**< mbedTLS could not set up its configuration. */
     }
@@ -180,6 +221,11 @@ int wifi_configureSecureServer(const char *baseUrl, const char *certificate, siz
     mbedtls_ssl_conf_min_tls_version(&wifi_SecureConfiguration, MBEDTLS_SSL_VERSION_TLS1_3);
     mbedtls_ssl_conf_max_tls_version(&wifi_SecureConfiguration, MBEDTLS_SSL_VERSION_TLS1_3);
     mbedtls_ssl_conf_authmode(&wifi_SecureConfiguration, MBEDTLS_SSL_VERIFY_REQUIRED);
+    mbedtls_ssl_conf_ca_chain(&wifi_SecureConfiguration, &wifi_TrustedCertificate, NULL);
+
+    wifi_SecureServer.validFromUtcSeconds = wifi_convertCertificateTime(&wifi_TrustedCertificate.valid_from);
+    wifi_SecureServer.validUntilUtcSeconds = wifi_convertCertificateTime(&wifi_TrustedCertificate.valid_to);
+    *server = wifi_SecureServer;
 
     const struct k_work_queue_config queueConfiguration = {
         .name = "wifi_secure_connection",
@@ -663,6 +709,109 @@ static int wifi_receiveSecureData(void *context, unsigned char *data, size_t len
         return MBEDTLS_ERR_SSL_CONN_EOF;
     }
     return ((errno == EAGAIN) || (errno == EWOULDBLOCK)) ? MBEDTLS_ERR_SSL_WANT_READ : MBEDTLS_ERR_SSL_INTERNAL_ERROR;
+}
+
+static int wifi_parseBaseUrl(const char *baseUrl)
+{
+    static const char scheme[] = "https://";
+    if(strncmp(baseUrl, scheme, sizeof(scheme) - 1U) != 0)
+    {
+        return -EINVAL; /**< Only HTTPS; no plain-HTTP fallback. */
+    }
+
+    const char *host = baseUrl + (sizeof(scheme) - 1U);
+    if(*host == '[')
+    {
+        return -EINVAL; /**< IPv6 literals are outside this version; the station resolves IPv4. */
+    }
+
+    const char *hostEnd = host;
+    while((*hostEnd != '\0') && (*hostEnd != ':') && (*hostEnd != '/'))
+    {
+        hostEnd++;
+    }
+    const size_t hostLength = (size_t)(hostEnd - host);
+    if((hostLength == 0U) || (hostLength > WIFI_SECURE_HOST_MAX_LENGTH))
+    {
+        return -EINVAL; /**< Missing or overlong host. */
+    }
+
+    uint32_t port = WIFI_SECURE_DEFAULT_PORT;
+    if(*hostEnd == ':')
+    {
+        port = 0U;
+        const char *digit = hostEnd + 1;
+        while((*digit >= '0') && (*digit <= '9') && (port <= 65535U))
+        {
+            port = (port * 10U) + (uint32_t)(*digit - '0');
+            digit++;
+        }
+        if((digit == hostEnd + 1) || (port == 0U) || (port > 65535U) || ((*digit != '\0') && (*digit != '/')))
+        {
+            return -EINVAL; /**< Invalid port. */
+        }
+    }
+
+    (void)memcpy(wifi_SecureHost, host, hostLength);
+    wifi_SecureHost[hostLength] = '\0';
+    wifi_SecurePort = (uint16_t)port;
+
+    struct net_in_addr literal = {0};
+    wifi_SecureHostIsAddress = (net_addr_pton(NET_AF_INET, wifi_SecureHost, &literal) == 0);
+    if(wifi_SecureHostIsAddress)
+    {
+        wifi_SecureHostAddress = (struct net_sockaddr_in){.sin_family = NET_AF_INET, .sin_addr = literal};
+    }
+
+    return 0;
+}
+
+static int wifi_checkSubjectAlternativeName(const mbedtls_x509_crt *certificate)
+{
+    /* Without a SAN extension mbedTLS falls back to the Common Name, which RFC 9525 and the design exclude. */
+    if(mbedtls_x509_crt_has_ext_type(certificate, MBEDTLS_X509_EXT_SUBJECT_ALT_NAME) == 0)
+    {
+        return -EBADMSG; /**< No Subject Alternative Name. */
+    }
+
+    const size_t hostLength = strlen(wifi_SecureHost);
+    bool isMatched = false;
+
+    for(const mbedtls_x509_sequence *entry = &certificate->subject_alt_names; (entry != NULL) && !isMatched; entry = entry->next)
+    {
+        mbedtls_x509_subject_alternative_name name;
+        if(mbedtls_x509_parse_subject_alt_name(&entry->buf, &name) != 0)
+        {
+            continue;
+        }
+
+        const mbedtls_x509_buf *value = &name.san.unstructured_name;
+        if((name.type == MBEDTLS_X509_SAN_DNS_NAME) && !wifi_SecureHostIsAddress && (value->len == hostLength))
+        {
+            /* Exact match only; wildcard names are left to mbedTLS's own check of the peer. */
+            isMatched = (strncasecmp((const char *)value->p, wifi_SecureHost, hostLength) == 0);
+        }
+        else if((name.type == MBEDTLS_X509_SAN_IP_ADDRESS) && wifi_SecureHostIsAddress && (value->len == sizeof(wifi_SecureHostAddress.sin_addr.s4_addr)))
+        {
+            isMatched = (memcmp(value->p, wifi_SecureHostAddress.sin_addr.s4_addr, value->len) == 0);
+        }
+        mbedtls_x509_free_subject_alt_name(&name);
+    }
+
+    return isMatched ? 0 : -EBADMSG; /**< No SAN matches the configured host. */
+}
+
+static int64_t wifi_convertCertificateTime(const mbedtls_x509_time *time)
+{
+    struct tm calendar = {
+        .tm_year = time->year - 1900,
+        .tm_mon = time->mon - 1,
+        .tm_mday = time->day,
+        .tm_hour = time->hour,
+        .tm_min = time->min,
+        .tm_sec = time->sec,
+    };
+    return timeutil_timegm64(&calendar);
 }
 
 /** @} */
