@@ -54,6 +54,11 @@ limit. These are project decisions, not measurements or standards conformity.
 8. **Flash layout.** The [STORAGE design](../design/STORAGE/interfaces-and-behavior.md#flash-layout) uses the whole 16 MB with only the
    partitions in use: the provisioning image in the last 2 MB, settings directly in front of it and the
    application in all remaining flash. Offsets follow from the sizes.
+
+   *Note of 4 November 2026:* Nico's flash layout decision of 4 November 2026 [5] supersedes this
+   placement. Settings start at `0xE80000` and provisioning at `0xF00000`, each with its own size and
+   growth room, so a size change of one partition never moves the other. The
+   [STORAGE design](../design/STORAGE/interfaces-and-behavior.md#flash-layout) holds the current layout.
 9. **Newest examination request wins.** A new pending request replaces an older pending one. A request
    that arrives while a session context is frozen stays pending for the next examination.
 10. **Timing derivation.** Every timing parameter is derived from a measured typical duration and a stated
@@ -146,3 +151,6 @@ accessed 2 November 2026.
 
 [4] Health Level Seven International, *FHIR R4 Security*, version 4.0.1, 2019, section 6.1.0, time keeping,
 <https://hl7.org/fhir/R4/security.html>, accessed 2 November 2026.
+
+[5] Nico, *Flash layout decision*, personal communication, T3 Code, 4 November 2026. Project decision,
+not a measurement. [Source register](../../../thesis-material/quellen.md#nico_flash_layout_decision_20261104).
