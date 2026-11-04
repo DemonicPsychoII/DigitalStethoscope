@@ -288,6 +288,9 @@ static k_timeout_t communication_timeUntilTransportDuty(k_timeout_t limit);
 /** @brief Latch WIFI_CLEANUP_FAILURE: network work stays disabled until restart; audio may still start. */
 static void communication_latchCleanupFault(void);
 
+/** @brief Monotonic time since the retained clock anchor was applied, in microseconds. */
+static uint64_t communication_getAnchorAgeMicroseconds(void);
+
 /**
  * @brief Map a measurement-end monotonic timestamp using the retained time anchor.
  * @param[in] measurementEndMonotonicMicroseconds Measurement-end kernel timestamp.
@@ -854,6 +857,17 @@ static int communication_prepareSecureConnection(k_timepoint_t deadline)
         return result;
     }
 
+    /* Against this setup's fresh clock, before the ClientHello; mbedTLS checks the peer's dates again during the handshake. */
+    const int64_t utcSeconds = (int64_t)(communication_AppliedTimeAnchor.utc_seconds + (communication_getAnchorAgeMicroseconds() / USEC_PER_SEC));
+    if((utcSeconds < communication_SecureServer.validFromUtcSeconds) || (utcSeconds > communication_SecureServer.validUntilUtcSeconds))
+    {
+        LOG_WRN("Server connection: certificate not valid at UTC %lld s, valid from %lld s until %lld s",
+                (long long)utcSeconds,
+                (long long)communication_SecureServer.validFromUtcSeconds,
+                (long long)communication_SecureServer.validUntilUtcSeconds);
+        return -EACCES; /**< Certificate not valid at the prepared UTC time; no ClientHello sent. */
+    }
+
     enum wifi_secure_connection_cause cause = WIFI_SECURE_CONNECTION_CAUSE_NONE;
     result = communication_connectSecurely(deadline, &cause);
     if(result == 0)
@@ -864,7 +878,7 @@ static int communication_prepareSecureConnection(k_timepoint_t deadline)
         /* P26-KEEPALIVE; boot admits only server values above the margin. */
         const uint64_t keepAliveMicroseconds = (uint64_t)(communication_Provisioning.serverKeepAliveSeconds - COMMUNICATION_DEVICE_KEEP_ALIVE_MARGIN_S) * USEC_PER_SEC;
         /* P25-MAPPING: delivery reuses the connection only while the anchor of its handshake qualifies, so keep it no longer. */
-        const uint64_t anchorAgeMicroseconds = k_ticks_to_us_floor64((uint64_t)k_uptime_ticks()) - communication_AppliedTimeAnchor.applied_monotonic_microseconds;
+        const uint64_t anchorAgeMicroseconds = communication_getAnchorAgeMicroseconds();
         const uint64_t anchorRemainingMicroseconds = (anchorAgeMicroseconds < COMMUNICATION_TIME_MAPPING_LIMIT_MICROSECONDS) ? (COMMUNICATION_TIME_MAPPING_LIMIT_MICROSECONDS - anchorAgeMicroseconds) : 0U;
         const uint64_t retainMicroseconds = (keepAliveMicroseconds < anchorRemainingMicroseconds) ? keepAliveMicroseconds : anchorRemainingMicroseconds;
         communication_SecureConnectionIdleDeadline = sys_timepoint_calc(K_MSEC((int64_t)(retainMicroseconds / USEC_PER_MSEC)));
@@ -1028,6 +1042,11 @@ static k_timeout_t communication_timeUntilTransportDuty(k_timeout_t limit)
     }
 
     return timeout;
+}
+
+static uint64_t communication_getAnchorAgeMicroseconds(void)
+{
+    return k_ticks_to_us_floor64((uint64_t)k_uptime_ticks()) - communication_AppliedTimeAnchor.applied_monotonic_microseconds;
 }
 
 static void communication_latchCleanupFault(void)
