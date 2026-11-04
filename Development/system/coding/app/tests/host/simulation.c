@@ -204,6 +204,17 @@ k_timeout_t sys_timepoint_timeout(k_timepoint_t deadline)
     return selectedValue;
 }
 
+/* One tick is one simulated millisecond, as for the timeouts above. */
+int64_t k_uptime_ticks(void)
+{
+    return time_milliseconds;
+}
+
+uint64_t k_ticks_to_us_floor64(uint64_t ticks)
+{
+    return ticks * USEC_PER_MSEC;
+}
+
 int k_sem_take(struct k_sem *semaphore, k_timeout_t timeout)
 {
     int64_t deadline;

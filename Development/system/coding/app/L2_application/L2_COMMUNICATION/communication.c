@@ -23,6 +23,11 @@
  *   - If a scan fails 4 times, setup closes with the cause.
  * - Idle: a 2 s hold runs setup. Every 2 min, check the link. If it is
  *   lost, join again (4 attempts) and run setup if all attempts fail.
+ *   With a provisioned server, prepare a verified TLS connection: one
+ *   ten-second setup beginning with SNTP, then 60 s after a failure
+ *   (design/COMMUNICATION/secure-transport.md). The retained connection is
+ *   closed after the server keep-alive minus 5 s, or once its clock anchor
+ *   no longer qualifies.
  * - Listening: no Wi-Fi work, but a connected station stays connected.
  *   All waits run in 200 ms intervals, so a Start is seen quickly.
  *
@@ -192,7 +197,7 @@ static bool communication_AppliedTimeAnchorIsValid;                        /**< 
 
 static struct storage_provisioning communication_Provisioning EXT_RAM_BSS_ATTR; /**< Boot copy of the provisioning image, in PSRAM. */
 static enum communication_provisioning_state communication_ProvisioningState;   /**< Boot result; secure transport requires PROVISIONED. */
-static bool communication_SecureServerIsConfigured;                             /**< A valid provisioning image was registered at boot. */
+static struct wifi_secure_server communication_SecureServer;                    /**< Validity of the provisioned certificate, from WIFI at boot. */
 static bool communication_TransportIsVerified;                                  /**< The last handshake verified the server with the clock of its own setup. */
 static bool communication_SecureConnectionIsRetained;                           /**< A verified connection stays open as a reuse candidate. */
 static k_timepoint_t communication_SecureConnectionIdleDeadline;                /**< The retained connection is closed at this time. */
@@ -602,8 +607,22 @@ static void communication_loadProvisioning(void)
     }
     else
     {
-        communication_ProvisioningState = COMMUNICATION_PROVISIONING_PROVISIONED;
-        LOG_INF("Server %s provisioned", communication_Provisioning.baseUrl);
+        /* storage_provisioning counts no NUL; mbedTLS needs it counted to parse PEM. */
+        const int configurationResult = wifi_configureSecureServer(communication_Provisioning.baseUrl,
+                                                                   communication_Provisioning.certificate,
+                                                                   communication_Provisioning.certificateLength + 1U,
+                                                                   &communication_SecureServer);
+        if(configurationResult != 0)
+        {
+            /* No fallback endpoint or certificate: secure transport stays unavailable; offline listening works. */
+            communication_ProvisioningState = COMMUNICATION_PROVISIONING_INVALID_CONFIGURATION;
+            LOG_ERR("Secure transport unavailable: invalid configuration, endpoint or certificate rejected (%d)", configurationResult);
+        }
+        else
+        {
+            communication_ProvisioningState = COMMUNICATION_PROVISIONING_PROVISIONED;
+            LOG_INF("Server %s provisioned", communication_Provisioning.baseUrl);
+        }
     }
 }
 
@@ -800,7 +819,7 @@ static int communication_prepareSecureConnection(k_timepoint_t deadline)
     {
         return -ENOTCONN; /**< Station has no IPv4 address; no attempt issued. */
     }
-    if(!communication_SecureServerIsConfigured)
+    if(communication_ProvisioningState != COMMUNICATION_PROVISIONING_PROVISIONED)
     {
         return -ENOENT; /**< No valid provisioning image; no attempt issued. */
     }
@@ -841,6 +860,14 @@ static int communication_prepareSecureConnection(k_timepoint_t deadline)
     {
         communication_TransportIsVerified = true;
         communication_SecureConnectionIsRetained = true;
+
+        /* P26-KEEPALIVE; boot admits only server values above the margin. */
+        const uint64_t keepAliveMicroseconds = (uint64_t)(communication_Provisioning.serverKeepAliveSeconds - COMMUNICATION_DEVICE_KEEP_ALIVE_MARGIN_S) * USEC_PER_SEC;
+        /* P25-MAPPING: delivery reuses the connection only while the anchor of its handshake qualifies, so keep it no longer. */
+        const uint64_t anchorAgeMicroseconds = k_ticks_to_us_floor64((uint64_t)k_uptime_ticks()) - communication_AppliedTimeAnchor.applied_monotonic_microseconds;
+        const uint64_t anchorRemainingMicroseconds = (anchorAgeMicroseconds < COMMUNICATION_TIME_MAPPING_LIMIT_MICROSECONDS) ? (COMMUNICATION_TIME_MAPPING_LIMIT_MICROSECONDS - anchorAgeMicroseconds) : 0U;
+        const uint64_t retainMicroseconds = (keepAliveMicroseconds < anchorRemainingMicroseconds) ? keepAliveMicroseconds : anchorRemainingMicroseconds;
+        communication_SecureConnectionIdleDeadline = sys_timepoint_calc(K_MSEC((int64_t)(retainMicroseconds / USEC_PER_MSEC)));
     }
     else if(result != -ECANCELED)
     {
@@ -924,7 +951,7 @@ static void communication_prepareTransportInIdle(void)
     communication_updateListeningState();
 
     /* Missing prerequisites defer preparation without consuming an attempt. */
-    const bool isAdmitted = communication_SecureServerIsConfigured && wifi_isConnected() && !communication_ListeningIsActive && !communication_CleanupFaultIsLatched;
+    const bool isAdmitted = (communication_ProvisioningState == COMMUNICATION_PROVISIONING_PROVISIONED) && wifi_isConnected() && !communication_ListeningIsActive && !communication_CleanupFaultIsLatched;
     const bool isDue = !communication_TransportIsVerified && sys_timepoint_expired(communication_NextPreparationTime);
     if(!isAdmitted || !isDue)
     {
@@ -991,7 +1018,7 @@ static k_timeout_t communication_timeUntilTransportDuty(k_timeout_t limit)
     }
 
     /* Only while preparation could run; otherwise an expired retry time would wake the thread at once, again and again. */
-    if(communication_SecureServerIsConfigured && !communication_TransportIsVerified && wifi_isConnected())
+    if((communication_ProvisioningState == COMMUNICATION_PROVISIONING_PROVISIONED) && !communication_TransportIsVerified && wifi_isConnected())
     {
         const k_timeout_t untilPreparation = sys_timepoint_timeout(communication_NextPreparationTime);
         if(untilPreparation.ticks < timeout.ticks)
