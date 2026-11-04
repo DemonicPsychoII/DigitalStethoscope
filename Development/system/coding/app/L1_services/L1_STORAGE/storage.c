@@ -47,6 +47,7 @@
      STORAGE_PROVISIONING_CERTIFICATE_MAX_LENGTH + 4)
 
 BUILD_ASSERT(STORAGE_PROVISIONING_MAX_SIZE <= PARTITION_SIZE(provisioning_partition), "The largest provisioning image must fit its partition");
+BUILD_ASSERT((PARTITION_OFFSET(storage_partition) + PARTITION_SIZE(storage_partition)) <= PARTITION_OFFSET(provisioning_partition), "Settings must end before the provisioning partition starts");
 
 /***********************************************************************/
 /* TYPES                                                               */

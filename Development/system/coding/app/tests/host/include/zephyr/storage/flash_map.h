@@ -6,9 +6,14 @@
 #include <sys/types.h>
 #include <zephyr/sys/util.h>
 
-/* The host model has one erased provisioning partition of the project layout. */
-#define PARTITION_ID(label)   0
-#define PARTITION_SIZE(label) 0x200000
+/* The host model has the settings and provisioning partitions of the project layout; provisioning is erased. */
+#define PARTITION_ID(label)                          0
+#define PARTITION_OFFSET(label)                      HOST_PARTITION_OFFSET_##label
+#define PARTITION_SIZE(label)                        HOST_PARTITION_SIZE_##label
+#define HOST_PARTITION_OFFSET_storage_partition      0xE80000
+#define HOST_PARTITION_SIZE_storage_partition        0x30000
+#define HOST_PARTITION_OFFSET_provisioning_partition 0xF00000
+#define HOST_PARTITION_SIZE_provisioning_partition   0x30000
 
 struct flash_area
 {

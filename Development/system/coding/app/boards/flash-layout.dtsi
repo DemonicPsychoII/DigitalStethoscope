@@ -1,18 +1,20 @@
 /*
- * Project flash layout of the 16 MB module (design/STORAGE/interfaces-and-behavior.md#flash-layout).
- * The provisioning image takes the last 2 MB, settings sit directly in front of it and the
- * application gets everything before the settings. Every offset follows from the three sizes.
+ * Project flash layout of the 16 MB module (Nico, flash layout decision, 4 November 2026):
+ * settings and the provisioning image each have a fixed start and their own size, with
+ * unassigned growth room behind each. The application gets everything before the settings.
+ * storage.c checks that settings end before the provisioning start and that the largest
+ * provisioning image fits.
  *
  * Unit addresses cannot be computed; dtc's unit_address_vs_reg check rejects a node name
- * that no longer matches its derived reg after a size change.
+ * that no longer matches its reg.
  */
 
 #define FLASH_LAYOUT_FLASH_SIZE          DT_SIZE_M(16)
-#define FLASH_LAYOUT_PROVISIONING_SIZE   DT_SIZE_M(2)
+#define FLASH_LAYOUT_SETTINGS_OFFSET     0xE80000
 #define FLASH_LAYOUT_SETTINGS_SIZE       DT_SIZE_K(192)
-#define FLASH_LAYOUT_PROVISIONING_OFFSET (FLASH_LAYOUT_FLASH_SIZE - FLASH_LAYOUT_PROVISIONING_SIZE)
-#define FLASH_LAYOUT_SETTINGS_OFFSET     (FLASH_LAYOUT_PROVISIONING_OFFSET - FLASH_LAYOUT_SETTINGS_SIZE)
-#define FLASH_LAYOUT_APPLICATION_SIZE    FLASH_LAYOUT_SETTINGS_OFFSET
+/* Fixed across firmware versions: a firmware update must still find the image flashed before it. */
+#define FLASH_LAYOUT_PROVISIONING_OFFSET 0xF00000
+#define FLASH_LAYOUT_PROVISIONING_SIZE   DT_SIZE_K(192)
 
 &flash0
 {
@@ -33,10 +35,10 @@
         {
             compatible = "zephyr,mapped-partition";
             label = "application";
-            reg = <0x0 FLASH_LAYOUT_APPLICATION_SIZE>;
+            reg = <0x0 FLASH_LAYOUT_SETTINGS_OFFSET>;
         };
 
-        storage_partition: partition@dd0000
+        storage_partition: partition@e80000
         {
             compatible = "zephyr,mapped-partition";
             label = "storage";
@@ -44,7 +46,7 @@
         };
 
         /* Written only by tools/flash-provisioning.ps1. */
-        provisioning_partition: partition@e00000
+        provisioning_partition: partition@f00000
         {
             compatible = "zephyr,mapped-partition";
             label = "provisioning";
