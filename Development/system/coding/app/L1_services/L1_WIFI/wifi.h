@@ -23,6 +23,7 @@
 
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
 
 #include <zephyr/kernel.h>
 #include <zephyr/net/wifi.h>
@@ -51,6 +52,24 @@ struct wifi_scan_entry
 {
     char name[WIFI_SSID_MAX_LEN + 1]; /**< Network name. */
     bool needsPassword;               /**< True if the network needs a password. */
+};
+
+/** A normalised time. */
+struct normalised_time
+{
+    uint64_t utc_seconds;
+    uint32_t utc_fraction_nanoseconds; /**< Range: 0–999,999,999. */
+    uint64_t receive_monotonic_microseconds;
+    uint32_t estimated_uncertainty_microseconds;
+};
+
+/** UTC and monotonic time paired when synchronization is applied. */
+struct applied_time_anchor
+{
+    uint64_t utc_seconds;
+    uint32_t utc_fraction_nanoseconds; /**< Range: 0–999,999,999. */
+    uint64_t applied_monotonic_microseconds;
+    uint32_t estimated_uncertainty_microseconds;
 };
 
 /***********************************************************************/
@@ -208,6 +227,48 @@ int wifi_startDHCPServer(void);
  * @return 0 on success or if already stopped, or a negative error code.
  */
 int wifi_stopDHCPServer(void);
+
+/**
+ * @brief Submit time synchronization without waiting for completion.
+ *
+ * @param[in] ntpServer NUL-terminated hostname, borrowed unchanged until terminal
+ *                     completion or successful cancellation.
+ *
+ * @return 0 if accepted, -EBUSY if pending, or another negative submission error.
+ */
+int wifi_startTimeSynchronization(const char *ntpServer);
+
+/**
+ * @brief Wait for time synchronization to complete.
+ *
+ * Terminal completion leaves operation resources and callbacks quiescent.
+ *
+ * @param[out] time Sample destination; written only on success.
+ * @param[in] timeout Maximum wait for this call; does not restart the operation.
+ *
+ * @return 0 with a sample, -EAGAIN if pending, or another negative terminal error.
+ */
+int wifi_waitForTimeSynchronization(struct normalised_time *time, k_timeout_t timeout);
+
+/**
+ * @brief Cancel synchronization within the P23 one-second stop bound.
+ *
+ * @return 0 when resources/callbacks are quiescent, including if already inactive;
+ *         negative error otherwise, with the hostname still borrowed.
+ */
+int wifi_cancelTimeSynchronization(void);
+
+/**
+ * @brief Apply the synchronized time to the system.
+ *
+ * Requires CONTROL's network lease.
+ *
+ * @param[in] time Normalized sample with receive-time monotonic timestamp.
+ * @param[out] anchor Applied UTC/monotonic pair and uncertainty; success only.
+ *
+ * @return 0 with an applied anchor, or a negative error code on failure.
+ */
+int wifi_applyTimeSynchronization(const struct normalised_time *time, struct applied_time_anchor *anchor);
 
 #endif /* L1_WIFI_H */
 
