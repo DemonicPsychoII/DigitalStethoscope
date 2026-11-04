@@ -57,6 +57,31 @@ struct net_in_addr
     uint8_t s4_addr[4];
 };
 
+typedef uint32_t net_socklen_t;
+
+struct net_sockaddr
+{
+    uint16_t sa_family;
+    uint8_t data[14];
+};
+
+struct net_sockaddr_in
+{
+    uint16_t sin_family;
+    uint16_t sin_port;
+    struct net_in_addr sin_addr;
+};
+
+static inline struct net_sockaddr_in *net_sin(const struct net_sockaddr *address)
+{
+    return (struct net_sockaddr_in *)address;
+}
+
+static inline uint16_t net_htons(uint16_t value)
+{
+    return (uint16_t)((value << 8) | (value >> 8));
+}
+
 struct net_linkaddr
 {
     uint8_t addr[6];

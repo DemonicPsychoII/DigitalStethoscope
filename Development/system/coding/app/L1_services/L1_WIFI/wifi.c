@@ -22,6 +22,7 @@
 /***********************************************************************/
 
 #include "wifi.h"
+#include "wifi_dns.h"
 
 #include <esp_wifi.h>
 
@@ -32,7 +33,6 @@
 
 #include <zephyr/logging/log.h>
 #include <zephyr/net/dhcpv4_server.h>
-#include <zephyr/net/dns_resolve.h>
 #include <zephyr/net/net_event.h>
 #include <zephyr/net/net_if.h>
 #include <zephyr/net/net_ip.h>
@@ -54,7 +54,7 @@
 #define WIFI_EVENT_FAILED    BIT(1) /**< Wait for a join failure, including disconnect before IPv4; failure, readiness or the caller's deadline ends the wait. */
 #define WIFI_EVENT_SCAN_DONE BIT(2) /**< Wait for scan completion or cancellation acknowledgement; SCAN_DONE or the caller's deadline ends the wait. */
 
-#define WIFI_EVENT_TIME_SYNCHRONIZED BIT(4) /**< Wake time synchronization waiters; the protected state holds the terminal result. */
+#define WIFI_EVENT_TIME_SYNCHRONIZED    BIT(4) /**< Wake time synchronization waiters; the protected state holds the terminal result. */
 #define WIFI_EVENT_TIME_SERVER_RESOLVED BIT(5) /**< Wake the time synchronization worker; only DNS has ended, not the synchronization. */
 
 #define WIFI_TIME_SYNCHRONIZATION_STACK_SIZE (2048) /**< Stack of the time synchronization work queue; proposed value pending target measurement. */
@@ -82,20 +82,10 @@
 /** Lifecycle of the single time synchronization operation. */
 enum wifi_time_synchronization_state
 {
-    WIFI_TIME_SYNCHRONIZATION_IDLE,      /**< Nothing started since boot. */
-    WIFI_TIME_SYNCHRONIZATION_PENDING,   /**< Started; no terminal result yet. */
+    WIFI_TIME_SYNCHRONIZATION_IDLE,       /**< Nothing started since boot. */
+    WIFI_TIME_SYNCHRONIZATION_PENDING,    /**< Started; no terminal result yet. */
     WIFI_TIME_SYNCHRONIZATION_CANCELLING, /**< Cancellation requested; resources not yet quiescent. */
-    WIFI_TIME_SYNCHRONIZATION_COMPLETED, /**< Terminal result stored; Wait returns it repeatedly. */
-};
-
-/** DNS result of one time synchronization operation; also the resolver's callback context. */
-struct wifi_time_server_resolution
-{
-    uint32_t generation;            /**< Operation that submitted the query; kept until its callbacks are quiescent. */
-    bool addressIsValid;            /**< address holds the first usable IPv4 result. */
-    struct net_sockaddr_in address; /**< Owned copy; the resolver's info is valid only during the callback. */
-    bool isComplete;                /**< The resolver delivered its terminal status. */
-    int result;                     /**< Once complete: 0 with a usable address, or a negative error code. */
+    WIFI_TIME_SYNCHRONIZATION_COMPLETED,  /**< Terminal result stored; Wait returns it repeatedly. */
 };
 
 /***********************************************************************/
@@ -129,7 +119,7 @@ static atomic_t wifi_DisconnectIsPending;
 static atomic_t wifi_StationIsActive;       /**< A station join is pending or the station is associated. */
 static atomic_t wifi_ConnectionIsRequested; /**< Connect and IPv4 events belong to a request of this module. */
 
-K_EVENT_DEFINE(wifi_Events); /**< WIFI_EVENT_* bits shared with the waiting thread. */
+K_EVENT_DEFINE(wifi_Events);                  /**< WIFI_EVENT_* bits shared with the waiting thread. */
 K_MUTEX_DEFINE(wifi_TimeSynchronizationLock); /**< Protects the time synchronization state, result and sample. */
 
 static enum wifi_time_synchronization_state wifi_TimeSynchronizationState;
@@ -137,12 +127,22 @@ static int wifi_TimeSynchronizationResult;                    /**< Terminal erro
 static struct normalised_time wifi_TimeSynchronizationSample; /**< Valid only when the result is 0. */
 static uint32_t wifi_TimeSynchronizationGeneration;           /**< Identifies the accepted operation, so late callbacks of an older one can be ignored. */
 static const char *wifi_TimeServerHostname;                   /**< Borrowed from the caller until terminal completion or successful cancellation. */
-static struct wifi_time_server_resolution wifi_TimeServerResolution; /**< Protected by wifi_TimeSynchronizationLock. */
-static bool wifi_TimeSynchronizationIsClaimed;                       /**< The worker owns the current operation's resources; protected by the lock. */
+/**
+ * @brief Tell whether an operation is still the pending one.
+ * @param[in] generation Operation to check.
+ * @return True while it is current and not cancelled; call with wifi_TimeSynchronizationLock held.
+ */
+static bool wifi_isTimeSynchronizationCurrent(uint32_t generation);
+
+static struct wifi_dns_lookup wifi_TimeServerLookup = {
+    .lock = &wifi_TimeSynchronizationLock,
+    .events = &wifi_Events,
+    .resolvedEvent = WIFI_EVENT_TIME_SERVER_RESOLVED,
+    .isCurrent = wifi_isTimeSynchronizationCurrent,
+}; /**< Time server lookup; its fields are protected by wifi_TimeSynchronizationLock. */
+static bool wifi_TimeSynchronizationIsClaimed; /**< The worker owns the current operation's resources; protected by the lock. */
 
 /* Owned by the time synchronization worker; no other thread touches them. */
-static uint16_t wifi_TimeServerQueryIdentifier;
-static bool wifi_TimeServerQueryIsSubmitted; /**< The resolver may still hold a query that needs cancelling. */
 static struct sntp_ctx wifi_TimeSynchronizationContext;
 static bool wifi_TimeSynchronizationSocketIsOpen; /**< wifi_TimeSynchronizationContext owns an open socket. */
 
@@ -247,14 +247,6 @@ static int wifi_releaseTimeSynchronizationResources(void);
  * @param[in] sample Successful sample; NULL on failure.
  */
 static void wifi_publishTimeSynchronizationResult(uint32_t generation, int result, const struct normalised_time *sample);
-
-/**
- * @brief Record DNS progress for the owning time synchronization operation.
- * @param[in] status Resolver progress or terminal status.
- * @param[in] info Borrowed address result; may be NULL for terminal callbacks.
- * @param[in] user_data Stable callback context identifying the submitted operation.
- */
-static void wifi_handleTimeServerResolution(enum dns_resolve_status status, struct dns_addrinfo *info, void *user_data);
 
 /***********************************************************************/
 /* MACROS                                                              */
@@ -873,7 +865,7 @@ int wifi_applyTimeSynchronization(const struct normalised_time *time, struct app
     const uint64_t elapsedMicroseconds = appliedMonotonicMicroseconds - time->receive_monotonic_microseconds;
     uint64_t elapsedSeconds = elapsedMicroseconds / USEC_PER_SEC;
     uint32_t advancedFractionNanoseconds = time->utc_fraction_nanoseconds + (uint32_t)((elapsedMicroseconds % USEC_PER_SEC) * NSEC_PER_USEC);
-    
+
     if(advancedFractionNanoseconds >= NSEC_PER_SEC)
     {
         advancedFractionNanoseconds -= NSEC_PER_SEC;
@@ -886,14 +878,14 @@ int wifi_applyTimeSynchronization(const struct normalised_time *time, struct app
     }
 
     const struct applied_time_anchor appliedAnchor = {
-        .utc_seconds                        = (time->utc_seconds + elapsedSeconds),
-        .utc_fraction_nanoseconds           = advancedFractionNanoseconds,
-        .applied_monotonic_microseconds     = appliedMonotonicMicroseconds,
+        .utc_seconds = (time->utc_seconds + elapsedSeconds),
+        .utc_fraction_nanoseconds = advancedFractionNanoseconds,
+        .applied_monotonic_microseconds = appliedMonotonicMicroseconds,
         .estimated_uncertainty_microseconds = time->estimated_uncertainty_microseconds,
     };
 
     const struct timespec realTime = {
-        .tv_sec  = (time_t)appliedAnchor.utc_seconds,
+        .tv_sec = (time_t)appliedAnchor.utc_seconds,
         .tv_nsec = (long)appliedAnchor.utc_fraction_nanoseconds,
     };
 
@@ -951,10 +943,15 @@ static void wifi_runTimeSynchronization(struct k_work *work)
     }
 }
 
+static bool wifi_isTimeSynchronizationCurrent(uint32_t generation)
+{
+    return (generation == wifi_TimeSynchronizationGeneration) && (wifi_TimeSynchronizationState == WIFI_TIME_SYNCHRONIZATION_PENDING);
+}
+
 static bool wifi_isTimeSynchronizationAdmitted(uint32_t generation)
 {
     (void)k_mutex_lock(&wifi_TimeSynchronizationLock, K_FOREVER);
-    const bool isAdmitted = (generation == wifi_TimeSynchronizationGeneration) && (wifi_TimeSynchronizationState == WIFI_TIME_SYNCHRONIZATION_PENDING);
+    const bool isAdmitted = wifi_isTimeSynchronizationCurrent(generation);
     (void)k_mutex_unlock(&wifi_TimeSynchronizationLock);
 
     return isAdmitted;
@@ -963,62 +960,16 @@ static bool wifi_isTimeSynchronizationAdmitted(uint32_t generation)
 static int wifi_resolveTimeServer(uint32_t generation, k_timepoint_t deadline, struct net_sockaddr_in *address)
 {
     (void)k_mutex_lock(&wifi_TimeSynchronizationLock, K_FOREVER);
-    const bool isAdmitted = (generation == wifi_TimeSynchronizationGeneration) && (wifi_TimeSynchronizationState == WIFI_TIME_SYNCHRONIZATION_PENDING);
     const char *hostname = wifi_TimeServerHostname;
-    if(isAdmitted)
-    {
-        /* Ready before submission: the resolver calls back inline for cached and numeric names. */
-        wifi_TimeServerResolution = (struct wifi_time_server_resolution){.generation = generation};
-        (void)k_event_clear(&wifi_Events, WIFI_EVENT_TIME_SERVER_RESOLVED);
-    }
     (void)k_mutex_unlock(&wifi_TimeSynchronizationLock);
 
-    if(!isAdmitted)
-    {
-        return -ECANCELED; /**< Cancellation withdrew the operation before DNS. */
-    }
-
-    /* Submitted without the lock: the resolver holds its own lock while calling back, and the callback takes this one. */
-    uint16_t queryIdentifier = 0U;
-    int result = dns_get_addr_info(hostname,
-                                   DNS_QUERY_TYPE_A,
-                                   &queryIdentifier,
-                                   wifi_handleTimeServerResolution,
-                                   &wifi_TimeServerResolution,
-                                   WIFI_TIME_SYNCHRONIZATION_OPERATION_TIMEOUT_MS);
-    if(result != 0)
-    {
-        return result;
-    }
-    wifi_TimeServerQueryIdentifier = queryIdentifier;
-    wifi_TimeServerQueryIsSubmitted = true;
-
-    result = -EAGAIN; /**< DNS is still running. */
-    while(result == -EAGAIN)
-    {
-        (void)wifi_waitForEvents(WIFI_EVENT_TIME_SERVER_RESOLVED, K_MSEC(WIFI_TIME_SYNCHRONIZATION_POLL_INTERVAL_MS));
-
-        (void)k_mutex_lock(&wifi_TimeSynchronizationLock, K_FOREVER);
-        if((generation != wifi_TimeSynchronizationGeneration) || (wifi_TimeSynchronizationState != WIFI_TIME_SYNCHRONIZATION_PENDING))
-        {
-            result = -ECANCELED; /**< Cancellation ended the operation during DNS. */
-        }
-        else if(wifi_TimeServerResolution.isComplete)
-        {
-            result = wifi_TimeServerResolution.result;
-            if(result == 0)
-            {
-                *address = wifi_TimeServerResolution.address;
-            }
-        }
-        else if(sys_timepoint_expired(deadline))
-        {
-            result = -ETIMEDOUT; /**< DNS did not finish within the operation's time. */
-        }
-        (void)k_mutex_unlock(&wifi_TimeSynchronizationLock);
-    }
-
-    return result;
+    return wifi_resolveIpv4(&wifi_TimeServerLookup,
+                            hostname,
+                            generation,
+                            deadline,
+                            WIFI_TIME_SYNCHRONIZATION_OPERATION_TIMEOUT_MS,
+                            WIFI_TIME_SYNCHRONIZATION_POLL_INTERVAL_MS,
+                            address);
 }
 
 static int wifi_exchangeTimeSample(uint32_t generation, k_timepoint_t deadline, const struct net_sockaddr_in *address, struct normalised_time *sample)
@@ -1075,23 +1026,10 @@ static int wifi_releaseTimeSynchronizationResources(void)
         wifi_TimeSynchronizationSocketIsOpen = false;
     }
 
-    if(wifi_TimeServerQueryIsSubmitted)
+    const int lookupResult = wifi_releaseLookup(&wifi_TimeServerLookup);
+    if(lookupResult != 0)
     {
-        (void)k_mutex_lock(&wifi_TimeSynchronizationLock, K_FOREVER);
-        const char *hostname = wifi_TimeServerHostname;
-        (void)k_mutex_unlock(&wifi_TimeSynchronizationLock);
-
-        /* The resolver calls back and cancels under its own lock, so after this returns no callback for the query runs.
-         * -ENOENT: the query had already ended. Called without this module's lock, which the callback takes. */
-        const int cancelResult = dns_cancel_addr_info_with_name(hostname, DNS_QUERY_TYPE_A, wifi_TimeServerQueryIdentifier);
-        if((cancelResult == 0) || (cancelResult == -ENOENT))
-        {
-            wifi_TimeServerQueryIsSubmitted = false;
-        }
-        else
-        {
-            result = cancelResult;
-        }
+        result = lookupResult;
     }
 
     return result;
@@ -1126,68 +1064,11 @@ static void wifi_publishTimeSynchronizationResult(uint32_t generation, int resul
     (void)k_mutex_unlock(&wifi_TimeSynchronizationLock);
 }
 
-static void wifi_handleTimeServerResolution(enum dns_resolve_status status, struct dns_addrinfo *info, void *user_data)
-{
-    struct wifi_time_server_resolution *resolution = user_data;
-
-    if(resolution == NULL)
-    {
-        return;
-    }
-
-    bool resolutionHasFailed = false;
-
-    (void)k_mutex_lock(&wifi_TimeSynchronizationLock, K_FOREVER);
-
-    const bool belongsToCurrentOperation = (resolution->generation == wifi_TimeSynchronizationGeneration) &&
-                                           (wifi_TimeSynchronizationState == WIFI_TIME_SYNCHRONIZATION_PENDING) &&
-                                           !resolution->isComplete;
-
-    if(belongsToCurrentOperation)
-    {
-        if(status == DNS_EAI_INPROGRESS)
-        {
-            if((info != NULL) && (info->ai_family == NET_AF_INET) && !resolution->addressIsValid)
-            {
-                resolution->address = *net_sin(&info->ai_addr);
-                resolution->addressIsValid = true;
-            }
-        }
-        else
-        {
-            if(status == DNS_EAI_ALLDONE)
-            {
-                resolution->result = resolution->addressIsValid ? 0 : -ENOENT; /**< Requested record or network was not found. */
-            }
-            else if(status == DNS_EAI_CANCELED)
-            {
-                /* Cancellation leaves PENDING first, so a cancel seen here comes from a timeout: the resolver's or the worker's. */
-                resolution->result = -ETIMEDOUT;
-            }
-            else
-            {
-                resolution->result = -EHOSTUNREACH; /**< The resolver could not resolve the time server. */
-            }
-
-            resolution->isComplete = true;
-            resolutionHasFailed = (resolution->result != 0);
-            (void)k_event_post(&wifi_Events, WIFI_EVENT_TIME_SERVER_RESOLVED);
-        }
-    }
-
-    (void)k_mutex_unlock(&wifi_TimeSynchronizationLock);
-
-    if(resolutionHasFailed)
-    {
-        LOG_WRN("Time server resolution failed (DNS status %d)", status);
-    }
-}
-
 static int wifi_normalizeTimeSample(const struct sntp_time *nativeTime, struct normalised_time *sample)
 {
     int result = 0;
 
-    if ((nativeTime == NULL) || (sample == NULL))
+    if((nativeTime == NULL) || (sample == NULL))
     {
         result = -EINVAL; /**< Invalid argument or unsupported input. */
     }
@@ -1195,7 +1076,7 @@ static int wifi_normalizeTimeSample(const struct sntp_time *nativeTime, struct n
     {
         const uint64_t kernelMonotonicMicroseconds = k_ticks_to_us_floor64((uint64_t)k_uptime_ticks());
 
-        if (nativeTime->fraction >= USEC_PER_SEC)
+        if(nativeTime->fraction >= USEC_PER_SEC)
         {
             result = -EINVAL; /**< Invalid argument or unsupported input. */
         }
@@ -1205,8 +1086,7 @@ static int wifi_normalizeTimeSample(const struct sntp_time *nativeTime, struct n
                 .utc_seconds = nativeTime->seconds,
                 .utc_fraction_nanoseconds = (nativeTime->fraction * NSEC_PER_USEC),
                 .receive_monotonic_microseconds = kernelMonotonicMicroseconds,
-                .estimated_uncertainty_microseconds = nativeTime->uncertainty_us
-            };
+                .estimated_uncertainty_microseconds = nativeTime->uncertainty_us};
 
             *sample = normalizedSample;
         }
