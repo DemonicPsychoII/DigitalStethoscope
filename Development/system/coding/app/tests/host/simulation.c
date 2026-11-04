@@ -204,6 +204,17 @@ k_timeout_t sys_timepoint_timeout(k_timepoint_t deadline)
     return selectedValue;
 }
 
+/* One tick is one simulated millisecond, as for the timeouts above. */
+int64_t k_uptime_ticks(void)
+{
+    return time_milliseconds;
+}
+
+uint64_t k_ticks_to_us_floor64(uint64_t ticks)
+{
+    return ticks * USEC_PER_MSEC;
+}
+
 int k_sem_take(struct k_sem *semaphore, k_timeout_t timeout)
 {
     int64_t deadline;
@@ -542,6 +553,39 @@ int wifi_applyTimeSynchronization(const struct normalised_time *time, struct app
     (void)time;
     (void)anchor;
     return -ENOSYS; /**< Not modelled by this host substitute. */
+}
+
+/* No server is configured here, so the existing scenarios keep their traces and timing. */
+int wifi_configureSecureServer(const char *baseUrl, const char *certificate, size_t certificateLength, struct wifi_secure_server *server)
+{
+    (void)baseUrl;
+    (void)certificate;
+    (void)certificateLength;
+    (void)server;
+    return -ENOSYS; /**< Not modelled by this host substitute. */
+}
+
+int wifi_startSecureConnection(k_timepoint_t deadline)
+{
+    (void)deadline;
+    return -ENOSYS; /**< Not modelled by this host substitute. */
+}
+
+int wifi_waitForSecureConnection(enum wifi_secure_connection_cause *cause, k_timeout_t timeout)
+{
+    (void)cause;
+    (void)timeout;
+    return -ENOSYS; /**< Not modelled by this host substitute. */
+}
+
+int wifi_cancelSecureConnection(void)
+{
+    return 0;
+}
+
+int wifi_closeSecureConnection(void)
+{
+    return 0;
 }
 
 int portal_start(void)

@@ -898,6 +898,43 @@ int wifi_applyTimeSynchronization(const struct normalised_time *time, struct app
     return result;
 }
 
+int wifi_configureSecureServer(const char *baseUrl, const char *certificate, size_t certificateLength, struct wifi_secure_server *server)
+{
+    ARG_UNUSED(baseUrl);
+    ARG_UNUSED(certificate);
+    ARG_UNUSED(certificateLength);
+    ARG_UNUSED(server);
+
+    return -ENOSYS; /**< Secure connections are not available in this build. */
+}
+
+int wifi_startSecureConnection(k_timepoint_t deadline)
+{
+    ARG_UNUSED(deadline);
+
+    return -ENOSYS; /**< Secure connections are not available in this build. */
+}
+
+int wifi_waitForSecureConnection(enum wifi_secure_connection_cause *cause, k_timeout_t timeout)
+{
+    ARG_UNUSED(cause);
+    ARG_UNUSED(timeout);
+
+    return -ENOSYS; /**< Secure connections are not available in this build. */
+}
+
+int wifi_cancelSecureConnection(void)
+{
+    /* Start never accepts an operation here, so nothing can be pending. */
+    return 0;
+}
+
+int wifi_closeSecureConnection(void)
+{
+    /* No connection is ever retained here. */
+    return 0;
+}
+
 /***********************************************************************/
 /* LOCAL FUNCTIONS                                                     */
 /***********************************************************************/
