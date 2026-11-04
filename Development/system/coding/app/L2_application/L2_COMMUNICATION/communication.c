@@ -10,7 +10,10 @@
  *
  * Workflow (architecture/COMMUNICATION/setup-state.puml, setup-flow.puml and
  * link-recovery.puml):
- * - Boot: join the stored network, 4 attempts, 5 s apart. Without a stored
+ * - Boot: read the provisioning image once (design/STORAGE/provisioning.md).
+ *   Without a valid image, secure transport stays unavailable with a
+ *   configuration cause; Wi-Fi setup and offline listening are unaffected.
+ *   Then join the stored network, 4 attempts, 5 s apart. Without a stored
  *   network, run setup. If all attempts fail, wait for a 2 s button hold.
  * - Setup: scan, then open the hotspot, the DHCP server and the page.
  *   - Connect: one join attempt. On success, save the network and show the
@@ -34,6 +37,8 @@
 #include <errno.h>
 #include <string.h>
 #include <time.h>
+
+#include <esp_attr.h>
 
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
@@ -77,6 +82,8 @@
 #define COMMUNICATION_TIME_MAPPING_LIMIT_MICROSECONDS      (45000000000ULL) /**< P25-MAPPING: 12.5 h = (1 s - 100 ms) / 20 ppm between anchor and measurement end. */
 #define COMMUNICATION_JOIN_TIME_SYNCHRONIZATION_TIMEOUT_S  (5)              /**< One standalone SNTP exchange after a join, beginning before DNS. */
 
+#define COMMUNICATION_DEVICE_KEEP_ALIVE_MARGIN_S (5) /**< P26-KEEPALIVE: the device closes an idle connection this long before the server. */
+
 /***********************************************************************/
 /* TYPES                                                               */
 /***********************************************************************/
@@ -98,6 +105,15 @@ enum communication_wait_target
     COMMUNICATION_WAIT_CONNECTION,    /**< Wait for a join result; completion, failure, deadline or Start ends it. */
     COMMUNICATION_WAIT_SCAN_LIST,     /**< Wait for the complete scan list; completion, failure, deadline or Start ends it. */
     COMMUNICATION_WAIT_WIFI_STOP,     /**< Wait for a stopped/offline acknowledgement of Start, or return pending at the deadline. */
+};
+
+/** Configuration cause from the boot read of the provisioning image. */
+enum communication_provisioning_state
+{
+    COMMUNICATION_PROVISIONING_MISSING,               /**< Erased partition; no secure connection is attempted. */
+    COMMUNICATION_PROVISIONING_INVALID_IMAGE,         /**< Unreadable image, or bad magic, version, length or CRC-32. */
+    COMMUNICATION_PROVISIONING_INVALID_CONFIGURATION, /**< Valid image whose contents cannot be used. */
+    COMMUNICATION_PROVISIONING_PROVISIONED,           /**< Server provisioned; secure transport can become available. */
 };
 
 /** How setup ended. */
@@ -170,6 +186,9 @@ static size_t communication_ScanCount;                                     /**< 
 static struct applied_time_anchor communication_AppliedTimeAnchor;         /**< Anchor from the last successful Apply. */
 static bool communication_AppliedTimeAnchorIsValid;                        /**< AppliedTimeAnchor holds an applied anchor. */
 
+static struct storage_provisioning communication_Provisioning EXT_RAM_BSS_ATTR; /**< Boot copy of the provisioning image, in PSRAM. */
+static enum communication_provisioning_state communication_ProvisioningState;   /**< Boot result; secure transport requires PROVISIONED. */
+
 /***********************************************************************/
 /* LOCAL FUNCTION PROTOTYPES                                           */
 /***********************************************************************/
@@ -182,6 +201,14 @@ static bool communication_AppliedTimeAnchorIsValid;                        /**< 
  * @param[in] arg3 Unused parameter.
  */
 static void communication_thread(void *arg1, void *arg2, void *arg3);
+
+/**
+ * @brief Read the provisioning image once and record whether secure transport can be available.
+ *
+ * A missing or invalid image is logged with its configuration cause and
+ * never blocks Wi-Fi setup or offline listening.
+ */
+static void communication_loadProvisioning(void);
 
 /**
  * @brief Load the stored network and connect, or run setup if none is stored.
@@ -500,12 +527,42 @@ static void communication_thread(void *arg1, void *arg2, void *arg3)
     }
     else
     {
+        communication_loadProvisioning();
         communication_connectAtBoot();
 
         for(;;)
         {
             communication_runIdleCycle();
         }
+    }
+}
+
+static void communication_loadProvisioning(void)
+{
+    const int result = storage_readProvisioning(&communication_Provisioning);
+
+    if(result == -ENOENT)
+    {
+        communication_ProvisioningState = COMMUNICATION_PROVISIONING_MISSING;
+        LOG_WRN("Secure transport unavailable: no provisioning image");
+    }
+    else if(result != 0)
+    {
+        communication_ProvisioningState = COMMUNICATION_PROVISIONING_INVALID_IMAGE;
+        LOG_ERR("Secure transport unavailable: invalid provisioning image (%d)", result);
+    }
+    else if(communication_Provisioning.serverKeepAliveSeconds <= (uint32_t)COMMUNICATION_DEVICE_KEEP_ALIVE_MARGIN_S)
+    {
+        /* The device keep-alive is the server value minus the margin, so it must stay positive. */
+        communication_ProvisioningState = COMMUNICATION_PROVISIONING_INVALID_CONFIGURATION;
+        LOG_ERR("Secure transport unavailable: invalid configuration, server keep-alive %u s must exceed %d s",
+                communication_Provisioning.serverKeepAliveSeconds,
+                COMMUNICATION_DEVICE_KEEP_ALIVE_MARGIN_S);
+    }
+    else
+    {
+        communication_ProvisioningState = COMMUNICATION_PROVISIONING_PROVISIONED;
+        LOG_INF("Server %s provisioned", communication_Provisioning.baseUrl);
     }
 }
 

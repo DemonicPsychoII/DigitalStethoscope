@@ -20,6 +20,7 @@
 #include "storage.h"
 
 #include <errno.h>
+#include <string.h>
 
 #include <zephyr/logging/log.h>
 #include <zephyr/settings/settings.h>
@@ -117,6 +118,16 @@ int storage_write(const char *name, const void *data, size_t size)
     }
 
     return result;
+}
+
+int storage_readProvisioning(struct storage_provisioning *provisioning)
+{
+    if(provisioning != NULL)
+    {
+        (void)memset(provisioning, 0, sizeof(*provisioning));
+    }
+
+    return -ENOSYS; /**< Function not implemented. */
 }
 
 /***********************************************************************/
