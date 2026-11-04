@@ -42,12 +42,12 @@ The tool writes the canonical form into the image; registration binds to the sam
 
 ### Certificate checks
 
-Before anything is written, the tool applies the checks the device performs at boot, so a mismatch fails on the developer PC:
+Before anything is written, the tool applies the device's certificate rules, so a mismatch fails on the developer PC. The device applies rules 1 and 3 at boot, enforces rule 2 through its handshake verification and applies rule 4 against its synchronized clock before each handshake, because boot has no valid clock yet:
 
 1. The text is exactly one parsable X.509 certificate.
 2. It is self-issued and its signature verifies with its own public key, because the device trusts it directly.
-3. It has a Subject Alternative Name extension with a DNS entry equal to the host (case-insensitive, no wildcard) or an IP entry equal to the IPv4 host. Common Name is never used [6].
-4. It is valid on the developer PC's current date. The tool prints the expiry date; the device repeats the validity check against its synchronized clock before each handshake.
+3. It has a Subject Alternative Name extension whose entry type follows the host: a DNS name host needs an equal DNS entry (case-insensitive, no wildcard); an IPv4 host needs an equal IP address entry, and a DNS entry spelling the address does not count. Common Name is never used [6].
+4. It is valid on the developer PC's current date. The tool prints the expiry date.
 
 The checks use the `cryptography` package already present in the toolchain environment as an esptool dependency (own observation, 4 November 2026: version 50.0.2 in `.ci-workspace/.venv`). A pinned-dependency change of the toolchain must keep it available.
 
@@ -77,7 +77,7 @@ The tool lives in `Development/system/coding/tools/provisioning/`. Every rejecti
 
 ## Device behavior
 
-Boot reads and validates the image once, as the [flash layout](interfaces-and-behavior.md#flash-layout) defines; WIFI then applies the certificate rules above. Every failure leaves secure transport unavailable with a configuration cause and keeps Wi-Fi setup, time synchronization and offline listening working:
+Boot reads and validates the image once, as the [flash layout](interfaces-and-behavior.md#flash-layout) defines; WIFI then applies certificate rules 1 and 3. Every boot failure leaves secure transport unavailable with a configuration cause and keeps Wi-Fi setup and offline listening working. Validity is checked later, after the setup's time synchronization and before each handshake, as the [TLS design](../COMMUNICATION/secure-transport.md) defines:
 
 | Image state | Boot result |
 | --- | --- |
@@ -103,7 +103,8 @@ These scenarios allocate future verification; they do not add a generated test b
 | --- | --- | --- |
 | Valid deployment file | REQ-09/REQ-11; VT-08 | `check` passes; the image bytes match the field table and the firmware reader accepts them. |
 | Each violated file rule | REQ-11; VT-08 | Rejected with key and rule; no image written. |
-| Certificate not self-issued, without matching Subject Alternative Name, or expired | REQ-11; VT-08 | Rejected by the tool; an image forced onto a device yields an invalid configuration at boot. |
+| Certificate not self-issued, without matching Subject Alternative Name, or with a DNS entry for an IPv4 host | REQ-11; VT-08 | Rejected by the tool; an image forced onto a device yields an invalid configuration at boot (missing or wrong-type SAN) or a failed verification at the handshake (not self-issued). |
+| Certificate expired or not yet valid | REQ-11; VT-08 | Rejected by the tool on the PC's date; on the device a valid image is accepted at boot and the setup fails its validity check after time synchronization, without a handshake. |
 | Private key or other PEM label in the file | VT-11 | Rejected; nothing written. |
 | Image larger than the partition, or build without the partition node | REQ-11; VT-08 | Rejected before writing. |
 | Flash command on a device | REQ-11/REQ-12; VT-08 | Only the provisioning range changes; saved network and firmware remain. |
