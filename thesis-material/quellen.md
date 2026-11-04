@@ -1860,3 +1860,52 @@ IHE International, *IHE IT Infrastructure (ITI) Technical Framework*, Revision 2
 Health Level Seven International, *FHIR R4 Security*, version 4.0.1, 2019, section 6.1.0 (time keeping: clocks synchronized using NTP/SNTP, no maximum deviation stated), <https://hl7.org/fhir/R4/security.html>, accessed 2 November 2026.
 
 **Cited by:** [Decision record 2 November 2026](../Development/system/planning/mvp-decisions-2026-11-02.md#drift-calculation).
+
+<a id="nico_provisioning_decisions_20261104"></a>
+### nico_provisioning_decisions_20261104
+
+Nico. *Provisioning deployment-file decisions*. Personal communication, T3 Code, 4 November 2026: one TOML file per server deployment with the certificate embedded as PEM, versioned in the repository, and one flash command that validates, builds and writes the image. [Conversation](t3-thread://v2/d5e44f69-2ecc-4a3e-917b-31a7b084c12b/b0a0170f-70da-43f5-89a6-38c67da80e40), accessed 4 November 2026. Project decisions, not measurements.
+
+**Cited by:** [Provisioning design](../Development/system/design/STORAGE/provisioning.md), deployment file and flash command.
+
+<a id="ietf_service_identity_9525_2023"></a>
+### ietf_service_identity_9525_2023
+
+Peter Saint-Andre and Rich Salz. *Service Identity in TLS*. IETF RFC 9525, November 2023, sections 4 and 6. DOI [10.17487/RFC9525](https://doi.org/10.17487/RFC9525). <https://www.rfc-editor.org/rfc/rfc9525>. Accessed 4 November 2026.
+
+**Cited by:** [Provisioning design](../Development/system/design/STORAGE/provisioning.md), Subject Alternative Name check without Common Name fallback.
+
+<a id="toml_v1_2021"></a>
+### toml_v1_2021
+
+Tom Preston-Werner, Pradyun Gedam et al. *TOML v1.0.0*. Specification, 11 January 2021; multi-line basic strings and integer and string types. <https://toml.io/en/v1.0.0>. Accessed 4 November 2026.
+
+**Cited by:** [Provisioning design](../Development/system/design/STORAGE/provisioning.md), deployment file syntax.
+
+<a id="python_tomllib_314"></a>
+### python_tomllib_314
+
+Python Software Foundation. *tomllib — Parse TOML files*. Python 3.14 documentation; module added in version 3.11. <https://docs.python.org/3/library/tomllib.html>. Accessed 4 November 2026.
+
+**Cited by:** [Provisioning design](../Development/system/design/STORAGE/provisioning.md), standard-library TOML reader of the tool.
+
+<a id="ietf_uri_3986_2005"></a>
+### ietf_uri_3986_2005
+
+Tim Berners-Lee, Roy T. Fielding and Larry Masinter. *Uniform Resource Identifier (URI): Generic Syntax*. IETF RFC 3986, STD 66, January 2005, section 6.2.2.1 (case normalization). DOI [10.17487/RFC3986](https://doi.org/10.17487/RFC3986). <https://www.rfc-editor.org/rfc/rfc3986>. Accessed 4 November 2026.
+
+**Cited by:** [Provisioning design](../Development/system/design/STORAGE/provisioning.md), base URL canonical form.
+
+<a id="ietf_pem_7468_2015"></a>
+### ietf_pem_7468_2015
+
+Simon Josefsson and Sean Leonard. *Textual Encodings of PKIX, PKCS, and CMS Structures*. IETF RFC 7468, April 2015, sections 2 and 5 (CERTIFICATE label). DOI [10.17487/RFC7468](https://doi.org/10.17487/RFC7468). <https://www.rfc-editor.org/rfc/rfc7468>. Accessed 4 November 2026.
+
+**Cited by:** [Provisioning design](../Development/system/design/STORAGE/provisioning.md), embedded PEM certificate.
+
+<a id="espressif_esptool_basic_commands"></a>
+### espressif_esptool_basic_commands
+
+Espressif Systems. *esptool: Basic Commands (ESP32-S3)*. esptool documentation, latest; online revision and publication year not stated; writing a binary at a flash offset. <https://docs.espressif.com/projects/esptool/en/latest/esp32s3/esptool/basic-commands.html>. Accessed 4 November 2026.
+
+**Cited by:** [Provisioning design](../Development/system/design/STORAGE/provisioning.md), flash command.
