@@ -6,8 +6,8 @@
 /** @addtogroup L1_WIFI
  * @{
  * @file
- * Cancellable IPv4 lookup for the WIFI workers, such as time synchronization.
- * Private to L1_WIFI.
+ * Cancellable IPv4 lookup shared by the WIFI workers (time synchronization
+ * and secure connection). Private to L1_WIFI.
  *
  * The resolver may call back before submission returns, and it calls back
  * while holding its own lock. So the lookup is prepared before submission,
