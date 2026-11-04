@@ -845,9 +845,26 @@ static int communication_prepareSecureConnection(k_timepoint_t deadline)
         }
         return result;
     }
-    LOG_INF("Time synchronized: UTC %llu.%09u s, uncertainty %u us",
-            communication_AppliedTimeAnchor.utc_seconds,
-            communication_AppliedTimeAnchor.utc_fraction_nanoseconds,
+    /* Days to a civil date by H. Hinnant's civil_from_days, because not every host build declares gmtime_r. */
+    const uint64_t secondsOfDay = communication_AppliedTimeAnchor.utc_seconds % 86400U;
+    const uint64_t shiftedDays = (communication_AppliedTimeAnchor.utc_seconds / 86400U) + 719468U;
+    const uint64_t era = shiftedDays / 146097U;
+    const uint64_t dayOfEra = shiftedDays - (era * 146097U);
+    const uint64_t yearOfEra = (dayOfEra - (dayOfEra / 1460U) + (dayOfEra / 36524U) - (dayOfEra / 146096U)) / 365U;
+    const uint64_t dayOfYear = dayOfEra - ((365U * yearOfEra) + (yearOfEra / 4U) - (yearOfEra / 100U));
+    const uint64_t monthIndex = ((5U * dayOfYear) + 2U) / 153U;
+    const unsigned int day = (unsigned int)(dayOfYear - (((153U * monthIndex) + 2U) / 5U) + 1U);
+    const unsigned int month = (unsigned int)((monthIndex < 10U) ? (monthIndex + 3U) : (monthIndex - 9U));
+    const unsigned int year = (unsigned int)((yearOfEra + (era * 400U)) + ((month <= 2U) ? 1U : 0U));
+
+    LOG_INF("Time synchronized: %04u-%02u-%02u %02u:%02u:%02u.%03u UTC, uncertainty %u us",
+            year,
+            month,
+            day,
+            (unsigned int)(secondsOfDay / 3600U),
+            (unsigned int)((secondsOfDay % 3600U) / 60U),
+            (unsigned int)(secondsOfDay % 60U),
+            (unsigned int)(communication_AppliedTimeAnchor.utc_fraction_nanoseconds / NSEC_PER_MSEC),
             communication_AppliedTimeAnchor.estimated_uncertainty_microseconds);
 
     /* Against this setup's fresh clock, before the ClientHello; mbedTLS checks the peer's dates again during the handshake. */

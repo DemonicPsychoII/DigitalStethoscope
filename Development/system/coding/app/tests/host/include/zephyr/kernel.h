@@ -9,6 +9,7 @@
 #define __unused          __attribute__((__unused__))
 
 #define NSEC_PER_USEC 1000U
+#define NSEC_PER_MSEC 1000000U
 #define USEC_PER_MSEC 1000U
 #define USEC_PER_SEC  1000000U
 #define NSEC_PER_SEC  1000000000U
