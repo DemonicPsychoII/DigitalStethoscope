@@ -89,6 +89,25 @@ west build --pristine=always -b esp32s3_devkitc/esp32s3/procpu Development/syste
 CI runs the same application build with
 `python Development/system/testing/ci/run_ci.py build --application`.
 
+### Software bill of materials
+
+Generate the SPDX 2.3 SBOM of the release firmware from PowerShell:
+
+```powershell
+Development/system/coding/tools/build-sbom.ps1             # build-app/ -> build-app/spdx/
+Development/system/coding/tools/build-sbom.ps1 -Pristine   # clean rebuild first
+```
+
+The script enables the CMake file-based API, builds the release app and runs
+`west spdx --include-sdk`. `prj.conf` enables `CONFIG_BUILD_OUTPUT_META`, which
+`west spdx` needs. The output has one document each for the application, Zephyr with
+its modules, the Zephyr SDK and the build.
+
+`west spdx` leaves out the Espressif Wi-Fi and PHY binary libraries; their versions are
+listed in `hal_espressif`'s `zephyr/module.yml`. On Windows it also lists no
+application or SDK files, because its path check mixes `/` and `\`; the packages and
+their versions are complete.
+
 ### Manual flash
 
 Connect the board with a USB data cable and find its COM port in Device Manager.
@@ -108,9 +127,9 @@ firmware on the selected device. If connection fails, hold BOOT, press and relea
 RESET, release BOOT, check the port again and retry.
 
 For local PowerShell shortcuts, add aliases to your profile using absolute paths
-to `build-firmware.ps1` and `flash-firmware.ps1`, for example `stetho-build` and
-`stetho-flash`. Arguments pass through: `stetho-build -Target app -Pristine` and
-`stetho-flash 5`.
+to `build-firmware.ps1`, `flash-firmware.ps1` and `build-sbom.ps1`, for example
+`stetho-build`, `stetho-flash` and `stetho-sbom`. Arguments pass through:
+`stetho-build -Target app -Pristine` and `stetho-flash 5`.
 
 ### Debugging with GDB
 

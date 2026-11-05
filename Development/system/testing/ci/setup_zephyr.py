@@ -88,6 +88,10 @@ def main() -> None:
             ws / "zephyr",
         )
         run(["git", "checkout", "--detach", PINS["zephyr_revision"]], ws / "zephyr")
+    # Only the pinned modules are cloned; marking the rest inactive keeps Zephyr's
+    # build meta file, which west spdx needs, from reading projects that do not exist.
+    project_filter = ",".join(["-.*", *(f"+{name}" for name in PINS["modules"])])
+    run([*west, "config", "manifest.project-filter", "--", project_filter])
     run([*west, "update", "--narrow", "-o=--depth=1", *PINS["modules"]])
     # Explicit module list also keeps fresh installs small and reproducible.
     # Firmware needs base build/SDK packages and esptool, rather than Zephyr's

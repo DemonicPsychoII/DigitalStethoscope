@@ -57,6 +57,9 @@ def state(kind: str, workspace: Path) -> dict:
             text=True,
         )
         projects = dict(line.split("|", 1) for line in listing.splitlines())
+        # west list shows active projects only; setup marks all but the pinned modules inactive.
+        if set(projects) - {"manifest"} != set(PINS["modules"]):
+            raise ValueError("active west projects do not match the pinned modules")
         result["modules"] = {
             name: git_head(workspace / projects[name]) for name in PINS["modules"]
         }
