@@ -55,7 +55,7 @@ The provisioning image is the only source of the server endpoint and certificate
 | Certificate length, certificate | 2 bytes + at most 8192 bytes | PEM public server certificate |
 | CRC-32 | 4 bytes | IEEE CRC-32 over all preceding bytes; detects corruption only. The MVP uses no signature. |
 
-Erased flash, an unknown magic or version, an out-of-range length, a CRC mismatch or an unparsable certificate make the image invalid. The image keeps settings and provisioning apart: erasing only the settings partition never removes the server, and rewriting the server never touches Wi-Fi credentials or the registration record. A whole-flash erase (`flash-firmware.ps1 -Erase`) removes the image too and requires flashing it again.
+Erased flash, an unknown magic or version, an out-of-range length, a CRC mismatch or an unparsable certificate make the image invalid. A server keep-alive below 6 seconds makes the configuration invalid; COMMUNICATION rejects it at boot, so secure transport stays unavailable. The image keeps settings and provisioning apart: erasing only the settings partition never removes the server, and rewriting the server never touches Wi-Fi credentials or the registration record. A whole-flash erase (`flash-firmware.ps1 -Erase`) removes the image too and requires flashing it again.
 
 Own observation on 2 November 2026: flashing a test build (`feature/time-synchronization` at `b6cccb8` plus the full-MAC hotspot change) with `flash-firmware.ps1` wrote 671,744 bytes at `0x00000000`, and the device booted with Espressif Simple Boot. Only the image range was written. Target verification remains open under [TICKET-214](https://nfrie.atlassian.net/browse/TICKET-214), following the build-system plan above.
 
