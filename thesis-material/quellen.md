@@ -1643,26 +1643,272 @@ The Zephyr Project. *Zephyr DHCPv4 Kconfig*. Zephyr source repository, revision 
 
 **Cited by:** [WIFI operation parameters](../Development/system/design/WIFI/parameters.md), four-address default and consecutive DHCP lease pool; target behavior remains unverified.
 
-<a id="nico_provisioning_decisions_20261104"></a>
-### nico_provisioning_decisions_20261104
+<a id="zephyr_sntp_pinned"></a>
+### zephyr_sntp_pinned
 
-Nico. *Provisioning deployment-file decisions*. Personal communication, T3 Code, 4 November 2026: one TOML file per server deployment with the certificate embedded as PEM, versioned in the repository, and one flash command that validates, builds and writes the image. [Conversation](t3-thread://v2/d5e44f69-2ecc-4a3e-917b-31a7b084c12b/b0a0170f-70da-43f5-89a6-38c67da80e40), accessed 4 November 2026. Project decisions, not measurements.
+The Zephyr Project. *SNTP API, uncertainty configuration, implementation and DNS resolver API*. Zephyr source repository. <https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/subsys/net/lib/sntp/sntp.c>. Accessed 28 October 2026.
 
-**Cited by:** [Provisioning architecture](../Development/system/architecture/system/provisioning.md), deployment file, format, location and flash command.
+**Verification:** Revision 357467a011cd2557a1a3f0b4be83d817c4addc9b; publication year unverified. Inspected SNTP header, Kconfig, parser, convenience helper and DNS resolver header. Native unit semantics and helper retries inspected; target behavior unverified.
 
-<a id="ietf_service_identity_9525_2023"></a>
-### ietf_service_identity_9525_2023
+**Cited by:** [SNTP design](../Development/system/design/COMMUNICATION/time-synchronization.md).
 
-Peter Saint-Andre and Rich Salz. *Service Identity in TLS*. IETF RFC 9525, November 2023, sections 4 and 6. DOI [10.17487/RFC9525](https://doi.org/10.17487/RFC9525). <https://www.rfc-editor.org/rfc/rfc9525>. Accessed 4 November 2026.
+<a id="nico_sntp_design_20261028"></a>
+### nico_sntp_design_20261028
 
-**Cited by:** [Provisioning architecture](../Development/system/architecture/system/provisioning.md), identity check without Common Name fallback.
+Nico. *SNTP detailed-design decisions*. Personal communication, T3 Code, 2026. <t3-thread://v2/d5e44f69-2ecc-4a3e-917b-31a7b084c12b/576e10df-527c-41cc-86cd-4e7c0ff0c290>. Accessed 28 October 2026.
+
+**Verification:** Numbered owner answers: pool.ntp.org trust assumption, Zephyr uncertainty, fresh boot sync, Start cancellation, 5 s attempt, 60 s recovery, 15 min refresh, 1 h expiry and failure indication. Project decisions, not measurements.
+
+**Cited by:** [SNTP design](../Development/system/design/COMMUNICATION/time-synchronization.md).
+
+
+<a id="nico_tls_design_20261029"></a>
+### nico_tls_design_20261029
+
+Nico. *TLS detailed-design decisions*. Personal communication, T3 Code, 29 October 2026. [Conversation](t3-thread://v2/d5e44f69-2ecc-4a3e-917b-31a7b084c12b/576e10df-527c-41cc-86cd-4e7c0ff0c290), accessed 29 October 2026. Project decisions, not target acceptance.
+
+**Cited by:** [TLS design](../Development/system/design/COMMUNICATION/secure-transport.md).
+
+
+<a id="ietf_tls13_8446_2018"></a>
+### ietf_tls13_8446_2018
+
+Eric Rescorla. *The Transport Layer Security (TLS) Protocol Version 1.3*. IETF RFC 8446, August 2018. DOI: [10.17487/RFC8446](https://doi.org/10.17487/RFC8446), accessed 29 October 2026.
+
+**Cited by:** [TLS design](../Development/system/design/COMMUNICATION/secure-transport.md).
+
+
+<a id="ietf_tls_identity_9525_2023"></a>
+### ietf_tls_identity_9525_2023
+
+Peter Saint-Andre and Rich Salz. *Service Identity in TLS*. IETF RFC 9525, November 2023. DOI: [10.17487/RFC9525](https://doi.org/10.17487/RFC9525), accessed 29 October 2026.
+
+**Cited by:** [TLS design](../Development/system/design/COMMUNICATION/secure-transport.md).
+
+
+<a id="stetho_hapi_tls_probe_20261029"></a>
+### stetho_hapi_tls_probe_20261029
+
+GPT-6.1-Sol on behalf of Nico. *Local HAPI TLS investigation*. Own desktop observations, 29 October 2026. [Evidence and limitations](../Development/system/design/COMMUNICATION/secure-transport.md#investigation-basis-and-limitations). Python desktop probe, no device firmware revision; public certificate fingerprint and image content ID recorded; registry manifest digest not captured. Read-only metadata success is not write authorization evidence.
+
+**Cited by:** [TLS design](../Development/system/design/COMMUNICATION/secure-transport.md).
+
+
+<a id="pulsoxy_fhirservice_pinned"></a>
+### pulsoxy_fhirservice_pinned
+
+nt-medlink contributors (individual authors unverified). *PulsOxy FhirService implementation*. NewTec GitLab, revision `e38b98fc8b881af01e23a8f4935567e73d00de28`; publication year unverified. [Source](https://gitlab.newtec.zz/newtec/student-projects/nt-medlink/ntmedlinkremdev/-/blob/e38b98fc8b881af01e23a8f4935567e73d00de28/lib/FhirService/src/FhirService.cpp), accessed 29 October 2026.
+
+**Cited by:** [TLS design](../Development/system/design/COMMUNICATION/secure-transport.md).
+
+
+<a id="zephyr_tls_socket_pinned"></a>
+### zephyr_tls_socket_pinned
+
+Zephyr Project contributors. *TLS socket implementation*. Zephyr Project, revision `357467a011cd2557a1a3f0b4be83d817c4addc9b`; publication year unverified. [Source](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/subsys/net/lib/sockets/sockets_tls.c), accessed 29 October 2026. Presence of a TLS 1.3 path is not ESP32-S3 interoperability evidence.
+
+**Cited by:** [TLS design](../Development/system/design/COMMUNICATION/secure-transport.md).
+
+
+<a id="nico_tls_keepalive_20261029"></a>
+### nico_tls_keepalive_20261029
+
+Nico. *TLS keep-alive and reconnect decisions*. Personal communication, T3 Code, 29 October 2026. [Conversation](t3-thread://v2/d5e44f69-2ecc-4a3e-917b-31a7b084c12b/e4e74eaa-efe8-48c5-8071-2589f46555a2), accessed 29 October 2026. Project decisions, not target acceptance.
+
+**Cited by:** [TLS design](../Development/system/design/COMMUNICATION/secure-transport.md).
+
+
+<a id="nico_fhir_design_20261029"></a>
+### nico_fhir_design_20261029
+
+Nico, *FHIR registration and examination-context design decisions*, personal communication, T3 Code, 29 October 2026, [conversation](t3-thread://v2/d5e44f69-2ecc-4a3e-917b-31a7b084c12b/576e10df-527c-41cc-86cd-4e7c0ff0c290), accessed 29 October 2026. Project decisions, not target measurements.
+
+**Cited by:** [Server communication design](../Development/system/design/COMMUNICATION/server-communication.md).
+
+
+<a id="stetho_hotspot_identity_2026"></a>
+### stetho_hotspot_identity_2026
+
+DigitalStethoscope contributors, *WIFI hotspot identity implementation*, project source, integration revision `3d989815b4cbded9bf64ec7c9934894f95cc68e5`, 2026, [wifi.c](../Development/system/coding/app/L1_services/L1_WIFI/wifi.c), lines 478–482, inspected 29 October 2026. This proves the source expression, not factory-MAC provenance on target.
+
+**Cited by:** [Server communication design](../Development/system/design/COMMUNICATION/server-communication.md).
+
+
+<a id="hl7_fhir_r4_device_2019"></a>
+### hl7_fhir_r4_device_2019
+
+Health Level Seven International, *FHIR R4 Device*, version 4.0.1, 2019, <https://hl7.org/fhir/R4/device.html>, accessed 29 October 2026.
+
+**Cited by:** [Server communication design](../Development/system/design/COMMUNICATION/server-communication.md).
+
+
+<a id="hl7_fhir_r4_datatypes_2019"></a>
+### hl7_fhir_r4_datatypes_2019
+
+Health Level Seven International, *FHIR R4 Data Types*, version 4.0.1, 2019, Identifier and id definitions, <https://hl7.org/fhir/R4/datatypes.html>, accessed 29 October 2026.
+
+**Cited by:** [Server communication design](../Development/system/design/COMMUNICATION/server-communication.md).
+
+
+<a id="pulsoxy_fhir_lifecycle_pinned"></a>
+### pulsoxy_fhir_lifecycle_pinned
+
+nt-medlink contributors (individual authors unverified), *PulsOxy InitState, MeasuringState and FhirResourceFactory*, NewTec GitLab, revision `e38b98fc8b881af01e23a8f4935567e73d00de28`, publication year unverified, [initialization](https://gitlab.newtec.zz/newtec/student-projects/nt-medlink/ntmedlinkremdev/-/blob/e38b98fc8b881af01e23a8f4935567e73d00de28/lib/App_PulsOxy/src/InitState.cpp), [sending](https://gitlab.newtec.zz/newtec/student-projects/nt-medlink/ntmedlinkremdev/-/blob/e38b98fc8b881af01e23a8f4935567e73d00de28/lib/App_PulsOxy/src/MeasuringState.cpp), [builder](https://gitlab.newtec.zz/newtec/student-projects/nt-medlink/ntmedlinkremdev/-/blob/e38b98fc8b881af01e23a8f4935567e73d00de28/lib/FhirService/src/FhirResourceFactory.cpp), accessed 29 October 2026. Initialization PUTs Patient/Device; measurement sends Observations without registration per message.
+
+**Cited by:** [Server communication design](../Development/system/design/COMMUNICATION/server-communication.md).
+
+
+<a id="hl7_fhir_r4_observation_2019"></a>
+### hl7_fhir_r4_observation_2019
+
+Health Level Seven International, *FHIR R4 Observation*, version 4.0.1, 2019, <https://hl7.org/fhir/R4/observation.html>, accessed 29 October 2026.
+
+**Cited by:** [Server communication design](../Development/system/design/COMMUNICATION/server-communication.md).
+
+
+<a id="hl7_fhir_r4_request_workflow_2019"></a>
+### hl7_fhir_r4_request_workflow_2019
+
+Health Level Seven International, *FHIR R4 Task* and *ServiceRequest*, version 4.0.1, 2019, <https://hl7.org/fhir/R4/task.html> and <https://hl7.org/fhir/R4/servicerequest.html>, accessed 29 October 2026.
+
+**Cited by:** [Server communication design](../Development/system/design/COMMUNICATION/server-communication.md).
+
+
+<a id="stetho_hapi_capabilities_20261029"></a>
+### stetho_hapi_capabilities_20261029
+
+GPT-6.1-Sol on behalf of Nico, *Read-only HAPI FHIR capability and request-delivery investigation*, own desktop observations, 29 October 2026, recorded above and in the [conversation](t3-thread://v2/d5e44f69-2ecc-4a3e-917b-31a7b084c12b/576e10df-527c-41cc-86cd-4e7c0ff0c290). Python desktop HTTPS probes, no device firmware revision. Capability and count-query results do not establish write/notification behavior.
+
+**Cited by:** [Server communication design](../Development/system/design/COMMUNICATION/server-communication.md).
+
+
+<a id="hapi_websocket_812"></a>
+### hapi_websocket_812
+
+HAPI FHIR contributors, *WebsocketDispatcherConfig*, HAPI FHIR 8.12.0, 2026 (source copyright year), [source](https://github.com/hapifhir/hapi-fhir/blob/v8.12.0/hapi-fhir-jpaserver-subscription/src/main/java/ca/uhn/fhir/jpa/subscription/match/config/WebsocketDispatcherConfig.java), accessed 29 October 2026. Source capability, not deployment enablement.
+
+**Cited by:** [Server communication design](../Development/system/design/COMMUNICATION/server-communication.md).
+
+
+<a id="hl7_fhir_r4_subscription_2019"></a>
+### hl7_fhir_r4_subscription_2019
+
+Health Level Seven International, *FHIR R4 Subscription*, version 4.0.1, 2019, <https://hl7.org/fhir/R4/subscription.html>, accessed 29 October 2026. Subscription channels and polling/history alternative.
+
+**Cited by:** [Server communication design](../Development/system/design/COMMUNICATION/server-communication.md).
+
+
+<a id="ietf_websocket_6455_2011"></a>
+### ietf_websocket_6455_2011
+
+Ian Fette and Alexey Melnikov, *The WebSocket Protocol*, IETF RFC 6455, December 2011, sections 1.3 and 1.7, DOI [10.17487/RFC6455](https://doi.org/10.17487/RFC6455), accessed 29 October 2026.
+
+**Cited by:** [Server communication design](../Development/system/design/COMMUNICATION/server-communication.md).
+
+
+<a id="hl7_fhir_r4_data_absent_reason_2019"></a>
+### hl7_fhir_r4_data_absent_reason_2019
+
+Health Level Seven International, *FHIR R4 DataAbsentReason code system*, version 4.0.1, 2019, <https://hl7.org/fhir/R4/codesystem-data-absent-reason.html>, accessed 29 October 2026. The selected use of `error` for poor-signal reporting is an accepted project decision (Nico, 29 October 2026), not prescribed by this source.
+
+**Cited by:** [Server communication design](../Development/system/design/COMMUNICATION/server-communication.md).
+
 
 <a id="summerer_design_review_20261102"></a>
 ### summerer_design_review_20261102
 
 Andreas Summerer and Nico, *Design review of time, TLS and FHIR*, review meeting, 2 November 2026, 10:30–11:30, notes by Nico with resolutions in the [T3 conversation](t3-thread://v1/d5e44f69-2ecc-4a3e-917b-31a7b084c12b), accessed 2 November 2026. Project decisions, not measurements.
 
-**Cited by:** [Provisioning architecture](../Development/system/architecture/system/provisioning.md), separate provisioning image and physical-access trust assumption.
+**Cited by:** [Provisioning architecture](../Development/system/architecture/system/provisioning.md), separate provisioning image and physical-access trust assumption; [decision record 2 November 2026](../Development/system/planning/mvp-decisions-2026-11-02.md).
+
+
+<a id="espressif_esp32s3_wroom1_datasheet_v18"></a>
+### espressif_esp32s3_wroom1_datasheet_v18
+
+Espressif Systems, *ESP32-S3-WROOM-1 & ESP32-S3-WROOM-1U Datasheet*, version 1.8, 2 March 2026, section 8 *Module Schematics* (in-module crystal labelled 40 MHz ± 10 ppm), <https://documentation.espressif.com/esp32-s3-wroom-1_wroom-1u_datasheet_en.pdf>, accessed 2 November 2026. The label does not state whether temperature range and ageing are included.
+
+**Cited by:** [Decision record 2 November 2026, drift calculation](../Development/system/planning/mvp-decisions-2026-11-02.md#drift-calculation).
+
+
+<a id="zephyr_esp32s3_timer_clock_357467a"></a>
+### zephyr_esp32s3_timer_clock_357467a
+
+The Zephyr Project, *Xtensa system timer and ESP32-S3 devicetree*, source revision `357467a011cd2557a1a3f0b4be83d817c4addc9b`, [Kconfig.xtensa](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/drivers/timer/Kconfig.xtensa) and [esp32s3_common.dtsi](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/dts/xtensa/espressif/esp32s3/esp32s3_common.dtsi), accessed 2 November 2026. CCOUNT-based kernel timer on Xtensa; 240 MHz CPU clock from the PLL with a 40 MHz crystal.
+
+**Cited by:** [Decision record 2 November 2026, drift calculation](../Development/system/planning/mvp-decisions-2026-11-02.md#drift-calculation).
+
+
+<a id="zephyr_esp32s3_flash_layout_357467a"></a>
+### zephyr_esp32s3_flash_layout_357467a
+
+The Zephyr Project, *ESP32-S3-DevKitC devicetree, Espressif partition tables, Simple Boot and settings ZMS backend*, source revision `357467a011cd2557a1a3f0b4be83d817c4addc9b`, [esp32s3_devkitc_procpu.dts](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/boards/espressif/esp32s3_devkitc/esp32s3_devkitc_procpu.dts), [partitions_0x0_amp_4M.dtsi](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/dts/vendor/espressif/partitions_0x0_amp_4M.dtsi), [soc/espressif/common/Kconfig](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/soc/espressif/common/Kconfig) and [settings_zms.c](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/subsys/settings/src/settings_zms.c), accessed 2 November 2026.
+
+**Cited by:** [STORAGE flash layout](../Development/system/design/STORAGE/interfaces-and-behavior.md#flash-layout).
+
+
+<a id="ihe_iti_consistent_time_rev20_2023"></a>
+### ihe_iti_consistent_time_rev20_2023
+
+IHE International, *IHE IT Infrastructure (ITI) Technical Framework*, Revision 20.0, Final Text, 4 August 2023, Volume 1 section 7 *Consistent Time (CT)* and Volume 2 section 3.1.4.1.2 *Maintain Time [ITI-1]*, <https://profiles.ihe.net/ITI/TF/Volume1/ch-7.html> and <https://profiles.ihe.net/ITI/TF/Volume2/ITI-1.html>, accessed 2 November 2026. Requires synchronization with a median error of less than one second and names SNTP sufficient for one-second time clients; its use as a worst-case bound is a project decision.
+
+**Cited by:** [Decision record 2 November 2026](../Development/system/planning/mvp-decisions-2026-11-02.md#drift-calculation), [SNTP design](../Development/system/design/COMMUNICATION/time-synchronization.md).
+
+
+<a id="hl7_fhir_r4_security_2019"></a>
+### hl7_fhir_r4_security_2019
+
+Health Level Seven International, *FHIR R4 Security*, version 4.0.1, 2019, section 6.1.0 (time keeping: clocks synchronized using NTP/SNTP, no maximum deviation stated), <https://hl7.org/fhir/R4/security.html>, accessed 2 November 2026.
+
+**Cited by:** [Decision record 2 November 2026](../Development/system/planning/mvp-decisions-2026-11-02.md#drift-calculation).
+
+<a id="nico_provisioning_decisions_20261104"></a>
+### nico_provisioning_decisions_20261104
+
+Nico. *Provisioning deployment-file decisions*. Personal communication, T3 Code, 4 November 2026: one TOML file per server deployment with the certificate embedded as PEM, versioned in the repository, and one flash command that validates, builds and writes the image. [Conversation](t3-thread://v2/d5e44f69-2ecc-4a3e-917b-31a7b084c12b/b0a0170f-70da-43f5-89a6-38c67da80e40), accessed 4 November 2026. Project decisions, not measurements.
+
+**Cited by:** [Provisioning architecture](../Development/system/architecture/system/provisioning.md), deployment file, format, location and flash command; [provisioning design](../Development/system/design/STORAGE/provisioning.md), deployment file and flash command.
+
+<a id="ietf_service_identity_9525_2023"></a>
+### ietf_service_identity_9525_2023
+
+Peter Saint-Andre and Rich Salz. *Service Identity in TLS*. IETF RFC 9525, November 2023, sections 4 and 6. DOI [10.17487/RFC9525](https://doi.org/10.17487/RFC9525). <https://www.rfc-editor.org/rfc/rfc9525>. Accessed 4 November 2026.
+
+**Cited by:** [Provisioning architecture](../Development/system/architecture/system/provisioning.md), identity check without Common Name fallback; [provisioning design](../Development/system/design/STORAGE/provisioning.md), Subject Alternative Name check without Common Name fallback.
+
+<a id="toml_v1_2021"></a>
+### toml_v1_2021
+
+Tom Preston-Werner, Pradyun Gedam et al. *TOML v1.0.0*. Specification, 11 January 2021; multi-line basic strings and integer and string types. <https://toml.io/en/v1.0.0>. Accessed 4 November 2026.
+
+**Cited by:** [Provisioning design](../Development/system/design/STORAGE/provisioning.md), deployment file syntax.
+
+<a id="python_tomllib_314"></a>
+### python_tomllib_314
+
+Python Software Foundation. *tomllib — Parse TOML files*. Python 3.14 documentation; module added in version 3.11. <https://docs.python.org/3/library/tomllib.html>. Accessed 4 November 2026.
+
+**Cited by:** [Provisioning design](../Development/system/design/STORAGE/provisioning.md), standard-library TOML reader of the tool.
+
+<a id="ietf_uri_3986_2005"></a>
+### ietf_uri_3986_2005
+
+Tim Berners-Lee, Roy T. Fielding and Larry Masinter. *Uniform Resource Identifier (URI): Generic Syntax*. IETF RFC 3986, STD 66, January 2005, section 6.2.2.1 (case normalization). DOI [10.17487/RFC3986](https://doi.org/10.17487/RFC3986). <https://www.rfc-editor.org/rfc/rfc3986>. Accessed 4 November 2026.
+
+**Cited by:** [Provisioning design](../Development/system/design/STORAGE/provisioning.md), base URL canonical form.
+
+<a id="ietf_pem_7468_2015"></a>
+### ietf_pem_7468_2015
+
+Simon Josefsson and Sean Leonard. *Textual Encodings of PKIX, PKCS, and CMS Structures*. IETF RFC 7468, April 2015, sections 2 and 5 (CERTIFICATE label). DOI [10.17487/RFC7468](https://doi.org/10.17487/RFC7468). <https://www.rfc-editor.org/rfc/rfc7468>. Accessed 4 November 2026.
+
+**Cited by:** [Provisioning design](../Development/system/design/STORAGE/provisioning.md), embedded PEM certificate.
+
+<a id="espressif_esptool_basic_commands"></a>
+### espressif_esptool_basic_commands
+
+Espressif Systems. *esptool: Basic Commands (ESP32-S3)*. esptool documentation, latest; online revision and publication year not stated; writing a binary at a flash offset. <https://docs.espressif.com/projects/esptool/en/latest/esp32s3/esptool/basic-commands.html>. Accessed 4 November 2026.
+
+**Cited by:** [Provisioning design](../Development/system/design/STORAGE/provisioning.md), flash command.
 
 <a id="nico_flash_layout_decision_20261104"></a>
 ### nico_flash_layout_decision_20261104
@@ -1671,4 +1917,11 @@ Nico. *Flash layout decision*. Personal communication, T3 Code, 4 November 2026.
 
 **Source type:** Project decision. No claim of implementation, measurement or standards conformity.
 
-**Cited by:** [Provisioning architecture](../Development/system/architecture/system/provisioning.md).
+**Cited by:** [Provisioning architecture](../Development/system/architecture/system/provisioning.md), [STORAGE flash layout](../Development/system/design/STORAGE/interfaces-and-behavior.md#flash-layout), [decision record 2 November 2026](../Development/system/planning/mvp-decisions-2026-11-02.md), [provisioning design](../Development/system/design/STORAGE/provisioning.md).
+
+<a id="zephyr_zms_sizing_357467a"></a>
+### zephyr_zms_sizing_357467a
+
+The Zephyr Project, *ZMS allocation table entry, settings ZMS entries and ESP32-S3 flash geometry*, source revision `357467a011cd2557a1a3f0b4be83d817c4addc9b`, [zms_priv.h](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/subsys/kvss/zms/zms_priv.h), [zms.c](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/subsys/kvss/zms/zms.c), [settings_zms.c](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/subsys/settings/src/settings_zms.c), [settings_zms.h](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/subsys/settings/include/settings/settings_zms.h) and [esp32s3_common.dtsi](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/dts/xtensa/espressif/esp32s3/esp32s3_common.dtsi), accessed 4 November 2026.
+
+**Cited by:** [STORAGE flash layout](../Development/system/design/STORAGE/interfaces-and-behavior.md#flash-layout).

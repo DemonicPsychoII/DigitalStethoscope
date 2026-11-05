@@ -754,6 +754,257 @@
   note = {Publication year not verified. Default address count and consecutive-pool semantics; no target DHCP verification claim.}
 }
 
+@misc{zephyr_sntp_pinned,
+  author = {The Zephyr Project},
+  title = {SNTP API, uncertainty configuration, implementation and DNS resolver API},
+  howpublished = {Zephyr source repository},
+  url = {https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/subsys/net/lib/sntp/sntp.c},
+  urldate = {2026-10-28},
+  note = {Revision 357467a011cd2557a1a3f0b4be83d817c4addc9b; publication year unverified. Inspected SNTP header, Kconfig, parser, convenience helper and DNS resolver header. Native unit semantics and helper retries inspected; target behavior unverified.}
+}
+
+@misc{nico_sntp_design_20261028,
+  author = {Nico},
+  title = {SNTP detailed-design decisions},
+  howpublished = {Personal communication, T3 Code, 2026},
+  url = {t3-thread://v2/d5e44f69-2ecc-4a3e-917b-31a7b084c12b/576e10df-527c-41cc-86cd-4e7c0ff0c290},
+  urldate = {2026-10-28},
+  note = {Numbered owner answers: pool.ntp.org trust assumption, Zephyr uncertainty, fresh boot sync, Start cancellation, 5 s attempt, 60 s recovery, 15 min refresh, 1 h expiry and failure indication. Project decisions, not measurements.}
+}
+
+
+@misc{nico_tls_design_20261029,
+  author = {Nico},
+  title = {TLS detailed-design decisions},
+  url = {t3-thread://v2/d5e44f69-2ecc-4a3e-917b-31a7b084c12b/576e10df-527c-41cc-86cd-4e7c0ff0c290},
+  urldate = {2026-10-29},
+  year = {2026}
+}
+
+
+@misc{ietf_tls13_8446_2018,
+  author = {Eric Rescorla},
+  title = {The Transport Layer Security (TLS) Protocol Version 1.3},
+  url = {https://www.rfc-editor.org/rfc/rfc8446},
+  urldate = {2026-10-29},
+  year = {2018}
+}
+
+
+@misc{ietf_tls_identity_9525_2023,
+  author = {Peter Saint-Andre and Rich Salz},
+  title = {Service Identity in TLS},
+  url = {https://www.rfc-editor.org/rfc/rfc9525},
+  urldate = {2026-10-29},
+  year = {2023}
+}
+
+
+@misc{stetho_hapi_tls_probe_20261029,
+  author = {{GPT-6.1-Sol on behalf of Nico}},
+  title = {Local HAPI TLS investigation},
+  url = {t3-thread://v1/d5e44f69-2ecc-4a3e-917b-31a7b084c12b},
+  urldate = {2026-10-29},
+  year = {2026}
+}
+
+
+@misc{pulsoxy_fhirservice_pinned,
+  author = {{nt-medlink contributors}},
+  title = {PulsOxy FhirService implementation},
+  url = {https://gitlab.newtec.zz/newtec/student-projects/nt-medlink/ntmedlinkremdev/-/blob/e38b98fc8b881af01e23a8f4935567e73d00de28/lib/FhirService/src/FhirService.cpp},
+  urldate = {2026-10-29},
+  note = {Publication year unverified; revision identified in source catalogue}
+}
+
+
+@misc{zephyr_tls_socket_pinned,
+  author = {{Zephyr Project contributors}},
+  title = {TLS socket implementation},
+  url = {https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/subsys/net/lib/sockets/sockets_tls.c},
+  urldate = {2026-10-29},
+  note = {Publication year unverified; revision identified in source catalogue}
+}
+
+@misc{nico_tls_keepalive_20261029,
+  author = {Nico},
+  title = {TLS keep-alive and reconnect decisions},
+  url = {t3-thread://v2/d5e44f69-2ecc-4a3e-917b-31a7b084c12b/e4e74eaa-efe8-48c5-8071-2589f46555a2},
+  urldate = {2026-10-29},
+  year = {2026}
+}
+
+@misc{nico_fhir_design_20261029,
+  author = {Nico},
+  title = {FHIR registration and examination-context design decisions},
+  url = {t3-thread://v2/d5e44f69-2ecc-4a3e-917b-31a7b084c12b/576e10df-527c-41cc-86cd-4e7c0ff0c290},
+  urldate = {2026-10-29},
+  year = {2026}
+}
+
+
+@misc{stetho_hotspot_identity_2026,
+  author = {{DigitalStethoscope contributors}},
+  title = {WIFI hotspot identity implementation},
+  url = {https://github.com/DemonicPsychoII/DigitalStethoscope/blob/3d989815b4cbded9bf64ec7c9934894f95cc68e5/Development/system/coding/app/L1_services/L1_WIFI/wifi.c},
+  urldate = {2026-10-29},
+  year = {2026}
+}
+
+
+@misc{hl7_fhir_r4_device_2019,
+  author = {{Health Level Seven International}},
+  title = {FHIR R4 Device},
+  url = {https://hl7.org/fhir/R4/device.html},
+  urldate = {2026-10-29},
+  year = {2019}
+}
+
+
+@misc{hl7_fhir_r4_datatypes_2019,
+  author = {{Health Level Seven International}},
+  title = {FHIR R4 Data Types},
+  url = {https://hl7.org/fhir/R4/datatypes.html},
+  urldate = {2026-10-29},
+  year = {2019}
+}
+
+
+@misc{pulsoxy_fhir_lifecycle_pinned,
+  author = {{nt-medlink contributors}},
+  title = {PulsOxy InitState, MeasuringState and FhirResourceFactory},
+  url = {https://gitlab.newtec.zz/newtec/student-projects/nt-medlink/ntmedlinkremdev/-/tree/e38b98fc8b881af01e23a8f4935567e73d00de28},
+  urldate = {2026-10-29},
+  note = {Publication year and individual authors unverified; revision identified in source catalogue}
+}
+
+
+@misc{hl7_fhir_r4_observation_2019,
+  author = {{Health Level Seven International}},
+  title = {FHIR R4 Observation},
+  url = {https://hl7.org/fhir/R4/observation.html},
+  urldate = {2026-10-29},
+  year = {2019}
+}
+
+
+@misc{hl7_fhir_r4_request_workflow_2019,
+  author = {{Health Level Seven International}},
+  title = {FHIR R4 Task and ServiceRequest},
+  url = {https://hl7.org/fhir/R4/task.html},
+  urldate = {2026-10-29},
+  year = {2019}
+}
+
+
+@misc{stetho_hapi_capabilities_20261029,
+  author = {{GPT-6.1-Sol on behalf of Nico}},
+  title = {Read-only HAPI FHIR capability and request-delivery investigation},
+  url = {t3-thread://v2/d5e44f69-2ecc-4a3e-917b-31a7b084c12b/576e10df-527c-41cc-86cd-4e7c0ff0c290},
+  urldate = {2026-10-29},
+  year = {2026}
+}
+
+
+@misc{hapi_websocket_812,
+  author = {{HAPI FHIR contributors}},
+  title = {WebsocketDispatcherConfig},
+  url = {https://github.com/hapifhir/hapi-fhir/blob/v8.12.0/hapi-fhir-jpaserver-subscription/src/main/java/ca/uhn/fhir/jpa/subscription/match/config/WebsocketDispatcherConfig.java},
+  urldate = {2026-10-29},
+  year = {2026}
+}
+
+
+@misc{hl7_fhir_r4_subscription_2019,
+  author = {{Health Level Seven International}},
+  title = {FHIR R4 Subscription},
+  url = {https://hl7.org/fhir/R4/subscription.html},
+  urldate = {2026-10-29},
+  year = {2019}
+}
+
+
+@misc{ietf_websocket_6455_2011,
+  author = {Ian Fette and Alexey Melnikov},
+  title = {The WebSocket Protocol},
+  url = {https://www.rfc-editor.org/rfc/rfc6455},
+  urldate = {2026-10-29},
+  year = {2011}
+}
+
+
+@misc{hl7_fhir_r4_data_absent_reason_2019,
+  author = {{Health Level Seven International}},
+  title = {FHIR R4 DataAbsentReason code system},
+  url = {https://hl7.org/fhir/R4/codesystem-data-absent-reason.html},
+  urldate = {2026-10-29},
+  year = {2019}
+}
+
+
+@misc{summerer_design_review_20261102,
+  author = {Andreas Summerer and Nico},
+  title = {Design review of time, TLS and FHIR},
+  howpublished = {Review meeting; notes and owner resolutions in T3 Code},
+  url = {t3-thread://v1/d5e44f69-2ecc-4a3e-917b-31a7b084c12b},
+  urldate = {2026-11-02},
+  year = {2026},
+  note = {Project decisions, not measurements. See Development/system/planning/mvp-decisions-2026-11-02.md.}
+}
+
+
+@misc{espressif_esp32s3_wroom1_datasheet_v18,
+  author = {{Espressif Systems}},
+  title = {ESP32-S3-WROOM-1 \& ESP32-S3-WROOM-1U Datasheet},
+  version = {1.8},
+  date = {2026-03-02},
+  url = {https://documentation.espressif.com/esp32-s3-wroom-1_wroom-1u_datasheet_en.pdf},
+  urldate = {2026-11-02},
+  year = {2026},
+  note = {Section 8 Module Schematics: in-module crystal 40 MHz ± 10 ppm.}
+}
+
+
+@misc{zephyr_esp32s3_timer_clock_357467a,
+  author = {{The Zephyr Project}},
+  title = {Xtensa system timer and ESP32-S3 devicetree},
+  version = {357467a011cd2557a1a3f0b4be83d817c4addc9b},
+  url = {https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/drivers/timer/Kconfig.xtensa},
+  urldate = {2026-11-02},
+  note = {Publication year unverified; source revision pinned.}
+}
+
+
+@misc{zephyr_esp32s3_flash_layout_357467a,
+  author = {{The Zephyr Project}},
+  title = {ESP32-S3-DevKitC devicetree, Espressif partition tables, Simple Boot and settings ZMS backend},
+  version = {357467a011cd2557a1a3f0b4be83d817c4addc9b},
+  url = {https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/dts/vendor/espressif/partitions_0x0_amp_4M.dtsi},
+  urldate = {2026-11-02},
+  note = {Publication year unverified; source revision pinned.}
+}
+
+
+@misc{ihe_iti_consistent_time_rev20_2023,
+  author = {{IHE International}},
+  title = {IHE IT Infrastructure (ITI) Technical Framework, Consistent Time (CT) and Maintain Time [ITI-1]},
+  version = {Revision 20.0, Final Text},
+  date = {2023-08-04},
+  url = {https://profiles.ihe.net/ITI/TF/Volume2/ITI-1.html},
+  urldate = {2026-11-02},
+  year = {2023}
+}
+
+
+@misc{hl7_fhir_r4_security_2019,
+  author = {{Health Level Seven International}},
+  title = {FHIR R4 Security},
+  version = {4.0.1},
+  url = {https://hl7.org/fhir/R4/security.html},
+  urldate = {2026-11-02},
+  year = {2019}
+}
+
 @misc{nico_provisioning_decisions_20261104,
   author = {Nico},
   title = {Provisioning deployment-file decisions},
@@ -774,14 +1025,51 @@
   year = {2023}
 }
 
-@misc{summerer_design_review_20261102,
-  author = {Andreas Summerer and Nico},
-  title = {Design review of time, TLS and FHIR},
-  howpublished = {Review meeting; notes and owner resolutions in T3 Code},
-  url = {t3-thread://v1/d5e44f69-2ecc-4a3e-917b-31a7b084c12b},
-  urldate = {2026-11-02},
-  year = {2026},
-  note = {Project decisions, not measurements. See Development/system/planning/mvp-decisions-2026-11-02.md.}
+@misc{toml_v1_2021,
+  author = {Preston-Werner, Tom and Gedam, Pradyun and others},
+  title = {TOML v1.0.0},
+  howpublished = {Specification},
+  url = {https://toml.io/en/v1.0.0},
+  urldate = {2026-11-04},
+  year = {2021}
+}
+
+@misc{python_tomllib_314,
+  author = {{Python Software Foundation}},
+  title = {tomllib --- Parse TOML files},
+  howpublished = {Python 3.14 documentation},
+  url = {https://docs.python.org/3/library/tomllib.html},
+  urldate = {2026-11-04},
+  note = {Online documentation; publication year not stated.}
+}
+
+@misc{ietf_uri_3986_2005,
+  author = {Berners-Lee, Tim and Fielding, Roy T. and Masinter, Larry},
+  title = {Uniform Resource Identifier (URI): Generic Syntax},
+  howpublished = {IETF RFC 3986, STD 66},
+  doi = {10.17487/RFC3986},
+  url = {https://www.rfc-editor.org/rfc/rfc3986},
+  urldate = {2026-11-04},
+  year = {2005}
+}
+
+@misc{ietf_pem_7468_2015,
+  author = {Josefsson, Simon and Leonard, Sean},
+  title = {Textual Encodings of PKIX, PKCS, and CMS Structures},
+  howpublished = {IETF RFC 7468},
+  doi = {10.17487/RFC7468},
+  url = {https://www.rfc-editor.org/rfc/rfc7468},
+  urldate = {2026-11-04},
+  year = {2015}
+}
+
+@misc{espressif_esptool_basic_commands,
+  author = {{Espressif Systems}},
+  title = {esptool: Basic Commands (ESP32-S3)},
+  howpublished = {esptool documentation, latest},
+  url = {https://docs.espressif.com/projects/esptool/en/latest/esp32s3/esptool/basic-commands.html},
+  urldate = {2026-11-04},
+  note = {Online revision and publication year not stated.}
 }
 
 @misc{nico_flash_layout_decision_20261104,
@@ -790,4 +1078,13 @@
   howpublished = {Personal communication, T3 Code},
   year = {2026},
   note = {4 November 2026. Project decision, not a measurement. Conversation link not recorded.}
+}
+
+@misc{zephyr_zms_sizing_357467a,
+  author = {{The Zephyr Project}},
+  title = {ZMS allocation table entry, settings ZMS entries and ESP32-S3 flash geometry},
+  version = {357467a011cd2557a1a3f0b4be83d817c4addc9b},
+  url = {https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/subsys/kvss/zms/zms_priv.h},
+  urldate = {2026-11-04},
+  note = {Publication year unverified; source revision pinned.}
 }
