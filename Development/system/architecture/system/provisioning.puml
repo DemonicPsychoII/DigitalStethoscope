@@ -1,0 +1,33 @@
+@startuml provisioning
+!theme cyborg
+!pragma layout smetana
+skinparam shadowing false
+skinparam componentStyle rectangle
+skinparam defaultFontName SansSerif
+title Provisioning: one deployment file to the trusted server
+top to bottom direction
+package "Developer PC" as host {
+ artifact "Deployment file\nprovisioning/<deployment>.toml\nbase URL, keep-alive, PEM certificate" as file
+ component "Flash command\none file, one serial port" as flash
+ component "Provisioning tool\nvalidate, canonicalize, build image" as tool
+ artifact "Firmware build\npartition offset and size" as build
+}
+package "Device flash" as device {
+ database "Provisioning partition\none image; firmware reads only" as partition
+ database "Settings partition\nWi-Fi network, registration" as settings
+ database "Firmware image" as firmware
+}
+package "Firmware at boot" as boot {
+ component "L1_STORAGE\nformat, lengths, CRC-32" as storage
+ component "L2_COMMUNICATION\ntransport availability, configuration cause" as communication
+ component "L1_WIFI\nendpoint, certificate, SAN, trust anchor" as wifi
+}
+file --> flash
+flash --> tool : validate and build
+build --> flash : partition location
+flash --> partition : write the image only
+partition --> storage : read once
+storage --> communication : endpoint, keep-alive, certificate
+communication --> wifi : configure the one server
+settings -[hidden]right-> firmware
+@enduml
