@@ -1675,7 +1675,7 @@ Nico. *TLS detailed-design decisions*. Personal communication, T3 Code, 29 Octob
 
 Eric Rescorla. *The Transport Layer Security (TLS) Protocol Version 1.3*. IETF RFC 8446, August 2018. DOI: [10.17487/RFC8446](https://doi.org/10.17487/RFC8446), accessed 29 October 2026.
 
-**Cited by:** [TLS design](../Development/system/design/COMMUNICATION/secure-transport.md).
+**Cited by:** [TLS design](../Development/system/design/COMMUNICATION/secure-transport.md), [provisioning design](../Development/system/design/STORAGE/provisioning.md#certificate-checks) (section 4.4.2.2, Key Usage of the server certificate).
 
 
 <a id="ietf_tls_identity_9525_2023"></a>
@@ -1925,3 +1925,10 @@ Nico. *Flash layout decision*. Personal communication, T3 Code, 4 November 2026.
 The Zephyr Project, *ZMS allocation table entry, settings ZMS entries and ESP32-S3 flash geometry*, source revision `357467a011cd2557a1a3f0b4be83d817c4addc9b`, [zms_priv.h](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/subsys/kvss/zms/zms_priv.h), [zms.c](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/subsys/kvss/zms/zms.c), [settings_zms.c](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/subsys/settings/src/settings_zms.c), [settings_zms.h](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/subsys/settings/include/settings/settings_zms.h) and [esp32s3_common.dtsi](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/dts/xtensa/espressif/esp32s3/esp32s3_common.dtsi), accessed 4 November 2026.
 
 **Cited by:** [STORAGE flash layout](../Development/system/design/STORAGE/interfaces-and-behavior.md#flash-layout).
+
+<a id="mbedtls_cert_usage_098e120"></a>
+### mbedtls_cert_usage_098e120
+
+Mbed TLS contributors. *`mbedtls_ssl_check_cert_usage` in `library/ssl_tls.c`*. Zephyr Mbed TLS module, revision `098e120afb51877ed814bdc04443890ae12e0642`, as pinned by Zephyr `357467a011cd2557a1a3f0b4be83d817c4addc9b`; publication year unverified. [Source](https://github.com/zephyrproject-rtos/mbedtls/blob/098e120afb51877ed814bdc04443890ae12e0642/library/ssl_tls.c#L8639), accessed 5 November 2026. Inspected: TLS 1.3 requires `digitalSignature` when Key Usage is present; a client requires `serverAuth` (or `anyExtendedKeyUsage`) when Extended Key Usage is present. Source reading, not a target measurement.
+
+**Cited by:** [Provisioning design](../Development/system/design/STORAGE/provisioning.md#certificate-checks).

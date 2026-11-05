@@ -44,12 +44,13 @@ The tool writes the canonical form into the image; registration binds to the sam
 
 ### Certificate checks
 
-Before anything is written, the tool applies the device's certificate rules, so a mismatch fails on the developer PC. The device applies rules 1 and 3 at boot, enforces rule 2 through its handshake verification and applies rule 4 against its synchronized clock before each handshake, because boot has no valid clock yet:
+Before anything is written, the tool applies the device's certificate rules, so a mismatch fails on the developer PC. The device applies rules 1 and 3 at boot, enforces rules 2 and 5 through its handshake verification and applies rule 4 against its synchronized clock before each handshake, because boot has no valid clock yet:
 
 1. The text is exactly one parsable X.509 certificate.
 2. It is self-issued and its signature verifies with its own public key, because the device trusts it directly.
 3. It has a Subject Alternative Name extension whose entry type follows the host: a DNS name host needs an equal DNS entry (case-insensitive, no wildcard); an IPv4 host needs an equal IP address entry, and a DNS entry spelling the address does not count. Common Name is never used [6].
 4. It is valid on the developer PC's current date. The tool prints the expiry date.
+5. Its key may sign TLS 1.3 server authentication: a Key Usage extension, if present, includes `digitalSignature` [9]; an Extended Key Usage extension, if present, includes `serverAuth` or `anyExtendedKeyUsage`. The device's TLS library rejects the handshake otherwise [10].
 
 The checks use the `cryptography` package already present in the toolchain environment as an esptool dependency (own observation, 4 November 2026: version 50.0.2 in `.ci-workspace/.venv`). A pinned-dependency change of the toolchain must keep it available.
 
@@ -106,6 +107,7 @@ These scenarios allocate future verification; they do not add a generated test b
 | Valid deployment file | REQ-09/REQ-11; VT-08 | `check` passes; the image bytes match the field table and the firmware reader accepts them. |
 | Each violated file rule | REQ-11; VT-08 | Rejected with key and rule; no image written. |
 | Certificate not self-issued, without matching Subject Alternative Name, or with a DNS entry for an IPv4 host | REQ-11; VT-08 | Rejected by the tool; an image forced onto a device yields an invalid configuration at boot (missing or wrong-type SAN) or a failed verification at the handshake (not self-issued). |
+| Certificate whose Key Usage lacks `digitalSignature` or whose Extended Key Usage lacks `serverAuth` and `anyExtendedKeyUsage` | REQ-11; VT-08 | Rejected by the tool; an image forced onto a device is accepted at boot and fails verification at the handshake. |
 | Certificate expired or not yet valid | REQ-11; VT-08 | Rejected by the tool on the PC's date; on the device a valid image is accepted at boot and the setup fails its validity check after time synchronization, without a handshake. |
 | Private key or other PEM label in the file | VT-11 | Rejected; nothing written. |
 | Image larger than the provisioning area, or build without the partition node | REQ-11; VT-08 | Rejected before writing. |
@@ -129,3 +131,7 @@ These scenarios allocate future verification; they do not add a generated test b
 [7] Espressif Systems, *esptool: Basic Commands (ESP32-S3)*, esptool documentation, latest; online revision and publication year not stated, <https://docs.espressif.com/projects/esptool/en/latest/esp32s3/esptool/basic-commands.html>, accessed 4 November 2026. [Source register](../../../../thesis-material/quellen.md#espressif_esptool_basic_commands).
 
 [8] Nico, *Flash layout decision*, personal communication, T3 Code, 4 November 2026. [Source register](../../../../thesis-material/quellen.md#nico_flash_layout_decision_20261104). Project decision, not a measurement.
+
+[9] Eric Rescorla, *The Transport Layer Security (TLS) Protocol Version 1.3*, IETF RFC 8446, August 2018, section 4.4.2.2, DOI [10.17487/RFC8446](https://doi.org/10.17487/RFC8446), accessed 5 November 2026. [Source register](../../../../thesis-material/quellen.md#ietf_tls13_8446_2018).
+
+[10] Mbed TLS contributors, *`mbedtls_ssl_check_cert_usage` in `library/ssl_tls.c`*, Zephyr Mbed TLS module, revision `098e120afb51877ed814bdc04443890ae12e0642`; publication year unverified, [source](https://github.com/zephyrproject-rtos/mbedtls/blob/098e120afb51877ed814bdc04443890ae12e0642/library/ssl_tls.c#L8639), accessed 5 November 2026. [Source register](../../../../thesis-material/quellen.md#mbedtls_cert_usage_098e120).

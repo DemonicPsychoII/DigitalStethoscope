@@ -103,7 +103,8 @@ and names SNTP sufficient for that [3]. Using 1 s as a worst-case bound is a pro
 `notBefore` and `notAfter` of the server certificate, a window of months to years; the server does not
 check the device's time. The local HAPI certificate is valid from 17 June 2025 to 25 September 2027
 ([TLS design](../design/COMMUNICATION/secure-transport.md#investigation-basis-and-limitations)).
-At 20 ppm, one day of error needs about 137 years; only an unset clock fails this check. Every TLS
+At 20 ppm, one day of error needs about 137 years, so drift alone does not fail this check; an unset
+clock does, as does any clock after `notAfter` or, near either boundary, a small clock error. Every TLS
 setup applies a fresh SNTP time anyway.
 
 Limitations: the datasheet labels the tolerance without stating whether it covers temperature range
