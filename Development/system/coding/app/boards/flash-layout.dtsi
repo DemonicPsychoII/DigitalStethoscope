@@ -2,8 +2,8 @@
  * Project flash layout of the 16 MB module (Nico, flash layout decision, 4 November 2026):
  * settings and the provisioning image each have a fixed start and their own size, with
  * unassigned growth room behind each. The application gets everything before the settings.
- * storage.c checks that settings end before the provisioning start and that the largest
- * provisioning image fits.
+ * storage.c checks that settings end before the provisioning start, that provisioning keeps
+ * its fixed start and ends within the flash, and that the largest provisioning image fits.
  *
  * Unit addresses cannot be computed; dtc's unit_address_vs_reg check rejects a node name
  * that no longer matches its reg.

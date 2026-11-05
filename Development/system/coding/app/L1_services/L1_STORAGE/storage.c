@@ -41,6 +41,12 @@
 #define STORAGE_PROVISIONING_VERSION      (1U)    /**< P28-IMAGE: format version this firmware reads. */
 #define STORAGE_ERASED_FLASH_BYTE         (0xFFU) /**< Value of erased NOR flash. */
 
+/** 16 MB flash of the N16R8 module. */
+#define STORAGE_FLASH_SIZE (0x1000000U)
+
+/** P28-PARTITION: fixed across firmware versions, so an update still finds the image flashed before it. */
+#define STORAGE_PROVISIONING_PARTITION_OFFSET (0xF00000U)
+
 /** Largest image: magic, version, URL length and URL, keep-alive, certificate length and certificate, CRC-32. */
 #define STORAGE_PROVISIONING_MAX_SIZE                                                               \
     (STORAGE_PROVISIONING_MAGIC_LENGTH + 1 + 2 + STORAGE_PROVISIONING_BASE_URL_MAX_LENGTH + 4 + 2 + \
@@ -48,6 +54,8 @@
 
 BUILD_ASSERT(STORAGE_PROVISIONING_MAX_SIZE <= PARTITION_SIZE(provisioning_partition), "The largest provisioning image must fit its partition");
 BUILD_ASSERT((PARTITION_OFFSET(storage_partition) + PARTITION_SIZE(storage_partition)) <= PARTITION_OFFSET(provisioning_partition), "Settings must end before the provisioning partition starts");
+BUILD_ASSERT(PARTITION_OFFSET(provisioning_partition) == STORAGE_PROVISIONING_PARTITION_OFFSET, "The provisioning partition must keep its fixed start");
+BUILD_ASSERT((PARTITION_OFFSET(provisioning_partition) + PARTITION_SIZE(provisioning_partition)) <= STORAGE_FLASH_SIZE, "The provisioning partition must end within the flash");
 
 /***********************************************************************/
 /* TYPES                                                               */
