@@ -67,7 +67,9 @@ class PreparedTests(unittest.TestCase):
                     ("esptool", "esptool_version"),
                 ]
             }
-            listing = "\n".join(f"{name}|{name}" for name in p.PINS["modules"])
+            listing = "\n".join(
+                ["manifest|zephyr", *(f"{name}|{name}" for name in p.PINS["modules"])]
+            )
             with (
                 patch.object(p.sys, "platform", "linux"),
                 patch.object(
@@ -76,10 +78,16 @@ class PreparedTests(unittest.TestCase):
                     return_value={"python": "3.12.3", "packages": packages},
                 ),
                 patch.object(p, "git_head", return_value=p.PINS["zephyr_revision"]),
-                patch.object(p.subprocess, "check_output", return_value=listing),
+                patch.object(
+                    p.subprocess, "check_output", return_value=listing
+                ) as west_list,
             ):
                 p.record("zephyr", root)
                 self.assertTrue(p.ready("zephyr", root))
+                # A workspace without the project filter lists unpinned projects as active.
+                west_list.return_value = listing + "\nhal_adi|modules/hal/adi"
+                self.assertFalse(p.ready("zephyr", root))
+                west_list.return_value = listing
                 blob.write_bytes(b"changed")
                 self.assertFalse(p.ready("zephyr", root))
                 blob.write_bytes(b"blob")
