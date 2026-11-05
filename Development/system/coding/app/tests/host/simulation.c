@@ -676,10 +676,10 @@ int storage_read(const char *name, void *data, size_t size)
     return 0;
 }
 
-int storage_readProvisioning(struct storage_provisioning *provisioning)
+int storage_readServerProfile(struct storage_server_profile *serverProfile)
 {
-    memset(provisioning, 0, sizeof(*provisioning));
-    return -ENOENT; /**< Erased provisioning partition in the host model. */
+    memset(serverProfile, 0, sizeof(*serverProfile));
+    return -ENOENT; /**< Erased server profile partition in the host model. */
 }
 
 int storage_write(const char *name, const void *data, size_t size)

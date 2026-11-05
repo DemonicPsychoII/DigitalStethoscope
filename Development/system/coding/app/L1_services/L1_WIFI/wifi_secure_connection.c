@@ -6,7 +6,7 @@
 /** @addtogroup L1_WIFI
  * @{
  * @file
- * Secure connection to the one provisioned server: DNS, TCP and a TLS 1.3
+ * Secure connection to the one configured server: DNS, TCP and a TLS 1.3
  * handshake with mandatory server verification (design/COMMUNICATION/secure-transport.md).
  *
  * mbedTLS runs directly over a non-blocking TCP socket. Zephyr's TLS sockets
@@ -99,7 +99,7 @@ static uint16_t wifi_SecurePort;
 static bool wifi_SecureHostIsAddress;                 /**< wifi_SecureHost is an IPv4 literal. */
 static struct net_sockaddr_in wifi_SecureHostAddress; /**< Parsed literal when wifi_SecureHostIsAddress. */
 static struct wifi_secure_server wifi_SecureServer;
-static mbedtls_x509_crt wifi_TrustedCertificate EXT_RAM_BSS_ATTR;    /**< The provisioned certificate, the only trust anchor. */
+static mbedtls_x509_crt wifi_TrustedCertificate EXT_RAM_BSS_ATTR;    /**< The server profile's certificate, the only trust anchor. */
 static mbedtls_ssl_config wifi_SecureConfiguration EXT_RAM_BSS_ATTR; /**< Client, TLS 1.3 only, verification required. */
 
 /* Owned by the worker during an operation, then by the retained connection. */
@@ -121,7 +121,7 @@ static void wifi_runSecureConnection(struct k_work *work);
 /** @brief Tell whether the worker may continue the given operation. */
 static bool wifi_isSecureConnectionAdmitted(uint32_t generation);
 
-/** @brief Resolve the server name, or use the provisioned IPv4 literal. */
+/** @brief Resolve the server name, or use the configured IPv4 literal. */
 static int wifi_resolveSecureServer(uint32_t generation, k_timepoint_t deadline, struct net_sockaddr_in *address);
 
 /** @brief Connect TCP without blocking, polling in short intervals. */
@@ -181,7 +181,7 @@ int wifi_configureSecureServer(const char *baseUrl, const char *certificate, siz
     int result = wifi_parseBaseUrl(baseUrl);
     if(result != 0)
     {
-        LOG_WRN("Provisioned base URL unusable (%d)", result);
+        LOG_WRN("Server base URL unusable (%d)", result);
         return result;
     }
 
@@ -196,7 +196,7 @@ int wifi_configureSecureServer(const char *baseUrl, const char *certificate, siz
     result = mbedtls_x509_crt_parse(&wifi_TrustedCertificate, (const unsigned char *)certificate, certificateLength);
     if((result != 0) || (wifi_TrustedCertificate.next != NULL))
     {
-        LOG_WRN("Provisioned certificate unusable (-0x%04x)", (unsigned int)-result);
+        LOG_WRN("Server certificate unusable (-0x%04x)", (unsigned int)-result);
         mbedtls_x509_crt_free(&wifi_TrustedCertificate);
         return -EBADMSG; /**< Not exactly one parsable certificate. */
     }
@@ -204,7 +204,7 @@ int wifi_configureSecureServer(const char *baseUrl, const char *certificate, siz
     result = wifi_checkSubjectAlternativeName(&wifi_TrustedCertificate);
     if(result != 0)
     {
-        LOG_WRN("Provisioned certificate has no Subject Alternative Name for %s", wifi_SecureHost);
+        LOG_WRN("Server certificate has no Subject Alternative Name for %s", wifi_SecureHost);
         mbedtls_x509_crt_free(&wifi_TrustedCertificate);
         return result;
     }
@@ -241,7 +241,7 @@ int wifi_startSecureConnection(k_timepoint_t deadline)
 {
     if(!wifi_SecureServerIsConfigured)
     {
-        return -ENOENT; /**< No provisioned server. */
+        return -ENOENT; /**< No configured server. */
     }
 
     int result = 0;

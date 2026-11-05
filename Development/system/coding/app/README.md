@@ -117,12 +117,13 @@ combination of them:
 
 ```powershell
 Development/system/coding/tools/erase-flash.ps1 5 -Settings   # saved settings incl. Wi-Fi -> COM5
-Development/system/coding/tools/erase-flash.ps1 5 -Settings -Provisioning -WhatIf
+Development/system/coding/tools/erase-flash.ps1 5 -Settings -ServerProfile -WhatIf
 Development/system/coding/tools/erase-flash.ps1 5 -App   # application; reflash before it boots again
 ```
 
 The offsets and sizes come from the devicetree of the existing `build-app` build, or
-from `-BuildDir`. `-Partition` is an alias of `-Provisioning`.
+from `-BuildDir`. `-ServerProfile` erases the
+[server profile](../server-profiles/README.md).
 
 ### Debugging with GDB
 

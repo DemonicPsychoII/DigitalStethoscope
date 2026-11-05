@@ -10,7 +10,7 @@
  *
  * Workflow (architecture/COMMUNICATION/setup-state.puml, setup-flow.puml and
  * link-recovery.puml):
- * - Boot: read the provisioning image once (design/STORAGE/provisioning.md).
+ * - Boot: read the server profile image once (design/STORAGE/server-profile.md).
  *   Without a valid image, secure transport stays unavailable with a
  *   configuration cause; Wi-Fi setup and offline listening are unaffected.
  *   Then join the stored network, 4 attempts, 5 s apart. Without a stored
@@ -23,7 +23,7 @@
  *   - If a scan fails 4 times, setup closes with the cause.
  * - Idle: a 2 s hold runs setup. Every 2 min, check the link. If it is
  *   lost, join again (4 attempts) and run setup if all attempts fail.
- *   With a provisioned server, prepare a verified TLS connection: one
+ *   With a valid server profile, prepare a verified TLS connection: one
  *   ten-second setup beginning with SNTP, then 60 s after a failure
  *   (design/COMMUNICATION/secure-transport.md). The retained connection is
  *   closed after the server keep-alive minus 5 s, or once its clock anchor
@@ -114,13 +114,13 @@ enum communication_wait_target
     COMMUNICATION_WAIT_WIFI_STOP,     /**< Wait for a stopped/offline acknowledgement of Start, or return pending at the deadline. */
 };
 
-/** Configuration cause from the boot read of the provisioning image. */
-enum communication_provisioning_state
+/** Configuration cause from the boot read of the server profile image. */
+enum communication_server_profile_state
 {
-    COMMUNICATION_PROVISIONING_MISSING,               /**< Erased partition; no secure connection is attempted. */
-    COMMUNICATION_PROVISIONING_INVALID_IMAGE,         /**< Unreadable image, or bad magic, version, length or CRC-32. */
-    COMMUNICATION_PROVISIONING_INVALID_CONFIGURATION, /**< Valid image whose contents cannot be used. */
-    COMMUNICATION_PROVISIONING_PROVISIONED,           /**< Server provisioned; secure transport can become available. */
+    COMMUNICATION_SERVER_PROFILE_MISSING,               /**< Erased partition; no secure connection is attempted. */
+    COMMUNICATION_SERVER_PROFILE_INVALID_IMAGE,         /**< Unreadable image, or bad magic, version, length or CRC-32. */
+    COMMUNICATION_SERVER_PROFILE_INVALID_CONFIGURATION, /**< Valid image whose contents cannot be used. */
+    COMMUNICATION_SERVER_PROFILE_CONFIGURED,            /**< Server configured; secure transport can become available. */
 };
 
 /** How setup ended. */
@@ -194,14 +194,14 @@ static size_t communication_ScanCount;                                     /**< 
 static struct applied_time_anchor communication_AppliedTimeAnchor;         /**< Anchor from the last successful Apply. */
 static bool communication_AppliedTimeAnchorIsValid;                        /**< AppliedTimeAnchor holds an applied anchor. */
 
-static struct storage_provisioning communication_Provisioning EXT_RAM_BSS_ATTR; /**< Boot copy of the provisioning image, in PSRAM. */
-static enum communication_provisioning_state communication_ProvisioningState;   /**< Boot result; secure transport requires PROVISIONED. */
-static struct wifi_secure_server communication_SecureServer;                    /**< Validity of the provisioned certificate, from WIFI at boot. */
-static bool communication_TransportIsVerified;                                  /**< The last handshake verified the server with the clock of its own setup. */
-static bool communication_SecureConnectionIsRetained;                           /**< A verified connection stays open as a reuse candidate. */
-static k_timepoint_t communication_SecureConnectionIdleDeadline;                /**< The retained connection is closed at this time. */
-static k_timepoint_t communication_NextPreparationTime;                         /**< No Idle preparation before this time after a failed or interrupted attempt. */
-static bool communication_ServerConnectionFailureIsLatched;                     /**< SERVER_CONNECTION_FAILURE latched in the current unavailable episode. */
+static struct storage_server_profile communication_ServerProfile EXT_RAM_BSS_ATTR; /**< Boot copy of the server profile image, in PSRAM. */
+static enum communication_server_profile_state communication_ServerProfileState;   /**< Boot result; secure transport requires CONFIGURED. */
+static struct wifi_secure_server communication_SecureServer;                       /**< Validity of the server profile's certificate, from WIFI at boot. */
+static bool communication_TransportIsVerified;                                     /**< The last handshake verified the server with the clock of its own setup. */
+static bool communication_SecureConnectionIsRetained;                              /**< A verified connection stays open as a reuse candidate. */
+static k_timepoint_t communication_SecureConnectionIdleDeadline;                   /**< The retained connection is closed at this time. */
+static k_timepoint_t communication_NextPreparationTime;                            /**< No Idle preparation before this time after a failed or interrupted attempt. */
+static bool communication_ServerConnectionFailureIsLatched;                        /**< SERVER_CONNECTION_FAILURE latched in the current unavailable episode. */
 
 /***********************************************************************/
 /* LOCAL FUNCTION PROTOTYPES                                           */
@@ -217,12 +217,12 @@ static bool communication_ServerConnectionFailureIsLatched;                     
 static void communication_thread(void *arg1, void *arg2, void *arg3);
 
 /**
- * @brief Read the provisioning image once and record whether secure transport can be available.
+ * @brief Read the server profile image once and record whether secure transport can be available.
  *
  * A missing or invalid image is logged with its configuration cause and
  * never blocks Wi-Fi setup or offline listening.
  */
-static void communication_loadProvisioning(void);
+static void communication_loadServerProfile(void);
 
 /**
  * @brief Load the stored network and connect, or run setup if none is stored.
@@ -567,7 +567,7 @@ static void communication_thread(void *arg1, void *arg2, void *arg3)
     }
     else
     {
-        communication_loadProvisioning();
+        communication_loadServerProfile();
         communication_connectAtBoot();
 
         for(;;)
@@ -577,45 +577,45 @@ static void communication_thread(void *arg1, void *arg2, void *arg3)
     }
 }
 
-static void communication_loadProvisioning(void)
+static void communication_loadServerProfile(void)
 {
-    const int result = storage_readProvisioning(&communication_Provisioning);
+    const int result = storage_readServerProfile(&communication_ServerProfile);
 
     if(result == -ENOENT)
     {
-        communication_ProvisioningState = COMMUNICATION_PROVISIONING_MISSING;
-        LOG_WRN("Secure transport unavailable: no provisioning image");
+        communication_ServerProfileState = COMMUNICATION_SERVER_PROFILE_MISSING;
+        LOG_WRN("Secure transport unavailable: no server profile image");
     }
     else if(result != 0)
     {
-        communication_ProvisioningState = COMMUNICATION_PROVISIONING_INVALID_IMAGE;
-        LOG_ERR("Secure transport unavailable: invalid provisioning image (%d)", result);
+        communication_ServerProfileState = COMMUNICATION_SERVER_PROFILE_INVALID_IMAGE;
+        LOG_ERR("Secure transport unavailable: invalid server profile image (%d)", result);
     }
-    else if(communication_Provisioning.serverKeepAliveSeconds <= (uint32_t)COMMUNICATION_DEVICE_KEEP_ALIVE_MARGIN_S)
+    else if(communication_ServerProfile.serverKeepAliveSeconds <= (uint32_t)COMMUNICATION_DEVICE_KEEP_ALIVE_MARGIN_S)
     {
         /* The device keep-alive is the server value minus the margin, so it must stay positive. */
-        communication_ProvisioningState = COMMUNICATION_PROVISIONING_INVALID_CONFIGURATION;
+        communication_ServerProfileState = COMMUNICATION_SERVER_PROFILE_INVALID_CONFIGURATION;
         LOG_ERR("Secure transport unavailable: invalid configuration, server keep-alive %u s must exceed %d s",
-                communication_Provisioning.serverKeepAliveSeconds,
+                communication_ServerProfile.serverKeepAliveSeconds,
                 COMMUNICATION_DEVICE_KEEP_ALIVE_MARGIN_S);
     }
     else
     {
-        /* storage_provisioning counts no NUL; mbedTLS needs it counted to parse PEM. */
-        const int configurationResult = wifi_configureSecureServer(communication_Provisioning.baseUrl,
-                                                                   communication_Provisioning.certificate,
-                                                                   communication_Provisioning.certificateLength + 1U,
+        /* storage_server_profile counts no NUL; mbedTLS needs it counted to parse PEM. */
+        const int configurationResult = wifi_configureSecureServer(communication_ServerProfile.baseUrl,
+                                                                   communication_ServerProfile.certificate,
+                                                                   communication_ServerProfile.certificateLength + 1U,
                                                                    &communication_SecureServer);
         if(configurationResult != 0)
         {
             /* No fallback endpoint or certificate: secure transport stays unavailable; offline listening works. */
-            communication_ProvisioningState = COMMUNICATION_PROVISIONING_INVALID_CONFIGURATION;
+            communication_ServerProfileState = COMMUNICATION_SERVER_PROFILE_INVALID_CONFIGURATION;
             LOG_ERR("Secure transport unavailable: invalid configuration, endpoint or certificate rejected (%d)", configurationResult);
         }
         else
         {
-            communication_ProvisioningState = COMMUNICATION_PROVISIONING_PROVISIONED;
-            LOG_INF("Server %s provisioned", communication_Provisioning.baseUrl);
+            communication_ServerProfileState = COMMUNICATION_SERVER_PROFILE_CONFIGURED;
+            LOG_INF("Server %s configured", communication_ServerProfile.baseUrl);
         }
     }
 }
@@ -811,9 +811,9 @@ static int communication_prepareSecureConnection(k_timepoint_t deadline)
     {
         return -ENOTCONN; /**< Station has no IPv4 address; no attempt issued. */
     }
-    if(communication_ProvisioningState != COMMUNICATION_PROVISIONING_PROVISIONED)
+    if(communication_ServerProfileState != COMMUNICATION_SERVER_PROFILE_CONFIGURED)
     {
-        return -ENOENT; /**< No valid provisioning image; no attempt issued. */
+        return -ENOENT; /**< No valid server profile image; no attempt issued. */
     }
     if(sys_timepoint_expired(deadline))
     {
@@ -886,7 +886,7 @@ static int communication_prepareSecureConnection(k_timepoint_t deadline)
         communication_SecureConnectionIsRetained = true;
 
         /* P26-KEEPALIVE; boot admits only server values above the margin. */
-        const uint64_t keepAliveMicroseconds = (uint64_t)(communication_Provisioning.serverKeepAliveSeconds - COMMUNICATION_DEVICE_KEEP_ALIVE_MARGIN_S) * USEC_PER_SEC;
+        const uint64_t keepAliveMicroseconds = (uint64_t)(communication_ServerProfile.serverKeepAliveSeconds - COMMUNICATION_DEVICE_KEEP_ALIVE_MARGIN_S) * USEC_PER_SEC;
         /* P25-MAPPING: delivery reuses the connection only while the anchor of its handshake qualifies, so keep it no longer. */
         const uint64_t anchorAgeMicroseconds = communication_getAnchorAgeMicroseconds();
         const uint64_t anchorRemainingMicroseconds = (anchorAgeMicroseconds < COMMUNICATION_TIME_MAPPING_LIMIT_MICROSECONDS) ? (COMMUNICATION_TIME_MAPPING_LIMIT_MICROSECONDS - anchorAgeMicroseconds) : 0U;
@@ -980,7 +980,7 @@ static void communication_prepareTransportInIdle(void)
     communication_updateListeningState();
 
     /* Missing prerequisites defer preparation without consuming an attempt. */
-    const bool isAdmitted = (communication_ProvisioningState == COMMUNICATION_PROVISIONING_PROVISIONED) && wifi_isConnected() && !communication_ListeningIsActive && !communication_CleanupFaultIsLatched;
+    const bool isAdmitted = (communication_ServerProfileState == COMMUNICATION_SERVER_PROFILE_CONFIGURED) && wifi_isConnected() && !communication_ListeningIsActive && !communication_CleanupFaultIsLatched;
     const bool isDue = !communication_TransportIsVerified && sys_timepoint_expired(communication_NextPreparationTime);
     if(!isAdmitted || !isDue)
     {
@@ -1047,7 +1047,7 @@ static k_timeout_t communication_timeUntilTransportDuty(k_timeout_t limit)
     }
 
     /* Only while preparation could run; otherwise an expired retry time would wake the thread at once, again and again. */
-    if((communication_ProvisioningState == COMMUNICATION_PROVISIONING_PROVISIONED) && !communication_TransportIsVerified && wifi_isConnected())
+    if((communication_ServerProfileState == COMMUNICATION_SERVER_PROFILE_CONFIGURED) && !communication_TransportIsVerified && wifi_isConnected())
     {
         const k_timeout_t untilPreparation = sys_timepoint_timeout(communication_NextPreparationTime);
         if(untilPreparation.ticks < timeout.ticks)

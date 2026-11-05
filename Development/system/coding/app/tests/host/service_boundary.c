@@ -302,7 +302,7 @@ uint64_t k_ticks_to_us_floor64(uint64_t ticks)
     return ticks * 1000U;
 }
 
-/* wifi_secure_connection.c needs mbedTLS and is not compiled here; host provisioning is erased, so no server is configured. */
+/* wifi_secure_connection.c needs mbedTLS and is not compiled here; the host server profile is erased, so no server is configured. */
 int wifi_configureSecureServer(const char *baseUrl, const char *certificate, size_t certificateLength, struct wifi_secure_server *server)
 {
     (void)baseUrl;

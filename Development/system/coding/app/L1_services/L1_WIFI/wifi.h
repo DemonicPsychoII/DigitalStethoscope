@@ -85,7 +85,7 @@ enum wifi_secure_connection_cause
     WIFI_SECURE_CONNECTION_CAUSE_CANCELLED,     /**< Cancelled before completion. */
 };
 
-/** The one provisioned server, validated at boot. */
+/** The one configured server, validated at boot. */
 struct wifi_secure_server
 {
     int64_t validFromUtcSeconds;  /**< Start of the trusted certificate's validity. */
@@ -291,7 +291,7 @@ int wifi_cancelTimeSynchronization(void);
 int wifi_applyTimeSynchronization(const struct normalised_time *time, struct applied_time_anchor *anchor);
 
 /**
- * @brief Validate and register the provisioned server once at boot.
+ * @brief Validate and register the server from the server profile once at boot.
  *
  * Parses the canonical base URL (https://host:port/path) and the PEM certificate,
  * requires a Subject Alternative Name matching the host, and makes the
@@ -309,7 +309,7 @@ int wifi_applyTimeSynchronization(const struct normalised_time *time, struct app
 int wifi_configureSecureServer(const char *baseUrl, const char *certificate, size_t certificateLength, struct wifi_secure_server *server);
 
 /**
- * @brief Submit one secure connection to the provisioned server without waiting.
+ * @brief Submit one secure connection to the configured server without waiting.
  *
  * Requires CONTROL's network lease and an applied clock. Resolves IPv4, connects
  * TCP and runs a TLS 1.3 handshake with mandatory server verification. No retry.

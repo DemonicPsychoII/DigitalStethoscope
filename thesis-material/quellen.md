@@ -1675,7 +1675,7 @@ Nico. *TLS detailed-design decisions*. Personal communication, T3 Code, 29 Octob
 
 Eric Rescorla. *The Transport Layer Security (TLS) Protocol Version 1.3*. IETF RFC 8446, August 2018. DOI: [10.17487/RFC8446](https://doi.org/10.17487/RFC8446), accessed 29 October 2026.
 
-**Cited by:** [TLS design](../Development/system/design/COMMUNICATION/secure-transport.md), [provisioning design](../Development/system/design/STORAGE/provisioning.md#certificate-checks) (section 4.4.2.2, Key Usage of the server certificate).
+**Cited by:** [TLS design](../Development/system/design/COMMUNICATION/secure-transport.md), [server profile design](../Development/system/design/STORAGE/server-profile.md#certificate-checks) (section 4.4.2.2, Key Usage of the server certificate).
 
 
 <a id="stetho_hapi_tls_probe_20261029"></a>
@@ -1811,7 +1811,7 @@ Health Level Seven International, *FHIR R4 DataAbsentReason code system*, versio
 
 Andreas Summerer and Nico, *Design review of time, TLS and FHIR*, review meeting, 2 November 2026, 10:30–11:30, notes by Nico with resolutions in the [T3 conversation](t3-thread://v1/d5e44f69-2ecc-4a3e-917b-31a7b084c12b), accessed 2 November 2026. Project decisions, not measurements.
 
-**Cited by:** [Provisioning architecture](../Development/system/architecture/system/provisioning.md), separate provisioning image and physical-access trust assumption; [decision record 2 November 2026](../Development/system/planning/mvp-decisions-2026-11-02.md).
+**Cited by:** [Server profile architecture](../Development/system/architecture/system/server-profile.md), separate server profile image and physical-access trust assumption; [decision record 2 November 2026](../Development/system/planning/mvp-decisions-2026-11-02.md).
 
 
 <a id="espressif_esp32s3_wroom1_datasheet_v18"></a>
@@ -1858,49 +1858,49 @@ Health Level Seven International, *FHIR R4 Security*, version 4.0.1, 2019, secti
 
 Nico. *Provisioning deployment-file decisions*. Personal communication, T3 Code, 4 November 2026: one TOML file per server deployment with the certificate embedded as PEM, versioned in the repository, and one flash command that validates, builds and writes the image. [Conversation](t3-thread://v2/d5e44f69-2ecc-4a3e-917b-31a7b084c12b/b0a0170f-70da-43f5-89a6-38c67da80e40), accessed 4 November 2026. Project decisions, not measurements.
 
-**Cited by:** [Provisioning architecture](../Development/system/architecture/system/provisioning.md), deployment file, format, location and flash command; [provisioning design](../Development/system/design/STORAGE/provisioning.md), deployment file and flash command.
+**Cited by:** [Server profile architecture](../Development/system/architecture/system/server-profile.md), deployment file, format, location and flash command; [server profile design](../Development/system/design/STORAGE/server-profile.md), deployment file and flash command.
 
 <a id="ietf_service_identity_9525_2023"></a>
 ### ietf_service_identity_9525_2023
 
 Peter Saint-Andre and Rich Salz. *Service Identity in TLS*. IETF RFC 9525, November 2023, sections 4 and 6. DOI [10.17487/RFC9525](https://doi.org/10.17487/RFC9525). <https://www.rfc-editor.org/rfc/rfc9525>. Accessed 4 November 2026.
 
-**Cited by:** [TLS design](../Development/system/design/COMMUNICATION/secure-transport.md), identity check; [provisioning architecture](../Development/system/architecture/system/provisioning.md), identity check without Common Name fallback; [provisioning design](../Development/system/design/STORAGE/provisioning.md), Subject Alternative Name check without Common Name fallback.
+**Cited by:** [TLS design](../Development/system/design/COMMUNICATION/secure-transport.md), identity check; [server profile architecture](../Development/system/architecture/system/server-profile.md), identity check without Common Name fallback; [server profile design](../Development/system/design/STORAGE/server-profile.md), Subject Alternative Name check without Common Name fallback.
 
 <a id="toml_v1_2021"></a>
 ### toml_v1_2021
 
 Tom Preston-Werner, Pradyun Gedam et al. *TOML v1.0.0*. Specification, 11 January 2021; multi-line basic strings and integer and string types. <https://toml.io/en/v1.0.0>. Accessed 4 November 2026.
 
-**Cited by:** [Provisioning design](../Development/system/design/STORAGE/provisioning.md), deployment file syntax.
+**Cited by:** [Server profile design](../Development/system/design/STORAGE/server-profile.md), deployment file syntax.
 
 <a id="python_tomllib_314"></a>
 ### python_tomllib_314
 
 Python Software Foundation. *tomllib — Parse TOML files*. Python 3.14 documentation; module added in version 3.11. <https://docs.python.org/3.14/library/tomllib.html>. Accessed 4 November 2026; versioned URL checked 5 November 2026.
 
-**Cited by:** [Provisioning design](../Development/system/design/STORAGE/provisioning.md), standard-library TOML reader of the tool.
+**Cited by:** [Server profile design](../Development/system/design/STORAGE/server-profile.md), standard-library TOML reader of the tool.
 
 <a id="ietf_uri_3986_2005"></a>
 ### ietf_uri_3986_2005
 
 Tim Berners-Lee, Roy T. Fielding and Larry Masinter. *Uniform Resource Identifier (URI): Generic Syntax*. IETF RFC 3986, STD 66, January 2005, section 6.2.2.1 (case normalization). DOI [10.17487/RFC3986](https://doi.org/10.17487/RFC3986). <https://www.rfc-editor.org/rfc/rfc3986>. Accessed 4 November 2026.
 
-**Cited by:** [Provisioning design](../Development/system/design/STORAGE/provisioning.md), base URL canonical form.
+**Cited by:** [Server profile design](../Development/system/design/STORAGE/server-profile.md), base URL canonical form.
 
 <a id="ietf_pem_7468_2015"></a>
 ### ietf_pem_7468_2015
 
 Simon Josefsson and Sean Leonard. *Textual Encodings of PKIX, PKCS, and CMS Structures*. IETF RFC 7468, April 2015, sections 2 and 5 (CERTIFICATE label). DOI [10.17487/RFC7468](https://doi.org/10.17487/RFC7468). <https://www.rfc-editor.org/rfc/rfc7468>. Accessed 4 November 2026.
 
-**Cited by:** [Provisioning design](../Development/system/design/STORAGE/provisioning.md), embedded PEM certificate.
+**Cited by:** [Server profile design](../Development/system/design/STORAGE/server-profile.md), embedded PEM certificate.
 
 <a id="espressif_esptool_basic_commands"></a>
 ### espressif_esptool_basic_commands
 
 Espressif Systems. *esptool: Basic Commands (ESP32-S3)*. esptool documentation, latest; online revision and publication year not stated; writing a binary at a flash offset. <https://docs.espressif.com/projects/esptool/en/latest/esp32s3/esptool/basic-commands.html>. Accessed 4 November 2026.
 
-**Cited by:** [Provisioning design](../Development/system/design/STORAGE/provisioning.md), flash command.
+**Cited by:** [Server profile design](../Development/system/design/STORAGE/server-profile.md), flash command.
 
 <a id="nico_flash_layout_decision_20261104"></a>
 ### nico_flash_layout_decision_20261104
@@ -1909,7 +1909,7 @@ Nico. *Flash layout decision*. Personal communication, T3 Code, 4 November 2026.
 
 **Source type:** Project decision. No claim of implementation, measurement or standards conformity.
 
-**Cited by:** [Provisioning architecture](../Development/system/architecture/system/provisioning.md), [STORAGE flash layout](../Development/system/design/STORAGE/interfaces-and-behavior.md#flash-layout), [decision record 2 November 2026](../Development/system/planning/mvp-decisions-2026-11-02.md), [provisioning design](../Development/system/design/STORAGE/provisioning.md).
+**Cited by:** [Server profile architecture](../Development/system/architecture/system/server-profile.md), [STORAGE flash layout](../Development/system/design/STORAGE/interfaces-and-behavior.md#flash-layout), [decision record 2 November 2026](../Development/system/planning/mvp-decisions-2026-11-02.md), [server profile design](../Development/system/design/STORAGE/server-profile.md).
 
 <a id="zephyr_zms_sizing_357467a"></a>
 ### zephyr_zms_sizing_357467a
@@ -1923,4 +1923,4 @@ The Zephyr Project, *ZMS allocation table entry, settings ZMS entries and ESP32-
 
 Mbed TLS contributors. *`mbedtls_ssl_check_cert_usage` in `library/ssl_tls.c`*. Zephyr Mbed TLS module, revision `098e120afb51877ed814bdc04443890ae12e0642`, as pinned by Zephyr `357467a011cd2557a1a3f0b4be83d817c4addc9b`; publication year unverified. [Source](https://github.com/zephyrproject-rtos/mbedtls/blob/098e120afb51877ed814bdc04443890ae12e0642/library/ssl_tls.c#L8639), accessed 5 November 2026. Inspected: TLS 1.3 requires `digitalSignature` when Key Usage is present; a client requires `serverAuth` (or `anyExtendedKeyUsage`) when Extended Key Usage is present. Source reading, not a target measurement.
 
-**Cited by:** [Provisioning design](../Development/system/design/STORAGE/provisioning.md#certificate-checks).
+**Cited by:** [Server profile design](../Development/system/design/STORAGE/server-profile.md#certificate-checks).

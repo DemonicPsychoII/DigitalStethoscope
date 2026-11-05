@@ -12,7 +12,7 @@
  * name as the subtree, so ZMS finds the entry by its hash and does not
  * walk all entries.
  *
- * The provisioning image is read sequentially from its own partition
+ * The server profile image is read sequentially from its own partition
  * through the flash map; the CRC-32 accumulates over every byte read.
  */
 
@@ -36,26 +36,26 @@
 /* DEFINES                                                             */
 /***********************************************************************/
 
-#define STORAGE_PROVISIONING_MAGIC        "STPV"  /**< P28-IMAGE: marks a provisioning image. */
-#define STORAGE_PROVISIONING_MAGIC_LENGTH (4)     /**< Magic length in bytes, without a NUL. */
-#define STORAGE_PROVISIONING_VERSION      (1U)    /**< P28-IMAGE: format version this firmware reads. */
-#define STORAGE_ERASED_FLASH_BYTE         (0xFFU) /**< Value of erased NOR flash. */
+#define STORAGE_SERVER_PROFILE_MAGIC        "STPV"  /**< P28-IMAGE: marks a server profile image. */
+#define STORAGE_SERVER_PROFILE_MAGIC_LENGTH (4)     /**< Magic length in bytes, without a NUL. */
+#define STORAGE_SERVER_PROFILE_VERSION      (1U)    /**< P28-IMAGE: format version this firmware reads. */
+#define STORAGE_ERASED_FLASH_BYTE           (0xFFU) /**< Value of erased NOR flash. */
 
 /** 16 MB flash of the N16R8 module. */
 #define STORAGE_FLASH_SIZE (0x1000000U)
 
 /** P28-PARTITION: fixed across firmware versions, so an update still finds the image flashed before it. */
-#define STORAGE_PROVISIONING_PARTITION_OFFSET (0xF00000U)
+#define STORAGE_SERVER_PROFILE_PARTITION_OFFSET (0xF00000U)
 
 /** Largest image: magic, version, URL length and URL, keep-alive, certificate length and certificate, CRC-32. */
-#define STORAGE_PROVISIONING_MAX_SIZE                                                               \
-    (STORAGE_PROVISIONING_MAGIC_LENGTH + 1 + 2 + STORAGE_PROVISIONING_BASE_URL_MAX_LENGTH + 4 + 2 + \
-     STORAGE_PROVISIONING_CERTIFICATE_MAX_LENGTH + 4)
+#define STORAGE_SERVER_PROFILE_MAX_SIZE                                                                 \
+    (STORAGE_SERVER_PROFILE_MAGIC_LENGTH + 1 + 2 + STORAGE_SERVER_PROFILE_BASE_URL_MAX_LENGTH + 4 + 2 + \
+     STORAGE_SERVER_PROFILE_CERTIFICATE_MAX_LENGTH + 4)
 
-BUILD_ASSERT(STORAGE_PROVISIONING_MAX_SIZE <= PARTITION_SIZE(provisioning_partition), "The largest provisioning image must fit its partition");
-BUILD_ASSERT((PARTITION_OFFSET(storage_partition) + PARTITION_SIZE(storage_partition)) <= PARTITION_OFFSET(provisioning_partition), "Settings must end before the provisioning partition starts");
-BUILD_ASSERT(PARTITION_OFFSET(provisioning_partition) == STORAGE_PROVISIONING_PARTITION_OFFSET, "The provisioning partition must keep its fixed start");
-BUILD_ASSERT((PARTITION_OFFSET(provisioning_partition) + PARTITION_SIZE(provisioning_partition)) <= STORAGE_FLASH_SIZE, "The provisioning partition must end within the flash");
+BUILD_ASSERT(STORAGE_SERVER_PROFILE_MAX_SIZE <= PARTITION_SIZE(server_profile_partition), "The largest server profile image must fit its partition");
+BUILD_ASSERT((PARTITION_OFFSET(storage_partition) + PARTITION_SIZE(storage_partition)) <= PARTITION_OFFSET(server_profile_partition), "Settings must end before the server profile partition starts");
+BUILD_ASSERT(PARTITION_OFFSET(server_profile_partition) == STORAGE_SERVER_PROFILE_PARTITION_OFFSET, "The server profile partition must keep its fixed start");
+BUILD_ASSERT((PARTITION_OFFSET(server_profile_partition) + PARTITION_SIZE(server_profile_partition)) <= STORAGE_FLASH_SIZE, "The server profile partition must end within the flash");
 
 /***********************************************************************/
 /* TYPES                                                               */
@@ -69,10 +69,10 @@ struct storage_read_context
     int result;  /**< 0 when read, -ENOENT until found, or an error code. */
 };
 
-/** Sequential reader over the provisioning partition. */
+/** Sequential reader over the server profile partition. */
 struct storage_image_reader
 {
-    const struct flash_area *area; /**< Open provisioning partition. */
+    const struct flash_area *area; /**< Open server profile partition. */
     off_t offset;                  /**< Next byte to read. */
     uint32_t checksum;             /**< IEEE CRC-32 over all bytes read so far. */
 };
@@ -109,13 +109,13 @@ static int storage_loadRecord(const char *key, size_t length, settings_read_cb r
 /**
  * @brief Read and check all image fields from the start of the open partition.
  *
- * @param[in,out] reader       Open reader at offset 0.
- * @param[out]    provisioning Destination of the text fields and the keep-alive.
+ * @param[in,out] reader        Open reader at offset 0.
+ * @param[out]    serverProfile Destination of the text fields and the keep-alive.
  *
  * @return 0 for a valid image, -ENOENT for an erased partition, -EBADMSG for
  *         any other invalid image, or a negative error code from the flash driver.
  */
-static int storage_parseProvisioning(struct storage_image_reader *reader, struct storage_provisioning *provisioning);
+static int storage_parseServerProfile(struct storage_image_reader *reader, struct storage_server_profile *serverProfile);
 
 /**
  * @brief Read a length field and check it against its limit.
@@ -189,26 +189,26 @@ int storage_write(const char *name, const void *data, size_t size)
     return result;
 }
 
-int storage_readProvisioning(struct storage_provisioning *provisioning)
+int storage_readServerProfile(struct storage_server_profile *serverProfile)
 {
     int result = -EINVAL; /**< Invalid argument or unsupported input. */
 
-    if(provisioning != NULL)
+    if(serverProfile != NULL)
     {
         struct storage_image_reader reader = {.area = NULL, .offset = 0, .checksum = 0U};
 
-        (void)memset(provisioning, 0, sizeof(*provisioning));
-        result = flash_area_open(PARTITION_ID(provisioning_partition), &reader.area);
+        (void)memset(serverProfile, 0, sizeof(*serverProfile));
+        result = flash_area_open(PARTITION_ID(server_profile_partition), &reader.area);
 
         if(result == 0)
         {
-            result = storage_parseProvisioning(&reader, provisioning);
+            result = storage_parseServerProfile(&reader, serverProfile);
             flash_area_close(reader.area);
         }
 
         if(result != 0)
         {
-            (void)memset(provisioning, 0, sizeof(*provisioning));
+            (void)memset(serverProfile, 0, sizeof(*serverProfile));
         }
     }
 
@@ -254,9 +254,9 @@ static int storage_loadRecord(const char *key, size_t length, settings_read_cb r
     return 0;
 }
 
-static int storage_parseProvisioning(struct storage_image_reader *reader, struct storage_provisioning *provisioning)
+static int storage_parseServerProfile(struct storage_image_reader *reader, struct storage_server_profile *serverProfile)
 {
-    uint8_t magic[STORAGE_PROVISIONING_MAGIC_LENGTH] = {0};
+    uint8_t magic[STORAGE_SERVER_PROFILE_MAGIC_LENGTH] = {0};
     uint8_t version = 0U;
     uint8_t keepAliveBytes[4] = {0};
     uint8_t checksumBytes[4] = {0};
@@ -278,14 +278,14 @@ static int storage_parseProvisioning(struct storage_image_reader *reader, struct
         {
             result = -ENOENT; /**< No image was flashed. */
         }
-        else if(memcmp(magic, STORAGE_PROVISIONING_MAGIC, sizeof(magic)) != 0)
+        else if(memcmp(magic, STORAGE_SERVER_PROFILE_MAGIC, sizeof(magic)) != 0)
         {
-            result = -EBADMSG; /**< Not a provisioning image. */
+            result = -EBADMSG; /**< Not a server profile image. */
         }
         else
         {
             result = storage_readImage(reader, &version, sizeof(version));
-            if((result == 0) && (version != STORAGE_PROVISIONING_VERSION))
+            if((result == 0) && (version != STORAGE_SERVER_PROFILE_VERSION))
             {
                 result = -EBADMSG; /**< Image format this firmware cannot read. */
             }
@@ -294,24 +294,24 @@ static int storage_parseProvisioning(struct storage_image_reader *reader, struct
 
     if(result == 0)
     {
-        result = storage_readLength(reader, STORAGE_PROVISIONING_BASE_URL_MAX_LENGTH, &baseUrlLength);
+        result = storage_readLength(reader, STORAGE_SERVER_PROFILE_BASE_URL_MAX_LENGTH, &baseUrlLength);
     }
     if(result == 0)
     {
-        result = storage_readImage(reader, provisioning->baseUrl, baseUrlLength);
+        result = storage_readImage(reader, serverProfile->baseUrl, baseUrlLength);
     }
     if(result == 0)
     {
         result = storage_readImage(reader, keepAliveBytes, sizeof(keepAliveBytes));
-        provisioning->serverKeepAliveSeconds = sys_get_le32(keepAliveBytes);
+        serverProfile->serverKeepAliveSeconds = sys_get_le32(keepAliveBytes);
     }
     if(result == 0)
     {
-        result = storage_readLength(reader, STORAGE_PROVISIONING_CERTIFICATE_MAX_LENGTH, &certificateLength);
+        result = storage_readLength(reader, STORAGE_SERVER_PROFILE_CERTIFICATE_MAX_LENGTH, &certificateLength);
     }
     if(result == 0)
     {
-        result = storage_readImage(reader, provisioning->certificate, certificateLength);
+        result = storage_readImage(reader, serverProfile->certificate, certificateLength);
     }
     if(result == 0)
     {
@@ -325,13 +325,13 @@ static int storage_parseProvisioning(struct storage_image_reader *reader, struct
     }
 
     /* The text fields are used as C strings, so an embedded NUL would shorten them silently. */
-    if((result == 0) && ((strlen(provisioning->baseUrl) != baseUrlLength) || (strlen(provisioning->certificate) != certificateLength)))
+    if((result == 0) && ((strlen(serverProfile->baseUrl) != baseUrlLength) || (strlen(serverProfile->certificate) != certificateLength)))
     {
         result = -EBADMSG; /**< Length field does not match the text. */
     }
     if(result == 0)
     {
-        provisioning->certificateLength = certificateLength;
+        serverProfile->certificateLength = certificateLength;
     }
 
     return result;

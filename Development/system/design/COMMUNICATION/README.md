@@ -4,6 +4,6 @@
 
 [SNTP synchronization](time-synchronization.md) defines the exchange that opens every TLS setup, service contracts, uncertainty, the computed mapping limit and cancellation, independently of Wi-Fi setup success.
 
-[TLS preparation](secure-transport.md) defines the provisioned endpoint/trust inputs, TLS 1.3 verification, connection reuse, cancellation, recovery and the delivery-budget boundary. Each setup starts with the SNTP exchange above.
+[TLS preparation](secure-transport.md) defines the endpoint and trust inputs from the server profile, TLS 1.3 verification, connection reuse, cancellation, recovery and the delivery-budget boundary. Each setup starts with the SNTP exchange above.
 
 [Server communication](server-communication.md) defines persistent conditional Device registration, bounded FHIR message construction, request-context consumption and connection reuse. Its request-delivery comparison leaves the external adapter undecided; It depends on the SNTP and TLS designs above.

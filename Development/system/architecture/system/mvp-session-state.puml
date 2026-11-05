@@ -18,8 +18,8 @@ Measuring --> Muted : catalogue halting fault / mute, invalidate
 Listening --> Idle : Stop in Lung (optional) / mute, no BPM or send
 Measuring --> Idle : Stop before 15 s / cancel, no send
 Measuring --> Analysing : Stop at or after 15 s / mute, finalize
-Analysing --> Sending : valid BPM + Wi-Fi configured + delivery prerequisites (Device id, provisioning image)
-Analysing --> ReportingError : invalid BPM + validated error contract + Wi-Fi configured + delivery prerequisites (Device id, provisioning image)
+Analysing --> Sending : valid BPM + Wi-Fi configured + delivery prerequisites (Device id, server profile image)
+Analysing --> ReportingError : invalid BPM + validated error contract + Wi-Fi configured + delivery prerequisites (Device id, server profile image)
 Analysing --> Idle : Wi-Fi unconfigured / no send or Wi-Fi error
 Analysing --> Idle : Wi-Fi configured + delivery prerequisites fail / latch DELIVERY_NOT_POSSIBLE
 Sending --> Idle : receipt 201 / 200

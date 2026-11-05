@@ -11,14 +11,14 @@ the firmware is flashed again.
 Erase the application partition, including the boot image header.
 .PARAMETER Settings
 Erase the settings partition, including the saved Wi-Fi network.
-.PARAMETER Provisioning
-Erase the provisioning partition with the deployment endpoint and certificate.
+.PARAMETER ServerProfile
+Erase the server profile partition with the deployment endpoint and certificate.
 .PARAMETER BuildDir
 Firmware build whose devicetree defines the partitions; build-app by default.
 .EXAMPLE
     .\erase-flash.ps1 5 -Settings
 .EXAMPLE
-    .\erase-flash.ps1 5 -Settings -Provisioning
+    .\erase-flash.ps1 5 -Settings -ServerProfile
 #>
 [CmdletBinding(SupportsShouldProcess = $true, ConfirmImpact = 'Medium')]
 param(
@@ -27,8 +27,7 @@ param(
     [int]$Port,
     [switch]$App,
     [switch]$Settings,
-    [Alias('Partition')]
-    [switch]$Provisioning,
+    [switch]$ServerProfile,
     [string]$BuildDir
 )
 
@@ -38,10 +37,10 @@ $ErrorActionPreference = 'Stop'
 $selectedLabels = @(
     if ($App) { 'slot0_partition' }
     if ($Settings) { 'storage_partition' }
-    if ($Provisioning) { 'provisioning_partition' }
+    if ($ServerProfile) { 'server_profile_partition' }
 )
 if ($selectedLabels.Count -eq 0) {
-    throw 'Select at least one partition: -App, -Settings or -Provisioning.'
+    throw 'Select at least one partition: -App, -Settings or -ServerProfile.'
 }
 
 Assert-FwToolchain

@@ -1,6 +1,6 @@
-"""Check a deployment file and build its provisioning image.
+"""Check a deployment file and build its server profile image.
 
-The deployment file and the commands follow design/STORAGE/provisioning.md;
+The deployment file and the commands follow design/STORAGE/server-profile.md;
 the image is format version 1 of design/STORAGE/interfaces-and-behavior.md#flash-layout:
 magic "STPV", version, base URL length and base URL, server keep-alive seconds,
 certificate length and PEM certificate, IEEE CRC-32 over all preceding bytes,
@@ -42,7 +42,7 @@ PEM_CERTIFICATE = re.compile(
     r"-----BEGIN CERTIFICATE-----\n[A-Za-z0-9+/=\n]+-----END CERTIFICATE-----\n"
 )
 PARTITION = re.compile(
-    r"\bprovisioning_partition:\s*(?:\w+:\s*)*partition@[0-9a-fA-F]+\s*\{[^}]*?"
+    r"\bserver_profile_partition:\s*(?:\w+:\s*)*partition@[0-9a-fA-F]+\s*\{[^}]*?"
     r"\breg\s*=\s*<\s*(0x[0-9a-fA-F]+)\s+(0x[0-9a-fA-F]+)\s*>",
     re.DOTALL,
 )
@@ -241,8 +241,8 @@ def build_image(deployment: Deployment) -> bytes:
     return body + struct.pack("<I", zlib.crc32(body))
 
 
-def provisioning_partition(build_directory: Path) -> tuple[int, int]:
-    """Start and size of the provisioning partition from the build's final devicetree."""
+def server_profile_partition(build_directory: Path) -> tuple[int, int]:
+    """Start and size of the server profile partition from the build's final devicetree."""
     devicetree = build_directory / "zephyr" / "zephyr.dts"
     try:
         text = devicetree.read_text(encoding="utf-8")
@@ -250,7 +250,7 @@ def provisioning_partition(build_directory: Path) -> tuple[int, int]:
         raise DeploymentError("--build-dir", f"cannot read {devicetree} ({error.strerror})") from None
     match = PARTITION.search(text)
     if match is None:
-        raise DeploymentError("--build-dir", f"no provisioning_partition node in {devicetree}")
+        raise DeploymentError("--build-dir", f"no server_profile_partition node in {devicetree}")
     return int(match.group(1), 16), int(match.group(2), 16)
 
 
@@ -273,10 +273,10 @@ def check(path: Path) -> Deployment:
 def build(path: Path, build_directory: Path) -> tuple[Path, int]:
     deployment = check(path)
     image = build_image(deployment)
-    start, size = provisioning_partition(build_directory)
+    start, size = server_profile_partition(build_directory)
     if len(image) > size:
         raise DeploymentError("--build-dir", f"image of {len(image)} bytes exceeds the partition of {size} bytes")
-    output = build_directory / "provisioning" / f"{deployment.name}.bin"
+    output = build_directory / "server-profile" / f"{deployment.name}.bin"
     output.parent.mkdir(exist_ok=True)
     output.write_bytes(image)
     print(f"Image:                     {output}")
@@ -296,10 +296,10 @@ def main() -> int:
     commands = parser.add_subparsers(dest="command", required=True)
     check_command = commands.add_parser("check", help="Validate a deployment file and its certificate.")
     check_command.add_argument("file", type=Path)
-    build_command = commands.add_parser("build", help="Check, then write <build>/provisioning/<deployment>.bin.")
+    build_command = commands.add_parser("build", help="Check, then write <build>/server-profile/<deployment>.bin.")
     build_command.add_argument("file", type=Path)
     build_command.add_argument("--build-dir", type=Path, required=True, help="Firmware build with the partition table.")
-    flash_command = commands.add_parser("flash", help="Build, then write the image; used by flash-provisioning.ps1.")
+    flash_command = commands.add_parser("flash", help="Build, then write the image; used by flash-server-profile.ps1.")
     flash_command.add_argument("file", type=Path)
     flash_command.add_argument("--build-dir", type=Path, required=True)
     flash_command.add_argument("--port", required=True, help="Serial port, for example COM4.")
