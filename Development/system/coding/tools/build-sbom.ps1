@@ -41,7 +41,7 @@ Invoke-FwWest @('spdx', '--init', '-d', $BuildDir)
 $spdxDir = Join-Path $BuildDir 'spdx'
 # Stale documents would otherwise hide a run that wrote nothing.
 if (Test-Path -LiteralPath $spdxDir -PathType Container) {
-    Remove-Item -Path (Join-Path $spdxDir '*.spdx')
+    Get-ChildItem -LiteralPath $spdxDir -Filter '*.spdx' -File | Remove-Item
 }
 Invoke-FwWest @('spdx', '-d', $BuildDir, '--include-sdk')
 
