@@ -86,7 +86,7 @@ Boot reads and validates the image once, as the [flash layout](interfaces-and-be
 | --- | --- |
 | Erased partition | Missing image; no secure connection attempt. |
 | Unknown magic or version, bad length, CRC mismatch | Invalid image. |
-| Unusable URL, unparsable certificate, no matching Subject Alternative Name | Invalid configuration; the log names the rule. |
+| Unusable URL, unparsable certificate, no matching Subject Alternative Name, server keep-alive below 6 seconds | Invalid configuration; the log names the rule. COMMUNICATION rejects the keep-alive, because its 5-second margin would leave no idle time. |
 | Valid image | Server provisioned; preparation follows the [TLS design](../COMMUNICATION/secure-transport.md). |
 
 ## Parameters
@@ -113,6 +113,7 @@ These scenarios allocate future verification; they do not add a generated test b
 | Image larger than the provisioning area, or build without the partition node | REQ-11; VT-08 | Rejected before writing. |
 | Flash command on a device | REQ-11/REQ-12; VT-08 | Only the provisioning range changes; saved network and firmware remain. |
 | Missing or corrupted image at boot | REQ-11/REQ-13; VT-08/VT-09 | Secure transport unavailable with a configuration cause; Wi-Fi and offline listening unaffected. |
+| CRC-valid image with a server keep-alive of 0 to 5 seconds at boot | REQ-11/REQ-13; VT-08/VT-09 | Invalid configuration; no secure connection attempt; Wi-Fi and offline listening unaffected. |
 
 ## Sources
 
@@ -120,7 +121,7 @@ These scenarios allocate future verification; they do not add a generated test b
 
 [2] Tom Preston-Werner, Pradyun Gedam et al., *TOML v1.0.0*, specification, 11 January 2021, <https://toml.io/en/v1.0.0>, accessed 4 November 2026. [Source register](../../../../thesis-material/quellen.md#toml_v1_2021).
 
-[3] Python Software Foundation, *tomllib — Parse TOML files*, Python 3.14 documentation, module added in version 3.11, <https://docs.python.org/3/library/tomllib.html>, accessed 4 November 2026. [Source register](../../../../thesis-material/quellen.md#python_tomllib_314).
+[3] Python Software Foundation, *tomllib — Parse TOML files*, Python 3.14 documentation, module added in version 3.11, <https://docs.python.org/3.14/library/tomllib.html>, accessed 4 November 2026. [Source register](../../../../thesis-material/quellen.md#python_tomllib_314).
 
 [4] Simon Josefsson and Sean Leonard, *Textual Encodings of PKIX, PKCS, and CMS Structures*, IETF RFC 7468, April 2015, sections 2 and 5, DOI [10.17487/RFC7468](https://doi.org/10.17487/RFC7468), accessed 4 November 2026. [Source register](../../../../thesis-material/quellen.md#ietf_pem_7468_2015).
 

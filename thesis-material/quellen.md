@@ -1646,7 +1646,7 @@ The Zephyr Project. *Zephyr DHCPv4 Kconfig*. Zephyr source repository, revision 
 <a id="zephyr_sntp_pinned"></a>
 ### zephyr_sntp_pinned
 
-The Zephyr Project. *SNTP API, uncertainty configuration, implementation and DNS resolver API*. Zephyr source repository. <https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/subsys/net/lib/sntp/sntp.c>. Accessed 28 October 2026.
+The Zephyr Project. *SNTP API, uncertainty configuration, implementation and DNS resolver API*. Zephyr source repository: [SNTP header](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/include/zephyr/net/sntp.h), [Kconfig](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/subsys/net/lib/sntp/Kconfig), [parser](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/subsys/net/lib/sntp/sntp.c), [convenience helper](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/subsys/net/lib/sntp/sntp_simple.c), [DNS resolver header](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/include/zephyr/net/dns_resolve.h). Accessed 28 October 2026.
 
 **Verification:** Revision 357467a011cd2557a1a3f0b4be83d817c4addc9b; publication year unverified. Inspected SNTP header, Kconfig, parser, convenience helper and DNS resolver header. Native unit semantics and helper retries inspected; target behavior unverified.
 
@@ -1877,7 +1877,7 @@ Tom Preston-Werner, Pradyun Gedam et al. *TOML v1.0.0*. Specification, 11 Januar
 <a id="python_tomllib_314"></a>
 ### python_tomllib_314
 
-Python Software Foundation. *tomllib — Parse TOML files*. Python 3.14 documentation; module added in version 3.11. <https://docs.python.org/3/library/tomllib.html>. Accessed 4 November 2026.
+Python Software Foundation. *tomllib — Parse TOML files*. Python 3.14 documentation; module added in version 3.11. <https://docs.python.org/3.14/library/tomllib.html>. Accessed 4 November 2026; versioned URL checked 5 November 2026.
 
 **Cited by:** [Provisioning design](../Development/system/design/STORAGE/provisioning.md), standard-library TOML reader of the tool.
 

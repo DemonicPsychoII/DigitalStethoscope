@@ -51,7 +51,7 @@ The provisioning image is the only source of the server endpoint and certificate
 | Magic | 4 bytes | ASCII `STPV` |
 | Version | 1 byte | `1` |
 | Base URL length, base URL | 2 bytes + at most 256 bytes | Canonical HTTPS FHIR base URL as defined by the [server binding](../COMMUNICATION/server-communication.md#physical-identity-and-server-binding) |
-| Server keep-alive | 4 bytes | Server idle timeout in seconds; the device subtracts 5 seconds |
+| Server keep-alive | 4 bytes | Server idle timeout in seconds, 6 to 4,294,967,295; the device subtracts 5 seconds, and COMMUNICATION rejects a smaller value at boot as an invalid configuration |
 | Certificate length, certificate | 2 bytes + at most 8192 bytes | PEM public server certificate |
 | CRC-32 | 4 bytes | IEEE CRC-32 over all preceding bytes; detects corruption only. The MVP uses no signature. |
 
