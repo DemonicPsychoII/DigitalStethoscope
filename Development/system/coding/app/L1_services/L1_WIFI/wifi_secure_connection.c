@@ -433,18 +433,23 @@ static void wifi_runSecureConnection(struct k_work *work)
         }
     }
 
-    if((result == 0) && wifi_isSecureConnectionAdmitted(generation))
-    {
-        (void)k_mutex_lock(&wifi_SecureLock, K_FOREVER);
-        /* Only the socket and session remain; the retained connection owns them now. */
-        wifi_SecureConnectionIsRetained = true;
-        (void)k_mutex_unlock(&wifi_SecureLock);
-        wifi_publishSecureResult(generation, 0, WIFI_SECURE_CONNECTION_CAUSE_NONE);
-        return;
-    }
-
     if(result == 0)
     {
+        /* Admission, retention and publication form one step, so a Cancel that reports release never leaves a retained connection behind. */
+        (void)k_mutex_lock(&wifi_SecureLock, K_FOREVER);
+        const bool isAdmitted = wifi_isSecureConnectionCurrent(generation);
+        if(isAdmitted)
+        {
+            /* Only the socket and session remain; the retained connection owns them now. */
+            wifi_SecureConnectionIsRetained = true;
+            wifi_publishSecureResult(generation, 0, WIFI_SECURE_CONNECTION_CAUSE_NONE);
+        }
+        (void)k_mutex_unlock(&wifi_SecureLock);
+
+        if(isAdmitted)
+        {
+            return;
+        }
         result = -ECANCELED; /**< Cancellation won over a completed handshake. */
     }
 

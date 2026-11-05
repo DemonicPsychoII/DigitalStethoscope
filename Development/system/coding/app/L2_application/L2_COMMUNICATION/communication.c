@@ -936,7 +936,12 @@ static int communication_connectSecurely(k_timepoint_t deadline, enum wifi_secur
         else if(communication_ListeningIsActive || sys_timepoint_expired(deadline))
         {
             const bool isInterrupted = communication_ListeningIsActive; /**< Start, not the deadline, ended the attempt. */
-            const int cancelResult = wifi_cancelSecureConnection();
+            int cancelResult = wifi_cancelSecureConnection();
+            if(cancelResult == 0)
+            {
+                /* The attempt may have completed after the last wait; its connection is abandoned with it, or every later Start is busy. */
+                cancelResult = wifi_closeSecureConnection();
+            }
 
             if(cancelResult != 0)
             {
