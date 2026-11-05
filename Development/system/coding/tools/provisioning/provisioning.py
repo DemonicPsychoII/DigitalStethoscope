@@ -24,6 +24,7 @@ from urllib.parse import urlsplit
 
 from cryptography import x509
 from cryptography.exceptions import InvalidSignature, UnsupportedAlgorithm
+from cryptography.x509.oid import ExtendedKeyUsageOID
 
 MAGIC = b"STPV"
 VERSION = 1
@@ -128,7 +129,7 @@ def certificate_text(text: str) -> bytes:
 
 
 def check_certificate(pem: bytes, host: str, now: datetime) -> x509.Certificate:
-    """Apply certificate rules 1 to 4 of the design."""
+    """Apply certificate rules 1 to 5 of the design."""
     key = "server.certificate"
     try:
         certificate = x509.load_pem_x509_certificate(pem)
@@ -162,6 +163,23 @@ def check_certificate(pem: bytes, host: str, now: datetime) -> x509.Certificate:
             key,
             "rule 4: not valid on this PC's date "
             f"(valid {certificate.not_valid_before_utc:%Y-%m-%d} to {certificate.not_valid_after_utc:%Y-%m-%d})",
+        )
+    try:
+        key_usage = certificate.extensions.get_extension_for_class(x509.KeyUsage).value
+    except x509.ExtensionNotFound:
+        key_usage = None
+    if key_usage is not None and not key_usage.digital_signature:
+        raise DeploymentError(key, "rule 5: Key Usage lacks digitalSignature")
+    try:
+        extended_key_usage = certificate.extensions.get_extension_for_class(
+            x509.ExtendedKeyUsage
+        ).value
+    except x509.ExtensionNotFound:
+        extended_key_usage = None
+    server_usages = {ExtendedKeyUsageOID.SERVER_AUTH, ExtendedKeyUsageOID.ANY_EXTENDED_KEY_USAGE}
+    if extended_key_usage is not None and server_usages.isdisjoint(extended_key_usage):
+        raise DeploymentError(
+            key, "rule 5: Extended Key Usage lacks serverAuth and anyExtendedKeyUsage"
         )
     return certificate
 
