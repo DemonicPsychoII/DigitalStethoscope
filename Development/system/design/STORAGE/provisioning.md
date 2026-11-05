@@ -44,7 +44,7 @@ The tool writes the canonical form into the image; registration binds to the sam
 
 ### Certificate checks
 
-Before anything is written, the tool applies the device's certificate rules, so a mismatch fails on the developer PC. The device applies rules 1 and 3 at boot, enforces rules 2 and 5 through its handshake verification and applies rule 4 against its synchronized clock before each handshake, because boot has no valid clock yet:
+Before anything is written, the tool applies the device's certificate rules, so a mismatch fails on the developer PC. The device applies rules 1 and 3 at boot, enforces rule 5 through its handshake verification and applies rule 4 against its synchronized clock before each handshake, because boot has no valid clock yet. For rule 2 the device trusts only this certificate; whether the pinned verifier also checks self-issuance and signature of a directly trusted certificate is still to be demonstrated by L1 work ([TLS trust inputs](../COMMUNICATION/secure-transport.md#trust-and-provisioning-inputs)):
 
 1. The text is exactly one parsable X.509 certificate.
 2. It is self-issued and its signature verifies with its own public key, because the device trusts it directly.
@@ -106,8 +106,8 @@ These scenarios allocate future verification; they do not add a generated test b
 | --- | --- | --- |
 | Valid deployment file | REQ-09/REQ-11; VT-08 | `check` passes; the image bytes match the field table and the firmware reader accepts them. |
 | Each violated file rule | REQ-11; VT-08 | Rejected with key and rule; no image written. |
-| Certificate not self-issued, without matching Subject Alternative Name, or with a DNS entry for an IPv4 host | REQ-11; VT-08 | Rejected by the tool; an image forced onto a device yields an invalid configuration at boot (missing or wrong-type SAN) or a failed verification at the handshake (not self-issued). |
-| Certificate whose Key Usage lacks `digitalSignature` or whose Extended Key Usage lacks `serverAuth` and `anyExtendedKeyUsage` | REQ-11; VT-08 | Rejected by the tool; an image forced onto a device is accepted at boot and fails verification at the handshake. |
+| Certificate not self-issued, without matching Subject Alternative Name, or with a DNS entry for an IPv4 host | REQ-11; VT-08 | Rejected by the tool; an image forced onto a device yields an invalid configuration at boot (missing or wrong-type SAN) or, for a certificate that is not self-issued, an expected handshake failure that L1 work still has to demonstrate ([TLS trust inputs](../COMMUNICATION/secure-transport.md#trust-and-provisioning-inputs)). |
+| Certificate with a Key Usage extension that omits `digitalSignature`, or with an Extended Key Usage extension that omits both `serverAuth` and `anyExtendedKeyUsage` | REQ-11; VT-08 | Rejected by the tool; an image forced onto a device is accepted at boot and fails verification at the handshake. |
 | Certificate expired or not yet valid | REQ-11; VT-08 | Rejected by the tool on the PC's date; on the device a valid image is accepted at boot and the setup fails its validity check after time synchronization, without a handshake. |
 | Private key or other PEM label in the file | VT-11 | Rejected; nothing written. |
 | Image larger than the provisioning area, or build without the partition node | REQ-11; VT-08 | Rejected before writing. |
