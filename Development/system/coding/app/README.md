@@ -105,8 +105,10 @@ its modules, the Zephyr SDK and the build.
 
 `west spdx` leaves out the Espressif Wi-Fi and PHY binary libraries; their versions are
 listed in `hal_espressif`'s `zephyr/module.yml`. On Windows it also lists no
-application or SDK files, because its path check mixes `/` and `\`; the packages and
-their versions are complete.
+application or SDK files, because its path check mixes `/` and `\`. The Zephyr and
+module packages carry their commit or release version; the application and SDK
+packages carry none, so record the repository commit and SDK version (`toolchain.json`)
+alongside the SBOM.
 
 ### Manual flash
 
