@@ -42,7 +42,7 @@ Moving settings from `0x3B0000` to `0xE80000` loses the stored Wi-Fi network and
 2. **Firmware reader.** L1_STORAGE reads the image through `flash_area_open(FIXED_PARTITION_ID(provisioning_partition))`, validates it once at boot and hands endpoint, keep-alive and certificate to COMMUNICATION. A build assertion checks that the maximum image fits the partition.
 3. **Host tool.** `Development/system/coding/tools/provisioning/` builds the image from one [deployment file](provisioning.md#deployment-file), validates it, checks the certificate and appends the CRC-32. It reads the partition offset and size from the build's generated devicetree, so no offset is written twice.
 4. **Flash command.** `flash-provisioning.ps1 <COM port> <deployment file>` builds that image and writes it to the provisioning offset with the pinned esptool ([commands](provisioning.md#commands)). `flash-firmware.ps1` stays unchanged and writes only the firmware image.
-5. **Verification.** Host tests cover the tool (format, limits, CRC) and the reader (valid, erased, corrupted, oversized images). On target: build and boot with the new table, read back the provisioning partition after a firmware flash, reject a corrupted image, and keep the image across a settings erase.
+5. **Verification.** Host tests cover the tool (format, limits, CRC) and the reader (valid, erased, corrupted, oversized images). On target: build and boot with the new table, read back the provisioning partition after a firmware flash, reject a corrupted image, and keep the image across a settings-partition erase.
 
 The provisioning image is the only source of the server endpoint and certificate ([TLS trust inputs](../COMMUNICATION/secure-transport.md#trust-and-provisioning-inputs)). A host tool builds it; a separate flash command writes it to the provisioning offset `0xF00000`. The firmware reads it through the flash map and never writes it. Proposed version 1 format, little-endian:
 
@@ -55,7 +55,7 @@ The provisioning image is the only source of the server endpoint and certificate
 | Certificate length, certificate | 2 bytes + at most 8192 bytes | PEM public server certificate |
 | CRC-32 | 4 bytes | IEEE CRC-32 over all preceding bytes; detects corruption only. The MVP uses no signature. |
 
-Erased flash, an unknown magic or version, an out-of-range length, a CRC mismatch or an unparsable certificate make the image invalid. The image keeps settings and provisioning apart: erasing settings never removes the server, and rewriting the server never touches Wi-Fi credentials or the registration record.
+Erased flash, an unknown magic or version, an out-of-range length, a CRC mismatch or an unparsable certificate make the image invalid. The image keeps settings and provisioning apart: erasing only the settings partition never removes the server, and rewriting the server never touches Wi-Fi credentials or the registration record. A whole-flash erase (`flash-firmware.ps1 -Erase`) removes the image too and requires flashing it again.
 
 Own observation on 2 November 2026: flashing a test build (`feature/time-synchronization` at `b6cccb8` plus the full-MAC hotspot change) with `flash-firmware.ps1` wrote 671,744 bytes at `0x00000000`, and the device booted with Espressif Simple Boot. Only the image range was written. Target verification remains open under [TICKET-214](https://nfrie.atlassian.net/browse/TICKET-214), following the build-system plan above.
 
