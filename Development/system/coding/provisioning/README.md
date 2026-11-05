@@ -6,7 +6,7 @@ This repository is public, so it holds test deployments only: no production endp
 
 | Deployment | Server | Owner |
 | --- | --- | --- |
-| [`lab-hapi`](lab-hapi.toml) | Local HAPI FHIR test server on `nglegion`, home network 192.168.2.0/24, `https://192.168.2.40:8443/fhir`. Server configuration and certificate source: `ntmedlinkkis` repository, commit `4dd534b` (`certs/cert.conf`, `docker-compose.yml`). | Nico |
+| [`lab-hapi`](lab-hapi.toml) | Local HAPI FHIR test server on `nglegion`, home network 192.168.2.0/24, `https://192.168.2.40:8443/fhir`, or iPhone hotspot 172.20.10.0/28. Server configuration and certificate source: `ntmedlinkkis` repository (`certs/cert.conf`, `docker-compose.yml`). | Nico |
 
 ## Use
 
@@ -19,6 +19,6 @@ Development/system/coding/tools/flash-provisioning.ps1 <COM port number> Develop
 
 `check` validates the file and the certificate. The flash command builds the image against the firmware build's partition table and writes only the provisioning partition; the firmware and the saved Wi-Fi network stay unchanged.
 
-A lab deployment names its server by the IPv4 address of the day. If the address changes, reissue the server certificate with the new address in its Subject Alternative Names, update the file and flash the image again.
+A lab deployment names its server by the IPv4 address of the day. The `lab-hapi` certificate covers the home address and every iPhone hotspot client address, 172.20.10.2 to 172.20.10.14, so on these networks only `base_url` changes before the image is flashed again. On any other address, reissue the server certificate with that address in its Subject Alternative Names and update the file.
 
 Created by Claude-Opus-5.5 on behalf of Nico running in claude code.

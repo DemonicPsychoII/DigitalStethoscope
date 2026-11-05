@@ -36,7 +36,7 @@ MIID...
 """
 ```
 
-A lab deployment names the server host by its IPv4 address on the network of the day. Before each test the address is read again; if it changed, the server certificate is reissued with that address in its Subject Alternative Names, the file is updated and the image is flashed again. A host name avoids this only where the network's DNS resolves it, which the phone hotspot does not.
+A lab deployment names the server host by its IPv4 address on the network of the day. Before each test the address is read again; if it changed, the file is updated and the image is flashed again. The lab certificate lists every client address of an iPhone hotspot, 172.20.10.2 to 172.20.10.14, besides the home address, so only an address outside these needs a reissued certificate with that address in its Subject Alternative Names. A host name avoids this only where the network's DNS resolves it, which the phone hotspot does not.
 
 ### Canonical base URL
 
