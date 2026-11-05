@@ -14,9 +14,12 @@ Shared views remain at system level. The [viewer](review.html) presents the prod
 | Listening | [listening-workflow.puml](listening-workflow.puml) | [SVG](rendered/listening_workflow.svg) |
 | MVP session / alarms | [mvp-session-state.puml](mvp-session-state.puml) | [SVG](rendered/mvp_session_state.svg) |
 | BPM measurement | [measurement-workflow.puml](measurement-workflow.puml) | [SVG](rendered/measurement_workflow.svg) |
+| Provisioning | [provisioning.puml](provisioning.puml) | [SVG](rendered/provisioning.svg) |
 
 Lung mode is optional beyond the MVP (TICKET-203); its paths are marked optional in the listening and MVP session views.
 
 [Feedback ground rules](feedback-principles.md) define indication ownership and fault containment.
+
+[Provisioning](provisioning.md) allocates how a device receives its one server, endpoint and trusted certificate.
 
 Original board snapshots remain immutable source material.
