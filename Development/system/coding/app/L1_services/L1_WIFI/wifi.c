@@ -65,6 +65,12 @@
 #define WIFI_TIME_SYNCHRONIZATION_POLL_INTERVAL_MS     (100)   /**< Longest worker wait between cancellation checks, well inside the stop bound. */
 #define WIFI_SNTP_PORT                                 (123)   /**< P25-SERVER: SNTP over UDP/123. */
 
+#define WIFI_SNTP_HEADER_SIZE          (2)  /**< Leap indicator, version and mode byte, then the stratum byte (RFC 4330 section 4). */
+#define WIFI_SNTP_LEAP_INDICATOR_SHIFT (6)  /**< The leap indicator occupies the two most significant bits of the first byte. */
+#define WIFI_SNTP_LEAP_INDICATOR_ALARM (3)  /**< Alarm condition: the server clock is not synchronized. */
+#define WIFI_SNTP_STRATUM_MINIMUM      (1)  /**< Stratum 0 is kiss-o'-death or unspecified. */
+#define WIFI_SNTP_STRATUM_MAXIMUM      (15) /**< Strata 16 to 255 are reserved. */
+
 #define WIFI_SCAN_CANCEL_TIMEOUT_MS (1000) /**< Longest wait for a running scan to end. */
 
 /* Zephyr link-layer and network-layer events use separate callback masks. */
@@ -233,6 +239,14 @@ static int wifi_resolveTimeServer(uint32_t generation, k_timepoint_t deadline, s
  * @return 0 on success, or a negative error code.
  */
 static int wifi_exchangeTimeSample(uint32_t generation, k_timepoint_t deadline, const struct net_sockaddr_in *address, struct normalised_time *sample);
+
+/**
+ * @brief Wait one poll interval for the SNTP response and parse it only from a synchronized server.
+ * @param[out] nativeTime Native result; written only on success.
+ * @return 0 on success, -ETIMEDOUT if nothing arrived, -EPROTO for a server that is not
+ *         synchronized, or another negative error code.
+ */
+static int wifi_receiveTimeResponse(struct sntp_time *nativeTime);
 
 /**
  * @brief Release the DNS query and SNTP socket the worker owns.
@@ -1000,11 +1014,16 @@ static int wifi_exchangeTimeSample(uint32_t generation, k_timepoint_t deadline, 
     }
 
     struct sntp_time nativeTime = {0};
-    /* sntp_query() sends the operation's only request; every later wait only receives. */
-    result = sntp_query(&wifi_TimeSynchronizationContext, WIFI_TIME_SYNCHRONIZATION_POLL_INTERVAL_MS, &nativeTime);
+    /* sntp_query() sends the operation's only request; every later wait only receives.
+     * Its zero receive timeout leaves the response to wifi_receiveTimeResponse(), which checks the server state first. */
+    result = sntp_query(&wifi_TimeSynchronizationContext, 0, &nativeTime);
+    if(result == 0)
+    {
+        result = -EPROTO; /**< A response that arrived before the server state check was parsed unchecked. */
+    }
     while((result == -ETIMEDOUT) && !sys_timepoint_expired(deadline) && wifi_isTimeSynchronizationAdmitted(generation))
     {
-        result = sntp_recv_response(&wifi_TimeSynchronizationContext, WIFI_TIME_SYNCHRONIZATION_POLL_INTERVAL_MS, &nativeTime);
+        result = wifi_receiveTimeResponse(&nativeTime);
     }
 
     if(result == 0)
@@ -1014,6 +1033,44 @@ static int wifi_exchangeTimeSample(uint32_t generation, k_timepoint_t deadline, 
     }
 
     return result;
+}
+
+static int wifi_receiveTimeResponse(struct sntp_time *nativeTime)
+{
+    const int socket = wifi_TimeSynchronizationContext.sock.fd;
+    struct zsock_pollfd descriptor = {.fd = socket, .events = ZSOCK_POLLIN};
+
+    const int ready = zsock_poll(&descriptor, 1, WIFI_TIME_SYNCHRONIZATION_POLL_INTERVAL_MS);
+    if(ready < 0)
+    {
+        return -errno;
+    }
+    if(ready == 0)
+    {
+        return -ETIMEDOUT; /**< No response within this poll interval. */
+    }
+
+    /* The pinned Zephyr parser rejects only stratum 0 and returns neither field, so the queued datagram is inspected first. */
+    uint8_t header[WIFI_SNTP_HEADER_SIZE] = {0};
+    const ssize_t received = zsock_recv(socket, header, sizeof(header), ZSOCK_MSG_PEEK);
+    if(received < 0)
+    {
+        return -errno;
+    }
+    if(received == (ssize_t)sizeof(header))
+    {
+        const uint8_t leapIndicator = (header[0] >> WIFI_SNTP_LEAP_INDICATOR_SHIFT);
+        const uint8_t stratum = header[1];
+
+        if((leapIndicator == WIFI_SNTP_LEAP_INDICATOR_ALARM) || (stratum < WIFI_SNTP_STRATUM_MINIMUM) || (stratum > WIFI_SNTP_STRATUM_MAXIMUM))
+        {
+            /* The exchange ends here; closing the socket discards the datagram. */
+            return -EPROTO; /**< Server clock is not synchronized. */
+        }
+    }
+
+    /* A shorter datagram is left to the parser, which rejects its size. */
+    return sntp_recv_response(&wifi_TimeSynchronizationContext, 0, nativeTime);
 }
 
 static int wifi_releaseTimeSynchronizationResources(void)
