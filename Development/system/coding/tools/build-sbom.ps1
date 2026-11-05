@@ -38,6 +38,16 @@ if ($Pristine) {
 # so west re-runs CMake even for an existing build directory.
 Invoke-FwWest @('spdx', '--init', '-d', $BuildDir)
 & $buildScript -Target 'app' -BuildDir $BuildDir
+$spdxDir = Join-Path $BuildDir 'spdx'
+# Stale documents would otherwise hide a run that wrote nothing.
+if (Test-Path -LiteralPath $spdxDir -PathType Container) {
+    Remove-Item -Path (Join-Path $spdxDir '*.spdx')
+}
 Invoke-FwWest @('spdx', '-d', $BuildDir, '--include-sdk')
 
-Write-Host "SBOM written to $(Join-Path $BuildDir 'spdx')"
+# west spdx exits 0 without writing anything when the output path is not a directory.
+$missing = @('app', 'zephyr', 'build', 'modules-deps', 'sdk') |
+    Where-Object { -not (Test-Path -LiteralPath (Join-Path $spdxDir "$_.spdx") -PathType Leaf) }
+if ($missing) { throw "west spdx did not write $($missing -join ', ') to $spdxDir." }
+
+Write-Host "SBOM written to $spdxDir"
