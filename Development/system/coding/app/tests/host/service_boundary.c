@@ -6,6 +6,7 @@
 #include <string.h>
 /* Including the units exposes secret buffers for erasure inspection without production hooks. */
 #include "../../L1_services/L1_WIFI/wifi.c"
+#include "../../L1_services/L1_WIFI/wifi_dns.c"
 #include "../../L1_services/L1_PORTAL/portal.c"
 #include "../../L1_services/L1_STORAGE/storage.c"
 
@@ -259,6 +260,137 @@ uint32_t k_event_wait(struct k_event *event, uint32_t mask, bool reset, k_timeou
     if(!(event->events & mask) && timeout.ticks > 0)
         advance_clock(time_milliseconds + timeout.ticks);
     return (event->events & mask);
+}
+
+/* No time synchronization worker runs on the host: Start fails at submission, so the scenarios keep their traces and timing. */
+void k_work_init(struct k_work *work, k_work_handler_t handler)
+{
+    work->handler = handler;
+}
+
+void k_work_queue_start(struct k_work_q *queue, char *stack, size_t size, int priority, const struct k_work_queue_config *configuration)
+{
+    (void)queue;
+    (void)stack;
+    (void)size;
+    (void)priority;
+    (void)configuration;
+}
+
+int k_work_submit_to_queue(struct k_work_q *queue, struct k_work *work)
+{
+    (void)queue;
+    (void)work;
+    return -ENODEV; /**< No work queue thread in the host model. */
+}
+
+int64_t k_uptime_ticks(void)
+{
+    return time_milliseconds;
+}
+
+uint64_t k_ticks_to_us_floor64(uint64_t ticks)
+{
+    return ticks * 1000U;
+}
+
+/* wifi_secure_connection.c needs mbedTLS and is not compiled here; host provisioning is erased, so no server is configured. */
+int wifi_configureSecureServer(const char *baseUrl, const char *certificate, size_t certificateLength, struct wifi_secure_server *server)
+{
+    (void)baseUrl;
+    (void)certificate;
+    (void)certificateLength;
+    (void)server;
+    return -ENOSYS; /**< Not modelled by this host substitute. */
+}
+
+int wifi_startSecureConnection(k_timepoint_t deadline)
+{
+    (void)deadline;
+    return -ENOSYS; /**< Not modelled by this host substitute. */
+}
+
+int wifi_waitForSecureConnection(enum wifi_secure_connection_cause *cause, k_timeout_t timeout)
+{
+    (void)cause;
+    (void)timeout;
+    return -ENOSYS; /**< Not modelled by this host substitute. */
+}
+
+int wifi_cancelSecureConnection(void)
+{
+    return 0;
+}
+
+int wifi_closeSecureConnection(void)
+{
+    return 0;
+}
+
+int sys_clock_settime(int clock, const struct timespec *time)
+{
+    (void)clock;
+    (void)time;
+    return -ENOSYS; /**< Not modelled by this host substitute. */
+}
+
+int sntp_init(struct sntp_ctx *context, const struct net_sockaddr *address, net_socklen_t length)
+{
+    (void)context;
+    (void)address;
+    (void)length;
+    return -ENOSYS; /**< Not modelled by this host substitute. */
+}
+
+int sntp_query(struct sntp_ctx *context, uint32_t timeout, struct sntp_time *time)
+{
+    (void)context;
+    (void)timeout;
+    (void)time;
+    return -ENOSYS; /**< Not modelled by this host substitute. */
+}
+
+int sntp_recv_response(struct sntp_ctx *context, uint32_t timeout, struct sntp_time *time)
+{
+    (void)context;
+    (void)timeout;
+    (void)time;
+    return -ENOSYS; /**< Not modelled by this host substitute. */
+}
+
+void sntp_close(struct sntp_ctx *context)
+{
+    (void)context;
+}
+
+int zsock_setsockopt(int socket, int level, int option, const void *value, net_socklen_t length)
+{
+    (void)socket;
+    (void)level;
+    (void)option;
+    (void)value;
+    (void)length;
+    errno = ENOSYS;
+    return -1;
+}
+
+int dns_get_addr_info(const char *query, enum dns_query_type type, uint16_t *identifier, dns_resolve_cb_t callback, void *context, int32_t timeout)
+{
+    (void)query;
+    (void)type;
+    (void)identifier;
+    (void)callback;
+    (void)context;
+    (void)timeout;
+    return -ENOSYS; /**< Not modelled by this host substitute. */
+}
+
+int dns_cancel_addr_info_with_name(const char *query, enum dns_query_type type, uint16_t identifier)
+{
+    (void)query;
+    (void)type;
+    (void)identifier;
+    return -ENOENT; /**< No query was submitted. */
 }
 
 int http_server_start(void)

@@ -23,6 +23,7 @@
 
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
 
 #include <zephyr/kernel.h>
 #include <zephyr/net/wifi.h>
@@ -51,6 +52,44 @@ struct wifi_scan_entry
 {
     char name[WIFI_SSID_MAX_LEN + 1]; /**< Network name. */
     bool needsPassword;               /**< True if the network needs a password. */
+};
+
+/** A normalised time. */
+struct normalised_time
+{
+    uint64_t utc_seconds;
+    uint32_t utc_fraction_nanoseconds; /**< Range: 0–999,999,999. */
+    uint64_t receive_monotonic_microseconds;
+    uint32_t estimated_uncertainty_microseconds;
+};
+
+/** UTC and monotonic time paired when synchronization is applied. */
+struct applied_time_anchor
+{
+    uint64_t utc_seconds;
+    uint32_t utc_fraction_nanoseconds; /**< Range: 0–999,999,999. */
+    uint64_t applied_monotonic_microseconds;
+    uint32_t estimated_uncertainty_microseconds;
+};
+
+/** Bounded cause of a failed secure connection; carries no secrets or patient context. */
+enum wifi_secure_connection_cause
+{
+    WIFI_SECURE_CONNECTION_CAUSE_NONE,          /**< Connected and verified. */
+    WIFI_SECURE_CONNECTION_CAUSE_CONFIGURATION, /**< Endpoint or certificate unusable on this device. */
+    WIFI_SECURE_CONNECTION_CAUSE_RESOLUTION,    /**< Server name not resolved to IPv4. */
+    WIFI_SECURE_CONNECTION_CAUSE_TCP,           /**< TCP connection refused, reset or unreachable. */
+    WIFI_SECURE_CONNECTION_CAUSE_TIMEOUT,       /**< Deadline reached before verification. */
+    WIFI_SECURE_CONNECTION_CAUSE_TLS,           /**< Handshake failed, including no TLS 1.3 or a required client certificate. */
+    WIFI_SECURE_CONNECTION_CAUSE_TRUST,         /**< Certificate, name or validity rejected. */
+    WIFI_SECURE_CONNECTION_CAUSE_CANCELLED,     /**< Cancelled before completion. */
+};
+
+/** The one provisioned server, validated at boot. */
+struct wifi_secure_server
+{
+    int64_t validFromUtcSeconds;  /**< Start of the trusted certificate's validity. */
+    int64_t validUntilUtcSeconds; /**< End of the trusted certificate's validity. */
 };
 
 /***********************************************************************/
@@ -208,6 +247,113 @@ int wifi_startDHCPServer(void);
  * @return 0 on success or if already stopped, or a negative error code.
  */
 int wifi_stopDHCPServer(void);
+
+/**
+ * @brief Submit time synchronization without waiting for completion.
+ *
+ * @param[in] ntpServer NUL-terminated hostname, borrowed unchanged until terminal
+ *                     completion or successful cancellation.
+ *
+ * @return 0 if accepted, -EBUSY if pending, or another negative submission error.
+ */
+int wifi_startTimeSynchronization(const char *ntpServer);
+
+/**
+ * @brief Wait for time synchronization to complete.
+ *
+ * Terminal completion leaves operation resources and callbacks quiescent.
+ *
+ * @param[out] time Sample destination; written only on success.
+ * @param[in] timeout Maximum wait for this call; does not restart the operation.
+ *
+ * @return 0 with a sample, -EAGAIN if pending, or another negative terminal error.
+ */
+int wifi_waitForTimeSynchronization(struct normalised_time *time, k_timeout_t timeout);
+
+/**
+ * @brief Cancel synchronization within the P23 one-second stop bound.
+ *
+ * @return 0 when resources/callbacks are quiescent, including if already inactive;
+ *         negative error otherwise, with the hostname still borrowed.
+ */
+int wifi_cancelTimeSynchronization(void);
+
+/**
+ * @brief Apply the synchronized time to the system.
+ *
+ * Requires CONTROL's network lease.
+ *
+ * @param[in] time Normalized sample with receive-time monotonic timestamp.
+ * @param[out] anchor Applied UTC/monotonic pair and uncertainty; success only.
+ *
+ * @return 0 with an applied anchor, or a negative error code on failure.
+ */
+int wifi_applyTimeSynchronization(const struct normalised_time *time, struct applied_time_anchor *anchor);
+
+/**
+ * @brief Validate and register the provisioned server once at boot.
+ *
+ * Parses the canonical base URL (https://host:port/path) and the PEM certificate,
+ * requires a Subject Alternative Name matching the host, and makes the
+ * certificate the only trust anchor. Without success, Start returns -ENOENT.
+ *
+ * @param[in]  baseUrl           Canonical base URL; copied.
+ * @param[in]  certificate       PEM certificate; parsed into an own copy.
+ * @param[in]  certificateLength PEM length including the terminating NUL.
+ * @param[out] server            Certificate validity; written only on success.
+ *
+ * @return 0 on success, -EINVAL for an unusable URL, -EBADMSG for an unusable
+ *         certificate or one without a matching Subject Alternative Name,
+ *         -EALREADY if already configured, or another negative error code.
+ */
+int wifi_configureSecureServer(const char *baseUrl, const char *certificate, size_t certificateLength, struct wifi_secure_server *server);
+
+/**
+ * @brief Submit one secure connection to the provisioned server without waiting.
+ *
+ * Requires CONTROL's network lease and an applied clock. Resolves IPv4, connects
+ * TCP and runs a TLS 1.3 handshake with mandatory server verification. No retry.
+ * A retained connection must be closed first.
+ *
+ * @param[in] deadline End of the connection setup; shared with the caller's budget.
+ *
+ * @return 0 if accepted, -EBUSY if an operation or retained connection exists,
+ *         -ENOENT if no server is configured, or another negative submission error.
+ */
+int wifi_startSecureConnection(k_timepoint_t deadline);
+
+/**
+ * @brief Wait for the secure connection to complete.
+ *
+ * Terminal completion leaves the operation's resources and callbacks quiescent.
+ * On success the verified connection is retained for later requests.
+ *
+ * @param[out] cause   Failure cause; written on terminal completion.
+ * @param[in]  timeout Maximum wait for this call; does not restart the operation.
+ *
+ * @return 0 when connected and verified, -EAGAIN if pending, -EINVAL if nothing
+ *         was started, or another negative terminal error.
+ */
+int wifi_waitForSecureConnection(enum wifi_secure_connection_cause *cause, k_timeout_t timeout);
+
+/**
+ * @brief Cancel a pending secure connection within the P23 one-second stop bound.
+ *
+ * Leaves an already retained connection open.
+ *
+ * @return 0 when resources are released, including if nothing is pending;
+ *         a negative error code otherwise, with Start still blocked.
+ */
+int wifi_cancelSecureConnection(void);
+
+/**
+ * @brief Close the retained connection within the P23 one-second stop bound.
+ *
+ * Requires CONTROL's network lease. No reconnect.
+ *
+ * @return 0 when closed, including if none is retained, or a negative error code.
+ */
+int wifi_closeSecureConnection(void);
 
 #endif /* L1_WIFI_H */
 
