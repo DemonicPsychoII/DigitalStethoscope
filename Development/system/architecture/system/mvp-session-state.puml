@@ -23,10 +23,10 @@ Analysing --> ReportingError : invalid BPM + validated error contract + Wi-Fi co
 Analysing --> Idle : Wi-Fi unconfigured / no send or Wi-Fi error
 Analysing --> Idle : Wi-Fi configured + delivery prerequisites fail / latch DELIVERY_NOT_POSSIBLE
 Sending --> Idle : receipt 201 / 200
-Sending --> Idle : failed after 3 retries / latch DELIVERY_FAILURE
+Sending --> Idle : failed after 3 retries with a qualifying anchor / latch DELIVERY_FAILURE
 Sending --> Idle : no qualifying clock anchor by P13 deadline / latch SERVER_CONNECTION_FAILURE
 ReportingError --> Idle : error report received / no numeric BPM
-ReportingError --> Idle : report failed after 3 retries / latch DELIVERY_FAILURE
+ReportingError --> Idle : report failed after 3 retries with a qualifying anchor / latch DELIVERY_FAILURE
 ReportingError --> Idle : no qualifying clock anchor by P13 deadline / latch SERVER_CONNECTION_FAILURE
 note as NormalFaultIndication
   Error latch (red LED) is independent of workflow state.
