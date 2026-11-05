@@ -46,6 +46,8 @@ A result without a qualifying anchor by the end of the P13 budget is not sent an
 
 Pinned-source caveat [2]: the uncertainty-enabled parser assigns `fraction` as a microsecond remainder, unlike the binary fraction on the ordinary path. The header calls `uptime_us` uptime, but the implementation derives it from real-time/NTP-epoch timestamps. WIFI must normalize the pinned units and independently sample kernel monotonic time rather than cast these fields or treat native `uptime_us` as kernel uptime. Verify unset initial time, subsecond carry and conversion before L1 acceptance. Recheck these semantics on a Zephyr revision change. This PR contains no upstream patch.
 
+Reject a response from an unsynchronized server before normalization: a leap indicator of 3 (alarm condition, clock not synchronized) or a stratum outside 1–15 (0 is kiss-o'-death or unspecified, 16–255 reserved) [3]. The pinned parser rejects only stratum 0 and returns neither field [2], so WIFI must check both on the received packet. A rejected response fails the containing connection setup like any other failed exchange; the reported uncertainty never overrides this check.
+
 ## Failure indication and acknowledgement
 
 There is no separate time-synchronization error. A failed exchange is a failed secure connection setup and follows the [TLS failure indication](secure-transport.md#failure-indication): `SERVER_CONNECTION_FAILURE`, blue with 1 blink, with offline Start/listening preserved. The same code marks a result that cannot be sent for lack of a qualifying anchor. Diagnostics name the time cause, anchor age and estimate, never credentials or patient context. The running examination wins: no time work and no time indication occur during listening.
@@ -70,7 +72,7 @@ The initial source requires usable DNS and reachable public UDP/123; Wi-Fi alone
 | Scenario | Trace | Expected result |
 | --- | --- | --- |
 | Boot and successful exchange | REQ-09/11; VT-07/08 | No persisted ready clock; the first TLS setup applies the UTC/monotonic anchor before its ClientHello. |
-| DNS failure, blocked UDP, rejected response | REQ-09/13; VT-08/09 | The containing connection setup fails within its deadline and follows P26 or P13 recovery; `SERVER_CONNECTION_FAILURE` without blocking listening. |
+| DNS failure, blocked UDP, rejected response (including leap indicator 3 or stratum outside 1–15) | REQ-09/13; VT-08/09 | The containing connection setup fails within its deadline and follows P26 or P13 recovery; `SERVER_CONNECTION_FAILURE` without blocking listening. |
 | Start during DNS/wait/completion race | REQ-02/13; VT-08/09 | Quiesce before audio; stale completion cannot apply time; cancellation raises no time-sync error. |
 | Mapping limit and long Idle period | REQ-09/10/13; VT-07/08/09 | A qualifying anchor freezes the end at Stop; otherwise the delivery setup anchor freezes it; no qualifying anchor sends nothing and latches `SERVER_CONNECTION_FAILURE`. |
 | Correction and frozen measurement | REQ-09/10; VT-07 | Monotonic duration and frozen UTC/identity stay unchanged across retries and later exchanges; no delayed resend. |
@@ -85,7 +87,7 @@ These allocate future verification, not generated tests or execution. DNS/socket
 
 [2] The Zephyr Project, *SNTP API, Kconfig, implementation and DNS resolver API*, Zephyr source repository revision `357467a011cd2557a1a3f0b4be83d817c4addc9b`, publication year unverified; [SNTP header](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/include/zephyr/net/sntp.h), [Kconfig](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/subsys/net/lib/sntp/Kconfig), [parser](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/subsys/net/lib/sntp/sntp.c), [helper](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/subsys/net/lib/sntp/sntp_simple.c), [DNS header](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/include/zephyr/net/dns_resolve.h), accessed 28 October 2026. The convenience helper resolves before its exchange timeout and resends internally; split DNS/SNTP APIs underpin the proposed cancellable adapter. Target behavior remains unverified.
 
-[3] David L. Mills, *Simple Network Time Protocol (SNTP) Version 4 for IPv4, IPv6 and OSI*, IETF RFC 4330, January 2006, section 9, DOI: 10.17487/RFC4330, <https://www.rfc-editor.org/rfc/rfc4330#section-9>. Access recorded 24 October 2026 in the [source register](../../../../thesis-material/quellen.md#ietf_sntp_4330_2006); no new access claimed.
+[3] David L. Mills, *Simple Network Time Protocol (SNTP) Version 4 for IPv4, IPv6 and OSI*, IETF RFC 4330, January 2006, sections 4, 5 and 9, DOI: 10.17487/RFC4330, <https://www.rfc-editor.org/rfc/rfc4330#section-9>. Access recorded 24 October 2026 in the [source register](../../../../thesis-material/quellen.md#ietf_sntp_4330_2006); no new access claimed.
 
 [4] Andreas Summerer and Nico, *Design review of time, TLS and FHIR*, review meeting, 2 November 2026, with Nico's resolutions in the [decision record](../../planning/mvp-decisions-2026-11-02.md), accessed 2 November 2026. Project decisions; the drift figure is a datasheet calculation, not a measurement.
 

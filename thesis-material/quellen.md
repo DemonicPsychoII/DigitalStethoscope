@@ -1646,7 +1646,7 @@ The Zephyr Project. *Zephyr DHCPv4 Kconfig*. Zephyr source repository, revision 
 <a id="zephyr_sntp_pinned"></a>
 ### zephyr_sntp_pinned
 
-The Zephyr Project. *SNTP API, uncertainty configuration, implementation and DNS resolver API*. Zephyr source repository. <https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/subsys/net/lib/sntp/sntp.c>. Accessed 28 October 2026.
+The Zephyr Project. *SNTP API, uncertainty configuration, implementation and DNS resolver API*. Zephyr source repository: [SNTP header](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/include/zephyr/net/sntp.h), [Kconfig](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/subsys/net/lib/sntp/Kconfig), [parser](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/subsys/net/lib/sntp/sntp.c), [convenience helper](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/subsys/net/lib/sntp/sntp_simple.c), [DNS resolver header](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/include/zephyr/net/dns_resolve.h). Accessed 28 October 2026.
 
 **Verification:** Revision 357467a011cd2557a1a3f0b4be83d817c4addc9b; publication year unverified. Inspected SNTP header, Kconfig, parser, convenience helper and DNS resolver header. Native unit semantics and helper retries inspected; target behavior unverified.
 
@@ -1676,14 +1676,6 @@ Nico. *TLS detailed-design decisions*. Personal communication, T3 Code, 29 Octob
 Eric Rescorla. *The Transport Layer Security (TLS) Protocol Version 1.3*. IETF RFC 8446, August 2018. DOI: [10.17487/RFC8446](https://doi.org/10.17487/RFC8446), accessed 29 October 2026.
 
 **Cited by:** [TLS design](../Development/system/design/COMMUNICATION/secure-transport.md), [provisioning design](../Development/system/design/STORAGE/provisioning.md#certificate-checks) (section 4.4.2.2, Key Usage of the server certificate).
-
-
-<a id="ietf_tls_identity_9525_2023"></a>
-### ietf_tls_identity_9525_2023
-
-Peter Saint-Andre and Rich Salz. *Service Identity in TLS*. IETF RFC 9525, November 2023. DOI: [10.17487/RFC9525](https://doi.org/10.17487/RFC9525), accessed 29 October 2026.
-
-**Cited by:** [TLS design](../Development/system/design/COMMUNICATION/secure-transport.md).
 
 
 <a id="stetho_hapi_tls_probe_20261029"></a>
@@ -1729,7 +1721,7 @@ Nico, *FHIR registration and examination-context design decisions*, personal com
 <a id="stetho_hotspot_identity_2026"></a>
 ### stetho_hotspot_identity_2026
 
-DigitalStethoscope contributors, *WIFI hotspot identity implementation*, project source, integration revision `3d989815b4cbded9bf64ec7c9934894f95cc68e5`, 2026, [wifi.c](../Development/system/coding/app/L1_services/L1_WIFI/wifi.c), lines 478–482, inspected 29 October 2026. This proves the source expression, not factory-MAC provenance on target.
+DigitalStethoscope contributors, *WIFI hotspot identity implementation*, project source, integration revision `f98296c4423efa577a1d01b5ff60dc9f5774083f` (PR #107, full-MAC hotspot name), 2026, [wifi.c](../Development/system/coding/app/L1_services/L1_WIFI/wifi.c), lines 478–482, inspected 5 November 2026. This proves the source expression, not factory-MAC provenance on target.
 
 **Cited by:** [Server communication design](../Development/system/design/COMMUNICATION/server-communication.md).
 
@@ -1873,7 +1865,7 @@ Nico. *Provisioning deployment-file decisions*. Personal communication, T3 Code,
 
 Peter Saint-Andre and Rich Salz. *Service Identity in TLS*. IETF RFC 9525, November 2023, sections 4 and 6. DOI [10.17487/RFC9525](https://doi.org/10.17487/RFC9525). <https://www.rfc-editor.org/rfc/rfc9525>. Accessed 4 November 2026.
 
-**Cited by:** [Provisioning architecture](../Development/system/architecture/system/provisioning.md), identity check without Common Name fallback; [provisioning design](../Development/system/design/STORAGE/provisioning.md), Subject Alternative Name check without Common Name fallback.
+**Cited by:** [TLS design](../Development/system/design/COMMUNICATION/secure-transport.md), identity check; [provisioning architecture](../Development/system/architecture/system/provisioning.md), identity check without Common Name fallback; [provisioning design](../Development/system/design/STORAGE/provisioning.md), Subject Alternative Name check without Common Name fallback.
 
 <a id="toml_v1_2021"></a>
 ### toml_v1_2021
@@ -1885,7 +1877,7 @@ Tom Preston-Werner, Pradyun Gedam et al. *TOML v1.0.0*. Specification, 11 Januar
 <a id="python_tomllib_314"></a>
 ### python_tomllib_314
 
-Python Software Foundation. *tomllib — Parse TOML files*. Python 3.14 documentation; module added in version 3.11. <https://docs.python.org/3/library/tomllib.html>. Accessed 4 November 2026.
+Python Software Foundation. *tomllib — Parse TOML files*. Python 3.14 documentation; module added in version 3.11. <https://docs.python.org/3.14/library/tomllib.html>. Accessed 4 November 2026; versioned URL checked 5 November 2026.
 
 **Cited by:** [Provisioning design](../Development/system/design/STORAGE/provisioning.md), standard-library TOML reader of the tool.
 

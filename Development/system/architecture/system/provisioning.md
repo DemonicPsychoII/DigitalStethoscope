@@ -17,7 +17,7 @@ Editable source: [provisioning.puml](provisioning.puml).
 | Deployment file | The single reviewed source of one server deployment: base URL, server keep-alive and the public server certificate. | Public data only. Never a private key, keystore, password or patient context. |
 | Provisioning tool (developer PC) | Validate the file, canonicalize the base URL, check the certificate against the endpoint, build the versioned image with its checksum and check that it fits the partition. | Writes no firmware and no other partition. Does not obtain a certificate from the network. |
 | Flash command (developer PC) | Take one deployment file and one serial port, run the tool and write the image at the partition location taken from the firmware build. | The firmware image and the settings partition stay unchanged. |
-| Provisioning partition (device flash) | Hold exactly one image at a fixed start, independent of firmware updates, the settings size and settings erasure. | The firmware reads it and never writes it. |
+| Provisioning partition (device flash) | Hold exactly one image at a fixed start, independent of firmware updates, the settings size and an erase of the settings partition; a whole-flash erase removes it. | The firmware reads it and never writes it. |
 | L1_STORAGE | Read the image once at boot and check its format, lengths and checksum. | Does not interpret the endpoint or the certificate. |
 | L2_COMMUNICATION | Load the image at boot, decide whether secure transport is available and report a configuration cause otherwise. | A missing or invalid image never blocks Wi-Fi setup or offline listening. |
 | L1_WIFI | Parse the endpoint, parse the certificate, require a Subject Alternative Name that matches the endpoint and make the certificate the only trust anchor. | No fallback endpoint, no fallback certificate and no insecure mode. |
@@ -48,7 +48,7 @@ These scenarios allocate future verification; they do not add a generated test b
 | Invalid deployment file | REQ-11; VT-08 | The tool rejects it before writing; the device keeps its previous image. |
 | Certificate without matching Subject Alternative Name | REQ-11; VT-08 | Rejected by the tool; a device that boots with such an image reports a configuration cause and no secure transport. |
 | Missing or corrupted image | REQ-11/REQ-13; VT-08/VT-09 | Secure transport unavailable with a configuration cause; Wi-Fi setup and offline listening unaffected. |
-| Firmware update or settings erasure | REQ-11/REQ-12; VT-08 | The image remains and is accepted at the next boot. |
+| Firmware update or settings-partition erase | REQ-11/REQ-12; VT-08 | The image remains and is accepted at the next boot. |
 | Deployment file content | VT-11 | Inspection finds no private key, keystore, password or patient context. |
 
 ## Sources
