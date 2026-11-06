@@ -1,9 +1,9 @@
 """Hardware regression run of the app firmware against a local HAPI FHIR test server.
 
 Each scenario prepares the server profile partition and the FHIR container, resets the
-board through RTS and checks the serial log for required lines in order and for forbidden
-lines within a time limit. The settings partition with the saved Wi-Fi network is never
-touched. See README.md in this directory for the setup.
+board through RTS and checks the serial log for required lines in order, forbidden lines,
+unexpected resets and the timing of server connection attempts. The settings partition
+with the saved Wi-Fi network is never touched. See README.md in this directory.
 """
 
 import argparse
@@ -18,7 +18,7 @@ import time
 import tomllib
 import urllib.request
 from collections.abc import Callable, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import serial
@@ -33,6 +33,12 @@ LAB_DEPLOYMENT = REPOSITORY / "Development/system/coding/server-profiles/lab-hap
 BAUD_RATE = 115200
 SERVER_START_TIMEOUT_SECONDS = 180
 
+# P26-ATTEMPT and P26-RETRY in design/COMMUNICATION/secure-transport.md.
+PREPARATION_LIMIT_SECONDS = 10
+RETRY_GAP_SECONDS = 60
+# Log timestamps have millisecond resolution; logging and scheduling add a little more.
+TIMING_TOLERANCE_SECONDS = 0.5
+
 CRASH_PATTERNS = [
     r"FATAL",
     r"Guru Meditation",
@@ -40,7 +46,6 @@ CRASH_PATTERNS = [
     r"ASSERTION FAIL",
     r"Stack overflow",
     r"heap corruption",
-    r"rst:0x[0-9a-f]+ \((?!POWERON|RTC_SW_SYS_RESET)",
 ]
 # A first preparation right after the join can miss its budget; the 60 s retry must then verify.
 FIRST_ATTEMPT_WARNINGS = [
@@ -50,6 +55,13 @@ FIRST_ATTEMPT_WARNINGS = [
     r"SERVER_CONNECTION_FAILURE",
 ]
 ESCAPE_SEQUENCE = re.compile(r"\x1b\[[0-9;]*[A-Za-z]")
+BOOT_BANNER = re.compile(r"^rst:0x[0-9a-f]+ ")
+DEVICE_TIMESTAMP = re.compile(r"\[(\d+):(\d\d):(\d\d)\.(\d{3}),\d{3}\]")
+TIME_SYNCHRONIZED = "Time synchronized"
+ATTEMPT_FAILED = re.compile(
+    r"Server connection: (TLS setup failed|time synchronization failed|certificate not valid)"
+)
+ATTEMPT_SUCCEEDED = "Server connection verified"
 
 
 @dataclass
@@ -69,6 +81,18 @@ class Context:
 
     def log(self, scenario: str) -> Path:
         return self.output_directory / f"{scenario}.log"
+
+
+@dataclass
+class LogEvent:
+    device_seconds: float
+    message: str
+
+
+@dataclass
+class Capture:
+    failures: list[str] = field(default_factory=list)
+    events: list[LogEvent] = field(default_factory=list)
 
 
 def run(command: Sequence[str | Path]) -> None:
@@ -92,9 +116,11 @@ def run_tool(script: str, context: Context, *arguments: str | Path) -> None:
 
 
 def lab_server() -> dict[str, object]:
-    server = tomllib.loads(LAB_DEPLOYMENT.read_text(encoding="utf-8"))["server"]
-    if not isinstance(server.get("certificate"), str) or not isinstance(
-        server.get("keep_alive_seconds"), int
+    server = tomllib.loads(LAB_DEPLOYMENT.read_text(encoding="utf-8")).get("server")
+    if (
+        not isinstance(server, dict)
+        or not isinstance(server.get("certificate"), str)
+        or not isinstance(server.get("keep_alive_seconds"), int)
     ):
         raise SystemExit(f"{LAB_DEPLOYMENT} has no certificate or keep-alive")
     return server
@@ -115,6 +141,10 @@ def deployment_file(
         encoding="utf-8",
     )
     return path
+
+
+def flash_lab_profile(context: Context) -> None:
+    run_tool("flash-server-profile.ps1", context, deployment_file(context, "lab-hapi"))
 
 
 def foreign_certificate(server_address: str) -> str:
@@ -167,6 +197,14 @@ def set_server_running(context: Context, running: bool) -> None:
     )
 
 
+def device_seconds(line: str) -> float | None:
+    match = DEVICE_TIMESTAMP.search(line)
+    if match is None:
+        return None
+    hours, minutes, seconds, milliseconds = (int(group) for group in match.groups())
+    return hours * 3600 + minutes * 60 + seconds + milliseconds / 1000
+
+
 def capture(
     context: Context,
     scenario: str,
@@ -176,11 +214,13 @@ def capture(
     warnings: Sequence[str] = (),
     quiet_seconds: float = 0,
     on_line: Callable[[str], None] | None = None,
-) -> list[str]:
-    """Reset the board and read its console until every required pattern matched in order, then for quiet_seconds more."""
+) -> Capture:
+    """Reset the board and read its console until every required pattern matched in order
+    within seconds, then for quiet_seconds more, which the overall limit does not shorten."""
+    result = Capture()
     pending_patterns = list(required)
-    failures: list[str] = []
     quiet_until: float | None = None
+    boot_count = 0
     with (
         serial.Serial(context.port, BAUD_RATE, timeout=0.2) as connection,
         open(context.log(scenario), "w", encoding="utf-8") as log,
@@ -188,28 +228,40 @@ def capture(
         connection.dtr = False
         connection.rts = True
         time.sleep(0.2)
+        # Opening the port can briefly reset the board; drop that partial boot while it is held in reset.
+        connection.reset_input_buffer()
         connection.rts = False
         start = time.monotonic()
         buffer = b""
-        while time.monotonic() - start < seconds and (
-            pending_patterns
-            or (quiet_until is not None and time.monotonic() < quiet_until)
+        while (pending_patterns and time.monotonic() - start < seconds) or (
+            quiet_until is not None and time.monotonic() < quiet_until
         ):
             buffer += connection.read(4096)
             *lines, buffer = buffer.split(b"\n")
             for raw_line in lines:
                 elapsed = time.monotonic() - start
                 line = ESCAPE_SEQUENCE.sub("", raw_line.decode("utf-8", "replace"))
-                line = line.replace("uart:~$ ", "").rstrip()
+                line = line.replace("uart:~$ ", "").strip()
                 message = line[line.find("<") :] if "<" in line else line
                 log.write(f"[{elapsed:7.2f}] {line}\n")
                 log.flush()
+                if BOOT_BANNER.search(line):
+                    boot_count += 1
+                    if boot_count > 1:
+                        result.failures.append(
+                            f"unexpected reset at {elapsed:.1f} s: {line}"
+                        )
                 for pattern in forbidden:
                     if re.search(pattern, line):
-                        failures.append(f"forbidden at {elapsed:.1f} s: {message}")
+                        result.failures.append(
+                            f"forbidden at {elapsed:.1f} s: {message}"
+                        )
                 for pattern in warnings:
                     if re.search(pattern, line):
                         print(f"    WARN {elapsed:6.1f} s  {message}", flush=True)
+                timestamp = device_seconds(line)
+                if timestamp is not None:
+                    result.events.append(LogEvent(timestamp, message))
                 if pending_patterns and re.search(pending_patterns[0], line):
                     print(
                         f"    {elapsed:6.1f} s  {pending_patterns.pop(0)}", flush=True
@@ -218,9 +270,65 @@ def capture(
                         quiet_until = time.monotonic() + quiet_seconds
                 if on_line:
                     on_line(line)
-    failures += [
+    if boot_count == 0:
+        result.failures.append("no boot banner after the reset")
+    result.failures += [
         f"missing within {seconds} s: {pattern}" for pattern in pending_patterns
     ]
+    return result
+
+
+def check_attempt_timing(
+    events: Sequence[LogEvent], maximum_failed_attempts: int | None = None
+) -> list[str]:
+    """Check P26 on the device clock: a failed attempt ends within 10 s of its SNTP result,
+    and the next attempt's SNTP result follows 60 s to 70 s after that failure.
+
+    The log has no line for the start of an attempt, so its SNTP result is the earliest
+    evidence of it; the 10 s bound is therefore checked from that line, not from the start.
+    """
+    failures: list[str] = []
+    attempt_synchronized_at: float | None = None
+    previous_failure_at: float | None = None
+    failed_attempts = 0
+    for event in events:
+        is_failure = ATTEMPT_FAILED.search(event.message) is not None
+        starts_attempt = TIME_SYNCHRONIZED in event.message or (
+            "time synchronization failed" in event.message
+        )
+        if starts_attempt and previous_failure_at is not None:
+            gap = event.device_seconds - previous_failure_at
+            if (
+                not RETRY_GAP_SECONDS
+                <= gap
+                <= RETRY_GAP_SECONDS + PREPARATION_LIMIT_SECONDS
+            ):
+                failures.append(
+                    f"next attempt {gap:.1f} s after the failure at {previous_failure_at:.1f} s,"
+                    f" expected {RETRY_GAP_SECONDS} s to {RETRY_GAP_SECONDS + PREPARATION_LIMIT_SECONDS} s"
+                )
+            previous_failure_at = None
+        if TIME_SYNCHRONIZED in event.message:
+            attempt_synchronized_at = event.device_seconds
+        if is_failure or ATTEMPT_SUCCEEDED in event.message:
+            if attempt_synchronized_at is not None:
+                duration = event.device_seconds - attempt_synchronized_at
+                if duration > PREPARATION_LIMIT_SECONDS + TIMING_TOLERANCE_SECONDS:
+                    failures.append(
+                        f"attempt ended {duration:.1f} s after its SNTP result at"
+                        f" {event.device_seconds:.1f} s, limit {PREPARATION_LIMIT_SECONDS} s"
+                    )
+            attempt_synchronized_at = None
+        if is_failure:
+            failed_attempts += 1
+            previous_failure_at = event.device_seconds
+    if (
+        maximum_failed_attempts is not None
+        and failed_attempts > maximum_failed_attempts
+    ):
+        failures.append(
+            f"{failed_attempts} failed attempts, at most {maximum_failed_attempts} allowed"
+        )
     return failures
 
 
@@ -231,16 +339,16 @@ def scenario_no_profile(context: Context) -> list[str]:
     return capture(
         context,
         "no-profile",
-        150,
+        80,
         [r"Secure transport unavailable: no server profile image", r"Wi-Fi connected"],
         CRASH_PATTERNS
-        + [r"Time synchronized", r"Server connection", r"WIFI_CLEANUP_FAILURE"],
+        + [TIME_SYNCHRONIZED, r"Server connection", r"WIFI_CLEANUP_FAILURE"],
         quiet_seconds=70,
-    )
+    ).failures
 
 
 def scenario_foreign_certificate(context: Context) -> list[str]:
-    """Profile pins another certificate for the same address: the device refuses the server."""
+    """Profile pins another certificate for the same address: the first attempt and the retry both refuse the server."""
     set_server_running(context, True)
     run_tool(
         "flash-server-profile.ps1",
@@ -251,7 +359,7 @@ def scenario_foreign_certificate(context: Context) -> list[str]:
             certificate=foreign_certificate(context.server_address),
         ),
     )
-    return capture(
+    result = capture(
         context,
         "foreign-certificate",
         150,
@@ -259,45 +367,58 @@ def scenario_foreign_certificate(context: Context) -> list[str]:
             r"Wi-Fi connected",
             r"Server verification failed \(flags 0x8\)",
             r"SERVER_CONNECTION_FAILURE \(-13\)",
+            r"Server verification failed \(flags 0x8\)",
+            r"TLS setup failed \(-13, cause 6\)",
         ],
-        CRASH_PATTERNS + [r"Server connection verified", r"WIFI_CLEANUP_FAILURE"],
+        CRASH_PATTERNS + [ATTEMPT_SUCCEEDED, r"WIFI_CLEANUP_FAILURE"],
     )
+    return result.failures + check_attempt_timing(result.events)
 
 
 def scenario_server_down_then_up(context: Context) -> list[str]:
     """Server stopped at boot: failure and the 60 s retry, then verified once the server is back."""
-    run_tool("flash-server-profile.ps1", context, deployment_file(context, "lab-hapi"))
+    flash_lab_profile(context)
     set_server_running(context, False)
-    is_server_started = threading.Event()
+    server_start_errors: list[str] = []
+
+    def start_server() -> None:
+        try:
+            set_server_running(context, True)
+        except (OSError, RuntimeError, subprocess.CalledProcessError) as error:
+            server_start_errors.append(f"server start failed: {error}")
+
+    # Started in the background so the console keeps being read while the server boots.
+    server_starter = threading.Thread(target=start_server, daemon=True)
 
     def start_server_after_failure(line: str) -> None:
-        if not is_server_started.is_set() and "SERVER_CONNECTION_FAILURE" in line:
-            is_server_started.set()
-            # Started in the background so the console keeps being read while the server boots.
-            threading.Thread(
-                target=set_server_running, args=(context, True), daemon=True
-            ).start()
+        if server_starter.ident is None and "SERVER_CONNECTION_FAILURE" in line:
+            server_starter.start()
 
-    return capture(
-        context,
-        "server-down-then-up",
-        240,
-        [
-            r"Wi-Fi connected",
-            r"Time synchronized",
-            r"SERVER_CONNECTION_FAILURE \(-?\d+\); retry in 60 s",
-            r"Server connection verified",
-        ],
-        CRASH_PATTERNS + [r"WIFI_CLEANUP_FAILURE", r"Server verification failed"],
-        on_line=start_server_after_failure,
-    )
+    try:
+        result = capture(
+            context,
+            "server-down-then-up",
+            240,
+            [
+                r"Wi-Fi connected",
+                TIME_SYNCHRONIZED,
+                r"SERVER_CONNECTION_FAILURE \(-?\d+\); retry in 60 s",
+                ATTEMPT_SUCCEEDED,
+            ],
+            CRASH_PATTERNS + [r"WIFI_CLEANUP_FAILURE", r"Server verification failed"],
+            on_line=start_server_after_failure,
+        )
+    finally:
+        if server_starter.ident is not None:
+            server_starter.join()
+    return result.failures + check_attempt_timing(result.events) + server_start_errors
 
 
 def scenario_valid_profile(context: Context) -> list[str]:
-    """Lab profile: stored Wi-Fi join, SNTP and a verified TLS connection to the pinned server."""
-    run_tool("flash-server-profile.ps1", context, deployment_file(context, "lab-hapi"))
+    """Lab profile: stored Wi-Fi join, SNTP and a verified TLS connection to the pinned server within one retry."""
+    flash_lab_profile(context)
     set_server_running(context, True)
-    return capture(
+    result = capture(
         context,
         "valid-profile",
         120,
@@ -305,8 +426,8 @@ def scenario_valid_profile(context: Context) -> list[str]:
             rf"Server {re.escape(context.base_url)} configured",
             r"Connecting to \"",
             r"Wi-Fi connected",
-            r"Time synchronized: 20\d\d-",
-            r"Server connection verified",
+            TIME_SYNCHRONIZED + r": 20\d\d-",
+            ATTEMPT_SUCCEEDED,
         ],
         CRASH_PATTERNS
         + [
@@ -317,6 +438,9 @@ def scenario_valid_profile(context: Context) -> list[str]:
         warnings=FIRST_ATTEMPT_WARNINGS,
         quiet_seconds=20,
     )
+    return result.failures + check_attempt_timing(
+        result.events, maximum_failed_attempts=1
+    )
 
 
 SCENARIOS: dict[str, Callable[[Context], list[str]]] = {
@@ -325,6 +449,21 @@ SCENARIOS: dict[str, Callable[[Context], list[str]]] = {
     "server-down-then-up": scenario_server_down_then_up,
     "valid-profile": scenario_valid_profile,
 }
+
+
+def restore(context: Context, is_lab_profile_flashed: bool) -> list[str]:
+    """Leave the server running and the lab profile on the board; each step runs even if the other fails."""
+    failures: list[str] = []
+    try:
+        set_server_running(context, True)
+    except (OSError, RuntimeError, subprocess.CalledProcessError) as error:
+        failures.append(f"server start failed: {error}")
+    if not is_lab_profile_flashed:
+        try:
+            flash_lab_profile(context)
+        except (OSError, subprocess.CalledProcessError) as error:
+            failures.append(f"lab profile restore failed: {error}")
+    return failures
 
 
 def main() -> None:
@@ -353,6 +492,16 @@ def main() -> None:
     )
     arguments = parser.parse_args()
     stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+    # Inputs are checked before anything touches the board.
+    if re.fullmatch(r"COM\d+", arguments.port.upper()) is None:
+        parser.error(f"--port must be a COM port such as COM4, not {arguments.port}")
+    try:
+        ipaddress.IPv4Address(arguments.server_address)
+    except ValueError:
+        parser.error(
+            f"--server-address must be an IPv4 address, not {arguments.server_address}"
+        )
+    lab_server()
     context = Context(
         port=arguments.port,
         server_address=arguments.server_address,
@@ -368,27 +517,27 @@ def main() -> None:
     print(f"Tree {commit}, port {context.port}, logs {context.output_directory}")
     if arguments.flash_firmware:
         run_tool("flash-firmware.ps1", context)
-    # The lab profile goes last, so the board is left in its normal configuration.
     names = arguments.scenario or list(SCENARIOS)
     results: dict[str, list[str]] = {}
+    is_lab_profile_flashed = False
+    cleanup_failures: list[str] = []
     try:
         for name in names:
+            # Cleared first: a scenario that fails before its own flash leaves the profile unknown.
+            is_lab_profile_flashed = False
             print(f"\n== {name}: {SCENARIOS[name].__doc__}", flush=True)
             results[name] = SCENARIOS[name](context)
+            is_lab_profile_flashed = name in ("server-down-then-up", "valid-profile")
             for failure in results[name]:
                 print(f"    FAIL {failure}", flush=True)
     finally:
-        set_server_running(context, True)
-        if names[-1] != "valid-profile":
-            run_tool(
-                "flash-server-profile.ps1",
-                context,
-                deployment_file(context, "lab-hapi"),
-            )
+        cleanup_failures = restore(context, is_lab_profile_flashed)
+        for failure in cleanup_failures:
+            print(f"    CLEANUP FAIL {failure}", flush=True)
     print("\nSummary")
     for name, failures in results.items():
         print(f"  {'FAIL' if failures else 'PASS'}  {name}")
-    sys.exit(1 if any(results.values()) else 0)
+    sys.exit(1 if any(results.values()) or cleanup_failures else 0)
 
 
 if __name__ == "__main__":
