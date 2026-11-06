@@ -32,10 +32,13 @@ TOOLS = REPOSITORY / "Development/system/coding/tools"
 LAB_DEPLOYMENT = REPOSITORY / "Development/system/coding/server-profiles/lab-hapi.toml"
 BAUD_RATE = 115200
 SERVER_START_TIMEOUT_SECONDS = 180
+DOCKER_COMMAND_TIMEOUT_SECONDS = 60
 
 # P26-ATTEMPT and P26-RETRY in design/COMMUNICATION/secure-transport.md.
 PREPARATION_LIMIT_SECONDS = 10
 RETRY_GAP_SECONDS = 60
+# P23: a failed SNTP exchange is logged only after its cancellation, which has its own stop bound.
+CLEANUP_LIMIT_SECONDS = 1
 # Log timestamps have millisecond resolution; logging and scheduling add a little more.
 TIMING_TOLERANCE_SECONDS = 0.5
 
@@ -177,6 +180,7 @@ def set_server_running(context: Context, running: bool) -> None:
         ["docker", "start" if running else "stop", context.server_container],
         check=True,
         capture_output=True,
+        timeout=DOCKER_COMMAND_TIMEOUT_SECONDS,
     )
     if not running:
         return
@@ -282,7 +286,8 @@ def check_attempt_timing(
     events: Sequence[LogEvent], maximum_failed_attempts: int | None = None
 ) -> list[str]:
     """Check P26 on the device clock: a failed attempt ends within 10 s of its SNTP result,
-    and the next attempt's SNTP result follows 60 s to 70 s after that failure.
+    and the next attempt's SNTP result follows 60 s to 70.5 s after that failure; a failed
+    SNTP exchange may log up to 1 s later because its cancellation (P23) runs first.
 
     The log has no line for the start of an attempt, so its SNTP result is the earliest
     evidence of it; the 10 s bound is therefore checked from that line, not from the start.
@@ -293,19 +298,22 @@ def check_attempt_timing(
     failed_attempts = 0
     for event in events:
         is_failure = ATTEMPT_FAILED.search(event.message) is not None
-        starts_attempt = TIME_SYNCHRONIZED in event.message or (
-            "time synchronization failed" in event.message
+        is_synchronization_failure = "time synchronization failed" in event.message
+        starts_attempt = (
+            TIME_SYNCHRONIZED in event.message or is_synchronization_failure
         )
         if starts_attempt and previous_failure_at is not None:
             gap = event.device_seconds - previous_failure_at
-            if (
-                not RETRY_GAP_SECONDS
-                <= gap
-                <= RETRY_GAP_SECONDS + PREPARATION_LIMIT_SECONDS
-            ):
+            latest_gap = (
+                RETRY_GAP_SECONDS
+                + PREPARATION_LIMIT_SECONDS
+                + (CLEANUP_LIMIT_SECONDS if is_synchronization_failure else 0)
+                + TIMING_TOLERANCE_SECONDS
+            )
+            if not RETRY_GAP_SECONDS <= gap <= latest_gap:
                 failures.append(
                     f"next attempt {gap:.1f} s after the failure at {previous_failure_at:.1f} s,"
-                    f" expected {RETRY_GAP_SECONDS} s to {RETRY_GAP_SECONDS + PREPARATION_LIMIT_SECONDS} s"
+                    f" expected {RETRY_GAP_SECONDS} s to {latest_gap:.1f} s"
                 )
             previous_failure_at = None
         if TIME_SYNCHRONIZED in event.message:
@@ -333,7 +341,7 @@ def check_attempt_timing(
 
 
 def scenario_no_profile(context: Context) -> list[str]:
-    """Erased server profile: secure transport unavailable, Wi-Fi joins, no SNTP or TLS attempt for 70 s."""
+    """Erased server profile: secure transport unavailable, Wi-Fi joins, no SNTP result or server connection outcome for 70 s."""
     run_tool("erase-flash.ps1", context, "-ServerProfile")
     # SNTP runs only inside a TLS connection setup, so without a profile neither may start.
     return capture(
@@ -384,7 +392,7 @@ def scenario_server_down_then_up(context: Context) -> list[str]:
     def start_server() -> None:
         try:
             set_server_running(context, True)
-        except (OSError, RuntimeError, subprocess.CalledProcessError) as error:
+        except (OSError, RuntimeError, subprocess.SubprocessError) as error:
             server_start_errors.append(f"server start failed: {error}")
 
     # Started in the background so the console keeps being read while the server boots.
@@ -408,9 +416,15 @@ def scenario_server_down_then_up(context: Context) -> list[str]:
             CRASH_PATTERNS + [r"WIFI_CLEANUP_FAILURE", r"Server verification failed"],
             on_line=start_server_after_failure,
         )
-    finally:
+    except BaseException:
         if server_starter.ident is not None:
             server_starter.join()
+        # The capture exception propagates; a start error recorded before it is reported here.
+        for error in server_start_errors:
+            print(f"    FAIL {error}", flush=True)
+        raise
+    if server_starter.ident is not None:
+        server_starter.join()
     return result.failures + check_attempt_timing(result.events) + server_start_errors
 
 
@@ -456,12 +470,12 @@ def restore(context: Context, is_lab_profile_flashed: bool) -> list[str]:
     failures: list[str] = []
     try:
         set_server_running(context, True)
-    except (OSError, RuntimeError, subprocess.CalledProcessError) as error:
+    except (OSError, RuntimeError, subprocess.SubprocessError) as error:
         failures.append(f"server start failed: {error}")
     if not is_lab_profile_flashed:
         try:
             flash_lab_profile(context)
-        except (OSError, subprocess.CalledProcessError) as error:
+        except (OSError, subprocess.SubprocessError) as error:
             failures.append(f"lab profile restore failed: {error}")
     return failures
 
@@ -518,7 +532,7 @@ def main() -> None:
     if arguments.flash_firmware:
         run_tool("flash-firmware.ps1", context)
     names = arguments.scenario or list(SCENARIOS)
-    results: dict[str, list[str]] = {}
+    results: list[tuple[str, list[str]]] = []
     is_lab_profile_flashed = False
     cleanup_failures: list[str] = []
     try:
@@ -526,18 +540,20 @@ def main() -> None:
             # Cleared first: a scenario that fails before its own flash leaves the profile unknown.
             is_lab_profile_flashed = False
             print(f"\n== {name}: {SCENARIOS[name].__doc__}", flush=True)
-            results[name] = SCENARIOS[name](context)
+            failures = SCENARIOS[name](context)
+            # A list, so a repeated scenario keeps the result of every run.
+            results.append((name, failures))
             is_lab_profile_flashed = name in ("server-down-then-up", "valid-profile")
-            for failure in results[name]:
+            for failure in failures:
                 print(f"    FAIL {failure}", flush=True)
     finally:
         cleanup_failures = restore(context, is_lab_profile_flashed)
         for failure in cleanup_failures:
             print(f"    CLEANUP FAIL {failure}", flush=True)
     print("\nSummary")
-    for name, failures in results.items():
+    for name, failures in results:
         print(f"  {'FAIL' if failures else 'PASS'}  {name}")
-    sys.exit(1 if any(results.values()) or cleanup_failures else 0)
+    sys.exit(1 if any(failures for _, failures in results) or cleanup_failures else 0)
 
 
 if __name__ == "__main__":
