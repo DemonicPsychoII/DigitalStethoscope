@@ -6,8 +6,8 @@ reviews:
   allow_author_approval: true
   # Keep only inline findings and review status. Summaries, walkthrough extras and
   # metadata dropdowns add reading load without improving the review.
-  # The AI-agent prompt stays because agents implement the findings.
-  enable_prompt_for_ai_agents: true
+  # Agents read the finding itself; the generated fix prompt only repeats it.
+  enable_prompt_for_ai_agents: false
   high_level_summary: false
   review_info: false
   review_details: false
