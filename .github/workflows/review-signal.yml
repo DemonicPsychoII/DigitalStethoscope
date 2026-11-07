@@ -8,14 +8,7 @@ on:
 permissions: {}
 jobs:
   signal:
-    # A submitted comment review with an empty body is how GitHub records a reply in a review
-    # thread. A person's reply carries no decision or verdict marker and the gate ignores it when
-    # classifying threads; a new thread it opens is still enforced by required conversation
-    # resolution. CodeRabbit replies still signal: they can turn a minor finding into a blocking one.
-    if: >-
-      vars.CI_NATIVE_REVIEW != 'true' && github.event.pull_request.base.ref == 'integration'
-      && !(github.event.action == 'submitted' && github.event.review.state == 'commented' && !github.event.review.body
-           && github.event.review.user.type != 'Bot')
+    if: vars.CI_NATIVE_REVIEW != 'true' && github.event.pull_request.base.ref == 'integration'
     name: Review event received
     runs-on: ubuntu-24.04
     timeout-minutes: 1
