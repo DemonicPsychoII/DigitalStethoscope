@@ -582,6 +582,35 @@ int wifi_stopDHCPServer(void)
     return result;
 }
 
+int wifi_startTimeSynchronization(const char *ntpServer)
+{
+    ARG_UNUSED(ntpServer);
+
+    return -ENOSYS; /**< Time synchronization is not available in this build. */
+}
+
+int wifi_waitForTimeSynchronization(struct normalised_time *time, k_timeout_t timeout)
+{
+    ARG_UNUSED(time);
+    ARG_UNUSED(timeout);
+
+    return -ENOSYS; /**< Time synchronization is not available in this build. */
+}
+
+int wifi_cancelTimeSynchronization(void)
+{
+    /* Start never accepts an operation here, so nothing can be pending. */
+    return 0;
+}
+
+int wifi_applyTimeSynchronization(const struct normalised_time *time, struct applied_time_anchor *anchor)
+{
+    ARG_UNUSED(time);
+    ARG_UNUSED(anchor);
+
+    return -ENOSYS; /**< Time synchronization is not available in this build. */
+}
+
 /***********************************************************************/
 /* LOCAL FUNCTIONS                                                     */
 /***********************************************************************/

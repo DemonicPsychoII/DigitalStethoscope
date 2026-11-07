@@ -33,9 +33,11 @@
 
 #include <errno.h>
 #include <string.h>
+#include <time.h>
 
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
+#include <zephyr/sys/timeutil.h>
 
 #include "portal.h"
 #include "storage.h"
@@ -63,11 +65,17 @@
 
 #define COMMUNICATION_NETWORK_RECORD "wifi/network" /**< Storage name of the joined network. */
 
-#define COMMUNICATION_WORK_SCAN       BIT(0) /**< Scan started. */
-#define COMMUNICATION_WORK_CONNECTION BIT(1) /**< Connect request pending. */
-#define COMMUNICATION_WORK_PORTAL     BIT(2) /**< Setup page served. */
-#define COMMUNICATION_WORK_DHCP       BIT(3) /**< DHCP server running. */
-#define COMMUNICATION_WORK_HOTSPOT    BIT(4) /**< Hotspot open. */
+#define COMMUNICATION_WORK_SCAN                 BIT(0) /**< Scan started. */
+#define COMMUNICATION_WORK_CONNECTION           BIT(1) /**< Connect request pending. */
+#define COMMUNICATION_WORK_PORTAL               BIT(2) /**< Setup page served. */
+#define COMMUNICATION_WORK_DHCP                 BIT(3) /**< DHCP server running. */
+#define COMMUNICATION_WORK_HOTSPOT              BIT(4) /**< Hotspot open. */
+#define COMMUNICATION_WORK_TIME_SYNCHRONIZATION BIT(5) /**< Time synchronization accepted and not yet released. */
+
+#define COMMUNICATION_PUBLIC_NTP_SERVER                    "pool.ntp.org"   /**< Public NTP server for time synchronization. */
+#define COMMUNICATION_TIME_UNCERTAINTY_BUDGET_MICROSECONDS (100000)         /**< P25-UNCERTAINTY-BUDGET: largest accepted SNTP uncertainty. */
+#define COMMUNICATION_TIME_MAPPING_LIMIT_MICROSECONDS      (45000000000ULL) /**< P25-MAPPING: 12.5 h = (1 s - 100 ms) / 20 ppm between anchor and measurement end. */
+#define COMMUNICATION_JOIN_TIME_SYNCHRONIZATION_TIMEOUT_S  (5)              /**< One standalone SNTP exchange after a join, beginning before DNS. */
 
 /***********************************************************************/
 /* TYPES                                                               */
@@ -118,8 +126,9 @@ struct communication_work
 /* LOCAL CONSTANTS                                                     */
 /***********************************************************************/
 
-/** Work in the order it is stopped: radio work first, then the setup services. */
+/** Work in the order it is stopped: network work first, then the setup services. */
 static const struct communication_work communication_WorkList[] = {
+    {COMMUNICATION_WORK_TIME_SYNCHRONIZATION, wifi_cancelTimeSynchronization, "Time synchronization"},
     {COMMUNICATION_WORK_SCAN, wifi_cancelScan, "Scan"},
     {COMMUNICATION_WORK_CONNECTION, wifi_disconnect, "Connect request"},
     {COMMUNICATION_WORK_PORTAL, portal_stop, "Setup page"},
@@ -158,6 +167,8 @@ static bool communication_RecoveryIsAllowed;                               /**< 
 static struct portal_request communication_PageRequest;                    /**< Last page request, with password. */
 static struct wifi_scan_entry communication_ScanList[WIFI_SCAN_LIST_SIZE]; /**< Networks for the page. */
 static size_t communication_ScanCount;                                     /**< Valid entries in ScanList. */
+static struct applied_time_anchor communication_AppliedTimeAnchor;         /**< Anchor from the last successful Apply. */
+static bool communication_AppliedTimeAnchorIsValid;                        /**< AppliedTimeAnchor holds an applied anchor. */
 
 /***********************************************************************/
 /* LOCAL FUNCTION PROTOTYPES                                           */
@@ -186,6 +197,31 @@ static void communication_runIdleCycle(void);
  * @brief Reconnect if the link was lost in Idle; run setup if all attempts fail.
  */
 static void communication_recoverConnection(void);
+
+/**
+ * @brief Run one time-synchronization attempt under CONTROL's network lease.
+ *
+ * @param[in] deadline The time by which the attempt must complete.
+ *
+ * @return 0 on success, a negative error code on failure.
+ */
+static int communication_synchronizeTime(k_timepoint_t deadline);
+
+/**
+ * @brief Synchronize the clock once after the station joined at boot or through setup.
+ *
+ * Interim placement: design #104 runs the exchange inside TLS setup, before each ClientHello.
+ * Until that caller exists, this keeps the clock set; move the call there with TLS preparation.
+ */
+static void communication_synchronizeTimeAfterJoin(void);
+
+/**
+ * @brief Map a measurement-end monotonic timestamp using the retained time anchor.
+ * @param[in] measurementEndMonotonicMicroseconds Measurement-end kernel timestamp.
+ * @param[out] utcEnd UTC measurement end; unchanged on failure.
+ * @return 0 for an eligible mapping, or a negative error code.
+ */
+static int __unused communication_mapMeasurementEndTime(uint64_t measurementEndMonotonicMicroseconds, struct timespec *utcEnd);
 
 /**
  * @brief Wait until the selected condition is met, Start interrupts it or the time is over.
@@ -512,6 +548,7 @@ static void communication_connectAtBoot(void)
         if(result == 0)
         {
             LOG_INF("Wi-Fi connected");
+            communication_synchronizeTimeAfterJoin();
         }
         else if(result == -ECANCELED) /**< Start interrupted the network workflow. */
         {
@@ -605,7 +642,12 @@ static void communication_recoverConnection(void)
             result = communication_connectToNetwork(&communication_StoredNetwork, remainingAttempts);
         }
         communication_BootJoinIsPending = (result == -ECANCELED); /**< Start interrupted the network workflow. */
-        if((result != 0) && (result != -ECANCELED))               /**< Start interrupted the network workflow. */
+        if(result == 0)
+        {
+            LOG_INF("Wi-Fi connected");
+            communication_synchronizeTimeAfterJoin();
+        }
+        else if(result != -ECANCELED) /**< Start interrupted the network workflow. */
         {
             communication_RecoveryIsAllowed = false;
             LOG_ERR("JOIN_FAILURE (%d); hold the button 2 s for setup", result);
@@ -637,6 +679,205 @@ static void communication_recoverConnection(void)
             /* Listening started; RecoveryIsAllowed stays set, so Idle tries again. */
         }
     }
+}
+
+static int communication_synchronizeTime(k_timepoint_t deadline)
+{
+    if(sys_timepoint_expired(deadline))
+    {
+        return -ETIMEDOUT; /**< The containing setup has no budget left; no attempt issued. */
+    }
+
+    int result = 0;
+    bool isPending = false;
+    struct normalised_time sample = {0};
+    struct applied_time_anchor candidateAnchor = {0}; /**< Apply output; published only on success. */
+
+    communication_updateListeningState();
+
+    if(communication_CleanupFaultIsLatched)
+    {
+        result = -ENETDOWN; /**< Network work is disabled until restart; no attempt issued. */
+    }
+    else if(communication_ListeningIsActive)
+    {
+        result = -ECANCELED; /**< CONTROL holds the lease for listening; no attempt issued. */
+    }
+    else if(!wifi_isConnected())
+    {
+        result = -ENOTCONN; /**< Station has no IPv4 address; no attempt issued. */
+    }
+    else
+    {
+        result = wifi_startTimeSynchronization(COMMUNICATION_PUBLIC_NTP_SERVER);
+        isPending = (result == 0);
+        if(isPending)
+        {
+            communication_PendingWork |= COMMUNICATION_WORK_TIME_SYNCHRONIZATION;
+        }
+
+        while(isPending)
+        {
+            /* Short waits only let Start be seen; they never extend the containing setup's deadline. */
+            k_timeout_t waitInterval = sys_timepoint_timeout(deadline);
+            if(waitInterval.ticks > K_MSEC(COMMUNICATION_EVENT_CHECK_INTERVAL_MS).ticks)
+            {
+                waitInterval = K_MSEC(COMMUNICATION_EVENT_CHECK_INTERVAL_MS);
+            }
+
+            result = wifi_waitForTimeSynchronization(&sample, waitInterval);
+
+            communication_updateListeningState();
+
+            if(result != -EAGAIN)
+            {
+                /* Terminal completion: L1 has already released the operation's resources. */
+                communication_PendingWork &= ~COMMUNICATION_WORK_TIME_SYNCHRONIZATION;
+                isPending = false;
+            }
+            else if(communication_ListeningIsActive || sys_timepoint_expired(deadline))
+            {
+                bool isInterrupted = communication_ListeningIsActive; /**< Start, not the deadline, ended the attempt. */
+                int cancelResult = wifi_cancelTimeSynchronization();
+
+                if(cancelResult != 0)
+                {
+                    /* The work stays pending and the hostname borrowed; it is a string literal, so it outlives the fault. */
+                    communication_CleanupFaultIsLatched = true;
+                    communication_RecoveryIsAllowed = false;
+                    communication_BootJoinIsPending = false;
+                    LOG_ERR("WIFI_CLEANUP_FAILURE; time synchronization cancel failed (%d), network disabled until restart", cancelResult);
+                    result = cancelResult;
+                }
+                else
+                {
+                    communication_PendingWork &= ~COMMUNICATION_WORK_TIME_SYNCHRONIZATION;
+                    if(isInterrupted)
+                    {
+                        result = -ECANCELED; /**< Start interrupted an issued attempt. */
+                    }
+                    else
+                    {
+                        result = -ETIMEDOUT; /**< No sample within the attempt budget. */
+                    }
+                }
+                isPending = false;
+            }
+            else
+            {
+                /* Still pending with budget left: wait again. */
+            }
+        }
+
+        if(result == 0)
+        {
+            /* The lease is withdrawn only after this thread acknowledges Stopped, so applying now is still under it. */
+            if(communication_ListeningIsActive)
+            {
+                result = -ECANCELED; /**< Start arrived with the sample; discard it. */
+            }
+            else if(sys_timepoint_expired(deadline))
+            {
+                result = -ETIMEDOUT; /**< Clock application shares the attempt budget. */
+            }
+            else if(sample.estimated_uncertainty_microseconds > COMMUNICATION_TIME_UNCERTAINTY_BUDGET_MICROSECONDS)
+            {
+                result = -ERANGE; /**< Reported uncertainty exceeds the mapping budget; the exchange fails. */
+            }
+            else
+            {
+                result = wifi_applyTimeSynchronization(&sample, &candidateAnchor);
+                if(result == 0)
+                {
+                    communication_AppliedTimeAnchor = candidateAnchor;
+                    communication_AppliedTimeAnchorIsValid = true;
+                }
+            }
+        }
+    }
+
+    return result;
+}
+
+static void communication_synchronizeTimeAfterJoin(void)
+{
+    const int result = communication_synchronizeTime(sys_timepoint_calc(K_SECONDS(COMMUNICATION_JOIN_TIME_SYNCHRONIZATION_TIMEOUT_S)));
+
+    if(result == 0)
+    {
+        LOG_INF("Time synchronized: UTC %llu.%09u s, uncertainty %u us",
+                communication_AppliedTimeAnchor.utc_seconds,
+                communication_AppliedTimeAnchor.utc_fraction_nanoseconds,
+                communication_AppliedTimeAnchor.estimated_uncertainty_microseconds);
+    }
+    else if(result != -ECANCELED) /**< Start interrupted the exchange; listening wins. */
+    {
+        LOG_WRN("Time synchronization after join failed (%d)", result);
+    }
+}
+
+static int communication_mapMeasurementEndTime(uint64_t measurementEndMonotonicMicroseconds, struct timespec *utcEnd)
+{
+    if(utcEnd == NULL)
+    {
+        return -EINVAL; /**< Invalid argument or unsupported input. */
+    }
+    if(!communication_AppliedTimeAnchorIsValid)
+    {
+        return -ENODATA; /**< No applied anchor to map from. */
+    }
+
+    const struct applied_time_anchor *anchor = &communication_AppliedTimeAnchor;
+    const bool isAfterAnchor = (measurementEndMonotonicMicroseconds >= anchor->applied_monotonic_microseconds);
+    const uint64_t distanceMicroseconds = isAfterAnchor ? (measurementEndMonotonicMicroseconds - anchor->applied_monotonic_microseconds)
+                                                        : (anchor->applied_monotonic_microseconds - measurementEndMonotonicMicroseconds);
+
+    if(distanceMicroseconds > COMMUNICATION_TIME_MAPPING_LIMIT_MICROSECONDS)
+    {
+        return -ERANGE; /**< Drift since the anchor may exceed the 1 s maximum deviation. */
+    }
+
+    const uint64_t distanceSeconds = distanceMicroseconds / USEC_PER_SEC;
+    const uint32_t distanceNanoseconds = (uint32_t)((distanceMicroseconds % USEC_PER_SEC) * NSEC_PER_USEC);
+    uint64_t seconds = anchor->utc_seconds;
+    uint32_t nanoseconds = anchor->utc_fraction_nanoseconds;
+
+    if(isAfterAnchor)
+    {
+        seconds += distanceSeconds;
+        nanoseconds += distanceNanoseconds;
+        if(nanoseconds >= NSEC_PER_SEC)
+        {
+            nanoseconds -= NSEC_PER_SEC;
+            seconds++;
+        }
+    }
+    else
+    {
+        uint64_t subtractedSeconds = distanceSeconds;
+        if(nanoseconds < distanceNanoseconds)
+        {
+            nanoseconds += NSEC_PER_SEC;
+            subtractedSeconds++;
+        }
+        nanoseconds -= distanceNanoseconds;
+
+        if(subtractedSeconds > seconds)
+        {
+            return -ERANGE; /**< UTC before 1970 is not representable. */
+        }
+        seconds -= subtractedSeconds;
+    }
+
+    if(seconds > (uint64_t)SYS_TIME_T_MAX)
+    {
+        return -ERANGE; /**< UTC is not representable as time_t. */
+    }
+
+    utcEnd->tv_sec = (time_t)seconds;
+    utcEnd->tv_nsec = (long)nanoseconds;
+
+    return 0;
 }
 
 static int communication_waitForCondition(enum communication_wait_target target, k_timeout_t timeout)
@@ -977,6 +1218,12 @@ static void communication_runSetup(void)
         enum communication_setup_result outcome = communication_servePage(&error);
 
         communication_closeSetup(outcome, error);
+
+        /* After closing, so the exchange no longer shares the radio with the setup hotspot. */
+        if(outcome == COMMUNICATION_SETUP_CONNECTED)
+        {
+            communication_synchronizeTimeAfterJoin();
+        }
     }
     else
     {

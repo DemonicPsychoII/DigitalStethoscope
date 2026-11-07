@@ -518,6 +518,32 @@ int wifi_stopDHCPServer(void)
     return 0;
 }
 
+/* Time synchronization is unavailable here, so the existing scenarios keep their traces and timing. */
+int wifi_startTimeSynchronization(const char *ntpServer)
+{
+    (void)ntpServer;
+    return -ENOSYS; /**< Not modelled by this host substitute. */
+}
+
+int wifi_waitForTimeSynchronization(struct normalised_time *time, k_timeout_t timeout)
+{
+    (void)time;
+    (void)timeout;
+    return -ENOSYS; /**< Not modelled by this host substitute. */
+}
+
+int wifi_cancelTimeSynchronization(void)
+{
+    return 0;
+}
+
+int wifi_applyTimeSynchronization(const struct normalised_time *time, struct applied_time_anchor *anchor)
+{
+    (void)time;
+    (void)anchor;
+    return -ENOSYS; /**< Not modelled by this host substitute. */
+}
+
 int portal_start(void)
 {
     trace("page_start", 0);
