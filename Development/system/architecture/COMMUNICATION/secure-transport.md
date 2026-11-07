@@ -32,7 +32,7 @@ Design must define retained-connection lifecycle, closure detection, cleanup and
 
 ## Security and lifecycle boundaries
 
-Verify the server certificate against provisioned trust material, together with endpoint identity and validity; these checks are mandatory. TLS detailed design replaced the earlier lab-CA assumption with direct trust of the server's public certificate. Endpoint and certificate come from a provisioning image written separately from the firmware; no client certificate is configured. Failed verification prevents sending the application request; neither plain-HTTP fallback nor a verification bypass is a recovery path. COMMUNICATION receives a terminal verification failure under the existing delivery policy. A station address alone does not establish server readiness.
+Verify the server certificate against the trust material of the server profile, together with endpoint identity and validity; these checks are mandatory. TLS detailed design replaced the earlier lab-CA assumption with direct trust of the server's public certificate. Endpoint and certificate come from a server profile image written separately from the firmware; no client certificate is configured. Failed verification prevents sending the application request; neither plain-HTTP fallback nor a verification bypass is a recovery path. COMMUNICATION receives a terminal verification failure under the existing delivery policy. A station address alone does not establish server readiness.
 
 The local provisioning HTTP server remains L1_PORTAL's separate responsibility. Successful setup does not imply TLS readiness. Registration, examination-context ingress and delivery use the secure-server boundary when their transport contracts are defined.
 
@@ -40,7 +40,7 @@ Active connection work follows the exclusive network lease. WIFI owns connection
 
 ## Detailed-design inputs and gaps
 
-Define operation interfaces, endpoint/trust provisioning, credential handling, connection lifetime, resource budgets and failure mapping in Design. Retain existing delivery bounds; cipher selection, rotation and timeout values remain Design inputs. Unauthenticated SNTP time is accepted for the MVP ([SNTP Design PR #99](https://github.com/DemonicPsychoII/DigitalStethoscope/pull/99)); timestamp accuracy evidence remains open (TICKET-209). Server authentication/authorization and certificate deployment must be made concrete before service implementation. Transport verification does not settle examination-request authorization.
+Define operation interfaces, endpoint and trust inputs, credential handling, connection lifetime, resource budgets and failure mapping in Design. Retain existing delivery bounds; cipher selection, rotation and timeout values remain Design inputs. Unauthenticated SNTP time is accepted for the MVP ([SNTP Design PR #99](https://github.com/DemonicPsychoII/DigitalStethoscope/pull/99)); timestamp accuracy evidence remains open (TICKET-209). Server authentication/authorization and certificate deployment must be made concrete before service implementation. Transport verification does not settle examination-request authorization.
 
 ## Verification allocation
 

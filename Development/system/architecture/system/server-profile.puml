@@ -1,19 +1,19 @@
-@startuml provisioning
+@startuml server_profile
 !theme cyborg
 !pragma layout smetana
 skinparam shadowing false
 skinparam componentStyle rectangle
 skinparam defaultFontName SansSerif
-title Provisioning: one deployment file to the trusted server
+title Server profile: one deployment file to the trusted server
 top to bottom direction
 package "Developer PC" as host {
- artifact "Deployment file\nprovisioning/<deployment>.toml\nbase URL, keep-alive, PEM certificate" as file
+ artifact "Deployment file\nserver-profiles/<deployment>.toml\nbase URL, keep-alive, PEM certificate" as file
  component "Flash command\none file, one serial port" as flash
- component "Provisioning tool\nvalidate, canonicalize, build image" as tool
+ component "Server profile tool\nvalidate, canonicalize, build image" as tool
  artifact "Firmware build\npartition offset and size" as build
 }
 package "Device flash" as device {
- database "Provisioning partition\none image; firmware reads only" as partition
+ database "Server profile partition\none image; firmware reads only" as partition
  database "Settings partition\nWi-Fi network, registration" as settings
  database "Firmware image" as firmware
 }

@@ -133,6 +133,19 @@ to `build-firmware.ps1`, `flash-firmware.ps1` and `build-sbom.ps1`, for example
 `stetho-build`, `stetho-flash` and `stetho-sbom`. Arguments pass through:
 `stetho-build -Target app -Pristine` and `stetho-flash 5`.
 
+To erase only selected partitions instead of the whole chip, select any
+combination of them:
+
+```powershell
+Development/system/coding/tools/erase-flash.ps1 5 -Settings   # saved settings incl. Wi-Fi -> COM5
+Development/system/coding/tools/erase-flash.ps1 5 -Settings -ServerProfile -WhatIf
+Development/system/coding/tools/erase-flash.ps1 5 -App   # application; reflash before it boots again
+```
+
+The offsets and sizes come from the devicetree of the existing `build-app` build, or
+from `-BuildDir`. `-ServerProfile` erases the
+[server profile](../server-profiles/README.md).
+
 ### Debugging with GDB
 
 The ESP32-S3 has a built-in USB JTAG unit on GPIO19/20, the DevKitC "USB" connector.

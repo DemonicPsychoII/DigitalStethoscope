@@ -1,14 +1,14 @@
-# Provisioning from a deployment file
+# Server profile from a deployment file
 
 ## Basis
 
-This Design-stage contract refines the [provisioning architecture](https://github.com/DemonicPsychoII/DigitalStethoscope/pull/108) at `29f0e8f4b73e2491430c9f633d62e39026f2863e` and the [flash layout and image format](interfaces-and-behavior.md#flash-layout) at `fb2c979760f562bcb371a1c13cbb2ded7b3f0821`, which applies the design review of 2 November 2026 and the flash layout decision of 4 November 2026 [8]. It covers REQ-09, REQ-11 and REQ-13; verification uses VT-08, VT-09 and VT-11. No firmware, tool or generated tests change here.
+This Design-stage contract refines the [server profile architecture](https://github.com/DemonicPsychoII/DigitalStethoscope/pull/108) at `29f0e8f4b73e2491430c9f633d62e39026f2863e` and the [flash layout and image format](interfaces-and-behavior.md#flash-layout) at `fb2c979760f562bcb371a1c13cbb2ded7b3f0821`, which applies the design review of 2 November 2026 and the flash layout decision of 4 November 2026 [8]. It covers REQ-09, REQ-11 and REQ-13; verification uses VT-08, VT-09 and VT-11. No firmware, tool or generated tests change here.
 
 Nico decided on 4 November 2026 that one TOML file per server deployment, with the certificate embedded as PEM text and versioned in the repository, is the only input, and that one flash command validates, builds and writes the image [1]. The image format of the design review stays unchanged; the deployment file is a host-side input only.
 
 ## Deployment file
 
-Each server deployment has one file `Development/system/coding/provisioning/<deployment>.toml`. The name uses lowercase letters, digits and hyphens, for example `lab-hapi.toml`, and is the image name. The folder's README lists every deployment with its server and owner. A server change is a reviewed change of this file; no other input exists. The repository is public, so only test deployments are committed: no production endpoint and no credentials. A real deployment keeps its file with that deployment and uses the same tool.
+Each server deployment has one file `Development/system/coding/server-profiles/<deployment>.toml`. The name uses lowercase letters, digits and hyphens, for example `lab-hapi.toml`, and is the image name. The folder's README lists every deployment with its server and owner. A server change is a reviewed change of this file; no other input exists. The repository is public, so only test deployments are committed: no production endpoint and no credentials. A real deployment keeps its file with that deployment and uses the same tool.
 
 The file follows TOML v1.0.0 [2]. The tool reads it with Python's standard `tomllib` module [3] in the pinned toolchain environment, so no extra dependency is needed for parsing. Format 1:
 
@@ -36,7 +36,7 @@ MIID...
 """
 ```
 
-A lab deployment names the server host by its IPv4 address on the network of the day. Before each test the address is read again; if it changed, the server certificate is reissued with that address in its Subject Alternative Names, the file is updated and the image is flashed again. A host name avoids this only where the network's DNS resolves it, which the phone hotspot does not.
+A lab deployment names the server host by its IPv4 address on the network of the day. Before each test the address is read again; if it changed, the file is updated and the image is flashed again. The lab certificate lists every client address of an iPhone hotspot, 172.20.10.2 to 172.20.10.14, besides the home address, so only an address outside these needs a reissued certificate with that address in its Subject Alternative Names. A host name avoids this only where the network's DNS resolves it, which the phone hotspot does not.
 
 ### Canonical base URL
 
@@ -44,7 +44,7 @@ The tool writes the canonical form into the image; registration binds to the sam
 
 ### Certificate checks
 
-Before anything is written, the tool applies the device's certificate rules, so a mismatch fails on the developer PC. The device applies rules 1 and 3 at boot, enforces rule 5 through its handshake verification and applies rule 4 against its synchronized clock before each handshake, because boot has no valid clock yet. For rule 2 the device trusts only this certificate; whether the pinned verifier also checks self-issuance and signature of a directly trusted certificate is still to be demonstrated by L1 work ([TLS trust inputs](../COMMUNICATION/secure-transport.md#trust-and-provisioning-inputs)):
+Before anything is written, the tool applies the device's certificate rules, so a mismatch fails on the developer PC. The device applies rules 1 and 3 at boot, enforces rule 5 through its handshake verification and applies rule 4 against its synchronized clock before each handshake, because boot has no valid clock yet. For rule 2 the device trusts only this certificate; whether the pinned verifier also checks self-issuance and signature of a directly trusted certificate is still to be demonstrated by L1 work ([TLS trust inputs](../COMMUNICATION/secure-transport.md#trust-and-server-profile-inputs)):
 
 1. The text is exactly one parsable X.509 certificate.
 2. It is self-issued and its signature verifies with its own public key, because the device trusts it directly.
@@ -66,17 +66,17 @@ The image keeps format version 1 of the [flash layout](interfaces-and-behavior.m
 | Certificate length and certificate | `server.certificate` with LF line endings and one final newline. |
 | CRC-32 | Computed by the tool over all preceding bytes. |
 
-The tool rejects an image larger than the provisioning area. It takes the area's start and size from the `provisioning_partition` node of the firmware build's final devicetree (`<build>/zephyr/zephyr.dts`), so no offset is written twice. A build without that node is rejected.
+The tool rejects an image larger than the server profile area. It takes the area's start and size from the `server_profile_partition` node of the firmware build's final devicetree (`<build>/zephyr/zephyr.dts`), so no offset is written twice. A build without that node is rejected.
 
 ## Commands
 
 | Command | Result |
 | --- | --- |
-| `provisioning.py check <file>` | Validates file and certificate; prints canonical URL, keep-alive, certificate subject, Subject Alternative Names, expiry and image size. Exit 0 or 1. |
-| `provisioning.py build <file> --build-dir <build>` | Runs `check`, then writes `<build>/provisioning/<deployment>.bin`. |
-| `flash-provisioning.ps1 <COM port> <file> [-BuildDir <build>]` | Runs `build`, then writes only that image at the partition offset with the pinned esptool [7], which verifies the written data. The firmware image and the settings partition stay unchanged. |
+| `server_profile.py check <file>` | Validates file and certificate; prints canonical URL, keep-alive, certificate subject, Subject Alternative Names, expiry and image size. Exit 0 or 1. |
+| `server_profile.py build <file> --build-dir <build>` | Runs `check`, then writes `<build>/server-profile/<deployment>.bin`. |
+| `flash-server-profile.ps1 <COM port> <file> [-BuildDir <build>]` | Runs `build`, then writes only that image at the partition offset with the pinned esptool [7], which verifies the written data. The firmware image and the settings partition stay unchanged. |
 
-The tool lives in `Development/system/coding/tools/provisioning/`. Every rejection names the key and the violated rule, exits with status 1 and writes nothing to the device.
+The tool lives in `Development/system/coding/tools/server-profile/`. Every rejection names the key and the violated rule, exits with status 1 and writes nothing to the device.
 
 ## Device behavior
 
@@ -87,16 +87,16 @@ Boot reads and validates the image once, as the [flash layout](interfaces-and-be
 | Erased partition | Missing image; no secure connection attempt. |
 | Unknown magic or version, bad length, CRC mismatch | Invalid image. |
 | Unusable URL, unparsable certificate, no matching Subject Alternative Name, server keep-alive below 6 seconds | Invalid configuration; the log names the rule. COMMUNICATION rejects the keep-alive, because its 5-second margin would leave no idle time. |
-| Valid image | Server provisioned; preparation follows the [TLS design](../COMMUNICATION/secure-transport.md). |
+| Valid image | Server configured; preparation follows the [TLS design](../COMMUNICATION/secure-transport.md). |
 
 ## Parameters
 
 | ID | Value / meaning |
 | --- | --- |
-| P28-FILE | TOML v1.0.0 deployment file, format 1, at `Development/system/coding/provisioning/<deployment>.toml` |
+| P28-FILE | TOML v1.0.0 deployment file, format 1, at `Development/system/coding/server-profiles/<deployment>.toml` |
 | P28-LIMITS | Canonical base URL at most 256 bytes; certificate at most 8,192 bytes; keep-alive 6 to 4,294,967,295 seconds |
 | P28-IMAGE | Image format version 1 of the flash layout; IEEE CRC-32 |
-| P28-PARTITION | Provisioning area with the fixed start `0xF00000` and 192 KiB, independent of the settings size (project decision [8]); the image occupies at most 8,465 bytes from that start; the tool takes start and size from the `provisioning_partition` node of the build devicetree |
+| P28-PARTITION | Server profile area with the fixed start `0xF00000` and 192 KiB, independent of the settings size (project decision [8]); the image occupies at most 8,465 bytes from that start; the tool takes start and size from the `server_profile_partition` node of the build devicetree |
 
 ## Verification allocation
 
@@ -106,12 +106,12 @@ These scenarios allocate future verification; they do not add a generated test b
 | --- | --- | --- |
 | Valid deployment file | REQ-09/REQ-11; VT-08 | `check` passes; the image bytes match the field table and the firmware reader accepts them. |
 | Each violated file rule | REQ-11; VT-08 | Rejected with key and rule; no image written. |
-| Certificate not self-issued, without matching Subject Alternative Name, or with a DNS entry for an IPv4 host | REQ-11; VT-08 | Rejected by the tool; an image forced onto a device yields an invalid configuration at boot (missing or wrong-type SAN) or, for a certificate that is not self-issued, an expected handshake failure that L1 work still has to demonstrate ([TLS trust inputs](../COMMUNICATION/secure-transport.md#trust-and-provisioning-inputs)). |
+| Certificate not self-issued, without matching Subject Alternative Name, or with a DNS entry for an IPv4 host | REQ-11; VT-08 | Rejected by the tool; an image forced onto a device yields an invalid configuration at boot (missing or wrong-type SAN) or, for a certificate that is not self-issued, an expected handshake failure that L1 work still has to demonstrate ([TLS trust inputs](../COMMUNICATION/secure-transport.md#trust-and-server-profile-inputs)). |
 | Certificate with a Key Usage extension that omits `digitalSignature`, or with an Extended Key Usage extension that omits both `serverAuth` and `anyExtendedKeyUsage` | REQ-11; VT-08 | Rejected by the tool; an image forced onto a device is accepted at boot and fails verification at the handshake. |
 | Certificate expired or not yet valid | REQ-11; VT-08 | Rejected by the tool on the PC's date; on the device a valid image is accepted at boot and the setup fails its validity check after time synchronization, without a handshake. |
 | Private key or other PEM label in the file | VT-11 | Rejected; nothing written. |
-| Image larger than the provisioning area, or build without the partition node | REQ-11; VT-08 | Rejected before writing. |
-| Flash command on a device | REQ-11/REQ-12; VT-08 | Only the provisioning range changes; saved network and firmware remain. |
+| Image larger than the server profile area, or build without the partition node | REQ-11; VT-08 | Rejected before writing. |
+| Flash command on a device | REQ-11/REQ-12; VT-08 | Only the server profile range changes; saved network and firmware remain. |
 | Missing or corrupted image at boot | REQ-11/REQ-13; VT-08/VT-09 | Secure transport unavailable with a configuration cause; Wi-Fi and offline listening unaffected. |
 | CRC-valid image with a server keep-alive of 0 to 5 seconds at boot | REQ-11/REQ-13; VT-08/VT-09 | Invalid configuration; no secure connection attempt; Wi-Fi and offline listening unaffected. |
 

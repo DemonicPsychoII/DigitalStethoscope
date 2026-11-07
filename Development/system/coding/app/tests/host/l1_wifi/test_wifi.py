@@ -6,6 +6,7 @@ WIFI = "Development/system/design/WIFI/interfaces-and-behavior.md#"
 SERVICE = WIFI + "service-boundary"
 ENTRY = WIFI + "supported-networks"
 CACHE = WIFI + "failure-boundaries-and-bounded-results"
+TIME = "Development/system/design/COMMUNICATION/time-synchronization.md#clock-mapping-and-native-behavior"
 DRIVER = "https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/drivers/wifi/esp32/src/esp_wifi_drv.c#L487-L528"
 DHCP = "https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/subsys/net/lib/dhcpv4/dhcpv4.c#L1997-L2023"
 CASES = []
@@ -164,6 +165,55 @@ for boundary in ("before-ipv4", "online", "requested"):
     )
 
 
+for name, response, expected, description in (
+    (
+        "synchronized-stratum-1",
+        "0 1 250",
+        "1 1",
+        "A response with leap indicator 0 and stratum 1 is parsed and normalized.",
+    ),
+    (
+        "leap-warning-stratum-15",
+        "2 15 250",
+        "1 1",
+        "A leap warning (indicator 2) from stratum 15 is still synchronized and is parsed and normalized.",
+    ),
+    (
+        "leap-indicator-3",
+        "3 2 250",
+        "0 0",
+        "Leap indicator 3 (alarm, clock not synchronized) fails the exchange on receipt without parsing.",
+    ),
+    (
+        "stratum-0",
+        "0 0 250",
+        "0 0",
+        "Stratum 0 (kiss-o'-death or unspecified) fails the exchange on receipt without parsing.",
+    ),
+    (
+        "stratum-16",
+        "0 16 250",
+        "0 0",
+        "Stratum 16 (reserved) fails the exchange on receipt without parsing.",
+    ),
+    (
+        "before-check",
+        "0 2 0",
+        "0 1",
+        "A response the query parses before the server state check cannot succeed.",
+    ),
+):
+    add(
+        "wifi-time-response-" + name,
+        "time-response",
+        response,
+        expected,
+        TIME,
+        description
+        + " The SNTP parser substitute checks no header field; the query uses a zero receive timeout.",
+    )
+
+
 @pytest.mark.parametrize(
     "scenario,operation,argument,expected,basis,description", CASES
 )
@@ -186,4 +236,4 @@ def test_wifi_service(
         record_property(name, value)
     output = service("wifi", operation, argument)
     if expected is not None:
-        assert int(output) == expected
+        assert output.split() == str(expected).split()
