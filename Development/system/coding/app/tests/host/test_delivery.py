@@ -266,6 +266,24 @@ def test_no_request_after_the_deadline(simulate, record_property):
     assert "DELIVERY_FAILURE" in trace.production_log
 
 
+def test_expired_retained_connection_is_not_reused_after_listening(
+    simulate, record_property
+):
+    evidence(
+        record_property,
+        "Stop and submission after the keep-alive expired during listening",
+        P13,
+        "new setup with its own SNTP exchange before the request, DELIVERED",
+    )
+    submit = 600_000
+    script = plan("exchange", [201]) + f"event 1000 start 0\nevent {submit} stop 0\n"
+    trace = simulate(script, until=submit + GLOBAL + 1_000, submit=submit)
+    assert trace.last("delivery_outcome") == DELIVERED
+    request = trace.times("exchange")[-1]
+    assert any(submit <= time < request for time in trace.times("tls"))
+    assert any(submit <= time < request for time in trace.times("sntp"))
+
+
 def test_outcome_is_none_before_any_job(simulate, record_property):
     evidence(record_property, "no job", DELIVERY, "NONE before the first admission")
     trace = simulate("event 500 outcome 0\n" + plan("exchange", [201]))
