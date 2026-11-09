@@ -83,7 +83,12 @@ class Context:
         return f"https://{self.server_address}:8443/fhir"
 
     def log(self, scenario: str) -> Path:
-        return self.output_directory / f"{scenario}.log"
+        path = self.output_directory / f"{scenario}.log"
+        repetition = 1
+        while path.exists():
+            repetition += 1
+            path = self.output_directory / f"{scenario}-{repetition}.log"
+        return path
 
 
 @dataclass

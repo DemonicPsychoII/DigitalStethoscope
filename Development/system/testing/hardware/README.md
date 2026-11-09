@@ -10,10 +10,10 @@ The scenarios that connect also check P26 on the device's log timestamps. A fail
 | --- | --- | --- | --- |
 | `no-profile` | Erased server profile partition | "no server profile image", the stored network joins, and no SNTP result or server connection outcome follows for 70 s after the join. The log has no line for the start of an exchange; any attempt would log an outcome within its 10 s budget and 1 s cleanup | [Time synchronization](../../design/COMMUNICATION/time-synchronization.md#flow-and-scheduling), item 2: SNTP runs only inside a TLS connection setup |
 | `foreign-certificate` | Profile that pins a different valid certificate for the server address | The first attempt and the retry 60 s later both fail verification with flags `0x8` (not trusted), with `SERVER_CONNECTION_FAILURE (-13)`; never "verified" | [Secure transport](../../design/COMMUNICATION/secure-transport.md): the device trusts only the provisioned certificate |
-| `server-down-then-up` | Lab profile, server container stopped | `SERVER_CONNECTION_FAILURE`, then retries 60 s after each failure; once the server is started again, "Server connection verified" within 240 s | P26-ATTEMPT and P26-RETRY in [secure transport](../../design/COMMUNICATION/secure-transport.md#parameters) |
+| `server-down-then-up` | Lab profile, server container stopped | `SERVER_CONNECTION_FAILURE`, then retries 60 s after each failure; once the server is started again, "Server connection verified", all within 240 s of the board reset | P26-ATTEMPT and P26-RETRY in [secure transport](../../design/COMMUNICATION/secure-transport.md#parameters) |
 | `valid-profile` | Lab profile, server running | The stored network joins, the clock synchronizes, and the connection is verified with at most one failed attempt before it | As above |
 
-In `valid-profile`, a first attempt that fails and then recovers on the retry is printed as `WARN`: a rejected join, a TLS timeout, or an SNTP uncertainty above the P25 budget right after the join. A second failed attempt, a trust failure or a crash fails the scenario. After the run, also after an error, the runner starts the server and flashes the lab profile unless the last completed scenario left it on the board; a failed cleanup step fails the run. Docker commands time out after 60 s, and a server start after 180 s.
+In `valid-profile`, a first attempt that fails and then recovers on the retry is printed as `WARN`: a rejected join, a TLS timeout, or an SNTP uncertainty above the P25 budget right after the join. A second failed attempt, a trust failure or a crash fails the scenario. After the run, also after an error, the runner starts the server and flashes the lab profile unless the last completed scenario left it on the board; a failed cleanup step fails the run. Docker commands time out after 60 s, and the wait for the server's metadata after `docker start` after 180 s.
 
 ## Setup
 
@@ -31,6 +31,6 @@ From the repository root, with the pinned toolchain environment:
 .ci-workspace/.venv/Scripts/python.exe Development/system/testing/hardware/device_regression.py --port COM4 --scenario server-down-then-up
 ```
 
-`--flash-firmware` writes the build in `build-app` first. Without `--scenario`, all four scenarios run in the order of the table, which takes about 10 minutes. The serial log and the deployment files of each run go to `artifacts/hardware-regression/<date-time>/`. The exit code is 0 only if every scenario run passed, including each repetition of a repeated `--scenario`, and the cleanup succeeded.
+`--flash-firmware` writes the build in `build-app` first. Without `--scenario`, all four scenarios run in the order of the table, which takes about 10 minutes. The serial log and the deployment files of each run go to `artifacts/hardware-regression/<date-time>/`; a repeated scenario keeps each log, as `<scenario>-2.log` and so on. The exit code is 0 only if every scenario run passed, including each repetition of a repeated `--scenario`, and the cleanup succeeded.
 
 Created by Claude-Opus-5.5 on behalf of Nico running in T3 Code through Claude Code.
