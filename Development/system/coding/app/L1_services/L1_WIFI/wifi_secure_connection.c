@@ -643,6 +643,16 @@ static int wifi_writeSecureBytes(uint32_t generation, k_timepoint_t deadline, co
 
     while((result == 0) && (written < length))
     {
+        /* A delayed worker or an immediately writable socket must not send after Cancel or the deadline. */
+        if(!wifi_isSecureConnectionAdmitted(generation))
+        {
+            return -ECANCELED; /**< Cancellation ended the operation. */
+        }
+        if(sys_timepoint_expired(deadline))
+        {
+            return -ETIMEDOUT; /**< Write-and-receipt budget used up. */
+        }
+
         /* mbedTLS may accept fewer bytes than offered, for example one record at a time. */
         const int accepted = mbedtls_ssl_write(&wifi_SecureSession, &data[written], length - written);
 
