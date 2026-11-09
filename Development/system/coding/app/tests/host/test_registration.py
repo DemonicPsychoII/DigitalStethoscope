@@ -313,6 +313,9 @@ def test_interrupted_attempt_does_not_count_toward_the_failure_limit(
         failures, requests[2:], [RETRY, 2 * RETRY, 4 * RETRY]
     ):
         assert gap <= next_request - failure <= gap + 1_000
+    alerts = log_times(trace, FAILURE)
+    assert len(alerts) == 1
+    assert alerts[0] >= failures[0]
     assert log_times(trace, UNAVAILABLE)[0] >= requests[-1]
 
 
@@ -327,6 +330,8 @@ def test_missing_prerequisites_consume_no_attempt(simulate, record_property):
     script = plan("tls", [ECONNREFUSED, 0]) + plan("exchange", [503] * 5)
     trace = simulate(script, until=1_000_000)
     verified = log_times(trace, "Server connection verified")[0]
+    assert trace.values("tls_result")[:2] == [ECONNREFUSED, 0]
+    assert trace.times("tls")[1] - trace.times("tls_result")[0] >= RETRY
     requests = trace.times("exchange")
     assert len(requests) == 4
     assert requests[0] >= verified

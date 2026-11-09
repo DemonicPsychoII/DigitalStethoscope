@@ -890,12 +890,12 @@ static void run_storage_case(const char *scenario, const char *argument)
 {
     if(strcmp(scenario, "server-profile") != 0)
         abort();
-    /* Argument: "erased", "null" or "<image file> [<read error offset>]". */
+    /* Argument: "<read error offset or -1> <erased, null or image file>"; the file name can contain spaces. */
     static struct storage_server_profile profile;
     char path[512] = "";
     long long error_offset = -1;
-    const int fields = sscanf(argument, "%511s %lld", path, &error_offset);
-    assert(fields >= 1);
+    const int fields = sscanf(argument, "%lld %511[^\n]", &error_offset, path);
+    assert(fields == 2);
     if(strcmp(path, "erased") != 0 && strcmp(path, "null") != 0)
     {
         FILE *file = fopen(path, "rb");
@@ -904,7 +904,7 @@ static void run_storage_case(const char *scenario, const char *argument)
         assert(feof(file) && !ferror(file));
         fclose(file);
     }
-    if(fields == 2)
+    if(error_offset >= 0)
     {
         host_flash_read_error_offset = (off_t)error_offset;
         host_flash_read_error = -EIO; /**< Flash driver read failure in the host model. */

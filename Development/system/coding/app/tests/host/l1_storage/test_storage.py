@@ -274,8 +274,7 @@ def test_server_profile_reader(
         path = tmp_path / "server-profile.bin"
         path.write_bytes(data)
         argument = str(path)
-    if error_offset is not None:
-        argument += f" {error_offset}"
+    argument = f"{-1 if error_offset is None else error_offset} {argument}"
     output = service("storage", "server-profile", argument)
     actual = dict(token.split("=", 1) for token in output.split())
     mismatches = {
