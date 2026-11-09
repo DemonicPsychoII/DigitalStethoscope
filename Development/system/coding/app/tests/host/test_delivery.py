@@ -284,6 +284,21 @@ def test_expired_retained_connection_is_not_reused_after_listening(
     assert any(submit <= time < request for time in trace.times("sntp"))
 
 
+def test_cleanup_fault_still_ends_a_pending_job(simulate, record_property):
+    evidence(
+        record_property,
+        "submission during setup, then a failed portal stop latches the cleanup fault",
+        DELIVERY,
+        "terminal outcome without another control event, nothing sent",
+    )
+    script = "stop_failures 1\nevent 500 hold 0\nevent 2000 start 0\nevent 3000 stop 0\n"
+    trace = simulate(script, submit=1_500)
+    assert trace.values("deliver_result") == [0]
+    assert "WIFI_CLEANUP_FAILURE" in trace.production_log
+    assert trace.values("exchange_observation") == []
+    assert trace.last("delivery_outcome") in (FAILED, NO_CLOCK)
+
+
 def test_outcome_is_none_before_any_job(simulate, record_property):
     evidence(record_property, "no job", DELIVERY, "NONE before the first admission")
     trace = simulate("event 500 outcome 0\n" + plan("exchange", [201]))
