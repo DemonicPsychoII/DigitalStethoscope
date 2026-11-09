@@ -49,6 +49,7 @@
 #include <zephyr/logging/log.h>
 #include <zephyr/sys/timeutil.h>
 
+#include "fhir.h"
 #include "portal.h"
 #include "storage.h"
 #include "wifi.h"
@@ -90,6 +91,15 @@
 #define COMMUNICATION_SECURE_RETRY_DELAY_S                 (60)             /**< P26-RETRY: gap after a failed or interrupted issued preparation. */
 
 #define COMMUNICATION_DEVICE_KEEP_ALIVE_MARGIN_S (5) /**< P26-KEEPALIVE: the device closes an idle connection this long before the server. */
+
+#define COMMUNICATION_REGISTRATION_TIMEOUT_S     (10) /**< P27-REGISTRATION: one attempt including transport recovery, POST, parsing and flash save. */
+#define COMMUNICATION_REGISTRATION_RETRY_DELAY_S (60) /**< P27-REGISTRATION: gap after a failed or interrupted issued attempt. */
+
+#define COMMUNICATION_DELIVERY_ATTEMPTS           (4)    /**< P13: attempts at most, within the global deadline. */
+#define COMMUNICATION_DELIVERY_SETUP_TIMEOUT_MS   (3000) /**< P13: connection setup (SNTP, DNS, TCP, TLS) of an attempt without a reusable connection; provisional. */
+#define COMMUNICATION_DELIVERY_RECEIPT_TIMEOUT_MS (1000) /**< P13: write and receipt of an attempt; provisional. */
+#define COMMUNICATION_DELIVERY_RETRY_GAP_MS       (2000) /**< P13: gap after a failed attempt. */
+#define COMMUNICATION_DELIVERY_CLEANUP_RESERVE_MS (1000) /**< P13: one P23 stop bound kept before the global deadline for cancellation and release. */
 
 /***********************************************************************/
 /* TYPES                                                               */
@@ -174,10 +184,16 @@ K_SEM_DEFINE(communication_ControlChanged, 0, 1);                            /**
 static struct k_thread communication_ThreadData; /**< Communication thread. */
 
 /* Shared with CONTROL; protected by communication_ControlLock. */
-static struct k_spinlock communication_ControlLock;  /**< Protects the variables below. */
-static bool communication_ListeningIsRequested;      /**< CONTROL listens or is about to. */
-static bool communication_SetupIsRequested;          /**< 2 s hold not yet handled. */
-static enum communication_state communication_State; /**< State of the thread. */
+static struct k_spinlock communication_ControlLock;                       /**< Protects the variables below. */
+static bool communication_ListeningIsRequested;                           /**< CONTROL listens or is about to. */
+static bool communication_SetupIsRequested;                               /**< 2 s hold not yet handled. */
+static enum communication_state communication_State;                      /**< State of the thread. */
+static bool communication_WiFiIsConfigured;                               /**< A stored network exists; published by the thread. */
+static bool communication_DeliveryIsPossible;                             /**< Saved Device registration and configured server; published by the thread. */
+static bool communication_DeliveryIsPending;                              /**< An admitted job waits for or runs in the thread. */
+static struct communication_delivery communication_Delivery;              /**< Frozen copy of the admitted result. */
+static k_timepoint_t communication_DeliveryDeadline;                      /**< P13 global deadline of the admitted job. */
+static enum communication_delivery_outcome communication_DeliveryOutcome; /**< Outcome of the latest job. */
 
 /* Used by the communication thread only. */
 static bool communication_ListeningIsActive;            /**< Copy of ListeningIsRequested from the last event check. */
@@ -202,6 +218,21 @@ static bool communication_SecureConnectionIsRetained;                           
 static k_timepoint_t communication_SecureConnectionIdleDeadline;                   /**< The retained connection is closed at this time. */
 static k_timepoint_t communication_NextPreparationTime;                            /**< No Idle preparation before this time after a failed or interrupted attempt. */
 static bool communication_ServerConnectionFailureIsLatched;                        /**< SERVER_CONNECTION_FAILURE latched in the current unavailable episode. */
+
+/* Device registration (design/COMMUNICATION/server-communication.md); used by the communication thread only. */
+static char communication_PhysicalIdentifier[WIFI_DEVICE_IDENTIFIER_SIZE];      /**< Factory identity; "" when it could not be read. */
+static bool communication_RegistrationIsAvailable;                              /**< Identity and record backend usable; false keeps registration off until restart. */
+static bool communication_RegistrationIsReady;                                  /**< A saved record binds ServerDeviceId to this server and device. */
+static bool communication_RegistrationIsUnsaved;                                /**< ServerDeviceId came from the server but its record save failed. */
+static char communication_ServerDeviceId[FHIR_SERVER_DEVICE_ID_SIZE];           /**< Validated id; meaningful when ready or unsaved. */
+static k_timepoint_t communication_NextRegistrationTime;                        /**< No registration attempt before this time after a failed or interrupted one. */
+static bool communication_RegistrationFailureIsLatched;                         /**< DEVICE_REGISTRATION_FAILURE latched in the current episode. */
+static char communication_RequestBody[FHIR_OUTGOING_BODY_CAPACITY];             /**< Frozen body of the current request. */
+static char communication_RequestCondition[FHIR_OBSERVATION_CONDITION_SIZE];    /**< If-None-Exist value; sized for the longer Observation condition. */
+static struct wifi_http_response communication_Response EXT_RAM_BSS_ATTR;       /**< Response of the current exchange, in PSRAM. */
+static uint8_t communication_RegistrationRecord[FHIR_REGISTRATION_RECORD_SIZE]; /**< Stored record, read at boot and encoded for each save. */
+static bool communication_ObservationIsFrozen;                                  /**< RequestBody and RequestCondition hold the current job's Observation. */
+static size_t communication_RequestBodyLength;                                  /**< Bytes of the frozen Observation body. */
 
 /***********************************************************************/
 /* LOCAL FUNCTION PROTOTYPES                                           */
@@ -288,7 +319,7 @@ static uint64_t communication_getAnchorAgeMicroseconds(void);
  * @param[out] utcEnd UTC measurement end; unchanged on failure.
  * @return 0 for an eligible mapping, or a negative error code.
  */
-static int __unused communication_mapMeasurementEndTime(uint64_t measurementEndMonotonicMicroseconds, struct timespec *utcEnd);
+static int communication_mapMeasurementEndTime(uint64_t measurementEndMonotonicMicroseconds, struct timespec *utcEnd);
 
 /**
  * @brief Wait until the selected condition is met, Start interrupts it or the time is over.
@@ -467,6 +498,115 @@ static void communication_discardPageRequests(void);
  */
 static void communication_closeSetup(enum communication_setup_result outcome, int error);
 
+/**
+ * @brief Read this device's identity and the stored registration record once at boot.
+ *
+ * Requires communication_loadServerProfile() first. A matching record makes the
+ * registration ready without a request. A missing, malformed or mismatched record
+ * leaves it to conditional registration in Idle. A failed identity or record read
+ * makes registration unavailable until restart and latches DEVICE_REGISTRATION_FAILURE.
+ */
+static void communication_loadRegistration(void);
+
+/**
+ * @brief Register the Device in Idle when due: one ten-second attempt, then readiness or the retry gap.
+ *
+ * Missing prerequisites defer the attempt without consuming it: no configured server,
+ * no station address, no verified transport (communication_TransportIsVerified),
+ * listening, a latched cleanup fault, registration unavailable or already ready,
+ * or a retry gap that has not ended.
+ */
+static void communication_registerInIdle(void);
+
+/**
+ * @brief One registration attempt: transport, conditional POST /Device, validated id, saved record.
+ *
+ * @param[in] deadline End of the attempt; transport recovery, request, parsing and save share it.
+ *
+ * @return 0 when the record is saved and readiness published, -ECANCELED if listening
+ *         started, or the negative cause of the failed step.
+ */
+static int communication_registerDevice(k_timepoint_t deadline);
+
+/**
+ * @brief Get a validated server Device id: transport, conditional POST /Device, parsed response.
+ *
+ * A stale retained connection is rebuilt once inside the attempt.
+ *
+ * @param[in] deadline End of the attempt.
+ *
+ * @return 0 with communication_ServerDeviceId set, -EBADMSG for a response without a usable id,
+ *         -ECANCELED if listening started, or the negative cause of the failed step.
+ */
+static int communication_postDeviceRegistration(k_timepoint_t deadline);
+
+/**
+ * @brief Save the registration record of communication_ServerDeviceId for this server and device.
+ *
+ * On failure the id is kept as unsaved, so the next attempt only repeats the save.
+ *
+ * @return 0 when the record is saved, or a negative error code.
+ */
+static int communication_saveRegistration(void);
+
+/**
+ * @brief Send one request over the retained verified connection and wait for its response.
+ *
+ * Fills communication_Response. Afterwards communication_SecureConnectionIsRetained
+ * reflects whether WIFI kept the connection.
+ *
+ * @param[in] request  Request; borrowed until this call returns.
+ * @param[in] deadline End of write and receipt.
+ *
+ * @return 0 with a complete response of any status, -ECANCELED if listening started,
+ *         -ETIMEDOUT at the deadline, -ENOTCONN for a stale connection, or another WIFI result.
+ */
+static int communication_exchange(const struct wifi_http_request *request, k_timepoint_t deadline);
+
+/**
+ * @brief Publish to CONTROL whether Wi-Fi is configured and delivery prerequisites hold.
+ *
+ * Call after every change of communication_StoredNetworkIsValid or communication_RegistrationIsReady.
+ */
+static void communication_publishDeliveryPrerequisites(void);
+
+/**
+ * @brief Run the admitted job under P13 and publish its outcome.
+ *
+ * At most COMMUNICATION_DELIVERY_ATTEMPTS attempts, a gap of COMMUNICATION_DELIVERY_RETRY_GAP_MS
+ * after each failed one, all within the global deadline less the cleanup reserve.
+ */
+static void communication_runDelivery(void);
+
+/**
+ * @brief One delivery attempt: connection setup when none is retained, frozen request, receipt.
+ *
+ * @param[in] deadline Global deadline less the cleanup reserve.
+ *
+ * @return 0 for a 201 or 200 receipt; -EAGAIN for a retryable failure; -ENOTCONN for a stale
+ *         retained connection found before any receipt (replaced without consuming the attempt);
+ *         -ENODATA while no qualifying clock anchor maps the measurement end; -EPERM for a
+ *         terminal outcome.
+ */
+static int communication_attemptDelivery(k_timepoint_t deadline);
+
+/**
+ * @brief Freeze the Observation body and conditional-create identity once per job.
+ *
+ * @return 0 when frozen, or -ENODATA / -ERANGE while no qualifying anchor maps the measurement end.
+ */
+static int communication_freezeObservation(void);
+
+/**
+ * @brief The earlier of a deadline and now plus a limit.
+ *
+ * @param[in] deadline Enclosing deadline.
+ * @param[in] limit    Longest budget of the step.
+ *
+ * @return The deadline of the step.
+ */
+static k_timepoint_t communication_limitDeadline(k_timepoint_t deadline, k_timeout_t limit);
+
 /***********************************************************************/
 /* MACROS                                                              */
 /***********************************************************************/
@@ -544,6 +684,69 @@ int communication_waitForWiFiStop(k_timeout_t timeout)
     return communication_waitForCondition(COMMUNICATION_WAIT_WIFI_STOP, timeout);
 }
 
+int communication_submitDelivery(const struct communication_delivery *delivery, k_timepoint_t deadline)
+{
+    int result = 0;
+
+    /* A heart rate needs a value above 0 that L1_FHIR can write with its declared precision. */
+    if((delivery == NULL) || ((delivery->kind != COMMUNICATION_DELIVERY_HEART_RATE) && (delivery->kind != COMMUNICATION_DELIVERY_POOR_SIGNAL)) ||
+       ((delivery->kind == COMMUNICATION_DELIVERY_HEART_RATE) && ((delivery->heartRateScaled == 0U) || (delivery->heartRateDecimalPlaces > FHIR_HEART_RATE_DECIMAL_PLACES_MAX))))
+    {
+        result = -EINVAL;
+    }
+    else
+    {
+        k_spinlock_key_t key = k_spin_lock(&communication_ControlLock);
+
+        if(communication_DeliveryIsPending)
+        {
+            result = -EBUSY; /**< One job at a time, no queue. */
+        }
+        else if(!communication_WiFiIsConfigured)
+        {
+            result = -ENOENT; /**< Offline use: nothing is sent and nothing kept. */
+        }
+        else if(!communication_DeliveryIsPossible)
+        {
+            result = -ENODEV; /**< DELIVERY_NOT_POSSIBLE. */
+        }
+        else
+        {
+            communication_Delivery = *delivery;
+            communication_DeliveryDeadline = deadline;
+            communication_DeliveryIsPending = true;
+            communication_DeliveryOutcome = COMMUNICATION_DELIVERY_PENDING;
+        }
+
+        k_spin_unlock(&communication_ControlLock, key);
+
+        if(result == 0)
+        {
+            k_sem_give(&communication_ControlChanged);
+        }
+        else if(result == -ENODEV)
+        {
+            LOG_ERR("DELIVERY_NOT_POSSIBLE; no saved Device registration or no valid server profile");
+        }
+        else
+        {
+            /* Busy and offline need no log here. */
+        }
+    }
+
+    return result;
+}
+
+enum communication_delivery_outcome communication_getDeliveryOutcome(void)
+{
+    k_spinlock_key_t key = k_spin_lock(&communication_ControlLock);
+    const enum communication_delivery_outcome outcome = communication_DeliveryOutcome;
+
+    k_spin_unlock(&communication_ControlLock, key);
+
+    return outcome;
+}
+
 /***********************************************************************/
 /* LOCAL FUNCTIONS                                                     */
 /***********************************************************************/
@@ -568,6 +771,7 @@ static void communication_thread(void *arg1, void *arg2, void *arg3)
     else
     {
         communication_loadServerProfile();
+        communication_loadRegistration();
         communication_connectAtBoot();
 
         for(;;)
@@ -636,6 +840,7 @@ static void communication_connectAtBoot(void)
     {
         (void)memset(&communication_StoredNetwork, 0, sizeof(communication_StoredNetwork));
         communication_StoredNetworkIsValid = false;
+        communication_publishDeliveryPrerequisites();
 
         if(result != -ENOENT) /**< Requested record or network was not found. */
         {
@@ -648,6 +853,7 @@ static void communication_connectAtBoot(void)
     else
     {
         communication_StoredNetworkIsValid = true;
+        communication_publishDeliveryPrerequisites();
 
         LOG_INF("Connecting to \"%s\"", communication_StoredNetwork.name);
 
@@ -660,6 +866,7 @@ static void communication_connectAtBoot(void)
         {
             LOG_INF("Wi-Fi connected");
             communication_prepareTransportInIdle();
+            communication_registerInIdle();
         }
         else if(result == -ECANCELED) /**< Start interrupted the network workflow. */
         {
@@ -711,6 +918,9 @@ static void communication_runIdleCycle(void)
     else if(communication_CleanupFaultIsLatched)
     {
         (void)communication_waitForCondition(COMMUNICATION_WAIT_CONTROL_EVENT, K_FOREVER);
+
+        /* A job submitted after the fault still needs its terminal outcome. */
+        communication_runDelivery();
     }
     else if(communication_isSetupRequested())
     {
@@ -727,9 +937,11 @@ static void communication_runIdleCycle(void)
 
         if(!communication_ListeningIsActive)
         {
+            communication_runDelivery();
             communication_recoverConnection();
             communication_closeIdleSecureConnection();
             communication_prepareTransportInIdle();
+            communication_registerInIdle();
         }
     }
 }
@@ -760,6 +972,7 @@ static void communication_recoverConnection(void)
         {
             LOG_INF("Wi-Fi connected");
             communication_prepareTransportInIdle();
+            communication_registerInIdle();
         }
         else if(result != -ECANCELED) /**< Start interrupted the network workflow. */
         {
@@ -1033,9 +1246,518 @@ static void communication_closeIdleSecureConnection(void)
     }
 }
 
+static void communication_loadRegistration(void)
+{
+    int identityResult = 0;
+    int readResult = 0;
+
+    if(communication_ServerProfileState == COMMUNICATION_SERVER_PROFILE_CONFIGURED)
+    {
+        identityResult = wifi_getDeviceIdentifier(communication_PhysicalIdentifier, sizeof(communication_PhysicalIdentifier));
+
+        if(identityResult == 0)
+        {
+            readResult = storage_read(FHIR_REGISTRATION_RECORD_NAME, communication_RegistrationRecord, sizeof(communication_RegistrationRecord));
+        }
+
+        /* -ENOENT: never registered here; -EINVAL: a stored record of another size. Both only need registration. */
+        communication_RegistrationIsAvailable = ((identityResult == 0) && ((readResult == 0) || (readResult == -ENOENT) || (readResult == -EINVAL)));
+
+        if(!communication_RegistrationIsAvailable)
+        {
+            communication_RegistrationFailureIsLatched = true;
+            LOG_ERR("DEVICE_REGISTRATION_FAILURE (%d); registration unavailable until restart", (identityResult != 0) ? identityResult : readResult);
+        }
+        else if(readResult == 0)
+        {
+            const int decodeResult = fhir_decodeRegistrationRecord(communication_RegistrationRecord, sizeof(communication_RegistrationRecord), communication_ServerProfile.baseUrl, communication_PhysicalIdentifier, communication_ServerDeviceId, sizeof(communication_ServerDeviceId));
+
+            communication_RegistrationIsReady = (decodeResult == 0);
+            communication_publishDeliveryPrerequisites();
+
+            if(communication_RegistrationIsReady)
+            {
+                LOG_INF("Device registration ready: Device/%s", communication_ServerDeviceId);
+            }
+            else
+            {
+                /* -EBADMSG: damaged record; -ESTALE: another server binding or another board. */
+                LOG_WRN("Device registration needed: stored record unusable (%d)", decodeResult);
+            }
+        }
+        else
+        {
+            LOG_INF("Device registration needed: no usable stored record (%d)", readResult);
+        }
+    }
+}
+
+static void communication_registerInIdle(void)
+{
+    communication_updateListeningState();
+
+    /* Missing prerequisites defer registration without consuming an attempt. */
+    const bool isAdmitted = ((communication_ServerProfileState == COMMUNICATION_SERVER_PROFILE_CONFIGURED) && wifi_isConnected() && communication_TransportIsVerified && !communication_ListeningIsActive && !communication_CleanupFaultIsLatched && communication_RegistrationIsAvailable);
+    const bool isDue = (!communication_RegistrationIsReady && sys_timepoint_expired(communication_NextRegistrationTime));
+
+    if(isAdmitted && isDue)
+    {
+        const int result = communication_registerDevice(sys_timepoint_calc(K_SECONDS(COMMUNICATION_REGISTRATION_TIMEOUT_S)));
+
+        if(result == 0)
+        {
+            /* Success ends the failure episode; a later failure latches again. */
+            communication_RegistrationFailureIsLatched = false;
+        }
+        else if(!communication_CleanupFaultIsLatched)
+        {
+            /* Also after Start interrupted the issued attempt: the same gap applies, without an error. */
+            communication_NextRegistrationTime = sys_timepoint_calc(K_SECONDS(COMMUNICATION_REGISTRATION_RETRY_DELAY_S));
+
+            /* A reconnect inside the attempt that left the transport unverified starts the preparation gap too. */
+            if(!communication_TransportIsVerified)
+            {
+                communication_NextPreparationTime = sys_timepoint_calc(K_SECONDS(COMMUNICATION_SECURE_RETRY_DELAY_S));
+            }
+
+            if((result != -ECANCELED) && !communication_RegistrationFailureIsLatched)
+            {
+                communication_RegistrationFailureIsLatched = true;
+                LOG_ERR("DEVICE_REGISTRATION_FAILURE (%d); retry in %d s, offline listening stays available", result, COMMUNICATION_REGISTRATION_RETRY_DELAY_S);
+            }
+        }
+        else
+        {
+            /* WIFI_CLEANUP_FAILURE follows the restart policy, not the registration retry. */
+        }
+    }
+}
+
+static int communication_registerDevice(k_timepoint_t deadline)
+{
+    int result = 0;
+
+    /* An id whose save failed earlier is saved again without a second POST. */
+    if(!communication_RegistrationIsUnsaved)
+    {
+        result = communication_postDeviceRegistration(deadline);
+    }
+
+    if(result == 0)
+    {
+        result = communication_saveRegistration();
+    }
+
+    if(result == 0)
+    {
+        communication_RegistrationIsReady = true;
+        communication_publishDeliveryPrerequisites();
+        LOG_INF("Device registration ready: Device/%s", communication_ServerDeviceId);
+    }
+
+    return result;
+}
+
+static int communication_postDeviceRegistration(k_timepoint_t deadline)
+{
+    struct wifi_http_request request = {.resourcePath = "Device", .condition = communication_RequestCondition, .body = communication_RequestBody, .bodyLength = 0U};
+    size_t conditionLength = 0U;
+    enum fhir_response_cause cause = FHIR_RESPONSE_CAUSE_NONE;
+    int result = 0;
+
+    if(!communication_SecureConnectionIsRetained)
+    {
+        result = communication_prepareSecureConnection(deadline);
+    }
+
+    if(result == 0)
+    {
+        result = fhir_buildDeviceRegistration(communication_PhysicalIdentifier, communication_RequestBody, sizeof(communication_RequestBody), &request.bodyLength);
+    }
+
+    if(result == 0)
+    {
+        result = fhir_buildDeviceRegistrationCondition(communication_PhysicalIdentifier, communication_RequestCondition, sizeof(communication_RequestCondition), &conditionLength);
+    }
+
+    if(result == 0)
+    {
+        result = communication_exchange(&request, deadline);
+    }
+
+    /* A stale retained connection is rebuilt once inside the attempt; the POST is conditional, so sending again is safe. */
+    if(result == -ENOTCONN)
+    {
+        result = communication_prepareSecureConnection(deadline);
+
+        if(result == 0)
+        {
+            result = communication_exchange(&request, deadline);
+        }
+    }
+
+    if(result == 0)
+    {
+        /* An oversized body is unusable, so only the Location can supply the id. */
+        const struct fhir_response response = {
+            .status = communication_Response.status,
+            .location = (communication_Response.hasLocation ? communication_Response.location : NULL),
+            .body = (communication_Response.bodyHasOverflowed ? NULL : communication_Response.body),
+            .bodyLength = (communication_Response.bodyHasOverflowed ? 0U : communication_Response.bodyLength),
+        };
+
+        if(fhir_parseDeviceRegistration(&response, communication_ServerProfile.baseUrl, communication_PhysicalIdentifier, communication_ServerDeviceId, sizeof(communication_ServerDeviceId), &cause) != 0)
+        {
+            LOG_WRN("Device registration: response %u not accepted (cause %d)", (unsigned int)communication_Response.status, (int)cause);
+            result = -EBADMSG;
+        }
+    }
+
+    return result;
+}
+
+static int communication_saveRegistration(void)
+{
+    int result = fhir_encodeRegistrationRecord(communication_ServerProfile.baseUrl, communication_PhysicalIdentifier, communication_ServerDeviceId, communication_RegistrationRecord, sizeof(communication_RegistrationRecord));
+
+    if(result == 0)
+    {
+        result = storage_write(FHIR_REGISTRATION_RECORD_NAME, communication_RegistrationRecord, sizeof(communication_RegistrationRecord));
+    }
+
+    /* Never ready without a saved record; the next attempt only repeats the save. */
+    communication_RegistrationIsUnsaved = (result != 0);
+
+    if(communication_RegistrationIsUnsaved)
+    {
+        LOG_WRN("Device registration: record save failed (%d)", result);
+    }
+
+    return result;
+}
+
+static int communication_exchange(const struct wifi_http_request *request, k_timepoint_t deadline)
+{
+    int result = wifi_startSecureExchange(request, &communication_Response, deadline);
+    bool isPending = (result == 0);
+
+    if(isPending)
+    {
+        communication_PendingWork |= COMMUNICATION_WORK_SECURE_CONNECTION;
+    }
+    else if(result == -ENOTCONN)
+    {
+        /* WIFI holds no connection anymore, for example after a release behind a complete response. */
+        communication_SecureConnectionIsRetained = false;
+    }
+    else
+    {
+        /* Not accepted; the connection state is unchanged. */
+    }
+
+    while(isPending)
+    {
+        /* Short waits only let Start be seen; they never extend the attempt's deadline. */
+        k_timeout_t waitInterval = sys_timepoint_timeout(deadline);
+
+        if(waitInterval.ticks > K_MSEC(COMMUNICATION_EVENT_CHECK_INTERVAL_MS).ticks)
+        {
+            waitInterval = K_MSEC(COMMUNICATION_EVENT_CHECK_INTERVAL_MS);
+        }
+
+        result = wifi_waitForSecureExchange(waitInterval);
+
+        communication_updateListeningState();
+
+        if(result != -EAGAIN)
+        {
+            /* Terminal completion: WIFI kept the connection or has already released it. */
+            communication_PendingWork &= ~COMMUNICATION_WORK_SECURE_CONNECTION;
+            communication_SecureConnectionIsRetained = ((result == 0) && communication_Response.keepsConnection);
+            isPending = false;
+        }
+        else if(communication_ListeningIsActive || sys_timepoint_expired(deadline))
+        {
+            const bool isInterrupted = communication_ListeningIsActive; /**< Start, not the deadline, ended the exchange. */
+            int cancelResult = wifi_cancelSecureConnection();
+
+            if(cancelResult == 0)
+            {
+                /* The exchange may have completed after the last wait; its connection is abandoned with it. */
+                cancelResult = wifi_closeSecureConnection();
+            }
+
+            if(cancelResult != 0)
+            {
+                /* The work stays pending; WIFI keeps Start blocked until release is proven. */
+                communication_latchCleanupFault();
+                LOG_ERR("WIFI_CLEANUP_FAILURE; secure exchange cancel failed (%d), network disabled until restart", cancelResult);
+                result = cancelResult;
+            }
+            else
+            {
+                communication_PendingWork &= ~COMMUNICATION_WORK_SECURE_CONNECTION;
+                communication_SecureConnectionIsRetained = false;
+                result = (isInterrupted ? -ECANCELED : -ETIMEDOUT);
+            }
+
+            isPending = false;
+        }
+        else
+        {
+            /* Still pending with budget left: wait again. */
+        }
+    }
+
+    return result;
+}
+
+static void communication_publishDeliveryPrerequisites(void)
+{
+    k_spinlock_key_t key = k_spin_lock(&communication_ControlLock);
+
+    communication_WiFiIsConfigured = communication_StoredNetworkIsValid;
+    communication_DeliveryIsPossible = (communication_RegistrationIsReady && (communication_ServerProfileState == COMMUNICATION_SERVER_PROFILE_CONFIGURED));
+
+    k_spin_unlock(&communication_ControlLock, key);
+}
+
+static void communication_runDelivery(void)
+{
+    k_spinlock_key_t key = k_spin_lock(&communication_ControlLock);
+    const bool isPending = communication_DeliveryIsPending;
+    const k_timepoint_t deadline = communication_DeliveryDeadline;
+
+    k_spin_unlock(&communication_ControlLock, key);
+
+    if(isPending)
+    {
+        /* The attempts end one P23 stop bound before the global deadline, so cancellation and release still fit. */
+        k_timeout_t budget = sys_timepoint_timeout(deadline);
+        const k_timeout_t reserve = K_MSEC(COMMUNICATION_DELIVERY_CLEANUP_RESERVE_MS);
+        const k_timeout_t gap = K_MSEC(COMMUNICATION_DELIVERY_RETRY_GAP_MS);
+        enum communication_delivery_outcome outcome = COMMUNICATION_DELIVERY_FAILED;
+        bool isStaleConnectionReplaced = false;
+        bool isRunning = true;
+        int attempts = 0;
+        int result = -EAGAIN;
+
+        if(budget.ticks > reserve.ticks)
+        {
+            budget.ticks -= reserve.ticks;
+        }
+        else
+        {
+            budget = K_NO_WAIT;
+        }
+
+        const k_timepoint_t end = sys_timepoint_calc(budget);
+
+        communication_ObservationIsFrozen = false;
+
+        /* Freezing sends nothing, so a job whose budget is already used up still ends with the right outcome. */
+        (void)communication_freezeObservation();
+
+        while(isRunning)
+        {
+            /* The thread may have been busy elsewhere, for example in setup: never send after the budget. */
+            if(sys_timepoint_expired(end))
+            {
+                result = -ETIMEDOUT;
+                isRunning = false;
+            }
+            else
+            {
+                result = communication_attemptDelivery(end);
+            }
+
+            if(!isRunning)
+            {
+                /* Budget used up before the next attempt. */
+            }
+            else if((result == -ENOTCONN) && !isStaleConnectionReplaced)
+            {
+                /* The retained connection was stale: replaced once per job without counting the attempt. */
+                isStaleConnectionReplaced = true;
+            }
+            else
+            {
+                attempts++;
+
+                /* No gap that would reach the end of the budget: stop instead. */
+                isRunning = ((result != 0) && (result != -EPERM) && (attempts < COMMUNICATION_DELIVERY_ATTEMPTS) && (sys_timepoint_timeout(end).ticks > gap.ticks));
+
+                if(isRunning)
+                {
+                    /* Start ends the gap and with it the job. */
+                    isRunning = (communication_waitForCondition(COMMUNICATION_WAIT_DELAY, gap) == 0);
+                }
+            }
+        }
+
+        if(result == 0)
+        {
+            outcome = COMMUNICATION_DELIVERY_DELIVERED;
+            LOG_INF("Observation delivered: %s (status %u)", communication_Response.location, (unsigned int)communication_Response.status);
+        }
+        else if(!communication_ObservationIsFrozen)
+        {
+            /* No qualifying clock anchor ever mapped the measurement end, so nothing was sent. */
+            outcome = COMMUNICATION_DELIVERY_NO_CLOCK;
+            LOG_ERR("SERVER_CONNECTION_FAILURE (%d); no clock for the measurement end, result not sent", result);
+        }
+        else
+        {
+            LOG_ERR("DELIVERY_FAILURE (%d) after %d attempts", result, attempts);
+        }
+
+        /* An issued setup that left the transport unverified starts the preparation gap, as in Idle. */
+        if(!communication_TransportIsVerified)
+        {
+            communication_NextPreparationTime = sys_timepoint_calc(K_SECONDS(COMMUNICATION_SECURE_RETRY_DELAY_S));
+        }
+
+        key = k_spin_lock(&communication_ControlLock);
+        communication_DeliveryOutcome = outcome;
+        communication_DeliveryIsPending = false;
+        k_spin_unlock(&communication_ControlLock, key);
+    }
+}
+
+static int communication_attemptDelivery(k_timepoint_t deadline)
+{
+    struct wifi_http_request request = {.resourcePath = "Observation", .condition = communication_RequestCondition, .body = communication_RequestBody, .bodyLength = 0U};
+    const bool isTerminal = (communication_CleanupFaultIsLatched || (communication_ServerProfileState != COMMUNICATION_SERVER_PROFILE_CONFIGURED));
+    int setupResult = 0;
+    int result = 0;
+
+    if(!isTerminal && !communication_SecureConnectionIsRetained)
+    {
+        setupResult = communication_prepareSecureConnection(communication_limitDeadline(deadline, K_MSEC(COMMUNICATION_DELIVERY_SETUP_TIMEOUT_MS)));
+    }
+
+    /* After the setup, because its SNTP exchange may only now provide a qualifying anchor. */
+    const int freezeResult = communication_freezeObservation();
+
+    if(isTerminal)
+    {
+        result = -EPERM; /**< No server profile or a latched cleanup fault. */
+    }
+    else if(setupResult != 0)
+    {
+        /* Certificate validity, a missing server, a cleanup fault and Start cannot be fixed by a retry. */
+        const bool isSetupTerminal = ((setupResult == -EACCES) || (setupResult == -ENOENT) || (setupResult == -ECANCELED) || communication_CleanupFaultIsLatched);
+
+        result = (isSetupTerminal ? -EPERM : -EAGAIN);
+    }
+    else if(freezeResult != 0)
+    {
+        result = -ENODATA; /**< No qualifying anchor maps the measurement end yet. */
+    }
+    else
+    {
+        request.bodyLength = communication_RequestBodyLength;
+
+        const int exchangeResult = communication_exchange(&request, communication_limitDeadline(deadline, K_MSEC(COMMUNICATION_DELIVERY_RECEIPT_TIMEOUT_MS)));
+
+        if(exchangeResult == -ENOTCONN)
+        {
+            result = -ENOTCONN; /**< Stale retained connection, found before any receipt. */
+        }
+        else if((exchangeResult == -ECANCELED) || communication_CleanupFaultIsLatched)
+        {
+            result = -EPERM; /**< Start or a failed cancel ends the job. */
+        }
+        else if(exchangeResult != 0)
+        {
+            result = -EAGAIN; /**< Lost or incomplete receipt; the conditional identity makes a retry safe. */
+        }
+        else
+        {
+            const enum fhir_response_cause cause = fhir_classifyStatus(communication_Response.status);
+
+            if(cause == FHIR_RESPONSE_CAUSE_NONE)
+            {
+                result = 0;
+            }
+            else if(cause == FHIR_RESPONSE_CAUSE_SERVER_ERROR)
+            {
+                result = -EAGAIN;
+            }
+            else
+            {
+                result = -EPERM; /**< 412, 501 or another non-success status. */
+            }
+        }
+
+        if(result != 0)
+        {
+            LOG_WRN("Observation attempt failed (exchange %d, status %u)", exchangeResult, (unsigned int)communication_Response.status);
+        }
+    }
+
+    return result;
+}
+
+static int communication_freezeObservation(void)
+{
+    struct timespec utcEnd = {0};
+    size_t conditionLength = 0U;
+    int result = 0;
+
+    if(!communication_ObservationIsFrozen)
+    {
+        result = communication_mapMeasurementEndTime(communication_Delivery.measurementEndMonotonicMicroseconds, &utcEnd);
+
+        if(result == 0)
+        {
+            /* No subject: the request adapter for the patient reference is still open in the design. */
+            const struct fhir_observation observation = {
+                .serverDeviceId = communication_ServerDeviceId,
+                .measurementEndUtcSeconds = (uint64_t)utcEnd.tv_sec,
+                .measurementEndUtcMilliseconds = (uint16_t)(utcEnd.tv_nsec / (long)NSEC_PER_MSEC),
+                .patientReference = NULL,
+                .kind = ((communication_Delivery.kind == COMMUNICATION_DELIVERY_POOR_SIGNAL) ? FHIR_OBSERVATION_KIND_POOR_SIGNAL : FHIR_OBSERVATION_KIND_HEART_RATE),
+                .heartRateScaled = communication_Delivery.heartRateScaled,
+                .heartRateDecimalPlaces = communication_Delivery.heartRateDecimalPlaces,
+            };
+
+            result = fhir_buildObservation(&observation, communication_RequestBody, sizeof(communication_RequestBody), &communication_RequestBodyLength);
+
+            if(result == 0)
+            {
+                result = fhir_buildObservationCondition(&observation, communication_RequestCondition, sizeof(communication_RequestCondition), &conditionLength);
+            }
+
+            /* Every later attempt sends exactly these bytes. */
+            communication_ObservationIsFrozen = (result == 0);
+        }
+    }
+
+    return result;
+}
+
+static k_timepoint_t communication_limitDeadline(k_timepoint_t deadline, k_timeout_t limit)
+{
+    k_timeout_t remaining = sys_timepoint_timeout(deadline);
+
+    if(remaining.ticks > limit.ticks)
+    {
+        remaining = limit;
+    }
+
+    return sys_timepoint_calc(remaining);
+}
+
 static k_timeout_t communication_timeUntilTransportDuty(k_timeout_t limit)
 {
-    k_timeout_t timeout = limit;
+    k_spinlock_key_t key = k_spin_lock(&communication_ControlLock);
+    const bool isDeliveryPending = communication_DeliveryIsPending;
+
+    k_spin_unlock(&communication_ControlLock, key);
+
+    /* A submitted job starts at once. */
+    k_timeout_t timeout = (isDeliveryPending ? K_NO_WAIT : limit);
 
     if(communication_SecureConnectionIsRetained)
     {
@@ -1053,6 +1775,17 @@ static k_timeout_t communication_timeUntilTransportDuty(k_timeout_t limit)
         if(untilPreparation.ticks < timeout.ticks)
         {
             timeout = untilPreparation;
+        }
+    }
+
+    /* Only while registration could run, for the same reason. */
+    if((communication_ServerProfileState == COMMUNICATION_SERVER_PROFILE_CONFIGURED) && communication_RegistrationIsAvailable && !communication_RegistrationIsReady && communication_TransportIsVerified && wifi_isConnected())
+    {
+        const k_timeout_t untilRegistration = sys_timepoint_timeout(communication_NextRegistrationTime);
+
+        if(untilRegistration.ticks < timeout.ticks)
+        {
+            timeout = untilRegistration;
         }
     }
 
@@ -1592,6 +2325,7 @@ static void communication_runSetup(void)
         if(outcome == COMMUNICATION_SETUP_CONNECTED)
         {
             communication_prepareTransportInIdle();
+            communication_registerInIdle();
         }
     }
     else
@@ -1833,6 +2567,7 @@ static void communication_saveNetwork(const struct wifi_network *network)
     communication_StoredNetwork = *network;
     communication_StoredNetworkIsValid = true;
     communication_RecoveryIsAllowed = true;
+    communication_publishDeliveryPrerequisites();
 }
 
 static void communication_discardPageRequests(void)
