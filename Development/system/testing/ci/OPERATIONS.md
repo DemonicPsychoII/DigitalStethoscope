@@ -10,7 +10,7 @@ When present, the communication host suite runs production L2 (layer 2) with con
 
 When the application entry point is present, its later implementation stages provide the Wi-Fi service, portal and COMMUNICATION workflow; other components contain placeholders. CI then builds, publishes and reuses only the `application` profile; without that entry point the application suite is disabled. The bring-up firmware and its source-pattern QC are archived under `preThesis/06-bringup-zephyr` and have no CI. The pinned application toolchain and compiler cache remain active. External cloud importer compatibility and device results remain unverified.
 
-Component routing for WIFI, PORTAL and L2_COMMUNICATION selects the communication suite when its test folder exists. Shared system pages and requirements also select it. Other suites are added with their test PRs. Application delivery follows receipt-based case VT-07.
+Component routing for WIFI, PORTAL, STORAGE and COMMUNICATION selects the communication suite when its test folder exists; source folders match with or without their `L1_`/`L2_` prefix. Changes to the server profile tool or the host test requirements select it too. Shared system pages and requirements also select it. Other suites are added with their test PRs. Application delivery follows receipt-based case VT-07.
 
 ## Test levels
 
@@ -137,7 +137,7 @@ python Development/system/testing/ci/setup_zephyr.py
 .ci-workspace/.venv/Scripts/python.exe -m pip install --require-hashes -r Development/system/testing/ci/requirements-ci.txt
 ```
 
-Commands below use the pinned environment's Python. On Linux that executable is `.ci-workspace/.venv/bin/python`; on Windows it is `.ci-workspace/.venv/Scripts/python.exe`. Static checks also need actionlint and ShellCheck from [validation_tools.json](validation_tools.json). `validation_tools.py` installs their pinned Linux x86-64 binaries; a local Windows run uses native tools when available and prints a skip message for missing validators. CI requires both validators on every run. Host tests need pytest and a C compiler selected through `CC` (GCC in CI). The workflow records their dependency setup.
+Commands below use the pinned environment's Python. On Linux that executable is `.ci-workspace/.venv/bin/python`; on Windows it is `.ci-workspace/.venv/Scripts/python.exe`. Static checks also need actionlint and ShellCheck from [validation_tools.json](validation_tools.json). `validation_tools.py` installs their pinned Linux x86-64 binaries; a local Windows run uses native tools when available and prints a skip message for missing validators. CI requires both validators on every run. Host tests need pytest, `cryptography` for the server profile tool cases and a C compiler selected through `CC` (GCC in CI). The workflow records their dependency setup.
 
 | Check | Command from the repository root |
 | --- | --- |

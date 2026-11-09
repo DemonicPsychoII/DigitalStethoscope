@@ -22,9 +22,17 @@ COMPONENT_HOST_SUITES = {
     },
     "communication": {
         "tests": "Development/system/coding/app/tests/host",
-        "components": ("WIFI", "PORTAL", "L2_COMMUNICATION"),
+        "components": ("WIFI", "PORTAL", "L1_STORAGE", "L2_COMMUNICATION"),
     },
 }
+
+
+# The host batch also tests the server profile tool, and installs its dependencies from this file.
+HOST_TEST_INPUTS = (
+    "Development/system/coding/app/tests/host/",
+    "Development/system/coding/tools/server-profile/",
+)
+HOST_TEST_REQUIREMENTS = "Development/system/testing/ci/requirements-host.txt"
 
 
 def available_component_suites() -> tuple[str, ...]:
@@ -35,14 +43,19 @@ def available_component_suites() -> tuple[str, ...]:
     )
 
 
+def component_name(part: str) -> str:
+    return part.removeprefix("L1_").removeprefix("L2_")
+
+
 def component_host_affected(paths: list[str], suite: str) -> bool:
-    components = COMPONENT_HOST_SUITES[suite]["components"]
+    # Source folders carry their layer (L1_STORAGE); design and architecture folders do not (STORAGE).
+    components = {
+        component_name(component)
+        for component in COMPONENT_HOST_SUITES[suite]["components"]
+    }
     for path in paths:
         parts = path.split("/")
-        if any(
-            part in components or part.removeprefix("L1_") in components
-            for part in parts
-        ):
+        if any(component_name(part) in components for part in parts):
             return True
         if path.startswith(
             (
@@ -132,7 +145,8 @@ def suites(paths: list[str]) -> dict[str, bool]:
                 for suite in available_component_suites()
             )
             or any(
-                p.startswith("Development/system/coding/app/tests/host/") for p in paths
+                p.startswith(HOST_TEST_INPUTS) or p == HOST_TEST_REQUIREMENTS
+                for p in paths
             )
         ),
     }
