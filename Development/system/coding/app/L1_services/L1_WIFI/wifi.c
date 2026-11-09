@@ -24,6 +24,7 @@
 #include "wifi.h"
 #include "wifi_dns.h"
 
+#include <esp_mac.h>
 #include <esp_wifi.h>
 
 #include <ctype.h>
@@ -80,6 +81,11 @@
 #define WIFI_HOTSPOT_NETMASK    "255.255.255.0"                 /**< Hotspot subnet. */
 #define WIFI_HOTSPOT_POOL_START (10)                            /**< Last address byte of the first DHCP lease. */
 #define WIFI_HOTSPOT_NAME_SIZE  (sizeof("Stetho-XXXXXXXXXXXX")) /**< Hotspot name with all six MAC bytes. */
+
+#define WIFI_DEVICE_IDENTIFIER_PREFIX "stetho-" /**< P27-IDENTITY: lowercase project prefix of the physical identifier. */
+
+#define WIFI_MAC_SIZE          (6U)    /**< Bytes of an IEEE 802 MAC address. */
+#define WIFI_MAC_MULTICAST_BIT (0x01U) /**< I/G bit of the first byte; a station address is unicast (IEEE 802-2014 section 8.2). */
 
 /***********************************************************************/
 /* TYPES                                                               */
@@ -490,6 +496,37 @@ int wifi_getAddress(char *text, size_t size)
     return result;
 }
 
+int wifi_getDeviceIdentifier(char *identifier, size_t size)
+{
+    uint8_t mac[WIFI_MAC_SIZE] = {0};
+    int result = 0;
+
+    if((identifier != NULL) && (size > 0U))
+    {
+        identifier[0] = '\0';
+    }
+
+    if((identifier == NULL) || (size < WIFI_DEVICE_IDENTIFIER_SIZE))
+    {
+        result = -EINVAL;
+    }
+    else if(esp_efuse_mac_get_default(mac) != ESP_OK)
+    {
+        result = -EIO;
+    }
+    /* The ESP32-S3 stores no MAC CRC, so a damaged eFuse value is only caught by plausibility. */
+    else if(((mac[0] & WIFI_MAC_MULTICAST_BIT) != 0U) || ((mac[0] | mac[1] | mac[2] | mac[3] | mac[4] | mac[5]) == 0U))
+    {
+        result = -ENODATA;
+    }
+    else
+    {
+        (void)snprintk(identifier, size, WIFI_DEVICE_IDENTIFIER_PREFIX "%02X%02X%02X%02X%02X%02X", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+    }
+
+    return result;
+}
+
 int wifi_startScan(void)
 {
     k_spinlock_key_t key = k_spin_lock(&wifi_ScanLock);
@@ -576,11 +613,17 @@ int wifi_waitForScanResult(struct wifi_scan_entry *list, size_t listSize, k_time
 
 int wifi_startHotspot(void)
 {
-    int result = 0;
+    char identifier[WIFI_DEVICE_IDENTIFIER_SIZE] = "";
+    /* The label shows the same factory MAC as the FHIR Device identity. */
+    int result = wifi_getDeviceIdentifier(identifier, sizeof(identifier));
     struct net_in_addr address;
     struct net_in_addr netmask;
 
-    if(wifi_HotspotInterface == NULL)
+    if(result != 0)
+    {
+        /* No hotspot without a valid identity: the device could not register anyway. */
+    }
+    else if(wifi_HotspotInterface == NULL)
     {
         result = -ENODEV; /**< Required device interface is unavailable. */
     }
@@ -608,11 +651,10 @@ int wifi_startHotspot(void)
 
     if(result == 0)
     {
-        const uint8_t *hardwareAddress = net_if_get_link_addr(wifi_StationInterface)->addr;
         char name[WIFI_HOTSPOT_NAME_SIZE];
 
-        /* The full MAC tells devices apart and matches the label used for the FHIR Device identity. */
-        (void)snprintk(name, sizeof(name), "Stetho-%02X%02X%02X%02X%02X%02X", hardwareAddress[0], hardwareAddress[1], hardwareAddress[2], hardwareAddress[3], hardwareAddress[4], hardwareAddress[5]);
+        /* The full MAC tells devices apart; only the prefix differs from the identifier. */
+        (void)snprintk(name, sizeof(name), "Stetho-%.*s", (int)(2U * WIFI_MAC_SIZE), &identifier[sizeof(WIFI_DEVICE_IDENTIFIER_PREFIX) - 1U]);
 
         struct wifi_connect_req_params parameters = {
             .ssid = (const uint8_t *)name,

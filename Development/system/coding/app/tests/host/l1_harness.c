@@ -266,6 +266,41 @@ static void run_wifi_case(const char *scenario, const char *argument)
         assert(wifi_connect(&network) == 0);
         assert(disconnect_calls == 2 && connect_calls == 2);
     }
+    else if(strcmp(scenario, "device-identifier") == 0)
+    {
+        /* Argument: "<12 hex digits of the factory MAC> <size> [read-error|null]". */
+        char mac[13] = "";
+        unsigned size = 0;
+        char option[16] = "";
+        char identifier[64];
+        assert(sscanf(argument, "%12s %u %15s", mac, &size, option) >= 2 && strlen(mac) == 12 && size <= sizeof(identifier));
+        for(size_t index = 0; index < 6; index++)
+        {
+            char pair[3] = {mac[2 * index], mac[2 * index + 1], '\0'};
+            factory_mac[index] = (uint8_t)strtoul(pair, NULL, 16);
+        }
+        factory_mac_result = (strcmp(option, "read-error") == 0) ? ESP_ERR_INVALID_CRC : ESP_OK;
+        memset(identifier, 0x5A, sizeof(identifier));
+        const int result = wifi_getDeviceIdentifier((strcmp(option, "null") == 0) ? NULL : identifier, size);
+        bool is_untouched_beyond_size = true;
+        for(size_t index = size; index < sizeof(identifier); index++)
+            is_untouched_beyond_size = is_untouched_beyond_size && identifier[index] == 0x5A;
+        const bool is_terminated = (size == 0) || (memchr(identifier, '\0', size) != NULL);
+        const char *name = (result == 0) ? "OK" : (result == -EINVAL) ? "EINVAL"
+                                              : (result == -EIO)      ? "EIO"
+                                              : (result == -ENODATA)  ? "ENODATA"
+                                              : (result == -ENOSYS)   ? "ENOSYS"
+                                                                      : "OTHER";
+        const bool has_text = (size > 0) && is_terminated && (identifier[0] != '\0') && (strcmp(option, "null") != 0);
+        printf("%s %s %d %d %d\n", name, has_text ? identifier : "-", is_untouched_beyond_size, is_terminated, factory_mac_reads);
+    }
+    else if(strcmp(scenario, "hotspot-name") == 0)
+    {
+        /* Argument: "ok" or "read-error". The link address stub is 00:01:02:03:04:05, so the name proves the factory source. */
+        factory_mac_result = (strcmp(argument, "read-error") == 0) ? ESP_ERR_INVALID_CRC : ESP_OK;
+        const int result = wifi_startHotspot();
+        printf("%d %s %d\n", result, hotspot_is_enabled ? hotspot_name : "-", factory_mac_reads);
+    }
     else if(strcmp(scenario, "hotspot-client-limit") == 0)
     {
         assert(wifi_startHotspot() == 0);

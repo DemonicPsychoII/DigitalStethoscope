@@ -55,6 +55,28 @@ static jmp_buf finished;
 static struct portal_request requests[CAPACITY];
 static int request_count;
 
+/* Server communication model; inactive unless the script configures a server. */
+#define SIMULATION_BASE_URL    "https://172.20.10.7:8443/fhir"
+#define SIMULATION_OTHER_BASE  "https://192.168.2.40:8443/fhir"
+#define SIMULATION_IDENTITY    "stetho-3030F912D838"
+#define SIMULATION_STORED_ID   "7400"
+#define SIMULATION_REGISTERED  "7501"
+#define SIMULATION_RECORD_SIZE 343
+#define SIMULATION_RECORD_BASE 1
+#define SIMULATION_RECORD_ID   (1 + 257 + 20)
+static bool server_configured;
+static int identity_error;
+static int registration_state; /* 0 none, 1 this binding, 2 another base URL, 3 unsupported version. */
+static int registration_read_error, registration_write_failures, registration_writes;
+static struct operation tls, exchange;
+static bool retained;
+static struct wifi_http_response *exchange_response;
+static bool exchange_is_observation;
+static int sntp_error;                    /* Set by an sntp_fail event: every later time synchronization fails with it. */
+static int observation_requests;          /* Observation requests of the current job. */
+static char observation_first_body[2048]; /* First request of the job; every retry must repeat it. */
+static char observation_first_condition[256];
+
 static void trace(const char *kind, int value)
 {
     printf("%lld %s %d\n", (long long)time_milliseconds, kind, value);
@@ -99,6 +121,22 @@ static void dispatch(struct event *event)
     }
     else if(strcmp(event->kind, "hold") == 0)
         (void)communication_postEvent(COMMUNICATION_EVENT_SETUP_REQUESTED);
+    else if(strcmp(event->kind, "deliver") == 0)
+    {
+        /* CONTROL after finalization: value 0 is 72.3 BPM, 1 a poor-signal report; the P13 deadline is Stop + 10 s. */
+        const struct communication_delivery delivery = {
+            .measurementEndMonotonicMicroseconds = (uint64_t)time_milliseconds * 1000U,
+            .kind = (event->value == 1) ? COMMUNICATION_DELIVERY_POOR_SIGNAL : COMMUNICATION_DELIVERY_HEART_RATE,
+            .heartRateScaled = 723U,
+            .heartRateDecimalPlaces = 1U,
+        };
+        observation_requests = 0;
+        trace("deliver_result", communication_submitDelivery(&delivery, sys_timepoint_calc(K_MSEC(10000))));
+    }
+    else if(strcmp(event->kind, "outcome") == 0)
+        trace("delivery_outcome", (int)communication_getDeliveryOutcome());
+    else if(strcmp(event->kind, "sntp_fail") == 0)
+        sntp_error = event->value;
     else if(strcmp(event->kind, "drop") == 0)
         connected = false;
     else if(strcmp(event->kind, "snapshot") == 0)
@@ -529,18 +567,26 @@ int wifi_stopDHCPServer(void)
     return 0;
 }
 
-/* Time synchronization is unavailable here, so the existing scenarios keep their traces and timing. */
+/* Without a configured server, time synchronization and TLS are unavailable, so the VT-14 scenarios keep their traces and timing.
+ * With one, SNTP answers at once with a fixed UTC time and TLS and exchanges follow the script plans. */
 int wifi_startTimeSynchronization(const char *ntpServer)
 {
     (void)ntpServer;
-    return -ENOSYS; /**< Not modelled by this host substitute. */
+    if(server_configured && (sntp_error != 0))
+    {
+        trace("sntp_failed", sntp_error);
+        return sntp_error;
+    }
+    return server_configured ? 0 : -ENOSYS; /**< Not modelled without a server. */
 }
 
 int wifi_waitForTimeSynchronization(struct normalised_time *time, k_timeout_t timeout)
 {
-    (void)time;
     (void)timeout;
-    return -ENOSYS; /**< Not modelled by this host substitute. */
+    if(!server_configured)
+        return -ENOSYS; /**< Not modelled without a server. */
+    *time = (struct normalised_time){.utc_seconds = 1794182400U, .receive_monotonic_microseconds = (uint64_t)time_milliseconds * 1000U, .estimated_uncertainty_microseconds = 1000U};
+    return 0;
 }
 
 int wifi_cancelTimeSynchronization(void)
@@ -550,41 +596,153 @@ int wifi_cancelTimeSynchronization(void)
 
 int wifi_applyTimeSynchronization(const struct normalised_time *time, struct applied_time_anchor *anchor)
 {
-    (void)time;
-    (void)anchor;
-    return -ENOSYS; /**< Not modelled by this host substitute. */
+    if(!server_configured)
+        return -ENOSYS; /**< Not modelled without a server. */
+    *anchor = (struct applied_time_anchor){time->utc_seconds, 0U, (uint64_t)time_milliseconds * 1000U, time->estimated_uncertainty_microseconds};
+    trace("sntp", 0);
+    return 0;
 }
 
-/* No server is configured here, so the existing scenarios keep their traces and timing. */
 int wifi_configureSecureServer(const char *baseUrl, const char *certificate, size_t certificateLength, struct wifi_secure_server *server)
 {
-    (void)baseUrl;
     (void)certificate;
     (void)certificateLength;
-    (void)server;
-    return -ENOSYS; /**< Not modelled by this host substitute. */
+    if(!server_configured || strcmp(baseUrl, SIMULATION_BASE_URL) != 0)
+        return -ENOSYS; /**< Not modelled without a server. */
+    *server = (struct wifi_secure_server){0, INT64_MAX};
+    return 0;
 }
 
 int wifi_startSecureConnection(k_timepoint_t deadline)
 {
     (void)deadline;
-    return -ENOSYS; /**< Not modelled by this host substitute. */
+    if(!server_configured)
+        return -ENOSYS; /**< Not modelled without a server. */
+    if(retained || tls.pending || exchange.pending)
+        return -EBUSY;
+    return begin(&tls, "tls");
 }
 
 int wifi_waitForSecureConnection(enum wifi_secure_connection_cause *cause, k_timeout_t timeout)
 {
-    (void)cause;
-    (void)timeout;
-    return -ENOSYS; /**< Not modelled by this host substitute. */
+    if(!server_configured)
+        return -ENOSYS; /**< Not modelled without a server. */
+    const int result = wait_result(&tls, timeout);
+    if(result != -EAGAIN)
+    {
+        *cause = (result == 0) ? WIFI_SECURE_CONNECTION_CAUSE_NONE : WIFI_SECURE_CONNECTION_CAUSE_TCP;
+        retained = (result == 0);
+        trace("tls_result", result);
+    }
+    return result;
 }
 
 int wifi_cancelSecureConnection(void)
 {
+    if(tls.pending || exchange.pending)
+    {
+        trace("secure_cancel", exchange.pending);
+        /* A cancelled exchange leaves no usable connection behind. */
+        retained = retained && !exchange.pending;
+        tls.pending = false;
+        exchange.pending = false;
+    }
     return 0;
 }
 
 int wifi_closeSecureConnection(void)
 {
+    if(exchange.pending)
+        return -EBUSY;
+    if(retained)
+        trace("tls_close", 0);
+    retained = false;
+    return 0;
+}
+
+int wifi_getDeviceIdentifier(char *identifier, size_t size)
+{
+    if(size > 0)
+        identifier[0] = '\0';
+    trace("identity", identity_error);
+    if(identity_error != 0)
+        return identity_error;
+    snprintf(identifier, size, "%s", SIMULATION_IDENTITY);
+    return 0;
+}
+
+/* Plan values: an HTTP status (100 to 599) gives a complete response; 1 gives 201 without any id;
+ * 2 gives 201 for another device; a negative value is the exchange's error result. */
+int wifi_startSecureExchange(const struct wifi_http_request *request, struct wifi_http_response *response, k_timepoint_t deadline)
+{
+    (void)deadline;
+    if(!retained)
+        return -ENOTCONN;
+    if(tls.pending || exchange.pending)
+        return -EBUSY;
+    exchange_is_observation = strcmp(request->resourcePath, "Observation") == 0;
+    if(exchange_is_observation)
+    {
+        if(request->bodyLength >= sizeof(observation_first_body) || strlen(request->condition) >= sizeof(observation_first_condition))
+            abort();
+        if(observation_requests++ == 0)
+        {
+            memcpy(observation_first_body, request->body, request->bodyLength);
+            observation_first_body[request->bodyLength] = '\0';
+            snprintf(observation_first_condition, sizeof(observation_first_condition), "%s", request->condition);
+            simulation_log("observation_body %s", observation_first_body);
+            simulation_log("observation_condition %s", observation_first_condition);
+        }
+        const bool is_same = (request->bodyLength == strlen(observation_first_body)) && (memcmp(request->body, observation_first_body, request->bodyLength) == 0) && (strcmp(request->condition, observation_first_condition) == 0);
+        trace("exchange_observation", observation_requests);
+        trace("exchange_same_observation", is_same);
+    }
+    else
+    {
+        trace("exchange_device", strcmp(request->resourcePath, "Device") == 0);
+        trace("exchange_conditional", strcmp(request->condition, "identifier=urn%3Astethoscope%3Adevice|" SIMULATION_IDENTITY) == 0);
+        trace("exchange_body_identity", (request->bodyLength > 0) && (strstr(request->body, "\"" SIMULATION_IDENTITY "\"") != NULL));
+    }
+    exchange_response = response;
+    return begin(&exchange, "exchange");
+}
+
+int wifi_waitForSecureExchange(k_timeout_t timeout)
+{
+    const int outcome = wait_result(&exchange, timeout);
+    if(outcome == -EAGAIN)
+        return outcome;
+    trace("exchange_result", outcome);
+    if(outcome <= 0)
+    {
+        retained = false;
+        return outcome;
+    }
+    struct wifi_http_response *response = exchange_response;
+    memset(response, 0, sizeof(*response));
+    const char *identity = (outcome == 2) ? "stetho-000000000001" : SIMULATION_IDENTITY;
+    response->status = (outcome < 100) ? 201 : (uint16_t)outcome;
+    if(outcome == 1)
+        snprintf(response->body, sizeof(response->body), "%s", "{}");
+    else if(exchange_is_observation && ((response->status == 201) || (response->status == 200)))
+    {
+        response->hasLocation = true;
+        snprintf(response->location, sizeof(response->location), "%s", SIMULATION_OTHER_BASE "/Observation/8001/_history/1");
+        snprintf(response->body, sizeof(response->body), "%s", "{\"resourceType\":\"Observation\",\"id\":\"8001\"}");
+    }
+    else if((response->status == 201) || (response->status == 200))
+    {
+        response->hasLocation = true;
+        snprintf(response->location, sizeof(response->location), "%s", SIMULATION_OTHER_BASE "/Device/" SIMULATION_REGISTERED "/_history/1");
+        snprintf(response->body,
+                 sizeof(response->body),
+                 "{\"resourceType\":\"Device\",\"id\":\"" SIMULATION_REGISTERED "\",\"identifier\":[{\"system\":\"urn:stethoscope:device\",\"value\":\"%s\"}],\"status\":\"active\"}",
+                 identity);
+    }
+    else
+        snprintf(response->body, sizeof(response->body), "%s", "{\"resourceType\":\"OperationOutcome\"}");
+    response->bodyLength = strlen(response->body);
+    response->keepsConnection = true;
     return 0;
 }
 
@@ -660,8 +818,46 @@ int storage_init(void)
     return 0;
 }
 
+/* Version-1 registration record, built from the design layout independently of L1_FHIR. */
+static void registration_record(uint8_t *bytes, const char *base, const char *identifier, uint8_t version)
+{
+    memset(bytes, 0, SIMULATION_RECORD_SIZE);
+    bytes[0] = version;
+    memcpy(&bytes[SIMULATION_RECORD_BASE], base, strlen(base));
+    memcpy(&bytes[SIMULATION_RECORD_BASE + 257], SIMULATION_IDENTITY, strlen(SIMULATION_IDENTITY));
+    memcpy(&bytes[SIMULATION_RECORD_ID], identifier, strlen(identifier));
+}
+
+static int registration_read(void *data, size_t size)
+{
+    if(size != SIMULATION_RECORD_SIZE)
+        abort();
+    trace("registration_read", registration_read_error);
+    if(registration_read_error != 0)
+        return registration_read_error;
+    if(registration_state == 0)
+        return -ENOENT;
+    registration_record(data, (registration_state == 2) ? SIMULATION_OTHER_BASE : SIMULATION_BASE_URL, SIMULATION_STORED_ID, (registration_state == 3) ? 2U : 1U);
+    return 0;
+}
+
+static int registration_write(const void *data, size_t size)
+{
+    if(size != SIMULATION_RECORD_SIZE)
+        abort();
+    trace("registration_write", ++registration_writes);
+    if(registration_writes <= registration_write_failures)
+        return -EIO; /**< Input/output operation failed in the host model. */
+    uint8_t expected[SIMULATION_RECORD_SIZE];
+    registration_record(expected, SIMULATION_BASE_URL, SIMULATION_REGISTERED, 1U);
+    trace("registration_saved", memcmp(data, expected, sizeof(expected)) == 0);
+    return 0;
+}
+
 int storage_read(const char *name, void *data, size_t size)
 {
+    if(strcmp(name, "fhir/device-registration") == 0)
+        return registration_read(data, size);
     if(strcmp(name, "wifi/network") != 0 || size != sizeof(record))
         abort();
     trace("read", 0);
@@ -679,11 +875,19 @@ int storage_read(const char *name, void *data, size_t size)
 int storage_readServerProfile(struct storage_server_profile *serverProfile)
 {
     memset(serverProfile, 0, sizeof(*serverProfile));
-    return -ENOENT; /**< Erased server profile partition in the host model. */
+    if(!server_configured)
+        return -ENOENT; /**< Erased server profile partition in the host model. */
+    snprintf(serverProfile->baseUrl, sizeof(serverProfile->baseUrl), "%s", SIMULATION_BASE_URL);
+    serverProfile->serverKeepAliveSeconds = 600U;
+    snprintf(serverProfile->certificate, sizeof(serverProfile->certificate), "%s", "-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----\n");
+    serverProfile->certificateLength = strlen(serverProfile->certificate);
+    return 0;
 }
 
 int storage_write(const char *name, const void *data, size_t size)
 {
+    if(strcmp(name, "fhir/device-registration") == 0)
+        return registration_write(data, size);
     if(strcmp(name, "wifi/network") != 0 || size != sizeof(record))
         abort();
     trace("write", ++writes);
@@ -715,12 +919,20 @@ int main(void)
             events[event_count++].value = first;
         }
         /* Parse either supported radio-operation script command. */
-        else if(sscanf(line, "scan %d %d", &first, &second) == 2 || sscanf(line, "join %d %d", &first, &second) == 2)
+        else if(sscanf(line, "scan %d %d", &first, &second) == 2 || sscanf(line, "join %d %d", &first, &second) == 2 || sscanf(line, "tls %d %d", &first, &second) == 2 || sscanf(line, "exchange %d %d", &first, &second) == 2)
         {
             struct operation *operation;
             if(line[0] == 's')
             {
                 operation = &scan;
+            }
+            else if(line[0] == 't')
+            {
+                operation = &tls;
+            }
+            else if(line[0] == 'e')
+            {
+                operation = &exchange;
             }
             else
             {
@@ -766,6 +978,16 @@ int main(void)
                 service_start_delay_milliseconds = first;
             else if(strcmp(key, "scan_count") == 0)
                 scan_count = first;
+            else if(strcmp(key, "server") == 0)
+                server_configured = first != 0;
+            else if(strcmp(key, "identity_error") == 0)
+                identity_error = first;
+            else if(strcmp(key, "registration") == 0)
+                registration_state = first;
+            else if(strcmp(key, "registration_read_error") == 0)
+                registration_read_error = first;
+            else if(strcmp(key, "registration_write_failures") == 0)
+                registration_write_failures = first;
             else
                 abort();
         }

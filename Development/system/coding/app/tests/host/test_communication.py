@@ -90,11 +90,13 @@ def executable(host_build_directory):
         APP / "L1_services/L1_WIFI",
         APP / "L1_services/L1_PORTAL",
         APP / "L1_services/L1_STORAGE",
+        APP / "L1_services/L1_FHIR",
     ):
         command += ["-I", str(directory)]
     command += [
         str(HERE / "simulation.c"),
         str(APP / "L2_application/L2_COMMUNICATION/communication.c"),
+        str(APP / "L1_services/L1_FHIR/fhir.c"),
         "-o",
         str(target),
     ]

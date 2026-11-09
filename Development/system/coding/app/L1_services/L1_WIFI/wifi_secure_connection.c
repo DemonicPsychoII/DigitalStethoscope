@@ -25,6 +25,7 @@
 
 #include "wifi.h"
 #include "wifi_dns.h"
+#include "wifi_http.h"
 
 #include <errno.h>
 #include <string.h>
@@ -48,12 +49,14 @@
 #define WIFI_SECURE_EVENT_COMPLETED BIT(0) /**< Wake secure connection waiters; the protected state holds the result. */
 #define WIFI_SECURE_EVENT_RESOLVED  BIT(1) /**< Wake the worker; only DNS has ended. */
 
-#define WIFI_SECURE_STACK_SIZE        (8192) /**< mbedTLS handshake with ECDHE and signature checks; proposed pending target measurement. */
-#define WIFI_SECURE_PRIORITY          (10)   /**< Same preemptive priority as the communication thread that waits for it. */
-#define WIFI_SECURE_POLL_INTERVAL_MS  (100)  /**< Longest worker wait between cancellation checks, well inside the stop bound. */
-#define WIFI_SECURE_CANCEL_TIMEOUT_MS (1000) /**< P23 per-service stop bound. */
-#define WIFI_SECURE_HOST_MAX_LENGTH   (253)  /**< Longest DNS name. */
-#define WIFI_SECURE_DEFAULT_PORT      (443)  /**< HTTPS. */
+#define WIFI_SECURE_STACK_SIZE           (8192) /**< mbedTLS handshake with ECDHE and signature checks; proposed pending target measurement. */
+#define WIFI_SECURE_PRIORITY             (10)   /**< Same preemptive priority as the communication thread that waits for it. */
+#define WIFI_SECURE_POLL_INTERVAL_MS     (100)  /**< Longest worker wait between cancellation checks, well inside the stop bound. */
+#define WIFI_SECURE_CANCEL_TIMEOUT_MS    (1000) /**< P23 per-service stop bound. */
+#define WIFI_SECURE_HOST_MAX_LENGTH      (253)  /**< Longest DNS name. */
+#define WIFI_SECURE_DEFAULT_PORT         (443)  /**< HTTPS. */
+#define WIFI_SECURE_BASE_PATH_MAX_LENGTH (256)  /**< P27-RECORD: the whole base URL has at most 256 bytes, so its path too. */
+#define WIFI_SECURE_RECEIVE_CHUNK_SIZE   (512)  /**< Decrypted bytes read per mbedtls_ssl_read() on the worker stack. */
 
 /***********************************************************************/
 /* TYPES                                                               */
@@ -66,6 +69,13 @@ enum wifi_secure_state
     WIFI_SECURE_PENDING,    /**< Started; no terminal result yet. */
     WIFI_SECURE_CANCELLING, /**< Cancellation requested; resources not yet released. */
     WIFI_SECURE_COMPLETED,  /**< Terminal result stored; on success the connection is retained. */
+};
+
+/** Kind of the single operation; both share state, generation, claim and cancellation. */
+enum wifi_secure_operation
+{
+    WIFI_SECURE_OPERATION_CONNECT,  /**< DNS, TCP and verified handshake; retains the connection. */
+    WIFI_SECURE_OPERATION_EXCHANGE, /**< One request and its response over the retained connection. */
 };
 
 /***********************************************************************/
@@ -81,7 +91,12 @@ static bool wifi_SecureIsClaimed;         /**< The worker owns the current opera
 static k_timepoint_t wifi_SecureDeadline; /**< End of the caller's connection setup. */
 static int wifi_SecureResult;             /**< Terminal error code; 0 means connected and verified. */
 static enum wifi_secure_connection_cause wifi_SecureCause;
-static bool wifi_SecureConnectionIsRetained; /**< The socket and session below form a verified connection. */
+static bool wifi_SecureConnectionIsRetained;                         /**< The socket and session below form a verified connection. */
+static enum wifi_secure_operation wifi_SecureOperation;              /**< Kind of the current operation. */
+static const struct wifi_http_request *wifi_SecureRequest;           /**< Exchange request; borrowed from the caller until completion. */
+static struct wifi_http_response *wifi_SecureResponse;               /**< Exchange result; borrowed from the caller until completion. */
+static char wifi_SecureRequestHead[WIFI_HTTP_REQUEST_HEAD_CAPACITY]; /**< Built by Start, written by the worker. */
+static size_t wifi_SecureRequestHeadLength;
 /** @brief Tell whether an operation is still the pending one; call with wifi_SecureLock held. */
 static bool wifi_isSecureConnectionCurrent(uint32_t generation);
 
@@ -96,8 +111,9 @@ static struct wifi_dns_lookup wifi_SecureServerLookup = {
 static bool wifi_SecureServerIsConfigured;
 static char wifi_SecureHost[WIFI_SECURE_HOST_MAX_LENGTH + 1]; /**< Reference identity and DNS name. */
 static uint16_t wifi_SecurePort;
-static bool wifi_SecureHostIsAddress;                 /**< wifi_SecureHost is an IPv4 literal. */
-static struct net_sockaddr_in wifi_SecureHostAddress; /**< Parsed literal when wifi_SecureHostIsAddress. */
+static char wifi_SecureBasePath[WIFI_SECURE_BASE_PATH_MAX_LENGTH + 1]; /**< "" or "/fhir"-style path of the base URL, without trailing '/'. */
+static bool wifi_SecureHostIsAddress;                                  /**< wifi_SecureHost is an IPv4 literal. */
+static struct net_sockaddr_in wifi_SecureHostAddress;                  /**< Parsed literal when wifi_SecureHostIsAddress. */
 static struct wifi_secure_server wifi_SecureServer;
 static mbedtls_x509_crt wifi_TrustedCertificate EXT_RAM_BSS_ATTR;    /**< The server profile's certificate, the only trust anchor. */
 static mbedtls_ssl_config wifi_SecureConfiguration EXT_RAM_BSS_ATTR; /**< Client, TLS 1.3 only, verification required. */
@@ -148,7 +164,7 @@ static int wifi_sendSecureData(void *context, const unsigned char *data, size_t 
 /** @brief mbedTLS receive callback over the non-blocking socket. */
 static int wifi_receiveSecureData(void *context, unsigned char *data, size_t length);
 
-/** @brief Split https://host:port/path into host and port. */
+/** @brief Split https://host:port/path into host, port and base path. */
 static int wifi_parseBaseUrl(const char *baseUrl);
 
 /** @brief Require a DNS or IP Subject Alternative Name that matches the host. */
@@ -156,6 +172,50 @@ static int wifi_checkSubjectAlternativeName(const mbedtls_x509_crt *certificate)
 
 /** @brief Convert an X.509 time to UTC seconds. */
 static int64_t wifi_convertCertificateTime(const mbedtls_x509_time *time);
+
+/**
+ * @brief Run one claimed exchange: write head and body, read one response, then keep or release the connection.
+ *
+ * @param[in] generation Claimed operation.
+ * @param[in] deadline   End of write and receipt.
+ */
+static void wifi_runSecureExchange(uint32_t generation, k_timepoint_t deadline);
+
+/**
+ * @brief Write all bytes through the TLS session, polling in short intervals.
+ *
+ * @param[in] generation Claimed operation; cancellation ends the write.
+ * @param[in] deadline   End of write and receipt.
+ * @param[in] data       Bytes to send; borrowed for the call only.
+ * @param[in] length     Number of bytes in @p data.
+ *
+ * @return 0 when all bytes were accepted by mbedTLS, -ECANCELED, -ETIMEDOUT, or -ECONNRESET.
+ */
+static int wifi_writeSecureBytes(uint32_t generation, k_timepoint_t deadline, const uint8_t *data, size_t length);
+
+/**
+ * @brief Read decrypted bytes into the response reader until one response is complete.
+ *
+ * @param[in]  generation  Claimed operation; cancellation ends the read.
+ * @param[in]  deadline    End of write and receipt.
+ * @param[out] hasReceived True once any response byte arrived.
+ *
+ * @return 0 for a complete response, -ENOTCONN for close or reset before any byte, -ECONNRESET
+ *         after that, -ECANCELED, -ETIMEDOUT, or the reader's -EBADMSG / -EMSGSIZE.
+ */
+static int wifi_readSecureResponse(uint32_t generation, k_timepoint_t deadline, bool *hasReceived);
+
+/**
+ * @brief Wait for the current operation if it is of the given kind.
+ *
+ * @param[in]  operation Kind the caller waits for; another kind is not reported.
+ * @param[out] cause     Failure cause; written on terminal completion.
+ * @param[in]  timeout   Maximum wait for this call; does not restart the operation.
+ *
+ * @return The stored terminal result, -EAGAIN if pending, -ECANCELED if replaced, or -EINVAL
+ *         if nothing of this kind was started.
+ */
+static int wifi_waitForSecureOperation(enum wifi_secure_operation operation, enum wifi_secure_connection_cause *cause, k_timeout_t timeout);
 
 /***********************************************************************/
 /* MACROS                                                              */
@@ -265,6 +325,7 @@ int wifi_startSecureConnection(k_timepoint_t deadline)
             wifi_SecureGeneration++;
             wifi_SecureIsClaimed = false;
             wifi_SecureDeadline = deadline;
+            wifi_SecureOperation = WIFI_SECURE_OPERATION_CONNECT;
             wifi_SecureState = WIFI_SECURE_PENDING;
             (void)k_event_clear(&wifi_SecureEvents, WIFI_SECURE_EVENT_COMPLETED);
         }
@@ -276,45 +337,12 @@ int wifi_startSecureConnection(k_timepoint_t deadline)
 
 int wifi_waitForSecureConnection(enum wifi_secure_connection_cause *cause, k_timeout_t timeout)
 {
-    if(cause == NULL)
-    {
-        return -EINVAL; /**< Invalid argument or unsupported input. */
-    }
+    int result = -EINVAL;
 
-    const k_timepoint_t deadline = sys_timepoint_calc(timeout);
-    if(k_mutex_lock(&wifi_SecureLock, sys_timepoint_timeout(deadline)) != 0)
+    if(cause != NULL)
     {
-        return -EAGAIN; /**< State was busy for this call's whole interval. */
+        result = wifi_waitForSecureOperation(WIFI_SECURE_OPERATION_CONNECT, cause, timeout);
     }
-    const enum wifi_secure_state stateBeforeWait = wifi_SecureState;
-    const uint32_t awaitedGeneration = wifi_SecureGeneration;
-    (void)k_mutex_unlock(&wifi_SecureLock);
-
-    if(stateBeforeWait == WIFI_SECURE_IDLE)
-    {
-        return -EINVAL; /**< No operation to wait for. */
-    }
-    if(stateBeforeWait != WIFI_SECURE_COMPLETED)
-    {
-        /* The event only wakes this call; the protected state decides the result. */
-        (void)k_event_wait(&wifi_SecureEvents, WIFI_SECURE_EVENT_COMPLETED, false, sys_timepoint_timeout(deadline));
-    }
-
-    if(k_mutex_lock(&wifi_SecureLock, sys_timepoint_timeout(deadline)) != 0)
-    {
-        return -EAGAIN; /**< State was busy for the rest of this call's interval. */
-    }
-    int result = -EAGAIN; /**< Still pending after this call's interval. */
-    if(wifi_SecureGeneration != awaitedGeneration)
-    {
-        result = -ECANCELED; /**< A newer Start replaced the awaited operation. */
-    }
-    else if(wifi_SecureState == WIFI_SECURE_COMPLETED)
-    {
-        result = wifi_SecureResult;
-        *cause = wifi_SecureCause;
-    }
-    (void)k_mutex_unlock(&wifi_SecureLock);
 
     return result;
 }
@@ -361,9 +389,22 @@ int wifi_cancelSecureConnection(void)
 
 int wifi_closeSecureConnection(void)
 {
+    int result = 0;
+    bool isRetained = false;
+
     (void)k_mutex_lock(&wifi_SecureLock, K_FOREVER);
-    const bool isRetained = wifi_SecureConnectionIsRetained;
-    wifi_SecureConnectionIsRetained = false;
+
+    /* A pending exchange still uses the session; it must be cancelled first. */
+    if((wifi_SecureState == WIFI_SECURE_PENDING) || (wifi_SecureState == WIFI_SECURE_CANCELLING))
+    {
+        result = (wifi_SecureConnectionIsRetained ? -EBUSY : 0);
+    }
+    else
+    {
+        isRetained = wifi_SecureConnectionIsRetained;
+        wifi_SecureConnectionIsRetained = false;
+    }
+
     (void)k_mutex_unlock(&wifi_SecureLock);
 
     if(isRetained)
@@ -373,7 +414,69 @@ int wifi_closeSecureConnection(void)
         (void)wifi_releaseSecureResources();
     }
 
-    return 0;
+    return result;
+}
+
+int wifi_startSecureExchange(const struct wifi_http_request *request, struct wifi_http_response *response, k_timepoint_t deadline)
+{
+    int result = 0;
+
+    if(!wifi_SecureServerIsConfigured)
+    {
+        result = -ENOENT; /**< No configured server. */
+    }
+    else if((request == NULL) || (response == NULL))
+    {
+        result = -EINVAL;
+    }
+    else
+    {
+        (void)k_mutex_lock(&wifi_SecureLock, K_FOREVER);
+
+        if((wifi_SecureState == WIFI_SECURE_PENDING) || (wifi_SecureState == WIFI_SECURE_CANCELLING))
+        {
+            result = -EBUSY; /**< Service is busy with another operation. */
+        }
+        else if(!wifi_SecureConnectionIsRetained)
+        {
+            result = -ENOTCONN;
+        }
+        /* No operation is pending, so the worker does not read the head while it is built. */
+        else if(wifi_buildHttpRequestHead(request, wifi_SecureHost, wifi_SecurePort, wifi_SecureBasePath, wifi_SecureRequestHead, sizeof(wifi_SecureRequestHead), &wifi_SecureRequestHeadLength) != 0)
+        {
+            result = -EINVAL;
+        }
+        else
+        {
+            /* Submitting first leaves the previous record intact if the queue rejects the work. */
+            result = k_work_submit_to_queue(&wifi_SecureQueue, &wifi_SecureWork);
+
+            if(result >= 0)
+            {
+                wifi_SecureGeneration++;
+                wifi_SecureIsClaimed = false;
+                wifi_SecureDeadline = deadline;
+                wifi_SecureOperation = WIFI_SECURE_OPERATION_EXCHANGE;
+                wifi_SecureRequest = request;
+                wifi_SecureResponse = response;
+                wifi_SecureState = WIFI_SECURE_PENDING;
+                (void)k_event_clear(&wifi_SecureEvents, WIFI_SECURE_EVENT_COMPLETED);
+
+                result = 0;
+            }
+        }
+
+        (void)k_mutex_unlock(&wifi_SecureLock);
+    }
+
+    return result;
+}
+
+int wifi_waitForSecureExchange(k_timeout_t timeout)
+{
+    enum wifi_secure_connection_cause cause = WIFI_SECURE_CONNECTION_CAUSE_NONE;
+
+    return wifi_waitForSecureOperation(WIFI_SECURE_OPERATION_EXCHANGE, &cause, timeout);
 }
 
 /***********************************************************************/
@@ -387,6 +490,7 @@ static void wifi_runSecureConnection(struct k_work *work)
     (void)k_mutex_lock(&wifi_SecureLock, K_FOREVER);
     const uint32_t generation = wifi_SecureGeneration;
     const k_timepoint_t deadline = wifi_SecureDeadline;
+    const enum wifi_secure_operation operation = wifi_SecureOperation;
     /* A handler left queued by an earlier submission must not take over an operation that Cancel withdrew. */
     const bool isClaimed = (wifi_SecureState == WIFI_SECURE_PENDING) && !wifi_SecureIsClaimed;
     if(isClaimed)
@@ -397,6 +501,12 @@ static void wifi_runSecureConnection(struct k_work *work)
 
     if(!isClaimed)
     {
+        return;
+    }
+
+    if(operation == WIFI_SECURE_OPERATION_EXCHANGE)
+    {
+        wifi_runSecureExchange(generation, deadline);
         return;
     }
 
@@ -461,6 +571,228 @@ static void wifi_runSecureConnection(struct k_work *work)
         return;
     }
     wifi_publishSecureResult(generation, result, cause);
+}
+
+static void wifi_runSecureExchange(uint32_t generation, k_timepoint_t deadline)
+{
+    bool hasReceived = false;
+    bool isKept = false;
+    int result = wifi_writeSecureBytes(generation, deadline, (const uint8_t *)wifi_SecureRequestHead, wifi_SecureRequestHeadLength);
+
+    if(result == 0)
+    {
+        result = wifi_writeSecureBytes(generation, deadline, (const uint8_t *)wifi_SecureRequest->body, wifi_SecureRequest->bodyLength);
+    }
+
+    /* No response byte has arrived yet, so a peer that closed or reset left the retained connection stale. */
+    if(result == -ECONNRESET)
+    {
+        result = -ENOTCONN;
+    }
+
+    if(result == 0)
+    {
+        result = wifi_readSecureResponse(generation, deadline, &hasReceived);
+    }
+
+    /* Keeping and publishing form one step, so a Cancel that reports release never leaves a retained connection behind. */
+    (void)k_mutex_lock(&wifi_SecureLock, K_FOREVER);
+
+    const bool isCurrent = wifi_isSecureConnectionCurrent(generation);
+
+    isKept = ((result == 0) && isCurrent && wifi_SecureResponse->keepsConnection && (mbedtls_ssl_get_bytes_avail(&wifi_SecureSession) == 0U));
+
+    if(isKept)
+    {
+        wifi_publishSecureResult(generation, 0, WIFI_SECURE_CONNECTION_CAUSE_NONE);
+    }
+    else
+    {
+        /* The caller reads keepsConnection as "WIFI still holds the connection", also after buffered bytes. */
+        wifi_SecureConnectionIsRetained = false;
+        wifi_SecureResponse->keepsConnection = false;
+
+        if((result == 0) && !isCurrent)
+        {
+            result = -ECANCELED; /**< Cancellation won over a complete response. */
+        }
+    }
+
+    (void)k_mutex_unlock(&wifi_SecureLock);
+
+    if(!isKept)
+    {
+        const int releaseResult = wifi_releaseSecureResources();
+
+        if(releaseResult != 0)
+        {
+            /* Without proven release the operation never completes: Start stays blocked and Cancel reports the fault. */
+            LOG_ERR("Secure exchange release failed (%d)", releaseResult);
+        }
+        else
+        {
+            wifi_publishSecureResult(generation, result, WIFI_SECURE_CONNECTION_CAUSE_NONE);
+        }
+    }
+}
+
+static int wifi_writeSecureBytes(uint32_t generation, k_timepoint_t deadline, const uint8_t *data, size_t length)
+{
+    size_t written = 0U;
+    int result = 0;
+
+    while((result == 0) && (written < length))
+    {
+        /* A delayed worker or an immediately writable socket must not send after Cancel or the deadline. */
+        if(!wifi_isSecureConnectionAdmitted(generation))
+        {
+            return -ECANCELED; /**< Cancellation ended the operation. */
+        }
+        if(sys_timepoint_expired(deadline))
+        {
+            return -ETIMEDOUT; /**< Write-and-receipt budget used up. */
+        }
+
+        /* mbedTLS may accept fewer bytes than offered, for example one record at a time. */
+        const int accepted = mbedtls_ssl_write(&wifi_SecureSession, &data[written], length - written);
+
+        if(accepted > 0)
+        {
+            written += (size_t)accepted;
+        }
+        else if(accepted == MBEDTLS_ERR_SSL_WANT_WRITE)
+        {
+            result = wifi_waitForSocket(generation, deadline, ZSOCK_POLLOUT);
+        }
+        else if(accepted == MBEDTLS_ERR_SSL_WANT_READ)
+        {
+            result = wifi_waitForSocket(generation, deadline, ZSOCK_POLLIN);
+        }
+        else
+        {
+            result = -ECONNRESET; /**< Transport or TLS failure. */
+        }
+    }
+
+    return result;
+}
+
+static int wifi_readSecureResponse(uint32_t generation, k_timepoint_t deadline, bool *hasReceived)
+{
+    struct wifi_http_reader reader;
+    uint8_t chunk[WIFI_SECURE_RECEIVE_CHUNK_SIZE];
+    int result = -EAGAIN;
+
+    *hasReceived = false;
+
+    wifi_beginHttpResponse(&reader, wifi_SecureResponse);
+
+    while(result == -EAGAIN)
+    {
+        const int received = mbedtls_ssl_read(&wifi_SecureSession, chunk, sizeof(chunk));
+
+        if(received > 0)
+        {
+            size_t consumed = 0U;
+
+            *hasReceived = true;
+            result = wifi_readHttpResponse(&reader, chunk, (size_t)received, &consumed);
+        }
+        else if((received == MBEDTLS_ERR_SSL_WANT_READ) || (received == MBEDTLS_ERR_SSL_WANT_WRITE))
+        {
+            const int waitResult = wifi_waitForSocket(generation, deadline, (received == MBEDTLS_ERR_SSL_WANT_READ) ? ZSOCK_POLLIN : ZSOCK_POLLOUT);
+
+            if(waitResult != 0)
+            {
+                result = waitResult;
+            }
+        }
+        else if(received == MBEDTLS_ERR_SSL_RECEIVED_NEW_SESSION_TICKET)
+        {
+            /* A TLS 1.3 post-handshake message, not response data: read again. */
+        }
+        else if((received == 0) || (received == MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY) || (received == MBEDTLS_ERR_SSL_CONN_EOF))
+        {
+            /* The server closed: a close-delimited body ends here, anything else is truncated. */
+            result = ((*hasReceived) ? wifi_finishHttpResponse(&reader) : -ENOTCONN);
+        }
+        else
+        {
+            result = -ECONNRESET; /**< Transport or TLS failure. */
+        }
+
+        /* Data that keeps arriving never waits, so the budget and cancellation are checked here too. */
+        if((result == -EAGAIN) && !wifi_isSecureConnectionAdmitted(generation))
+        {
+            result = -ECANCELED;
+        }
+        else if((result == -EAGAIN) && sys_timepoint_expired(deadline))
+        {
+            result = -ETIMEDOUT;
+        }
+        else
+        {
+            /* Finished, or the next read follows. */
+        }
+    }
+
+    /* Before any response byte, a lost transport means the retained connection was stale. */
+    if((result == -ECONNRESET) && !*hasReceived)
+    {
+        result = -ENOTCONN;
+    }
+
+    return result;
+}
+
+static int wifi_waitForSecureOperation(enum wifi_secure_operation operation, enum wifi_secure_connection_cause *cause, k_timeout_t timeout)
+{
+    const k_timepoint_t deadline = sys_timepoint_calc(timeout);
+    enum wifi_secure_state stateBeforeWait = WIFI_SECURE_IDLE;
+    uint32_t awaitedGeneration = 0U;
+    bool isAwaited = false;
+    int result = -EAGAIN; /**< Still pending, or the state was busy for this call's interval. */
+
+    if(k_mutex_lock(&wifi_SecureLock, sys_timepoint_timeout(deadline)) == 0)
+    {
+        stateBeforeWait = wifi_SecureState;
+        awaitedGeneration = wifi_SecureGeneration;
+        isAwaited = ((stateBeforeWait != WIFI_SECURE_IDLE) && (wifi_SecureOperation == operation));
+
+        (void)k_mutex_unlock(&wifi_SecureLock);
+
+        if(!isAwaited)
+        {
+            result = -EINVAL; /**< Nothing of this kind to wait for. */
+        }
+    }
+
+    if(isAwaited && (stateBeforeWait != WIFI_SECURE_COMPLETED))
+    {
+        /* The event only wakes this call; the protected state decides the result. */
+        (void)k_event_wait(&wifi_SecureEvents, WIFI_SECURE_EVENT_COMPLETED, false, sys_timepoint_timeout(deadline));
+    }
+
+    if(isAwaited && (k_mutex_lock(&wifi_SecureLock, sys_timepoint_timeout(deadline)) == 0))
+    {
+        if(wifi_SecureGeneration != awaitedGeneration)
+        {
+            result = -ECANCELED; /**< A newer Start replaced the awaited operation. */
+        }
+        else if(wifi_SecureState == WIFI_SECURE_COMPLETED)
+        {
+            result = wifi_SecureResult;
+            *cause = wifi_SecureCause;
+        }
+        else
+        {
+            /* Still pending after this call's interval. */
+        }
+
+        (void)k_mutex_unlock(&wifi_SecureLock);
+    }
+
+    return result;
 }
 
 static bool wifi_isSecureConnectionCurrent(uint32_t generation)
@@ -742,6 +1074,7 @@ static int wifi_parseBaseUrl(const char *baseUrl)
     }
 
     uint32_t port = WIFI_SECURE_DEFAULT_PORT;
+    const char *path = hostEnd;
     if(*hostEnd == ':')
     {
         port = 0U;
@@ -755,11 +1088,25 @@ static int wifi_parseBaseUrl(const char *baseUrl)
         {
             return -EINVAL; /**< Invalid port. */
         }
+        path = digit;
+    }
+
+    /* The request line appends "/<resource>", so a trailing '/' of the base path is dropped. */
+    size_t pathLength = strlen(path);
+    if((pathLength > 0U) && (path[pathLength - 1U] == '/'))
+    {
+        pathLength--;
+    }
+    if(pathLength > WIFI_SECURE_BASE_PATH_MAX_LENGTH)
+    {
+        return -EINVAL; /**< Overlong base path. */
     }
 
     (void)memcpy(wifi_SecureHost, host, hostLength);
     wifi_SecureHost[hostLength] = '\0';
     wifi_SecurePort = (uint16_t)port;
+    (void)memcpy(wifi_SecureBasePath, path, pathLength);
+    wifi_SecureBasePath[pathLength] = '\0';
 
     struct net_in_addr literal = {0};
     wifi_SecureHostIsAddress = (net_addr_pton(NET_AF_INET, wifi_SecureHost, &literal) == 0);

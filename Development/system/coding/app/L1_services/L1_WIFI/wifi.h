@@ -32,13 +32,37 @@
 /* DEFINES                                                             */
 /***********************************************************************/
 
-#define WIFI_HOTSPOT_ADDRESS "192.168.4.1"               /**< Device address in the setup hotspot; the page is served here. */
-#define WIFI_SCAN_LIST_SIZE  (16)                        /**< Strongest distinct networks kept per scan. */
-#define WIFI_ADDRESS_SIZE    (sizeof("255.255.255.255")) /**< Text of an IPv4 address with terminator. */
+#define WIFI_HOTSPOT_ADDRESS        "192.168.4.1"                   /**< Device address in the setup hotspot; the page is served here. */
+#define WIFI_SCAN_LIST_SIZE         (16)                            /**< Strongest distinct networks kept per scan. */
+#define WIFI_ADDRESS_SIZE           (sizeof("255.255.255.255"))     /**< Text of an IPv4 address with terminator. */
+#define WIFI_DEVICE_IDENTIFIER_SIZE (sizeof("stetho-AABBCCDDEEFF")) /**< P27-IDENTITY: physical identifier with terminator. */
+#define WIFI_HTTP_BODY_CAPACITY     (4096U)                         /**< P27-BUFFERS: response body bytes kept. */
+#define WIFI_HTTP_LOCATION_SIZE     (512U)                          /**< Longest Location value with terminator; holds a 256-byte base URL, Device id and version. */
 
 /***********************************************************************/
 /* TYPES                                                               */
 /***********************************************************************/
+
+/** One conditional POST to the configured server; every field is borrowed until the exchange completes. */
+struct wifi_http_request
+{
+    const char *resourcePath; /**< Resource type relative to the base path, for example "Device". */
+    const char *condition;    /**< If-None-Exist value, for example from fhir_buildDeviceRegistrationCondition(). */
+    const char *body;         /**< Frozen JSON body; not terminated. */
+    size_t bodyLength;        /**< Bytes in body. */
+};
+
+/** One received response. Valid once its exchange completed with 0. */
+struct wifi_http_response
+{
+    uint16_t status;                        /**< HTTP status code. */
+    bool hasLocation;                       /**< A Location header was present. */
+    char location[WIFI_HTTP_LOCATION_SIZE]; /**< Location value, NUL-terminated; "" when absent. */
+    char body[WIFI_HTTP_BODY_CAPACITY];     /**< Decoded body, not terminated; chunked framing removed. */
+    size_t bodyLength;                      /**< Bytes in body. */
+    bool bodyHasOverflowed;                 /**< The body was longer than WIFI_HTTP_BODY_CAPACITY; body is unusable. */
+    bool keepsConnection;                   /**< The connection may carry the next request. */
+};
 
 /** Network name and password, as entered on the setup page. */
 struct wifi_network
@@ -176,6 +200,22 @@ bool wifi_isConnected(void);
 int wifi_getAddress(char *text, size_t size);
 
 /**
+ * @brief Write this device's physical identifier, "stetho-" plus the factory station MAC.
+ *
+ * The six bytes come from the factory eFuse MAC, never from the runtime link address,
+ * as uppercase hexadecimal without separators, for example "stetho-7CDFA10B2C3D".
+ * Neither connects to a network nor registers a Device.
+ *
+ * @param[out] identifier NUL-terminated identifier; "" on failure when @p size > 0.
+ * @param[in]  size       Size of @p identifier, at least WIFI_DEVICE_IDENTIFIER_SIZE.
+ *
+ * @return 0 on success, -EINVAL for a NULL @p identifier or a @p size below
+ *         WIFI_DEVICE_IDENTIFIER_SIZE, -EIO if the factory MAC cannot be read, or
+ *         -ENODATA if it is all zero or not a unicast address.
+ */
+int wifi_getDeviceIdentifier(char *identifier, size_t size);
+
+/**
  * @brief Start a scan for networks and return at once.
  *
  * Collect the result with wifi_waitForScanResult(). A new scan drops late
@@ -215,9 +255,11 @@ int wifi_waitForScanResult(struct wifi_scan_entry *list, size_t listSize, k_time
  *
  * Give the hotspot interface its fixed IPv4 address and enable the
  * access point. The station stays usable, so wifi_startScan() and
- * wifi_connect() work while the hotspot is open.
+ * wifi_connect() work while the hotspot is open. The hotspot is named
+ * "Stetho-" plus the factory MAC of wifi_getDeviceIdentifier().
  *
- * @return 0 on success, or a negative error code.
+ * @return 0 on success, the error of wifi_getDeviceIdentifier() if there is no
+ *         valid identity, or another negative error code.
  */
 int wifi_startHotspot(void);
 
@@ -351,9 +393,45 @@ int wifi_cancelSecureConnection(void);
  *
  * Requires CONTROL's network lease. No reconnect.
  *
- * @return 0 when closed, including if none is retained, or a negative error code.
+ * @return 0 when closed, including if none is retained; -EBUSY while an exchange
+ *         still uses the retained connection, which wifi_cancelSecureConnection() ends first.
  */
 int wifi_closeSecureConnection(void);
+
+/**
+ * @brief Submit one conditional POST over the retained verified connection without waiting.
+ *
+ * Requires CONTROL's network lease and a retained connection. The worker writes
+ * the request head and the body, then reads one response into @p response.
+ * No reconnect and no retry; the caller owns P13. wifi_cancelSecureConnection()
+ * also cancels a pending exchange.
+ *
+ * @param[in]  request  Request; borrowed with all its fields until the exchange completed.
+ * @param[out] response Result; borrowed until the exchange completed.
+ * @param[in]  deadline End of write and receipt; shared with the caller's budget.
+ *
+ * @return 0 if accepted, -ENOTCONN without a retained connection, -EBUSY while
+ *         an operation is pending, -EINVAL for a NULL pointer or a request whose
+ *         head cannot be built, -ENOENT if no server is configured.
+ */
+int wifi_startSecureExchange(const struct wifi_http_request *request, struct wifi_http_response *response, k_timepoint_t deadline);
+
+/**
+ * @brief Wait for the exchange to complete.
+ *
+ * Terminal completion leaves resources and callbacks quiescent. The connection
+ * stays retained only after 0 with response->keepsConnection and no further
+ * received bytes; every other outcome closes and releases it first.
+ *
+ * @param[in] timeout Maximum wait for this call; does not restart the exchange.
+ *
+ * @return 0 with a complete response of any status; -EAGAIN while pending;
+ *         -ENOTCONN if the server closed or reset before any response byte, so the
+ *         retained connection was stale; -ECONNRESET for transport loss after that;
+ *         -ETIMEDOUT at the deadline; -ECANCELED; -EBADMSG or -EMSGSIZE for an
+ *         unusable response (no receipt); -EINVAL if no exchange was started.
+ */
+int wifi_waitForSecureExchange(k_timeout_t timeout);
 
 #endif /* L1_WIFI_H */
 

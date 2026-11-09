@@ -47,7 +47,7 @@ def integration_executable(host_build_directory):
         APPLICATION / "L2_application/L2_COMMUNICATION",
         *(
             APPLICATION / "L1_services" / name
-            for name in ("L1_WIFI", "L1_PORTAL", "L1_STORAGE")
+            for name in ("L1_WIFI", "L1_PORTAL", "L1_STORAGE", "L1_FHIR")
         ),
     ):
         command += ["-I", str(directory)]
