@@ -13,9 +13,16 @@ import host_build
 HERE = Path(__file__).resolve().parent
 REPOSITORY = HERE.parents[6]
 DESIGN = "Development/system/design/COMMUNICATION/server-communication.md#"
-RECEIPT = DESIGN + "observation-delivery"
+RECEIPT = DESIGN + "observation-construction-and-delivery"
 BUFFERS = DESIGN + "parameters-and-outstanding-evidence"
+HEADER_COUNT = (
+    "; Development/system/coding/app/L1_services/L1_WIFI/wifi_http.h"
+    " (WIFI_HTTP_HEADER_CAPACITY)"
+)
 FRAMING = "https://www.rfc-editor.org/rfc/rfc9112#section-7.1"
+MESSAGE_LENGTH = "https://www.rfc-editor.org/rfc/rfc9112#section-6.3"
+LOCATION_FIELD = "https://www.rfc-editor.org/rfc/rfc9110#section-10.2.2"
+VT_ID = "VT-07, VT-08"
 BODY_CAPACITY = 4096
 LOCATION_SIZE = 512
 
@@ -35,10 +42,17 @@ VENDORED_BLOBS = {
 }
 
 
+@pytest.fixture(scope="module", autouse=True)
+def traceability(request):
+    """Map every case before the module fixtures build the harness, so a build failure keeps it."""
+    for item in request.session.items:
+        if getattr(item, "module", None) is request.module:
+            item.user_properties.append(("vt_id", VT_ID))
+
+
 def test_vendored_parser_matches_the_pinned_zephyr(record_property):
     for name, value in (
         ("scenario", "wifi-http-vendored-parser-pin"),
-        ("vt_id", "VT-07, VT-08"),
         ("basis", "Development/system/testing/ci/toolchain.json (zephyr_revision)"),
         ("expected", "vendored files equal the git blobs of the pinned revision"),
     ):
@@ -111,7 +125,6 @@ def reader(host_build_directory, tmp_path_factory):
 
 def evidence(record_property, scenario, basis, expected):
     record_property("scenario", scenario)
-    record_property("vt_id", "VT-07, VT-08")
     record_property("basis", basis)
     record_property("expected", expected)
 
@@ -340,6 +353,11 @@ def test_close_delimited_body_completes_at_close(reader, record_property):
             id="final-chunk-missing",
         ),
         pytest.param(b"", id="nothing-received"),
+        pytest.param(b"HTTP/1.1 200 OK\r\n", id="status-line-only"),
+        pytest.param(
+            b"HTTP/1.1 200 OK\r\nConnection: close\r\n",
+            id="close-delimited-headers-unterminated",
+        ),
     ],
 )
 def test_truncated_response_is_no_receipt(reader, record_property, data):
@@ -386,6 +404,10 @@ def test_truncated_response_is_no_receipt(reader, record_property, data):
                 ],
             ),
             id="location-twice-other-case",
+        ),
+        pytest.param(
+            response(CREATED, [b"Location:", LOCATION, b"Content-Length: 0"]),
+            id="empty-location-then-location",
         ),
     ],
 )
@@ -539,27 +561,175 @@ def test_body_bound_drains_without_truncation(
             assert fields["body"] == body
 
 
-def test_bytes_behind_the_message_are_not_parsed(reader, record_property):
+FIRST_RESPONSE = response(CREATED, [b"Content-Length: 2"], b"ok")
+BEHIND_FIRST_RESPONSE = FIRST_RESPONSE + response(
+    b"HTTP/1.1 500 Internal Server Error", [b"Content-Length: 0"]
+)
+
+
+def test_bytes_behind_the_message_in_the_same_piece_end_reuse(reader, record_property):
     evidence(
         record_property,
-        "second response behind the first",
-        DESIGN + "observation-delivery",
-        "first only, connection not reused",
+        "second response behind the first, in the same piece",
+        RECEIPT,
+        "first response only; the leftover bytes end reuse, so the connection is closed",
     )
-    first = response(CREATED, [b"Content-Length: 2"], b"ok")
-    data = first + response(
-        b"HTTP/1.1 500 Internal Server Error", [b"Content-Length: 0"]
+    fields = reader(BEHIND_FIRST_RESPONSE, len(BEHIND_FIRST_RESPONSE))
+    assert (fields["result"], fields["status"], fields["body"]) == ("OK", 201, b"ok")
+    assert fields["consumed"] == len(FIRST_RESPONSE)
+    assert fields["keeps"] is False
+
+
+def test_message_end_stops_before_bytes_of_later_pieces(reader, record_property):
+    evidence(
+        record_property,
+        "second response behind the first, pieces of 1",
+        RECEIPT,
+        "first response only, no byte behind it consumed; the reader saw no leftover "
+        "bytes, so the complete keep-alive response leaves the connection reusable",
     )
-    for piece_size in (len(data), 1):
+    fields = reader(BEHIND_FIRST_RESPONSE, 1)
+    assert (fields["result"], fields["status"], fields["body"]) == ("OK", 201, b"ok")
+    assert fields["consumed"] == len(FIRST_RESPONSE)
+    assert fields["keeps"] is True
+
+
+def header_bytes_response(reason_phrase, aggregate):
+    """Fill one header so the reason phrase, names and values total aggregate bytes."""
+    counted = len(reason_phrase) + len(b"Content-Length") + len(b"0")
+    counted += len(b"X-Filler")
+    filler = b"f" * (aggregate - counted)
+    return response(
+        b"HTTP/1.1 201 " + reason_phrase,
+        [b"X-Filler: " + filler, b"Content-Length: 0"],
+    )
+
+
+@pytest.mark.parametrize(
+    "reason_phrase, aggregate, result",
+    [
+        pytest.param(b"Created", 4096, "OK", id="aggregate-4096"),
+        pytest.param(b"Created", 4097, "EMSGSIZE", id="aggregate-4097"),
+        pytest.param(b"", 4096, "OK", id="aggregate-4096-empty-reason-phrase"),
+        pytest.param(b"", 4097, "EMSGSIZE", id="aggregate-4097-empty-reason-phrase"),
+    ],
+)
+def test_header_capacity_boundary(
+    reader, record_property, reason_phrase, aggregate, result
+):
+    evidence(
+        record_property,
+        f"reason phrase, header names and values of {aggregate} bytes",
+        BUFFERS + HEADER_COUNT,
+        f"{result}; reason phrase, names and values count, the status line prefix, "
+        "separators and line ends do not",
+    )
+    data = header_bytes_response(reason_phrase, aggregate)
+    for piece_size in (4096, 1):
+        assert reader(data, piece_size)["result"] == result
+
+
+def test_reason_phrase_counts_against_the_header_capacity(reader, record_property):
+    evidence(
+        record_property,
+        "headers of 4089 bytes and a reason phrase of 8 bytes",
+        BUFFERS + HEADER_COUNT,
+        "EMSGSIZE",
+    )
+    data = header_bytes_response(b"Created", 4096).replace(
+        b" 201 Created\r\n", b" 201 Created!\r\n"
+    )
+    for piece_size in (4096, 1):
+        assert reader(data, piece_size)["result"] == "EMSGSIZE"
+
+
+@pytest.mark.parametrize(
+    "headers",
+    [
+        pytest.param(
+            [b"Transfer-Encoding: chunked", b"Content-Length: 3"],
+            id="transfer-encoding-first",
+        ),
+        pytest.param(
+            [b"Content-Length: 3", b"Transfer-Encoding: chunked"],
+            id="content-length-first",
+        ),
+    ],
+)
+def test_transfer_encoding_with_content_length_is_malformed(
+    reader, record_property, headers
+):
+    evidence(
+        record_property,
+        f"both framings {headers}",
+        MESSAGE_LENGTH + " and " + RECEIPT,
+        "EBADMSG; a response with both framings is handled as an error, no receipt",
+    )
+    data = response(CREATED, headers, chunked(b"a"))
+    for piece_size in (4096, 1):
+        assert reader(data, piece_size)["result"] == "EBADMSG"
+
+
+@pytest.mark.parametrize(
+    "data",
+    [
+        pytest.param(
+            response(CREATED, [b"Content-Length: %d" % 2**64], b"hello"),
+            id="content-length-2-to-the-64",
+        ),
+        pytest.param(
+            response(CREATED, [b"Content-Length: %d" % (2**64 + 5)], b"hello"),
+            id="content-length-wraps-to-5",
+        ),
+        pytest.param(
+            response(CREATED, [b"Content-Length: " + b"9" * 30], b"hello"),
+            id="content-length-30-digits",
+        ),
+        pytest.param(
+            response(
+                CREATED,
+                [b"Transfer-Encoding: chunked"],
+                b"%x\r\na\r\n0\r\n\r\n" % 2**64,
+            ),
+            id="chunk-size-2-to-the-64",
+        ),
+        pytest.param(
+            response(
+                CREATED,
+                [b"Transfer-Encoding: chunked"],
+                b"%x\r\na\r\n0\r\n\r\n" % (2**64 + 1),
+            ),
+            id="chunk-size-wraps-to-1",
+        ),
+    ],
+)
+def test_lengths_beyond_64_bits_are_malformed(reader, record_property, data):
+    evidence(
+        record_property,
+        "length beyond 64 bits",
+        MESSAGE_LENGTH + " and " + FRAMING + " and " + RECEIPT,
+        "EBADMSG; no length is wrapped into a smaller value, no receipt",
+    )
+    for piece_size in (4096, 1):
+        assert reader(data, piece_size)["result"] == "EBADMSG"
+
+
+@pytest.mark.parametrize("value", [b"", b" "], ids=["no-value", "space-only"])
+def test_empty_location_keeps_no_address(reader, record_property, value):
+    evidence(
+        record_property,
+        f"empty Location value {value!r}",
+        LOCATION_FIELD + " and " + RECEIPT,
+        "complete; the empty value is kept as empty, no address is invented",
+    )
+    data = response(CREATED, [b"Location:" + value, b"Content-Length: 0"])
+    for piece_size in (4096, 1):
         fields = reader(data, piece_size)
-        assert (fields["result"], fields["status"], fields["body"]) == (
+        assert (fields["result"], fields["status"], fields["location"]) == (
             "OK",
             201,
-            b"ok",
+            "",
         )
-        assert fields["consumed"] == len(first)
-        expected_keeps = piece_size == 1
-        assert fields["keeps"] == expected_keeps
 
 
 def test_read_after_complete_is_rejected(reader, record_property):
@@ -572,6 +742,10 @@ def test_read_after_complete_is_rejected(reader, record_property):
 
 
 REQUEST = DESIGN + "registration-flow-and-recovery"
+OBSERVATION_REQUEST = (
+    "Development/system/design/system/interfaces-and-behavior.md"
+    "#delivery-clock-and-configuration"
+)
 DEVICE_CONDITION = "identifier=urn%3Astethoscope%3Adevice|stetho-A1B2C3D4E5F6"
 
 
@@ -655,7 +829,7 @@ def test_request_head_layout(request_head, record_property, fields):
     evidence(
         record_property,
         f"request head {fields}",
-        REQUEST,
+        OBSERVATION_REQUEST if fields.get("resource") == "Observation" else REQUEST,
         "exact request line and headers",
     )
     arguments = {

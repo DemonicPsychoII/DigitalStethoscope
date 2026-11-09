@@ -72,9 +72,14 @@ static struct operation tls, exchange;
 static bool retained;
 static struct wifi_http_response *exchange_response;
 static bool exchange_is_observation;
-static int sntp_error;                    /* Set by an sntp_fail event: every later time synchronization fails with it. */
-static int observation_requests;          /* Observation requests of the current job. */
-static char observation_first_body[2048]; /* First request of the job; every retry must repeat it. */
+static int sntp_error; /* Set by an sntp_fail event: every later time synchronization fails with it. */
+static int sntp_uncertainty_microseconds = 1000;
+static int64_t certificate_valid_from_seconds, certificate_valid_until_seconds = INT64_MAX;
+static int server_keep_alive_seconds = 600;
+static int secure_cancel_delay_milliseconds; /* Time a cancellation of pending secure work takes to prove release. */
+static int secure_cancel_failures;           /* Cancellations that cannot prove release, like a P23 stop that fails. */
+static int observation_requests;             /* Observation requests of the current job. */
+static char observation_first_body[2048];    /* First request of the job; every retry must repeat it. */
 static char observation_first_condition[256];
 
 static void trace(const char *kind, int value)
@@ -572,12 +577,15 @@ int wifi_stopDHCPServer(void)
 int wifi_startTimeSynchronization(const char *ntpServer)
 {
     (void)ntpServer;
-    if(server_configured && (sntp_error != 0))
+    if(!server_configured)
+        return -ENOSYS; /**< Not modelled without a server. */
+    trace("sntp_request", 0);
+    if(sntp_error != 0)
     {
         trace("sntp_failed", sntp_error);
         return sntp_error;
     }
-    return server_configured ? 0 : -ENOSYS; /**< Not modelled without a server. */
+    return 0;
 }
 
 int wifi_waitForTimeSynchronization(struct normalised_time *time, k_timeout_t timeout)
@@ -585,7 +593,7 @@ int wifi_waitForTimeSynchronization(struct normalised_time *time, k_timeout_t ti
     (void)timeout;
     if(!server_configured)
         return -ENOSYS; /**< Not modelled without a server. */
-    *time = (struct normalised_time){.utc_seconds = 1794182400U, .receive_monotonic_microseconds = (uint64_t)time_milliseconds * 1000U, .estimated_uncertainty_microseconds = 1000U};
+    *time = (struct normalised_time){.utc_seconds = 1794182400U, .receive_monotonic_microseconds = (uint64_t)time_milliseconds * 1000U, .estimated_uncertainty_microseconds = (uint32_t)sntp_uncertainty_microseconds};
     return 0;
 }
 
@@ -609,7 +617,7 @@ int wifi_configureSecureServer(const char *baseUrl, const char *certificate, siz
     (void)certificateLength;
     if(!server_configured || strcmp(baseUrl, SIMULATION_BASE_URL) != 0)
         return -ENOSYS; /**< Not modelled without a server. */
-    *server = (struct wifi_secure_server){0, INT64_MAX};
+    *server = (struct wifi_secure_server){certificate_valid_from_seconds, certificate_valid_until_seconds};
     return 0;
 }
 
@@ -630,7 +638,17 @@ int wifi_waitForSecureConnection(enum wifi_secure_connection_cause *cause, k_tim
     const int result = wait_result(&tls, timeout);
     if(result != -EAGAIN)
     {
-        *cause = (result == 0) ? WIFI_SECURE_CONNECTION_CAUSE_NONE : WIFI_SECURE_CONNECTION_CAUSE_TCP;
+        /* Causes as L1_WIFI reports them: -ENOENT from DNS without an IPv4 record, -EACCES from rejected trust. */
+        if(result == 0)
+            *cause = WIFI_SECURE_CONNECTION_CAUSE_NONE;
+        else if(result == -ENOENT)
+            *cause = WIFI_SECURE_CONNECTION_CAUSE_RESOLUTION;
+        else if(result == -EACCES)
+            *cause = WIFI_SECURE_CONNECTION_CAUSE_TRUST;
+        else if(result == -ETIMEDOUT)
+            *cause = WIFI_SECURE_CONNECTION_CAUSE_TIMEOUT;
+        else
+            *cause = WIFI_SECURE_CONNECTION_CAUSE_TCP;
         retained = (result == 0);
         trace("tls_result", result);
     }
@@ -642,10 +660,19 @@ int wifi_cancelSecureConnection(void)
     if(tls.pending || exchange.pending)
     {
         trace("secure_cancel", exchange.pending);
+        if(secure_cancel_failures > 0)
+        {
+            secure_cancel_failures--;
+            trace("secure_cancel_failed", -ETIMEDOUT);
+            (void)k_sleep(K_MSEC(1000));
+            return -ETIMEDOUT;
+        }
+        (void)k_sleep(K_MSEC(secure_cancel_delay_milliseconds));
         /* A cancelled exchange leaves no usable connection behind. */
         retained = retained && !exchange.pending;
         tls.pending = false;
         exchange.pending = false;
+        trace("secure_cancel_done", 0);
     }
     return 0;
 }
@@ -878,7 +905,7 @@ int storage_readServerProfile(struct storage_server_profile *serverProfile)
     if(!server_configured)
         return -ENOENT; /**< Erased server profile partition in the host model. */
     snprintf(serverProfile->baseUrl, sizeof(serverProfile->baseUrl), "%s", SIMULATION_BASE_URL);
-    serverProfile->serverKeepAliveSeconds = 600U;
+    serverProfile->serverKeepAliveSeconds = (uint32_t)server_keep_alive_seconds;
     snprintf(serverProfile->certificate, sizeof(serverProfile->certificate), "%s", "-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----\n");
     serverProfile->certificateLength = strlen(serverProfile->certificate);
     return 0;
@@ -988,6 +1015,18 @@ int main(void)
                 registration_read_error = first;
             else if(strcmp(key, "registration_write_failures") == 0)
                 registration_write_failures = first;
+            else if(strcmp(key, "sntp_uncertainty") == 0)
+                sntp_uncertainty_microseconds = first;
+            else if(strcmp(key, "certificate_valid_from") == 0)
+                certificate_valid_from_seconds = first;
+            else if(strcmp(key, "certificate_valid_until") == 0)
+                certificate_valid_until_seconds = first;
+            else if(strcmp(key, "server_keep_alive") == 0)
+                server_keep_alive_seconds = first;
+            else if(strcmp(key, "secure_cancel_delay") == 0)
+                secure_cancel_delay_milliseconds = first;
+            else if(strcmp(key, "secure_cancel_failures") == 0)
+                secure_cancel_failures = first;
             else
                 abort();
         }

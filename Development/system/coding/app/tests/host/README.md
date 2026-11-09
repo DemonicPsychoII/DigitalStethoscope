@@ -50,7 +50,15 @@ Expectations come from [Wi-Fi behavior](../../../../design/WIFI/interfaces-and-b
 [P19/P21/P23/P24](../../../../design/WIFI/parameters.md),
 [system behavior](../../../../design/system/interfaces-and-behavior.md),
 [system parameters](../../../../design/system/parameters.md) and the public
-WIFI, PORTAL, COMMUNICATION and STORAGE interfaces. Requirements and architecture
+WIFI, PORTAL, COMMUNICATION and STORAGE interfaces. The delivery, registration,
+time-synchronization and secure-transport cases follow
+[server communication](../../../../design/COMMUNICATION/server-communication.md),
+[time synchronization](../../../../design/COMMUNICATION/time-synchronization.md),
+[secure transport](../../../../design/COMMUNICATION/secure-transport.md) and the
+[server profile](../../../../design/STORAGE/server-profile.md). The
+[server profile tool cases](server_profile_tool/test_server_profile.py) run the host tool
+with committed public certificates from `generate_certificates.py`; the tests never
+import that generator. Requirements and architecture
 provide traceability; implementation is inspected only to connect the harness to
 real functions, callbacks, resources and secret buffers.
 
