@@ -73,6 +73,245 @@ static void finish_scan(void)
     emit_event(NET_EVENT_WIFI_SCAN_DONE, NULL);
 }
 
+static const char *result_name(int result)
+{
+    static char other[24];
+
+    const struct
+    {
+        int code;
+        const char *name;
+    } names[] = {
+        {0, "0"},
+        {-EAGAIN, "EAGAIN"},
+        {-EBADMSG, "EBADMSG"},
+        {-EBUSY, "EBUSY"},
+        {-ECANCELED, "ECANCELED"},
+        {-EINVAL, "EINVAL"},
+        {-EIO, "EIO"},
+        {-ENOENT, "ENOENT"},
+        {-ENOSYS, "ENOSYS"},
+        {-EPROTO, "EPROTO"},
+        {-ERANGE, "ERANGE"},
+        {-ETIMEDOUT, "ETIMEDOUT"},
+    };
+
+    for(size_t index = 0; index < ARRAY_SIZE(names); index++)
+        if(names[index].code == result)
+            return names[index].name;
+    snprintf(other, sizeof(other), "%d", result);
+    return other;
+}
+
+static const char time_server_name[] = "pool.ntp.org";
+static struct normalised_time untouched_time_sample;
+static int64_t running_cancel_call_milliseconds;
+static int64_t running_cancel_return_milliseconds;
+static int running_cancel_result = 1;
+static int running_start_result = 1;
+static bool late_lookup_answer_is_delivered;
+
+static void model_time_server(enum time_server_lookup lookup)
+{
+    time_server_is_modelled = true;
+    time_worker_is_modelled = true;
+    time_server_lookup = lookup;
+    memset(&untouched_time_sample, 0x5A, sizeof(untouched_time_sample));
+}
+
+static bool run_submitted_work(void)
+{
+    struct k_work *work = submitted_work;
+    submitted_work = NULL;
+    if(work != NULL)
+        work->handler(work);
+    return work != NULL;
+}
+
+/* Runs as another thread would while the worker is blocked between two of its steps for the whole stop bound. */
+static void cancel_while_worker_runs(void)
+{
+    running_cancel_call_milliseconds = time_milliseconds;
+    running_cancel_result = wifi_cancelTimeSynchronization();
+    running_cancel_return_milliseconds = time_milliseconds;
+    running_start_result = wifi_startTimeSynchronization(time_server_name);
+    if(late_lookup_answer_is_delivered)
+    {
+        assert(pending_lookup_callback != NULL);
+        dns_resolve_cb_t callback = pending_lookup_callback;
+        pending_lookup_callback = NULL;
+        answer_time_server_lookup(callback, pending_lookup_context);
+    }
+}
+
+static void cancel_at_next_worker_unlock(void)
+{
+    host_mutex_unlock_hook = cancel_while_worker_runs;
+}
+
+static void print_terminal_wait(const char *prefix)
+{
+    struct normalised_time sample = untouched_time_sample;
+    const int result = wifi_waitForTimeSynchronization(&sample, K_NO_WAIT);
+    printf("%swait_terminal_failure=%d %swait_code=%s %ssample_untouched=%d\n",
+           prefix,
+           (result < 0) && (result != -EAGAIN),
+           prefix,
+           result_name(result),
+           prefix,
+           memcmp(&sample, &untouched_time_sample, sizeof(sample)) == 0);
+}
+
+static void run_time_synchronization_case(const char *scenario, const char *argument)
+{
+    if(strcmp(scenario, "time-start-busy") == 0)
+    {
+        model_time_server(TIME_SERVER_LOOKUP_ANSWERED);
+        const int first = wifi_startTimeSynchronization(time_server_name);
+        printf("first_start=%s ", result_name(first));
+        printf("second_start=%s\n", result_name(wifi_startTimeSynchronization(time_server_name)));
+    }
+    else if(strcmp(scenario, "time-cancel-inactive") == 0)
+    {
+        model_time_server(TIME_SERVER_LOOKUP_ANSWERED);
+        const int first = wifi_cancelTimeSynchronization();
+        const int second = wifi_cancelTimeSynchronization();
+        printf("first_cancel=%s second_cancel=%s cancel_milliseconds=%lld\n", result_name(first), result_name(second), (long long)time_milliseconds);
+    }
+    else if(strcmp(scenario, "time-cancel-before-worker") == 0)
+    {
+        model_time_server(TIME_SERVER_LOOKUP_ANSWERED);
+        time_response_is_queued = true;
+        printf("start=%s ", result_name(wifi_startTimeSynchronization(time_server_name)));
+        const int cancel = wifi_cancelTimeSynchronization();
+        printf("cancel=%s cancel_milliseconds=%lld\n", result_name(cancel), (long long)time_milliseconds);
+        print_terminal_wait("");
+        (void)run_submitted_work();
+        printf("lookups=%d sockets_opened=%d requests=%d\n", time_server_lookups, time_server_sockets_opened, time_requests_sent);
+        print_terminal_wait("after_worker_");
+        printf("restart=%s\n", result_name(wifi_startTimeSynchronization(time_server_name)));
+    }
+    else if(strcmp(scenario, "time-cancel-during-lookup") == 0)
+    {
+        /* Argument: "pending" keeps the query unanswered; "late-answer" answers it during cancellation. */
+        model_time_server(TIME_SERVER_LOOKUP_PENDING);
+        late_lookup_answer_is_delivered = strcmp(argument, "late-answer") == 0;
+        host_time_lookup_hook = cancel_at_next_worker_unlock;
+        printf("start=%s\n", result_name(wifi_startTimeSynchronization(time_server_name)));
+        assert(run_submitted_work());
+        printf("running_cancel_failed=%d running_cancel_code=%s cancel_milliseconds=%lld start_while_cancelling=%s\n",
+               running_cancel_result < 0,
+               result_name(running_cancel_result),
+               (long long)(running_cancel_return_milliseconds - running_cancel_call_milliseconds),
+               result_name(running_start_result));
+        printf("lookup_cancellations=%d sockets_opened=%d requests=%d\n", time_server_lookup_cancellations, time_server_sockets_opened, time_requests_sent);
+        print_terminal_wait("");
+        printf("final_cancel=%s ", result_name(wifi_cancelTimeSynchronization()));
+        printf("restart=%s\n", result_name(wifi_startTimeSynchronization(time_server_name)));
+    }
+    else if(strcmp(scenario, "time-cancel-during-exchange") == 0)
+    {
+        model_time_server(TIME_SERVER_LOOKUP_ANSWERED);
+        time_response[0] = (uint8_t)((0U << 6) | (4U << 3) | 4U);
+        time_response[1] = 1U;
+        time_response_is_queued = true;
+        time_response_arrival_milliseconds = 50;
+        host_time_request_hook = cancel_at_next_worker_unlock;
+        printf("start=%s\n", result_name(wifi_startTimeSynchronization(time_server_name)));
+        assert(run_submitted_work());
+        printf("running_cancel_failed=%d running_cancel_code=%s cancel_milliseconds=%lld start_while_cancelling=%s\n",
+               running_cancel_result < 0,
+               result_name(running_cancel_result),
+               (long long)(running_cancel_return_milliseconds - running_cancel_call_milliseconds),
+               result_name(running_start_result));
+        printf("requests=%d responses_parsed=%d sockets_closed=%d\n", time_requests_sent, time_response_parse_calls, time_server_sockets_closed);
+        print_terminal_wait("");
+        printf("final_cancel=%s ", result_name(wifi_cancelTimeSynchronization()));
+        printf("restart=%s\n", result_name(wifi_startTimeSynchronization(time_server_name)));
+    }
+    else if(strcmp(scenario, "time-single-request") == 0)
+    {
+        /* Argument: "<arrival milliseconds or none> <native seconds> <native fraction> <native uncertainty>". */
+        char arrival[16] = "";
+        unsigned long long seconds = 0;
+        unsigned fraction = 0;
+        unsigned uncertainty = 0;
+        assert(sscanf(argument, "%15s %llu %u %u", arrival, &seconds, &fraction, &uncertainty) == 4);
+        model_time_server(TIME_SERVER_LOOKUP_ANSWERED);
+        time_response_native = (struct sntp_time){.seconds = seconds, .fraction = fraction, .uncertainty_us = uncertainty};
+        time_response[0] = (uint8_t)((0U << 6) | (4U << 3) | 4U);
+        time_response[1] = 2U;
+        time_response_is_queued = strcmp(arrival, "none") != 0;
+        time_response_arrival_milliseconds = atoll(arrival);
+        printf("start=%s\n", result_name(wifi_startTimeSynchronization(time_server_name)));
+        assert(run_submitted_work());
+        const struct net_in_addr *address = &time_server_socket_address.sin_addr;
+        printf("lookup_name=%s server_address=%u.%u.%u.%u server_port=%u requests=%d\n",
+               time_server_lookup_name,
+               address->s4_addr[0],
+               address->s4_addr[1],
+               address->s4_addr[2],
+               address->s4_addr[3],
+               (unsigned)net_htons(time_server_socket_address.sin_port),
+               time_requests_sent);
+        struct normalised_time sample = untouched_time_sample;
+        const int result = wifi_waitForTimeSynchronization(&sample, K_NO_WAIT);
+        printf("wait=%s wait_terminal_failure=%d sample_untouched=%d\n",
+               result_name(result),
+               (result < 0) && (result != -EAGAIN),
+               memcmp(&sample, &untouched_time_sample, sizeof(sample)) == 0);
+        if(result == 0)
+            printf("utc_seconds=%llu utc_fraction_nanoseconds=%u receive_monotonic_microseconds=%llu uncertainty_microseconds=%u\n",
+                   (unsigned long long)sample.utc_seconds,
+                   sample.utc_fraction_nanoseconds,
+                   (unsigned long long)sample.receive_monotonic_microseconds,
+                   sample.estimated_uncertainty_microseconds);
+        struct normalised_time repeated = untouched_time_sample;
+        const int repeated_result = wifi_waitForTimeSynchronization(&repeated, K_SECONDS(1));
+        printf("repeated_wait_same=%d requests_after_waits=%d\n",
+               (repeated_result == result) && ((result != 0) || (memcmp(&repeated, &sample, sizeof(sample)) == 0)),
+               time_requests_sent);
+    }
+    else if(strcmp(scenario, "time-apply") == 0)
+    {
+        /* Argument: "<UTC seconds> <fraction nanoseconds> <receive microseconds> <apply milliseconds> <uncertainty microseconds> <ok|EIO>". */
+        unsigned long long seconds = 0;
+        unsigned fraction = 0;
+        unsigned long long receive = 0;
+        long long apply_milliseconds = 0;
+        unsigned uncertainty = 0;
+        char clock_result[8] = "";
+        assert(sscanf(argument, "%llu %u %llu %lld %u %7s", &seconds, &fraction, &receive, &apply_milliseconds, &uncertainty, clock_result) == 6);
+        clock_set_result = (strcmp(clock_result, "ok") == 0) ? 0 : -EIO; /**< Real-time clock rejects the set in the host model. */
+        time_milliseconds = apply_milliseconds;
+        const struct normalised_time sample = {
+            .utc_seconds = seconds,
+            .utc_fraction_nanoseconds = fraction,
+            .receive_monotonic_microseconds = receive,
+            .estimated_uncertainty_microseconds = uncertainty,
+        };
+        struct applied_time_anchor anchor;
+        memset(&anchor, 0x5A, sizeof(anchor));
+        struct applied_time_anchor untouched_anchor = anchor;
+        const int result = wifi_applyTimeSynchronization(&sample, &anchor);
+        printf("apply=%s clock_set_calls=%d clock_is_realtime=%d clock_seconds=%lld clock_nanoseconds=%ld anchor_untouched=%d\n",
+               result_name(result),
+               clock_set_calls,
+               clock_set_clock == SYS_CLOCK_REALTIME,
+               (long long)clock_set_time.tv_sec,
+               clock_set_time.tv_nsec,
+               memcmp(&anchor, &untouched_anchor, sizeof(anchor)) == 0);
+        if(result == 0)
+            printf("anchor_seconds=%llu anchor_fraction_nanoseconds=%u anchor_monotonic_microseconds=%llu anchor_uncertainty_microseconds=%u\n",
+                   (unsigned long long)anchor.utc_seconds,
+                   anchor.utc_fraction_nanoseconds,
+                   (unsigned long long)anchor.applied_monotonic_microseconds,
+                   anchor.estimated_uncertainty_microseconds);
+    }
+    else
+        abort();
+}
+
 static void run_wifi_case(const char *scenario, const char *argument)
 {
     struct wifi_network network = {"selected-network", "test-password"};
@@ -416,6 +655,8 @@ static void run_wifi_case(const char *scenario, const char *argument)
         }
         printf("%d %d\n", result == 0, time_response_parse_calls);
     }
+    else if(strncmp(scenario, "time-", 5) == 0)
+        run_time_synchronization_case(scenario, argument);
     else
         abort();
 }
@@ -637,6 +878,54 @@ static void run_portal_case(const char *scenario, const char *argument)
         abort();
 }
 
+static void print_hexadecimal(const char *name, const char *text, size_t length)
+{
+    printf("%s=", name);
+    for(size_t index = 0; index < length; index++)
+        printf("%02x", (unsigned char)text[index]);
+    printf("\n");
+}
+
+static void run_storage_case(const char *scenario, const char *argument)
+{
+    if(strcmp(scenario, "server-profile") != 0)
+        abort();
+    /* Argument: "erased", "null" or "<image file> [<read error offset>]". */
+    static struct storage_server_profile profile;
+    char path[512] = "";
+    long long error_offset = -1;
+    const int fields = sscanf(argument, "%511s %lld", path, &error_offset);
+    assert(fields >= 1);
+    if(strcmp(path, "erased") != 0 && strcmp(path, "null") != 0)
+    {
+        FILE *file = fopen(path, "rb");
+        assert(file != NULL);
+        host_server_profile_image_length = fread(host_server_profile_image, 1, sizeof(host_server_profile_image), file);
+        assert(feof(file) && !ferror(file));
+        fclose(file);
+    }
+    if(fields == 2)
+    {
+        host_flash_read_error_offset = (off_t)error_offset;
+        host_flash_read_error = -EIO; /**< Flash driver read failure in the host model. */
+    }
+    memset(&profile, 0x5A, sizeof(profile));
+    const int result = storage_readServerProfile((strcmp(path, "null") == 0) ? NULL : &profile);
+    printf("result=%s cleared=%d\n", result_name(result), is_zero(&profile, sizeof(profile)));
+    if(result == 0)
+    {
+        const size_t base_url_length = strnlen(profile.baseUrl, sizeof(profile.baseUrl));
+        const size_t certificate_length = strnlen(profile.certificate, sizeof(profile.certificate));
+        printf("base_url_terminated=%d certificate_terminated=%d certificate_length=%zu keep_alive=%u\n",
+               base_url_length < sizeof(profile.baseUrl),
+               certificate_length < sizeof(profile.certificate),
+               profile.certificateLength,
+               (unsigned)profile.serverKeepAliveSeconds);
+        print_hexadecimal("base_url", profile.baseUrl, base_url_length);
+        print_hexadecimal("certificate", profile.certificate, certificate_length);
+    }
+}
+
 int main(int argument_count, char **arguments)
 {
     assert(argument_count >= 3);
@@ -653,6 +942,8 @@ int main(int argument_count, char **arguments)
         run_wifi_case(arguments[2], argument);
     else if(strcmp(arguments[1], "portal") == 0)
         run_portal_case(arguments[2], argument);
+    else if(strcmp(arguments[1], "storage") == 0)
+        run_storage_case(arguments[2], argument);
     else
         abort();
     return 0;

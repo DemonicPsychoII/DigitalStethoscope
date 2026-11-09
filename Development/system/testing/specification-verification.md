@@ -4,8 +4,8 @@ This AI-generated system verification catalogue derives cases from the agreed re
 
 ## Current state and target
 
-The catalogue defines the target cases. The [Wi-Fi/portal L2 batch](../coding/app/tests/host/README.md) covers the communication design with production L2 and controlled L1 services. The [host integration batch](../coding/app/tests/host/integration/README.md) also connects real L2 and L1 services at the Zephyr API boundary. At this head the host suites contain no strict expected failures, so no known
-implementation defect is recorded as an XFAIL. Other cases still need a test or procedure reference, as listed below. Recorded results apply to their identified source and configuration. Full device acceptance remains pending.
+The catalogue defines the target cases. The [Wi-Fi/portal L2 batch](../coding/app/tests/host/README.md) covers the communication design with production L2 and controlled L1 services. The [host integration batch](../coding/app/tests/host/integration/README.md) also connects real L2 and L1 services at the Zephyr API boundary. At this head one strict expected failure records a known
+implementation defect: a DNS answer without an IPv4 record ends a delivery terminally instead of being retried ([GitHub #131](https://github.com/DemonicPsychoII/DigitalStethoscope/issues/131) / [TICKET-220](https://nfrie.atlassian.net/browse/TICKET-220)). Other cases still need a test or procedure reference, as listed below. Recorded results apply to their identified source and configuration. Full device acceptance remains pending.
 
 ## System acceptance
 
@@ -45,7 +45,11 @@ VT-07 and VT-08 are partly covered, on the host only:
 
 - **Host unit evidence:** the [L1_FHIR host suite](../coding/app/tests/host/l1_fhir/test_fhir.py) checks the Device and Observation serializers, both conditional-create conditions and the validation of registration responses. This includes malformed and partial responses and two responses captured from the lab HAPI server.
 - **HTTP reader evidence:** the [HTTP reader suite](../coding/app/tests/host/l1_wifi_http/test_wifi_http.py) runs in static CI against a vendored copy of the pinned Zephyr `http_parser`. A test checks that copy against the pin.
-- **Host-simulation evidence:** the [delivery scenarios](../coding/app/tests/host/test_delivery.py) cover the L2 workflow under P13 in simulated time. They check the identical retry after a lost receipt or a server error, the four-attempt limit, the 2 s gap, the 1 s receipt cancel and no request after the deadline.
+- **Host-simulation evidence:** the [delivery scenarios](../coding/app/tests/host/test_delivery.py) cover the L2 workflow under P13 in simulated time. They check the identical retry after a lost receipt or a server error, the four-attempt limit, the 2 s gap measured after the cancellation released the attempt, the 1 s receipt cancel, the 3 s setup budget, fewer attempts when a gap would use up the remaining budget, release by the global deadline, terminal certificate failures, retried malformed or oversized receipts, keep-alive replacement without using an attempt, `WIFI_CLEANUP_FAILURE` instead of a retry, and no request after the deadline. The P25 cases check one SNTP exchange before every TLS setup and none on a reused connection, the 12.5 h mapping limit, a stale anchor replaced by the delivery-setup clock, the 100 ms uncertainty budget and no time or transport work while listening. The DNS case for #131 is a strict expected failure.
+- **Time synchronization (L1):** the [L1_WIFI time cases](../coding/app/tests/host/l1_wifi/test_wifi.py) check response rejection, one request without resend, busy Start, idempotent and bounded Cancel, late DNS answers or responses after Cancel, native units and clock application with carry.
+- **Secure transport (L2):** the [delivery scenarios](../coding/app/tests/host/test_delivery.py) also cover Idle preparation: cancellation at the P26 10 s attempt budget, the 60 s gap after a failure or an interrupting Start, one `SERVER_CONNECTION_FAILURE` per episode, certificate validity checked before the handshake and the device keep-alive. The TLS worker (`wifi_secure_connection.c`) is not built on the host; its handshake, write, read and cancellation paths remain target evidence.
+- **Server profile:** the [server profile tool cases](../coding/app/tests/host/server_profile_tool/test_server_profile.py) check the deployment-file, URL and certificate rules, the image layout and CRC, the partition check and the commands. The [STORAGE reader cases](../coding/app/tests/host/l1_storage/test_storage.py) check valid, erased and corrupted images against the design layout.
+- **Open design question:** whether a response that completes in the read crossing the deadline counts as a receipt ([GitHub #130](https://github.com/DemonicPsychoII/DigitalStethoscope/issues/130) / [TICKET-219](https://nfrie.atlassian.net/browse/TICKET-219)). No case asserts either behavior.
 - **Still open for VT-07 (TICKET-181, TICKET-209), on the target:**
   - The P13 budgets measured on the board.
   - The server-requested examination.
@@ -53,10 +57,12 @@ VT-07 and VT-08 are partly covered, on the host only:
   - Before acceptance, freeze the clock reference, synchronization evidence and allowed measurement-end timestamp skew. Use REQ-06 for value accuracy; the delivery deadline does not define timestamp accuracy.
 - **Still open for VT-08 (TICKET-180), on the target:** TLS, socket and timeout fault cases in the mbedTLS exchange worker.
 
+VT-09 and VT-11 are partly covered, on the host only, for time synchronization and the server profile. The L1 time cases check rejected responses, bounded cancellation and late results; the STORAGE reader rejects corrupted images; the server profile tool rejects private keys and other PEM labels (VT-11). Fault containment across the other components and the evidence and privacy procedure still need to be added.
+
 VT-15 is partly covered, on the host only:
 
 - **Host unit evidence:** the [L1_WIFI identity tests](../coding/app/tests/host/l1_wifi/test_wifi_identity.py) check the physical identifier derived from the factory MAC. The L1_FHIR suite checks the encoding and decoding of the registration record.
-- **Host-simulation evidence:** the [registration scenarios](../coding/app/tests/host/test_registration.py) cover reuse of a stored record, conditional registration, save failure and the recovery gap.
+- **Host-simulation evidence:** the [registration scenarios](../coding/app/tests/host/test_registration.py) cover reuse of a stored record, conditional registration, save failure, the recovery gap, and that interrupted attempts and missing prerequisites do not count toward the failure limit.
 - **Still open, on the authorized DevKit with the lab HAPI server:**
   - Reuse across three restarts.
   - Exactly one Device on the server.
@@ -78,9 +84,7 @@ The [documentation check](ci/validate_docs.py) requires each VT ID to occur in a
 - VT-03: Not yet covered — application DSP (digital signal processing) cases need to be added. Before final REQ-03 acceptance, the filter study (TICKET-189 / design decision D06) must freeze the listening coefficients, tone frequencies and expected pass/attenuated classifications in the run configuration. No approved study result or quantitative attenuation threshold exists in this baseline; that filter demonstration remains blocked. REQ-03 is an audible selector/filter demonstration, not a filter-superiority claim.
 - VT-04: Not yet covered — control and input cases need to be added.
 - VT-06: Not yet covered — BPM (beats per minute) session cases need to be added. Freeze signal-validity criteria and reference selection before recording or excluding sessions; REQ-06 acceptance is blocked until then (TICKET-208).
-- VT-09: Not yet covered — fault containment cases need to be added.
 - VT-10: Not yet covered — filter comparison procedure needs to be added.
-- VT-11: Not yet covered — evidence and privacy procedure needs to be added.
 - VT-12: Not yet covered — electrical inspection procedure needs to be added.
 
 VT-14 host cases are in [the communication batch](../coding/app/tests/host/test_communication.py). Target-only radio, phone/QR/page, restart persistence, retained-station audio and private-log checks are covered by the [Wi-Fi procedure](WIFI/VT-14-target.md) and [portal procedure](PORTAL/VT-14-target.md). Both procedures are unexecuted; target results remain pending (TICKET-182).

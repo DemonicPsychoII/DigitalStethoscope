@@ -16,7 +16,9 @@ READY_STORED = "Device registration ready: Device/7400"
 READY_NEW = "Device registration ready: Device/7501"
 FAILURE = "DEVICE_REGISTRATION_FAILURE"
 ENOTCONN = -107
+ECONNREFUSED = -111
 EIO = -5
+UNAVAILABLE = "registration unavailable until restart"
 
 
 @pytest.fixture
@@ -157,7 +159,7 @@ def test_stale_retained_connection_is_replaced_within_the_attempt(
     evidence(
         record_property,
         "stale connection",
-        DESIGN + "observation-delivery",
+        DESIGN + "observation-construction-and-delivery",
         "reconnect and send again inside the same attempt, without an alert",
     )
     trace = simulate(plan("tls", [0, 0]) + plan("exchange", [ENOTCONN, 201]))
@@ -277,6 +279,59 @@ def test_transport_failure_defers_registration(simulate, record_property):
     assert trace.count("exchange") == 0
     assert "SERVER_CONNECTION_FAILURE" in trace.production_log
     assert FAILURE not in trace.production_log
+
+
+def log_times(trace, text):
+    return [
+        int(line.partition(" ")[0])
+        for line in trace.production_log.splitlines()
+        if text in line
+    ]
+
+
+def test_interrupted_attempt_does_not_count_toward_the_failure_limit(
+    simulate, record_property
+):
+    evidence(
+        record_property,
+        "Start interrupts the first attempt, then only 503",
+        FLOW,
+        "interrupted attempt waits 60 s but is not counted: four failed attempts follow "
+        "(gaps 60 s, 120 s, 240 s), then unavailable until restart",
+    )
+    script = plan("exchange", [201], delay=5_000) + plan("exchange", [503] * 5)
+    script += "event 1000 start 0\nevent 2000 stop 0\n"
+    trace = simulate(script, until=1_000_000)
+    cancel = trace.times("secure_cancel")[0]
+    assert cancel <= 1_000 + 200
+    requests = trace.times("exchange")
+    assert len(requests) == 5
+    assert requests[1] - trace.times("secure_cancel_done")[0] >= RETRY
+    failures = trace.times("exchange_result")
+    assert len(failures) == 4
+    for failure, next_request, gap in zip(
+        failures, requests[2:], [RETRY, 2 * RETRY, 4 * RETRY]
+    ):
+        assert gap <= next_request - failure <= gap + 1_000
+    assert log_times(trace, UNAVAILABLE)[0] >= requests[-1]
+
+
+def test_missing_prerequisites_consume_no_attempt(simulate, record_property):
+    evidence(
+        record_property,
+        "transport unverified for 60 s, then only 503",
+        FLOW,
+        "no attempt while verified TLS is missing; afterwards all four failed attempts "
+        "remain, then unavailable until restart",
+    )
+    script = plan("tls", [ECONNREFUSED, 0]) + plan("exchange", [503] * 5)
+    trace = simulate(script, until=1_000_000)
+    verified = log_times(trace, "Server connection verified")[0]
+    requests = trace.times("exchange")
+    assert len(requests) == 4
+    assert requests[0] >= verified
+    assert_retry_gaps(trace, [RETRY, 2 * RETRY, 4 * RETRY])
+    assert log_times(trace, UNAVAILABLE)[0] >= requests[-1]
 
 
 def test_without_server_profile_nothing_is_read_or_sent(simulate, record_property):

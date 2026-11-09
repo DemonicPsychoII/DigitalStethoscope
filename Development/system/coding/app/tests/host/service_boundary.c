@@ -66,7 +66,35 @@ static bool time_response_is_queued;
 static int64_t time_response_arrival_milliseconds;
 static uint32_t time_query_timeout_milliseconds = UINT32_MAX;
 static int time_response_parse_calls;
-static const struct sntp_time time_response_native = {.seconds = 1793836800U, .fraction = 250000U, .uncertainty_us = 50000U};
+static struct sntp_time time_response_native = {.seconds = 1793836800U, .fraction = 250000U, .uncertainty_us = 50000U};
+static int time_server_sockets_opened;
+static int time_server_sockets_closed;
+static int time_requests_sent;
+static struct net_sockaddr_in time_server_socket_address;
+static void (*host_time_request_hook)(void);
+/* Scenarios that run the submitted worker themselves; all others keep the failing submission. */
+static bool time_worker_is_modelled;
+static struct k_work *submitted_work;
+
+enum time_server_lookup
+{
+    TIME_SERVER_LOOKUP_UNMODELLED,
+    TIME_SERVER_LOOKUP_ANSWERED,
+    TIME_SERVER_LOOKUP_PENDING
+};
+static enum time_server_lookup time_server_lookup;
+static const struct net_in_addr time_server_address = {{192, 0, 2, 123}};
+static char time_server_lookup_name[64];
+static int time_server_lookups;
+static int time_server_lookup_cancellations;
+static dns_resolve_cb_t pending_lookup_callback;
+static void *pending_lookup_context;
+static void (*host_time_lookup_hook)(void);
+
+static int clock_set_result = -ENOSYS; /**< Not modelled unless a scenario selects a result. */
+static int clock_set_calls;
+static int clock_set_clock;
+static struct timespec clock_set_time;
 
 static void emit_event(uint64_t event, const void *information)
 {
@@ -274,7 +302,7 @@ uint32_t k_event_wait(struct k_event *event, uint32_t mask, bool reset, k_timeou
     return (event->events & mask);
 }
 
-/* No time synchronization worker runs on the host: Start fails at submission, so the scenarios keep their traces and timing. */
+/* No time synchronization worker runs on the host unless a scenario models it: otherwise Start fails at submission, so the scenarios keep their traces and timing. */
 void k_work_init(struct k_work *work, k_work_handler_t handler)
 {
     work->handler = handler;
@@ -292,8 +320,12 @@ void k_work_queue_start(struct k_work_q *queue, char *stack, size_t size, int pr
 int k_work_submit_to_queue(struct k_work_q *queue, struct k_work *work)
 {
     (void)queue;
-    (void)work;
-    return -ENODEV; /**< No work queue thread in the host model. */
+    if(!time_worker_is_modelled)
+        return -ENODEV; /**< No work queue thread in the host model. */
+    /* Zephyr returns 0 for work that is already queued and 1 for newly queued work. */
+    int result = (submitted_work == work) ? 0 : 1;
+    submitted_work = work;
+    return result;
 }
 
 int64_t k_uptime_ticks(void)
@@ -355,19 +387,21 @@ int wifi_waitForSecureExchange(k_timeout_t timeout)
 
 int sys_clock_settime(int clock, const struct timespec *time)
 {
-    (void)clock;
-    (void)time;
-    return -ENOSYS; /**< Not modelled by this host substitute. */
+    clock_set_calls++;
+    clock_set_clock = clock;
+    clock_set_time = *time;
+    return clock_set_result;
 }
 
 int sntp_init(struct sntp_ctx *context, const struct net_sockaddr *address, net_socklen_t length)
 {
-    (void)address;
     (void)length;
     int result = -ENOSYS; /**< Not modelled by this host substitute. */
     if(time_server_is_modelled)
     {
         context->sock.fd = 7;
+        time_server_sockets_opened++;
+        time_server_socket_address = *net_sin(address);
         result = 0;
     }
     return result;
@@ -392,12 +426,22 @@ int sntp_recv_response(struct sntp_ctx *context, uint32_t timeout, struct sntp_t
 int sntp_query(struct sntp_ctx *context, uint32_t timeout, struct sntp_time *time)
 {
     time_query_timeout_milliseconds = timeout;
+    time_requests_sent++;
+    if(host_time_request_hook != NULL)
+    {
+        void (*callback)(void) = host_time_request_hook;
+        host_time_request_hook = NULL;
+        callback();
+    }
     return sntp_recv_response(context, timeout, time);
 }
 
 void sntp_close(struct sntp_ctx *context)
 {
     (void)context;
+    time_server_sockets_closed++;
+    /* Closing the socket discards a datagram that has not been received. */
+    time_response_is_queued = false;
 }
 
 int zsock_setsockopt(int socket, int level, int option, const void *value, net_socklen_t length)
@@ -451,15 +495,42 @@ ssize_t zsock_recv(int socket, void *buffer, size_t length, int flags)
     return (ssize_t)copied;
 }
 
+static void answer_time_server_lookup(dns_resolve_cb_t callback, void *context)
+{
+    struct dns_addrinfo information = {.ai_family = NET_AF_INET};
+    struct net_sockaddr_in *address = net_sin(&information.ai_addr);
+    address->sin_family = NET_AF_INET;
+    address->sin_addr = time_server_address;
+    callback(DNS_EAI_INPROGRESS, &information, context);
+    callback(DNS_EAI_ALLDONE, NULL, context);
+}
+
 int dns_get_addr_info(const char *query, enum dns_query_type type, uint16_t *identifier, dns_resolve_cb_t callback, void *context, int32_t timeout)
 {
-    (void)query;
-    (void)type;
-    (void)identifier;
-    (void)callback;
-    (void)context;
     (void)timeout;
-    return -ENOSYS; /**< Not modelled by this host substitute. */
+    if(time_server_lookup == TIME_SERVER_LOOKUP_UNMODELLED)
+        return -ENOSYS; /**< Not modelled by this host substitute. */
+    assert(type == DNS_QUERY_TYPE_A && strlen(query) < sizeof(time_server_lookup_name));
+    strcpy(time_server_lookup_name, query);
+    time_server_lookups++;
+    *identifier = 1U;
+    if(time_server_lookup == TIME_SERVER_LOOKUP_ANSWERED)
+    {
+        /* The resolver answers cached and numeric names inline. */
+        answer_time_server_lookup(callback, context);
+    }
+    else
+    {
+        pending_lookup_callback = callback;
+        pending_lookup_context = context;
+    }
+    if(host_time_lookup_hook != NULL)
+    {
+        void (*hook)(void) = host_time_lookup_hook;
+        host_time_lookup_hook = NULL;
+        hook();
+    }
+    return 0;
 }
 
 int dns_cancel_addr_info_with_name(const char *query, enum dns_query_type type, uint16_t identifier)
@@ -467,7 +538,11 @@ int dns_cancel_addr_info_with_name(const char *query, enum dns_query_type type, 
     (void)query;
     (void)type;
     (void)identifier;
-    return -ENOENT; /**< No query was submitted. */
+    if(pending_lookup_callback == NULL)
+        return -ENOENT; /**< No query is held by the resolver. */
+    time_server_lookup_cancellations++;
+    pending_lookup_callback = NULL;
+    return 0;
 }
 
 int http_server_start(void)

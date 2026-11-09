@@ -31,7 +31,9 @@ def host_test_level(request, record_property):
     path = Path(str(request.node.fspath))
     if "integration" in path.parts:
         level = "integration"
-    elif path.parent.name.startswith("l1_"):
+    elif (
+        path.parent.name.startswith("l1_") or path.parent.name == "server_profile_tool"
+    ):
         level = "unit"
     else:
         level = "l2"
