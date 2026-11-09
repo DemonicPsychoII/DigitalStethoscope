@@ -300,6 +300,9 @@ static void communication_prepareTransportInIdle(void);
 /** @brief Close the retained connection once its idle time reaches the device keep-alive timeout. */
 static void communication_closeIdleSecureConnection(void);
 
+/** @brief Whether a request may use the retained connection instead of a new setup with its own SNTP exchange. */
+static bool communication_isRetainedConnectionReusable(void);
+
 /**
  * @brief Time until the next Idle transport duty.
  * @param[in] limit Longest wait the caller allows.
@@ -1246,6 +1249,12 @@ static void communication_closeIdleSecureConnection(void)
     }
 }
 
+static bool communication_isRetainedConnectionReusable(void)
+{
+    /* Listening defers the idle close, so a request right after Stop can find a connection past its keep-alive or clock limit. */
+    return (communication_SecureConnectionIsRetained && !sys_timepoint_expired(communication_SecureConnectionIdleDeadline));
+}
+
 static void communication_loadRegistration(void)
 {
     int identityResult = 0;
@@ -1365,7 +1374,7 @@ static int communication_postDeviceRegistration(k_timepoint_t deadline)
     enum fhir_response_cause cause = FHIR_RESPONSE_CAUSE_NONE;
     int result = 0;
 
-    if(!communication_SecureConnectionIsRetained)
+    if(!communication_isRetainedConnectionReusable())
     {
         result = communication_prepareSecureConnection(deadline);
     }
@@ -1631,7 +1640,7 @@ static int communication_attemptDelivery(k_timepoint_t deadline)
     int setupResult = 0;
     int result = 0;
 
-    if(!isTerminal && !communication_SecureConnectionIsRetained)
+    if(!isTerminal && !communication_isRetainedConnectionReusable())
     {
         setupResult = communication_prepareSecureConnection(communication_limitDeadline(deadline, K_MSEC(COMMUNICATION_DELIVERY_SETUP_TIMEOUT_MS)));
     }
