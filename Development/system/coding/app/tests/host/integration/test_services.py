@@ -1,12 +1,11 @@
 """VT-14 real COMMUNICATION, WIFI, PORTAL and STORAGE at the Zephyr boundary."""
 
-import os
 from pathlib import Path
-import shlex
 import subprocess
-import sys
 
 import pytest
+
+import host_build
 
 HERE = Path(__file__).resolve().parent
 APPLICATION = HERE.parents[2]
@@ -14,52 +13,18 @@ APPLICATION = HERE.parents[2]
 
 @pytest.fixture(scope="session")
 def integration_executable(host_build_directory):
-    if sys.platform == "win32":
-        executable_name = "integration.exe"
-    else:
-        executable_name = "integration"
-    target = host_build_directory("integration", "services") / executable_name
-    (target.parent / "portal.html.inc").write_text(
-        ",".join(
-            str(value)
-            for value in (
-                APPLICATION / "L1_services/L1_PORTAL/portal.html"
-            ).read_bytes()
-        )
-        + ",\n"
-    )
-    compiler = shlex.split(os.environ.get("CC", "gcc"))
-    command = compiler + [
-        "-std=c11",
-        "-D_POSIX_C_SOURCE=200809L",
-        "-Wall",
-        "-Wextra",
-        "-Werror",
-        "-g",
-    ]
-    if os.environ.get("STETHO_COVERAGE_DIRECTORY"):
-        command += ["--coverage", "-O0"]
-    if os.environ.get("STETHO_SANITIZERS", "").lower() == "true":
-        command += ["-fsanitize=address,undefined", "-fno-sanitize-recover=all"]
-    for directory in (
-        HERE.parent / "include",
-        target.parent,
-        APPLICATION / "L2_application/L2_COMMUNICATION",
-        *(
-            APPLICATION / "L1_services" / name
-            for name in ("L1_WIFI", "L1_PORTAL", "L1_STORAGE", "L1_FHIR")
-        ),
-    ):
-        command += ["-I", str(directory)]
-    command += [str(HERE / "harness.c"), "-o", str(target)]
-    result = subprocess.run(command, capture_output=True, text=True, timeout=120)
-    assert result.returncode == 0, result.stdout + result.stderr
-    return (
-        target,
-        command,
-        subprocess.check_output(
-            compiler + ["--version"], text=True, timeout=30
-        ).splitlines()[0],
+    return host_build.build(
+        host_build_directory("integration", "services"),
+        "integration",
+        [HERE / "harness.c"],
+        [
+            APPLICATION / "L2_application/L2_COMMUNICATION",
+            *(
+                APPLICATION / "L1_services" / name
+                for name in ("L1_WIFI", "L1_PORTAL", "L1_STORAGE", "L1_FHIR")
+            ),
+        ],
+        embed_portal_page=True,
     )
 
 
@@ -80,7 +45,7 @@ def integration_executable(host_build_directory):
     ),
 )
 def test_real_services(scenario, integration_executable, record_property):
-    target, command, compiler = integration_executable
+    integration_executable.record_identity(record_property)
     for name, value in (
         ("scenario", "integration-" + scenario),
         ("vt_id", "VT-14"),
@@ -88,18 +53,13 @@ def test_real_services(scenario, integration_executable, record_property):
             "basis",
             "Development/system/design/COMMUNICATION/interfaces-and-behavior.md#wi-fi-setup-and-recovery",
         ),
-        ("compiler_version", compiler),
-        ("compiler_command", subprocess.list2cmdline(command)),
-        (
-            "source_revision",
-            subprocess.check_output(
-                ["git", "rev-parse", "HEAD"], cwd=HERE, text=True, timeout=30
-            ).strip(),
-        ),
     ):
         record_property(name, value)
     result = subprocess.run(
-        [str(target), scenario], capture_output=True, text=True, timeout=10
+        [str(integration_executable.path), scenario],
+        capture_output=True,
+        text=True,
+        timeout=10,
     )
     record_property("service_trace", result.stdout)
     record_property("service_error", result.stderr)
