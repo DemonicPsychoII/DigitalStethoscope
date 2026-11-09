@@ -2,13 +2,12 @@
 
 from datetime import datetime, timedelta, timezone
 import json
-import os
 from pathlib import Path
-import shlex
 import subprocess
-import sys
 
 import pytest
+
+import host_build
 
 HERE = Path(__file__).resolve().parent
 DESIGN = "Development/system/design/COMMUNICATION/server-communication.md#"
@@ -27,30 +26,9 @@ CONDITION = "identifier=urn%3Astethoscope%3Adevice|stetho-A1B2C3D4E5F6"
 
 @pytest.fixture(scope="module")
 def harness(host_build_directory):
-    target = host_build_directory("unit", "fhir") / (
-        "fhir.exe" if sys.platform == "win32" else "fhir"
-    )
-    compiler = shlex.split(os.environ.get("CC", "gcc"))
-    command = compiler + [
-        "-std=c11",
-        "-D_POSIX_C_SOURCE=200809L",
-        "-Wall",
-        "-Wextra",
-        "-Werror",
-        "-g",
-    ]
-    if os.environ.get("STETHO_COVERAGE_DIRECTORY"):
-        command += ["--coverage", "-O0"]
-    if os.environ.get("STETHO_SANITIZERS", "").lower() == "true":
-        command += ["-fsanitize=address,undefined", "-fno-sanitize-recover=all"]
-    command += [str(HERE / "fhir_harness.c"), "-o", str(target)]
-    try:
-        result = subprocess.run(command, capture_output=True, text=True, timeout=120)
-    except OSError as error:
-        pytest.fail(
-            f"Host C compiler could not start ({compiler}): {error}", pytrace=False
-        )
-    assert result.returncode == 0, result.stdout + result.stderr
+    target = host_build.build(
+        host_build_directory("unit", "fhir"), "fhir", [HERE / "fhir_harness.c"]
+    ).path
 
     def run(operation, value, capacity, *extra):
         arguments = [str(target), operation, value, str(capacity)]

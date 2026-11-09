@@ -9,9 +9,8 @@ import json
 
 import pytest
 
-from test_communication import create_simulation_runner, executable, plan
-
-assert executable  # Session fixture shared with the VT-14 simulation.
+from host_build import error_code
+from test_communication import create_simulation_runner, plan
 
 DESIGN = "Development/system/design/system/"
 P13 = DESIGN + "parameters.md (P13)"
@@ -38,16 +37,20 @@ BOOT_ANCHOR = 100
 BOOT_HANDSHAKE = 200
 SIMULATED_UTC_SECONDS = 1_794_182_400
 NONE, PENDING, DELIVERED, FAILED, NO_CLOCK = range(5)
-ENOENT, ENODEV, EBUSY, EACCES = -2, -19, -16, -13
-ENOTCONN, ECONNRESET, ECONNREFUSED = -107, -104, -111
-EBADMSG, EMSGSIZE = -74, -90
+ENOENT, ENODEV, EBUSY, EIO, EACCES = (
+    error_code(name) for name in ("ENOENT", "ENODEV", "EBUSY", "EIO", "EACCES")
+)
+ENOTCONN, ECONNRESET, ECONNREFUSED, ETIMEDOUT = (
+    error_code(name) for name in ("ENOTCONN", "ECONNRESET", "ECONNREFUSED", "ETIMEDOUT")
+)
+EBADMSG, EMSGSIZE = (error_code(name) for name in ("EBADMSG", "EMSGSIZE"))
 SIMULATED_UTC = datetime(2026, 11, 9, tzinfo=timezone.utc)
 SERVER_CONNECTION_FAILURE = "SERVER_CONNECTION_FAILURE"
 
 
 @pytest.fixture
-def simulate(executable, record_property):
-    run = create_simulation_runner(executable, record_property)
+def simulate(simulation_executable, record_property):
+    run = create_simulation_runner(simulation_executable, record_property)
 
     def delivery(
         script="",
@@ -236,7 +239,7 @@ def test_failed_connection_setup_is_a_failed_attempt(simulate, record_property):
         "four failed setups, DELIVERY_FAILURE",
     )
     trace = simulate(
-        plan("tls", [0, -111, -111, -111, -111, 0]) + plan("exchange", [ENOTCONN])
+        plan("tls", [0] + [ECONNREFUSED] * 4 + [0]) + plan("exchange", [ENOTCONN])
     )
     assert_final(trace, FAILED)
     assert trace.count("tls") == 5 and trace.count("exchange") == 1
@@ -252,7 +255,7 @@ def test_no_clock_anchor_reports_server_connection_failure(simulate, record_prop
     )
     submit = 45_000_500
     trace = simulate(
-        f"event {submit - 300} sntp_fail -110\n",
+        f"event {submit - 300} sntp_fail {ETIMEDOUT}\n",
         until=submit + GLOBAL + 1_000,
         submit=submit,
     )
@@ -267,7 +270,7 @@ def test_no_clock_anchor_reports_server_connection_failure(simulate, record_prop
     [
         pytest.param({"stored": False}, ENOENT, id="wifi-not-configured"),
         pytest.param(
-            {"script": "identity_error -5\n"}, ENODEV, id="no-device-registration"
+            {"script": f"identity_error {EIO}\n"}, ENODEV, id="no-device-registration"
         ),
         pytest.param({"server": False}, ENODEV, id="no-server-profile"),
     ],

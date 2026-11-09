@@ -2,9 +2,8 @@
 
 import pytest
 
-from test_communication import create_simulation_runner, executable, plan
-
-assert executable  # Session fixture shared with the VT-14 simulation.
+from host_build import error_code
+from test_communication import create_simulation_runner, plan
 
 DESIGN = "Development/system/design/COMMUNICATION/server-communication.md#"
 FLOW = DESIGN + "registration-flow-and-recovery"
@@ -15,15 +14,15 @@ ATTEMPT = 10_000
 READY_STORED = "Device registration ready: Device/7400"
 READY_NEW = "Device registration ready: Device/7501"
 FAILURE = "DEVICE_REGISTRATION_FAILURE"
-ENOTCONN = -107
-ECONNREFUSED = -111
-EIO = -5
+ENOTCONN, EIO, ECONNREFUSED = (
+    error_code(name) for name in ("ENOTCONN", "EIO", "ECONNREFUSED")
+)
 UNAVAILABLE = "registration unavailable until restart"
 
 
 @pytest.fixture
-def simulate(executable, record_property):
-    run = create_simulation_runner(executable, record_property)
+def simulate(simulation_executable, record_property):
+    run = create_simulation_runner(simulation_executable, record_property)
 
     def registration(script="", until=5_000, server=True):
         return run(f"server {int(server)}\n" + script, until=until, stored=True)
@@ -181,7 +180,8 @@ def test_failed_reconnect_inside_the_attempt_waits_for_the_gap(
         "no further issued preparation before 60 s after the failed attempt",
     )
     trace = simulate(
-        plan("tls", [0, -111, 0]) + plan("exchange", [ENOTCONN, 201]), until=75_000
+        plan("tls", [0, ECONNREFUSED, 0]) + plan("exchange", [ENOTCONN, 201]),
+        until=75_000,
     )
     connects = trace.times("tls")
     failed_reconnect = trace.times("tls_result")[1]
@@ -251,8 +251,8 @@ def test_listening_interrupts_without_alert(simulate, record_property):
 @pytest.mark.parametrize(
     "script",
     [
-        pytest.param("identity_error -5\n", id="identity-read-failure"),
-        pytest.param("registration_read_error -5\n", id="record-read-failure"),
+        pytest.param(f"identity_error {EIO}\n", id="identity-read-failure"),
+        pytest.param(f"registration_read_error {EIO}\n", id="record-read-failure"),
     ],
 )
 def test_unavailable_registration_never_sends(simulate, record_property, script):
@@ -275,7 +275,7 @@ def test_transport_failure_defers_registration(simulate, record_property):
         FLOW,
         "registration needs verified transport: no request, no registration alert",
     )
-    trace = simulate(plan("tls", [-111]), until=30_000)
+    trace = simulate(plan("tls", [ECONNREFUSED]), until=30_000)
     assert trace.count("exchange") == 0
     assert "SERVER_CONNECTION_FAILURE" in trace.production_log
     assert FAILURE not in trace.production_log
