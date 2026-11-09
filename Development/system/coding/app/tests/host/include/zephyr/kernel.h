@@ -6,6 +6,13 @@
 #define BIT(number)       (1U << (number))
 #define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
 #define ARG_UNUSED(value) ((void)(value))
+#define __unused          __attribute__((__unused__))
+
+#define NSEC_PER_USEC 1000U
+#define NSEC_PER_MSEC 1000000U
+#define USEC_PER_MSEC 1000U
+#define USEC_PER_SEC  1000000U
+#define NSEC_PER_SEC  1000000000U
 
 typedef struct
 {
@@ -73,6 +80,30 @@ uint32_t k_event_wait(struct k_event *, uint32_t, bool, k_timeout_t);
 uint32_t k_event_test(struct k_event *, uint32_t);
 uint32_t k_event_post(struct k_event *, uint32_t);
 uint32_t k_event_clear(struct k_event *, uint32_t);
+struct k_work;
+typedef void (*k_work_handler_t)(struct k_work *);
+
+struct k_work
+{
+    k_work_handler_t handler;
+};
+
+struct k_work_q
+{
+    int unused;
+};
+
+struct k_work_queue_config
+{
+    const char *name;
+};
+
+void k_work_init(struct k_work *, k_work_handler_t);
+void k_work_queue_start(struct k_work_q *, char *, size_t, int, const struct k_work_queue_config *);
+int k_work_submit_to_queue(struct k_work_q *, struct k_work *);
+int64_t k_uptime_ticks(void);
+uint64_t k_ticks_to_us_floor64(uint64_t);
+
 typedef int atomic_t;
 
 static inline int atomic_get(const atomic_t *value)

@@ -348,6 +348,39 @@ static void run_wifi_case(const char *scenario, const char *argument)
         for(size_t index = 0; index < sizeof(network); index++)
             assert(((unsigned char *)&network)[index] == 0x55);
     }
+    else if(strcmp(scenario, "time-response") == 0)
+    {
+        unsigned leap_indicator;
+        unsigned stratum;
+        long long arrival_milliseconds;
+        assert(sscanf(argument, "%u %u %lld", &leap_indicator, &stratum, &arrival_milliseconds) == 3);
+        assert(leap_indicator <= 3 && stratum <= 255);
+        time_server_is_modelled = true;
+        time_response[0] = (uint8_t)((leap_indicator << 6) | (4U << 3) | 4U);
+        time_response[1] = (uint8_t)stratum;
+        time_response_is_queued = true;
+        time_response_arrival_milliseconds = arrival_milliseconds;
+        wifi_TimeSynchronizationGeneration = 1;
+        wifi_TimeSynchronizationState = WIFI_TIME_SYNCHRONIZATION_PENDING;
+        const struct net_sockaddr_in address = {0};
+        struct normalised_time sample = {0};
+        const int result = wifi_exchangeTimeSample(1, sys_timepoint_calc(K_MSEC(WIFI_TIME_SYNCHRONIZATION_OPERATION_TIMEOUT_MS)), &address, &sample);
+        assert(time_query_timeout_milliseconds == 0);
+        assert(time_milliseconds == arrival_milliseconds); /**< The response ends the exchange; no wait until the deadline. */
+        if(result == 0)
+        {
+            assert(sample.utc_seconds == time_response_native.seconds);
+            assert(sample.utc_fraction_nanoseconds == time_response_native.fraction * 1000U);
+            assert(sample.receive_monotonic_microseconds == (uint64_t)arrival_milliseconds * 1000U);
+            assert(sample.estimated_uncertainty_microseconds == time_response_native.uncertainty_us);
+        }
+        else
+        {
+            assert(result == -EPROTO);                                                     /**< Rejected response fails the exchange. */
+            assert(sample.utc_seconds == 0 && sample.receive_monotonic_microseconds == 0); /**< Not normalized. */
+        }
+        printf("%d %d\n", result == 0, time_response_parse_calls);
+    }
     else
         abort();
 }

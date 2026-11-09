@@ -6,6 +6,7 @@
 #include <string.h>
 /* Including the units exposes secret buffers for erasure inspection without production hooks. */
 #include "../../L1_services/L1_WIFI/wifi.c"
+#include "../../L1_services/L1_WIFI/wifi_dns.c"
 #include "../../L1_services/L1_PORTAL/portal.c"
 #include "../../L1_services/L1_STORAGE/storage.c"
 
@@ -54,6 +55,14 @@ static struct wifi_network stored_network;
 static int settings_write_failures;
 static int settings_write_calls;
 static void (*host_mutex_unlock_hook)(void);
+/* The time server is modelled only on request, so other scenarios keep the unmodelled exchange. */
+static bool time_server_is_modelled;
+static uint8_t time_response[48];
+static bool time_response_is_queued;
+static int64_t time_response_arrival_milliseconds;
+static uint32_t time_query_timeout_milliseconds = UINT32_MAX;
+static int time_response_parse_calls;
+static const struct sntp_time time_response_native = {.seconds = 1793836800U, .fraction = 250000U, .uncertainty_us = 50000U};
 
 static void emit_event(uint64_t event, const void *information)
 {
@@ -259,6 +268,188 @@ uint32_t k_event_wait(struct k_event *event, uint32_t mask, bool reset, k_timeou
     if(!(event->events & mask) && timeout.ticks > 0)
         advance_clock(time_milliseconds + timeout.ticks);
     return (event->events & mask);
+}
+
+/* No time synchronization worker runs on the host: Start fails at submission, so the scenarios keep their traces and timing. */
+void k_work_init(struct k_work *work, k_work_handler_t handler)
+{
+    work->handler = handler;
+}
+
+void k_work_queue_start(struct k_work_q *queue, char *stack, size_t size, int priority, const struct k_work_queue_config *configuration)
+{
+    (void)queue;
+    (void)stack;
+    (void)size;
+    (void)priority;
+    (void)configuration;
+}
+
+int k_work_submit_to_queue(struct k_work_q *queue, struct k_work *work)
+{
+    (void)queue;
+    (void)work;
+    return -ENODEV; /**< No work queue thread in the host model. */
+}
+
+int64_t k_uptime_ticks(void)
+{
+    return time_milliseconds;
+}
+
+uint64_t k_ticks_to_us_floor64(uint64_t ticks)
+{
+    return ticks * 1000U;
+}
+
+/* wifi_secure_connection.c needs mbedTLS and is not compiled here; the host server profile is erased, so no server is configured. */
+int wifi_configureSecureServer(const char *baseUrl, const char *certificate, size_t certificateLength, struct wifi_secure_server *server)
+{
+    (void)baseUrl;
+    (void)certificate;
+    (void)certificateLength;
+    (void)server;
+    return -ENOSYS; /**< Not modelled by this host substitute. */
+}
+
+int wifi_startSecureConnection(k_timepoint_t deadline)
+{
+    (void)deadline;
+    return -ENOSYS; /**< Not modelled by this host substitute. */
+}
+
+int wifi_waitForSecureConnection(enum wifi_secure_connection_cause *cause, k_timeout_t timeout)
+{
+    (void)cause;
+    (void)timeout;
+    return -ENOSYS; /**< Not modelled by this host substitute. */
+}
+
+int wifi_cancelSecureConnection(void)
+{
+    return 0;
+}
+
+int wifi_closeSecureConnection(void)
+{
+    return 0;
+}
+
+int sys_clock_settime(int clock, const struct timespec *time)
+{
+    (void)clock;
+    (void)time;
+    return -ENOSYS; /**< Not modelled by this host substitute. */
+}
+
+int sntp_init(struct sntp_ctx *context, const struct net_sockaddr *address, net_socklen_t length)
+{
+    (void)address;
+    (void)length;
+    int result = -ENOSYS; /**< Not modelled by this host substitute. */
+    if(time_server_is_modelled)
+    {
+        context->sock.fd = 7;
+        result = 0;
+    }
+    return result;
+}
+
+int sntp_recv_response(struct sntp_ctx *context, uint32_t timeout, struct sntp_time *time)
+{
+    if(!time_server_is_modelled)
+        return -ENOSYS; /**< Not modelled by this host substitute. */
+    struct zsock_pollfd descriptor = {.fd = context->sock.fd, .events = ZSOCK_POLLIN};
+    if(zsock_poll(&descriptor, 1, (int)timeout) == 0)
+        return -ETIMEDOUT; /**< Operation exceeded its wait deadline in the host model. */
+    uint8_t packet[sizeof(time_response)];
+    if(zsock_recv(context->sock.fd, packet, sizeof(packet), 0) != (ssize_t)sizeof(packet))
+        return -EMSGSIZE; /**< Datagram is not one SNTP packet. */
+    /* Parses without any header check, so only WIFI can reject an unsynchronized server. */
+    time_response_parse_calls++;
+    *time = time_response_native;
+    return 0;
+}
+
+int sntp_query(struct sntp_ctx *context, uint32_t timeout, struct sntp_time *time)
+{
+    time_query_timeout_milliseconds = timeout;
+    return sntp_recv_response(context, timeout, time);
+}
+
+void sntp_close(struct sntp_ctx *context)
+{
+    (void)context;
+}
+
+int zsock_setsockopt(int socket, int level, int option, const void *value, net_socklen_t length)
+{
+    (void)socket;
+    (void)level;
+    (void)option;
+    (void)value;
+    (void)length;
+    int result = 0;
+    if(!time_server_is_modelled)
+    {
+        errno = ENOSYS;
+        result = -1;
+    }
+    return result;
+}
+
+int zsock_poll(struct zsock_pollfd *descriptors, int count, int timeout)
+{
+    assert(count == 1 && descriptors[0].events == ZSOCK_POLLIN && timeout >= 0);
+    descriptors[0].revents = 0;
+    int result = 0;
+    if(time_response_is_queued && time_response_arrival_milliseconds <= time_milliseconds + timeout)
+    {
+        if(time_response_arrival_milliseconds > time_milliseconds)
+            advance_clock(time_response_arrival_milliseconds);
+        descriptors[0].revents = ZSOCK_POLLIN;
+        result = 1;
+    }
+    else
+    {
+        advance_clock(time_milliseconds + timeout);
+    }
+    return result;
+}
+
+ssize_t zsock_recv(int socket, void *buffer, size_t length, int flags)
+{
+    (void)socket;
+    if(!time_response_is_queued || time_response_arrival_milliseconds > time_milliseconds)
+    {
+        errno = EAGAIN;
+        return -1;
+    }
+    /* A shorter buffer truncates the datagram like a UDP receive. */
+    size_t copied = length < sizeof(time_response) ? length : sizeof(time_response);
+    memcpy(buffer, time_response, copied);
+    if((flags & ZSOCK_MSG_PEEK) == 0)
+        time_response_is_queued = false;
+    return (ssize_t)copied;
+}
+
+int dns_get_addr_info(const char *query, enum dns_query_type type, uint16_t *identifier, dns_resolve_cb_t callback, void *context, int32_t timeout)
+{
+    (void)query;
+    (void)type;
+    (void)identifier;
+    (void)callback;
+    (void)context;
+    (void)timeout;
+    return -ENOSYS; /**< Not modelled by this host substitute. */
+}
+
+int dns_cancel_addr_info_with_name(const char *query, enum dns_query_type type, uint16_t identifier)
+{
+    (void)query;
+    (void)type;
+    (void)identifier;
+    return -ENOENT; /**< No query was submitted. */
 }
 
 int http_server_start(void)

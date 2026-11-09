@@ -204,6 +204,17 @@ k_timeout_t sys_timepoint_timeout(k_timepoint_t deadline)
     return selectedValue;
 }
 
+/* One tick is one simulated millisecond, as for the timeouts above. */
+int64_t k_uptime_ticks(void)
+{
+    return time_milliseconds;
+}
+
+uint64_t k_ticks_to_us_floor64(uint64_t ticks)
+{
+    return ticks * USEC_PER_MSEC;
+}
+
 int k_sem_take(struct k_sem *semaphore, k_timeout_t timeout)
 {
     int64_t deadline;
@@ -518,6 +529,65 @@ int wifi_stopDHCPServer(void)
     return 0;
 }
 
+/* Time synchronization is unavailable here, so the existing scenarios keep their traces and timing. */
+int wifi_startTimeSynchronization(const char *ntpServer)
+{
+    (void)ntpServer;
+    return -ENOSYS; /**< Not modelled by this host substitute. */
+}
+
+int wifi_waitForTimeSynchronization(struct normalised_time *time, k_timeout_t timeout)
+{
+    (void)time;
+    (void)timeout;
+    return -ENOSYS; /**< Not modelled by this host substitute. */
+}
+
+int wifi_cancelTimeSynchronization(void)
+{
+    return 0;
+}
+
+int wifi_applyTimeSynchronization(const struct normalised_time *time, struct applied_time_anchor *anchor)
+{
+    (void)time;
+    (void)anchor;
+    return -ENOSYS; /**< Not modelled by this host substitute. */
+}
+
+/* No server is configured here, so the existing scenarios keep their traces and timing. */
+int wifi_configureSecureServer(const char *baseUrl, const char *certificate, size_t certificateLength, struct wifi_secure_server *server)
+{
+    (void)baseUrl;
+    (void)certificate;
+    (void)certificateLength;
+    (void)server;
+    return -ENOSYS; /**< Not modelled by this host substitute. */
+}
+
+int wifi_startSecureConnection(k_timepoint_t deadline)
+{
+    (void)deadline;
+    return -ENOSYS; /**< Not modelled by this host substitute. */
+}
+
+int wifi_waitForSecureConnection(enum wifi_secure_connection_cause *cause, k_timeout_t timeout)
+{
+    (void)cause;
+    (void)timeout;
+    return -ENOSYS; /**< Not modelled by this host substitute. */
+}
+
+int wifi_cancelSecureConnection(void)
+{
+    return 0;
+}
+
+int wifi_closeSecureConnection(void)
+{
+    return 0;
+}
+
 int portal_start(void)
 {
     trace("page_start", 0);
@@ -604,6 +674,12 @@ int storage_read(const char *name, void *data, size_t size)
         return -ENOENT; /**< Requested record or network was not found in the host model. */
     memcpy(data, &record, size);
     return 0;
+}
+
+int storage_readServerProfile(struct storage_server_profile *serverProfile)
+{
+    memset(serverProfile, 0, sizeof(*serverProfile));
+    return -ENOENT; /**< Erased server profile partition in the host model. */
 }
 
 int storage_write(const char *name, const void *data, size_t size)

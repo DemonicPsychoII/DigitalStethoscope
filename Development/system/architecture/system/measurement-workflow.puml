@@ -28,7 +28,7 @@ if (Heart + microphone + audio ready?) then (yes)
   :Latch normal BPM fault; no numeric value;
  endif
  if (Wi-Fi configured?) then (yes)
-  if (Device id / provisioning image ready?) then (yes)
+  if (Device id / server profile image ready?) then (yes)
    if (Valid BPM?) then (yes)
     :One HTTPS/FHIR numeric result attempt;
    else (no)

@@ -1,23 +1,23 @@
-# Provisioning architecture
+# Server profile architecture
 
 ## Basis and scope
 
-This Architecture-stage proposal allocates how a device receives its one server: endpoint, keep-alive and trusted certificate. It refines the [TLS trust boundary](https://github.com/DemonicPsychoII/DigitalStethoscope/pull/80) the separate provisioning image from the [design review of 2 November 2026](https://github.com/DemonicPsychoII/DigitalStethoscope/pull/104) and the flash layout decision of 4 November 2026 [4]. Its requirements basis is REQ-09, REQ-11 and REQ-13. It defines components, responsibilities, boundaries and dependencies; the file format, image format, validation rules and commands belong to detailed design.
+This Architecture-stage proposal allocates how a device receives its one server: endpoint, keep-alive and trusted certificate. It refines the [TLS trust boundary](https://github.com/DemonicPsychoII/DigitalStethoscope/pull/80) and the separate server profile image from the [design review of 2 November 2026](https://github.com/DemonicPsychoII/DigitalStethoscope/pull/104) and the flash layout decision of 4 November 2026 [4]. Its requirements basis is REQ-09, REQ-11 and REQ-13. It defines components, responsibilities, boundaries and dependencies; the file format, image format, validation rules and commands belong to detailed design.
 
 Nico decided on 4 November 2026 that one file per server deployment holds everything the image needs, that this file is TOML with the certificate embedded as PEM text, that deployment files are versioned in the repository, and that one flash command validates, builds and writes the image [1]. These are project decisions, not measurements. The design review had already placed endpoint and certificate in an image separate from the firmware [2].
 
 ## Responsibilities and dependencies
 
-![Provisioning components and data flow](rendered/provisioning.svg)
+![Server profile components and data flow](rendered/server_profile.svg)
 
-Editable source: [provisioning.puml](provisioning.puml).
+Editable source: [server-profile.puml](server-profile.puml).
 
 | Owner | Responsibility | Boundary |
 | --- | --- | --- |
 | Deployment file | The single reviewed source of one server deployment: base URL, server keep-alive and the public server certificate. | Public data only. Never a private key, keystore, password or patient context. |
-| Provisioning tool (developer PC) | Validate the file, canonicalize the base URL, check the certificate against the endpoint, build the versioned image with its checksum and check that it fits the partition. | Writes no firmware and no other partition. Does not obtain a certificate from the network. |
+| Server profile tool (developer PC) | Validate the file, canonicalize the base URL, check the certificate against the endpoint, build the versioned image with its checksum and check that it fits the partition. | Writes no firmware and no other partition. Does not obtain a certificate from the network. |
 | Flash command (developer PC) | Take one deployment file and one serial port, run the tool and write the image at the partition location taken from the firmware build. | The firmware image and the settings partition stay unchanged. |
-| Provisioning partition (device flash) | Hold exactly one image at a fixed start, independent of firmware updates, the settings size and an erase of the settings partition; a whole-flash erase removes it. | The firmware reads it and never writes it. |
+| Server profile partition (device flash) | Hold exactly one image at a fixed start, independent of firmware updates, the settings size and an erase of the settings partition; a whole-flash erase removes it. | The firmware reads it and never writes it. |
 | L1_STORAGE | Read the image once at boot and check its format, lengths and checksum. | Does not interpret the endpoint or the certificate. |
 | L2_COMMUNICATION | Load the image at boot, decide whether secure transport is available and report a configuration cause otherwise. | A missing or invalid image never blocks Wi-Fi setup or offline listening. |
 | L1_WIFI | Parse the endpoint, parse the certificate, require a Subject Alternative Name that matches the endpoint and make the certificate the only trust anchor. | No fallback endpoint, no fallback certificate and no insecure mode. |
@@ -30,11 +30,11 @@ Whoever can flash the device can change its server; physical access is the trust
 
 The deployment file contains only public information, so it can be versioned and reviewed like source code. The repository is public, so it holds test deployments only; a real deployment keeps its file with that deployment. A server change is visible in review as a changed endpoint or certificate. The server's private key and keystore stay with the server deployment.
 
-The device trusts the provisioned certificate directly and verifies the server identity against its Subject Alternative Names, without Common Name fallback [3]. The tool applies the same identity rule before flashing, so a certificate that cannot match the endpoint is rejected on the developer PC rather than at the next boot.
+The device trusts the server profile's certificate directly and verifies the server identity against its Subject Alternative Names, without Common Name fallback [3]. The tool applies the same identity rule before flashing, so a certificate that cannot match the endpoint is rejected on the developer PC rather than at the next boot.
 
 ## Open and deferred decisions
 
-- The provisioning location is fixed at `0xF00000` and independent of the settings: a settings size change never moves it, and it never changes between firmware versions, so an updated firmware still finds an image flashed earlier. Settings get their own fixed start in front of it; [TICKET-214](https://nfrie.atlassian.net/browse/TICKET-214) moves them from the board's partition. This is a project decision of 4 November 2026 [4]; the [STORAGE flash layout](https://github.com/DemonicPsychoII/DigitalStethoscope/pull/104) defines addresses and sizes.
+- The server profile location is fixed at `0xF00000` and independent of the settings: a settings size change never moves it, and it never changes between firmware versions, so an updated firmware still finds an image flashed earlier. Settings get their own fixed start in front of it; [TICKET-214](https://nfrie.atlassian.net/browse/TICKET-214) moves them from the board's partition. This is a project decision of 4 November 2026 [4]; the [STORAGE flash layout](https://github.com/DemonicPsychoII/DigitalStethoscope/pull/104) defines addresses and sizes.
 - Signed images, several servers per device, network or portal enrollment and a project certificate authority remain outside this version, as in the design review [2].
 - Detailed design defines the file format, its validation, the image format and the command interface.
 
@@ -44,7 +44,7 @@ These scenarios allocate future verification; they do not add a generated test b
 
 | Scenario | Trace | Expected outcome |
 | --- | --- | --- |
-| Valid deployment file flashed | REQ-09/REQ-11; VT-08 | Boot reports the provisioned server; secure preparation uses that endpoint and certificate. |
+| Valid deployment file flashed | REQ-09/REQ-11; VT-08 | Boot reports the configured server; secure preparation uses that endpoint and certificate. |
 | Invalid deployment file | REQ-11; VT-08 | The tool rejects it before writing; the device keeps its previous image. |
 | Certificate without matching Subject Alternative Name | REQ-11; VT-08 | Rejected by the tool; a device that boots with such an image reports a configuration cause and no secure transport. |
 | Missing or corrupted image | REQ-11/REQ-13; VT-08/VT-09 | Secure transport unavailable with a configuration cause; Wi-Fi setup and offline listening unaffected. |
