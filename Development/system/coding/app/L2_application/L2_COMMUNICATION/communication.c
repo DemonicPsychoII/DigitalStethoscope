@@ -922,6 +922,9 @@ static void communication_runIdleCycle(void)
     }
     else if(communication_CleanupFaultIsLatched)
     {
+        /* A job admitted while the fault latched may have used up its wake-up already. */
+        communication_runDelivery();
+
         (void)communication_waitForCondition(COMMUNICATION_WAIT_CONTROL_EVENT, K_FOREVER);
 
         /* A job submitted after the fault still needs its terminal outcome. */
