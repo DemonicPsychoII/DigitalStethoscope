@@ -2,14 +2,22 @@
 
 import os
 from pathlib import Path
-import shlex
 import subprocess
 import sys
 
 import pytest
 
+import host_build
+
 HERE = Path(__file__).resolve().parent
 APPLICATION = HERE.parents[1]
+SIMULATION_INCLUDE_DIRECTORIES = [
+    APPLICATION / "L2_application/L2_COMMUNICATION",
+    APPLICATION / "L1_services/L1_WIFI",
+    APPLICATION / "L1_services/L1_PORTAL",
+    APPLICATION / "L1_services/L1_STORAGE",
+    APPLICATION / "L1_services/L1_FHIR",
+]
 
 
 @pytest.fixture(scope="session")
@@ -58,69 +66,53 @@ def page_javascript_runtime():
 
 @pytest.fixture(scope="session")
 def service_executable(host_build_directory):
-    if sys.platform == "win32":
-        target = host_build_directory("unit", "services") / "services.exe"
-    else:
-        target = host_build_directory("unit", "services") / "services"
-    page = APPLICATION / "L1_services/L1_PORTAL/portal.html"
-    generated = target.parent / "portal.html.inc"
-    generated.write_text(",".join(str(value) for value in page.read_bytes()) + ",\n")
-    compiler = shlex.split(os.environ.get("CC", "gcc"))
-    command = compiler + [
-        "-std=c11",
-        "-D_POSIX_C_SOURCE=200809L",
-        "-Wall",
-        "-Wextra",
-        "-Werror",
-        "-g",
-    ]
-    if os.environ.get("STETHO_COVERAGE_DIRECTORY"):
-        command += ["--coverage", "-O0"]
-    if os.environ.get("STETHO_SANITIZERS", "").lower() == "true":
-        command += ["-fsanitize=address,undefined", "-fno-sanitize-recover=all"]
-    for directory in (
-        HERE / "include",
-        target.parent,
-        APPLICATION / "L1_services/L1_WIFI",
-        APPLICATION / "L1_services/L1_PORTAL",
-        APPLICATION / "L1_services/L1_STORAGE",
-    ):
-        command += ["-I", str(directory)]
-    command += [str(HERE / "l1_harness.c"), "-o", str(target)]
-    try:
-        result = subprocess.run(command, capture_output=True, text=True, timeout=120)
-    except OSError as error:
-        pytest.fail(
-            f"Host C compiler could not start ({compiler}): {error}", pytrace=False
-        )
-    assert result.returncode == 0, result.stdout + result.stderr
-    try:
-        version = subprocess.check_output(
-            compiler + ["--version"], text=True, timeout=30
-        ).splitlines()[0]
-    except subprocess.TimeoutExpired as error:
-        pytest.fail(f"Host compiler identity timed out: {error.cmd}", pytrace=False)
-    return target, command, version
+    return host_build.build(
+        host_build_directory("unit", "services"),
+        "services",
+        [HERE / "l1_harness.c"],
+        [
+            APPLICATION / "L1_services/L1_WIFI",
+            APPLICATION / "L1_services/L1_PORTAL",
+            APPLICATION / "L1_services/L1_STORAGE",
+        ],
+        embed_portal_page=True,
+    )
+
+
+@pytest.fixture(scope="session")
+def simulation_executable(host_build_directory):
+    return host_build.build(
+        host_build_directory("l2", "communication"),
+        "simulation",
+        [
+            HERE / "simulation.c",
+            APPLICATION / "L2_application/L2_COMMUNICATION/communication.c",
+            APPLICATION / "L1_services/L1_FHIR/fhir.c",
+        ],
+        SIMULATION_INCLUDE_DIRECTORIES,
+    )
+
+
+@pytest.fixture(scope="session")
+def memory_executable(host_build_directory):
+    return host_build.build(
+        host_build_directory("l2", "communication-memory"),
+        "memory",
+        [
+            HERE / "communication_memory_harness.c",
+            APPLICATION / "L1_services/L1_FHIR/fhir.c",
+        ],
+        SIMULATION_INCLUDE_DIRECTORIES,
+    )
 
 
 @pytest.fixture
 def service(service_executable, record_property):
-    target, command, version = service_executable
-    record_property("compiler_version", version)
-    record_property("compiler_command", subprocess.list2cmdline(command))
-    try:
-        revision = subprocess.check_output(
-            ["git", "rev-parse", "HEAD"], cwd=HERE, text=True, timeout=30
-        ).strip()
-    except subprocess.TimeoutExpired as error:
-        pytest.fail(f"Host source identity timed out: {error.cmd}", pytrace=False)
-    except OSError as error:
-        pytest.fail(f"Git is required for host source identity: {error}", pytrace=False)
-    record_property("source_revision", revision)
+    service_executable.record_identity(record_property)
 
     def run(component, scenario, argument=""):
         result = subprocess.run(
-            [str(target), component, scenario, argument],
+            [str(service_executable.path), component, scenario, argument],
             capture_output=True,
             text=True,
             timeout=10,

@@ -1,15 +1,11 @@
 """VT-14 workflow expectations from the Wi-Fi and portal design."""
 
-import os
-from pathlib import Path
-import shlex
 import subprocess
-import sys
 
 import pytest
 
-HERE = Path(__file__).resolve().parent
-APP = HERE.parents[1]
+from host_build import error_code
+
 WIFI = "Development/system/design/WIFI/interfaces-and-behavior.md#"
 COMMUNICATION = "Development/system/design/COMMUNICATION/interfaces-and-behavior.md#"
 PARAMETERS = "Development/system/design/WIFI/parameters.md"
@@ -22,6 +18,9 @@ CHECK = 120_000
 SCAN_TIMEOUT = 10_000
 JOIN_TIMEOUT = 15_000
 CASES = []
+EIO, EACCES, EAGAIN, EINVAL = (
+    error_code(name) for name in ("EIO", "EACCES", "EAGAIN", "EINVAL")
+)
 
 
 def case(name, anchor, expected):
@@ -70,69 +69,22 @@ def plan(kind, results, delay=100):
     return "".join(f"{kind} {result} {delay}\n" for result in results)
 
 
-@pytest.fixture(scope="session")
-def executable(host_build_directory):
-    if sys.platform == "win32":
-        executable_name = "simulation.exe"
-    else:
-        executable_name = "simulation"
-    target = host_build_directory("l2", "communication") / executable_name
-    # shlex keeps compiler arguments (e.g. Zig's cc subcommand); quoted paths work.
-    compiler = shlex.split(os.environ.get("CC", "gcc"))
-    command = compiler + ["-std=c11", "-Wall", "-Wextra", "-Werror", "-g"]
-    if os.environ.get("STETHO_COVERAGE_DIRECTORY"):
-        command += ["--coverage", "-O0"]
-    if os.environ.get("STETHO_SANITIZERS", "").lower() == "true":
-        command += ["-fsanitize=address,undefined", "-fno-sanitize-recover=all"]
-    for directory in (
-        HERE / "include",
-        APP / "L2_application/L2_COMMUNICATION",
-        APP / "L1_services/L1_WIFI",
-        APP / "L1_services/L1_PORTAL",
-        APP / "L1_services/L1_STORAGE",
-        APP / "L1_services/L1_FHIR",
-    ):
-        command += ["-I", str(directory)]
-    command += [
-        str(HERE / "simulation.c"),
-        str(APP / "L2_application/L2_COMMUNICATION/communication.c"),
-        str(APP / "L1_services/L1_FHIR/fhir.c"),
-        "-o",
-        str(target),
-    ]
-    result = subprocess.run(command, capture_output=True, text=True, timeout=120)
-    if result.returncode:
-        pytest.fail(
-            f"Host compile failed: {command}\n{result.stdout}\n{result.stderr}",
-            pytrace=False,
-        )
-    try:
-        version = subprocess.check_output(
-            compiler + ["--version"], text=True, timeout=30
-        ).splitlines()[0]
-        revision = subprocess.check_output(
-            ["git", "rev-parse", "HEAD"], cwd=APP, text=True, timeout=30
-        ).strip()
-    except subprocess.TimeoutExpired as error:
-        pytest.fail(f"Host tool identity timed out: {error.cmd}", pytrace=False)
-    return target, command, version, revision
-
-
 @pytest.fixture
-def simulate(executable, record_property):
-    return create_simulation_runner(executable, record_property)
+def simulate(simulation_executable, record_property):
+    return create_simulation_runner(simulation_executable, record_property)
 
 
 def create_simulation_runner(executable, record_property):
-    target, command, version, revision = executable
-    record_property("source_revision", revision)
-    record_property("compiler_version", version)
-    record_property("compiler_command", subprocess.list2cmdline(command))
+    executable.record_identity(record_property)
 
     def run(script="", until=1000, stored=False):
         script = f"horizon {until}\nstored {int(stored)}\n" + script
         result = subprocess.run(
-            [str(target)], input=script, capture_output=True, text=True, timeout=10
+            [str(executable.path)],
+            input=script,
+            capture_output=True,
+            text=True,
+            timeout=10,
         )
         record_property("simulation_input", script)
         record_property("simulation_trace", result.stdout)
@@ -173,7 +125,7 @@ def boot_stored(simulation):
     "Three failures are followed by the fourth successful join, each retry 5 s after failure.",
 )
 def boot_fourth(simulation):
-    trace = simulation(plan("join", [-5, -5, -5, 0]), until=20_000, stored=True)
+    trace = simulation(plan("join", [EIO, EIO, EIO, 0]), until=20_000, stored=True)
     assert trace.times("join") == [0, 100 + RETRY, 200 + 2 * RETRY, 300 + 3 * RETRY]
     assert trace.last("connected") == 1 and trace.count("scan") == 0
 
@@ -185,7 +137,7 @@ def boot_fourth(simulation):
 )
 def boot_exhaustion(simulation):
     trace = simulation(
-        plan("join", [-5] * 4) + event(25_000, "snapshot") + event(30_000, "hold"),
+        plan("join", [EIO] * 4) + event(25_000, "snapshot") + event(30_000, "hold"),
         until=31_000,
         stored=True,
     )
@@ -270,9 +222,9 @@ def hold_entry(simulation):
     "Four scan attempts maximum, 5 s between failures; open AP only after scan success.",
 )
 def scan_fourth(simulation):
-    trace = simulation(plan("scan", [-5, -5, -5, 0]), until=20_000)
+    trace = simulation(plan("scan", [EIO, EIO, EIO, 0]), until=20_000)
     assert trace.times("scan") == [0, 100 + RETRY, 200 + 2 * RETRY, 300 + 3 * RETRY]
-    assert trace.values("scan_result") == [-5, -5, -5, 0]
+    assert trace.values("scan_result") == [EIO, EIO, EIO, 0]
     assert trace.count("ap_start") == 1
     successful_scan_result = next(
         row for row in reversed(trace.rows) if row[1] == "scan_result"
@@ -289,7 +241,7 @@ def scan_fourth(simulation):
 )
 def scan_exhaustion(simulation):
     trace = simulation(
-        plan("scan", [-5] * 4) + event(25_000, "snapshot") + event(30_000, "hold"),
+        plan("scan", [EIO] * 4) + event(25_000, "snapshot") + event(30_000, "hold"),
         until=31_000,
     )
     assert trace.times("scan")[-1] == 30_000 and trace.count("scan") == 5
@@ -337,8 +289,8 @@ def explicit_rescan(simulation):
     "One failed portal join shows its cause and refreshes the scan list with AP still open.",
 )
 def failed_join(simulation):
-    trace = simulation(plan("join", [-13]) + event(1000, "connect", 1), until=3000)
-    assert trace.count("join") == 1 and trace.values("join_failed") == [-13]
+    trace = simulation(plan("join", [EACCES]) + event(1000, "connect", 1), until=3000)
+    assert trace.count("join") == 1 and trace.values("join_failed") == [EACCES]
     assert trace.count("scan") == 2 and trace.count("networks") == 2
     assert trace.count("write") == 0 and trace.last("page") == 1
 
@@ -350,7 +302,9 @@ def failed_join(simulation):
 )
 def join_after_failure(simulation):
     trace = simulation(
-        plan("join", [-13, 0]) + event(1000, "connect", 1) + event(3000, "connect", 1),
+        plan("join", [EACCES, 0])
+        + event(1000, "connect", 1)
+        + event(3000, "connect", 1),
         until=15_000,
     )
     assert trace.count("join") == 2 and trace.count("success") == 1
@@ -612,7 +566,7 @@ def reconnect(simulation):
 )
 def reconnect_fourth(simulation):
     trace = simulation(
-        plan("join", [0, -5, -5, -5, 0]) + event(1000, "drop"),
+        plan("join", [0, EIO, EIO, EIO, 0]) + event(1000, "drop"),
         until=140_000,
         stored=True,
     )
@@ -632,7 +586,7 @@ def reconnect_fourth(simulation):
 )
 def reconnect_exhaustion(simulation):
     trace = simulation(
-        plan("join", [0] + [-5] * 4) + event(1000, "drop"), until=140_000, stored=True
+        plan("join", [0] + [EIO] * 4) + event(1000, "drop"), until=140_000, stored=True
     )
     assert (
         trace.count("join") == 5
@@ -757,7 +711,7 @@ def acknowledgement_invalidation(simulation):
         until=4500,
         stored=True,
     )
-    assert trace.values("ack")[:3] == [0, -11, 0]
+    assert trace.values("ack")[:3] == [0, EAGAIN, 0]
 
 
 @case(
@@ -903,7 +857,7 @@ def start_reconnect(simulation):
 )
 def rescan_failure(simulation):
     trace = simulation(
-        plan("scan", [0] + [-5] * 4) + event(1000, "rescan"), until=20_000
+        plan("scan", [0] + [EIO] * 4) + event(1000, "rescan"), until=20_000
     )
     assert trace.count("scan") == 5 and trace.count("networks") == 1
     assert trace.times("closing") == [1000 + 4 * 100 + 3 * RETRY]
@@ -975,7 +929,7 @@ for final_start in (False, True):
         if final_start:
             expected_acknowledgment = 0
         else:
-            expected_acknowledgment = -11
+            expected_acknowledgment = EAGAIN
         assert trace.last("ack") == expected_acknowledgment
         assert trace.count("scan_cancel") == int(final_start)
         assert trace.last("page") == int(not final_start)
@@ -1032,7 +986,7 @@ def start_during_notice(simulation):
 def interrupted_boot_budget(simulation):
     trace = simulation(
         plan("join", [0], 9000)
-        + plan("join", [-5] * 3)
+        + plan("join", [EIO] * 3)
         + event(1000, "start")
         + event(3000, "stop")
         + event(25000, "snapshot")
@@ -1055,7 +1009,7 @@ def interrupted_boot_budget(simulation):
 )
 def boot_before_attempt(simulation):
     trace = simulation(
-        plan("join", [-5] * 4) + event(0, "start") + event(1000, "stop"),
+        plan("join", [EIO] * 4) + event(0, "start") + event(1000, "stop"),
         until=25000,
         stored=True,
     )
@@ -1071,7 +1025,7 @@ def boot_before_attempt(simulation):
 def invalid_page_connect(simulation):
     trace = simulation(event(1000, "connect", 2), until=3000)
     assert trace.count("join") == 0 and trace.count("write") == 0
-    assert trace.values("join_failed") == [-22] and trace.count("scan") == 2
+    assert trace.values("join_failed") == [EINVAL] and trace.count("scan") == 2
 
 
 @case(
@@ -1099,7 +1053,7 @@ def independent_portal_failure(simulation):
 )
 def rescan_exhaustion_station(simulation):
     trace = simulation(
-        plan("scan", [0] + [-5] * 4 + [0])
+        plan("scan", [0] + [EIO] * 4 + [0])
         + event(1000, "hold")
         + event(2000, "rescan")
         + event(25000, "snapshot")
@@ -1120,8 +1074,22 @@ for service_name, setting, failure_name, setup_script, stored, stop_tries in (
     ("portal", "stop_failures", "page_stop_failed", "", False, 1),
     ("dhcp", "dhcp_stop_failures", "dhcp_stop_failed", "", False, 1),
     ("ap", "ap_stop_failures", "ap_stop_failed", "", False, 1),
-    ("scan", "scan_stop_failures", "scan_cancel_failed", plan("scan", [0], 20000), False, 2),
-    ("disconnect", "disconnect_failures", "disconnect_failed", plan("join", [0], 20000), True, 2),
+    (
+        "scan",
+        "scan_stop_failures",
+        "scan_cancel_failed",
+        plan("scan", [0], 20000),
+        False,
+        2,
+    ),
+    (
+        "disconnect",
+        "disconnect_failures",
+        "disconnect_failed",
+        plan("join", [0], 20000),
+        True,
+        2,
+    ),
 ):
     for failure_count in range(1, stop_tries + 1):
         latches = failure_count == stop_tries
@@ -1184,7 +1152,7 @@ def release_wait_timeout(simulation):
         "stop_failures 1\n" + event(1000, "start") + event(1100, "release_wait", 250),
         until=5000,
     )
-    assert trace.values("release_wait_result") == [-11]
+    assert trace.values("release_wait_result") == [EAGAIN]
     assert trace.values("release_wait_elapsed") == [250]
     assert trace.last("ack") == 0
 
@@ -1209,25 +1177,6 @@ def test_design_scenario(
     record_property("parameters", PARAMETERS)
     record_property("expected", expected)
     function(simulate)
-
-
-@pytest.fixture(scope="session")
-def memory_executable(executable, host_build_directory):
-    _, previous_command, version, revision = executable
-    if sys.platform == "win32":
-        executable_name = "memory.exe"
-    else:
-        executable_name = "memory"
-    target = host_build_directory("l2", "communication-memory") / executable_name
-    command = previous_command.copy()
-    source_index = command.index(str(HERE / "simulation.c"))
-    command[source_index : source_index + 2] = [
-        str(HERE / "communication_memory_harness.c")
-    ]
-    command[-1] = str(target)
-    result = subprocess.run(command, capture_output=True, text=True, timeout=120)
-    assert result.returncode == 0, result.stdout + result.stderr
-    return target, command, version, revision
 
 
 MEMORY_CASES = [
@@ -1262,12 +1211,9 @@ def test_coalesced_start_stop_resumes_boot(memory_executable, record_property):
         "expected",
         "An interrupted boot pending in Idle resumes after the five-second gap when Start and Stop both precede the worker's next check. A white-box harness seeds the pending-boot boundary; L1 and clock are substituted.",
     )
-    target, command, version, revision = memory_executable
-    record_property("source_revision", revision)
-    record_property("compiler_version", version)
-    record_property("compiler_command", subprocess.list2cmdline(command))
+    memory_executable.record_identity(record_property)
     result = subprocess.run(
-        [str(target), "coalesced-boot-resume"],
+        [str(memory_executable.path), "coalesced-boot-resume"],
         capture_output=True,
         text=True,
         timeout=10,
@@ -1280,7 +1226,7 @@ def test_coalesced_start_stop_resumes_boot(memory_executable, record_property):
 
 for name, script in (
     ("success", event(1000, "connect", 1)),
-    ("failure", plan("join", [-13]) + event(1000, "connect", 1)),
+    ("failure", plan("join", [EACCES]) + event(1000, "connect", 1)),
     (
         "start-interruption",
         plan("join", [0], 5000) + event(1000, "connect", 1) + event(1500, "start"),

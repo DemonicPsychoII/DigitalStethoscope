@@ -15,7 +15,10 @@ python Development/system/testing/ci/application_host_results.py artifacts/ci/ap
 ```
 
 `CC` defaults to GCC; quote executable paths containing spaces inside `CC`.
-C builds use `-Wall -Wextra -Werror`. `STETHO_SANITIZERS=true` requests
+Every harness is compiled through `host_build.build`, which applies the same
+`-Wall -Wextra -Werror`, coverage and sanitizer flags to all of them. Expected
+error results use `host_build.error_code("ENOTCONN")`, which reads the value from
+the compiler's `errno.h`, because the numbers differ between C libraries. `STETHO_SANITIZERS=true` requests
 AddressSanitizer and UndefinedBehaviorSanitizer; effective support depends on the
 compiler/platform and must be recorded with results. Node executes the production
 page JavaScript with DOM, clock and fetch substitutes. Linux uses the pinned

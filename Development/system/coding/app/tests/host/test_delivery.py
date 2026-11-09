@@ -5,9 +5,8 @@ import json
 
 import pytest
 
-from test_communication import create_simulation_runner, executable, plan
-
-assert executable  # Session fixture shared with the VT-14 simulation.
+from host_build import error_code
+from test_communication import create_simulation_runner, plan
 
 DESIGN = "Development/system/design/system/"
 P13 = DESIGN + "parameters.md (P13)"
@@ -17,14 +16,18 @@ GLOBAL = 10_000
 RESERVE = 1_000
 GAP = 2_000
 NONE, PENDING, DELIVERED, FAILED, NO_CLOCK = range(5)
-ENOENT, ENODEV, EBUSY = -2, -19, -16
-ENOTCONN, ECONNRESET = -107, -104
+ENOENT, ENODEV, EBUSY, EIO = (
+    error_code(name) for name in ("ENOENT", "ENODEV", "EBUSY", "EIO")
+)
+ENOTCONN, ECONNRESET, ECONNREFUSED, ETIMEDOUT = (
+    error_code(name) for name in ("ENOTCONN", "ECONNRESET", "ECONNREFUSED", "ETIMEDOUT")
+)
 SIMULATED_UTC = datetime(2026, 11, 9, tzinfo=timezone.utc)
 
 
 @pytest.fixture
-def simulate(executable, record_property):
-    run = create_simulation_runner(executable, record_property)
+def simulate(simulation_executable, record_property):
+    run = create_simulation_runner(simulation_executable, record_property)
 
     def delivery(
         script="",
@@ -81,7 +84,10 @@ def test_delivered_with_one_receipt(simulate, record_property, status):
     trace = simulate(plan("exchange", [status]))
     assert_final(trace, DELIVERED)
     assert trace.count("exchange") == 1
-    assert f"Observation delivered: https://192.168.2.40:8443/fhir/Observation/8001/_history/1 (status {status})" in trace.production_log
+    assert (
+        f"Observation delivered: https://192.168.2.40:8443/fhir/Observation/8001/_history/1 (status {status})"
+        in trace.production_log
+    )
     observation = json.loads(logged(trace, "observation_body"))
     assert observation["resourceType"] == "Observation"
     assert observation["device"] == {"reference": "Device/7400"}
@@ -192,7 +198,7 @@ def test_failed_connection_setup_is_a_failed_attempt(simulate, record_property):
         "four failed setups, DELIVERY_FAILURE",
     )
     trace = simulate(
-        plan("tls", [0, -111, -111, -111, -111, 0]) + plan("exchange", [ENOTCONN])
+        plan("tls", [0] + [ECONNREFUSED] * 4 + [0]) + plan("exchange", [ENOTCONN])
     )
     assert_final(trace, FAILED)
     assert trace.count("tls") == 5 and trace.count("exchange") == 1
@@ -208,7 +214,7 @@ def test_no_clock_anchor_reports_server_connection_failure(simulate, record_prop
     )
     submit = 45_000_500
     trace = simulate(
-        f"event {submit - 300} sntp_fail -110\n",
+        f"event {submit - 300} sntp_fail {ETIMEDOUT}\n",
         until=submit + GLOBAL + 1_000,
         submit=submit,
     )
@@ -223,7 +229,7 @@ def test_no_clock_anchor_reports_server_connection_failure(simulate, record_prop
     [
         pytest.param({"stored": False}, ENOENT, id="wifi-not-configured"),
         pytest.param(
-            {"script": "identity_error -5\n"}, ENODEV, id="no-device-registration"
+            {"script": f"identity_error {EIO}\n"}, ENODEV, id="no-device-registration"
         ),
         pytest.param({"server": False}, ENODEV, id="no-server-profile"),
     ],
@@ -291,7 +297,9 @@ def test_cleanup_fault_still_ends_a_pending_job(simulate, record_property):
         DELIVERY,
         "terminal outcome without another control event, nothing sent",
     )
-    script = "stop_failures 1\nevent 500 hold 0\nevent 2000 start 0\nevent 3000 stop 0\n"
+    script = (
+        "stop_failures 1\nevent 500 hold 0\nevent 2000 start 0\nevent 3000 stop 0\n"
+    )
     trace = simulate(script, submit=1_500)
     assert trace.values("deliver_result") == [0]
     assert "WIFI_CLEANUP_FAILURE" in trace.production_log

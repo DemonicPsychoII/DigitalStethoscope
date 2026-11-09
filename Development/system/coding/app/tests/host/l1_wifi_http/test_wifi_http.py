@@ -2,14 +2,13 @@
 
 import hashlib
 import json
-import os
 from pathlib import Path
-import shlex
 import shutil
 import subprocess
-import sys
 
 import pytest
+
+import host_build
 
 HERE = Path(__file__).resolve().parent
 REPOSITORY = HERE.parents[6]
@@ -58,30 +57,16 @@ def reader(host_build_directory, tmp_path_factory):
     for path in VENDORED_BLOBS:
         (zephyr / path).parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(VENDORED / Path(path).name, zephyr / path)
-    target = host_build_directory("unit", "wifi-http") / (
-        "http.exe" if sys.platform == "win32" else "http"
-    )
-    compiler = shlex.split(os.environ.get("CC", "gcc"))
-    command = compiler + [
-        "-std=c11",
-        "-D_POSIX_C_SOURCE=200809L",
-        "-Wall",
-        "-Wextra",
-        "-Werror",
-        "-g",
-    ]
-    if os.environ.get("STETHO_SANITIZERS", "").lower() == "true":
-        command += ["-fsanitize=address,undefined", "-fno-sanitize-recover=all"]
-    command += ["-I", str(HERE.parent / "include"), "-I", str(zephyr / "include")]
-    command += [
-        str(HERE / "http_harness.c"),
-        str(zephyr / "subsys/net/lib/http/http_parser.c"),
-        str(zephyr / "subsys/net/lib/http/http_parser_url.c"),
-        "-o",
-        str(target),
-    ]
-    result = subprocess.run(command, capture_output=True, text=True, timeout=120)
-    assert result.returncode == 0, result.stdout + result.stderr
+    target = host_build.build(
+        host_build_directory("unit", "wifi-http"),
+        "http",
+        [
+            HERE / "http_harness.c",
+            zephyr / "subsys/net/lib/http/http_parser.c",
+            zephyr / "subsys/net/lib/http/http_parser_url.c",
+        ],
+        [zephyr / "include"],
+    ).path
     directory = tmp_path_factory.mktemp("responses")
 
     def run(data, piece_size=4096, option=""):
