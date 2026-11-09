@@ -41,9 +41,26 @@ VT-14 case groups:
 - Both Cancel levels; paused inactivity timer; failed save retains the connection and old settings; result closes after 10 s.
 - Start teardown and late callbacks; retained association during audio; offline fallback; restart persistence; private logs.
 
-VT-07 and VT-08 are partly covered. The [L1_FHIR host suite](../coding/app/tests/host/l1_fhir/test_fhir.py) checks the Device and Observation serializers, both conditional-create conditions and the validation of registration responses. This includes malformed and partial responses and two responses captured from the lab HAPI server. Still open for VT-07 (TICKET-181, TICKET-209): the L2 delivery workflow, retry after a lost receipt, P13 timing, the server-requested examination and target runs against the authorized local HAPI. Before acceptance, freeze the clock reference, synchronization evidence and allowed measurement-end timestamp skew; use REQ-06 for value accuracy. The delivery deadline does not define timestamp accuracy. Still open for VT-08 (TICKET-180): TLS, socket and timeout fault cases.
+VT-07 and VT-08 are partly covered, on the host only:
 
-VT-15 is partly covered. The [L1_WIFI identity tests](../coding/app/tests/host/l1_wifi/test_wifi_identity.py) check the physical identifier derived from the factory MAC. Still open: the registration record, reuse after restart, exactly one Device on the server and recovery from a missing server id, all on the authorized DevKit with the lab HAPI server.
+- **Host unit evidence:** the [L1_FHIR host suite](../coding/app/tests/host/l1_fhir/test_fhir.py) checks the Device and Observation serializers, both conditional-create conditions and the validation of registration responses. This includes malformed and partial responses and two responses captured from the lab HAPI server.
+- **HTTP reader evidence:** the [HTTP reader suite](../coding/app/tests/host/l1_wifi_http/test_wifi_http.py) runs in static CI against a vendored copy of the pinned Zephyr `http_parser`. A test checks that copy against the pin.
+- **Host-simulation evidence:** the [delivery scenarios](../coding/app/tests/host/test_delivery.py) cover the L2 workflow under P13 in simulated time. They check the identical retry after a lost receipt or a server error, the four-attempt limit, the 2 s gap, the 1 s receipt cancel and no request after the deadline.
+- **Still open for VT-07 (TICKET-181, TICKET-209), on the target:**
+  - The P13 budgets measured on the board.
+  - The server-requested examination.
+  - Runs against the authorized local HAPI.
+  - Before acceptance, freeze the clock reference, synchronization evidence and allowed measurement-end timestamp skew. Use REQ-06 for value accuracy; the delivery deadline does not define timestamp accuracy.
+- **Still open for VT-08 (TICKET-180), on the target:** TLS, socket and timeout fault cases in the mbedTLS exchange worker.
+
+VT-15 is partly covered, on the host only:
+
+- **Host unit evidence:** the [L1_WIFI identity tests](../coding/app/tests/host/l1_wifi/test_wifi_identity.py) check the physical identifier derived from the factory MAC. The L1_FHIR suite checks the encoding and decoding of the registration record.
+- **Host-simulation evidence:** the [registration scenarios](../coding/app/tests/host/test_registration.py) cover reuse of a stored record, conditional registration, save failure and the recovery gap.
+- **Still open, on the authorized DevKit with the lab HAPI server:**
+  - Reuse across three restarts.
+  - Exactly one Device on the server.
+  - Recovery from a missing server id.
 
 VT-05 (replay) and VT-13 (shared SPI) were removed in the [scope decision](../planning/mvp-decisions-2026-10-14.md#scope).
 
