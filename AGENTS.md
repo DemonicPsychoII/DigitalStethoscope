@@ -1,5 +1,11 @@
 # AGENTS.md — DigitalStethoscope
 
+## Agent skills
+
+Project skills live in `.agents/skills/`, where Codex discovers them. Claude Code reads only
+`.claude/skills/`, which is not tracked. To expose the skills to Claude Code in a checkout, run
+`cmd /c "mkdir .claude & mklink /J .claude\skills .agents\skills"` from its root.
+
 ## Thesis sources
 
 Applies to bachelor-thesis work: `thesis-material/`, `preThesis/`, requirements/design/planning
