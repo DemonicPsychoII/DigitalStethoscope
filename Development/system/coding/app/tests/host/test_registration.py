@@ -115,21 +115,40 @@ def test_failure_latches_and_retries_after_gap(simulate, record_property, first)
     assert READY_NEW in trace.production_log
 
 
+def assert_retry_gaps(trace, gaps):
+    requests = trace.times("exchange")
+    results = trace.times("exchange_result")
+    for result_time, next_request, gap in zip(results, requests[1:], gaps):
+        assert gap <= next_request - result_time <= gap + 1_000
+
+
 def test_failure_latches_once_per_episode(simulate, record_property):
     evidence(
         record_property,
         "two failures",
         FLOW,
-        "one alert for the episode; every retry 60 s apart",
+        "one alert for the episode; the retry gap doubles from 60 s",
     )
-    trace = simulate(plan("exchange", [503, 503, 201]), until=135_000)
-    requests = trace.times("exchange")
-    results = trace.times("exchange_result")
-    assert len(requests) == 3
-    for result_time, next_request in zip(results, requests[1:]):
-        assert RETRY <= next_request - result_time <= RETRY + 1_000
+    trace = simulate(plan("exchange", [503, 503, 201]), until=200_000)
+    assert trace.count("exchange") == 3
+    assert_retry_gaps(trace, [RETRY, 2 * RETRY])
     assert trace.production_log.count(FAILURE) == 1
     assert READY_NEW in trace.production_log
+
+
+def test_fourth_failure_makes_registration_unavailable(simulate, record_property):
+    evidence(
+        record_property,
+        "four failures",
+        FLOW,
+        "gaps 60 s, 120 s, 240 s; after the fourth failure no request until restart",
+    )
+    trace = simulate(plan("exchange", [503] * 5), until=1_000_000)
+    assert trace.count("exchange") == 4
+    assert_retry_gaps(trace, [RETRY, 2 * RETRY, 4 * RETRY])
+    assert trace.production_log.count(FAILURE) == 1
+    assert "registration unavailable until restart" in trace.production_log
+    assert READY_NEW not in trace.production_log
 
 
 def test_stale_retained_connection_is_replaced_within_the_attempt(

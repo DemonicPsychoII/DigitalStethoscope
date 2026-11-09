@@ -93,7 +93,8 @@
 #define COMMUNICATION_DEVICE_KEEP_ALIVE_MARGIN_S (5) /**< P26-KEEPALIVE: the device closes an idle connection this long before the server. */
 
 #define COMMUNICATION_REGISTRATION_TIMEOUT_S     (10) /**< P27-REGISTRATION: one attempt including transport recovery, POST, parsing and flash save. */
-#define COMMUNICATION_REGISTRATION_RETRY_DELAY_S (60) /**< P27-REGISTRATION: gap after a failed or interrupted issued attempt. */
+#define COMMUNICATION_REGISTRATION_RETRY_DELAY_S (60) /**< P27-REGISTRATION: gap after the first failed or an interrupted issued attempt; doubles with every further failure. */
+#define COMMUNICATION_REGISTRATION_ATTEMPTS      (4)  /**< P27-REGISTRATION: failed attempts until registration is unavailable until restart. */
 
 #define COMMUNICATION_DELIVERY_ATTEMPTS           (4)    /**< P13: attempts at most, within the global deadline. */
 #define COMMUNICATION_DELIVERY_SETUP_TIMEOUT_MS   (3000) /**< P13: connection setup (SNTP, DNS, TCP, TLS) of an attempt without a reusable connection; provisional. */
@@ -227,6 +228,7 @@ static bool communication_RegistrationIsUnsaved;                                
 static char communication_ServerDeviceId[FHIR_SERVER_DEVICE_ID_SIZE];           /**< Validated id; meaningful when ready or unsaved. */
 static k_timepoint_t communication_NextRegistrationTime;                        /**< No registration attempt before this time after a failed or interrupted one. */
 static bool communication_RegistrationFailureIsLatched;                         /**< DEVICE_REGISTRATION_FAILURE latched in the current episode. */
+static int communication_RegistrationFailedAttempts;                            /**< Failed issued attempts since boot; interrupted ones are not counted. */
 static char communication_RequestBody[FHIR_OUTGOING_BODY_CAPACITY];             /**< Frozen body of the current request. */
 static char communication_RequestCondition[FHIR_OBSERVATION_CONDITION_SIZE];    /**< If-None-Exist value; sized for the longer Observation condition. */
 static struct wifi_http_response communication_Response EXT_RAM_BSS_ATTR;       /**< Response of the current exchange, in PSRAM. */
@@ -1320,8 +1322,14 @@ static void communication_registerInIdle(void)
         }
         else if(!communication_CleanupFaultIsLatched)
         {
-            /* Also after Start interrupted the issued attempt: the same gap applies, without an error. */
-            communication_NextRegistrationTime = sys_timepoint_calc(K_SECONDS(COMMUNICATION_REGISTRATION_RETRY_DELAY_S));
+            /* Start interrupting the issued attempt does not count, but it waits for the current gap. */
+            if(result != -ECANCELED)
+            {
+                communication_RegistrationFailedAttempts++;
+            }
+
+            const int retryDelaySeconds = (communication_RegistrationFailedAttempts > 1) ? (COMMUNICATION_REGISTRATION_RETRY_DELAY_S << (communication_RegistrationFailedAttempts - 1)) : COMMUNICATION_REGISTRATION_RETRY_DELAY_S;
+            communication_NextRegistrationTime = sys_timepoint_calc(K_SECONDS(retryDelaySeconds));
 
             /* A reconnect inside the attempt that left the transport unverified starts the preparation gap too. */
             if(!communication_TransportIsVerified)
@@ -1329,10 +1337,16 @@ static void communication_registerInIdle(void)
                 communication_NextPreparationTime = sys_timepoint_calc(K_SECONDS(COMMUNICATION_SECURE_RETRY_DELAY_S));
             }
 
-            if((result != -ECANCELED) && !communication_RegistrationFailureIsLatched)
+            if(communication_RegistrationFailedAttempts >= COMMUNICATION_REGISTRATION_ATTEMPTS)
+            {
+                communication_RegistrationIsAvailable = false;
+                communication_RegistrationFailureIsLatched = true;
+                LOG_ERR("Device registration failed %d times (%d); registration unavailable until restart", communication_RegistrationFailedAttempts, result);
+            }
+            else if((result != -ECANCELED) && !communication_RegistrationFailureIsLatched)
             {
                 communication_RegistrationFailureIsLatched = true;
-                LOG_ERR("DEVICE_REGISTRATION_FAILURE (%d); retry in %d s, offline listening stays available", result, COMMUNICATION_REGISTRATION_RETRY_DELAY_S);
+                LOG_ERR("DEVICE_REGISTRATION_FAILURE (%d); retry in %d s, offline listening stays available", result, retryDelaySeconds);
             }
         }
         else
