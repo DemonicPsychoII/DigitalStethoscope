@@ -10,9 +10,9 @@ The [state diagram](../../architecture/COMMUNICATION/setup-state.puml),
 
 ### Entry, scan and recovery
 
-Only supported networks are listed and offered: open networks and WPA2-PSK. WPA1, WPA2-SHA256 and WPA3/SAE scan results are filtered rather than joined with a mismatched security type; support for WPA3 and WPA2-SHA256 is TICKET-200. Keep the strongest distinct SSIDs within the P23 cache limit.
+Only supported networks are listed and offered: open networks and WPA2-PSK. WPA1, WPA2-SHA256 and WPA3/SAE scan results are filtered rather than joined with a mismatched security type; support for WPA3 and WPA2-SHA256 is planned in the project backlog (Jira TICKET-200, "Support WPA3 (SAE) and WPA2-SHA256 networks"). Keep the 16 strongest distinct supported SSIDs, the scan list limit of the [P23 Wi-Fi retry and limit parameters](parameters.md); the setup page lists these networks.
 
-Initialize L1_STORAGE with `storage_init()` before any boot record read. If initialization fails, treat the record as unavailable and open setup; never join using failed-read output. Read settings through L1. At boot, join a stored network with four attempts total,
+Initialize L1_STORAGE with `storage_init()` before any boot record read. If initialization fails, treat the record as unavailable and open setup; never join using failed-read output. Read settings through L1_STORAGE. At boot, join a stored network with four attempts total,
 5 s between failures. Exhaustion shows an error and waits for a 2 s hold in Idle.
 Without credentials, or on a 2 s hold in Idle, scan/cache first, then open the AP
 and serve one HTML document. Rescan explicitly or after a failed portal join;
@@ -21,7 +21,7 @@ Scan has four attempts total, 5 s between failures. Exhausted scan or AP-start f
 permits a manual 2 s setup retry. Link loss has four reconnect attempts, 5 s apart;
 exhaustion starts setup automatically in Idle. Defer all active recovery during listening.
 
-The [portal interface](../PORTAL/interfaces-and-behavior.md) queues typed requests for COMMUNICATION and publishes its status. The hotspot is open; the phone joins it manually before opening the page. Its name is `Stetho-AABBCCDDEEFF`: all six station MAC bytes in upper-case hexadecimal, so devices in one room stay distinguishable ([design review of 2 November 2026](https://github.com/DemonicPsychoII/DigitalStethoscope/pull/104)).
+The [portal interface](../PORTAL/interfaces-and-behavior.md) queues typed requests for COMMUNICATION and publishes its status. The hotspot is open. The operator's own phone, or any other device with Wi-Fi and a browser, joins it manually and then opens the setup page; it is not paired with the stethoscope. Its name is `Stetho-AABBCCDDEEFF`: all six station MAC bytes in upper-case hexadecimal, so devices in one room stay distinguishable ([design review of 2 November 2026](https://github.com/DemonicPsychoII/DigitalStethoscope/pull/104)).
 
 ### Join, persistence and result closure
 
@@ -31,8 +31,8 @@ cause, rescan and return to selection. On success save the network as the
 `wifi/network` record with `storage_write()` in `L1_STORAGE`; retry saving once.
 Preserve the old valid record on failure. Show success or save warning, with the
 station IPv4 address from `wifi_getAddress()`, for 10 s. Publish Closing before teardown on every setup exit, including result/save-warning completion and Start; only Cancel, inactivity and scan failure add the 2 s closing-notice delay. Then close AP/server and keep
-the station, including with unsaved credentials. At boot L2 reads the record with
-`storage_read()` and checks it with `wifi_isValidNetwork()`; L2 owns workflow policy.
+the station, including with unsaved credentials. At boot L2_COMMUNICATION reads the record with
+`storage_read()` and checks it with `wifi_isValidNetwork()`; L2_COMMUNICATION owns workflow policy.
 
 ### Cancellation and inactivity
 
@@ -40,7 +40,8 @@ The shared setup contract accepts form Back/Cancel only before Connect submissio
 
 Retain an established station; otherwise cancel attempts and
 release Wi-Fi services. Software errors that prevent continuing setup log/show the
-cause, clean up and return to offline operation. Later 2 s holds can retry.
+cause, clean up and return to offline operation. The user can start the Wi-Fi setup
+workflow again by holding the button for 2 s in Idle.
 
 ### Listening priority and safe teardown
 
@@ -49,7 +50,7 @@ starts audio. Preserve an established station association. Serialize cancellatio
 against join completion, reject stale callbacks and finish an atomic settings write
 safely. Preserve the final requested Start/Stop state when commands coalesce.
 CONTROL serializes its commands with the release wait. No acknowledgement is
-valid until L1 confirms scan/connect cancellation and portal/DHCP/AP shutdown;
+valid until L1_WIFI and L1_PORTAL confirm scan/connect cancellation and portal/DHCP/AP shutdown;
 cleanup tries each pending stop once (see below); a latched Wi-Fi-only cleanup fault releases audio and prevents further Wi-Fi work until restart. This exception follows REQ-13; it does not assert that the radio is physically off. A new Start invalidates the
 previous acknowledgement. The 200 ms wait interval is a candidate event-check
 interval, not a measured bound on total teardown or settings-write latency.
