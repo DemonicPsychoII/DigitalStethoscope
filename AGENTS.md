@@ -4,7 +4,8 @@
 
 Project skills live in `.agents/skills/`, where Codex discovers them. Claude Code reads only
 `.claude/skills/`, which is not tracked. To expose the skills to Claude Code in a checkout, run
-`cmd /c "mkdir .claude & mklink /J .claude\skills .agents\skills"` from its root.
+from its root on Windows `cmd /c "mkdir .claude & mklink /J .claude\skills .agents\skills"`, or on
+Linux `mkdir -p .claude && ln -s ../.agents/skills .claude/skills`.
 
 ## Thesis sources
 
