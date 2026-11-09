@@ -10,8 +10,8 @@
 
 ## How Wi-Fi setup works
 
-1. At boot, read the stored network and join it.
-2. If that fails, or after a 2 s button hold in Idle, scan for nearby networks, open the hotspot and serve the setup page with the found networks listed.
+1. At boot, read the stored network and join it. If all boot attempts fail, the device shows an error and waits in Idle; it does not open setup on its own.
+2. If no stored network can be read, or after a 2 s button hold in Idle, scan for nearby networks, open the hotspot and serve the setup page with the found networks listed.
 3. The operator selects a network, enters its password if it needs one, and submits. The device joins that network and, once it has an address, saves the SSID and password in its persistent settings.
 4. After showing the result for 10 s, the device closes the hotspot and stays connected to the network.
 
