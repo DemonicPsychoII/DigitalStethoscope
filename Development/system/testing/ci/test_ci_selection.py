@@ -26,7 +26,7 @@ class SelectionTests(unittest.TestCase):
 
     def test_component_pages_select_only_the_available_communication_suite(self):
         for area in ("architecture", "design"):
-            for component in ("WIFI", "PORTAL", "L2_COMMUNICATION", "system"):
+            for component in ("WIFI", "PORTAL", "COMMUNICATION", "STORAGE", "system"):
                 self.assertTrue(
                     suites([f"Development/system/{area}/{component}/README.md"])[
                         "application_host"
@@ -37,10 +37,22 @@ class SelectionTests(unittest.TestCase):
                     "application_host"
                 ]
             )
-        for component in ("L1_WIFI", "L1_PORTAL", "L2_COMMUNICATION"):
+        for component in ("L1_WIFI", "L1_PORTAL", "L1_STORAGE", "L2_COMMUNICATION"):
             self.assertTrue(
                 suites([f"{APP}{component}/service.md"])["application_host"]
             )
+
+    def test_server_profile_tool_and_host_requirements_select_the_host_suites(self):
+        for path in (
+            "Development/system/coding/tools/server-profile/server_profile.py",
+            CI + "requirements-host.txt",
+        ):
+            self.assertTrue(suites([path])["application_host"])
+        self.assertFalse(
+            suites(["Development/system/coding/tools/build-firmware.ps1"])[
+                "application_host"
+            ]
+        )
 
     def test_l1_suites_select_the_shared_host_step(self):
         for component, suite in (("WIFI", "wifi"), ("PORTAL", "portal")):
