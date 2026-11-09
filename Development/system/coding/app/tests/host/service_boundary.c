@@ -44,6 +44,10 @@ static int hotspot_set_configuration_result;
 static int hotspot_dhcp_start_result;
 static int hotspot_disable_calls;
 static int hotspot_dhcp_stop_calls;
+static char hotspot_name[33];
+static esp_err_t factory_mac_result;
+static uint8_t factory_mac[6] = {0x7C, 0xDF, 0xA1, 0x0B, 0x2C, 0x3D};
+static int factory_mac_reads;
 static uint64_t scheduled_event;
 static int64_t scheduled_event_time_milliseconds;
 static bool deleted_record;
@@ -335,6 +339,20 @@ int wifi_closeSecureConnection(void)
     return 0;
 }
 
+int wifi_startSecureExchange(const struct wifi_http_request *request, struct wifi_http_response *response, k_timepoint_t deadline)
+{
+    (void)request;
+    (void)response;
+    (void)deadline;
+    return -ENOTCONN; /**< No connection is ever retained without a server. */
+}
+
+int wifi_waitForSecureExchange(k_timeout_t timeout)
+{
+    (void)timeout;
+    return -EINVAL; /**< No exchange was started. */
+}
+
 int sys_clock_settime(int clock, const struct timespec *time)
 {
     (void)clock;
@@ -518,6 +536,10 @@ int net_mgmt(int request, struct net_if *interface, void *data, size_t size)
     }
     else if(request == NET_REQUEST_WIFI_AP_ENABLE)
     {
+        const struct wifi_connect_req_params *parameters = data;
+        assert(parameters->ssid_length < sizeof(hotspot_name));
+        memcpy(hotspot_name, parameters->ssid, parameters->ssid_length);
+        hotspot_name[parameters->ssid_length] = '\0';
         /* Model a driver that starts the AP before reporting an error. */
         hotspot_is_enabled = true;
         result = hotspot_enable_result;
@@ -631,6 +653,13 @@ int net_dhcpv4_server_stop(struct net_if *interface)
     hotspot_dhcp_stop_calls++;
     hotspot_dhcp_is_running = false;
     return 0;
+}
+
+esp_err_t esp_efuse_mac_get_default(uint8_t *mac)
+{
+    factory_mac_reads++;
+    memcpy(mac, factory_mac, sizeof(factory_mac));
+    return factory_mac_result;
 }
 
 int esp_wifi_get_config(int interface, wifi_config_t *configuration)

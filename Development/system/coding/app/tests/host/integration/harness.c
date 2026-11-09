@@ -1,5 +1,6 @@
 #include <setjmp.h>
 #include "../service_boundary.c"
+#include "../../../L1_services/L1_FHIR/fhir.c"
 #include "../../../L2_application/L2_COMMUNICATION/communication.c"
 
 enum integration_event_type
