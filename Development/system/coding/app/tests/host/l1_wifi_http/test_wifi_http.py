@@ -1,8 +1,11 @@
 """VT-07/VT-08: bounded HTTP/1.1 response reader on Zephyr's http_parser."""
 
+import hashlib
+import json
 import os
 from pathlib import Path
 import shlex
+import shutil
 import subprocess
 import sys
 
@@ -18,24 +21,43 @@ BODY_CAPACITY = 4096
 LOCATION_SIZE = 512
 
 
-def zephyr_base():
-    configured = os.environ.get("ZEPHYR_BASE")
-    candidates = [Path(configured)] if configured else []
-    candidates.append(REPOSITORY / ".ci-workspace" / "zephyr")
-    for candidate in candidates:
-        if (candidate / "subsys/net/lib/http/http_parser.c").is_file():
-            return candidate
-    return None
+# The static CI job has no Zephyr workspace, so the parser is vendored at the pinned revision.
+# The files are stored flat because tracked "/zephyr/" paths count as a checked-in workspace.
+VENDORED = REPOSITORY / "Development/system/coding/third_party/zephyr-http-parser"
+TOOLCHAIN = REPOSITORY / "Development/system/testing/ci/toolchain.json"
+VENDORED_REVISION = "357467a011cd2557a1a3f0b4be83d817c4addc9b"
+VENDORED_BLOBS = {
+    "include/zephyr/net/http/method.h": "9bcad986dd4f6df2c0c0a93dac26b1c7c6bc0fa2",
+    "include/zephyr/net/http/parser.h": "d7b754e5dac53988a3c8de00c1fc5dfeee89af59",
+    "include/zephyr/net/http/parser_state.h": "2369c6b676f31916b46924c08034194b25bcf3b2",
+    "include/zephyr/net/http/parser_url.h": "e795e18ab3a7a1b4a28b745f490e0a172035730b",
+    "subsys/net/lib/http/http_parser.c": "a36bceef9b97e489605a72c1f7fd29a0fe563bf1",
+    "subsys/net/lib/http/http_parser_url.c": "cb46029002f397770af42b158f4658b376b713d1",
+}
+
+
+def test_vendored_parser_matches_the_pinned_zephyr(record_property):
+    for name, value in (
+        ("scenario", "wifi-http-vendored-parser-pin"),
+        ("vt_id", "VT-07, VT-08"),
+        ("basis", "Development/system/testing/ci/toolchain.json (zephyr_revision)"),
+        ("expected", "vendored files equal the git blobs of the pinned revision"),
+    ):
+        record_property(name, value)
+    pinned = json.loads(TOOLCHAIN.read_text(encoding="utf-8"))["zephyr_revision"]
+    assert pinned == VENDORED_REVISION, "re-vendor the parser for the new Zephyr pin"
+    for path, blob in VENDORED_BLOBS.items():
+        content = (VENDORED / Path(path).name).read_bytes()
+        header = f"blob {len(content)}\0".encode()
+        assert hashlib.sha1(header + content).hexdigest() == blob, path
 
 
 @pytest.fixture(scope="module")
 def reader(host_build_directory, tmp_path_factory):
-    zephyr = zephyr_base()
-    if zephyr is None:
-        pytest.skip(
-            "Zephyr's http_parser source is required: set ZEPHYR_BASE or create the pinned "
-            ".ci-workspace; the static CI job has no Zephyr workspace."
-        )
+    zephyr = tmp_path_factory.mktemp("zephyr")
+    for path in VENDORED_BLOBS:
+        (zephyr / path).parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(VENDORED / Path(path).name, zephyr / path)
     target = host_build_directory("unit", "wifi-http") / (
         "http.exe" if sys.platform == "win32" else "http"
     )
