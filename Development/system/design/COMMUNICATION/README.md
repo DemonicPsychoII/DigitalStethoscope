@@ -12,7 +12,7 @@
 
 1. At boot, read the stored network and join it. If all boot attempts fail, the device shows an error and waits in Idle; it does not open setup on its own.
 2. If no stored network can be read, or after a 2 s button hold in Idle, scan for nearby networks, open the hotspot and serve the setup page with the found networks listed.
-3. The operator selects a network, enters its password if it needs one, and submits. The device joins that network and, once it has an address, saves the SSID and password in its persistent settings.
-4. After showing the result for 10 s, the device closes the hotspot and stays connected to the network.
+3. The operator selects a network, enters its password if it needs one, and submits. The device joins that network and, once it has an address, saves the SSID and password in its persistent settings, retrying once. If saving fails, it keeps the old stored network and shows a save warning instead of success.
+4. After showing the result or save warning for 10 s, the device closes the hotspot and stays connected to the network, even if the new network was not saved.
 
 The [state diagram](../../architecture/COMMUNICATION/setup-state.puml), [setup flow](../../architecture/COMMUNICATION/setup-flow.puml) and [recovery flow](../../architecture/COMMUNICATION/link-recovery.puml) show these steps. The [setup workflow](interfaces-and-behavior.md) holds the detailed rules: retries, recovery, cancellation and listening priority.
