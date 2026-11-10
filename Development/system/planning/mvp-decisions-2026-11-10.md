@@ -1,7 +1,8 @@
-# Status light pin and placeholder volume — 10 November 2026
+# Status light pin, placeholder volume and catalogue order — 10 November 2026
 
 Nico decided on 10 November 2026 in T3 Code (conversation link not recorded) how the first fitted
-evaluation carrier is used. These are project decisions, not measurements.
+evaluation carrier is used and how the feedback catalogue is ordered. These are project decisions,
+not measurements.
 
 Board state reported by Nico: the evaluation PCB from the `DigitalStethoscope_Eval` Altium project
 (commit `a8f23a2`, production package of 13 October 2026) is assembled with J3 (INMP441 microphone),
@@ -23,6 +24,12 @@ The DevKit was not yet soldered to the carrier, so carrier inputs such as J8 wer
 2. **Fixed volume until J7 is fitted.** Until the potentiometer is fitted, the audio path uses a
    fixed volume of 100 % as a placeholder that the potentiometer replaces. REQ-04 and the volume
    part of TICKET-187 stay unverified until then.
+3. **Catalogue rows grouped by subject, blink codes kept.** Within each colour, statuses come first
+   and errors are grouped by subject in workflow order, for example all `DELIVERY_*` rows together.
+   Every code keeps its blink count, so blink counts no longer rise down the table. The enum in
+   `feedback.h` and the status light table follow the same order. This replaces the sort rule
+   "colour, then number of blinks" (option B of the comparison on the Pages board
+   `stethoscope-feedback-grouping`).
 
 ## Applied in
 
