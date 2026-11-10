@@ -217,7 +217,7 @@ jobs:
         run: |
           python3 - >> "$GITHUB_ENV" <<'PYTHON'
           import json
-          pins = json.load(open("Development/system/testing/ci/toolchain.json"))
+          pins = json.load(open("Development/system/coding/tools/toolchain/toolchain.json"))
           print(f"ZEPHYR_REVISION={pins['zephyr_revision']}")
           print(f"ZEPHYR_SDK_VERSION={pins['sdk_version']}")
           print(f"WEST_VERSION={pins['west_version']}")
@@ -247,9 +247,9 @@ jobs:
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: .ci-ccache
-          key: ccache-${{ runner.os }}-${{ hashFiles('Development/system/testing/ci/toolchain.json', 'Development/system/testing/ci/compiler_cache.json') }}-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          key: ccache-${{ runner.os }}-${{ hashFiles('Development/system/coding/tools/toolchain/toolchain.json', 'Development/system/testing/ci/compiler_cache.json') }}-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
-            ccache-${{ runner.os }}-${{ hashFiles('Development/system/testing/ci/toolchain.json', 'Development/system/testing/ci/compiler_cache.json') }}-
+            ccache-${{ runner.os }}-${{ hashFiles('Development/system/coding/tools/toolchain/toolchain.json', 'Development/system/testing/ci/compiler_cache.json') }}-
       - name: Reset compiler-cache statistics
         if: env.HEAVY_REQUIRED == 'true'
         run: ccache --zero-stats

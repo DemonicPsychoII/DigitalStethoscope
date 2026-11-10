@@ -33,6 +33,8 @@ HOST_TEST_INPUTS = (
     "Development/system/coding/tools/server-profile/",
 )
 HOST_TEST_REQUIREMENTS = "Development/system/testing/ci/requirements-host.txt"
+# Toolchain pins and setup live with the production tools; CI imports and tests them.
+TOOLCHAIN = "Development/system/coding/tools/toolchain/"
 
 
 def available_component_suites() -> tuple[str, ...]:
@@ -79,7 +81,7 @@ def needs_build(paths: list[str], component: str) -> bool:
     ci = "Development/system/testing/ci/"
     thesis_app = "Development/system/coding/app/"
     for path in paths:
-        if path == ".github/workflows/quality-gates.yml":
+        if path == ".github/workflows/quality-gates.yml" or path.startswith(TOOLCHAIN):
             return True
         if path.startswith(thesis_app) and component == thesis_app:
             relative = path[len(thesis_app) :]
@@ -131,11 +133,15 @@ def suites(paths: list[str]) -> dict[str, bool]:
         or any(
             p.endswith((".md", ".puml", ".svg"))
             or "/tests/" in p
-            or p.startswith(("thesis-material/", "Development/system/testing/ci/"))
+            or p.startswith(
+                ("thesis-material/", "Development/system/testing/ci/", TOOLCHAIN)
+            )
             for p in paths
         ),
         "tooling": workflow
-        or any(p.startswith("Development/system/testing/ci/") for p in paths),
+        or any(
+            p.startswith(("Development/system/testing/ci/", TOOLCHAIN)) for p in paths
+        ),
         "gate": workflow or any(p.startswith(".github/agent-gate/") for p in paths),
         "application_host": bool(available_component_suites())
         and (

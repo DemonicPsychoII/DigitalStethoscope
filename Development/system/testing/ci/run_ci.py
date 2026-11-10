@@ -14,6 +14,7 @@ from pathlib import Path
 
 import firmware_release
 import yaml
+import toolchain_path  # noqa: F401
 from build_support import BOARD, build_env
 
 ROOT = Path(__file__).resolve().parents[4]
@@ -117,17 +118,12 @@ def static() -> None:
         if path.suffix in {".yaml", ".yml"}:
             yaml.safe_load(path.read_text(encoding="utf-8"))
     # Format all maintained application sources.
-    run([sys.executable, "-m", "ruff", "check", "Development/system/testing"])
-    run(
-        [
-            sys.executable,
-            "-m",
-            "ruff",
-            "format",
-            "--check",
-            "Development/system/testing",
-        ]
+    python_sources = (
+        "Development/system/testing",
+        "Development/system/coding/tools/toolchain",
     )
+    run([sys.executable, "-m", "ruff", "check", *python_sources])
+    run([sys.executable, "-m", "ruff", "format", "--check", *python_sources])
     clang_format = shutil.which("clang-format")
     if clang_format and (APP / "CMakeLists.txt").is_file():
         maintained_sources = sorted(

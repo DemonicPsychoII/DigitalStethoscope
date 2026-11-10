@@ -30,7 +30,7 @@ LOCATION_SIZE = 512
 # The static CI job has no Zephyr workspace, so the parser is vendored at the pinned revision.
 # The files are stored flat because tracked "/zephyr/" paths count as a checked-in workspace.
 VENDORED = REPOSITORY / "Development/system/coding/third_party/zephyr-http-parser"
-TOOLCHAIN = REPOSITORY / "Development/system/testing/ci/toolchain.json"
+TOOLCHAIN = REPOSITORY / "Development/system/coding/tools/toolchain/toolchain.json"
 VENDORED_REVISION = "357467a011cd2557a1a3f0b4be83d817c4addc9b"
 VENDORED_BLOBS = {
     "include/zephyr/net/http/method.h": "9bcad986dd4f6df2c0c0a93dac26b1c7c6bc0fa2",
@@ -53,7 +53,10 @@ def traceability(request):
 def test_vendored_parser_matches_the_pinned_zephyr(record_property):
     for name, value in (
         ("scenario", "wifi-http-vendored-parser-pin"),
-        ("basis", "Development/system/testing/ci/toolchain.json (zephyr_revision)"),
+        (
+            "basis",
+            "Development/system/coding/tools/toolchain/toolchain.json (zephyr_revision)",
+        ),
         ("expected", "vendored files equal the git blobs of the pinned revision"),
     ):
         record_property(name, value)

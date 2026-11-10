@@ -2,7 +2,7 @@
 
 # Legacy Zephyr toolchain locations (retained for existing installations).
 # Current setup uses the ignored .ci-workspace below; recreate it with:
-#   python Development/system/testing/ci/setup_zephyr.py
+#   python Development/system/coding/tools/toolchain/setup_zephyr.py
 Development/system/coding/tools/zephyrproject/
 Development/Toolchain/zephyrproject/
 

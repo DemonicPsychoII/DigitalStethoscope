@@ -12,7 +12,6 @@ import venv
 from pathlib import Path
 
 from build_support import PINS, ROOT, build_env, checked, python_path, west_command
-from prepared_env import MARKER, record
 
 
 def main() -> None:
@@ -38,7 +37,6 @@ def main() -> None:
                 "Install 7-Zip first: winget install --id 7zip.7zip -e --silent"
             )
     ws.mkdir(parents=True, exist_ok=True)
-    (ws / MARKER).unlink(missing_ok=True)
     if not python_path(ws).is_file():
         venv.create(ws / ".venv", with_pip=True)
     env = build_env(ws)
@@ -124,9 +122,9 @@ def main() -> None:
     )
     run([*west, "zephyr-export"])
     run([*west, "--version"])
-    record("zephyr", ws)
+    build_firmware = Path(__file__).resolve().parents[1] / "build-firmware.ps1"
     print(
-        f"\nReady. No activation required:\n{py} {Path(__file__).with_name('run_ci.py')} build --application",
+        f"\nReady. No activation required:\npowershell -File {build_firmware}",
         flush=True,
     )
 

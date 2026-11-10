@@ -12,6 +12,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+import toolchain_path  # noqa: F401
 from build_support import PINS, ROOT, python_path
 
 STATIC_PYTHON = "3.12.10"
@@ -97,6 +98,10 @@ def record(kind: str, workspace: Path) -> None:
     (workspace / MARKER).write_text(json.dumps(data, sort_keys=True) + "\n")
 
 
+def invalidate(workspace: Path) -> None:
+    (workspace / MARKER).unlink(missing_ok=True)
+
+
 def ready(kind: str, workspace: Path) -> bool:
     try:
         return json.loads((workspace / MARKER).read_text()) == state(kind, workspace)
@@ -109,7 +114,9 @@ if __name__ == "__main__":
     workspace = Path(location)
     if command == "record":
         record(kind, workspace)
+    elif command == "invalidate":
+        invalidate(workspace)
     elif command == "check":
         raise SystemExit(0 if ready(kind, workspace) else 1)
     else:
-        raise SystemExit("expected record or check")
+        raise SystemExit("expected record, invalidate or check")

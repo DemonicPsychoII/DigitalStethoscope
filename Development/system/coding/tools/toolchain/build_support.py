@@ -7,7 +7,7 @@ import os
 import subprocess
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[4]
+ROOT = Path(__file__).resolve().parents[5]
 APP = ROOT / "Development/system/coding/app"
 PINS = json.loads(Path(__file__).with_name("toolchain.json").read_text())
 BOARD = PINS["board"]

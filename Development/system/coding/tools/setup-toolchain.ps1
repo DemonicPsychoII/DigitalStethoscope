@@ -12,6 +12,6 @@ in the workspace virtual environment. Safe to rerun after interrupted setup.
 param([string]$Python = 'python')
 
 $ErrorActionPreference = 'Stop'
-$setup = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..\testing\ci\setup_zephyr.py'))
+$setup = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot 'toolchain\setup_zephyr.py'))
 & $Python $setup
 if ($LASTEXITCODE -ne 0) { throw "Toolchain setup failed (exit $LASTEXITCODE)." }

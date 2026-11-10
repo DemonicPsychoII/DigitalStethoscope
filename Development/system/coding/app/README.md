@@ -78,16 +78,13 @@ thread information for OpenOCD, DBG logs from boot, assertions, stack sentinels 
 execution cycles in `kernel thread list`. Each profile has its own build directory,
 so switching does not rebuild everything. The debug profile exists only for this app.
 
-The script uses the board pinned in `toolchain.json` and leaves the shell environment
+The script uses the board pinned in [`toolchain.json`](../tools/toolchain/toolchain.json) and leaves the shell environment
 unchanged. It only builds; it never flashes or publishes. Without PowerShell, activate
 the pinned Zephyr environment and run from the repository root:
 
 ```sh
 west build --pristine=always -b esp32s3_devkitc/esp32s3/procpu Development/system/coding/app -d build-app
 ```
-
-CI runs the same application build with
-`python Development/system/testing/ci/run_ci.py build --application`.
 
 ### Software bill of materials
 
@@ -190,8 +187,6 @@ The script resolves PC (faulting instruction) and A0 (caller) to source lines wi
 `addr2line`. The pinned Zephyr cannot link `CONFIG_XTENSA_ENABLE_BACKTRACE` for the
 ESP32-S3 (`xthal_window_spill` is missing), so deeper frames need GDB.
 
-`run_ci.py build` and `run_ci.py build --application` both compile this application to `build-ci-app`, retain build evidence and stage the single application profile. Daily/dispatch and `firmware`-label publication use that profile. The archived bring-up firmware has local build instructions and no CI.
-
 ## Layer rules
 
 Calls go downward; upward notifications use events/message queues. Zephyr owns
@@ -225,7 +220,7 @@ a bound on teardown latency: the time until audio can start also includes the at
 settings write and the driver shutdown, which are not yet measured.
 CONTROL does not call this interface yet.
 
-The [application host suite](tests/host/README.md) verifies communication, Wi-Fi and portal scenarios against substituted boundaries. VT-14 target timing, radio behavior and CONTROL integration remain pending; host results do not establish device behavior.
+Verification is described in the repository's testing documentation.
 
 ## Coding conventions
 

@@ -43,6 +43,10 @@ anchor, expected result and compiler/source identity; each scenario has its own
 result row. XFAIL records an implementation defect and a strict unexpected pass
 fails verification. Classifications and the complete case list belong in the PR.
 
+This application host suite verifies communication, Wi-Fi and portal scenarios against
+substituted boundaries. VT-14 target timing, radio behavior and CONTROL integration
+remain pending; host results do not establish device behavior.
+
 ## Test basis
 
 Expectations come from [Wi-Fi behavior](../../../../design/WIFI/interfaces-and-behavior.md),

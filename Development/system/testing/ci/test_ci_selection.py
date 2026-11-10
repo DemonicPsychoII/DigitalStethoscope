@@ -12,6 +12,7 @@ from firmware_changes import available_component_suites, needs_firmware, select,
 
 APP = "Development/system/coding/app/"
 CI = "Development/system/testing/ci/"
+TOOLCHAIN = "Development/system/coding/tools/toolchain/"
 ARCHIVE = "preThesis/06-bringup-zephyr/"
 
 
@@ -150,8 +151,9 @@ class SelectionTests(unittest.TestCase):
             APP + "L1_services/L1_WIFI/wifi.c",
             APP + "prj.conf",
             APP + "boards/board.overlay",
-            CI + "toolchain.json",
-            CI + "build_support.py",
+            TOOLCHAIN + "toolchain.json",
+            TOOLCHAIN + "build_support.py",
+            TOOLCHAIN + "setup_zephyr.py",
             ".github/workflows/quality-gates.yml",
         ):
             self.assertTrue(suites([path])["application"], path)
@@ -201,6 +203,7 @@ class SelectionTests(unittest.TestCase):
         ):
             self.assertFalse(needs_firmware([path]), path)
         self.assertTrue(suites([CI + "test_daily_build.py"])["tooling"])
+        self.assertTrue(suites([TOOLCHAIN + "build_support.py"])["tooling"])
         self.assertEqual(
             {k for k, v in suites([".github/agent-gate/agent_gate.py"]).items() if v},
             {"gate"},

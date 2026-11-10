@@ -15,6 +15,7 @@ import native_review
 import release_reuse
 import post_merge
 
+import toolchain_path  # noqa: F401
 from build_support import BOARD, RELEASE_COMPONENTS
 from ci_results import problems
 from firmware_release import PROJECT

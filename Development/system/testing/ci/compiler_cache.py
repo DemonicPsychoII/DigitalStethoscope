@@ -6,6 +6,7 @@ import os
 import subprocess
 from pathlib import Path
 
+import toolchain_path  # noqa: F401
 from build_support import ROOT
 from validation_tools import install
 

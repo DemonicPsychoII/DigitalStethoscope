@@ -4,7 +4,7 @@
 
 $FwRepo = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..\..\..'))
 $FwWorkspace = Join-Path $FwRepo '.ci-workspace'
-$FwPins = Get-Content (Join-Path $FwRepo 'Development\system\testing\ci\toolchain.json') -Raw | ConvertFrom-Json
+$FwPins = Get-Content (Join-Path $PSScriptRoot 'toolchain\toolchain.json') -Raw | ConvertFrom-Json
 $FwWest = Join-Path $FwWorkspace '.venv\Scripts\west.exe'
 $FwSdk = Join-Path $FwWorkspace "zephyr-sdk-$($FwPins.sdk_version)"
 $FwToolBin = Join-Path $FwSdk "gnu\$($FwPins.toolchain)\bin"

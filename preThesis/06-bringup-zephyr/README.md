@@ -15,7 +15,7 @@ profile also boots without credentials, server configuration or automatic connec
 Install Python 3.12+ and Git, then run from the repository root:
 
 ```powershell
-python Development/system/testing/ci/setup_zephyr.py
+python Development/system/coding/tools/toolchain/setup_zephyr.py
 ```
 
 See [local build instructions](BUILD-GUIDE.md) for prerequisites. In the activated
@@ -25,7 +25,7 @@ Zephyr environment, from this application directory:
 west build --pristine -b esp32s3_devkitc/esp32s3/procpu . -d build-eval
 ```
 
-The shared Zephyr and CI tool pins live in [toolchain.json](../../Development/system/testing/ci/toolchain.json).
+The shared Zephyr and CI tool pins live in [toolchain.json](../../Development/system/coding/tools/toolchain/toolchain.json).
 [Build and flash](BUILD-GUIDE.md) covers profiles, console ports, memory sizing,
 and build identity (`stetho version`). Hardware flashing, serial
 and device-network operations require owner authorization.

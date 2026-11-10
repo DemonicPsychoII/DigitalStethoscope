@@ -1,6 +1,6 @@
 $repo = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
 $workspace = Join-Path $repo '.ci-workspace'
-$pins = Get-Content (Join-Path $repo 'Development\system\testing\ci\toolchain.json') -Raw | ConvertFrom-Json
+$pins = Get-Content (Join-Path $repo 'Development\system\coding\tools\toolchain\toolchain.json') -Raw | ConvertFrom-Json
 
 $env:PATH = "$(Join-Path $workspace '.venv\Scripts');$env:PATH"
 $env:ZEPHYR_BASE = Join-Path $workspace 'zephyr'
