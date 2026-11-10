@@ -12,6 +12,7 @@ import host_build
 HERE = Path(__file__).resolve().parent
 APPLICATION = HERE.parents[1]
 SIMULATION_INCLUDE_DIRECTORIES = [
+    APPLICATION / "common",
     APPLICATION / "L2_application/L2_COMMUNICATION",
     APPLICATION / "L1_services/L1_WIFI",
     APPLICATION / "L1_services/L1_PORTAL",
