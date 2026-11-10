@@ -190,23 +190,31 @@ def parse_reverted(body: str) -> list[str]:
     return []
 
 
-def parse_review(body: str) -> dict[str, str] | None:
-    """The LAST valid review marker in one comment (a comment is one verdict)."""
-    found = None
-    for match in _REVIEW.finditer(strip_code(body)):
-        attrs = parse_attrs(match.group(1))
+def review_attempts(body: str) -> list[dict[str, str] | None]:
+    """Every line-anchored agent-review marker attempt in one body, in order; None where the
+    attempt is malformed. Each attempt is judged on its own, so a valid earlier marker cannot
+    hide a malformed later one."""
+    text = strip_code(body)
+    attempts: list[dict[str, str] | None] = []
+    for start in _REVIEW_START.finditer(text):
+        match = _REVIEW.match(text, start.start())
+        attrs = parse_attrs(match.group(1)) if match else {}
         if (
             attrs.get("verdict") in {"approve", "changes"}
             and _SHA.match(attrs.get("sha", "").lower())
             and _valid(attrs, ("reviewer", "session"))
         ):
             attrs["sha"] = attrs["sha"].lower()
-            found = attrs
-    return found
+            attempts.append(attrs)
+        else:
+            attempts.append(None)
+    return attempts
 
 
-def has_review_marker(body: str) -> bool:
-    return bool(_REVIEW_START.search(strip_code(body)))
+def parse_review(body: str) -> dict[str, str] | None:
+    """The verdict of one comment or review body: its LAST marker attempt, if that is valid."""
+    attempts = review_attempts(body)
+    return attempts[-1] if attempts else None
 
 
 def risk_section_problems(body: str) -> list[str]:
@@ -321,8 +329,9 @@ def _verdict_candidates(
     comments: list[dict[str, Any]], reviewer_logins: frozenset[str]
 ) -> list[tuple[tuple[str, bool, int], dict[str, str] | None, dict[str, Any]]]:
     """Accepted comments and review bodies containing an agent-review marker, oldest first. The
-    verdict is None when no marker in the body is valid. IDs are not comparable across comments
-    and reviews, so a same-second tie sorts `changes` and malformed markers as newest (fail closed)."""
+    verdict is None when the body's last marker attempt is malformed. IDs are not comparable across
+    comments and reviews, so a same-second tie sorts `changes` and malformed markers as newest
+    (fail closed)."""
     found = []
     for comment in comments:
         if reviewer_logins:
@@ -330,9 +339,12 @@ def _verdict_candidates(
         else:
             ok = trusted(comment)
         body = comment.get("body") or ""
-        if not ok or REPORT_MARKER in body or not has_review_marker(body):
+        if not ok or REPORT_MARKER in body:
             continue
-        review = parse_review(body)
+        attempts = review_attempts(body)
+        if not attempts:
+            continue
+        review = attempts[-1]
         key = (comment.get("created_at") or "", review is None or review["verdict"] == "changes",
                comment.get("id") or 0)
         found.append((key, review, comment))
@@ -354,8 +366,8 @@ def latest_review(
 def malformed_review(
     comments: list[dict[str, Any]], reviewer_logins: frozenset[str] = frozenset()
 ) -> dict[str, Any] | None:
-    """The newest marker-bearing comment, if none of its agent-review markers is valid. An older
-    malformed marker that a later valid verdict superseded is harmless."""
+    """The newest marker-bearing comment, if its last agent-review marker attempt is malformed.
+    An older malformed marker that a later valid verdict superseded is harmless."""
     candidates = _verdict_candidates(comments, reviewer_logins)
     if candidates and candidates[-1][1] is None:
         return candidates[-1][2]
@@ -468,7 +480,51 @@ def recorded_review_fallback(inputs: Inputs) -> bool:
     return False
 
 
+def agent_terminal_items(inputs: Inputs, author: dict[str, str] | None) -> list[tuple[str, str]]:
+    """Agent verdict problems the author must fix. They hold whatever CodeRabbit decided or is
+    still to decide, so a native approval or a requested CodeRabbit review never hides them."""
+    sources = verdict_sources(inputs)
+    malformed = malformed_review(sources, inputs.reviewer_logins)
+    if malformed is not None:
+        return [("fail", f"latest agent-review marker (by {malformed.get('login') or 'unknown'} at "
+                         f"{malformed.get('created_at') or 'unknown time'}) is malformed — post a valid "
+                         "`<!-- agent-review verdict=.. sha=<full sha> reviewer=.. session=.. -->`")]
+    review, _ = latest_review(sources, inputs.reviewer_logins)
+    if review is None:
+        return []
+    if review["verdict"] == "changes" and review["sha"] == inputs.head_sha.lower():
+        return [("fail", f"latest agent review of {inputs.head_sha[:7]} requests changes ({review['reviewer']})")]
+    if review["verdict"] == "approve" and author and review["session"] == author["session"]:
+        return [("fail", "reviewer session equals the author session — use a separate reviewer")]
+    return []
+
+
+def agent_review_items(inputs: Inputs) -> list[tuple[str, str]]:
+    """The agent verdict once agent_terminal_items() found nothing terminal: approved, or waiting."""
+    sha7 = inputs.head_sha[:7]
+    review, _ = latest_review(verdict_sources(inputs), inputs.reviewer_logins)
+    if review is None:
+        return [("pending", f"waiting for an agent review — a separate reviewer session must approve sha {sha7}")]
+    reviewed7 = review["sha"][:7]
+    if review["verdict"] != "approve":
+        return [("pending", f"latest agent review requested changes at {reviewed7}; "
+                            f"waiting for a re-review of {sha7}")]
+    who = f"{review['reviewer']} session {review['session']}"
+    if review["sha"] == inputs.head_sha.lower():
+        return [("ok", f"approved at {sha7} by {who}")]
+    carry = inputs.approval_carry_forward
+    if carry is not None and carry.sha == review["sha"] and carry.allowed:
+        return [("ok", f"approval carried forward from {reviewed7} ({who}): {carry.detail}; "
+                       "changes that arrived through the base were not reviewed")]
+    why = carry.detail if carry is not None and carry.sha == review["sha"] else "carry-forward not evaluated"
+    return [("pending", f"latest agent approval is for {reviewed7}, head is {sha7} and cannot be carried "
+                        f"forward ({why}); waiting for a re-review")]
+
+
 def review_items(inputs: Inputs, author: dict[str, str] | None) -> list[tuple[str, str]]:
+    terminal = agent_terminal_items(inputs, author)
+    if terminal:
+        return terminal
     # Native reviews come from the GitHub API, not text that a PR can imitate.
     bot_reviews = [r for r in inputs.native_reviews
                    if (r.get("user") or {}).get("type") == "Bot"
@@ -477,7 +533,8 @@ def review_items(inputs: Inputs, author: dict[str, str] | None) -> list[tuple[st
     decisions = [r for r in bot_reviews if r.get("state") in {"APPROVED", "CHANGES_REQUESTED", "DISMISSED"}]
     sha7 = inputs.head_sha[:7]
     if not decisions and inputs.coderabbit_label and not recorded_review_fallback(inputs):
-        return [("pending", f"label `{CODERABBIT_LABEL}` requests a CodeRabbit review; waiting for it on {sha7}")]
+        return [("pending", f"label `{CODERABBIT_LABEL}` requests a CodeRabbit review; waiting for it on {sha7}"),
+                *agent_review_items(inputs)]
     if decisions:
         review = max(decisions, key=lambda r: r.get("id", 0))
         login = review["user"]["login"]
@@ -495,33 +552,7 @@ def review_items(inputs: Inputs, author: dict[str, str] | None) -> list[tuple[st
             return [("fail", f"{login} requests changes on the current head")]
         else:
             return [("pending", f"{login} has not approved the current head")]
-    sources = verdict_sources(inputs)
-    malformed = malformed_review(sources, inputs.reviewer_logins)
-    if malformed is not None:
-        return [("fail", f"latest agent-review marker (by {malformed.get('login') or 'unknown'} at "
-                         f"{malformed.get('created_at') or 'unknown time'}) is malformed — post a valid "
-                         "`<!-- agent-review verdict=.. sha=<full sha> reviewer=.. session=.. -->`")]
-    review, _ = latest_review(sources, inputs.reviewer_logins)
-    if review is None:
-        return [("pending", f"waiting for an agent review — a separate reviewer session must approve sha {sha7}")]
-    reviewed7 = review["sha"][:7]
-    if review["verdict"] != "approve":
-        if review["sha"] == inputs.head_sha.lower():
-            return [("fail", f"latest agent review of {sha7} requests changes ({review['reviewer']})")]
-        return [("pending", f"latest agent review requested changes at {reviewed7}; "
-                            f"waiting for a re-review of {sha7}")]
-    if author and review["session"] == author["session"]:
-        return [("fail", "reviewer session equals the author session — use a separate reviewer")]
-    who = f"{review['reviewer']} session {review['session']}"
-    if review["sha"] == inputs.head_sha.lower():
-        return [("ok", f"approved at {sha7} by {who}")]
-    carry = inputs.approval_carry_forward
-    if carry is not None and carry.sha == review["sha"] and carry.allowed:
-        return [("ok", f"approval carried forward from {reviewed7} ({who}): {carry.detail}; "
-                       "changes that arrived through the base were not reviewed")]
-    why = carry.detail if carry is not None and carry.sha == review["sha"] else "carry-forward not evaluated"
-    return [("pending", f"latest agent approval is for {reviewed7}, head is {sha7} and cannot be carried "
-                        f"forward ({why}); waiting for a re-review")]
+    return agent_review_items(inputs)
 
 
 def scope_guard_items(inputs: Inputs, klass: str) -> list[tuple[str, str]]:
@@ -806,12 +837,41 @@ class GitHub:
                           changed["patch"]] for changed in files)
         return hashlib.sha256(json.dumps(entries).encode()).hexdigest(), ""
 
+    def force_pushed_heads(self, number: int) -> set[str]:
+        """Heads before and after each force-push of this PR: API evidence that a commit no longer
+        in the PR's commits once was its head."""
+        owner, name = self.repo.split("/")
+        query = """query($o:String!,$n:String!,$p:Int!,$c:String){repository(owner:$o,name:$n){
+          pullRequest(number:$p){timelineItems(itemTypes:[HEAD_REF_FORCE_PUSHED_EVENT],first:100,after:$c){
+            nodes{... on HeadRefForcePushedEvent{beforeCommit{oid} afterCommit{oid}}}
+            pageInfo{hasNextPage endCursor}}}}}"""
+        heads: set[str] = set()
+        cursor = None
+        while True:
+            data = self.graphql(query, {"o": owner, "n": name, "p": number, "c": cursor})
+            timeline = data["repository"]["pullRequest"]["timelineItems"]
+            for event in timeline["nodes"]:
+                for side in ("beforeCommit", "afterCommit"):
+                    if (event.get(side) or {}).get("oid"):
+                        heads.add(event[side]["oid"].lower())
+            if not timeline["pageInfo"]["hasNextPage"]:
+                return heads
+            cursor = timeline["pageInfo"]["endCursor"]
+
     def approval_carry_forward(self, number: int, base: str, approved: str, head: str) -> CarryForward:
         """An approval of `approved` still covers `head` when that commit belonged to this PR and
         the PR's own diff against its current base is identical. Comparing through the API, not
         local git objects, keeps the approval across a base merge, update-branch or a stacked PR's
         new base, while any change to the PR's own patch needs a new review."""
-        pull_request_commits = {commit["sha"] for commit in self.paginate(f"repos/{self.repo}/pulls/{number}/commits")}
+        pull_request_commits = {commit["sha"].lower()
+                                for commit in self.paginate(f"repos/{self.repo}/pulls/{number}/commits")}
+        if approved in pull_request_commits:
+            origin = "a commit of this PR"
+        elif approved in self.force_pushed_heads(number):
+            origin = "a head of this PR before a force-push"
+        else:
+            return CarryForward(approved, False, f"{approved[:7]} is neither a commit of this PR nor a head "
+                                                 "it had before a force-push")
         approved_fingerprint, problem = self.diff_fingerprint(base, approved)
         if approved_fingerprint is None:
             return CarryForward(approved, False, problem)
@@ -820,7 +880,6 @@ class GitHub:
             return CarryForward(approved, False, problem)
         if approved_fingerprint != head_fingerprint:
             return CarryForward(approved, False, f"the PR's own diff against {base} changed since {approved[:7]}")
-        origin = "a commit of this PR" if approved in pull_request_commits else "still resolvable after a force-push"
         return CarryForward(approved, True, f"{approved[:7]} is {origin} and the PR's own diff against {base} is identical")
 
     def ruleset_required_checks(self, branch: str) -> list[str]:

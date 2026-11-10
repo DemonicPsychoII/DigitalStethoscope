@@ -763,10 +763,18 @@ def changed_file(name="src/a.c", status="modified", patch="@@ -1 +1 @@\n-a\n+b",
     return entry
 
 
+def force_push_timeline(pairs):
+    nodes = [{"beforeCommit": {"oid": before} if before else None, "afterCommit": {"oid": after}}
+             for before, after in pairs]
+    return {"repository": {"pullRequest": {"timelineItems": {
+        "nodes": nodes, "pageInfo": {"hasNextPage": False, "endCursor": None}}}}}
+
+
 class FakeCompare(g.GitHub):
-    def __init__(self, comparisons, pull_request_commits):
+    def __init__(self, comparisons, pull_request_commits, force_pushes=()):
         super().__init__("o/r", "token")
         self.comparisons, self.pull_request_commits, self.requested = comparisons, pull_request_commits, []
+        self.force_pushes = list(force_pushes)
 
     def get(self, path):
         self.requested.append(path)
@@ -779,13 +787,17 @@ class FakeCompare(g.GitHub):
     def paginate(self, path, key=None):
         return [{"sha": sha} for sha in self.pull_request_commits]
 
+    def graphql(self, query, variables):
+        self.requested.append("graphql:timelineItems")
+        return force_push_timeline(self.force_pushes)
+
 
 class CarryForwardApiTests(unittest.TestCase):
-    def carry(self, approved_files, head_files, pull_request_commits=(OLD, HEAD)):
+    def carry(self, approved_files, head_files, pull_request_commits=(OLD, HEAD), force_pushes=()):
         comparisons = {HEAD: head_files}
         if approved_files is not None:
             comparisons[OLD] = approved_files
-        gh = FakeCompare(comparisons, list(pull_request_commits))
+        gh = FakeCompare(comparisons, list(pull_request_commits), force_pushes)
         return gh.approval_carry_forward(7, "integration", OLD, HEAD), gh
 
     def test_identical_diff_after_base_merge_is_carried(self):
@@ -796,15 +808,29 @@ class CarryForwardApiTests(unittest.TestCase):
         self.assertEqual(gh.requested, [f"repos/o/r/compare/integration...{OLD}",
                                         f"repos/o/r/compare/integration...{HEAD}"])
 
-    def test_force_pushed_but_resolvable_commit_is_carried(self):
-        result, _ = self.carry([changed_file()], [changed_file()], pull_request_commits=(HEAD,))
-        self.assertTrue(result.allowed, result.detail)
-        self.assertIn("force-push", result.detail)
+    def test_head_replaced_by_a_force_push_is_carried(self):
+        for force_pushes in ([(OLD, HEAD)], [(None, OLD), ("c" * 40, HEAD)]):
+            with self.subTest(force_pushes=force_pushes):
+                result, _ = self.carry([changed_file()], [changed_file()], pull_request_commits=(HEAD,),
+                                       force_pushes=force_pushes)
+                self.assertTrue(result.allowed, result.detail)
+                self.assertIn("before a force-push", result.detail)
 
-    def test_unresolvable_approved_commit_is_not_carried(self):
-        result, _ = self.carry(None, [changed_file()], pull_request_commits=(HEAD,))
+    def test_unrelated_resolvable_commit_with_identical_diff_is_not_carried(self):
+        result, gh = self.carry([changed_file()], [changed_file()], pull_request_commits=(HEAD,),
+                                force_pushes=[("c" * 40, HEAD)])
+        self.assertFalse(result.allowed)
+        self.assertIn("neither a commit of this PR", result.detail)
+        self.assertEqual(gh.requested, ["graphql:timelineItems"])
+
+    def test_force_pushed_head_no_longer_resolvable_is_not_carried(self):
+        result, _ = self.carry(None, [changed_file()], pull_request_commits=(HEAD,), force_pushes=[(OLD, HEAD)])
         self.assertFalse(result.allowed)
         self.assertIn("not resolvable", result.detail)
+
+    def test_current_commit_skips_the_force_push_lookup(self):
+        _, gh = self.carry([changed_file()], [changed_file()])
+        self.assertNotIn("graphql:timelineItems", gh.requested)
 
     def test_changed_patch_status_name_or_rename_source_is_not_carried(self):
         for head_file in (changed_file(patch="@@ -1 +1 @@\n-a\n+c"), changed_file(status="added"),
@@ -975,6 +1001,187 @@ class StickyReportTests(unittest.TestCase):
         gh = FakePublish()
         g.publish(gh, changed, g.evaluate(changed), "https://example.invalid/runs/3")
         self.assertEqual([method for method, _ in gh.calls], ["POST", "PATCH"])
+
+
+MALFORMED_CHANGES = "<!-- agent-review verdict=changes sha=abc1234 reviewer=codex/gpt-5.5 session=rev-2 -->"
+
+
+class TerminalVerdictPrecedenceTests(unittest.TestCase):
+    BOTS = {"coderabbitai[bot]": 136622811}
+
+    def native(self, state="APPROVED", sha=HEAD, rid=99):
+        return {"id": rid, "state": state, "commit_id": sha,
+                "user": {"type": "Bot", "login": "coderabbitai[bot]", "id": 136622811}}
+
+    def terminal_cases(self):
+        return {
+            "changes on head": {"comments": [review(verdict="changes")]},
+            "self-review": {"comments": [review(session="auth-1")]},
+            "malformed newest marker": {"comments": [review(), comment(MALFORMED_CHANGES,
+                                                                       created="2026-10-02T11:00:00Z", cid=2)]},
+        }
+
+    def test_coderabbit_label_wait_does_not_hide_terminal_agent_verdicts(self):
+        for name, options in self.terminal_cases().items():
+            with self.subTest(case=name):
+                d = g.evaluate(inputs(review_bots=self.BOTS, coderabbit_label=True, **options))
+                self.assertEqual(d.state, "failure", d.items)
+
+    def test_coderabbit_label_wait_reports_the_agent_review_as_well(self):
+        d = g.evaluate(inputs(review_bots=self.BOTS, coderabbit_label=True))
+        self.assertEqual(d.state, "pending", d.items)
+        texts = [text for _, text in d.items]
+        self.assertTrue(any("CodeRabbit" in text for text in texts), texts)
+        self.assertTrue(any(text.startswith(f"approved at {HEAD[:7]}") for text in texts), texts)
+
+    def test_native_approval_does_not_hide_a_later_agent_changes_verdict(self):
+        changes_body = g.review_records([submitted(verdict="changes", submitted_at="2026-10-02T11:00:00Z")])
+        d = g.evaluate(inputs(comments=[review()], review_bodies=changes_body, review_bots=self.BOTS,
+                              native_reviews=[self.native()]))
+        self.assertEqual(d.state, "failure", d.items)
+        self.assertIn("requests changes", d.description)
+
+    def test_native_approval_does_not_hide_other_terminal_agent_verdicts(self):
+        for name, options in self.terminal_cases().items():
+            with self.subTest(case=name):
+                d = g.evaluate(inputs(review_bots=self.BOTS, native_reviews=[self.native()], **options))
+                self.assertEqual(d.state, "failure", d.items)
+
+    def test_native_approval_still_passes_after_older_commit_changes_verdict(self):
+        d = g.evaluate(inputs(comments=[review(verdict="changes", sha=OLD)], review_bots=self.BOTS,
+                              native_reviews=[self.native()]))
+        self.assertEqual(d.state, "success", d.items)
+
+
+class MarkerAttemptTests(unittest.TestCase):
+    def test_later_malformed_marker_in_the_same_body_is_not_hidden_by_a_valid_one(self):
+        body = review(sha=OLD)["body"] + "\n" + MALFORMED_CHANGES
+        self.assertEqual(g.review_attempts(body)[1], None)
+        self.assertIsNone(g.parse_review(body))
+        d = g.evaluate(inputs(comments=[comment(body, created="2026-10-02T11:00:00Z")]))
+        self.assertEqual(d.state, "failure", d.items)
+        self.assertIn("malformed", d.description)
+        record = submitted(sha=OLD)
+        record["body"] += "\n" + MALFORMED_CHANGES
+        d = g.evaluate(inputs(comments=[], review_bodies=g.review_records([record])))
+        self.assertEqual(d.state, "failure", d.items)
+
+    def test_valid_marker_after_a_malformed_one_in_the_same_body_is_the_verdict(self):
+        body = MALFORMED_CHANGES + "\n" + review()["body"]
+        self.assertEqual(g.parse_review(body)["sha"], HEAD)
+        self.assertEqual(g.evaluate(inputs(comments=[comment(body)])).state, "success")
+
+    def test_each_attempt_is_parsed_separately(self):
+        body = "\n".join([review(verdict="changes", sha=OLD)["body"], MALFORMED_CHANGES, review()["body"]])
+        attempts = g.review_attempts(body)
+        self.assertEqual([attempt and attempt["verdict"] for attempt in attempts], ["changes", None, "approve"])
+
+
+class FakeGather(g.GitHub):
+    def __init__(self, base="integration", comments=(), reviews=(), pull_request_commits=(OLD, HEAD),
+                 force_pushes=(), comparisons=None, labels=()):
+        super().__init__("o/r", "token")
+        self.base, self.comments, self.reviews = base, list(comments), list(reviews)
+        self.pull_request_commits, self.force_pushes = list(pull_request_commits), list(force_pushes)
+        self.comparisons = comparisons if comparisons is not None else {OLD: [changed_file()], HEAD: [changed_file()]}
+        self.labels = list(labels)
+        self.requested = []
+
+    def get(self, path):
+        self.requested.append(path)
+        if path == "repos/o/r/pulls/7":
+            return {"state": "open", "draft": False, "body": BODY, "labels": [{"name": n} for n in self.labels],
+                    "head": {"sha": HEAD, "repo": {"full_name": "o/r"}}, "base": {"ref": self.base}}
+        if path.startswith(f"repos/o/r/commits/{HEAD}/status"):
+            return {"statuses": []}
+        if "/compare/" in path:
+            files = self.comparisons.get(path.rsplit("...", 1)[1])
+            if files is None:
+                raise urllib.error.HTTPError(path, 404, "Not Found", {}, None)
+            return {"files": files}
+        raise AssertionError(f"unexpected GET {path}")
+
+    def paginate(self, path, key=None):
+        self.requested.append(path)
+        if path.endswith("/issues/7/comments"):
+            return [{"id": c["id"], "body": c["body"], "created_at": c["created_at"], "user": {"login": c["login"]},
+                     "author_association": c["association"]} for c in self.comments]
+        if path.endswith("/pulls/7/reviews"):
+            return self.reviews
+        if path.endswith("/pulls/7/commits"):
+            return [{"sha": sha} for sha in self.pull_request_commits]
+        if "/check-runs" in path:
+            return green_ci()
+        if path.endswith("/pulls/7/files") or "/rules/branches/" in path:
+            return []
+        raise AssertionError(f"unexpected paginate {path}")
+
+    def graphql(self, query, variables):
+        if "timelineItems" in query:
+            self.requested.append("graphql:timelineItems")
+            return force_push_timeline(self.force_pushes)
+        return {"repository": {"pullRequest": {"reviewThreads": {
+            "nodes": [], "pageInfo": {"hasNextPage": False, "endCursor": None}}}}}
+
+
+GATHER_CONFIG = {"required_checks": ["mission-control-budget-tests"], "require_owner_approval": False,
+                 "required_checks_only": True}
+
+
+class GatherCarryForwardTests(unittest.TestCase):
+    def compare_paths(self, gh):
+        return [path for path in gh.requested if "/compare/" in path]
+
+    def test_review_body_only_approval_is_carried_forward(self):
+        gh = FakeGather(reviews=[submitted(sha=OLD)])
+        gathered = g.gather(gh, 7, GATHER_CONFIG, None)
+        self.assertEqual(len(gathered.review_bodies), 1)
+        self.assertTrue(gathered.approval_carry_forward.allowed, gathered.approval_carry_forward)
+        self.assertEqual(self.compare_paths(gh), [f"repos/o/r/compare/integration...{OLD}",
+                                                  f"repos/o/r/compare/integration...{HEAD}"])
+        decision = g.evaluate(gathered)
+        self.assertEqual(decision.state, "success", decision.items)
+        self.assertTrue(any("carried forward" in text for _, text in decision.items))
+
+    def test_compare_uses_the_current_base_branch(self):
+        gh = FakeGather(base="feature/lower-layer", comments=[review(sha=OLD)])
+        gathered = g.gather(gh, 7, GATHER_CONFIG, None)
+        self.assertTrue(gathered.approval_carry_forward.allowed)
+        self.assertEqual(self.compare_paths(gh), [f"repos/o/r/compare/feature%2Flower-layer...{OLD}",
+                                                  f"repos/o/r/compare/feature%2Flower-layer...{HEAD}"])
+
+    def test_changed_own_diff_against_the_new_base_is_not_carried(self):
+        comparisons = {OLD: [changed_file()], HEAD: [changed_file(patch="@@ -1 +1 @@\n-a\n+other")]}
+        gh = FakeGather(comments=[review(sha=OLD)], comparisons=comparisons)
+        gathered = g.gather(gh, 7, GATHER_CONFIG, None)
+        self.assertFalse(gathered.approval_carry_forward.allowed)
+        self.assertEqual(g.evaluate(gathered).state, "pending")
+
+    def test_commit_absent_from_the_pull_request_is_not_carried(self):
+        gh = FakeGather(comments=[review(sha=OLD)], pull_request_commits=(HEAD,))
+        gathered = g.gather(gh, 7, GATHER_CONFIG, None)
+        self.assertFalse(gathered.approval_carry_forward.allowed)
+        self.assertEqual(self.compare_paths(gh), [])
+        self.assertEqual(g.evaluate(gathered).state, "pending")
+
+    def test_commit_present_through_a_force_push_is_carried(self):
+        gh = FakeGather(comments=[review(sha=OLD)], pull_request_commits=(HEAD,), force_pushes=[(OLD, HEAD)])
+        gathered = g.gather(gh, 7, GATHER_CONFIG, None)
+        self.assertTrue(gathered.approval_carry_forward.allowed, gathered.approval_carry_forward)
+
+    def test_no_carry_forward_lookup_when_newest_verdict_is_changes_or_at_head(self):
+        later_changes = review(verdict="changes", sha=OLD, created="2026-10-02T11:00:00Z", cid=2)
+        for comments in ([review(sha=OLD), later_changes], [review()]):
+            with self.subTest(comments=[c["body"][:40] for c in comments]):
+                gh = FakeGather(comments=comments)
+                gathered = g.gather(gh, 7, GATHER_CONFIG, None)
+                self.assertIsNone(gathered.approval_carry_forward)
+                self.assertEqual(self.compare_paths(gh), [])
+                self.assertNotIn("repos/o/r/pulls/7/commits", gh.requested)
+
+    def test_coderabbit_label_is_gathered(self):
+        gathered = g.gather(FakeGather(labels=["coderabbit"]), 7, GATHER_CONFIG, None)
+        self.assertTrue(gathered.coderabbit_label)
 
 
 if __name__ == "__main__":
