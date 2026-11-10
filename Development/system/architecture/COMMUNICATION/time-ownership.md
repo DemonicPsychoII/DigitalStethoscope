@@ -11,7 +11,7 @@ The existing allocation places time operations in L1_WIFI and orchestration in L
 | Owner | Responsibility | Boundary |
 | --- | --- | --- |
 | L2_CONTROL | Admit active synchronization under the exclusive network lease; supply measurement timing context and consume readiness/failure outcomes. | Listening admission remains independent of server readiness. |
-| L2_COMMUNICATION | Coordinate synchronization and evaluate clock readiness against the eventual approved policy; make readiness available to delivery preparation. | No hidden background synchronization or retry policy in lower services. |
+| L2_COMMUNICATION | Coordinate synchronization and evaluate clock readiness against the eventual approved policy; make readiness available to delivery preparation. | No hidden background synchronization or retry policy in L1_WIFI or L1_FHIR. |
 | L1_WIFI | Perform one requested SNTP exchange through Zephyr and return the time information or failure. | Obtaining a time value does not establish that it is trusted. |
 | Measurement owner, L2_AUDIO with L2_CONTROL | Preserve the measurement interval in the sample/monotonic time domain and its approved UTC mapping. | A later synchronization must not silently relabel a frozen result. |
 | TLS transport and L1_FHIR | Consume approved clock information for their respective certificate-checking and timestamp responsibilities. | Neither chooses a time server nor starts synchronization. |
@@ -28,9 +28,9 @@ COMMUNICATION tracks network access, verified transport, including the time appl
 
 ## Trust boundary and open decisions
 
-The time source is an external SNTP server reached through the station's network. During SNTP detailed design on 28 October 2026, Nico selected the public `pool.ntp.org` service and accepted unauthenticated SNTP time as an MVP trust assumption, recorded in [SNTP Design PR #99](https://github.com/DemonicPsychoII/DigitalStethoscope/pull/99). Unauthenticated SNTP does not authenticate the source [1]; synchronization success must not be represented as authenticated time. A local time source for networks without internet access is deferred to [GitHub #85](https://github.com/DemonicPsychoII/DigitalStethoscope/issues/85).
+The time source is an external SNTP server reached through the station's network. During SNTP detailed design on 28 October 2026, Nico selected the public `pool.ntp.org` service and accepted unauthenticated SNTP time as a trust assumption for the minimum viable product (MVP), recorded in [SNTP Design PR #99](https://github.com/DemonicPsychoII/DigitalStethoscope/pull/99). Unauthenticated SNTP does not authenticate the source [1]; synchronization success must not be represented as authenticated time. A local time source for networks without internet access is deferred to [GitHub #85](https://github.com/DemonicPsychoII/DigitalStethoscope/issues/85).
 
-Detailed design defines synchronization timing, freshness, invalidation and the mapping across clock corrections before/after a measurement, without extending the delivery budget or creating network work during listening. Design sets the allowed measurement-end deviation; reference-clock comparison remains open under TICKET-209. This architecture sets no numeric acceptance limit and makes no claim of target accuracy.
+Detailed design defines synchronization timing, freshness, invalidation and the mapping across clock corrections before/after a measurement, without extending the delivery budget or creating network work during listening. Design sets the allowed measurement-end deviation; reference-clock comparison remains open under TICKET-209, choosing the clock reference and timestamp accuracy. This architecture sets no numeric acceptance limit and makes no claim of target accuracy.
 
 ## Verification allocation
 

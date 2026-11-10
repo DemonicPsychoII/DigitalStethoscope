@@ -10,8 +10,8 @@ Retain the system allocation of Wi-Fi, TLS and time operations to L1_WIFI and wo
 
 | Owner | Responsibility | Boundary |
 | --- | --- | --- |
-| L2_CONTROL | Admit active network work outside listening and receive completion/release outcomes. | Lower services never mutate controller mode. |
-| L2_COMMUNICATION | Coordinate preparation and delivery; own overall attempt policy and classify outcomes. | No hidden retries in lower services. |
+| L2_CONTROL | Admit active network work outside listening and receive completion/release outcomes. | L1_WIFI, L1_FHIR and L1_STORAGE never mutate controller mode. |
+| L2_COMMUNICATION | Coordinate preparation and delivery; own overall attempt policy and classify outcomes. | No hidden retries in L1_WIFI, L1_FHIR or L1_STORAGE. |
 | L1_WIFI | Own DNS/socket/TLS operations through Zephyr, certificate verification, connection resources and cleanup. | Report outcomes; never serialize FHIR or select a patient. |
 | Zephyr networking and TLS stack | Provide platform transport beneath L1_WIFI. | Integration and target behavior remain unverified. |
 | Clock preparation | Supply acceptable time for certificate-validity checking. | Accepted unauthenticated SNTP time is not authenticated time. |
@@ -28,7 +28,7 @@ Prepare secure transport automatically while Idle, starting each setup with one 
 
 During listening, retain an existing connection without application requests, heartbeat messages or proactive reconnects. If it closes, defer reconnection until listening stops. WIFI retains ownership of the dormant connection; lease release means active network operations have ended, not that every retained socket must close. Connection reuse never authorizes active work without the lease. Target verification must establish the audio/resource impact of retained connections and underlying stack activity; application inactivity alone proves no isolation.
 
-Design must define retained-connection lifecycle, closure detection, cleanup and reconnect behavior. No indefinite connection lifetime or keepalive guarantee is assumed. Servers close idle connections (the local HAPI deployment after about 60 s by default), so reconnection at delivery is the expected path and reuse depends on a keep-alive period on both ends: the deployment configures a long server keep-alive and the device applies its own, shorter keep-alive timeout. Retention during listening is the initial approach; if target measurement under [TICKET-213](https://nfrie.atlassian.net/browse/TICKET-213) shows that the connection does not survive, close it at Start instead. TLS 1.3 compatibility and resource costs remain unverified.
+Design must define retained-connection lifecycle, closure detection, cleanup and reconnect behavior. No indefinite connection lifetime or keepalive guarantee is assumed. Servers close idle connections (the local deployment of the HAPI FHIR server after about 60 s by default), so reconnection at delivery is the expected path and reuse depends on a keep-alive period on both ends: the deployment configures a long server keep-alive and the device applies its own, shorter keep-alive timeout. Retention during listening is the initial approach; if target measurement under [TICKET-213](https://nfrie.atlassian.net/browse/TICKET-213), measuring TLS reconnect timing and connection survival on the target, shows that the connection does not survive, close it at Start instead. TLS 1.3 compatibility and resource costs remain unverified.
 
 ## Security and lifecycle boundaries
 
@@ -40,7 +40,7 @@ Active connection work follows the exclusive network lease. WIFI owns connection
 
 ## Detailed-design inputs and gaps
 
-Define operation interfaces, endpoint and trust inputs, credential handling, connection lifetime, resource budgets and failure mapping in Design. Retain existing delivery bounds; cipher selection, rotation and timeout values remain Design inputs. Unauthenticated SNTP time is accepted for the MVP ([SNTP Design PR #99](https://github.com/DemonicPsychoII/DigitalStethoscope/pull/99)); timestamp accuracy evidence remains open (TICKET-209). Server authentication/authorization and certificate deployment must be made concrete before service implementation. Transport verification does not settle examination-request authorization.
+Define operation interfaces, endpoint and trust inputs, credential handling, connection lifetime, resource budgets and failure mapping in Design. Retain existing delivery bounds; cipher selection, rotation and timeout values remain Design inputs. Unauthenticated SNTP time is accepted for the minimum viable product (MVP) ([SNTP Design PR #99](https://github.com/DemonicPsychoII/DigitalStethoscope/pull/99)); timestamp accuracy evidence remains open under TICKET-209, choosing the clock reference and timestamp accuracy. Server authentication/authorization and certificate deployment must be made concrete before service implementation. Transport verification does not settle examination-request authorization.
 
 ## Verification allocation
 

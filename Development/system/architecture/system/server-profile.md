@@ -22,11 +22,11 @@ Editable source: [server-profile.puml](server-profile.puml).
 | L2_COMMUNICATION | Load the image at boot, decide whether secure transport is available and report a configuration cause otherwise. | A missing or invalid image never blocks Wi-Fi setup or offline listening. |
 | L1_WIFI | Parse the endpoint, parse the certificate, require a Subject Alternative Name that matches the endpoint and make the certificate the only trust anchor. | No fallback endpoint, no fallback certificate and no insecure mode. |
 
-Dependency direction: the deployment file feeds the host tool; the tool depends on the firmware build only for the partition location. On the device, COMMUNICATION reads through STORAGE and configures WIFI; nothing on the device depends on the deployment file or the tool. A server change means a new file revision and a new image, not a firmware build.
+Dependency direction: the deployment file feeds the server profile tool on the developer PC; the tool depends on the firmware build only for the partition location. On the device, L2_COMMUNICATION reads the image through L1_STORAGE and configures L1_WIFI; nothing on the device depends on the deployment file or the tool. A server change means a new file revision and a new image, not a firmware build.
 
 ## Trust boundary
 
-Whoever can flash the device can change its server; physical access is the trust assumption of the design review [2]. The image checksum detects corruption, not tampering, and the MVP image carries no signature. Without secure boot the same physical access can replace the firmware itself, so an image signature alone would add no protection; signing is deferred together with secure boot (project decision, 4 November 2026 [1]).
+Whoever can flash the device can change its server; physical access is the trust assumption of the design review [2]. The image checksum detects corruption, not tampering, and the image of the minimum viable product (MVP) carries no signature. Without secure boot the same physical access can replace the firmware itself, so an image signature alone would add no protection; signing is deferred together with secure boot (project decision, 4 November 2026 [1]).
 
 The deployment file contains only public information, so it can be versioned and reviewed like source code. The repository is public, so it holds test deployments only; a real deployment keeps its file with that deployment. A server change is visible in review as a changed endpoint or certificate. The server's private key and keystore stay with the server deployment.
 
@@ -34,7 +34,7 @@ The device trusts the server profile's certificate directly and verifies the ser
 
 ## Open and deferred decisions
 
-- The server profile location is fixed at `0xF00000` and independent of the settings: a settings size change never moves it, and it never changes between firmware versions, so an updated firmware still finds an image flashed earlier. Settings get their own fixed start in front of it; [TICKET-214](https://nfrie.atlassian.net/browse/TICKET-214) moves them from the board's partition. This is a project decision of 4 November 2026 [4]; the [STORAGE flash layout](https://github.com/DemonicPsychoII/DigitalStethoscope/pull/104) defines addresses and sizes.
+- The server profile location is fixed at `0xF00000` and independent of the settings: a settings size change never moves it, and it never changes between firmware versions, so an updated firmware still finds an image flashed earlier. Settings get their own fixed start in front of it. [TICKET-214](https://nfrie.atlassian.net/browse/TICKET-214), the server profile (provisioning) image for endpoint and certificate, moves them out of the board's default partition. This is a project decision of 4 November 2026 [4]; the [STORAGE flash layout](https://github.com/DemonicPsychoII/DigitalStethoscope/pull/104) defines addresses and sizes.
 - Signed images, several servers per device, network or portal enrollment and a project certificate authority remain outside this version, as in the design review [2].
 - Detailed design defines the file format, its validation, the image format and the command interface.
 

@@ -6,7 +6,7 @@ PlantUML sources define each diagram; committed SVG previews are generated from 
 | --- | --- |
 | [System](system/README.md) | Boundaries, hardware, layers, runtime ownership, audio, measurement and feedback ground rules. |
 | [WIFI](WIFI/README.md) | General station/provisioning model and radio operation boundary. |
-| [COMMUNICATION](COMMUNICATION/README.md) | Setup workflow, composition, recovery and listening-priority boundary. |
+| [COMMUNICATION](COMMUNICATION/README.md) | Wi-Fi setup workflow, composition, recovery and listening-priority boundary; [time synchronization](COMMUNICATION/time-ownership.md) and [secure transport](COMMUNICATION/secure-transport.md) to the server. |
 | [FHIR and server communication](COMMUNICATION/server-communication.md) | Proposed registration, examination-context, serialization and delivery responsibilities. |
 | [PORTAL](PORTAL/README.md) | Browser, HTTP and typed controller-request boundary. |
 
