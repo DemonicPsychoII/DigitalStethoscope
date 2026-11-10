@@ -7,8 +7,60 @@
 /* The board default describes the WROOM-N8 module and its 4 MB table; match the fitted N16R8. */
 #include "flash-layout.dtsi"
 
+#include <zephyr/dt-bindings/led/led.h>
+
 &psram0 
 { 
     status = "okay"; 
     size = <DT_SIZE_M(8)>; 
+};
+
+/*
+ * RGB status light: the WS2812 on GPIO48 (DevKitC-1 v1.0), driven through the SPI3 data
+ * line. Both I2S controllers belong to audio, so the I2S variant of the driver is not free.
+ * The board default also routes SPI3 clock, MISO and chip select to GPIO21, GPIO40 and
+ * GPIO14; GPIO40 and GPIO21 belong to the DAC and the filter switch, so only the data line
+ * stays. The carrier's SD card chip select on GPIO48 is not used.
+ */
+&spim3_default
+{
+    /delete-node/ group1;
+
+    group2
+    {
+        pinmux = <SPIM3_MOSI_GPIO48>;
+    };
+};
+
+&spi3
+{
+    /* The WS2812 reads a high idle level as data. */
+    line-idle-low;
+
+    status_light: ws2812@0
+    {
+        compatible = "worldsemi,ws2812-spi";
+        reg = <0>;
+        spi-max-frequency = <6400000>;
+        chain-length = <1>;
+        spi-cpha;
+        /* Each SPI byte is one WS2812 bit: 625 ns high for one, 312.5 ns high for zero. */
+        spi-one-frame = <0xf0>;
+        spi-zero-frame = <0xc0>;
+        color-mapping = <LED_COLOR_ID_GREEN LED_COLOR_ID_RED LED_COLOR_ID_BLUE>;
+    };
+};
+
+/* The board default routes SPI2 to GPIO10 to GPIO13; nothing uses it. */
+&spi2
+{
+    status = "disabled";
+};
+
+/ {
+    zephyr,user
+    {
+        /* Illuminated Start/Stop button J6: closes to ground; the carrier also has a pull-up. */
+        start-stop-button-gpios = <&gpio0 16 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+    };
 };

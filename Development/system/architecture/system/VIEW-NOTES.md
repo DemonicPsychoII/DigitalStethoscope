@@ -28,12 +28,12 @@ The application electrical baseline also assigns the Start/Stop button to GPIO16
 the Raw/Murmur/BPM switch to GPIO18/21/38, the volume potentiometer to GPIO1
 (ADC1 channel 0), and the button LED to GPIO17. Switch contacts and the button
 connect to ground with pull-ups; the button LED is active high.
-The GPIO38 switch assignment has an open board check against the RGB LED
-([specification baseline](../../spec/product-scope.md#electrical-interface-baseline)); this view does not resolve it.
+The RGB status light uses GPIO48, so GPIO38 stays the switch input
+([specification baseline](../../spec/product-scope.md#electrical-interface-baseline)).
 The [specification baseline](../../spec/product-scope.md#electrical-interface-baseline)
-defines these project assignments and their limits. The application overlay still
-needs these peripheral assignments; memory configuration alone does not establish
-application wiring or physical verification. The device ends at the DAC line
+defines these project assignments and their limits. The application overlay so far
+assigns the status light and the Start/Stop button; it does not establish application
+wiring or physical verification. The device ends at the DAC line
 output; the headphone amplifier is outside the project scope.
 
 ## Scope and source material
