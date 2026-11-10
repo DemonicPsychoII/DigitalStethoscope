@@ -68,8 +68,10 @@ int physicalinterface_init(physicalinterface_button_handler buttonHandler);
  * @brief Show the RGB part of a catalogue row on the status light.
  *
  * The light takes the row's context colour and pattern. Error rows show
- * their context colour steady. Rows without an RGB change, such as
- * FEEDBACK_ERROR_ACKNOWLEDGED, leave the current indication unchanged.
+ * their context colour steady. FEEDBACK_INPUT_REJECTED dims the current
+ * indication to half brightness for 250 ms without replacing it. Rows without
+ * an RGB change, such as FEEDBACK_ERROR_ACKNOWLEDGED, leave the current
+ * indication unchanged.
  * Does not block; the pattern runs on the system work queue.
  *
  * @param[in] code Catalogue code to show; FEEDBACK_NONE switches the light off.

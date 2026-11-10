@@ -34,11 +34,13 @@
 
 #define PHYSICALINTERFACE_FULL_BRIGHTNESS_PERCENT     100
 #define PHYSICALINTERFACE_IDLE_DIM_BRIGHTNESS_PERCENT 20 /**< P22 Idle dim candidate. */
+#define PHYSICALINTERFACE_REJECTION_DIM_PERCENT       50 /**< Catalogue: input rejected dims by at least 50 %. */
 
 #define PHYSICALINTERFACE_SLOW_BLINK_HALF_PERIOD_MILLISECONDS  1000 /**< P22 slow blink: 0.5 Hz, 1 s on/off. */
 #define PHYSICALINTERFACE_BREATHING_PERIOD_MILLISECONDS        3000 /**< P22 breathing: 3 s. */
 #define PHYSICALINTERFACE_QUICK_FLASH_HALF_PERIOD_MILLISECONDS 250  /**< P22 flashes: 2 Hz, 250 ms on/off. */
 #define PHYSICALINTERFACE_QUICK_FLASH_COUNT                    3
+#define PHYSICALINTERFACE_REJECTION_DIM_MILLISECONDS           250 /**< P22 input-rejected dimming: 250 ms. */
 
 #define PHYSICALINTERFACE_STATUS_LIGHT_NODE DT_NODELABEL(status_light)
 
@@ -70,6 +72,7 @@ enum physicalinterface_pattern
     PHYSICALINTERFACE_PATTERN_BLINK_SLOW,
     PHYSICALINTERFACE_PATTERN_BREATHING_SLOW,
     PHYSICALINTERFACE_PATTERN_THREE_QUICK_FLASHES, /**< Runs once, then the light stays off. */
+    PHYSICALINTERFACE_PATTERN_DIM_ONCE,            /**< Dims the current indication once; keeps its colour and pattern. */
 };
 
 /** RGB part of one catalogue row. */
@@ -85,6 +88,7 @@ struct physicalinterface_status_light_state
     enum physicalinterface_colour colour;
     enum physicalinterface_pattern pattern;
     int64_t patternStartMilliseconds;
+    int64_t rejectionDimEndMilliseconds; /**< Uptime at which the input-rejected dimming ends. */
 };
 
 /***********************************************************************/
@@ -131,7 +135,7 @@ static const struct physicalinterface_status_light_row physicalinterface_statusL
     [FEEDBACK_STARTUP_FAILURE] = {PHYSICALINTERFACE_COLOUR_WHITE, PHYSICALINTERFACE_PATTERN_STEADY},
     [FEEDBACK_RESET_UNEXPECTED] = {PHYSICALINTERFACE_COLOUR_WHITE, PHYSICALINTERFACE_PATTERN_STEADY},
     [FEEDBACK_SESSION_CONTEXT_CHANGE] = {PHYSICALINTERFACE_COLOUR_WHITE, PHYSICALINTERFACE_PATTERN_STEADY},
-    [FEEDBACK_INPUT_REJECTED] = {PHYSICALINTERFACE_COLOUR_OFF, PHYSICALINTERFACE_PATTERN_NO_CHANGE},
+    [FEEDBACK_INPUT_REJECTED] = {PHYSICALINTERFACE_COLOUR_OFF, PHYSICALINTERFACE_PATTERN_DIM_ONCE},
     [FEEDBACK_ERROR_ACKNOWLEDGED] = {PHYSICALINTERFACE_COLOUR_OFF, PHYSICALINTERFACE_PATTERN_NO_CHANGE},
 };
 
@@ -268,9 +272,16 @@ void physicalinterface_showStatusLight(enum feedback_code code)
 
     k_spinlock_key_t key = k_spin_lock(&physicalinterface_statusLightLock);
 
-    physicalinterface_statusLight.colour = row->colour;
-    physicalinterface_statusLight.pattern = row->pattern;
-    physicalinterface_statusLight.patternStartMilliseconds = k_uptime_get();
+    if(row->pattern == PHYSICALINTERFACE_PATTERN_DIM_ONCE)
+    {
+        physicalinterface_statusLight.rejectionDimEndMilliseconds = k_uptime_get() + PHYSICALINTERFACE_REJECTION_DIM_MILLISECONDS;
+    }
+    else
+    {
+        physicalinterface_statusLight.colour = row->colour;
+        physicalinterface_statusLight.pattern = row->pattern;
+        physicalinterface_statusLight.patternStartMilliseconds = k_uptime_get();
+    }
 
     k_spin_unlock(&physicalinterface_statusLightLock, key);
 
@@ -404,8 +415,15 @@ static void physicalinterface_renderStatusLight(struct k_work *work)
     struct physicalinterface_status_light_state state = physicalinterface_statusLight;
     k_spin_unlock(&physicalinterface_statusLightLock, key);
 
+    int64_t nowMilliseconds = k_uptime_get();
     bool isAnimated = false;
-    uint32_t brightnessPercent = physicalinterface_patternBrightnessPercent(state.pattern, k_uptime_get() - state.patternStartMilliseconds, &isAnimated);
+    uint32_t brightnessPercent = physicalinterface_patternBrightnessPercent(state.pattern, nowMilliseconds - state.patternStartMilliseconds, &isAnimated);
+
+    if(nowMilliseconds < state.rejectionDimEndMilliseconds)
+    {
+        brightnessPercent = (brightnessPercent * PHYSICALINTERFACE_REJECTION_DIM_PERCENT) / PHYSICALINTERFACE_FULL_BRIGHTNESS_PERCENT;
+        isAnimated = true;
+    }
 
     const struct led_rgb *fullColour = &physicalinterface_colourComponents[state.colour];
     struct led_rgb pixel = {
@@ -485,6 +503,7 @@ static uint32_t physicalinterface_patternBrightnessPercent(enum physicalinterfac
 
     case PHYSICALINTERFACE_PATTERN_OFF:
     case PHYSICALINTERFACE_PATTERN_NO_CHANGE:
+    case PHYSICALINTERFACE_PATTERN_DIM_ONCE:
     default:
         return 0;
     }
