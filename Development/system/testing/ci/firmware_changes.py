@@ -103,6 +103,7 @@ def needs_build(paths: list[str], component: str) -> bool:
                     "validate_docs.py",
                     "release_reuse.py",
                     "post_merge.py",
+                    "firmware_label.py",
                     "native_review.py",
                     "host_coverage.py",
                     "manual_test_records.py",

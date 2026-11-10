@@ -3,8 +3,9 @@ name: Mandatory quality gates
 on:
   pull_request:
     branches: [integration, test/v-model-from-start, 'replay/**']
-    # `labeled` exists for the `firmware` label; jobs skip every other label below.
-    types: [opened, synchronize, reopened, labeled]
+    # No `labeled`: a label-only run would become the newest run of this workflow for the head,
+    # and GitHub evaluates required checks against it (#139). firmware-label.yml re-runs instead.
+    types: [opened, synchronize, reopened]
   # Post-merge: re-run the gates on the merged result. A red run here makes
   # post-merge-revert.yml open a revert PR for the merge.
   push:
@@ -22,11 +23,9 @@ on:
         default: true
 
 concurrency:
-  # An unrelated label event gets its own group so it cannot cancel a real run.
   group: >-
     quality-gates-${{ github.workflow }}-${{ github.event.pull_request.number
-    || format('{0}-{1}-{2}', github.event_name, github.ref, github.run_id) }}${{ github.event.action == 'labeled'
-    && github.event.label.name != 'firmware' && format('-ignored-{0}', github.run_id) || '' }}
+    || format('{0}-{1}-{2}', github.event_name, github.ref, github.run_id) }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
@@ -38,13 +37,13 @@ env:
 jobs:
   plan:
     name: CI / Select Checks
-    if: github.event.action != 'labeled' || github.event.label.name == 'firmware'
     # Lightweight routing only; static suites and builds stay in disposable VMs.
     runs-on: ubuntu-24.04
     timeout-minutes: 3
     permissions:
       contents: read
       actions: read
+      pull-requests: read
     outputs:
       application: ${{ steps.changes.outputs.application }}
       docs: ${{ steps.changes.outputs.docs }}
@@ -53,12 +52,22 @@ jobs:
       tooling: ${{ steps.changes.outputs.tooling }}
       gate: ${{ steps.changes.outputs.gate }}
       daily: ${{ steps.daily.outputs.build || 'true' }}
-      publish: ${{ ((github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && github.ref_name == 'integration' && steps.daily.outputs.build != 'false') || (github.event.pull_request.head.repo.full_name == github.repository && contains(github.event.pull_request.labels.*.name, 'firmware')) }}
+      publish: ${{ ((github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && github.ref_name == 'integration' && steps.daily.outputs.build != 'false') || steps.label.outputs.firmware == 'true' }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           persist-credentials: false
+      - name: Read the live firmware label
+        id: label
+        # A re-run keeps its original event payload, so the label is read from the PR itself.
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PULL_REQUEST: ${{ github.event.pull_request.number }}
+        run: |
+          firmware="$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PULL_REQUEST" --jq '[.labels[].name] | index("firmware") != null')"
+          echo "firmware=$firmware" >> "$GITHUB_OUTPUT"
       - name: Skip an unchanged daily firmware build
         id: daily
         if: github.event_name == 'schedule' && github.event.schedule == '17 3 * * *'
@@ -79,7 +88,7 @@ jobs:
           CI_FULL: ${{ (github.event_name == 'schedule' && github.event.schedule == '47 4 * * 0') || (github.event_name == 'workflow_dispatch' && inputs.full) }}
           # Integration pushes verify a complete bundle for later exact-commit reuse.
           CI_RETAIN: ${{ github.event_name == 'push' && github.ref_name == 'integration' }}
-          CI_PUBLISH: ${{ ((github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && github.ref_name == 'integration' && steps.daily.outputs.build != 'false') || (github.event.pull_request.head.repo.full_name == github.repository && contains(github.event.pull_request.labels.*.name, 'firmware')) }}
+          CI_PUBLISH: ${{ ((github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && github.ref_name == 'integration' && steps.daily.outputs.build != 'false') || steps.label.outputs.firmware == 'true' }}
           CI_DAILY: ${{ github.event_name == 'schedule' && github.event.schedule == '17 3 * * *' }}
           REUSE: ${{ steps.reuse.outputs.run }}
         run: |
@@ -89,9 +98,9 @@ jobs:
           fi
           python3 Development/system/testing/ci/firmware_changes.py
   static:
-    name: ${{ github.event.action == 'labeled' && github.event.label.name != 'firmware' && 'Quality / Static Checks (label ignored)' || 'Quality / Static Checks' }}
+    name: Quality / Static Checks
     needs: plan
-    if: always() && !cancelled() && needs.plan.result != 'skipped' && (needs.plan.result != 'success' || needs.plan.outputs.daily != 'false')
+    if: always() && !cancelled() && (needs.plan.result != 'success' || needs.plan.outputs.daily != 'false')
     runs-on: homelab-stethoscope-static-${{ github.run_id }}-${{ github.run_attempt }}
     timeout-minutes: 10
     env:
@@ -177,9 +186,9 @@ jobs:
           retention-days: 14
           if-no-files-found: warn
   firmware:
-    name: ${{ github.event.action == 'labeled' && github.event.label.name != 'firmware' && 'Zephyr / Firmware Build (label ignored)' || 'Zephyr / Firmware Build' }}
+    name: Zephyr / Firmware Build
     needs: [plan, static]
-    if: always() && !cancelled() && needs.plan.result != 'skipped'
+    if: always() && !cancelled()
     runs-on: ${{ needs.static.result == 'success' && (needs.plan.outputs.daily != 'false' && needs.plan.outputs.application == 'true') && format('homelab-zephyr-{0}-{1}', github.run_id, github.run_attempt) || 'ubuntu-24.04' }}
     timeout-minutes: 60
     permissions:
