@@ -46,9 +46,12 @@ reviews:
       mode: "off"
     issue_assessment:
       mode: "off"
+  # CodeRabbit reviews only high-impact PRs, requested there with `@coderabbitai review`;
+  # manual requests keep working while automatic and incremental reviews are off.
   auto_review:
     base_branches: ["integration", "test/v-model-from-start", "replay/.*"]
-    enabled: true
+    enabled: false
+    auto_incremental_review: false
     drafts: false
   path_instructions:
     - path: "Development/system/coding/**"

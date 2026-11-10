@@ -6,6 +6,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+import urllib.error
 from unittest.mock import Mock
 from dataclasses import replace
 from pathlib import Path
@@ -189,12 +190,14 @@ class EvaluateTests(unittest.TestCase):
                 d = g.evaluate(inputs(body="Human-written fix.", **options))
                 self.assertNotEqual(d.state, "success", d.items)
 
-    def test_no_review_fails(self):
-        self.assertEqual(g.evaluate(inputs(comments=[])).state, "failure")
+    def test_no_review_is_pending(self):
+        d = g.evaluate(inputs(comments=[]))
+        self.assertEqual(d.state, "pending", d.items)
+        self.assertIn("waiting for an agent review", d.description)
 
-    def test_stale_review_after_push_fails(self):
+    def test_stale_review_without_carry_forward_is_pending(self):
         d = g.evaluate(inputs(comments=[review(sha=OLD)]))
-        self.assertEqual(d.state, "failure")
+        self.assertEqual(d.state, "pending")
         self.assertIn("re-review", d.description)
 
     def test_latest_review_wins(self):
@@ -205,7 +208,7 @@ class EvaluateTests(unittest.TestCase):
 
     def test_latest_marker_for_old_sha_blocks_even_if_earlier_matches(self):
         newer_old_sha = review(sha=OLD, created="2026-10-02T11:00:00Z", cid=2)
-        self.assertEqual(g.evaluate(inputs(comments=[review(), newer_old_sha])).state, "failure")
+        self.assertEqual(g.evaluate(inputs(comments=[review(), newer_old_sha])).state, "pending")
 
     def test_self_review_fails(self):
         d = g.evaluate(inputs(comments=[review(session="auth-1")]))
@@ -214,13 +217,13 @@ class EvaluateTests(unittest.TestCase):
 
     def test_untrusted_commenter_ignored(self):
         d = g.evaluate(inputs(comments=[review(association="NONE", login="stranger")]))
-        self.assertEqual(d.state, "failure")
+        self.assertEqual(d.state, "pending")
 
     def test_bot_review_is_never_trusted(self):
         # A PR controls its own pull_request workflows, which can comment as github-actions[bot].
         for association in ("NONE", "CONTRIBUTOR", "MEMBER"):
             bot = review(login="github-actions[bot]", association=association)
-            self.assertEqual(g.evaluate(inputs(comments=[bot])).state, "failure", association)
+            self.assertEqual(g.evaluate(inputs(comments=[bot])).state, "pending", association)
 
     def test_bot_changes_verdict_cannot_hide_human_approval(self):
         bot = review(verdict="changes", login="github-actions[bot]", association="NONE",
@@ -229,14 +232,14 @@ class EvaluateTests(unittest.TestCase):
 
     def test_reviewer_logins_restrict_who_can_review(self):
         only_app = frozenset({"reviewer-app[bot]"})
-        self.assertEqual(g.evaluate(inputs(reviewer_logins=only_app)).state, "failure")
+        self.assertEqual(g.evaluate(inputs(reviewer_logins=only_app)).state, "pending")
         app = review(login="reviewer-app[bot]", association="NONE")
         self.assertEqual(g.evaluate(inputs(comments=[app], reviewer_logins=only_app)).state, "success")
 
     def test_bot_report_comment_never_counts_as_review(self):
         fake = review(login="github-actions[bot]", association="NONE")
         fake["body"] = g.REPORT_MARKER + "\n" + fake["body"]
-        self.assertEqual(g.evaluate(inputs(comments=[fake])).state, "failure")
+        self.assertEqual(g.evaluate(inputs(comments=[fake])).state, "pending")
 
     def test_same_family_is_advisory_only(self):
         d = g.evaluate(inputs(comments=[review(reviewer="claude/claude-sonnet-5")]))
@@ -300,12 +303,12 @@ class EvaluateTests(unittest.TestCase):
 
     def test_verified_revert_without_revert_class_needs_review(self):
         d = g.evaluate(inputs(comments=[], revert=(True, "reverts abc1234")))
-        self.assertEqual(d.state, "failure")
+        self.assertEqual(d.state, "pending")
         self.assertTrue(any("class=quick-fix" in n for n in d.notes))
 
     def test_unverified_revert_still_needs_review(self):
         d = g.evaluate(inputs(comments=[], revert=(False, "conflict-resolved")))
-        self.assertEqual(d.state, "failure")
+        self.assertEqual(d.state, "pending")
         self.assertTrue(any("conflict-resolved" in n for n in d.notes))
 
     def test_open_owner_question_blocks_merge_even_for_reverts(self):
@@ -378,22 +381,27 @@ class EvaluateTests(unittest.TestCase):
 
     def test_owner_approval_still_needs_review_and_ci(self):
         d = g.evaluate(inputs(body=body_with_class("feature"), owner_label=True, comments=[]))
-        self.assertEqual(d.state, "failure")
+        self.assertEqual(d.state, "pending")
         runs = green_ci() + [{"id": 12, "name": "python-tests", "status": "completed", "conclusion": "failure"}]
         d = g.evaluate(inputs(body=body_with_class("feature"), owner_label=True, check_runs=runs))
         self.assertEqual(d.state, "failure")
 
     def test_policy_path_needs_owner_approval_whatever_the_class(self):
-        for path in (".github/agent-gate/agent_gate.py", ".github/workflows/tests.yml", "AGENTS.md"):
-            d = g.evaluate(inputs(changed_files=[path], owner_approval_paths=POLICY_PATHS))
+        d = g.evaluate(inputs(changed_files=["AGENTS.md"], owner_approval_paths=POLICY_PATHS))
+        self.assertEqual(d.state, "failure")
+        self.assertIn("policy path", d.description)
+        for path in (".github/agent-gate/agent_gate.py", ".github/workflows/tests.yml"):
+            d = g.evaluate(inputs(body=body_with_class("policy"), changed_files=[path],
+                                  owner_approval_paths=POLICY_PATHS))
             self.assertEqual(d.state, "failure", path)
-            self.assertIn("policy path", d.description)
+            self.assertIn("owner approval", d.description)
         d = g.evaluate(inputs(changed_files=["AGENTS.md"], owner_approval_paths=POLICY_PATHS, owner_label=True))
         self.assertEqual(d.state, "success", d.items)
 
-    def test_failure_beats_pending(self):
+    def test_terminal_failure_beats_pending(self):
         runs = green_ci() + [{"id": 12, "name": "x", "status": "queued", "conclusion": None}]
-        self.assertEqual(g.evaluate(inputs(check_runs=runs, comments=[])).state, "failure")
+        self.assertEqual(g.evaluate(inputs(check_runs=runs, comments=[review(verdict="changes")])).state,
+                         "failure")
 
     def test_description_fits_status_limit(self):
         d = g.evaluate(inputs(comments=[], body="", draft=True, unresolved_threads=3))
@@ -640,19 +648,334 @@ class AutomatedPolicyTests(unittest.TestCase):
         options = {"review_bots": {"coderabbitai[bot]": 136622811},
                    "native_reviews": [self.bot(state="COMMENTED")]}
         self.assertEqual(g.evaluate(inputs(**options)).state, "success")
-        self.assertEqual(g.evaluate(inputs(comments=[], **options)).state, "failure")
+        self.assertEqual(g.evaluate(inputs(comments=[], **options)).state, "pending")
         self.assertEqual(g.evaluate(inputs(unresolved_threads=1, **options)).state, "failure")
 
     def test_matching_login_without_immutable_identity_never_counts(self):
         for review in (self.bot(uid=1), self.bot(login="another[bot]")):
             decision = g.evaluate(inputs(comments=[], review_bots={"coderabbitai[bot]": 136622811},
                                          native_reviews=[review]))
-            self.assertEqual(decision.state, "failure")
+            self.assertEqual(decision.state, "pending")
 
     def test_later_comment_does_not_dismiss_a_native_approval(self):
         decision = g.evaluate(inputs(comments=[], review_bots={"coderabbitai[bot]": 136622811},
                                      native_reviews=[self.bot(), self.bot(state="COMMENTED", rid=100)]))
         self.assertEqual(decision.state, "success")
+
+
+def submitted(verdict="approve", sha=HEAD, session="rev-1", state="COMMENTED", submitted_at="2026-10-02T10:00:00Z",
+              association="OWNER", login="DemonicPsychoII", rid=900):
+    body = f"<!-- agent-review verdict={verdict} sha={sha} reviewer=codex/gpt-5.5 session={session} -->\nVerdict."
+    return {"id": rid, "body": body, "state": state, "submitted_at": submitted_at,
+            "user": {"login": login}, "author_association": association}
+
+
+class ReviewBodyTests(unittest.TestCase):
+    def test_review_submission_body_approves_current_sha(self):
+        d = g.evaluate(inputs(comments=[], review_bodies=g.review_records([submitted()])))
+        self.assertEqual(d.state, "success", d.items)
+
+    def test_review_submission_for_stale_sha_is_pending(self):
+        d = g.evaluate(inputs(comments=[], review_bodies=g.review_records([submitted(sha=OLD)])))
+        self.assertEqual(d.state, "pending")
+        self.assertIn("re-review", d.description)
+
+    def test_later_changes_in_either_source_overrides_approve(self):
+        later = "2026-10-02T11:00:00Z"
+        changes_review = g.review_records([submitted(verdict="changes", submitted_at=later, rid=2)])
+        self.assertEqual(g.evaluate(inputs(comments=[review()], review_bodies=changes_review)).state, "failure")
+        approve_review = g.review_records([submitted()])
+        changes_comment = review(verdict="changes", created=later, cid=2)
+        self.assertEqual(g.evaluate(inputs(comments=[changes_comment], review_bodies=approve_review)).state,
+                         "failure")
+        latest = g.review_records([submitted(submitted_at="2026-10-02T12:00:00Z", rid=3)])
+        self.assertEqual(g.evaluate(inputs(comments=[changes_comment], review_bodies=latest)).state, "success")
+
+    def test_same_second_tie_across_sources_fails_closed(self):
+        changes = g.review_records([submitted(verdict="changes", rid=1)])
+        self.assertEqual(g.evaluate(inputs(comments=[review(cid=999)], review_bodies=changes)).state, "failure")
+
+    def test_untrusted_pending_and_dismissed_review_submissions_ignored(self):
+        for submission in (submitted(association="NONE", login="stranger"),
+                           submitted(login="github-actions[bot]"),
+                           submitted(state="DISMISSED"),
+                           submitted(state="PENDING", submitted_at=None)):
+            with self.subTest(review=submission):
+                d = g.evaluate(inputs(comments=[], review_bodies=g.review_records([submission])))
+                self.assertEqual(d.state, "pending", d.items)
+
+    def test_review_submission_from_author_session_fails(self):
+        d = g.evaluate(inputs(comments=[], review_bodies=g.review_records([submitted(session="auth-1")])))
+        self.assertEqual(d.state, "failure")
+        self.assertIn("author session", d.description)
+
+
+def carried(allowed=True, sha=OLD, detail="the PR's own diff against integration is identical"):
+    return g.CarryForward(sha, allowed, detail)
+
+
+class CarryForwardEvaluateTests(unittest.TestCase):
+    def test_identical_diff_carries_the_approval_forward(self):
+        d = g.evaluate(inputs(comments=[review(sha=OLD)], approval_carry_forward=carried()))
+        self.assertEqual(d.state, "success", d.items)
+        self.assertTrue(any(f"approval carried forward from {OLD[:7]}" in text for _, text in d.items), d.items)
+        self.assertTrue(any("were not reviewed" in text for _, text in d.items), d.items)
+
+    def test_review_body_approval_is_carried_forward(self):
+        d = g.evaluate(inputs(comments=[], review_bodies=g.review_records([submitted(sha=OLD)]),
+                              approval_carry_forward=carried()))
+        self.assertEqual(d.state, "success", d.items)
+
+    def test_disallowed_or_mismatched_carry_forward_is_pending(self):
+        for carry in (carried(allowed=False, detail="the PR's own diff against integration changed"),
+                      carried(sha="c" * 40), None):
+            with self.subTest(carry=carry):
+                d = g.evaluate(inputs(comments=[review(sha=OLD)], approval_carry_forward=carry))
+                self.assertEqual(d.state, "pending", d.items)
+                self.assertIn("cannot be carried forward", d.description)
+
+    def test_newer_changes_verdict_prevents_carry_forward(self):
+        changes = review(verdict="changes", sha=OLD, created="2026-10-02T11:00:00Z", cid=2)
+        d = g.evaluate(inputs(comments=[review(sha=OLD), changes], approval_carry_forward=carried()))
+        self.assertEqual(d.state, "pending", d.items)
+        self.assertIn("requested changes", d.description)
+
+    def test_carried_self_review_still_fails(self):
+        d = g.evaluate(inputs(comments=[review(sha=OLD, session="auth-1")], approval_carry_forward=carried()))
+        self.assertEqual(d.state, "failure")
+        self.assertIn("author session", d.description)
+
+    def test_carry_forward_never_waives_ci_threads_or_owner_questions(self):
+        question = comment("<!-- owner-question id=q1 -->\nKeep it?", cid=51)
+        for options in ({"unresolved_threads": 1}, {"check_runs": []},
+                        {"comments": [review(sha=OLD), question]}):
+            with self.subTest(options=options):
+                values = {"comments": [review(sha=OLD)], "approval_carry_forward": carried(), **options}
+                self.assertNotEqual(g.evaluate(inputs(**values)).state, "success")
+
+
+def changed_file(name="src/a.c", status="modified", patch="@@ -1 +1 @@\n-a\n+b", previous=None):
+    entry = {"filename": name, "status": status}
+    if patch is not None:
+        entry["patch"] = patch
+    if previous:
+        entry["previous_filename"] = previous
+    return entry
+
+
+class FakeCompare(g.GitHub):
+    def __init__(self, comparisons, pull_request_commits):
+        super().__init__("o/r", "token")
+        self.comparisons, self.pull_request_commits, self.requested = comparisons, pull_request_commits, []
+
+    def get(self, path):
+        self.requested.append(path)
+        commit = path.rsplit("...", 1)[1]
+        files = self.comparisons.get(commit)
+        if files is None:
+            raise urllib.error.HTTPError(path, 404, "Not Found", {}, None)
+        return {"files": files}
+
+    def paginate(self, path, key=None):
+        return [{"sha": sha} for sha in self.pull_request_commits]
+
+
+class CarryForwardApiTests(unittest.TestCase):
+    def carry(self, approved_files, head_files, pull_request_commits=(OLD, HEAD)):
+        comparisons = {HEAD: head_files}
+        if approved_files is not None:
+            comparisons[OLD] = approved_files
+        gh = FakeCompare(comparisons, list(pull_request_commits))
+        return gh.approval_carry_forward(7, "integration", OLD, HEAD), gh
+
+    def test_identical_diff_after_base_merge_is_carried(self):
+        result, gh = self.carry([changed_file(), changed_file("b.md", "added")],
+                                [changed_file("b.md", "added"), changed_file()])
+        self.assertTrue(result.allowed, result.detail)
+        self.assertIn("a commit of this PR", result.detail)
+        self.assertEqual(gh.requested, [f"repos/o/r/compare/integration...{OLD}",
+                                        f"repos/o/r/compare/integration...{HEAD}"])
+
+    def test_force_pushed_but_resolvable_commit_is_carried(self):
+        result, _ = self.carry([changed_file()], [changed_file()], pull_request_commits=(HEAD,))
+        self.assertTrue(result.allowed, result.detail)
+        self.assertIn("force-push", result.detail)
+
+    def test_unresolvable_approved_commit_is_not_carried(self):
+        result, _ = self.carry(None, [changed_file()], pull_request_commits=(HEAD,))
+        self.assertFalse(result.allowed)
+        self.assertIn("not resolvable", result.detail)
+
+    def test_changed_patch_status_name_or_rename_source_is_not_carried(self):
+        for head_file in (changed_file(patch="@@ -1 +1 @@\n-a\n+c"), changed_file(status="added"),
+                          changed_file(name="src/other.c"), changed_file(status="renamed", previous="src/x.c")):
+            with self.subTest(head_file=head_file):
+                approved = changed_file(status="renamed", previous="src/y.c") if "previous_filename" in head_file \
+                    else changed_file()
+                result, _ = self.carry([approved], [head_file])
+                self.assertFalse(result.allowed)
+                self.assertIn("changed since", result.detail)
+
+    def test_extra_file_is_not_carried(self):
+        result, _ = self.carry([changed_file()], [changed_file(), changed_file("c.txt", "added")])
+        self.assertFalse(result.allowed)
+
+    def test_missing_patch_is_not_carried(self):
+        for approved, head in (([changed_file(patch=None)], [changed_file(patch=None)]),
+                               ([changed_file()], [changed_file(patch=None)])):
+            with self.subTest(approved=approved, head=head):
+                result, _ = self.carry(approved, head)
+                self.assertFalse(result.allowed)
+                self.assertIn("no patch", result.detail)
+
+    def test_truncated_file_list_is_not_carried(self):
+        files = [changed_file(f"f{index}.c") for index in range(g.COMPARE_FILE_LIMIT)]
+        result, _ = self.carry(files, files)
+        self.assertFalse(result.allowed)
+        self.assertIn("truncated", result.detail)
+
+
+class PendingAndTerminalTests(unittest.TestCase):
+    def test_waiting_for_review_while_ci_runs_is_pending(self):
+        runs = green_ci() + [{"id": 12, "name": "mission-control-budget-tests", "status": "in_progress",
+                              "conclusion": None}]
+        self.assertEqual(g.evaluate(inputs(comments=[], check_runs=runs)).state, "pending")
+
+    def test_required_check_still_queued_is_pending(self):
+        runs = [{"id": 12, "name": "mission-control-budget-tests", "status": "queued", "conclusion": None}]
+        d = g.evaluate(inputs(check_runs=runs, required_checks_only=True))
+        self.assertEqual(d.state, "pending", d.items)
+        self.assertIn("queued", d.description)
+
+    def test_changes_verdict_on_head_fails(self):
+        self.assertEqual(g.evaluate(inputs(comments=[review(verdict="changes")])).state, "failure")
+
+    def test_changes_verdict_on_older_commit_waits_for_re_review(self):
+        d = g.evaluate(inputs(comments=[review(verdict="changes", sha=OLD)]))
+        self.assertEqual(d.state, "pending")
+        self.assertIn("requested changes", d.description)
+
+    def test_newest_malformed_marker_fails(self):
+        for marker in ("<!-- agent-review verdict=approve sha=abc1234 reviewer=codex/gpt-5.5 session=r -->",
+                       f"<!-- agent-review verdict=lgtm sha={HEAD} reviewer=codex/gpt-5.5 session=r -->",
+                       f"<!-- agent-review verdict=approve sha={HEAD} -->"):
+            with self.subTest(marker=marker):
+                broken = comment(marker, created="2026-10-02T11:00:00Z", cid=2)
+                d = g.evaluate(inputs(comments=[review(), broken]))
+                self.assertEqual(d.state, "failure", d.items)
+                self.assertIn("malformed", d.description)
+                malformed_review_body = {"id": 3, "body": marker, "state": "COMMENTED",
+                                         "submitted_at": "2026-10-02T11:00:00Z", "user": {"login": "DemonicPsychoII"},
+                                         "author_association": "OWNER"}
+                d = g.evaluate(inputs(review_bodies=g.review_records([malformed_review_body])))
+                self.assertEqual(d.state, "failure", d.items)
+
+    def test_superseded_quoted_or_untrusted_malformed_marker_is_ignored(self):
+        marker = "<!-- agent-review verdict=approve sha=abc1234 reviewer=codex/gpt-5.5 session=r -->"
+        older = comment(marker, created="2026-10-02T09:00:00Z", cid=2)
+        self.assertEqual(g.evaluate(inputs(comments=[older, review()])).state, "success")
+        for ignored in (comment("> " + marker, created="2026-10-02T11:00:00Z", cid=3),
+                        comment("```\n" + marker + "\n```", created="2026-10-02T11:00:00Z", cid=4),
+                        comment(marker, created="2026-10-02T11:00:00Z", association="NONE", login="x", cid=5)):
+            with self.subTest(comment=ignored["body"]):
+                self.assertEqual(g.evaluate(inputs(comments=[review(), ignored])).state, "success")
+
+
+class ScopeGuardTests(unittest.TestCase):
+    GUARDED = (".github/agent-gate/agent_gate.py", ".github/agent-gate/fixtures/x.md",
+               ".github/workflows/quality-gates.yml")
+
+    def test_non_policy_agent_pr_changing_gate_or_workflows_fails(self):
+        for klass in ("quick-fix", "feature", "revert"):
+            for path in self.GUARDED:
+                with self.subTest(klass=klass, path=path):
+                    d = g.evaluate(inputs(body=body_with_class(klass), changed_files=["src/a.c", path],
+                                          require_owner_approval=False))
+                    self.assertEqual(d.state, "failure", d.items)
+                    text = " ".join(t for s, t in d.items if s == "fail")
+                    self.assertIn("separate `policy` PR", text)
+                    self.assertIn("code under test", text)
+
+    def test_policy_class_may_change_gate_and_workflows(self):
+        d = g.evaluate(inputs(body=body_with_class("policy"), changed_files=list(self.GUARDED),
+                              require_owner_approval=False))
+        self.assertEqual(d.state, "success", d.items)
+
+    def test_other_github_paths_are_not_guarded(self):
+        d = g.evaluate(inputs(changed_files=[".github/pull_request_template.md", "AGENTS.md"],
+                              require_owner_approval=False))
+        self.assertEqual(d.state, "success", d.items)
+
+    def test_renamed_out_of_guarded_path_counts(self):
+        d = g.evaluate(inputs(changed_files=["tools/gate.py", ".github/agent-gate/agent_gate.py"],
+                              require_owner_approval=False))
+        self.assertEqual(d.state, "failure")
+
+    def test_pr_without_agent_author_marker_skips_the_guard(self):
+        for body in ("Bumps actions/checkout from 6 to 7.", "Human edit of the workflow."):
+            with self.subTest(body=body):
+                d = g.evaluate(inputs(body=body, changed_files=list(self.GUARDED), require_owner_approval=False))
+                self.assertEqual(d.state, "success", d.items)
+
+
+class CodeRabbitRequestTests(unittest.TestCase):
+    BOTS = {"coderabbitai[bot]": 136622811}
+
+    def bot(self, state="APPROVED", sha=HEAD):
+        return {"id": 99, "state": state, "commit_id": sha,
+                "user": {"type": "Bot", "login": "coderabbitai[bot]", "id": 136622811}}
+
+    def test_unlabelled_pr_without_coderabbit_review_needs_only_the_agent_review(self):
+        d = g.evaluate(inputs(review_bots=self.BOTS))
+        self.assertEqual(d.state, "success", d.items)
+
+    def test_label_waits_for_coderabbit_even_with_agent_approval(self):
+        d = g.evaluate(inputs(review_bots=self.BOTS, coderabbit_label=True))
+        self.assertEqual(d.state, "pending", d.items)
+        self.assertIn("CodeRabbit", d.description)
+
+    def test_label_with_coderabbit_approval_passes(self):
+        d = g.evaluate(inputs(comments=[], review_bots=self.BOTS, coderabbit_label=True,
+                              native_reviews=[self.bot()]))
+        self.assertEqual(d.state, "success", d.items)
+
+    def test_label_with_recorded_fallback_uses_the_agent_review(self):
+        fallback = comment(f"<!-- review-fallback sha={HEAD} reason=unavailable -->", cid=60)
+        d = g.evaluate(inputs(comments=[fallback, review()], review_bots=self.BOTS, coderabbit_label=True))
+        self.assertEqual(d.state, "success", d.items)
+
+    def test_existing_coderabbit_review_is_still_required_without_label(self):
+        d = g.evaluate(inputs(review_bots=self.BOTS, native_reviews=[self.bot(state="CHANGES_REQUESTED")]))
+        self.assertEqual(d.state, "failure", d.items)
+        d = g.evaluate(inputs(review_bots=self.BOTS, native_reviews=[self.bot(state="CHANGES_REQUESTED", sha=OLD)]))
+        self.assertEqual(d.state, "pending", d.items)
+
+
+class FakePublish(g.GitHub):
+    def __init__(self):
+        super().__init__("o/r", "token")
+        self.calls = []
+
+    def request(self, method, path, body=None):
+        self.calls.append((method, path))
+        return None, {}
+
+
+class StickyReportTests(unittest.TestCase):
+    def test_report_is_edited_only_when_its_content_changes(self):
+        decision = g.evaluate(inputs())
+        old_report = g.render_report(inputs(), decision, "https://example.invalid/runs/1")
+        sticky = {"id": 70, "body": old_report, "created_at": "2026-10-02T08:00:00Z",
+                  "login": "github-actions[bot]", "association": "NONE"}
+        unchanged = inputs(comments=[review(), sticky])
+        gh = FakePublish()
+        g.publish(gh, unchanged, g.evaluate(unchanged), "https://example.invalid/runs/2")
+        self.assertEqual([method for method, _ in gh.calls], ["POST"])
+        changed = inputs(comments=[sticky])
+        gh = FakePublish()
+        g.publish(gh, changed, g.evaluate(changed), "https://example.invalid/runs/3")
+        self.assertEqual([method for method, _ in gh.calls], ["POST", "PATCH"])
+
 
 if __name__ == "__main__":
     unittest.main()
