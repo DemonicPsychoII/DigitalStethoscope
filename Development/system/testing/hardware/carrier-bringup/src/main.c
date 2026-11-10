@@ -38,13 +38,19 @@ LOG_MODULE_REGISTER(carrier, LOG_LEVEL_DBG);
 #define I2S_TIMEOUT_MS 100
 #define INPUT_POLL_MS 10
 #define BUTTON_DEBOUNCE_MS 30
-/* The slider breaks contact for 10 to 20 ms between positions. */
+/* The pad-link scan of 10 November 2026 saw 10 to 20 ms gaps between positions, at the
+ * 10 ms poll resolution. */
 #define SWITCH_DEBOUNCE_MS 30
+/* Settle time after driving GPIO18 low; a margin, not measured. */
+#define SWITCH_SETTLE_MICROSECONDS 20
 #define POTENTIOMETER_STEP_MV 40
 #define SUMMARY_PERIOD_MS 1000
 #define RAW_DUMP_PERIOD_MS 5000
 #define FULL_SCALE_24_BIT 8388607.0f
 #define POTENTIOMETER_FULL_MV 3300
+/* Highest reading at the 3V3 end of J7 on the Eval carrier, 10 November 2026. The cause of
+ * the gap to 3300 mV is not established. */
+#define POTENTIOMETER_MEASURED_TOP_MV 3083
 
 K_MEM_SLAB_DEFINE_STATIC(receive_slab, BLOCK_SIZE_BYTES, RECEIVE_BLOCK_COUNT, 4);
 K_MEM_SLAB_DEFINE_STATIC(transmit_slab, BLOCK_SIZE_BYTES, TRANSMIT_BLOCK_COUNT, 4);
@@ -245,6 +251,9 @@ static int trigger(const struct device *device, enum i2s_dir direction,
 	return result;
 }
 
+/* The shell probe reconfigures the input pins, so it must not run during an input poll. */
+K_MUTEX_DEFINE(input_pins_lock);
+
 static void probe_pin(const char *name, const struct gpio_dt_spec *specification)
 {
 	int result_up = gpio_pin_configure(specification->port, specification->pin,
@@ -333,7 +342,7 @@ static int read_potentiometer(int *raw, int *millivolts)
 static void set_status_light_brightness(int millivolts)
 {
 	static int last_brightness = -1;
-	const int brightness = CLAMP(millivolts * 255 / POTENTIOMETER_FULL_MV, 0, 255);
+	const int brightness = CLAMP(millivolts * 255 / POTENTIOMETER_MEASURED_TOP_MV, 0, 255);
 
 	if (brightness == last_brightness) {
 		return;
@@ -370,7 +379,7 @@ static enum filter_switch_position read_filter_switch(int *murmur_level, int *bp
 		return SWITCH_RAW;
 	}
 	if (gpio_pin_configure(common->port, common->pin, GPIO_OUTPUT_LOW) == 0) {
-		k_busy_wait(20);
+		k_busy_wait(SWITCH_SETTLE_MICROSECONDS);
 		*murmur_level = gpio_pin_get_raw(filter_switch[1].port, filter_switch[1].pin);
 		*bpm_level = gpio_pin_get_raw(filter_switch[2].port, filter_switch[2].pin);
 		position = *murmur_level == 0 && *bpm_level == 1   ? SWITCH_MURMUR
@@ -405,6 +414,7 @@ static void input_thread(void *unused1, void *unused2, void *unused3)
 	}
 
 	while (true) {
+		k_mutex_lock(&input_pins_lock, K_FOREVER);
 		const int raw_button = gpio_pin_get_dt(&button);
 
 		if (raw_button != candidate_button) {
@@ -436,6 +446,8 @@ static void input_thread(void *unused1, void *unused2, void *unused3)
 		int bpm_level = 0;
 		const enum filter_switch_position switch_reading =
 		        read_filter_switch(&murmur_level, &bpm_level);
+
+		k_mutex_unlock(&input_pins_lock);
 
 		if (switch_reading != switch_candidate) {
 			switch_candidate = switch_reading;
@@ -783,8 +795,10 @@ static int command_led(const struct shell *shell, size_t argc, char **argv)
 
 static int command_probe(const struct shell *shell, size_t argc, char **argv)
 {
+	k_mutex_lock(&input_pins_lock, K_FOREVER);
 	probe_all_pins();
 	configure_inputs();
+	k_mutex_unlock(&input_pins_lock);
 	return 0;
 }
 

@@ -26,17 +26,24 @@ read from the `.SchDoc` net labels, ports and wires.
 
 The footprint expects the switch common on pad 1. The fitted SP3T slide switch has its common
 on part pin 2, so the common lands on the GPIO18 pad and the throws on GND, GPIO21 and GPIO38.
-Pad-link scan on 10 November 2026 (this firmware, board above):
+**Measured on target, 10 November 2026.** Method: a pad-link scan in an earlier revision of
+this firmware. Every 10 ms it drove each J8 pad low in turn and logged which other pad followed.
+The switch was slid through its positions on the board above:
 
-| Position | Measured connection | Decoded as |
+| Position | Connection | Seen |
 | --- | --- | --- |
-| 1 | GPIO18 to GND | Raw |
-| 2 | GPIO18 to GPIO21 | Murmur |
-| 3 | GPIO18 to GPIO38 | BPM |
+| 1 | GPIO18 to GND | 4 times, including at boot |
+| 2 | GPIO18 to GPIO21 | 8 times |
+| 3 | GPIO18 to GPIO38 | 5 times |
 
-Each slide breaks contact for 10 to 20 ms. The firmware reads Raw directly, otherwise drives
-GPIO18 low for 20 µs and reads which pad follows, and debounces for 30 ms. Only low is driven.
-Decoding J8 in firmware for this board is Nico's decision of 10 November 2026.
+No other pad pair connected. Ten gaps without any connection between positions lasted 10 to
+21 ms; at the 10 ms poll resolution, shorter gaps do not appear in the log.
+
+**Decode (design, Nico's decision of 10 November 2026).** Raw when GPIO18 reads low; otherwise
+GPIO18 is driven low and Murmur or BPM is the pad that follows. Only low is driven. The 30 ms
+debounce covers the measured gaps. The 20 µs settle time after driving GPIO18 is a margin, not a
+measured value. On target the decoder has read Murmur, at boot; Raw, BPM and the slide between
+positions are not yet checked with the decoder.
 
 ## What it does
 
@@ -44,6 +51,8 @@ Decoding J8 in firmware for this board is Nico's decision of 10 November 2026.
   external pull-up, 0/0 a contact to GND, 1/0 that the pin follows the internal pull.
 - **Button LED:** blinks three times at boot, then lights while the button is held.
 - **Potentiometer:** logged in millivolts; it sets the white brightness of the RGB status light.
+  Full brightness is at 3083 mV, the highest reading at the 3V3 end of J7 on 10 November 2026.
+  Why the reading stops below 3300 mV is not established.
 - **Microphone:** I2S0 receive, 16 kHz, two 32-bit slots. Per second: blocks, errors, minimum,
   maximum, mean and AC RMS of both slots; raw words every 5 s.
 - **DAC:** I2S1 transmit. Default is microphone passthrough: left slot, one-pole DC blocker
