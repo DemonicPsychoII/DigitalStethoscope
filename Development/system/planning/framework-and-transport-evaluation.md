@@ -24,7 +24,7 @@ evidence were inspected directly instead.
 
 The project pins Zephyr `357467a011cd2557a1a3f0b4be83d817c4addc9b`, the
 `esp32s3_devkitc/esp32s3/procpu` board and an Xtensa ESP32-S3 toolchain in
-[toolchain.json](../testing/ci/toolchain.json). Documentation for `latest` describes
+[toolchain.json](../coding/tools/toolchain/toolchain.json). Documentation for `latest` describes
 upstream capabilities; the pinned build, overlay and target tests determine what
 works here. Optional peripherals are beyond the MVP even where evaluation code
 already supports them.

@@ -3,16 +3,16 @@
 Archived pre-thesis material. This firmware has no continuous integration (CI).
 
 Install the shared pinned tools with
-`python Development/system/testing/ci/setup_zephyr.py` from the repository root.
+`python Development/system/coding/tools/toolchain/setup_zephyr.py` from the repository root.
 Activate that Zephyr environment, then use the local commands below. The shared
 CI build and publication entry points now build only the application firmware.
 Archived bring-up builds stay local and are not published by CI.
 
 ### Toolchain and commands
 
-The Zephyr, SDK and west pins live in [toolchain.json](../../Development/system/testing/ci/toolchain.json);
+The Zephyr, SDK and west pins live in [toolchain.json](../../Development/system/coding/tools/toolchain/toolchain.json);
 the Zephyr west manifest fixes the hal_espressif revision
-(`3d4d922a4d2994f844790ec031a584ec71240485` at the current Zephyr pin). See `Development/system/testing/ci/setup_zephyr.sh`
+(`3d4d922a4d2994f844790ec031a584ec71240485` at the current Zephyr pin). See `Development/system/coding/tools/toolchain/setup_zephyr.py`
 for a fresh workspace. Work from an activated Zephyr environment (Python 3.12+,
 CMake, Ninja, esptool >=5.0.2, Espressif binary blobs). Commands below assume the
 current directory is this application:

@@ -29,7 +29,9 @@ def main() -> None:
         "run": os.environ.get("GITHUB_RUN_ID"),
         "attempt": os.environ.get("GITHUB_RUN_ATTEMPT"),
         "toolchain": json.loads(
-            (root / "Development/system/testing/ci/toolchain.json").read_text()
+            (
+                root / "Development/system/coding/tools/toolchain/toolchain.json"
+            ).read_text()
         ),
         "compiler_cache": json.loads(
             (root / "Development/system/testing/ci/compiler_cache.json").read_text()

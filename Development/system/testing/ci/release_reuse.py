@@ -9,6 +9,7 @@ import subprocess
 import zipfile
 from pathlib import Path
 
+import toolchain_path  # noqa: F401
 from build_support import BOARD, RELEASE_COMPONENTS, ROOT
 from firmware_release import PROJECT
 

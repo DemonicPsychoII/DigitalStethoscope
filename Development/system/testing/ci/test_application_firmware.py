@@ -7,6 +7,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import run_ci
+import toolchain_path  # noqa: F401
 from build_support import RELEASE_COMPONENTS
 from test_cloud_publish import IDENTITY
 

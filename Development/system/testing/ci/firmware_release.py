@@ -18,6 +18,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
+import toolchain_path  # noqa: F401
 from build_support import RELEASE_COMPONENTS
 
 PROJECT = "Digital Stethoscope"

@@ -91,11 +91,11 @@ are described in the host run instructions.
 
 Static checks and builds run in disposable home-lab VMs (virtual machines). GitHub-hosted runners handle routing, result accounting and artifact promotion. Heavy work has no hosted fallback. Fork builds receive no privileged credentials. Hardware flashing, serial access and device-network operations require owner authorization.
 
-The [quality workflow](../../../../.github/workflows/quality-gates.yml) runs for PRs into `integration`, integration pushes, scheduled verification and manual dispatch. Tool and board versions are defined by [toolchain.json](toolchain.json), the workflow and the hash-locked dependency files.
+The [quality workflow](../../../../.github/workflows/quality-gates.yml) runs for PRs into `integration`, integration pushes, scheduled verification and manual dispatch. Tool and board versions are defined by [toolchain.json](../../coding/tools/toolchain/toolchain.json), the workflow and the hash-locked dependency files. The pins and the workspace setup live with the production tools in [coding/tools/toolchain](../../coding/tools/toolchain/), so firmware builds without this folder; CI imports them through `toolchain_path.py`.
 
 ### Prepared environments
 
-Static jobs validate `/opt/stethoscope-ci` against the required Python version, package state and dependency hashes. Firmware jobs validate `/opt/zephyr-workspace` against Zephyr/module revisions, compiler inputs and Espressif binary hashes. Missing or changed inputs trigger setup. Validators are checksum-checked before reuse or download.
+Static jobs validate `/opt/stethoscope-ci` against the required Python version, package state and dependency hashes. Firmware jobs validate `/opt/zephyr-workspace` against Zephyr/module revisions, compiler inputs and Espressif binary hashes. Missing or changed inputs trigger setup. `setup_zephyr.sh` removes the marker, runs the production `setup_zephyr.py` and records the marker with `prepared_env.py record zephyr` only after setup succeeds. The marker holds the pin values, not their location. Validators are checksum-checked before reuse or download.
 
 Every build starts with a clean CMake build tree. Compiler outputs can be reused through the pinned 512 MiB ccache, separated by toolchain/cache versions. PRs read entries; successful integration verification saves them. Weekly and full verification disable compiler-cache reuse. Disposable guest writes are discarded; the base images remain read-only.
 
@@ -133,7 +133,7 @@ Setup uses Python 3.12+, Git and, on Windows, 7-Zip. Linux also needs venv suppo
 
 ```powershell
 winget install --id 7zip.7zip -e --silent
-python Development/system/testing/ci/setup_zephyr.py
+python Development/system/coding/tools/toolchain/setup_zephyr.py
 .ci-workspace/.venv/Scripts/python.exe -m pip install --require-hashes -r Development/system/testing/ci/requirements-ci.txt
 ```
 
@@ -148,7 +148,7 @@ Commands below use the pinned environment's Python. On Linux that executable is 
 | Tooling regression tests | `python -m unittest discover -s Development/system/testing/ci -p 'test_*.py'` |
 | Merge-gate regression tests | `python -m unittest discover -s .github/agent-gate` |
 
-`run_ci.py all` executes static checks and the application build. `build` and `build --application` are equivalent: both stage the single application image and identity manifest, and can publish locally when `cloud-publish` is installed. Available host scenarios, tooling and merge-gate tests have separate entry points. Install application host dependencies with `python -m pip install --require-hashes -r Development/system/testing/ci/requirements-host.txt` before running an available suite.
+`run_ci.py all` executes static checks and the application build. `build` and `build --application` are equivalent: both compile the application with its release configuration to `build-ci-app`, retain build evidence, stage the single application image and identity manifest, and can publish locally when `cloud-publish` is installed. The manual `coding/tools/build-firmware.ps1` release build uses the same configuration. Available host scenarios, tooling and merge-gate tests have separate entry points. Install application host dependencies with `python -m pip install --require-hashes -r Development/system/testing/ci/requirements-host.txt` before running an available suite.
 
 The [archived bring-up](../../../../preThesis/06-bringup-zephyr/README.md) retains its local build guide and optional QC (quality control) evaluator. Its checks depend on named bring-up modules, optional display/touch wiring, `qc.conf` and historical bring-up evidence. They do not define application quality gates.
 
@@ -156,8 +156,9 @@ The [archived bring-up](../../../../preThesis/06-bringup-zephyr/README.md) retai
 
 | Tool | Responsibility |
 | --- | --- |
-| `run_ci.py`, `build_support.py` | Check/build entry points, paths and firmware profiles. |
-| `setup_zephyr.py`, `setup_zephyr.sh` | Pinned workspace setup; reruns complete interrupted setup and reuse downloads. |
+| `run_ci.py` | Check/build entry points. |
+| `toolchain_path.py` | Makes the production `build_support.py` (paths, pins and firmware profiles) in `coding/tools/toolchain/` importable. |
+| `setup_zephyr.sh` | CI workspace setup through the production `setup_zephyr.py`, which completes interrupted setup and reuses downloads; then records the prepared-environment marker. |
 | `prepared_env.py`, `validation_tools.py`, `compiler_cache.py` | Validate and reuse prepared environments, validators and compiler cache. |
 | `firmware_changes.py` | Select affected suites. |
 | `ci_evidence.py`, `ci_results.py` | Record execution identity and account for results. |

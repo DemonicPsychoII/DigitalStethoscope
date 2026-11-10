@@ -7,10 +7,13 @@ import os
 import subprocess
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[4]
+ROOT = Path(__file__).resolve().parents[5]
 APP = ROOT / "Development/system/coding/app"
 PINS = json.loads(Path(__file__).with_name("toolchain.json").read_text())
 BOARD = PINS["board"]
+# Prepared-environment marker; setup removes it before changing a workspace, so a
+# half-finished setup never keeps the fingerprint of the previous complete one.
+PREPARED_MARKER = ".stethoscope-prepared.json"
 PROFILES = {"application": []}
 
 RELEASE_COMPONENTS = dict.fromkeys(PROFILES, "application")

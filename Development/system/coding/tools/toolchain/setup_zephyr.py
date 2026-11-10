@@ -5,14 +5,24 @@ from __future__ import annotations
 
 import argparse
 import os
+import shlex
 import shutil
 import subprocess
 import sys
 import venv
 from pathlib import Path
 
-from build_support import PINS, ROOT, build_env, checked, python_path, west_command
-from prepared_env import MARKER, record
+from build_support import (
+    BOARD,
+    PINS,
+    PREPARED_MARKER,
+    ROOT,
+    bin_dir,
+    build_env,
+    checked,
+    python_path,
+    west_command,
+)
 
 
 def main() -> None:
@@ -38,7 +48,7 @@ def main() -> None:
                 "Install 7-Zip first: winget install --id 7zip.7zip -e --silent"
             )
     ws.mkdir(parents=True, exist_ok=True)
-    (ws / MARKER).unlink(missing_ok=True)
+    (ws / PREPARED_MARKER).unlink(missing_ok=True)
     if not python_path(ws).is_file():
         venv.create(ws / ".venv", with_pip=True)
     env = build_env(ws)
@@ -124,11 +134,39 @@ def main() -> None:
     )
     run([*west, "zephyr-export"])
     run([*west, "--version"])
-    record("zephyr", ws)
-    print(
-        f"\nReady. No activation required:\n{py} {Path(__file__).with_name('run_ci.py')} build --application",
-        flush=True,
-    )
+    if os.name == "nt":
+        build_firmware = Path(__file__).resolve().parents[1] / "build-firmware.ps1"
+        next_step = f"powershell -File {build_firmware}"
+    else:
+        # Same environment as build_env(): west finds its Zephyr build command only inside
+        # the workspace with ZEPHYR_BASE set, and the build uses the pinned CMake, Ninja
+        # and SDK.
+        tool_env = build_env(ws)
+        assignments = " ".join(
+            f"{name}={shlex.quote(tool_env[name])}"
+            for name in (
+                "ZEPHYR_BASE",
+                "ZEPHYR_SDK_INSTALL_DIR",
+                "ZEPHYR_TOOLCHAIN_VARIANT",
+            )
+        )
+        build_command = shlex.join(
+            [
+                *west,
+                "build",
+                "-b",
+                BOARD,
+                "-d",
+                str(ROOT / "build-app"),
+                str(ROOT / "Development/system/coding/app"),
+            ]
+        )
+        next_step = (
+            f"cd {shlex.quote(str(ws))} && "
+            f'PATH={shlex.quote(str(bin_dir(ws)))}:"$PATH" '
+            f"{assignments} {build_command}"
+        )
+    print(f"\nReady. No activation required:\n{next_step}", flush=True)
 
 
 if __name__ == "__main__":
