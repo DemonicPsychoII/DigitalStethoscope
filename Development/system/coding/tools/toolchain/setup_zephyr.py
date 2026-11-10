@@ -11,7 +11,16 @@ import sys
 import venv
 from pathlib import Path
 
-from build_support import PINS, ROOT, build_env, checked, python_path, west_command
+from build_support import (
+    BOARD,
+    PINS,
+    PREPARED_MARKER,
+    ROOT,
+    build_env,
+    checked,
+    python_path,
+    west_command,
+)
 
 
 def main() -> None:
@@ -37,6 +46,7 @@ def main() -> None:
                 "Install 7-Zip first: winget install --id 7zip.7zip -e --silent"
             )
     ws.mkdir(parents=True, exist_ok=True)
+    (ws / PREPARED_MARKER).unlink(missing_ok=True)
     if not python_path(ws).is_file():
         venv.create(ws / ".venv", with_pip=True)
     env = build_env(ws)
@@ -122,11 +132,15 @@ def main() -> None:
     )
     run([*west, "zephyr-export"])
     run([*west, "--version"])
-    build_firmware = Path(__file__).resolve().parents[1] / "build-firmware.ps1"
-    print(
-        f"\nReady. No activation required:\npowershell -File {build_firmware}",
-        flush=True,
-    )
+    if os.name == "nt":
+        build_firmware = Path(__file__).resolve().parents[1] / "build-firmware.ps1"
+        next_step = f"powershell -File {build_firmware}"
+    else:
+        next_step = (
+            f"{' '.join(west)} build -b {BOARD} -d {ROOT / 'build-app'} "
+            f"{ROOT / 'Development/system/coding/app'}"
+        )
+    print(f"\nReady. No activation required:\n{next_step}", flush=True)
 
 
 if __name__ == "__main__":

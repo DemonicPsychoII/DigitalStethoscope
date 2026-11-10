@@ -13,14 +13,14 @@ import sys
 from pathlib import Path
 
 import toolchain_path  # noqa: F401
-from build_support import PINS, ROOT, python_path
+from build_support import PINS, PREPARED_MARKER, ROOT, python_path
 
 STATIC_PYTHON = "3.12.10"
 STATIC_REQUIREMENTS = (
     "Development/system/testing/ci/requirements-ci.txt",
     "Development/system/testing/ci/requirements-host.txt",
 )
-MARKER = ".stethoscope-prepared.json"
+MARKER = PREPARED_MARKER
 
 
 def python_state(python: Path) -> dict:
