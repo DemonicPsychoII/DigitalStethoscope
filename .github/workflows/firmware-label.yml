@@ -1,0 +1,54 @@
+name: Firmware label
+
+# The `firmware` label publishes the firmware of a PR head. Labels deliberately do not trigger
+# quality-gates.yml: a label-only run there becomes the newest run of that workflow for the head,
+# and GitHub then evaluates the required checks against it, so they report as expected (#139).
+# Instead, this re-runs the head's existing verification run. Its plan reads the live label and
+# selects the application build, and only a fully verified attempt uploads the firmware.
+#
+# Why these triggers:
+#   pull_request_target  the label was added. `_target` runs this file and the script from the
+#                        default branch; PR code is never checked out or executed.
+#   workflow_run         a verification run finished green without publishing because the label
+#                        arrived after its plan had read the labels.
+
+on:
+  pull_request_target:
+    branches: [integration, test/v-model-from-start, 'replay/**']
+    types: [labeled]
+  workflow_run:
+    workflows: ["Mandatory quality gates"]
+    types: [completed]
+
+permissions: {}
+
+jobs:
+  rerun:
+    name: Request firmware publication
+    if: >-
+      (github.event_name == 'pull_request_target' && github.event.label.name == 'firmware'
+          && github.event.pull_request.head.repo.full_name == github.repository)
+      || (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request'
+          && github.event.workflow_run.conclusion == 'success'
+          && github.event.workflow_run.head_repository.full_name == github.repository)
+    # Job level, so that skipped runs for other labels never displace a pending request.
+    # The label and completion events of one head must not both request a re-run.
+    concurrency:
+      group: firmware-label-${{ github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
+      cancel-in-progress: false
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    permissions:
+      contents: read
+      actions: write        # re-run the verification run
+      pull-requests: read   # read the live PR head and labels
+    steps:
+      - name: Check out the script from the default branch (never PR code)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          persist-credentials: false
+      - name: Re-run the head's verification when it has not published
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 Development/system/testing/ci/firmware_label.py

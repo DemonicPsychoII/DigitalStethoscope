@@ -107,7 +107,7 @@ Diagnostic artifacts are retained for 14 days; firmware artifacts for eight days
 
 Application publication requires successful selected verification and the single `application` profile, built from `coding/app/prj.conf`. The manifest entry has `component=application`, the version and SHA-256 (secure hash algorithm 256) checksum. The same version is printed at boot. Configuration, ELF (Executable and Linkable Format), binary, map, generated device tree and RAM/ROM reports are retained under `artifacts/firmware/application/`.
 
-Daily builds, dispatches of `integration` and the `firmware` label publish only this application. Integration pushes retain `verified-firmware-<attempt>`. Exact-commit reuse accepts a successful same-repository integration run of this workflow, a clean matching manifest and exactly one application image with a valid checksum. Missing eligible artifacts trigger a build; corrupt selected artifacts fail publication. The bundle keeps the external artifact name `firmware-build-<attempt>`. Build guests hold no cloud credentials.
+Daily builds, dispatches of `integration` and the `firmware` label publish only this application. Labels do not start quality-gate runs, because a label-only run would become the newest run for the head and hide its required checks. Adding `firmware` re-runs the head's green verification run through the [firmware label workflow](../../../../.github/workflows/firmware-label.yml); a run still in progress reads the live label when it plans, or is re-run once it finishes green without publishing. Integration pushes retain `verified-firmware-<attempt>`. Exact-commit reuse accepts a successful same-repository integration run of this workflow, a clean matching manifest and exactly one application image with a valid checksum. Missing eligible artifacts trigger a build; corrupt selected artifacts fail publication. The bundle keeps the external artifact name `firmware-build-<attempt>`. Build guests hold no cloud credentials.
 
 ### External publication handoff
 
@@ -162,6 +162,7 @@ The [archived bring-up](../../../../preThesis/06-bringup-zephyr/README.md) retai
 | `firmware_changes.py` | Select affected suites. |
 | `ci_evidence.py`, `ci_results.py` | Record execution identity and account for results. |
 | `daily_build.py`, `release_reuse.py`, `firmware_release.py` | Daily selection, verified-artifact reuse and publication manifests. |
+| `firmware_label.py` | Re-run a green, unpublished PR head verification when the `firmware` label is added. |
 | `application_host_results.py` | Per-scenario application JUnit summary and result validation. |
 | `native_review.py`, `post_merge.py` | Native protection migration and post-merge failure confirmation. |
 | `validate_docs.py` | Links, diagram renders, indexes, repeated facts, available thesis sources and VT references (reported separately when present). |

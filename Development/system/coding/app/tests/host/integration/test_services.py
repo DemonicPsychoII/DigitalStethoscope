@@ -18,6 +18,7 @@ def integration_executable(host_build_directory):
         "integration",
         [HERE / "harness.c"],
         [
+            APPLICATION / "common",
             APPLICATION / "L2_application/L2_COMMUNICATION",
             *(
                 APPLICATION / "L1_services" / name
