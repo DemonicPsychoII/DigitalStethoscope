@@ -4,13 +4,13 @@
 
 This Design-stage contract refines the [server profile architecture](https://github.com/DemonicPsychoII/DigitalStethoscope/pull/108) at `29f0e8f4b73e2491430c9f633d62e39026f2863e` and the [flash layout and image format](interfaces-and-behavior.md#flash-layout) at `fb2c979760f562bcb371a1c13cbb2ded7b3f0821`, which applies the design review of 2 November 2026 and the flash layout decision of 4 November 2026 [8]. It covers REQ-09, REQ-11 and REQ-13; verification uses VT-08, VT-09 and VT-11. No firmware, tool or generated tests change here.
 
-Nico decided on 4 November 2026 that one TOML file per server deployment, with the certificate embedded as PEM text and versioned in the repository, is the only input, and that one flash command validates, builds and writes the image [1]. The image format of the design review stays unchanged; the deployment file is a host-side input only.
+Nico decided on 4 November 2026 that one TOML file per server deployment, with the certificate embedded as PEM text and versioned in the repository, is the only input, and that one flash command validates, builds and writes the image [1]. The image format of the design review stays unchanged; the deployment file is an input on the developer PC only.
 
 ## Deployment file
 
 Each server deployment has one file `Development/system/coding/server-profiles/<deployment>.toml`. The name uses lowercase letters, digits and hyphens, for example `lab-hapi.toml`, and is the image name. The folder's README lists every deployment with its server and owner. A server change is a reviewed change of this file; no other input exists. The repository is public, so only test deployments are committed: no production endpoint and no credentials. A real deployment keeps its file with that deployment and uses the same tool.
 
-The file follows TOML v1.0.0 [2]. The tool reads it with Python's standard `tomllib` module [3] in the pinned toolchain environment, so no extra dependency is needed for parsing. Format 1:
+The file follows TOML v1.0.0 [2]. The server profile tool on the developer PC reads it with Python's standard `tomllib` module [3] in the pinned toolchain environment, so no extra dependency is needed for parsing. Format 1:
 
 | Key | TOML type | Required | Rule |
 | --- | --- | --- | --- |
@@ -44,7 +44,7 @@ The tool writes the canonical form into the image; registration binds to the sam
 
 ### Certificate checks
 
-Before anything is written, the tool applies the device's certificate rules, so a mismatch fails on the developer PC. The device applies rules 1 and 3 at boot, enforces rule 5 through its handshake verification and applies rule 4 against its synchronized clock before each handshake, because boot has no valid clock yet. For rule 2 the device trusts only this certificate; whether the pinned verifier also checks self-issuance and signature of a directly trusted certificate is still to be demonstrated by L1 work ([TLS trust inputs](../COMMUNICATION/secure-transport.md#trust-and-server-profile-inputs)):
+Before anything is written, the tool applies the device's certificate rules, so a mismatch fails on the developer PC. The device applies rules 1 and 3 at boot, enforces rule 5 through its handshake verification and applies rule 4 against its synchronized clock before each handshake, because boot has no valid clock yet. For rule 2 the device trusts only this certificate; whether the pinned verifier also checks self-issuance and signature of a directly trusted certificate is still to be demonstrated by L1_WIFI work ([TLS trust inputs](../COMMUNICATION/secure-transport.md#trust-and-server-profile-inputs)):
 
 1. The text is exactly one parsable X.509 certificate.
 2. It is self-issued and its signature verifies with its own public key, because the device trusts it directly.
@@ -106,7 +106,7 @@ These scenarios allocate future verification; they do not add a generated test b
 | --- | --- | --- |
 | Valid deployment file | REQ-09/REQ-11; VT-08 | `check` passes; the image bytes match the field table and the firmware reader accepts them. |
 | Each violated file rule | REQ-11; VT-08 | Rejected with key and rule; no image written. |
-| Certificate not self-issued, without matching Subject Alternative Name, or with a DNS entry for an IPv4 host | REQ-11; VT-08 | Rejected by the tool; an image forced onto a device yields an invalid configuration at boot (missing or wrong-type SAN) or, for a certificate that is not self-issued, an expected handshake failure that L1 work still has to demonstrate ([TLS trust inputs](../COMMUNICATION/secure-transport.md#trust-and-server-profile-inputs)). |
+| Certificate not self-issued, without matching Subject Alternative Name, or with a DNS entry for an IPv4 host | REQ-11; VT-08 | Rejected by the tool; an image forced onto a device yields an invalid configuration at boot (missing or wrong-type Subject Alternative Name) or, for a certificate that is not self-issued, an expected handshake failure that L1_WIFI work still has to demonstrate ([TLS trust inputs](../COMMUNICATION/secure-transport.md#trust-and-server-profile-inputs)). |
 | Certificate with a Key Usage extension that omits `digitalSignature`, or with an Extended Key Usage extension that omits both `serverAuth` and `anyExtendedKeyUsage` | REQ-11; VT-08 | Rejected by the tool; an image forced onto a device is accepted at boot and fails verification at the handshake. |
 | Certificate expired or not yet valid | REQ-11; VT-08 | Rejected by the tool on the PC's date; on the device a valid image is accepted at boot and the setup fails its validity check after time synchronization, without a handshake. |
 | Private key or other PEM label in the file | VT-11 | Rejected; nothing written. |

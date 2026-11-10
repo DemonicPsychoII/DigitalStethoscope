@@ -20,11 +20,11 @@ The patient rule is accepted: reuse only a patient reference supplied with a ser
 | L1_STORAGE | Persist/retrieve the named server registration record under the future agreed contract. | Not a persistent measurement queue; not a patient directory. |
 | External FHIR server | Hold Device and Observation resources and return application receipts. | Separate from the examination-request protocol, even if one deployment hosts both. |
 
-Dependencies run from CONTROL's frozen job to COMMUNICATION, then to FHIR serialization, WIFI transport and STORAGE operations. Transport depends on approved clock/trust preparation. A receipt returns through COMMUNICATION to CONTROL. Examination context enters through the adapter boundary and CONTROL admission before being frozen for the corresponding result. No lower service owns the complete workflow.
+Dependencies run from CONTROL's frozen job to COMMUNICATION, then to FHIR serialization, WIFI transport and STORAGE operations. Transport depends on approved clock/trust preparation. A receipt returns through COMMUNICATION to CONTROL. Examination context enters through the adapter boundary and CONTROL admission before being frozen for the corresponding result. Neither L1_FHIR, L1_WIFI nor L1_STORAGE owns the complete workflow.
 
 ## Agreed preparation and readiness flow
 
-While Idle, COMMUNICATION automatically prepares verified transport after joining the configured network, starting each setup with one time synchronization directly before the TLS handshake, then Device registration ([review decisions, 2 November 2026](https://github.com/DemonicPsychoII/DigitalStethoscope/pull/104)). Track network access, verified transport and Device registration independently. A retained TLS connection alone is not complete readiness. Unauthenticated SNTP time is an accepted MVP trust assumption ([SNTP Design PR #99](https://github.com/DemonicPsychoII/DigitalStethoscope/pull/99)); transport uses TLS 1.3 only, subject to stack/server verification ([TLS Design PR #100](https://github.com/DemonicPsychoII/DigitalStethoscope/pull/100)).
+While Idle, COMMUNICATION automatically prepares verified transport after joining the configured network, starting each setup with one time synchronization directly before the TLS handshake, then Device registration ([review decisions, 2 November 2026](https://github.com/DemonicPsychoII/DigitalStethoscope/pull/104)). Track network access, verified transport and Device registration independently. A retained TLS connection alone is not complete readiness. Unauthenticated SNTP time is an accepted trust assumption for the minimum viable product (MVP) ([SNTP Design PR #99](https://github.com/DemonicPsychoII/DigitalStethoscope/pull/99)); transport uses TLS 1.3 only, subject to stack/server verification ([TLS Design PR #100](https://github.com/DemonicPsychoII/DigitalStethoscope/pull/100)).
 
 Reuse an available verified connection. During listening, retain it without application requests, heartbeats or proactive reconnects; restore a lost connection after listening stops within the delivery budget. This is connection reuse, not an always-active background workflow.
 
@@ -58,7 +58,7 @@ Active preparation, external-request communication and delivery require CONTROL'
 | Terminal failure and later recovery | REQ-10/REQ-13; VT-07/VT-09 | Visible failure, released job, no delayed resend. |
 | Network work while listening and private context | REQ-11/REQ-13; VT-08/VT-11 | Lease prevents active jobs; no secrets/patient data in logs. |
 
-These are architecture expectations, not generated tests or execution evidence. The [catalogue](../../testing/specification-verification.md) retains pending VT-07/08/15 coverage. Detailed design must settle the examination adapter contract, registration recovery/persistence, authorization, local message/profile mapping, point coding and precision, and timestamp skew (TICKET-181/209). No unsupported profile-conformance claim is made.
+These are architecture expectations, not generated tests or execution evidence. The [catalogue](../../testing/specification-verification.md) retains pending VT-07/08/15 coverage. Detailed design must settle the examination adapter contract, registration recovery/persistence, authorization, local message/profile mapping, point coding and precision, and timestamp skew (TICKET-181, FHIR result delivery, error reporting and matching readback; TICKET-209, choosing the clock reference and timestamp accuracy). No unsupported profile-conformance claim is made.
 
 ## Sources and project decisions
 
