@@ -18,6 +18,7 @@
 #include <zephyr/logging/log.h>
 
 #include "communication.h"
+#include "control.h"
 
 /***********************************************************************/
 /* DEFINES                                                             */
@@ -61,7 +62,9 @@ int main(void)
 {
     LOG_INF("Initialize Digital Stethoscope Components...");
 
+    control_init();
     communication_init();
+    control_completeStartup();
 
     return 0;
 }
