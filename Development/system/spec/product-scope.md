@@ -58,12 +58,13 @@ application drivers or physical acceptance are complete.
 | Raw/Murmur/BPM selection | GPIO inputs | GPIO18/21/38 respectively, active low with pull-ups; switch common to ground |
 | Volume | ADC (analog-to-digital converter) input | GPIO1, ADC1 channel 0, potentiometer wiper |
 | Button LED (light-emitting diode) | GPIO output | GPIO17, active high; retain current limiting |
+| RGB status light | WS2812 data output | GPIO48 through the SPI3 data line, the DevKitC-1 v1.0 position, on either revision |
 
-Confirm the fitted carrier and DevKit revision before enabling peripherals. The
-GPIO38/RGB-LED conflict remains an open board check; it is not resolved by this
-assignment. Display, touch, SD storage, backlight and the speed switch are outside
-this application baseline. The headphone amplifier remains external. The memory-only
-application overlay is an implementation placeholder, not a wiring source.
+Confirm the fitted carrier and DevKit revision before enabling peripherals. GPIO38 is
+not driven for the RGB LED, so it stays the BPM switch input; a v1.1 DevKit leaves the
+status light dark ([10 November](../planning/mvp-decisions-2026-11-10.md)). Display, touch, SD storage, backlight and the speed switch are outside
+this application baseline. The headphone amplifier remains external. The application
+overlay is an implementation, not a wiring source.
 
 ## Terminology
 

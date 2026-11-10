@@ -6,7 +6,7 @@ The [architectural ground rules](../../architecture/system/feedback-principles.m
 
 The RGB status light never shows red; the separate red button light shows error codes.
 Serial logs retain the detailed cause. Timing is in [P22](parameters.md).
-The pin map stays unchanged; there is no GPIO14 filter-switch move. The claimed GPIO38/BPM-contact conflict is an unsupported project wiring note: no dated carrier schematic or fitted-board evidence is available here. Confirm the board revision and carrier wiring before enabling the RGB LED driver; if either is unknown, leave that driver disabled pending owner-authorized inspection (TICKET-186, TICKET-187). This is a design precondition, not evidence that an implemented driver enforces it.
+The pin map stays unchanged; there is no GPIO14 filter-switch move. The RGB status light is driven on GPIO48, its DevKitC-1 v1.0 position, whichever DevKit revision is fitted; GPIO38 stays the BPM contact of the filter switch ([10 November](../../planning/mvp-decisions-2026-11-10.md)). On a v1.1 DevKit the light stays dark.
 
 Vendor reference: Espressif Systems, *ESP32-S3-DevKitC-1 v1.1 User Guide*, ESP-Dev-Kits documentation, online revision not specified, <https://docs.espressif.com/projects/esp-dev-kits/en/latest/esp32s3/esp32-s3-devkitc-1/user_guide_v1.1.html> (accessed 2026-10-24). It identifies the board RGB LED connection; it does not establish the project's carrier wiring.
 
