@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import shlex
 import shutil
@@ -14,6 +15,7 @@ from pathlib import Path
 
 from build_support import (
     BOARD,
+    PIN_STAMP,
     PINS,
     PREPARED_MARKER,
     ROOT,
@@ -21,13 +23,19 @@ from build_support import (
     build_env,
     checked,
     python_path,
+    toolchain_workspace,
     west_command,
 )
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--workspace", type=Path, default=ROOT / ".ci-workspace")
+    parser.add_argument(
+        "--workspace",
+        type=Path,
+        default=toolchain_workspace(),
+        help="defaults to the workspace shared by all checkouts for these pins",
+    )
     args = parser.parse_args()
     ws = args.workspace.resolve()
     if sys.version_info < (3, 12):
@@ -49,6 +57,7 @@ def main() -> None:
             )
     ws.mkdir(parents=True, exist_ok=True)
     (ws / PREPARED_MARKER).unlink(missing_ok=True)
+    (ws / PIN_STAMP).unlink(missing_ok=True)
     if not python_path(ws).is_file():
         venv.create(ws / ".venv", with_pip=True)
     env = build_env(ws)
@@ -134,6 +143,12 @@ def main() -> None:
     )
     run([*west, "zephyr-export"])
     run([*west, "--version"])
+    (ws / PIN_STAMP).write_text(
+        json.dumps({"pins": PINS}, sort_keys=True) + "\n",
+        encoding="utf-8",
+        newline="\n",
+    )
+    print(f"Toolchain workspace: {ws}", flush=True)
     if os.name == "nt":
         build_firmware = Path(__file__).resolve().parents[1] / "build-firmware.ps1"
         next_step = f"powershell -File {build_firmware}"

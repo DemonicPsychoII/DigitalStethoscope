@@ -15,7 +15,7 @@ from pathlib import Path
 import firmware_release
 import yaml
 import toolchain_path  # noqa: F401
-from build_support import BOARD, build_env
+from build_support import BOARD, bin_dir, build_env, toolchain_workspace
 
 ROOT = Path(__file__).resolve().parents[4]
 APP = ROOT / "Development/system/coding/app"
@@ -38,25 +38,33 @@ def run(
 ) -> None:
     print("+", subprocess.list2cmdline(argv), flush=True)
     env = os.environ.copy()
-    pinned_zephyr = ROOT / ".ci-workspace/zephyr"
-    if pinned_zephyr.is_dir():
-        # CI commands run from the application repository, outside the nested
+    workspace = toolchain_workspace()
+    if (workspace / "zephyr").is_dir():
+        # CI commands run from the application repository, outside the
         # West workspace. Point West at the pinned Zephyr checkout explicitly.
-        env = build_env(ROOT / ".ci-workspace")
+        env = build_env(workspace)
     if env_overrides:
         env.update(env_overrides)
     if log:
         log.parent.mkdir(parents=True, exist_ok=True)
-        with log.open("w", encoding="utf-8") as stream:
-            result = subprocess.run(
+        # Stream while writing the log, so long builds show progress as they run.
+        with (
+            log.open("w", encoding="utf-8", newline="\n") as stream,
+            subprocess.Popen(
                 argv,
                 cwd=cwd,
                 env=env,
-                text=True,
-                stdout=stream,
+                stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
-            )
-        print(log.read_text(encoding="utf-8", errors="replace"))
+                encoding="utf-8",
+                errors="replace",
+            ) as process,
+        ):
+            for line in process.stdout:
+                stream.write(line)
+                sys.stdout.write(line)
+                sys.stdout.flush()
+        result = process
     else:
         result = subprocess.run(argv, cwd=cwd, env=env)
     if result.returncode:
@@ -66,18 +74,15 @@ def run(
 
 
 def west() -> str:
-    workspace_candidates = (
-        ROOT / ".ci-workspace/.venv/bin/west",
-        ROOT / ".ci-workspace/.venv/Scripts/west.exe",
-    )
-    for candidate in workspace_candidates:
-        if candidate.is_file():
-            return str(candidate)
+    workspace = toolchain_workspace()
+    candidate = bin_dir(workspace) / ("west.exe" if os.name == "nt" else "west")
+    if candidate.is_file():
+        return str(candidate)
     found = shutil.which("west")
     if found:
         return found
     raise SystemExit(
-        "west was not found on PATH or in the pinned .ci-workspace virtual environment"
+        f"west was not found on PATH or in the pinned toolchain workspace {workspace}"
     )
 
 
@@ -146,6 +151,7 @@ def workflow_validators() -> None:
         "shellcheck": [
             "shellcheck",
             "Development/system/testing/ci/setup_zephyr.sh",
+            "Development/Toolchain/zephyr-env.sh",
             ".github/agent-gate/revert-last-merge.sh",
         ],
     }
@@ -254,6 +260,9 @@ def build() -> None:
 
 
 def main() -> None:
+    # Windows consoles and pipes default to a legacy code page; tool output is UTF-8.
+    for stream in (sys.stdout, sys.stderr):
+        stream.reconfigure(encoding="utf-8", errors="replace")
     stages = {"static": static, "build": build}
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("stage", nargs="?", choices=("all", *stages), default="all")

@@ -129,15 +129,53 @@ Post-merge recovery reruns failed jobs once. Only attempts 1 and 2 determine rec
 
 New component suites are added through their test PRs. Use the following commands for the implemented checks.
 
+### Local CI entry point
+
+`local_ci.py` runs the same stages as the quality gates from any checkout or worktree on Windows (Git Bash or PowerShell) and Linux. Every stage runs; the summary lists each result, duration and device, and the exit code is non-zero if any stage failed.
+
+| Stage | Commands, as in `quality-gates.yml` | Native where |
+| --- | --- | --- |
+| `static` | `ci_evidence.py`, `validate_docs.py`, `manual_test_records.py`, `run_ci.py static` | every device; Windows skips actionlint and ShellCheck |
+| `unit` | tooling and merge-gate `unittest` suites | every device |
+| `host` | host scenarios with sanitizers and their results, then production coverage | Linux with GCC (or `CC`) |
+| `build` | `run_ci.py build --application`, then the ELF path and identity | wherever the pinned toolchain is installed |
+
+```bash
+python Development/system/testing/ci/local_ci.py run static unit
+python Development/system/testing/ci/local_ci.py run host build --detach
+python Development/system/testing/ci/local_ci.py follow --timeout 540
+```
+
+- `--mode auto` (default) runs a stage natively when the device has its toolchain and otherwise on homelab-annex. `--mode native` and `--mode remote` force one side.
+- Remote runs call `ssh homelab-server annex-power keep 60` (`--keep-minutes`), refresh the hold while they follow the run and call `annex-power release` at the end. They ship `HEAD` as a Git bundle plus every tracked and untracked, non-ignored file of the working tree to `~/stethoscope-local-ci/<run-id>` on the annex. The copy shows the same uncommitted changes. The stage runs there detached from the SSH session with `--mode native --provision`; the caller polls its progress log. Its `artifacts/` files are copied back over the local ones, and the scratch copy is removed, also after a failure or interruption.
+- `--detach` starts the run in the background, prints its run ID and `artifacts/local-ci/<run-id>/progress.log`, and returns. `follow [run-id]` streams new log output of the newest or named run and exits with the run's code; `--timeout` returns exit code 3 while the run continues, so each call stays within an agent's foreground limit. `--from-start` replays the whole log.
+- The `build` stage prints the firmware version from `artifacts/firmware-release/manifest.json`, then each ELF path with its SHA-256: the retained `artifacts/firmware/application/zephyr.elf` and, for native builds, `build-ci-app/zephyr/zephyr.elf`. After a remote build, the local `build-ci-app` holds an older build and is not listed. The pinned Zephyr links with `--build-id=none`, so no GNU build ID is printed. Decode crashes with the ELF whose SHA-256 belongs to the flashed build.
+- Output is UTF-8 on every console and written files use LF. Child Python processes run with `PYTHONUTF8=1`.
+- `annex-power release` ends the annex's keep-awake hold, including one held by a concurrent caller.
+
+### Shared environments
+
+The firmware toolchain workspace is resolved once for all checkouts and worktrees of the same pins:
+
+1. `STETHOSCOPE_TOOLCHAIN_WORKSPACE`, when set;
+2. the checkout's own `.ci-workspace`, when it exists (CI links the prepared image there);
+3. a workspace recorded with the current `toolchain.json` pins: the shared per-user location, the main checkout's `.ci-workspace` or, on Linux, `/opt/zephyr-workspace`;
+4. otherwise the shared location, which setup provisions: `%LOCALAPPDATA%\stethoscope-toolchain\zephyr-<pin key>` on Windows and `~/.cache/stethoscope-toolchain/zephyr-<pin key>` on Linux. The pin key is a hash of `toolchain.json`.
+
+`setup_zephyr.py` records the installed pins in `.stethoscope-toolchain-pins.json` after a complete setup. `run_ci.py`, the PowerShell firmware scripts and `local_ci.py` use the same resolution. To use the pinned west, CMake and Ninja interactively, dot-source `Development/Toolchain/zephyr-env.ps1` in PowerShell or source `Development/Toolchain/zephyr-env.sh` in Bash and Git Bash. Both set `ZEPHYR_BASE`, `ZEPHYR_SDK_INSTALL_DIR` and `ZEPHYR_TOOLCHAIN_VARIANT` and print the tool paths they found.
+
+The static, unit and host stages share one virtual environment per requirement-file hash, created with the CI's Python minor version (3.12). The hashes in the requirement files cover only its wheels. When the running interpreter has another version, `local_ci.py` uses `uv python find 3.12.10`, or installs that version with uv first. Linux runs install the pinned validators and Node with `validation_tools.py` into a shared cache directory. These environments live in the user cache directory, not in `/tmp` or a worktree.
+
+### Manual setup and individual checks
+
 Setup uses Python 3.12+, Git and, on Windows, 7-Zip. Linux also needs venv support, xz/tar and the [Zephyr host prerequisites](https://docs.zephyrproject.org/latest/develop/getting_started/index.html). A checkout path without parentheses avoids the pinned Zephyr Windows Kconfig path limitation.
 
 ```powershell
 winget install --id 7zip.7zip -e --silent
 python Development/system/coding/tools/toolchain/setup_zephyr.py
-.ci-workspace/.venv/Scripts/python.exe -m pip install --require-hashes -r Development/system/testing/ci/requirements-ci.txt
 ```
 
-Commands below use the pinned environment's Python. On Linux that executable is `.ci-workspace/.venv/bin/python`; on Windows it is `.ci-workspace/.venv/Scripts/python.exe`. Static checks also need actionlint and ShellCheck from [validation_tools.json](validation_tools.json). `validation_tools.py` installs their pinned Linux x86-64 binaries; a local Windows run uses native tools when available and prints a skip message for missing validators. CI requires both validators on every run. Host tests need pytest, `cryptography` for the server profile tool cases and a C compiler selected through `CC` (GCC in CI). The workflow records their dependency setup.
+The individual commands below use a Python with `requirements-ci.txt` installed. Static checks also need actionlint and ShellCheck from [validation_tools.json](validation_tools.json). `validation_tools.py` installs their pinned Linux x86-64 binaries; a local Windows run uses native tools when available and prints a skip message for missing validators. CI requires both validators on every run. Host tests need pytest, `cryptography` for the server profile tool cases and a C compiler selected through `CC` (GCC in CI). The workflow records their dependency setup.
 
 | Check | Command from the repository root |
 | --- | --- |
@@ -157,6 +195,7 @@ The [archived bring-up](../../../../preThesis/06-bringup-zephyr/README.md) retai
 | Tool | Responsibility |
 | --- | --- |
 | `run_ci.py` | Check/build entry points. |
+| `local_ci.py` | Local and homelab-annex execution of the CI stages. |
 | `toolchain_path.py` | Makes the production `build_support.py` (paths, pins and firmware profiles) in `coding/tools/toolchain/` importable. |
 | `setup_zephyr.sh` | CI workspace setup through the production `setup_zephyr.py`, which completes interrupted setup and reuses downloads; then records the prepared-environment marker. |
 | `prepared_env.py`, `validation_tools.py`, `compiler_cache.py` | Validate and reuse prepared environments, validators and compiler cache. |

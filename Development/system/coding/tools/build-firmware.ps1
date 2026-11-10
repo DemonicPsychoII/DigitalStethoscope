@@ -3,7 +3,7 @@
 .SYNOPSIS
 Build the thesis application or the bring-up firmware manually with the pinned toolchain.
 .DESCRIPTION
-Uses the toolchain provisioned by setup-toolchain.ps1 in .ci-workspace and the board
+Uses the shared toolchain workspace provisioned by setup-toolchain.ps1 and the board
 pinned in toolchain.json. Only builds; it never flashes or publishes firmware.
 .PARAMETER Target
 app (default) builds Development/system/coding/app; bringup builds the evaluation firmware.
