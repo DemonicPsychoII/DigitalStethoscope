@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import shlex
 import shutil
 import subprocess
 import sys
@@ -16,6 +17,7 @@ from build_support import (
     PINS,
     PREPARED_MARKER,
     ROOT,
+    bin_dir,
     build_env,
     checked,
     python_path,
@@ -136,10 +138,23 @@ def main() -> None:
         build_firmware = Path(__file__).resolve().parents[1] / "build-firmware.ps1"
         next_step = f"powershell -File {build_firmware}"
     else:
-        # west finds its Zephyr build command only inside the workspace with ZEPHYR_BASE set.
+        # west finds its Zephyr build command only inside the workspace with ZEPHYR_BASE
+        # set, and CMake finds the pinned CMake and Ninja on PATH.
+        build_command = shlex.join(
+            [
+                *west,
+                "build",
+                "-b",
+                BOARD,
+                "-d",
+                str(ROOT / "build-app"),
+                str(ROOT / "Development/system/coding/app"),
+            ]
+        )
         next_step = (
-            f"cd {ws} && ZEPHYR_BASE={ws / 'zephyr'} {' '.join(west)} build -b {BOARD} "
-            f"-d {ROOT / 'build-app'} {ROOT / 'Development/system/coding/app'}"
+            f"cd {shlex.quote(str(ws))} && "
+            f'PATH={shlex.quote(str(bin_dir(ws)))}:"$PATH" '
+            f"ZEPHYR_BASE={shlex.quote(str(ws / 'zephyr'))} {build_command}"
         )
     print(f"\nReady. No activation required:\n{next_step}", flush=True)
 
