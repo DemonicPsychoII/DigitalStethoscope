@@ -23,6 +23,8 @@
 
 #include <zephyr/kernel.h>
 
+#include "feedback.h"
+
 /***********************************************************************/
 /* DEFINES                                                             */
 /***********************************************************************/
@@ -57,6 +59,16 @@ enum communication_delivery_outcome
     COMMUNICATION_DELIVERY_NO_CLOCK,  /**< SERVER_CONNECTION_FAILURE: no qualifying clock anchor by the deadline. */
 };
 
+/**
+ * @brief Receives Wi-Fi workflow feedback on the communication thread.
+ *
+ * Statuses and errors use catalogue codes; FEEDBACK_NONE means the Wi-Fi
+ * workflow has no status to show any more.
+ *
+ * @param[in] code Catalogue code of the Wi-Fi workflow.
+ */
+typedef void (*communication_feedback_handler)(enum feedback_code code);
+
 /** Event from control to the communication thread. */
 enum communication_event
 {
@@ -76,6 +88,16 @@ enum communication_event
 /***********************************************************************/
 /* GLOBAL FUNCTION PROTOTYPES                                          */
 /***********************************************************************/
+
+/**
+ * @brief Register the receiver of Wi-Fi workflow feedback.
+ *
+ * Call before communication_init(), so the boot join is reported too.
+ * Without a handler, no feedback is reported.
+ *
+ * @param[in] handler Feedback receiver; only CONTROL registers one.
+ */
+void communication_setFeedbackHandler(communication_feedback_handler handler);
 
 /**
  * @brief Initialize the communication module.

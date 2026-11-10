@@ -179,6 +179,8 @@ static const struct communication_work communication_WorkList[] = {
 /* LOCAL VARIABLES                                                     */
 /***********************************************************************/
 
+static communication_feedback_handler communication_FeedbackHandler; /**< Set before the thread starts; only read afterwards. */
+
 K_THREAD_STACK_DEFINE(communication_Stack, COMMUNICATION_THREAD_STACK_SIZE); /**< Communication stack. */
 K_SEM_DEFINE(communication_ControlChanged, 0, 1);                            /**< Wakes the thread after an event. */
 
@@ -367,6 +369,13 @@ static void communication_updateListeningState(void);
  * @return True if setup is requested.
  */
 static bool communication_isSetupRequested(void);
+
+/**
+ * @brief Pass Wi-Fi workflow feedback to the registered handler.
+ *
+ * @param[in] code Catalogue code to report.
+ */
+static void communication_reportFeedback(enum feedback_code code);
 
 /**
  * @brief Set the state of the thread.
@@ -639,6 +648,11 @@ void communication_init(void)
     k_thread_start(&communication_ThreadData);
 }
 
+void communication_setFeedbackHandler(communication_feedback_handler handler)
+{
+    communication_FeedbackHandler = handler;
+}
+
 int communication_postEvent(enum communication_event event)
 {
     int result = 0;
@@ -861,6 +875,7 @@ static void communication_connectAtBoot(void)
         communication_publishDeliveryPrerequisites();
 
         LOG_INF("Connecting to \"%s\"", communication_StoredNetwork.name);
+        communication_reportFeedback(FEEDBACK_WIFI_CONNECTING);
 
         communication_BootJoinIsPending = true;
         communication_BootAttemptsUsed = 0;
@@ -870,6 +885,7 @@ static void communication_connectAtBoot(void)
         if(result == 0)
         {
             LOG_INF("Wi-Fi connected");
+            communication_reportFeedback(FEEDBACK_WIFI_CONNECTED);
             communication_prepareTransportInIdle();
             communication_registerInIdle();
         }
@@ -880,6 +896,7 @@ static void communication_connectAtBoot(void)
         else
         {
             LOG_ERR("JOIN_FAILURE (%d); hold the button 2 s for setup", result);
+            communication_reportFeedback(FEEDBACK_JOIN_FAILURE);
         }
     }
 }
@@ -979,6 +996,7 @@ static void communication_recoverConnection(void)
         if(result == 0)
         {
             LOG_INF("Wi-Fi connected");
+            communication_reportFeedback(FEEDBACK_WIFI_CONNECTED);
             communication_prepareTransportInIdle();
             communication_registerInIdle();
         }
@@ -986,6 +1004,7 @@ static void communication_recoverConnection(void)
         {
             communication_RecoveryIsAllowed = false;
             LOG_ERR("JOIN_FAILURE (%d); hold the button 2 s for setup", result);
+            communication_reportFeedback(FEEDBACK_JOIN_FAILURE);
         }
         return;
     }
@@ -994,16 +1013,19 @@ static void communication_recoverConnection(void)
     if(!communication_isSetupRequested() && communication_RecoveryIsAllowed && communication_StoredNetworkIsValid && !wifi_isConnected())
     {
         LOG_WRN("Wi-Fi link lost; reconnecting");
+        communication_reportFeedback(FEEDBACK_WIFI_CONNECTING);
 
         int result = communication_connectToNetwork(&communication_StoredNetwork, COMMUNICATION_STORED_CONNECT_ATTEMPTS);
 
         if(result == 0)
         {
             LOG_INF("Wi-Fi reconnected");
+            communication_reportFeedback(FEEDBACK_WIFI_CONNECTED);
         }
         else if(result != -ECANCELED) /**< Start interrupted the network workflow. */
         {
             LOG_ERR("RECONNECT_FAILURE (%d); opening setup", result);
+            communication_reportFeedback(FEEDBACK_RECONNECT_FAILURE);
 
             communication_RecoveryIsAllowed = false;
 
@@ -2326,6 +2348,7 @@ static void communication_runSetup(void)
     communication_BootJoinIsPending = false;
     communication_setState(COMMUNICATION_STATE_SETUP);
     LOG_INF("Wi-Fi setup: scanning");
+    communication_reportFeedback(FEEDBACK_WIFI_CONNECTING);
 
     /* Scan before the hotspot opens, so the list is ready when the phone joins. */
     int result = communication_scanNetworks();
@@ -2333,6 +2356,7 @@ static void communication_runSetup(void)
     if((result != 0) && (result != -ECANCELED)) /**< Start interrupted the network workflow. */
     {
         LOG_ERR("SCAN_FAILURE (%d); hold the button 2 s to retry", result);
+        communication_reportFeedback(FEEDBACK_SCAN_FAILURE);
     }
 
     if(result == 0)
@@ -2400,10 +2424,12 @@ static int communication_openSetup(void)
     if(result == 0)
     {
         LOG_INF("Wi-Fi setup open: join the hotspot and open http://%s", WIFI_HOTSPOT_ADDRESS);
+        communication_reportFeedback(FEEDBACK_PORTAL_OPEN);
     }
     else if(result != -ECANCELED) /**< Start interrupted the network workflow. */
     {
         LOG_ERR("HOTSPOT_START_FAILURE (%d); hold the button 2 s to retry", result);
+        communication_reportFeedback(FEEDBACK_HOTSPOT_START_FAILURE);
     }
     else
     {
@@ -2524,6 +2550,7 @@ static int communication_handleConnectRequest(void)
     }
 
     LOG_INF("Wi-Fi setup: joining \"%s\"", network->name);
+    communication_reportFeedback(FEEDBACK_WIFI_CONNECTING);
     portal_setStatus(PORTAL_STATUS_CONNECTING, 0);
 
     /* The hotspot stays open, so the phone can follow the status during the join. */
@@ -2540,6 +2567,7 @@ static int communication_handleConnectRequest(void)
         if(result != -ECANCELED) /**< Start interrupted the network workflow. */
         {
             LOG_WRN("Wi-Fi setup: join failed (%d)", result);
+            communication_reportFeedback(FEEDBACK_PORTAL_OPEN);
             portal_setStatus(PORTAL_STATUS_CONNECT_FAILED, result);
         }
     }
@@ -2580,12 +2608,14 @@ static void communication_saveNetwork(const struct wifi_network *network)
     if(result == 0)
     {
         LOG_INF("Wi-Fi setup: joined and saved");
+        communication_reportFeedback(FEEDBACK_WIFI_CONNECTED);
         portal_setStatus(PORTAL_STATUS_CONNECTED, 0);
     }
     else
     {
         /* The connection stays; flash keeps the previous record. */
         LOG_ERR("WIFI_SETTINGS_SAVE_FAILURE (%d); network not saved", result);
+        communication_reportFeedback(FEEDBACK_WIFI_SETTINGS_SAVE_FAILURE);
         portal_setStatus(PORTAL_STATUS_SAVE_FAILED, result);
     }
 
@@ -2611,6 +2641,7 @@ static void communication_closeSetup(enum communication_setup_result outcome, in
     if(outcome == COMMUNICATION_SETUP_FAILED)
     {
         LOG_ERR("SCAN_FAILURE (%d); closing setup, hold the button 2 s to retry", error);
+        communication_reportFeedback(FEEDBACK_SCAN_FAILURE);
     }
 
     portal_setStatus(PORTAL_STATUS_CLOSING, error);
@@ -2624,6 +2655,15 @@ static void communication_closeSetup(enum communication_setup_result outcome, in
     (void)communication_stopWiFiWork();
 
     LOG_INF("Wi-Fi setup closed (%d)", outcome);
+    communication_reportFeedback(FEEDBACK_NONE);
+}
+
+static void communication_reportFeedback(enum feedback_code code)
+{
+    if(communication_FeedbackHandler != NULL)
+    {
+        communication_FeedbackHandler(code);
+    }
 }
 
 /** @} */
