@@ -136,9 +136,10 @@ def main() -> None:
         build_firmware = Path(__file__).resolve().parents[1] / "build-firmware.ps1"
         next_step = f"powershell -File {build_firmware}"
     else:
+        # west finds its Zephyr build command only inside the workspace with ZEPHYR_BASE set.
         next_step = (
-            f"{' '.join(west)} build -b {BOARD} -d {ROOT / 'build-app'} "
-            f"{ROOT / 'Development/system/coding/app'}"
+            f"cd {ws} && ZEPHYR_BASE={ws / 'zephyr'} {' '.join(west)} build -b {BOARD} "
+            f"-d {ROOT / 'build-app'} {ROOT / 'Development/system/coding/app'}"
         )
     print(f"\nReady. No activation required:\n{next_step}", flush=True)
 
