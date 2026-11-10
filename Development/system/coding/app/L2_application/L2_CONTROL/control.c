@@ -133,7 +133,8 @@ static void control_handleButton(enum physicalinterface_button_event event)
 
         if(!isIdle)
         {
-            LOG_INF("Button hold outside Idle ignored");
+            LOG_INF("Button hold outside Idle rejected");
+            physicalinterface_showStatusLight(FEEDBACK_INPUT_REJECTED);
             break;
         }
 
