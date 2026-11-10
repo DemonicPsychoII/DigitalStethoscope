@@ -138,8 +138,18 @@ def main() -> None:
         build_firmware = Path(__file__).resolve().parents[1] / "build-firmware.ps1"
         next_step = f"powershell -File {build_firmware}"
     else:
-        # west finds its Zephyr build command only inside the workspace with ZEPHYR_BASE
-        # set, and CMake finds the pinned CMake and Ninja on PATH.
+        # Same environment as build_env(): west finds its Zephyr build command only inside
+        # the workspace with ZEPHYR_BASE set, and the build uses the pinned CMake, Ninja
+        # and SDK.
+        tool_env = build_env(ws)
+        assignments = " ".join(
+            f"{name}={shlex.quote(tool_env[name])}"
+            for name in (
+                "ZEPHYR_BASE",
+                "ZEPHYR_SDK_INSTALL_DIR",
+                "ZEPHYR_TOOLCHAIN_VARIANT",
+            )
+        )
         build_command = shlex.join(
             [
                 *west,
@@ -154,7 +164,7 @@ def main() -> None:
         next_step = (
             f"cd {shlex.quote(str(ws))} && "
             f'PATH={shlex.quote(str(bin_dir(ws)))}:"$PATH" '
-            f"ZEPHYR_BASE={shlex.quote(str(ws / 'zephyr'))} {build_command}"
+            f"{assignments} {build_command}"
         )
     print(f"\nReady. No activation required:\n{next_step}", flush=True)
 
