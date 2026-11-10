@@ -2,7 +2,7 @@
 
 [Setup workflow](interfaces-and-behavior.md) defines orchestration, retries, recovery, persistence sequencing, cancellation and listening priority. [Parameters](parameters.md) bound these operations. L1_WIFI owns radio operations; L1_STORAGE owns the record interface; L1_PORTAL owns HTTP and page behavior.
 
-[SNTP synchronization](time-synchronization.md) defines the Simple Network Time Protocol (SNTP) exchange that opens every TLS connection setup, its service contracts, its uncertainty, the computed limit on how far a clock setting may lie from a measurement end, and cancellation. It works independently of Wi-Fi setup success.
+[SNTP synchronization](time-synchronization.md) defines the Simple Network Time Protocol (SNTP) exchange that opens every TLS connection setup, its service contracts, its uncertainty, the computed limit on how far a clock setting may lie from a measurement end, and cancellation. Wi-Fi setup succeeds without it, but each exchange needs the station's network address and a reachable time server (DNS and UDP port 123).
 
 [TLS preparation](secure-transport.md) defines the endpoint and trust inputs from the server profile, TLS 1.3 verification, connection reuse, cancellation, recovery and the delivery-budget boundary. Each connection setup starts with the SNTP exchange above.
 
