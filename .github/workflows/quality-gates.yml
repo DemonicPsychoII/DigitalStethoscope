@@ -278,7 +278,6 @@ jobs:
           include-hidden-files: true
           path: |
             artifacts/ci/
-            artifacts/build-times/
             artifacts/firmware/
             artifacts/firmware-release/manifest.json
             build-*/CMakeCache.txt
