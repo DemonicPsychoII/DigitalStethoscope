@@ -48,7 +48,7 @@ worker placement and ISR wake-up primitives remain proposed implementation choic
 
 | Contract | Required fields and invariants |
 |---|---|
-| `AudioBlock` | pool handle, source ID/generation, sequence, first sample index, sample rate, frame count (≤64), representation/valid bits, discontinuity flag, readonly mono sample payload. Microphone is signed 24-bit normalized into int32; the alignment convention is an open AUDIO design decision ([sample format](../AUDIO/interfaces-and-behavior.md#sample-format)). Timestamp derives from sample count, not worker arrival. |
+| `AudioBlock` | pool handle, source ID/generation, sequence, first sample index, sample rate, frame count (≤64), representation/valid bits, discontinuity flag, readonly mono sample payload. Microphone samples are 24-bit, left-aligned in int32 with the low 8 bits cleared ([sample format](../AUDIO/interfaces-and-behavior.md#sample-format)). Timestamp derives from sample count, not worker arrival. |
 | `ControlEvent` | event ID/type, origin (physical/touch/shell/worker), monotonic timestamp, typed value, generation where relevant. Controller serializes accepted order; equal timestamps use queue arrival order. Invalid fields are rejected before mutation. |
 | `AudioCommand` | unique command ID, controller generation, desired settings, action/session ID. Audio acknowledges applied block boundary or explicit rejection; stale generations are discarded. |
 | `StateSnapshot` | snapshot revision, effective and requested settings, source/provenance, playback/measurement/delivery states, active IDs, capabilities, BPM validity/time, clip progress, pending replay speed, error/outcome counters. Read as a coherent copy; UI never edits it. |

@@ -41,9 +41,12 @@ not retry.
 
 ## Block loop
 
-`L2_AUDIO` runs one audio thread at the highest application thread priority; the numeric priority
-is an implementation choice measured under VT-02. It waits for commands while stopped and runs the
-loop below while started. No lock is held across a block wait.
+`L2_AUDIO` runs one audio thread with one deterministic processing path: read, process, send
+([decision of 11 November](../../planning/mvp-decisions-2026-11-11.md)). It runs at the highest application thread priority; the
+numeric priority is an implementation choice measured under VT-02. It waits for commands while
+stopped and runs the loop below while started. Each iteration, from the received block to the
+queued TX block, finishes within the processing budget of 3 ms (P02); the wait for the next block
+is not part of it. No lock is held across a block wait.
 
 1. `i2s_receiveBlock`.
 2. For each of the 64 frames, take the left slot (even index) into a 64-entry mono working buffer,
@@ -69,8 +72,9 @@ block before it requests a TX block, so the thread never holds more than one blo
 
 A stream fault includes a deadline miss. If the thread falls more than three blocks behind, the
 driver stops the stream itself [1]. The bring-up session showed that such a stream stays stopped
-until it is configured and started again [2]. Under the current catalogue rule this is a
-restart-required error. A Start after a fault therefore needs a device restart.
+until it is configured and started again [2]. A stream fault stays a restart-required error under
+the catalogue ([decision of 11 November](../../planning/mvp-decisions-2026-11-11.md)): a Start after a fault needs a device
+restart.
 
 ## Sample format
 
@@ -87,8 +91,8 @@ Two alignments of the mono working sample are possible:
 - **Signed 24-bit, right-aligned.** This matches the current `AudioBlock` wording "signed 24-bit
   normalized into int32", but needs an 8-bit shift into the TX slot.
 
-The choice is open. The proposal is left-aligned, because the copy step then writes the DAC slot
-unchanged.
+The mono working sample is left-aligned with its low 8 bits cleared
+([decision of 11 November](../../planning/mvp-decisions-2026-11-11.md)), so the copy step writes the DAC slot unchanged.
 
 The PCM5102A receives 32-bit words. The bring-up's DAC test only showed that the link accepts
 blocks, and its loopback test was not run [2], so audible output from these words is not verified
@@ -102,7 +106,7 @@ yet.
 | RX reserve | 3 waiting blocks × 4 ms | The thread may be up to 12 ms late before RX overruns |
 | TX reserve | 3 queued blocks behind the one in DMA × 4 ms | The thread may be up to 12 ms late before TX runs empty |
 | Transport delay | 1 RX block + 4 TX blocks, × 4 ms | About 20 ms plus processing, below the P03 target of 30 ms |
-| Processing budget | Half the block period (P02) | At most 2 ms per block |
+| Processing budget | Three quarters of the block period (P02) | At most 3 ms per block |
 | Block waits | 5 block periods (P11) | 20 ms; a normal block arrives within 4 ms |
 | Internal RAM | 2 pools × 5 × 512 bytes, plus the 256-byte mono buffer | 5,376 bytes, plus thread stack and driver descriptors |
 
@@ -111,9 +115,11 @@ remains judged by ear under REQ-05.
 
 ## Monitoring
 
-`L2_AUDIO` counts processed blocks and stream faults, records the longest processing time per block
-and the pools' highest use. These values feed VT-02. They make a deadline miss visible before it
-becomes a stream fault.
+`L2_AUDIO` counts processed blocks and stream faults, records the longest iteration time, the
+pools' highest use and the TX queue level over time ([decision of 11 November](../../planning/mvp-decisions-2026-11-11.md)). These
+values feed VT-02. The iteration time and pool use make a deadline miss visible before it becomes a
+stream fault; a TX queue level that drifts over a long run would show that the two links do not
+run at the same rate.
 
 ## Expected verification
 
@@ -126,7 +132,7 @@ becomes a stream fault.
 | Copy step with a known RX block | VT-03 | Both TX slots of every frame equal the left RX slot with its low 8 bits cleared; the right RX slot is ignored |
 | Receive wait expires | VT-01 | Microphone failure; stream stopped; catalogue error |
 | Thread delayed more than 12 ms | VT-02 | Driver stops the stream; fault reported; no hang and no repeated stale audio |
-| 10 min of listening under load | VT-02 | No fault; longest processing time ≤ 2 ms; pool use never reaches 5 blocks; constant TX queue level (no drift) |
+| 10 min of listening under load | VT-02 | No fault; longest iteration time ≤ 3 ms; pool use never reaches 5 blocks; constant TX queue level (no drift) |
 | Tap on the chestpiece | REQ-05 | No noticeable delay |
 
 ## Sources
