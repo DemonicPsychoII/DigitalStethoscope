@@ -1931,7 +1931,7 @@ Mbed TLS contributors. *`mbedtls_ssl_check_cert_usage` in `library/ssl_tls.c`*. 
 
 The Zephyr Project, *ESP32 I2S driver and its Kconfig*, source revision `357467a011cd2557a1a3f0b4be83d817c4addc9b`, [i2s_esp32.c](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/drivers/i2s/i2s_esp32.c) and [Kconfig.esp32](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/drivers/i2s/Kconfig.esp32), accessed 10 November 2026. The driver accepts only two channels and configures standard-mode stereo slots, 32 bits wide for words above 16 bits; it clocks both directions from `I2S_CLK_SRC_DEFAULT` and derives the dividers from sample rate, channel count and word size (a 24-bit word uses a different master-clock multiple than a 32-bit word). An empty TX queue after a completed block sets the error state and stops TX; RX also enters the error state when no free memory-slab block is available for the next transfer. `CONFIG_I2S_ESP32_RX_BLOCK_COUNT` and `CONFIG_I2S_ESP32_TX_BLOCK_COUNT` set the queue depths (default 5). Blocks larger than 4092 bytes are split across DMA descriptors. Source reading, not a target measurement.
 
-**Cited by:** [AUDIO architecture](../Development/system/architecture/AUDIO/README.md), [decision record 10 November 2026](../Development/system/planning/mvp-decisions-2026-11-10.md#first-audio-path).
+**Cited by:** [AUDIO architecture](../Development/system/architecture/AUDIO/README.md), [AUDIO design](../Development/system/design/AUDIO/interfaces-and-behavior.md), [decision record 10 November 2026](../Development/system/planning/mvp-decisions-2026-11-10.md#first-audio-path).
 
 
 <a id="nico_audio_path_decision_20261110"></a>
@@ -1951,4 +1951,4 @@ Nico F., *Hardware Test Protocol — ESP32-S3 Bring-up*, DigitalStethoscope repo
 
 **Source type:** Own measurement on archived pre-thesis firmware; not acceptance of the application firmware.
 
-**Cited by:** [AUDIO architecture](../Development/system/architecture/AUDIO/README.md).
+**Cited by:** [AUDIO architecture](../Development/system/architecture/AUDIO/README.md), [AUDIO design](../Development/system/design/AUDIO/interfaces-and-behavior.md).

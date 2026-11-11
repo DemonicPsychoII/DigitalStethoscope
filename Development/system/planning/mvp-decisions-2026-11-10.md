@@ -66,4 +66,6 @@ one clock can drive both links; the pinned driver clocks both controllers from t
 clock source and derives their dividers from these settings, so they run at the same rate on their
 separate pins without rate adaptation. This is a source reading, not a measurement.
 
-Applied in the [AUDIO architecture](../architecture/AUDIO/README.md).
+Applied in the [AUDIO architecture](../architecture/AUDIO/README.md), the
+[AUDIO design](../design/AUDIO/interfaces-and-behavior.md) and parameters P01, P02 and P11 in the
+[system parameters](../design/system/parameters.md).

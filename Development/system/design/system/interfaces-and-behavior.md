@@ -48,7 +48,7 @@ worker placement and ISR wake-up primitives remain proposed implementation choic
 
 | Contract | Required fields and invariants |
 |---|---|
-| `AudioBlock` | pool handle, source ID/generation, sequence, first sample index, sample rate, frame count (≤128), representation/valid bits, discontinuity flag, readonly mono sample payload. Microphone is signed 24-bit normalized into int32; alignment convention remains to be fixed. Timestamp derives from sample count, not worker arrival. |
+| `AudioBlock` | pool handle, source ID/generation, sequence, first sample index, sample rate, frame count (≤64), representation/valid bits, discontinuity flag, readonly mono sample payload. Microphone is signed 24-bit normalized into int32; the alignment convention is an open AUDIO design decision ([sample format](../AUDIO/interfaces-and-behavior.md#sample-format)). Timestamp derives from sample count, not worker arrival. |
 | `ControlEvent` | event ID/type, origin (physical/touch/shell/worker), monotonic timestamp, typed value, generation where relevant. Controller serializes accepted order; equal timestamps use queue arrival order. Invalid fields are rejected before mutation. |
 | `AudioCommand` | unique command ID, controller generation, desired settings, action/session ID. Audio acknowledges applied block boundary or explicit rejection; stale generations are discarded. |
 | `StateSnapshot` | snapshot revision, effective and requested settings, source/provenance, playback/measurement/delivery states, active IDs, capabilities, BPM validity/time, clip progress, pending replay speed, error/outcome counters. Read as a coherent copy; UI never edits it. |
@@ -74,9 +74,9 @@ returns Busy without overwriting a job; a terminal failure retains only redacted
 
 Candidate memory accounting:
 
-- 128 stereo 32-bit frames = 1,024 bytes per transport block; 4 RX + 4 TX = 8,192 bytes
-  before DMA descriptors, alignment and driver overhead.
-- A mono int32 analysis block is 512 bytes; four payloads = 2,048 bytes plus handles/metadata.
+- 64 stereo 32-bit frames = 512 bytes per transport block; 5 RX + 5 TX = 5,120 bytes
+  before DMA descriptors, alignment and driver overhead ([AUDIO sizing](../AUDIO/interfaces-and-behavior.md#timing-and-sizing)).
+- A mono int32 analysis block is 256 bytes; four payloads = 1,024 bytes plus handles/metadata.
 - 5 s raw int32 mono at 16 kHz = 320,000 bytes; 30 s = 1,920,000 bytes. Allocate separate
   fixture/clip regions only when their simultaneous use and budgets are justified.
 - Full 240×320 RGB565 frame = 153,600 bytes. At 10 MHz raw transfer lower bound is 122.88 ms;
@@ -90,7 +90,7 @@ Candidate memory accounting:
 |---|---|---|---|
 | Playback Boot | zero gain, capability checks, silent TX prime | bounded adapter initialization | Idle on essential readiness; Fault otherwise |
 | Idle | mute; no active transport/listening operation | allow configuration and network lease | Start is Busy during analysis and sending; otherwise start only after lease released |
-| Live | reset source-dependent state on source generation change | 128-frame normalized fan-out; selected listening filter; gain/saturation; TX | stop/fault mute; capture keeps live path |
+| Live | reset source-dependent state on source generation change | 64-frame normalized fan-out; selected listening filter; gain/saturation; TX | stop/fault mute; capture keeps live path |
 | Capture | allocate/claim bounded clip and ID; LED active | copy raw prefilter/pregain; normal live listening continues | full → Replay; cancel → Live; stop/fault → Idle/Fault, incomplete clip invalid |
 | Replay | freeze valid clip; initialize speed stage; LED active | raw clip → filter → WSOLA → gain/saturation; fresh mic still feeds analysis | end/cancel → Live; release clip cursor; stop/fault mutes |
 | Measurement Acquiring | freeze context/config/ID and clear aggregation | original-rate windows; independent filter; valid estimates | Stop <15 s cancels; Stop ≥15 s → Finalizing; identity change rejected; an Error with audio muted invalidates the session |
