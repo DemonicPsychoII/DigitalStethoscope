@@ -52,9 +52,10 @@ measurements. The derived sizes follow from the decisions and the pinned Zephyr 
    history buffers drawn on the board are dropped; the BPM analysis window is sized in TICKET-192.
 5. **16 kHz, 64-frame blocks.** The sample rate stays 16 kHz. A transport block holds 64 frames,
    4 ms, instead of 128 frames. 48 kHz with 240-frame blocks was considered and not chosen.
-6. **Five RX and five TX blocks.** Each direction has a pool of five blocks, so the audio thread may
-   be up to three blocks (12 ms) late before the stream stops. With four TX blocks in flight the
-   transport delay is about 20 ms plus processing, below the P03 target of 30 ms.
+6. **Five RX and five TX blocks.** Each direction has a pool of five blocks, so the audio thread
+   has three blocks (12 ms) for processing and lateness together before the stream stops. Four
+   TX blocks in flight give a transport delay of 16 ms: the first RX block fills and is processed
+   while the primed blocks play, so neither adds delay. This is below the P03 target of 30 ms.
 7. **Microphone on the left slot, copied to both DAC channels.** The INMP441 L/R pin is tied to
    ground, as on the bring-up wiring, so the microphone sends on the left slot. The audio path
    takes the left slot and writes the same sample to both DAC slots.
