@@ -55,6 +55,7 @@ REMOTE_SCRATCH = "stethoscope-local-ci"
 POLL_SECONDS = 10
 RUN_LOST = 2
 STILL_RUNNING = 3
+REMOTE_NO_INHIBITOR = 75
 REQUIREMENTS = (CI / "requirements-ci.txt", CI / "requirements-host.txt")
 STATIC_PYTHON_MINOR = tuple(int(part) for part in STATIC_PYTHON.split(".")[:2])
 UTF8_ENVIRONMENT = {
@@ -580,28 +581,46 @@ git status --short | head -20
         print("Uncommitted changes in the copy:\n" + changes, flush=True)
 
 
-def remote_start(scratch: str, stages: list[str], run_id: str) -> None:
-    # The wrapper shell leads its own session, detached from this SSH connection; cleanup
-    # stops its process group through the PID. Status files appear atomically via mv.
-    # A root-held block sleep inhibitor, the annex job convention, lasts until the
-    # wrapper exits; it keeps the annex awake even when the keep-awake hold ends.
+def remote_wrapper(stages: list[str], run_id: str) -> str:
+    """Shell that runs the stages in the scratch tree under a sleep inhibitor.
+
+    The block sleep inhibitor, the annex job convention, lasts until the wrapper exits;
+    it keeps the annex awake even when the keep-awake hold ends. A polkit rule grants it
+    to the SSH user. The stages start only once logind lists it, found by its PID as a
+    whole word on this run's line; otherwise the wrapper reports REMOTE_NO_INHIBITOR.
+    """
+    reason = f"local CI run {run_id}"
     inhibitor = shlex.join(
         [
-            *("sudo", "-n", "systemd-inhibit", "--what=sleep", "--mode=block"),
+            *("systemd-inhibit", "--what=sleep", "--mode=block"),
             "--who=stethoscope-local-ci",
-            f"--why=local CI run {run_id}",
+            f"--why={reason}",
             *("tail", "--pid=WRAPPER", "-f", "/dev/null"),
         ]
     ).replace("WRAPPER", "$$")
-    wrapper = (
+    return (
         ": > ../progress.log; "
         "echo $$ > ../pid.tmp && mv ../pid.tmp ../pid; "
-        f"{{ {inhibitor} || echo 'Warning: no sleep inhibitor; only the hold keeps "
-        "the annex awake' >> ../progress.log; } & "
+        f"{inhibitor} 2>> ../progress.log & inhibitor=$!; "
+        "listed=; for attempt in $(seq 40); do "
+        'listing="$(systemd-inhibit --list --no-pager --no-legend 2>/dev/null)"; '
+        f'if grep -F -- {shlex.quote(reason)} <<< "$listing" | grep -qw -- "$inhibitor"; '
+        "then listed=1; break; fi; "
+        'kill -0 "$inhibitor" 2>/dev/null || break; sleep 0.25; done; '
+        'if [ -n "$listed" ]; then '
         f"python3 Development/system/testing/ci/local_ci.py run {' '.join(stages)} "
         "--mode native --provision --results ../results.json >> ../progress.log 2>&1; "
-        "echo $? > ../exit-code.tmp && mv ../exit-code.tmp ../exit-code"
+        "status=$?; else "
+        'echo "No sleep inhibitor on $(hostname); the stages did not start" >> ../progress.log; '
+        f"status={REMOTE_NO_INHIBITOR}; fi; "
+        "echo $status > ../exit-code.tmp && mv ../exit-code.tmp ../exit-code"
     )
+
+
+def remote_start(scratch: str, stages: list[str], run_id: str) -> None:
+    # The wrapper shell leads its own session, detached from this SSH connection; cleanup
+    # stops its process group through the PID. Status files appear atomically via mv.
+    wrapper = remote_wrapper(stages, run_id)
     starter = (
         f'cd "$HOME/{scratch}/tree" && setsid -f bash -c {shlex.quote(wrapper)}'
         " < /dev/null > /dev/null 2>&1; "
@@ -726,6 +745,10 @@ def execute_remote(stages: list[str], run_id: str, keep_minutes: int) -> dict:
         remote_prepare(scratch)
         remote_start(scratch, stages, run_id)
         exit_code = remote_follow(scratch, hold)
+        if exit_code == REMOTE_NO_INHIBITOR:
+            raise StageFailure(
+                f"no sleep inhibitor on {REMOTE_HOST}; the stages did not start"
+            )
         results = remote_collect(scratch, stages)
         if exit_code and not results:
             raise StageFailure(f"remote run failed ({exit_code})")
