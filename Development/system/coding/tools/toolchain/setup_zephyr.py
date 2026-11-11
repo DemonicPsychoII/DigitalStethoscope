@@ -4,7 +4,9 @@
 from __future__ import annotations
 
 import argparse
+import json
 import os
+import re
 import shlex
 import shutil
 import subprocess
@@ -14,20 +16,35 @@ from pathlib import Path
 
 from build_support import (
     BOARD,
+    PIN_STAMP,
     PINS,
     PREPARED_MARKER,
     ROOT,
     bin_dir,
     build_env,
     checked,
+    exclusive_lock,
     python_path,
+    sdk_directory,
+    toolchain_problems,
+    toolchain_workspace,
     west_command,
 )
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--workspace", type=Path, default=ROOT / ".ci-workspace")
+    parser.add_argument(
+        "--workspace",
+        type=Path,
+        default=toolchain_workspace(),
+        help="defaults to the workspace shared by all checkouts for these pins",
+    )
+    parser.add_argument(
+        "--if-needed",
+        action="store_true",
+        help="return at once when the workspace already matches the pins",
+    )
     args = parser.parse_args()
     ws = args.workspace.resolve()
     if sys.version_info < (3, 12):
@@ -48,7 +65,18 @@ def main() -> None:
                 "Install 7-Zip first: winget install --id 7zip.7zip -e --silent"
             )
     ws.mkdir(parents=True, exist_ok=True)
+    # Checkouts share this workspace; one setup at a time, and readiness is judged
+    # only after the lock, when no other setup can be halfway through.
+    with exclusive_lock(ws / ".stethoscope-setup.lock"):
+        if args.if_needed and not toolchain_problems(ws):
+            print(f"Toolchain workspace already provisioned: {ws}", flush=True)
+            return
+        provision(ws, seven_zip)
+
+
+def provision(ws: Path, seven_zip: str | None) -> None:
     (ws / PREPARED_MARKER).unlink(missing_ok=True)
+    (ws / PIN_STAMP).unlink(missing_ok=True)
     if not python_path(ws).is_file():
         venv.create(ws / ".venv", with_pip=True)
     env = build_env(ws)
@@ -134,6 +162,29 @@ def main() -> None:
     )
     run([*west, "zephyr-export"])
     run([*west, "--version"])
+    sdk = sdk_directory(ws)
+    if not (sdk / "sdk_version").is_file():
+        # west reused an SDK of this version from elsewhere; record its location.
+        listing = subprocess.run(
+            [*west, "sdk", "list"],
+            cwd=ws,
+            env=env,
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout
+        version = re.escape(PINS["sdk_version"])
+        found = re.search(rf"^{version}:\s*\n\s+path:\s*(.+?)\s*$", listing, re.M)
+        if not found:
+            raise RuntimeError(f"west sdk list shows no SDK {PINS['sdk_version']}")
+        sdk = Path(found.group(1))
+    print(f"Zephyr SDK: {sdk}", flush=True)
+    (ws / PIN_STAMP).write_text(
+        json.dumps({"pins": PINS, "sdk": str(sdk)}, sort_keys=True) + "\n",
+        encoding="utf-8",
+        newline="\n",
+    )
+    print(f"Toolchain workspace: {ws}", flush=True)
     if os.name == "nt":
         build_firmware = Path(__file__).resolve().parents[1] / "build-firmware.ps1"
         next_step = f"powershell -File {build_firmware}"

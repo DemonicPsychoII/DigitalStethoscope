@@ -1,10 +1,18 @@
-$repo = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
-$workspace = Join-Path $repo '.ci-workspace'
-$pins = Get-Content (Join-Path $repo 'Development\system\coding\tools\toolchain\toolchain.json') -Raw | ConvertFrom-Json
+# Dot-source to put the pinned west, CMake and Ninja on PATH and set the Zephyr
+# variables: . .\Development\Toolchain\zephyr-env.ps1
+# The workspace is the one shared by all checkouts and worktrees for the current pins.
+. (Join-Path $PSScriptRoot '..\system\coding\tools\toolchain\toolchain-resolver.ps1')
 
-$env:PATH = "$(Join-Path $workspace '.venv\Scripts');$env:PATH"
-$env:ZEPHYR_BASE = Join-Path $workspace 'zephyr'
-$env:ZEPHYR_SDK_INSTALL_DIR = Join-Path $workspace "zephyr-sdk-$($pins.sdk_version)"
+$description = Invoke-ToolchainResolver -Arguments '--format', 'json'
+$toolchain = $description -join "`n" | ConvertFrom-Json
 
-Write-Host "Zephyr environment enabled from $workspace"
+foreach ($property in $toolchain.variables.PSObject.Properties) {
+    Set-Item "Env:\$($property.Name)" $property.Value
+}
+$env:PATH = (@($toolchain.path) + $env:PATH) -join [System.IO.Path]::PathSeparator
+
+Write-Host "Zephyr environment enabled from $($toolchain.workspace)"
+foreach ($tool in 'west', 'cmake', 'ninja') {
+    Write-Host "  $tool -> $((Get-Command $tool -ErrorAction Stop).Source)"
+}
 Write-Host 'west build -b esp32s3_devkitc/esp32s3/procpu <application>'

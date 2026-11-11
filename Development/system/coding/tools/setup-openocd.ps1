@@ -1,7 +1,7 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-Install Espressif's OpenOCD for JTAG debugging into .ci-workspace\openocd-esp32.
+Install Espressif's OpenOCD for JTAG debugging into openocd-esp32 in the shared toolchain workspace.
 .DESCRIPTION
 The Zephyr SDK OpenOCD cannot drive the ESP32-S3 built-in USB JTAG, and the board
 runner accepts only openocd-esp32. The release is pinned here and not in
