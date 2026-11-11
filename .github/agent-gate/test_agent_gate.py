@@ -649,21 +649,24 @@ class AutomatedPolicyTests(unittest.TestCase):
         missing = g.evaluate(inputs(required_checks_only=True, required_checks=["missing"]))
         self.assertEqual(missing.state, "pending")
 
-    def test_native_coderabbit_approval_replaces_agent_marker(self):
-        decision = g.evaluate(inputs(comments=[], review_bots={"coderabbitai[bot]": 136622811},
-                                     native_reviews=[self.bot()]))
+    def test_native_coderabbit_approval_does_not_replace_the_agent_review(self):
+        options = {"review_bots": {"coderabbitai[bot]": 136622811}, "native_reviews": [self.bot()]}
+        decision = g.evaluate(inputs(comments=[], **options))
+        self.assertEqual(decision.state, "pending", decision.items)
+        self.assertIn("waiting for an agent review", decision.description)
+        decision = g.evaluate(inputs(**options))
         self.assertEqual(decision.state, "success", decision.items)
 
-    def test_dependabot_pr_without_agent_metadata_passes_with_native_approval(self):
-        d = g.evaluate(inputs(body="Bumps the actions group with 3 updates.", comments=[],
-                              review_bots={"coderabbitai[bot]": 136622811},
-                              native_reviews=[self.bot()]))
+    def test_dependabot_pr_without_agent_metadata_needs_the_agent_review_next_to_native_approval(self):
+        options = {"body": "Bumps the actions group with 3 updates.",
+                   "review_bots": {"coderabbitai[bot]": 136622811}}
+        d = g.evaluate(inputs(comments=[], native_reviews=[self.bot()], **options))
+        self.assertEqual(d.state, "pending", d.items)
+        d = g.evaluate(inputs(native_reviews=[self.bot()], **options))
         self.assertEqual(d.state, "success", d.items)
         for bot_review in (self.bot(sha=OLD), self.bot(state="CHANGES_REQUESTED")):
             with self.subTest(review=bot_review):
-                d = g.evaluate(inputs(body="Bumps actions.", comments=[],
-                                      review_bots={"coderabbitai[bot]": 136622811},
-                                      native_reviews=[bot_review]))
+                d = g.evaluate(inputs(comments=[], native_reviews=[bot_review], **options))
                 self.assertNotEqual(d.state, "success", d.items)
 
     def test_native_approval_never_bypasses_unresolved_threads(self):
@@ -737,7 +740,7 @@ class AutomatedPolicyTests(unittest.TestCase):
             self.assertEqual(decision.state, "pending")
 
     def test_later_comment_does_not_dismiss_a_native_approval(self):
-        decision = g.evaluate(inputs(comments=[], review_bots={"coderabbitai[bot]": 136622811},
+        decision = g.evaluate(inputs(review_bots={"coderabbitai[bot]": 136622811},
                                      native_reviews=[self.bot(), self.bot(state="COMMENTED", rid=100)]))
         self.assertEqual(decision.state, "success")
 
@@ -1006,6 +1009,17 @@ class ScopeGuardTests(unittest.TestCase):
                               require_owner_approval=False))
         self.assertEqual(d.state, "success", d.items)
 
+    def test_verified_pure_revert_may_change_gate_and_workflows(self):
+        d = g.evaluate(inputs(body=body_with_class("revert"), comments=[], changed_files=list(self.GUARDED),
+                              revert=(True, "reverts abc1234"), require_owner_approval=False))
+        self.assertEqual(d.state, "success", d.items)
+
+    def test_unverified_revert_changing_gate_or_workflows_fails_the_guard(self):
+        d = g.evaluate(inputs(body=body_with_class("revert"), changed_files=list(self.GUARDED),
+                              revert=(False, "branch contains extra commits"), require_owner_approval=False))
+        self.assertEqual(d.state, "failure", d.items)
+        self.assertIn("separate `policy` PR", " ".join(t for s, t in d.items if s == "fail"))
+
     def test_other_github_paths_are_not_guarded(self):
         d = g.evaluate(inputs(changed_files=[".github/pull_request_template.md", "AGENTS.md"],
                               require_owner_approval=False))
@@ -1039,9 +1053,14 @@ class CodeRabbitRequestTests(unittest.TestCase):
         self.assertEqual(d.state, "pending", d.items)
         self.assertIn("CodeRabbit", d.description)
 
-    def test_label_with_coderabbit_approval_passes(self):
+    def test_label_with_coderabbit_approval_still_waits_for_the_agent_review(self):
         d = g.evaluate(inputs(comments=[], review_bots=self.BOTS, coderabbit_label=True,
                               native_reviews=[self.bot()]))
+        self.assertEqual(d.state, "pending", d.items)
+        self.assertIn(("ok", f"approved at {HEAD[:7]} by coderabbitai[bot]"), d.items)
+
+    def test_label_with_coderabbit_approval_and_agent_approval_passes(self):
+        d = g.evaluate(inputs(review_bots=self.BOTS, coderabbit_label=True, native_reviews=[self.bot()]))
         self.assertEqual(d.state, "success", d.items)
 
     def test_label_with_recorded_fallback_uses_the_agent_review(self):
@@ -1126,9 +1145,12 @@ class TerminalVerdictPrecedenceTests(unittest.TestCase):
                 d = g.evaluate(inputs(review_bots=self.BOTS, native_reviews=[self.native()], **options))
                 self.assertEqual(d.state, "failure", d.items)
 
-    def test_native_approval_still_passes_after_older_commit_changes_verdict(self):
-        d = g.evaluate(inputs(comments=[review(verdict="changes", sha=OLD)], review_bots=self.BOTS,
-                              native_reviews=[self.native()]))
+    def test_native_approval_waits_for_re_review_after_older_commit_changes_verdict(self):
+        changes = review(verdict="changes", sha=OLD)
+        d = g.evaluate(inputs(comments=[changes], review_bots=self.BOTS, native_reviews=[self.native()]))
+        self.assertEqual(d.state, "pending", d.items)
+        approval = review(created="2026-10-02T11:00:00Z", cid=2)
+        d = g.evaluate(inputs(comments=[changes, approval], review_bots=self.BOTS, native_reviews=[self.native()]))
         self.assertEqual(d.state, "success", d.items)
 
 
