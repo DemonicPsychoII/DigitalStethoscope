@@ -549,8 +549,19 @@ class RevertVerificationTests(unittest.TestCase):
         self.assertTrue(ok, detail)
 
 
-class NonDiffableRevertVerificationTests(unittest.TestCase):
-    """Files marked `-diff` (such as generated renders) or binary must be compared by content."""
+def gate_source(agent_value, bot_value, agent_indent="        "):
+    """Two functions whose surrounding lines are identical, so their hunks differ only in position."""
+    def function(name, value, indent):
+        return (f"def {name}(approved):\n    checked = approved\n    checked = checked\n    checked = checked\n"
+                f"    if checked:\n{indent}return {value}\n    return False\n\n\n")
+    return (function("agent", agent_value, agent_indent) + function("bot", bot_value, "        ")).encode()
+
+
+class TreeExactRevertVerificationTests(unittest.TestCase):
+    """A pure revert must produce exactly the tree `git revert -m 1` produces, byte for byte."""
+
+    GATE = ".github/agent-gate/agent_gate.py"
+    LATE_NUL = b"A" * 9000 + b"\x00"
 
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
@@ -559,74 +570,85 @@ class NonDiffableRevertVerificationTests(unittest.TestCase):
         for key, value in (("user.email", "t@t"), ("user.name", "t"), ("commit.gpgsign", "false"),
                            ("core.autocrlf", "false")):
             git(self.repo, "config", key, value)
-        (self.repo / ".gitattributes").write_bytes(b"rendered/*.svg -diff\n")
-        (self.repo / "rendered").mkdir()
-        self.render = self.repo / "rendered" / "overview.svg"
-        self.render.write_bytes(b"<svg><text>first</text></svg>\n")
-        self.binary = self.repo / "image.bin"
-        self.binary.write_bytes(b"header\x00first\x00")
+        self.write(".gitattributes", b"rendered/*.svg -diff\n")
+        self.write(self.GATE, gate_source("True", "bot_approved"))
+        self.write("crlf.txt", b"first\r\nsecond\r\n")
+        self.write("trailing.txt", b"value   \nother\t\n")
+        self.write("old-name.txt", b"".join(b"renamed line %d\n" % i for i in range(20)))
+        self.write("image.bin", b"header\x00first\x00")
+        self.write("rendered/overview.svg", b"<svg><text>first</text></svg>\n")
+        self.write("late-nul.dat", self.LATE_NUL + b"before\n")
         git(self.repo, "add", ".")
         git(self.repo, "commit", "-qm", "base")
         git(self.repo, "checkout", "-qb", "feature")
-        self.render.write_bytes(b"<svg><text>second</text></svg>\n")
-        self.binary.write_bytes(b"header\x00second\x00")
-        git(self.repo, "commit", "-qam", "update render and image")
+        self.write(self.GATE, gate_source("bot_approved", "bot_approved"))
+        self.write("crlf.txt", b"first\r\nchanged\r\n")
+        self.write("trailing.txt", b"value \nother\t\t\n")
+        git(self.repo, "mv", "old-name.txt", "new-name.txt")
+        self.write("image.bin", b"header\x00second\x00")
+        self.write("rendered/overview.svg", b"<svg><text>second</text></svg>\n")
+        self.write("late-nul.dat", self.LATE_NUL + b"after\n")
+        git(self.repo, "commit", "-qam", "change everything")
         git(self.repo, "checkout", "-q", "integration")
         git(self.repo, "merge", "-q", "--no-ff", "-m", "Merge feature", "feature")
         self.merge = git(self.repo, "rev-parse", "HEAD")
-        self.assertIn("Binary files", git(self.repo, "diff", f"{self.merge}^1", self.merge))
+        diff = git(self.repo, "diff", "-M", f"{self.merge}^1", self.merge)
+        self.assertIn("Binary files", diff)
+        self.assertIn("rename from old-name.txt", diff)
 
     def tearDown(self):
         self.tmp.cleanup()
 
+    def write(self, path, content):
+        target = self.repo / path
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(content)
+
     def revert_branch(self, tamper=None):
         git(self.repo, "checkout", "-qb", "revert", "integration")
         git(self.repo, "revert", "--no-edit", "-m", "1", self.merge)
-        if tamper:
-            path, content = tamper
-            path.write_bytes(content)
+        if tamper is not None:
+            self.write(*tamper)
             git(self.repo, "commit", "-qa", "--amend", "--no-edit")
         head = git(self.repo, "rev-parse", "HEAD")
         git(self.repo, "checkout", "-q", "integration")
+        git(self.repo, "branch", "-qD", "revert")
         return head
 
-    def test_exact_revert_of_non_diffable_and_binary_files_verifies(self):
-        ok, detail = g.verify_pure_revert(self.repo, "integration", self.revert_branch(), [self.merge])
-        self.assertTrue(ok, detail)
+    def tampered_reverts(self):
+        return {
+            "re-indented": (self.GATE, gate_source("True", "bot_approved", agent_indent="    ")),
+            "statement added": (self.GATE, gate_source("True", "bot_approved").replace(
+                b"return False", b"return True\n    return False", 1)),
+            "wrong function": (self.GATE, gate_source("bot_approved", "True")),
+            "late NUL file": ("late-nul.dat", self.LATE_NUL + b"smuggled\n"),
+            "altered binary": ("image.bin", b"header\x00smuggled\x00"),
+            "altered non-diffable": ("rendered/overview.svg", b"<svg><text>smuggled</text></svg>\n"),
+        }
 
-    def test_revert_that_alters_a_non_diffable_or_binary_file_does_not_verify(self):
-        for tamper in ((self.render, b"<svg><text>smuggled</text></svg>\n"), (self.binary, b"header\x00smuggled\x00")):
-            with self.subTest(path=tamper[0].name):
+    def evaluate(self, head):
+        verification = g.verify_pure_revert(self.repo, "integration", head, [self.merge])
+        return g.evaluate(inputs(body=body_with_class("revert"), comments=[], changed_files=[self.GATE],
+                                 revert=verification, require_owner_approval=False))
+
+    def test_exact_revert_verifies(self):
+        head = self.revert_branch()
+        ok, detail = g.verify_pure_revert(self.repo, "integration", head, [self.merge])
+        self.assertTrue(ok, detail)
+        d = self.evaluate(head)
+        self.assertEqual(d.state, "success", d.items)
+
+    def test_tampered_revert_does_not_verify(self):
+        for name, tamper in self.tampered_reverts().items():
+            with self.subTest(case=name):
                 head = self.revert_branch(tamper)
                 ok, detail = g.verify_pure_revert(self.repo, "integration", head, [self.merge])
                 self.assertFalse(ok, detail)
-                git(self.repo, "branch", "-qD", "revert")
-
-    def test_patch_id_hashes_non_diffable_content(self):
-        original = git(self.repo, "rev-parse", f"{self.merge}^1")
-        changed = self.revert_branch((self.render, b"<svg><text>smuggled</text></svg>\n"))
-        self.assertNotEqual(g.patch_id(self.repo, changed, self.merge), g.patch_id(self.repo, original, self.merge))
-
-    def test_binary_files_are_pinned_even_when_patch_id_ignores_their_content(self):
-        real_git = g._git
-
-        def patch_id_without_binary_content(repo, *args, stdin=None):
-            if args[:1] == ("patch-id",):
-                return b"0123456789abcdef0123456789abcdef01234567 " + b"0" * 40 + b"\n"
-            return real_git(repo, *args, stdin=stdin)
-
-        original = git(self.repo, "rev-parse", f"{self.merge}^1")
-        exact = self.revert_branch()
-        git(self.repo, "branch", "-qD", "revert")
-        for path, content in ((self.render, b"<svg><text>smuggled</text></svg>\n"),
-                              (self.binary, b"header\x00smuggled\x00")):
-            with self.subTest(path=path.name), patch.object(g, "_git", patch_id_without_binary_content):
-                changed = self.revert_branch((path, content))
-                git(self.repo, "branch", "-qD", "revert")
-                expected = g.patch_id(self.repo, original, self.merge)
-                self.assertEqual(g.patch_id(self.repo, exact, self.merge), expected)
-                self.assertNotEqual(g.patch_id(self.repo, changed, self.merge), expected)
-
+                d = self.evaluate(head)
+                self.assertEqual(d.state, "failure", d.items)
+                failures = " ".join(t for s, t in d.items if s == "fail")
+                self.assertIn("not a verified pure revert", failures)
+                self.assertIn("separate `policy` PR", failures)
 
 
 class AutomatedPolicyTests(unittest.TestCase):
@@ -649,21 +671,24 @@ class AutomatedPolicyTests(unittest.TestCase):
         missing = g.evaluate(inputs(required_checks_only=True, required_checks=["missing"]))
         self.assertEqual(missing.state, "pending")
 
-    def test_native_coderabbit_approval_replaces_agent_marker(self):
-        decision = g.evaluate(inputs(comments=[], review_bots={"coderabbitai[bot]": 136622811},
-                                     native_reviews=[self.bot()]))
+    def test_native_coderabbit_approval_does_not_replace_the_agent_review(self):
+        options = {"review_bots": {"coderabbitai[bot]": 136622811}, "native_reviews": [self.bot()]}
+        decision = g.evaluate(inputs(comments=[], **options))
+        self.assertEqual(decision.state, "pending", decision.items)
+        self.assertIn("waiting for an agent review", decision.description)
+        decision = g.evaluate(inputs(**options))
         self.assertEqual(decision.state, "success", decision.items)
 
-    def test_dependabot_pr_without_agent_metadata_passes_with_native_approval(self):
-        d = g.evaluate(inputs(body="Bumps the actions group with 3 updates.", comments=[],
-                              review_bots={"coderabbitai[bot]": 136622811},
-                              native_reviews=[self.bot()]))
+    def test_dependabot_pr_without_agent_metadata_needs_the_agent_review_next_to_native_approval(self):
+        options = {"body": "Bumps the actions group with 3 updates.",
+                   "review_bots": {"coderabbitai[bot]": 136622811}}
+        d = g.evaluate(inputs(comments=[], native_reviews=[self.bot()], **options))
+        self.assertEqual(d.state, "pending", d.items)
+        d = g.evaluate(inputs(native_reviews=[self.bot()], **options))
         self.assertEqual(d.state, "success", d.items)
         for bot_review in (self.bot(sha=OLD), self.bot(state="CHANGES_REQUESTED")):
             with self.subTest(review=bot_review):
-                d = g.evaluate(inputs(body="Bumps actions.", comments=[],
-                                      review_bots={"coderabbitai[bot]": 136622811},
-                                      native_reviews=[bot_review]))
+                d = g.evaluate(inputs(comments=[], native_reviews=[bot_review], **options))
                 self.assertNotEqual(d.state, "success", d.items)
 
     def test_native_approval_never_bypasses_unresolved_threads(self):
@@ -737,7 +762,7 @@ class AutomatedPolicyTests(unittest.TestCase):
             self.assertEqual(decision.state, "pending")
 
     def test_later_comment_does_not_dismiss_a_native_approval(self):
-        decision = g.evaluate(inputs(comments=[], review_bots={"coderabbitai[bot]": 136622811},
+        decision = g.evaluate(inputs(review_bots={"coderabbitai[bot]": 136622811},
                                      native_reviews=[self.bot(), self.bot(state="COMMENTED", rid=100)]))
         self.assertEqual(decision.state, "success")
 
@@ -1006,6 +1031,18 @@ class ScopeGuardTests(unittest.TestCase):
                               require_owner_approval=False))
         self.assertEqual(d.state, "success", d.items)
 
+    def test_verified_pure_revert_may_change_gate_and_workflows(self):
+        d = g.evaluate(inputs(body=body_with_class("revert"), comments=[], changed_files=list(self.GUARDED),
+                              revert=(True, "reverts abc1234"), require_owner_approval=False))
+        self.assertEqual(d.state, "success", d.items)
+        self.assertIn(("ok", f"changes CI or the gate ({self.GUARDED[0]}) only as a verified pure revert"), d.items)
+
+    def test_unverified_revert_changing_gate_or_workflows_fails_the_guard(self):
+        d = g.evaluate(inputs(body=body_with_class("revert"), changed_files=list(self.GUARDED),
+                              revert=(False, "branch contains extra commits"), require_owner_approval=False))
+        self.assertEqual(d.state, "failure", d.items)
+        self.assertIn("separate `policy` PR", " ".join(t for s, t in d.items if s == "fail"))
+
     def test_other_github_paths_are_not_guarded(self):
         d = g.evaluate(inputs(changed_files=[".github/pull_request_template.md", "AGENTS.md"],
                               require_owner_approval=False))
@@ -1039,9 +1076,14 @@ class CodeRabbitRequestTests(unittest.TestCase):
         self.assertEqual(d.state, "pending", d.items)
         self.assertIn("CodeRabbit", d.description)
 
-    def test_label_with_coderabbit_approval_passes(self):
+    def test_label_with_coderabbit_approval_still_waits_for_the_agent_review(self):
         d = g.evaluate(inputs(comments=[], review_bots=self.BOTS, coderabbit_label=True,
                               native_reviews=[self.bot()]))
+        self.assertEqual(d.state, "pending", d.items)
+        self.assertIn(("ok", f"approved at {HEAD[:7]} by coderabbitai[bot]"), d.items)
+
+    def test_label_with_coderabbit_approval_and_agent_approval_passes(self):
+        d = g.evaluate(inputs(review_bots=self.BOTS, coderabbit_label=True, native_reviews=[self.bot()]))
         self.assertEqual(d.state, "success", d.items)
 
     def test_label_with_recorded_fallback_uses_the_agent_review(self):
@@ -1126,9 +1168,12 @@ class TerminalVerdictPrecedenceTests(unittest.TestCase):
                 d = g.evaluate(inputs(review_bots=self.BOTS, native_reviews=[self.native()], **options))
                 self.assertEqual(d.state, "failure", d.items)
 
-    def test_native_approval_still_passes_after_older_commit_changes_verdict(self):
-        d = g.evaluate(inputs(comments=[review(verdict="changes", sha=OLD)], review_bots=self.BOTS,
-                              native_reviews=[self.native()]))
+    def test_native_approval_waits_for_re_review_after_older_commit_changes_verdict(self):
+        changes = review(verdict="changes", sha=OLD)
+        d = g.evaluate(inputs(comments=[changes], review_bots=self.BOTS, native_reviews=[self.native()]))
+        self.assertEqual(d.state, "pending", d.items)
+        approval = review(created="2026-10-02T11:00:00Z", cid=2)
+        d = g.evaluate(inputs(comments=[changes, approval], review_bots=self.BOTS, native_reviews=[self.native()]))
         self.assertEqual(d.state, "success", d.items)
 
 

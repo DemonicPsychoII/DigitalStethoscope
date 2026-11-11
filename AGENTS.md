@@ -51,14 +51,15 @@ workflows may remain hosted. Preserve required check names and existing gate pol
   approval forward: only when no newer `changes` verdict exists, the approved commit belongs to the
   PR (one of its commits, or a head it had before a force-push), and the PR's own diff against its
   current base is unchanged, as after a base merge, update-branch or a stacked PR's new base.
-  A carried approval did not see the changes that arrived through the base. Configured CodeRabbit
-  native approval also counts when it approves the current head; a progress check alone does not.
+  A carried approval did not see the changes that arrived through the base. CodeRabbit's native
+  approval of the current head never replaces the agent verdict: the gate requires both, Dependabot
+  PRs included. A progress check alone is not an approval.
 - `agent-gate` reports `pending` while a review is missing, stale or requested, and while
   required checks run. `failure` means the author must act.
 - **CI and gate changes:** keep changes to `.github/agent-gate/**` or `.github/workflows/**` in a
   separate PR of class `policy`. The gate fails an agent PR that changes these paths without class
-  `policy`; it does not check what else the PR contains. Fix a failing check in the code under
-  test, never by weakening the check, gate or workflow.
+  `policy`, unless it is a verified pure revert; it does not check what else the PR contains.
+  Fix a failing check in the code under test, never by weakening the check, gate or workflow.
 - **Reviewers:** the independent agent review is the default reviewer. CodeRabbit (confirmed free OSS
   access) reviews only high-impact PRs, next to the agent review. Automatic CodeRabbit reviews are
   off. On a high-impact PR, add the `coderabbit` label, check for an active or completed

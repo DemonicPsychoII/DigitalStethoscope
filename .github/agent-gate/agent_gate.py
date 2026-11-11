@@ -10,13 +10,14 @@ that status (from the GitHub Actions app), so this file is the merge policy. It 
   3. agent-managed PRs have a "Risk & rollback" section answering what could break / how verified / how to revert;
   4. every `<!-- owner-question id=X -->` (body or trusted comment) has a matching trusted
      `<!-- owner-answer id=X -->` comment — resolving a thread is not an answer;
-  5. an independent agent session or an allowlisted review bot approves the current SHA;
-     a machine-verified pure revert needs no review. An agent approval of an earlier commit is
-     carried forward when the PR's own diff against its current base is unchanged;
+  5. an independent agent session approves the current SHA, also when an allowlisted review bot
+     approved it; a machine-verified pure revert needs no review. An agent approval of an earlier
+     commit is carried forward when the PR's own diff against its current base is unchanged;
   6. critical/major and unclassified conversations are resolved; explicit minor/nitpick findings may stay open;
   7. configured and GitHub-required checks pass. Optional checks are advisory when
      required_checks_only is enabled;
-  8. agent-managed PRs that change the gate or the workflows are class `policy`.
+  8. agent-managed PRs that change the gate or the workflows are class `policy`, or a verified
+     pure revert.
 
 Waiting is `pending`, not `failure`: a missing, stale or requested review only waits for the
 reviewer. `failure` is kept for problems the author must fix.
@@ -34,12 +35,14 @@ The migrated configurations do not require human approval. Old configurations
 retain their previous approval behavior until explicitly migrated. Agent markers
 must come from trusted collaborator accounts; native bot reviews additionally
 match the configured immutable user ID and Bot type. A CodeRabbit progress check
-is not an approval. Current-head native decisions take precedence. A stale native
+is not an approval. A native approval never replaces the agent verdict: the PR needs both,
+Dependabot PRs included. Current-head native decisions take precedence. A stale native
 approval permits an independent current-head agent fallback. Other stale native
 decisions require a trusted current-head review-fallback record as well. Current-head
 native changes requests and dismissals remain blocking or pending. A current-head
 CodeRabbit changes request with fully accounted explicit minor/nitpick findings is
-nonblocking when configured; unknown classification and missing evidence block.
+nonblocking when configured, next to the agent verdict; unknown classification and missing
+evidence block.
 
 Everything is read from LIVE API state, never from the triggering event's payload: the gate is
 re-run on pushes, body edits, review comments and CI completion, and each run must judge the PR as
@@ -545,20 +548,23 @@ def review_items(inputs: Inputs, author: dict[str, str] | None) -> list[tuple[st
             # Validate the replacement review below; fallback never waives other gates.
 
         elif review.get("state") == "APPROVED":
-            return [("ok", f"approved at {inputs.head_sha[:7]} by {login}")]
+            return [("ok", f"approved at {inputs.head_sha[:7]} by {login}"), *agent_review_items(inputs)]
         elif review.get("state") == "CHANGES_REQUESTED":
             if minor_only_review(inputs, review):
-                return [("ok", f"{login} reviewed {inputs.head_sha[:7]}; only minor/nitpick findings")]
+                return [("ok", f"{login} reviewed {inputs.head_sha[:7]}; only minor/nitpick findings"),
+                        *agent_review_items(inputs)]
             return [("fail", f"{login} requests changes on the current head")]
         else:
             return [("pending", f"{login} has not approved the current head")]
     return agent_review_items(inputs)
 
 
-def scope_guard_items(inputs: Inputs, klass: str) -> list[tuple[str, str]]:
+def scope_guard_items(inputs: Inputs, klass: str, verified_revert: bool) -> list[tuple[str, str]]:
     touched = [path for path in inputs.changed_files if path.startswith(POLICY_CLASS_PATHS)]
     if not touched or klass == "policy":
         return []
+    if klass == "revert" and verified_revert:
+        return [("ok", f"changes CI or the gate ({touched[0]}) only as a verified pure revert")]
     return [("fail", f"class={klass or 'none'} changes {touched[0]}: CI and gate changes must be a separate "
                      "`policy` PR; fix a failing check in the code under test, not by weakening the check")]
 
@@ -598,6 +604,7 @@ def evaluate(inputs: Inputs) -> Decision:
 
     author = parse_author(inputs.body)
     klass = (author or {}).get("class", "")
+    verified_revert = inputs.revert is not None and inputs.revert[0]
     if agent_metadata_required(inputs.body):
         if author and klass in CLASSES:
             items.append(("ok", f"author {author['harness']}/{author['model']} session {author['session']} class {klass}"))
@@ -610,13 +617,12 @@ def evaluate(inputs: Inputs) -> Decision:
         items.extend(("fail", p) for p in risk)
         if not risk:
             items.append(("ok", "Risk & rollback section filled"))
-        items.extend(scope_guard_items(inputs, klass))
+        items.extend(scope_guard_items(inputs, klass, verified_revert))
     else:
         items.append(("ok", "PR has no agent authorship declaration; agent metadata is not required"))
 
     items.extend(owner_question_items(inputs))
 
-    verified_revert = inputs.revert is not None and inputs.revert[0]
     if klass == "revert":
         if verified_revert:
             items.append(("ok", f"verified pure revert ({inputs.revert[1]}); review and owner approval waived"))
@@ -629,7 +635,7 @@ def evaluate(inputs: Inputs) -> Decision:
         reviewed = review_items(inputs, author)
         items.extend(reviewed)
         review, _ = latest_review(verdict_sources(inputs), inputs.reviewer_logins)
-        if reviewed[0][0] == "ok" and author and review \
+        if all(state == "ok" for state, _ in reviewed) and author and review \
                 and family(review["reviewer"].split("/")[-1]) == family(author["model"]):
             notes.append("Reviewer is the same model family as the author; a different provider is preferred "
                          "(acceptable when provider limits require it).")
@@ -678,33 +684,27 @@ def _git(repo: Path, *args: str, stdin: bytes | None = None) -> bytes:
     ).stdout
 
 
-def patch_id(repo: Path, old: str, new: str) -> str:
-    diff = _git(repo, "diff", "--no-color", "--no-ext-diff", "--full-index", old, new)
-    out = _git(repo, "patch-id", "--stable", stdin=diff).decode().split()
-    if not out:
-        return ""
-    # Binary and `-diff` files appear only as "Binary files ... differ". Older git hashes that line
-    # without the content, and `--text` would not help: patch-id stops hashing a line at a NUL byte.
-    # Pinning each such file to its exact blobs keeps a revert that alters one from passing as an
-    # exact inverse, whatever the git version.
-    binary_files: list[bytes] = []
-    file_header = index_line = b""
-    for line in diff.splitlines():
-        if line.startswith(b"diff --git "):
-            file_header, index_line = line, b""
-        elif line.startswith(b"index "):
-            index_line = line
-        elif line.startswith(b"Binary files ") or line == b"GIT binary patch":
-            binary_files.append(file_header + b"\n" + index_line)
-    if not binary_files:
-        return out[0]
-    return hashlib.sha256(b"\n".join([out[0].encode(), *sorted(binary_files)])).hexdigest()
+def revert_tree(repo: Path, merge: str, first_parent: str, onto: str) -> str | None:
+    """The tree `git revert -m 1 <merge>` produces on `onto`: the three-way merge of the merge's first
+    parent into `onto`, with the merge itself as the base. None when that merge conflicts. Comparing
+    whole trees catches what a patch-id comparison cannot: whitespace, hunk positions, and bytes
+    after a NUL. `--merge-base` needs git 2.40 or later; an older git fails closed."""
+    result = subprocess.run(
+        ["git", "-C", str(repo), "merge-tree", "--write-tree", "--no-messages",
+         f"--merge-base={merge}", onto, first_parent],
+        capture_output=True, timeout=120,
+    )
+    if result.returncode == 1:
+        return None
+    if result.returncode != 0:
+        raise subprocess.CalledProcessError(result.returncode, result.args, result.stdout, result.stderr)
+    return result.stdout.split()[0].decode()
 
 
 def verify_pure_revert(repo: Path, base: str, head: str, reverted: list[str]) -> tuple[bool, str]:
-    """True only if head..base is exactly one non-merge commit per reverted merge, each the clean
-    inverse of a `git revert -m 1` of a merge already on base. Conflict-resolved reverts differ in
-    patch-id and fall back to a normal agent review."""
+    """True only if head..base is exactly one non-merge commit per reverted merge, each with exactly
+    the tree a conflict-free `git revert -m 1` of a merge already on base produces on its parent.
+    Conflict-resolved or edited reverts fall back to a normal agent review."""
     try:
         commits = _git(repo, "rev-list", "--reverse", "--parents", head, f"^{base}").decode().split("\n")
         commits = [c.split() for c in commits if c.strip()]
@@ -712,22 +712,22 @@ def verify_pure_revert(repo: Path, base: str, head: str, reverted: list[str]) ->
             return False, f"{len(commits)} commit(s) on the branch for {len(reverted)} reverted merge(s)"
         if any(len(c) != 2 for c in commits):
             return False, "branch contains a merge commit"
-        wanted: list[str] = []
+        wanted: list[tuple[str, str]] = []
         for merge in reverted:
             parents = _git(repo, "rev-list", "--parents", "-n1", merge).decode().split()
             if len(parents) != 3:
                 return False, f"{merge[:7]} is not a merge commit"
             if subprocess.run(["git", "-C", str(repo), "merge-base", "--is-ancestor", merge, base]).returncode:
                 return False, f"{merge[:7]} is not on the base branch"
-            pid = patch_id(repo, parents[1], merge)
-            if not pid:
+            if _git(repo, "rev-parse", f"{parents[0]}^{{tree}}") == _git(repo, "rev-parse", f"{parents[1]}^{{tree}}"):
                 return False, f"{merge[:7]} has an empty diff"
-            wanted.append(pid)
+            wanted.append((parents[0], parents[1]))
         for sha, parent in commits:
-            pid = patch_id(repo, sha, parent)  # inverse of the revert commit == the merge's change
-            if pid not in wanted:
-                return False, f"{sha[:7]} is not a clean inverse of a listed merge"
-            wanted.remove(pid)
+            tree = _git(repo, "rev-parse", f"{sha}^{{tree}}").decode().strip()
+            match = next((pair for pair in wanted if revert_tree(repo, *pair, onto=parent) == tree), None)
+            if match is None:
+                return False, f"{sha[:7]} is not the exact revert of a listed merge"
+            wanted.remove(match)
         return True, "reverts " + ", ".join(m[:7] for m in reverted)
     except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as exc:
         return False, f"git verification failed: {exc}"
