@@ -455,9 +455,9 @@ def ssh(
     return result
 
 
-def annex_power(*arguments: str, report: bool = False) -> dict | None:
-    """Run annex-power on the coordinator; with report, return its JSON answer."""
-    command = shlex.join(["annex-power", *(["--json"] if report else []), *arguments])
+def annex_power(*arguments: str) -> None:
+    """Run annex-power on the coordinator, which records the holds and wakes the annex."""
+    command = shlex.join(["annex-power", *arguments])
     if socket.gethostname().lower() == POWER_HOST:
         argv = ["bash", "-c", command]
     else:
@@ -466,65 +466,25 @@ def annex_power(*arguments: str, report: bool = False) -> dict | None:
     output = (result.stdout + result.stderr).decode("utf-8", errors="replace").strip()
     if result.returncode:
         raise StageFailure(f"annex-power {arguments[0]} failed: {output}")
-    if report:
-        return json.loads(result.stdout.decode("utf-8"))
     print(f"annex-power {' '.join(arguments)}: {output}", flush=True)
-    return None
 
 
 class AnnexHold:
-    """A keep-awake hold that this run sets only when needed and ends only if it owns it.
+    """This run's own keep-awake hold; annex-power keeps one hold per owner.
 
-    annex-power keeps a single hold: `keep` replaces it and `release` ends it for every
-    caller. A run therefore extends the hold only when none exists or it ends too soon,
-    and releases it only while the hold still ends when this run last set it.
+    `keep` replaces only this owner's hold and `release` ends only it, so concurrent
+    runs and other callers keep the annex awake independently.
     """
 
-    def __init__(self, minutes: int):
+    def __init__(self, minutes: int, owner: str):
         self.minutes = minutes
-        self.owned_until: float | None = None
-        self.awaiting_wake = False
+        self.owner = owner
 
-    def current_until(self) -> float | None:
-        status = annex_power("status", report=True) or {}
-        until = (status.get("idle") or {}).get("hold_until")
-        return float(until) if isinstance(until, (int, float)) else None
-
-    def ensure(self) -> None:
-        current = self.current_until()
-        if self.owned_until is not None and not self.same(current):
-            print("Another caller replaced the annex hold", flush=True)
-            self.owned_until = None
-        if current is not None and current >= time.time() + self.minutes * 60:
-            return
-        annex_power("keep", str(self.minutes))
-        # An asleep annex receives the hold only once SSH answers after the wake.
-        self.owned_until = self.current_until()
-        self.awaiting_wake = self.owned_until is None
-
-    def confirm_after_wake(self) -> None:
-        deadline = time.monotonic() + 60
-        while self.awaiting_wake and time.monotonic() < deadline:
-            self.owned_until = self.current_until()
-            self.awaiting_wake = self.owned_until is None
-            if self.awaiting_wake:
-                time.sleep(5)
-
-    def same(self, until: float | None) -> bool:
-        return (
-            until is not None
-            and self.owned_until is not None
-            and abs(until - self.owned_until) < 1
-        )
+    def keep(self) -> None:
+        annex_power("keep", str(self.minutes), "--owner", self.owner)
 
     def release(self) -> None:
-        if self.owned_until is None:
-            print("Leaving the annex hold: this run does not own it", flush=True)
-            return
-        if not self.same(self.current_until()):
-            print("Leaving the annex hold: another caller replaced it", flush=True)
-            return
-        annex_power("release")
+        annex_power("release", "--owner", self.owner)
 
 
 def wait_until_reachable(deadline_seconds: int = 300) -> None:
@@ -695,7 +655,7 @@ def remote_follow(scratch: str, hold: AnnexHold) -> int:
             # The sleep inhibitor protects the running stage; a failed renewal of the
             # extra hold is retried at the next interval instead of ending the run.
             try:
-                hold.ensure()
+                hold.keep()
             except (
                 StageFailure,
                 subprocess.SubprocessError,
@@ -758,12 +718,11 @@ def execute_remote(stages: list[str], run_id: str, keep_minutes: int) -> dict:
     scratch = f"{REMOTE_SCRATCH}/{run_id}"
     started = time.monotonic()
     results: dict[str, dict] = {}
-    hold = AnnexHold(keep_minutes)
+    hold = AnnexHold(keep_minutes, f"local-ci-{run_id}")
     print(f"\n== {' '.join(stages)} (remote on {REMOTE_HOST}) ==", flush=True)
     try:
-        hold.ensure()
+        hold.keep()
         wait_until_reachable()
-        hold.confirm_after_wake()
         remote_prepare(scratch)
         remote_start(scratch, stages, run_id)
         exit_code = remote_follow(scratch, hold)

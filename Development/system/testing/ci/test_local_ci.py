@@ -134,49 +134,23 @@ class PlacementTest(unittest.TestCase):
 
 
 class AnnexHoldTest(unittest.TestCase):
-    def test_keeps_only_when_no_hold_lasts_long_enough(self):
-        now = 1_000_000.0
-        with mock.patch.object(local_ci.time, "time", return_value=now):
-            calls = []
-            ends = iter([now + 7200])
-
-            def annex_power(*arguments, report=False):
-                calls.append(arguments)
-                return {"idle": {"hold_until": next(ends)}} if report else None
-
-            hold = local_ci.AnnexHold(60)
-            with mock.patch.object(local_ci, "annex_power", annex_power):
-                hold.ensure()
-                hold.release()
-        self.assertEqual(calls, [("status",)])
-        self.assertIsNone(hold.owned_until)
-
-    def test_releases_only_a_hold_it_still_owns(self):
-        now = 1_000_000.0
-        for later_hold, released in ((now + 3600, True), (now + 5000, False)):
-            calls = []
-            ends = iter([None, now + 3600, later_hold])
-
-            def annex_power(*arguments, report=False):
-                calls.append(arguments)
-                return {"idle": {"hold_until": next(ends)}} if report else None
-
-            hold = local_ci.AnnexHold(60)
-            with (
-                mock.patch.object(local_ci.time, "time", return_value=now),
-                mock.patch.object(local_ci, "annex_power", annex_power),
-            ):
-                hold.ensure()
-                hold.release()
-            self.assertIn(("keep", "60"), calls)
-            self.assertEqual(("release",) in calls, released)
+    def test_keeps_and_releases_only_the_runs_own_hold(self):
+        calls = []
+        hold = local_ci.AnnexHold(60, "local-ci-20261111-010203-abcdef")
+        with mock.patch.object(
+            local_ci, "annex_power", lambda *arguments: calls.append(arguments)
+        ):
+            hold.keep()
+            hold.release()
+        owner = ("--owner", "local-ci-20261111-010203-abcdef")
+        self.assertEqual(calls, [("keep", "60", *owner), ("release", *owner)])
 
 
 class RemoteFollowTest(unittest.TestCase):
     def test_a_failed_hold_renewal_does_not_end_the_run(self):
         answers = iter([b"building\n\x1erunning", b"done\n\x1e0"])
         clock = iter(range(0, 100_000, 1000))
-        hold = local_ci.AnnexHold(1)
+        hold = local_ci.AnnexHold(1, "local-ci-test")
         with (
             mock.patch.object(
                 local_ci,
@@ -186,7 +160,7 @@ class RemoteFollowTest(unittest.TestCase):
                 ),
             ),
             mock.patch.object(
-                hold, "ensure", side_effect=local_ci.StageFailure("coordinator down")
+                hold, "keep", side_effect=local_ci.StageFailure("coordinator down")
             ) as renewal,
             mock.patch.object(local_ci.time, "monotonic", lambda: next(clock)),
             mock.patch.object(local_ci.time, "sleep"),

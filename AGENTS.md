@@ -105,7 +105,7 @@ workflows may remain hosted. Preserve required check names and existing gate pol
   `python Development/system/testing/ci/local_ci.py run static unit` (add `host` for application
   or host-test changes, `build` for firmware changes) from any checkout or worktree on Windows or
   Linux. Stages without a local toolchain, such as `host` and `build` on Windows, run on
-  homelab-annex automatically; the tool wakes and releases it. Start runs that can exceed the
+  homelab-annex automatically; the tool wakes it and releases only its own hold. Start runs that can exceed the
   10-minute foreground limit with `--detach`, then repeat
   `local_ci.py follow --timeout 540` until it exits with the run's code instead of 3
   (2 means the run died; read its log). Do not set
