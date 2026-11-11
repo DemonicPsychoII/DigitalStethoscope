@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+import contextlib
 import hashlib
 import json
 import os
 import subprocess
 import sys
+import time
+from collections.abc import Iterator
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[5]
@@ -32,12 +35,19 @@ def user_cache_directory() -> Path:
 
 def pin_key() -> str:
     canonical = json.dumps(PINS, sort_keys=True, separators=(",", ":"))
-    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()[:16]
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()[:12]
 
 
 def shared_workspace() -> Path:
-    """One workspace per toolchain pin, shared by every checkout and worktree."""
-    return user_cache_directory() / "stethoscope-toolchain" / f"zephyr-{pin_key()}"
+    """One workspace per toolchain pin, shared by every checkout and worktree.
+
+    On Windows it sits at the drive root: the SDK's deepest file is 179 characters
+    below its directory, which under %LOCALAPPDATA% reaches the 260-character limit.
+    """
+    if os.name == "nt":
+        drive = os.environ.get("SystemDrive", "C:")
+        return Path(drive + "\\") / "stethoscope-toolchain" / pin_key()
+    return user_cache_directory() / "stethoscope-toolchain" / pin_key()
 
 
 def main_checkout() -> Path | None:
@@ -60,7 +70,7 @@ def workspace_matches_pins(workspace: Path) -> bool:
             recorded = json.loads((workspace / marker).read_text(encoding="utf-8"))
         except (OSError, ValueError):
             continue
-        if recorded.get("pins") == PINS:
+        if isinstance(recorded, dict) and recorded.get("pins") == PINS:
             return True
     return False
 
@@ -90,6 +100,84 @@ def toolchain_workspace() -> Path:
     return shared_workspace()
 
 
+def sdk_directory(workspace: Path) -> Path:
+    """The SDK this workspace builds with.
+
+    `west sdk install` reuses an SDK of the pinned version that the CMake package
+    registry already knows, even outside the workspace; setup records where it is.
+    """
+    local = workspace / f"zephyr-sdk-{PINS['sdk_version']}"
+    if (local / "sdk_version").is_file():
+        return local
+    try:
+        recorded = json.loads((workspace / PIN_STAMP).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return local
+    sdk = recorded.get("sdk") if isinstance(recorded, dict) else None
+    if isinstance(sdk, str) and (Path(sdk) / "sdk_version").is_file():
+        return Path(sdk)
+    return local
+
+
+def toolchain_problems(workspace: Path) -> list[str]:
+    """What keeps a workspace from building with the current pins; empty when ready."""
+    tool_directory = bin_dir(workspace)
+    suffix = ".exe" if os.name == "nt" else ""
+    compiler = (
+        sdk_directory(workspace)
+        / "gnu"
+        / PINS["toolchain"]
+        / "bin"
+        / f"{PINS['toolchain']}-gcc{suffix}"
+    )
+    required = {
+        "west": tool_directory / f"west{suffix}",
+        "cmake": tool_directory / f"cmake{suffix}",
+        "ninja": tool_directory / f"ninja{suffix}",
+        "Zephyr": workspace / "zephyr" / "CMakeLists.txt",
+        "SDK compiler": compiler,
+    }
+    problems = [
+        f"{name} missing" for name, path in required.items() if not path.is_file()
+    ]
+    if not workspace_matches_pins(workspace):
+        problems.append("no record of the current toolchain.json pins")
+    return problems
+
+
+@contextlib.contextmanager
+def exclusive_lock(path: Path) -> Iterator[None]:
+    """Serialize setup of a shared environment across processes and checkouts."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a+b") as stream:
+        announced = False
+        while True:
+            try:
+                if os.name == "nt":
+                    import msvcrt
+
+                    stream.seek(0)
+                    msvcrt.locking(stream.fileno(), msvcrt.LK_NBLCK, 1)
+                else:
+                    import fcntl
+
+                    fcntl.flock(stream.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+                break
+            except OSError:
+                if not announced:
+                    print(f"Waiting for {path}, held by another setup", flush=True)
+                    announced = True
+                time.sleep(1)
+        try:
+            yield
+        finally:
+            if os.name == "nt":
+                stream.seek(0)
+                msvcrt.locking(stream.fileno(), msvcrt.LK_UNLCK, 1)
+            else:
+                fcntl.flock(stream.fileno(), fcntl.LOCK_UN)
+
+
 def bin_dir(workspace: Path) -> Path:
     return workspace.resolve() / ".venv" / ("Scripts" if os.name == "nt" else "bin")
 
@@ -104,7 +192,7 @@ def build_env(workspace: Path) -> dict[str, str]:
     env = os.environ.copy()
     env["PATH"] = os.pathsep.join((str(bin_dir(workspace)), env.get("PATH", "")))
     env["ZEPHYR_BASE"] = str(workspace / "zephyr")
-    env["ZEPHYR_SDK_INSTALL_DIR"] = str(workspace / f"zephyr-sdk-{PINS['sdk_version']}")
+    env["ZEPHYR_SDK_INSTALL_DIR"] = str(sdk_directory(workspace))
     env["ZEPHYR_TOOLCHAIN_VARIANT"] = "zephyr"
     return env
 

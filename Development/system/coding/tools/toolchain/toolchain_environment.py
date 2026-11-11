@@ -15,11 +15,11 @@ import sys
 from pathlib import Path, PureWindowsPath
 
 from build_support import (
-    PINS,
     WORKSPACE_VARIABLE,
     bin_dir,
+    sdk_directory,
+    toolchain_problems,
     toolchain_workspace,
-    workspace_matches_pins,
 )
 
 TOOLS = ("west", "cmake", "ninja")
@@ -34,15 +34,12 @@ def describe(workspace: Path) -> dict:
     tool_directory = bin_dir(workspace)
     return {
         "workspace": str(workspace),
-        "pins_match": workspace_matches_pins(workspace),
         "path": [str(tool_directory)],
         "tools": {name: str(executable(tool_directory, name)) for name in TOOLS},
         "variables": {
             WORKSPACE_VARIABLE: str(workspace),
             "ZEPHYR_BASE": str(workspace / "zephyr"),
-            "ZEPHYR_SDK_INSTALL_DIR": str(
-                workspace / f"zephyr-sdk-{PINS['sdk_version']}"
-            ),
+            "ZEPHYR_SDK_INSTALL_DIR": str(sdk_directory(workspace)),
             "ZEPHYR_TOOLCHAIN_VARIANT": "zephyr",
         },
     }
@@ -71,22 +68,25 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--format",
-        choices=("json", "posix", "workspace"),
+        choices=("json", "posix", "locations"),
         default="json",
-        help="workspace prints only the resolved path, without checking its tools",
+        help="locations prints the workspace and SDK paths without checking the tools",
     )
     arguments = parser.parse_args()
-    environment = describe(toolchain_workspace())
-    if arguments.format == "workspace":
-        sys.stdout.buffer.write((environment["workspace"] + "\n").encode("utf-8"))
+    workspace = toolchain_workspace()
+    environment = describe(workspace)
+    if arguments.format == "locations":
+        locations = {
+            "workspace": environment["workspace"],
+            "sdk": environment["variables"]["ZEPHYR_SDK_INSTALL_DIR"],
+        }
+        sys.stdout.buffer.write((json.dumps(locations) + "\n").encode("utf-8"))
         return
-    missing = [
-        name for name, path in environment["tools"].items() if not Path(path).is_file()
-    ]
-    if missing:
+    problems = toolchain_problems(workspace)
+    if problems:
         raise SystemExit(
-            f"Pinned toolchain incomplete in {environment['workspace']}: "
-            f"{', '.join(missing)} missing. Run "
+            f"Pinned toolchain not ready in {environment['workspace']}: "
+            f"{'; '.join(problems)}. Run "
             "python Development/system/coding/tools/toolchain/setup_zephyr.py first."
         )
     if arguments.format == "json":

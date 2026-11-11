@@ -3,12 +3,32 @@
 # Dot-source it: . (Join-Path $PSScriptRoot 'firmware-common.ps1')
 
 $FwRepo = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..\..\..'))
+function Invoke-ToolchainResolver {
+    param([string]$Resolver, [string[]]$Arguments)
+    # Windows PowerShell 5.1 decodes native output with the console code page, but the
+    # resolver writes UTF-8; non-ASCII profile paths would arrive corrupted.
+    $previousEncoding = [Console]::OutputEncoding
+    [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+    try {
+        # `python` can be the inactive Microsoft Store alias; the launcher is the fallback.
+        foreach ($candidate in @(, @('python')) + @(, @('py', '-3'))) {
+            if (-not (Get-Command $candidate[0] -ErrorAction SilentlyContinue)) { continue }
+            $launcherArguments = @($candidate | Select-Object -Skip 1)
+            $output = & $candidate[0] @launcherArguments $Resolver @Arguments
+            if ($LASTEXITCODE -eq 0) { return $output }
+        }
+    }
+    finally { [Console]::OutputEncoding = $previousEncoding }
+    throw 'Pinned toolchain not resolved; needs Python 3.12+ as python or py -3, see the message above.'
+}
+
 # The pinned workspace is shared by all checkouts and worktrees; Python resolves it like CI.
-$FwWorkspace = & python (Join-Path $PSScriptRoot 'toolchain\toolchain_environment.py') --format workspace
-if ($LASTEXITCODE -ne 0 -or -not $FwWorkspace) { throw 'Could not resolve the pinned toolchain workspace; Python 3.12+ must be on PATH.' }
+$FwLocations = Invoke-ToolchainResolver -Resolver (Join-Path $PSScriptRoot 'toolchain\toolchain_environment.py') -Arguments '--format', 'locations' | ConvertFrom-Json
+$FwWorkspace = $FwLocations.workspace
 $FwPins = Get-Content (Join-Path $PSScriptRoot 'toolchain\toolchain.json') -Raw | ConvertFrom-Json
 $FwWest = Join-Path $FwWorkspace '.venv\Scripts\west.exe'
-$FwSdk = Join-Path $FwWorkspace "zephyr-sdk-$($FwPins.sdk_version)"
+# west may reuse an SDK of the pinned version outside the workspace; setup records it.
+$FwSdk = $FwLocations.sdk
 $FwToolBin = Join-Path $FwSdk "gnu\$($FwPins.toolchain)\bin"
 $FwOpenOcdDir = Join-Path $FwWorkspace 'openocd-esp32'
 

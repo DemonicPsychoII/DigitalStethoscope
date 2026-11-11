@@ -217,6 +217,9 @@ def retain_firmware_evidence(build_dir: Path, evidence: Path) -> None:
 
 
 def build_application(identity: firmware_release.Identity) -> None:
+    # west's pristine step runs the cleanup script of the Zephyr recorded in the old
+    # build cache; after a workspace change that Zephyr may no longer exist.
+    shutil.rmtree(ROOT / "build-ci-app", ignore_errors=True)
     run(
         [
             west(),

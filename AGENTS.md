@@ -94,7 +94,8 @@ workflows may remain hosted. Preserve required check names and existing gate pol
   Linux. Stages without a local toolchain, such as `host` and `build` on Windows, run on
   homelab-annex automatically; the tool wakes and releases it. Start runs that can exceed the
   10-minute foreground limit with `--detach`, then repeat
-  `local_ci.py follow --timeout 540` until it exits with the run's code instead of 3. Do not set
+  `local_ci.py follow --timeout 540` until it exits with the run's code instead of 3
+  (2 means the run died; read its log). Do not set
   PATH, `ZEPHYR_BASE` or `ZEPHYR_SDK_INSTALL_DIR` by hand, create per-worktree `.ci-workspace`
   copies or WSL virtual environments. Decode crashes with the ELF whose path and SHA-256 the
   `build` stage prints. See [local checks](Development/system/testing/ci/OPERATIONS.md#setup-and-local-checks).

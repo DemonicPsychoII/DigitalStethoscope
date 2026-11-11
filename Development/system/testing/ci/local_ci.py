@@ -23,6 +23,7 @@ import json
 import os
 import shlex
 import shutil
+import signal
 import socket
 import struct
 import subprocess
@@ -33,12 +34,13 @@ import time
 from pathlib import Path
 
 import toolchain_path  # noqa: F401
+import validation_tools as validation_installer
 from build_support import (
-    bin_dir,
+    exclusive_lock,
     python_path,
+    toolchain_problems,
     toolchain_workspace,
     user_cache_directory,
-    workspace_matches_pins,
 )
 from prepared_env import STATIC_PYTHON
 
@@ -50,8 +52,8 @@ STAGES = ("static", "unit", "host", "build")
 REMOTE_HOST = "homelab-annex"
 POWER_HOST = "homelab-server"
 REMOTE_SCRATCH = "stethoscope-local-ci"
-KEEP_REFRESH_SECONDS = 20 * 60
 POLL_SECONDS = 10
+RUN_LOST = 2
 STILL_RUNNING = 3
 REQUIREMENTS = (CI / "requirements-ci.txt", CI / "requirements-host.txt")
 STATIC_PYTHON_MINOR = tuple(int(part) for part in STATIC_PYTHON.split(".")[:2])
@@ -135,41 +137,58 @@ def python_environment() -> Path:
     )
     stamp = workspace / ".stethoscope-requirements"
     python = python_path(workspace)
+    # The stamp is written last and never removed, so a stamped environment is complete.
     if stamp.is_file() and python.is_file():
         return python
-    print(f"Creating the CI Python environment in {workspace}", flush=True)
-    shutil.rmtree(workspace, ignore_errors=True)
-    run_command([ci_interpreter(), "-m", "venv", str(workspace / ".venv")])
-    requirement_arguments = [
-        argument for path in REQUIREMENTS for argument in ("-r", str(path))
-    ]
-    run_command(
-        [
-            str(python),
-            *("-m", "pip", "install", "--disable-pip-version-check"),
-            "--require-hashes",
-            *requirement_arguments,
+    with exclusive_lock(workspace.with_name(workspace.name + ".lock")):
+        if stamp.is_file() and python.is_file():
+            return python
+        print(f"Creating the CI Python environment in {workspace}", flush=True)
+        shutil.rmtree(workspace, ignore_errors=True)
+        run_command([ci_interpreter(), "-m", "venv", str(workspace / ".venv")])
+        requirement_arguments = [
+            argument for path in REQUIREMENTS for argument in ("-r", str(path))
         ]
-    )
-    write_text(stamp, digest.hexdigest() + "\n")
+        run_command(
+            [
+                str(python),
+                *("-m", "pip", "install", "--disable-pip-version-check"),
+                "--require-hashes",
+                *requirement_arguments,
+            ]
+        )
+        write_text(stamp, digest.hexdigest() + "\n")
     return python
 
 
 def validation_tools(python: Path) -> Path:
     """Linux validators and Node, shared by all checkouts and reused once verified."""
-    pins = (CI / "validation_tools.json").read_bytes()
+    pin_bytes = (CI / "validation_tools.json").read_bytes()
+    pins = json.loads(pin_bytes)
     target = (
         user_cache_directory()
         / "stethoscope-validation-tools"
-        / hashlib.sha256(pins).hexdigest()[:16]
+        / hashlib.sha256(pin_bytes).hexdigest()[:16]
     )
-    run_command(
-        [
-            str(python),
-            str(CI / "validation_tools.py"),
-            *("--target", str(target), "--prepared", str(target)),
-        ]
-    )
+
+    def verified() -> bool:
+        return all(
+            validation_installer.prepared_binary(target, name, pin) is not None
+            for name, pin in pins.items()
+        )
+
+    # Reinstalling would rewrite binaries that another run may be executing.
+    if verified():
+        return target
+    with exclusive_lock(target.with_name(target.name + ".lock")):
+        if not verified():
+            run_command(
+                [
+                    str(python),
+                    str(CI / "validation_tools.py"),
+                    *("--target", str(target), "--prepared", str(target)),
+                ]
+            )
     return target
 
 
@@ -178,20 +197,20 @@ def compiler_available() -> bool:
     return bool(command) and shutil.which(command[0]) is not None
 
 
-def toolchain_ready() -> bool:
-    workspace = toolchain_workspace()
-    west = bin_dir(workspace) / ("west.exe" if os.name == "nt" else "west")
-    return west.is_file() and (workspace / "zephyr").is_dir()
-
-
 def native_blocker(stage: str, provision: bool) -> str | None:
     if stage == "host":
         if sys.platform == "win32":
             return "host scenarios need GCC with sanitizers on Linux"
         if not compiler_available():
             return "no C compiler: install gcc or set CC"
-    if stage == "build" and not provision and not toolchain_ready():
-        return f"pinned firmware toolchain missing in {toolchain_workspace()}"
+    if stage == "build" and not provision:
+        workspace = toolchain_workspace()
+        problems = toolchain_problems(workspace)
+        if problems:
+            return (
+                f"pinned firmware toolchain not ready in {workspace} "
+                f"({'; '.join(problems)}); --provision installs it here"
+            )
     return None
 
 
@@ -265,14 +284,15 @@ def host_stage() -> None:
 
 def provision_toolchain() -> None:
     workspace = toolchain_workspace()
-    if toolchain_ready() and workspace_matches_pins(workspace):
+    if not toolchain_problems(workspace):
         return
     print(f"Provisioning the pinned firmware toolchain in {workspace}", flush=True)
+    # setup_zephyr.py locks the workspace and re-checks it, so concurrent runs wait.
     run_command(
         [
             sys.executable,
             str(ROOT / "Development/system/coding/tools/toolchain/setup_zephyr.py"),
-            *("--workspace", str(workspace)),
+            *("--workspace", str(workspace), "--if-needed"),
         ]
     )
 
@@ -391,7 +411,8 @@ def plan(stages: list[str], mode: str, provision: bool) -> dict[str, str]:
             local_host = socket.gethostname().lower() == REMOTE_HOST
             placement[stage] = "remote" if blocker and not local_host else "native"
             if blocker:
-                print(f"{stage}: {blocker}; running it {placement[stage]}ly")
+                where = f"on {REMOTE_HOST}" if placement[stage] == "remote" else "here"
+                print(f"{stage}: {blocker}; running it {where}")
         else:
             placement[stage] = mode
     return placement
@@ -434,17 +455,76 @@ def ssh(
     return result
 
 
-def annex_power(*arguments: str) -> None:
-    command = shlex.join(["annex-power", *arguments])
+def annex_power(*arguments: str, report: bool = False) -> dict | None:
+    """Run annex-power on the coordinator; with report, return its JSON answer."""
+    command = shlex.join(["annex-power", *(["--json"] if report else []), *arguments])
     if socket.gethostname().lower() == POWER_HOST:
         argv = ["bash", "-c", command]
     else:
         argv = ssh_command(POWER_HOST, command)
     result = subprocess.run(argv, capture_output=True, timeout=300)
     output = (result.stdout + result.stderr).decode("utf-8", errors="replace").strip()
-    print(f"annex-power {' '.join(arguments)}: {output}", flush=True)
     if result.returncode:
-        raise StageFailure(f"annex-power {arguments[0]} failed ({result.returncode})")
+        raise StageFailure(f"annex-power {arguments[0]} failed: {output}")
+    if report:
+        return json.loads(result.stdout.decode("utf-8"))
+    print(f"annex-power {' '.join(arguments)}: {output}", flush=True)
+    return None
+
+
+class AnnexHold:
+    """A keep-awake hold that this run sets only when needed and ends only if it owns it.
+
+    annex-power keeps a single hold: `keep` replaces it and `release` ends it for every
+    caller. A run therefore extends the hold only when none exists or it ends too soon,
+    and releases it only while the hold still ends when this run last set it.
+    """
+
+    def __init__(self, minutes: int):
+        self.minutes = minutes
+        self.owned_until: float | None = None
+        self.awaiting_wake = False
+
+    def current_until(self) -> float | None:
+        status = annex_power("status", report=True) or {}
+        until = (status.get("idle") or {}).get("hold_until")
+        return float(until) if isinstance(until, (int, float)) else None
+
+    def ensure(self) -> None:
+        current = self.current_until()
+        if self.owned_until is not None and not self.same(current):
+            print("Another caller replaced the annex hold", flush=True)
+            self.owned_until = None
+        if current is not None and current >= time.time() + self.minutes * 60:
+            return
+        annex_power("keep", str(self.minutes))
+        # An asleep annex receives the hold only once SSH answers after the wake.
+        self.owned_until = self.current_until()
+        self.awaiting_wake = self.owned_until is None
+
+    def confirm_after_wake(self) -> None:
+        deadline = time.monotonic() + 60
+        while self.awaiting_wake and time.monotonic() < deadline:
+            self.owned_until = self.current_until()
+            self.awaiting_wake = self.owned_until is None
+            if self.awaiting_wake:
+                time.sleep(5)
+
+    def same(self, until: float | None) -> bool:
+        return (
+            until is not None
+            and self.owned_until is not None
+            and abs(until - self.owned_until) < 1
+        )
+
+    def release(self) -> None:
+        if self.owned_until is None:
+            print("Leaving the annex hold: this run does not own it", flush=True)
+            return
+        if not self.same(self.current_until()):
+            print("Leaving the annex hold: another caller replaced it", flush=True)
+            return
+        annex_power("release")
 
 
 def wait_until_reachable(deadline_seconds: int = 300) -> None:
@@ -540,37 +620,58 @@ git status --short | head -20
         print("Uncommitted changes in the copy:\n" + changes, flush=True)
 
 
-def remote_start(scratch: str, stages: list[str]) -> None:
-    # setsid detaches the run from this SSH session; its shell is the group leader,
-    # so cleanup can stop the whole process group through the recorded PID.
+def remote_start(scratch: str, stages: list[str], run_id: str) -> None:
+    # The wrapper shell leads its own session, detached from this SSH connection; cleanup
+    # stops its process group through the PID. Status files appear atomically via mv.
+    # A root-held block sleep inhibitor, the annex job convention, lasts until the
+    # wrapper exits; it keeps the annex awake even when the keep-awake hold ends.
+    inhibitor = shlex.join(
+        [
+            *("sudo", "-n", "systemd-inhibit", "--what=sleep", "--mode=block"),
+            "--who=stethoscope-local-ci",
+            f"--why=local CI run {run_id}",
+            *("tail", "--pid=WRAPPER", "-f", "/dev/null"),
+        ]
+    ).replace("WRAPPER", "$$")
+    wrapper = (
+        ": > ../progress.log; "
+        "echo $$ > ../pid.tmp && mv ../pid.tmp ../pid; "
+        f"{{ {inhibitor} || echo 'Warning: no sleep inhibitor; only the hold keeps "
+        "the annex awake' >> ../progress.log; } & "
+        f"python3 Development/system/testing/ci/local_ci.py run {' '.join(stages)} "
+        "--mode native --provision --results ../results.json >> ../progress.log 2>&1; "
+        "echo $? > ../exit-code.tmp && mv ../exit-code.tmp ../exit-code"
+    )
     starter = (
-        f'cd "$HOME/{scratch}/tree" && setsid -f bash -c '
-        + shlex.quote(
-            "echo $$ > ../pid; "
-            f"python3 Development/system/testing/ci/local_ci.py run {' '.join(stages)} "
-            "--mode native --provision --results ../results.json "
-            "> ../progress.log 2>&1; echo $? > ../exit-code"
-        )
-        + " < /dev/null > /dev/null 2>&1"
+        f'cd "$HOME/{scratch}/tree" && setsid -f bash -c {shlex.quote(wrapper)}'
+        " < /dev/null > /dev/null 2>&1; "
+        "for attempt in $(seq 50); do [ -f ../pid ] && exit 0; sleep 0.1; done; "
+        "echo 'the remote run did not start' >&2; exit 1"
     )
     ssh(REMOTE_HOST, starter)
     print(f"Started on {REMOTE_HOST}: ~/{scratch}/progress.log", flush=True)
 
 
-def remote_follow(scratch: str, keep_minutes: int) -> int:
+def remote_follow(scratch: str, hold: AnnexHold) -> int:
     offset = 0
     failures = 0
     refreshed = time.monotonic()
-    # New log bytes, a record separator, then the exit code, "running" or "lost".
+    # Renew well before the hold ends, however short it is.
+    renewal_seconds = max(30, hold.minutes * 60 / 2)
+    # The state is read before the log, so an exit code arrives after the final output.
+    # The wrapper writes the exit code before it exits; a dead wrapper without one is lost.
     status_query = (
-        "printf '\\036'; cat exit-code 2>/dev/null || "
-        '{ kill -0 "$(cat pid 2>/dev/null)" 2>/dev/null && echo running || echo lost; }'
+        'if [ -f exit-code ]; then state="$(cat exit-code)"; '
+        'elif kill -0 "$(cat pid)" 2>/dev/null; then state=running; '
+        'elif [ -f exit-code ]; then state="$(cat exit-code)"; '
+        "else state=lost; fi; "
     )
     while True:
         try:
             query = (
-                f'cd "$HOME/{scratch}" && tail -c +{offset + 1} progress.log '
-                f"2>/dev/null; {status_query}"
+                f'cd "$HOME/{scratch}" && {status_query}'
+                f"tail -c +{offset + 1} progress.log 2>/dev/null; "
+                "printf '\\036%s' \"$state\""
             )
             result = ssh(REMOTE_HOST, query, timeout=60)
             failures = 0
@@ -590,18 +691,22 @@ def remote_follow(scratch: str, keep_minutes: int) -> int:
             raise StageFailure("the remote run ended without an exit code")
         if state != "running":
             return int(state)
-        if time.monotonic() - refreshed > KEEP_REFRESH_SECONDS:
-            annex_power("keep", str(keep_minutes))
+        if time.monotonic() - refreshed > renewal_seconds:
+            hold.ensure()
             refreshed = time.monotonic()
         time.sleep(POLL_SECONDS)
 
 
-def remote_collect(scratch: str) -> dict[str, dict]:
+def remote_collect(scratch: str, stages: list[str]) -> dict[str, dict]:
     archive = ssh(
         REMOTE_HOST,
         f'cd "$HOME/{scratch}/tree" && if [ -d artifacts ]; then tar -czf - artifacts; fi',
         timeout=600,
     ).stdout
+    if "build" in stages:
+        # Older local firmware must not pass for this run's when the build failed early.
+        for name in ("firmware", "firmware-release"):
+            shutil.rmtree(ARTIFACTS / name, ignore_errors=True)
     if archive:
         # Overwrite file by file, so evidence of native stages in this run stays.
         with tarfile.open(fileobj=io.BytesIO(archive), mode="r:gz") as stream:
@@ -613,23 +718,48 @@ def remote_collect(scratch: str) -> dict[str, dict]:
     return json.loads(results.stdout.decode("utf-8"))
 
 
+def remote_cleanup(scratch: str) -> None:
+    """Stop a still running remote run, then delete its scratch copy."""
+    script = (
+        f'scratch="$HOME/{scratch}"; '
+        'if [ -f "$scratch/pid" ] && [ ! -f "$scratch/exit-code" ]; then '
+        'pid="$(cat "$scratch/pid")"; '
+        'kill -TERM -- "-$pid" 2>/dev/null; '
+        'for attempt in $(seq 20); do kill -0 "$pid" 2>/dev/null || break; sleep 0.5; done; '
+        'kill -KILL -- "-$pid" 2>/dev/null; fi; '
+        'rm -rf "$scratch"'
+    )
+    try:
+        ssh(REMOTE_HOST, script, check=False, timeout=120)
+    except subprocess.TimeoutExpired:
+        print(f"Could not remove ~/{scratch} on {REMOTE_HOST}", flush=True)
+
+
 def execute_remote(stages: list[str], run_id: str, keep_minutes: int) -> dict:
     scratch = f"{REMOTE_SCRATCH}/{run_id}"
     started = time.monotonic()
     results: dict[str, dict] = {}
+    hold = AnnexHold(keep_minutes)
     print(f"\n== {' '.join(stages)} (remote on {REMOTE_HOST}) ==", flush=True)
     try:
-        annex_power("keep", str(keep_minutes))
+        hold.ensure()
         wait_until_reachable()
+        hold.confirm_after_wake()
         remote_prepare(scratch)
-        remote_start(scratch, stages)
-        exit_code = remote_follow(scratch, keep_minutes)
-        results = remote_collect(scratch)
+        remote_start(scratch, stages, run_id)
+        exit_code = remote_follow(scratch, hold)
+        results = remote_collect(scratch, stages)
         if exit_code and not results:
             raise StageFailure(f"remote run failed ({exit_code})")
-        if "build" in stages:
+        if results.get("build", {}).get("outcome") == "passed":
             describe_firmware(include_build_directory=False)
-    except (StageFailure, subprocess.SubprocessError, OSError) as error:
+    except (
+        StageFailure,
+        subprocess.SubprocessError,
+        OSError,
+        tarfile.TarError,
+        ValueError,
+    ) as error:
         print(f"remote run failed: {error}", flush=True)
         for stage in stages:
             results.setdefault(
@@ -642,19 +772,10 @@ def execute_remote(stages: list[str], run_id: str, keep_minutes: int) -> dict:
                 },
             )
     finally:
-        cleanup = (
-            f'scratch="$HOME/{scratch}"; '
-            'if [ -f "$scratch/pid" ] && [ ! -f "$scratch/exit-code" ]; then '
-            'kill -TERM -- "-$(cat "$scratch/pid")" 2>/dev/null || true; fi; '
-            'rm -rf "$scratch"'
-        )
+        remote_cleanup(scratch)
         try:
-            ssh(REMOTE_HOST, cleanup, check=False, timeout=120)
-        except subprocess.TimeoutExpired:
-            print(f"Could not remove ~/{scratch} on {REMOTE_HOST}", flush=True)
-        try:
-            annex_power("release")
-        except (StageFailure, subprocess.SubprocessError, OSError) as error:
+            hold.release()
+        except (StageFailure, subprocess.SubprocessError, OSError, ValueError) as error:
             print(f"Release failed: {error}", flush=True)
     return results
 
@@ -686,7 +807,7 @@ def detach(arguments: list[str], run_id: str) -> int:
     with log.open("wb") as stream:
         for index, options in enumerate(attempts):
             try:
-                subprocess.Popen(
+                child = subprocess.Popen(
                     command,
                     cwd=ROOT,
                     env=child_environment(),
@@ -699,10 +820,38 @@ def detach(arguments: list[str], run_id: str) -> int:
             except OSError:
                 if index == len(attempts) - 1:
                     raise
+    write_text(directory / "pid", f"{child.pid}\n")
     follower = Path(__file__).resolve().relative_to(ROOT).as_posix()
     print(f"Run {run_id} detached; progress log: {log}")
     print(f"Follow it with: python {follower} follow {run_id} --timeout 540")
     return 0
+
+
+def process_alive(process_identifier: int) -> bool:
+    if os.name == "nt":
+        import ctypes
+
+        query_limited_information = 0x1000
+        still_active = 259
+        kernel = ctypes.windll.kernel32
+        handle = kernel.OpenProcess(
+            query_limited_information, False, process_identifier
+        )
+        if not handle:
+            return False
+        try:
+            exit_code = ctypes.c_ulong()
+            kernel.GetExitCodeProcess(handle, ctypes.byref(exit_code))
+            return exit_code.value == still_active
+        finally:
+            kernel.CloseHandle(handle)
+    try:
+        os.kill(process_identifier, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    return True
 
 
 def follow(run_id: str | None, timeout: float | None, from_start: bool) -> int:
@@ -713,7 +862,10 @@ def follow(run_id: str | None, timeout: float | None, from_start: bool) -> int:
         run_id = runs[-1]
     directory = RUNS / run_id
     log = directory / "progress.log"
+    if not log.is_file():
+        raise SystemExit(f"unknown run {run_id}: {log} does not exist")
     position_file = directory / "follow-position"
+    pid_file = directory / "pid"
     position = 0
     if not from_start and position_file.is_file():
         position = int(position_file.read_text(encoding="utf-8") or 0)
@@ -721,6 +873,13 @@ def follow(run_id: str | None, timeout: float | None, from_start: bool) -> int:
     while True:
         status = directory / "status.json"
         finished = status.is_file()
+        # Judged before the final read, so the log of a run that just ended is complete.
+        lost = (
+            not finished
+            and pid_file.is_file()
+            and not process_alive(int(pid_file.read_text(encoding="utf-8")))
+            and not status.is_file()
+        )
         with log.open("rb") as stream:
             stream.seek(position)
             chunk = stream.read()
@@ -732,6 +891,9 @@ def follow(run_id: str | None, timeout: float | None, from_start: bool) -> int:
             exit_code = json.loads(status.read_text(encoding="utf-8"))["exit_code"]
             print(f"\nRun {run_id} finished with exit code {exit_code}")
             return exit_code
+        if lost:
+            print(f"\nRun {run_id} ended without a result; see {log}")
+            return RUN_LOST
         if deadline and time.monotonic() > deadline:
             print(f"\nRun {run_id} is still running; follow it again to continue.")
             return STILL_RUNNING
@@ -752,7 +914,13 @@ def run(arguments: argparse.Namespace, raw_arguments: list[str]) -> int:
         if remote:
             run_id = arguments.run_id or new_run_id()
             results.update(execute_remote(remote, run_id, arguments.keep_minutes))
-        results = {stage: results[stage] for stage in stages if stage in results}
+        missing = {
+            "outcome": "failed",
+            "detail": "no result reported",
+            "seconds": 0,
+            "where": REMOTE_HOST,
+        }
+        results = {stage: results.get(stage, missing) for stage in stages}
         if arguments.results:
             write_text(arguments.results, json.dumps(results, indent=2) + "\n")
         exit_code = print_summary(results)
@@ -765,8 +933,23 @@ def run(arguments: argparse.Namespace, raw_arguments: list[str]) -> int:
     return exit_code
 
 
+def positive_minutes(value: str) -> int:
+    minutes = int(value)
+    if minutes < 1:
+        raise argparse.ArgumentTypeError("must be at least 1")
+    return minutes
+
+
+def stop_on_signal(signal_number: int, frame: object) -> None:
+    # Unwinding runs the cleanup in finally blocks: remote scratch, hold, status.
+    raise KeyboardInterrupt(f"signal {signal_number}")
+
+
 def main() -> int:
     configure_output()
+    for name in ("SIGTERM", "SIGHUP", "SIGBREAK"):
+        if hasattr(signal, name):
+            signal.signal(getattr(signal, name), stop_on_signal)
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
@@ -791,7 +974,7 @@ def main() -> int:
     )
     run_parser.add_argument(
         "--keep-minutes",
-        type=int,
+        type=positive_minutes,
         default=60,
         help="annex keep-awake hold, refreshed while a remote run is followed",
     )
@@ -815,4 +998,7 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    try:
+        sys.exit(main())
+    except KeyboardInterrupt:
+        sys.exit(130)

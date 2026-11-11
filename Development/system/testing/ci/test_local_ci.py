@@ -7,7 +7,14 @@ from unittest import mock
 
 import local_ci
 import toolchain_path  # noqa: F401
-from build_support import PIN_STAMP, PINS, PREPARED_MARKER, workspace_matches_pins
+from build_support import (
+    PIN_STAMP,
+    PINS,
+    PREPARED_MARKER,
+    sdk_directory,
+    toolchain_problems,
+    workspace_matches_pins,
+)
 
 
 def elf_image(notes: bytes) -> bytes:
@@ -59,6 +66,37 @@ class SharedWorkspaceTest(unittest.TestCase):
             (workspace / PREPARED_MARKER).write_text(json.dumps({"pins": PINS}))
             self.assertTrue(workspace_matches_pins(workspace))
 
+    def test_a_marker_that_is_not_an_object_is_skipped(self):
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory)
+            (workspace / PIN_STAMP).write_text("[]")
+            (workspace / PREPARED_MARKER).write_text("null")
+            self.assertFalse(workspace_matches_pins(workspace))
+
+    def test_an_sdk_reused_from_elsewhere_is_taken_from_the_record(self):
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory) / "workspace"
+            reused = Path(directory) / "other" / f"zephyr-sdk-{PINS['sdk_version']}"
+            workspace.mkdir()
+            reused.mkdir(parents=True)
+            (reused / "sdk_version").write_text(PINS["sdk_version"])
+            local = workspace / f"zephyr-sdk-{PINS['sdk_version']}"
+            self.assertEqual(sdk_directory(workspace), local)
+            (workspace / PIN_STAMP).write_text(
+                json.dumps({"pins": PINS, "sdk": str(reused)})
+            )
+            self.assertEqual(sdk_directory(workspace), reused)
+            local.mkdir()
+            (local / "sdk_version").write_text(PINS["sdk_version"])
+            self.assertEqual(sdk_directory(workspace), local)
+
+    def test_an_incomplete_or_unrecorded_workspace_is_not_ready(self):
+        with tempfile.TemporaryDirectory() as directory:
+            problems = toolchain_problems(Path(directory))
+            self.assertIn("west missing", problems)
+            self.assertIn("SDK compiler missing", problems)
+            self.assertIn("no record of the current toolchain.json pins", problems)
+
 
 class PlacementTest(unittest.TestCase):
     def test_auto_mode_sends_only_blocked_stages_to_the_annex(self):
@@ -88,6 +126,71 @@ class PlacementTest(unittest.TestCase):
             self.assertEqual(
                 local_ci.plan(["build"], "auto", False), {"build": "native"}
             )
+
+
+class AnnexHoldTest(unittest.TestCase):
+    def test_keeps_only_when_no_hold_lasts_long_enough(self):
+        now = 1_000_000.0
+        with mock.patch.object(local_ci.time, "time", return_value=now):
+            calls = []
+            ends = iter([now + 7200])
+
+            def annex_power(*arguments, report=False):
+                calls.append(arguments)
+                return {"idle": {"hold_until": next(ends)}} if report else None
+
+            hold = local_ci.AnnexHold(60)
+            with mock.patch.object(local_ci, "annex_power", annex_power):
+                hold.ensure()
+                hold.release()
+        self.assertEqual(calls, [("status",)])
+        self.assertIsNone(hold.owned_until)
+
+    def test_releases_only_a_hold_it_still_owns(self):
+        now = 1_000_000.0
+        for later_hold, released in ((now + 3600, True), (now + 5000, False)):
+            calls = []
+            ends = iter([None, now + 3600, later_hold])
+
+            def annex_power(*arguments, report=False):
+                calls.append(arguments)
+                return {"idle": {"hold_until": next(ends)}} if report else None
+
+            hold = local_ci.AnnexHold(60)
+            with (
+                mock.patch.object(local_ci.time, "time", return_value=now),
+                mock.patch.object(local_ci, "annex_power", annex_power),
+            ):
+                hold.ensure()
+                hold.release()
+            self.assertIn(("keep", "60"), calls)
+            self.assertEqual(("release",) in calls, released)
+
+
+class FollowTest(unittest.TestCase):
+    def test_a_run_whose_process_is_gone_is_reported_lost(self):
+        with tempfile.TemporaryDirectory() as directory:
+            runs = Path(directory)
+            run = runs / "run"
+            run.mkdir()
+            (run / "progress.log").write_text("started\n")
+            (run / "pid").write_text("4242\n")
+            with (
+                mock.patch.object(local_ci, "RUNS", runs),
+                mock.patch.object(local_ci, "process_alive", return_value=False),
+                mock.patch("sys.stdout"),
+            ):
+                self.assertEqual(
+                    local_ci.follow("run", timeout=5, from_start=True),
+                    local_ci.RUN_LOST,
+                )
+
+    def test_an_unknown_run_is_a_clear_error(self):
+        with tempfile.TemporaryDirectory() as directory:
+            with mock.patch.object(local_ci, "RUNS", Path(directory)):
+                with self.assertRaises(SystemExit) as raised:
+                    local_ci.follow("missing", timeout=1, from_start=False)
+        self.assertIn("unknown run missing", str(raised.exception))
 
 
 if __name__ == "__main__":
