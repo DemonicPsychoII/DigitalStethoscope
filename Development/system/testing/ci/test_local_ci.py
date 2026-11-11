@@ -1,6 +1,11 @@
 import json
+import shlex
 import struct
+import subprocess
+import sys
 import tempfile
+import threading
+import time
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -191,6 +196,40 @@ class FollowTest(unittest.TestCase):
                 with self.assertRaises(SystemExit) as raised:
                     local_ci.follow("missing", timeout=1, from_start=False)
         self.assertIn("unknown run missing", str(raised.exception))
+
+
+@unittest.skipUnless(sys.platform.startswith("linux"), "process groups as on the annex")
+class RemoteCleanupTest(unittest.TestCase):
+    def test_a_member_that_handles_term_finishes_before_kill(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            scratch = root / "scratch"
+            scratch.mkdir()
+            ready = root / "ready"
+            finished = root / "finished"
+            # Like python under the remote wrapper: it needs a moment to unwind on TERM.
+            member = (
+                f"trap 'sleep 1; echo graceful > {shlex.quote(str(finished))}; exit 0' TERM; "
+                f": > {shlex.quote(str(ready))}; "
+                "while true; do sleep 0.1; done"
+            )
+            wrapper = (
+                f"echo $$ > pid; bash -c {shlex.quote(member)}; echo $? > exit-code"
+            )
+            process = subprocess.Popen(
+                ["bash", "-c", wrapper], cwd=scratch, start_new_session=True
+            )
+            # On the annex init reaps the wrapper; here a waiting thread does.
+            reaper = threading.Thread(target=process.wait)
+            reaper.start()
+            deadline = time.monotonic() + 10
+            while not ready.exists() and time.monotonic() < deadline:
+                time.sleep(0.05)
+            script = local_ci.cleanup_script(shlex.quote(str(scratch)))
+            subprocess.run(["bash", "-c", script], check=True, timeout=30)
+            reaper.join(timeout=10)
+            self.assertEqual(finished.read_text().strip(), "graceful")
+            self.assertFalse(scratch.exists())
 
 
 if __name__ == "__main__":

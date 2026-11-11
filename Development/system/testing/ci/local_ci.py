@@ -718,17 +718,26 @@ def remote_collect(scratch: str, stages: list[str]) -> dict[str, dict]:
     return json.loads(results.stdout.decode("utf-8"))
 
 
-def remote_cleanup(scratch: str) -> None:
-    """Stop a still running remote run, then delete its scratch copy."""
-    script = (
-        f'scratch="$HOME/{scratch}"; '
+def cleanup_script(scratch_expression: str) -> str:
+    """Shell that stops a still running run's process group, then deletes its copy.
+
+    The wrapper shell dies at once on TERM, so the grace period waits for the whole
+    group: Python, west and Ninja get up to 10 s to unwind before KILL.
+    """
+    return (
+        f"scratch={scratch_expression}; "
         'if [ -f "$scratch/pid" ] && [ ! -f "$scratch/exit-code" ]; then '
-        'pid="$(cat "$scratch/pid")"; '
-        'kill -TERM -- "-$pid" 2>/dev/null; '
-        'for attempt in $(seq 20); do kill -0 "$pid" 2>/dev/null || break; sleep 0.5; done; '
-        'kill -KILL -- "-$pid" 2>/dev/null; fi; '
+        'group="-$(cat "$scratch/pid")"; '
+        'kill -TERM -- "$group" 2>/dev/null; '
+        "for attempt in $(seq 20); do "
+        'kill -0 -- "$group" 2>/dev/null || break; sleep 0.5; done; '
+        'kill -KILL -- "$group" 2>/dev/null; fi; '
         'rm -rf "$scratch"'
     )
+
+
+def remote_cleanup(scratch: str) -> None:
+    script = cleanup_script(f'"$HOME/{scratch}"')
     try:
         ssh(REMOTE_HOST, script, check=False, timeout=120)
     except subprocess.TimeoutExpired:

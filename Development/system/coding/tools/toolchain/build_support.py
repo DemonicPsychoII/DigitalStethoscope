@@ -41,12 +41,13 @@ def pin_key() -> str:
 def shared_workspace() -> Path:
     """One workspace per toolchain pin, shared by every checkout and worktree.
 
-    On Windows it sits at the drive root: the SDK's deepest file is 179 characters
-    below its directory, which under %LOCALAPPDATA% reaches the 260-character limit.
+    It stays inside the user's own profile, so other local accounts cannot plant tools
+    in it. On Windows it sits directly in the profile: the SDK's deepest file is 179
+    characters below its directory, which under %LOCALAPPDATA% reaches the
+    260-character path limit.
     """
     if os.name == "nt":
-        drive = os.environ.get("SystemDrive", "C:")
-        return Path(drive + "\\") / "stethoscope-toolchain" / pin_key()
+        return Path.home() / ".stethoscope-toolchain" / pin_key()
     return user_cache_directory() / "stethoscope-toolchain" / pin_key()
 
 
