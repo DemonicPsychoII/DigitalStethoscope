@@ -13,7 +13,7 @@ import sys
 from pathlib import Path
 
 import toolchain_path  # noqa: F401
-from build_support import PINS, PREPARED_MARKER, ROOT, python_path
+from build_support import PINS, PREPARED_MARKER, ROOT, python_path, sdk_directory
 
 STATIC_PYTHON = "3.12.10"
 STATIC_REQUIREMENTS = (
@@ -64,7 +64,7 @@ def state(kind: str, workspace: Path) -> dict:
         result["modules"] = {
             name: git_head(workspace / projects[name]) for name in PINS["modules"]
         }
-        sdk = workspace / f"zephyr-sdk-{PINS['sdk_version']}"
+        sdk = sdk_directory(workspace)
         suffix = ".exe" if sys.platform == "win32" else ""
         compiler = (
             sdk / "gnu" / PINS["toolchain"] / "bin" / f"{PINS['toolchain']}-gcc{suffix}"

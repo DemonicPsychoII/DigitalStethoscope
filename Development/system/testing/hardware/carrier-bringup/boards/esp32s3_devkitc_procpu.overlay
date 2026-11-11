@@ -1,0 +1,112 @@
+/*
+ * Pin map from the DigitalStethoscope_Eval schematic (Altium commit a8f23a2):
+ * J3 INMP441 SCK/WS/SD GPIO4/5/6, J4 PCM5102A BCK/LRCK/DIN GPIO40/41/42,
+ * J6 button GPIO16 (R11 pull-up) and LED GPIO17 (R12), J8 RAW/MURMUR/BPM
+ * GPIO18/21/38 (R14..R16 pull-ups, common to GND), J7 wiper GPIO1 via R13.
+ * GPIO33..37 belong to the octal PSRAM. GPIO48 carries the DevKitC-1 v1.0 WS2812 and the
+ * unused SD_CS net (R20 pull-up); only the SPI3 data line is routed there.
+ */
+
+#include <zephyr/dt-bindings/gpio/gpio.h>
+#include <zephyr/dt-bindings/adc/adc.h>
+#include <zephyr/dt-bindings/led/led.h>
+
+/ {
+	aliases {
+		i2s-mic = &i2s0;
+		i2s-dac = &i2s1;
+		status-light = &status_light;
+	};
+
+	zephyr,user {
+		io-channels = <&adc0 0>;
+		led-gpios = <&gpio0 17 GPIO_ACTIVE_HIGH>;
+		button-gpios = <&gpio0 16 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+		filter-switch-gpios = <&gpio0 18 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>,
+				      <&gpio0 21 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>,
+				      <&gpio1 6 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+		microphone-data-gpios = <&gpio0 6 GPIO_ACTIVE_HIGH>;
+	};
+};
+
+&adc0 {
+	status = "okay";
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	channel@0 {
+		reg = <0>;
+		zephyr,gain = "ADC_GAIN_1_4";
+		zephyr,reference = "ADC_REF_INTERNAL";
+		zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
+		zephyr,resolution = <12>;
+	};
+};
+
+&pinctrl {
+	i2s0_default: i2s0_default {
+		group1 {
+			pinmux = <I2S0_I_BCK_GPIO4>,
+				 <I2S0_I_WS_GPIO5>;
+			output-enable;
+		};
+		group2 {
+			pinmux = <I2S0_I_SD_GPIO6>;
+			input-enable;
+		};
+	};
+
+	i2s1_default: i2s1_default {
+		group1 {
+			pinmux = <I2S1_O_BCK_GPIO40>,
+				 <I2S1_O_WS_GPIO41>,
+				 <I2S1_O_SD_GPIO42>;
+			output-enable;
+		};
+	};
+};
+
+/* The board default also routes SPI3 clock, MISO and CS to GPIO21, GPIO40 and GPIO14,
+ * which belong to J8 and the DAC, so only the data line stays. */
+&spim3_default {
+	/delete-node/ group1;
+
+	group2 {
+		pinmux = <SPIM3_MOSI_GPIO48>;
+	};
+};
+
+&spi3 {
+	/* The WS2812 reads a high idle level as data. */
+	line-idle-low;
+
+	status_light: ws2812@0 {
+		compatible = "worldsemi,ws2812-spi";
+		reg = <0>;
+		spi-max-frequency = <6400000>;
+		chain-length = <1>;
+		spi-cpha;
+		spi-one-frame = <0xf0>;
+		spi-zero-frame = <0xc0>;
+		color-mapping = <LED_COLOR_ID_GREEN LED_COLOR_ID_RED LED_COLOR_ID_BLUE>;
+	};
+};
+
+&dma {
+	status = "okay";
+};
+
+&i2s0 {
+	status = "okay";
+	pinctrl-0 = <&i2s0_default>;
+	pinctrl-names = "default";
+};
+
+&i2s1 {
+	status = "okay";
+	pinctrl-0 = <&i2s1_default>;
+	pinctrl-names = "default";
+};
+
+&flash0 { reg = <0x0 DT_SIZE_M(16)>; ranges = <0x0 0x0 DT_SIZE_M(16)>; };
+&psram0 { status = "okay"; size = <DT_SIZE_M(8)>; };
