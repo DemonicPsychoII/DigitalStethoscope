@@ -172,6 +172,30 @@ class AnnexHoldTest(unittest.TestCase):
             self.assertEqual(("release",) in calls, released)
 
 
+class RemoteFollowTest(unittest.TestCase):
+    def test_a_failed_hold_renewal_does_not_end_the_run(self):
+        answers = iter([b"building\n\x1erunning", b"done\n\x1e0"])
+        clock = iter(range(0, 100_000, 1000))
+        hold = local_ci.AnnexHold(1)
+        with (
+            mock.patch.object(
+                local_ci,
+                "ssh",
+                lambda *arguments, **options: subprocess.CompletedProcess(
+                    [], 0, next(answers), b""
+                ),
+            ),
+            mock.patch.object(
+                hold, "ensure", side_effect=local_ci.StageFailure("coordinator down")
+            ) as renewal,
+            mock.patch.object(local_ci.time, "monotonic", lambda: next(clock)),
+            mock.patch.object(local_ci.time, "sleep"),
+            mock.patch("sys.stdout"),
+        ):
+            self.assertEqual(local_ci.remote_follow("scratch", hold), 0)
+        renewal.assert_called_once()
+
+
 class FollowTest(unittest.TestCase):
     def test_a_run_whose_process_is_gone_is_reported_lost(self):
         with tempfile.TemporaryDirectory() as directory:

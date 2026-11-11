@@ -692,7 +692,17 @@ def remote_follow(scratch: str, hold: AnnexHold) -> int:
         if state != "running":
             return int(state)
         if time.monotonic() - refreshed > renewal_seconds:
-            hold.ensure()
+            # The sleep inhibitor protects the running stage; a failed renewal of the
+            # extra hold is retried at the next interval instead of ending the run.
+            try:
+                hold.ensure()
+            except (
+                StageFailure,
+                subprocess.SubprocessError,
+                OSError,
+                ValueError,
+            ) as error:
+                print(f"(hold renewal failed: {error})", flush=True)
             refreshed = time.monotonic()
         time.sleep(POLL_SECONDS)
 
