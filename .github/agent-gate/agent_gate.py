@@ -703,8 +703,8 @@ def revert_tree(repo: Path, merge: str, first_parent: str, onto: str) -> str | N
 
 def verify_pure_revert(repo: Path, base: str, head: str, reverted: list[str]) -> tuple[bool, str]:
     """True only if head..base is exactly one non-merge commit per reverted merge, each with exactly
-    the tree a conflict-free `git revert -m 1` of a merge already on base produces on its parent.
-    Conflict-resolved or edited reverts fall back to a normal agent review."""
+    the tree a conflict-free `git revert -m 1` of a merge on base's first-parent history produces
+    on its parent. Conflict-resolved or edited reverts fall back to a normal agent review."""
     try:
         commits = _git(repo, "rev-list", "--reverse", "--parents", head, f"^{base}").decode().split("\n")
         commits = [c.split() for c in commits if c.strip()]
@@ -712,13 +712,16 @@ def verify_pure_revert(repo: Path, base: str, head: str, reverted: list[str]) ->
             return False, f"{len(commits)} commit(s) on the branch for {len(reverted)} reverted merge(s)"
         if any(len(c) != 2 for c in commits):
             return False, "branch contains a merge commit"
+        # Only merges into the base branch itself: a merge inside a merged branch can hide content
+        # from the PR's net diff, and reverting it would restore that content unreviewed.
+        base_merges = set(_git(repo, "rev-list", "--first-parent", "--merges", base).decode().split())
         wanted: list[tuple[str, str]] = []
         for merge in reverted:
             parents = _git(repo, "rev-list", "--parents", "-n1", merge).decode().split()
             if len(parents) != 3:
                 return False, f"{merge[:7]} is not a merge commit"
-            if subprocess.run(["git", "-C", str(repo), "merge-base", "--is-ancestor", merge, base]).returncode:
-                return False, f"{merge[:7]} is not on the base branch"
+            if parents[0] not in base_merges:
+                return False, f"{merge[:7]} is not a merge on the base branch's first-parent history"
             if _git(repo, "rev-parse", f"{parents[0]}^{{tree}}") == _git(repo, "rev-parse", f"{parents[1]}^{{tree}}"):
                 return False, f"{merge[:7]} has an empty diff"
             wanted.append((parents[0], parents[1]))

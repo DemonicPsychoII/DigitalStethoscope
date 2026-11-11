@@ -548,6 +548,28 @@ class RevertVerificationTests(unittest.TestCase):
         ok, detail = g.verify_pure_revert(self.repo, "integration", head, [self.merge])
         self.assertTrue(ok, detail)
 
+    def test_merge_inside_a_merged_branch_rejected(self):
+        """A crafted merge inside a feature branch drops a commit's content, so the PR's net diff
+        hides it; "reverting" that inner merge would bring the hidden content back unreviewed."""
+        git(self.repo, "checkout", "-qb", "side", "integration")
+        (self.repo / "side.txt").write_text("side\n")
+        git(self.repo, "add", ".")
+        git(self.repo, "commit", "-qm", "side")
+        git(self.repo, "checkout", "-qb", "crafted", "integration")
+        (self.repo / "hidden.txt").write_text("weakened gate\n")
+        git(self.repo, "add", ".")
+        git(self.repo, "commit", "-qm", "hidden")
+        git(self.repo, "merge", "-q", "--no-ff", "-m", "crafted", "side")
+        git(self.repo, "rm", "-q", "hidden.txt")
+        git(self.repo, "commit", "-q", "--amend", "-m", "crafted")
+        inner = git(self.repo, "rev-parse", "HEAD")
+        git(self.repo, "checkout", "-q", "integration")
+        git(self.repo, "merge", "-q", "--no-ff", "-m", "Merge crafted", "crafted")
+        head = self._revert_branch(inner)
+        ok, detail = g.verify_pure_revert(self.repo, "integration", head, [inner])
+        self.assertFalse(ok)
+        self.assertIn("first-parent", detail)
+
 
 def gate_source(agent_value, bot_value, agent_indent="        "):
     """Two functions whose surrounding lines are identical, so their hunks differ only in position."""
