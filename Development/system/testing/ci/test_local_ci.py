@@ -249,6 +249,7 @@ class RemoteCleanupTest(unittest.TestCase):
             deadline = time.monotonic() + 10
             while not ready.exists() and time.monotonic() < deadline:
                 time.sleep(0.05)
+            self.assertTrue(ready.exists(), "member did not install its TERM trap")
             script = local_ci.cleanup_script(shlex.quote(str(scratch)))
             subprocess.run(["bash", "-c", script], check=True, timeout=30)
             reaper.join(timeout=10)
