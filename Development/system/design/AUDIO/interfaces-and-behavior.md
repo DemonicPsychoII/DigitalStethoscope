@@ -103,12 +103,17 @@ yet.
 | Quantity | Derivation | Value |
 | --- | --- | --- |
 | Block period | 64 frames ÷ 16,000 Hz | 4 ms |
+| Block size | 64 frames × 2 slots × 4 bytes; two slots because the driver accepts only stereo, 4 bytes because a 24-bit sample needs a 32-bit slot [1] | 512 bytes |
+| RX pool | 3 completed blocks waiting + 1 in DMA + 1 lent to the audio thread | 5 blocks, 2,560 bytes |
+| TX pool | 4 queued blocks (the primed ones, 1 of them in DMA) + 1 being filled | 5 blocks, 2,560 bytes |
+| Mono working buffer | 64 samples × 4 bytes | 256 bytes |
 | RX reserve | 3 waiting blocks × 4 ms | The thread may be up to 12 ms late before RX overruns |
 | TX reserve | 3 queued blocks behind the one in DMA × 4 ms | The thread may be up to 12 ms late before TX runs empty |
-| Transport delay | 1 RX block + 4 TX blocks, × 4 ms | About 20 ms plus processing, below the P03 target of 30 ms |
+| Transport delay | 1 RX block + 4 TX blocks, × 4 ms | About 20 ms plus processing, at most 23 ms with the 3 ms budget; below the P03 target of 30 ms |
+| 128-frame blocks instead | 8 ms per block; a reserve of at least 12 ms needs 3 TX blocks in flight, (3 − 1) × 8 ms = 16 ms, and the delay becomes (1 + 3) × 8 ms = 32 ms | Above the 30 ms target, so 64 frames were chosen |
 | Processing budget | Three quarters of the block period (P02) | At most 3 ms per block |
 | Block waits | 5 block periods (P11) | 20 ms; a normal block arrives within 4 ms |
-| Internal RAM | 2 pools × 5 × 512 bytes, plus the 256-byte mono buffer | 5,376 bytes, plus thread stack and driver descriptors |
+| Internal RAM | 2,560 + 2,560 + 256 bytes | 5,376 bytes, plus thread stack and driver descriptors |
 
 The transport delay and the reserves are derived from the driver behavior [1], not measured. P03
 remains judged by ear under REQ-05.
