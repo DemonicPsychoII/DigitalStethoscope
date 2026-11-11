@@ -11,10 +11,19 @@ that status (from the GitHub Actions app), so this file is the merge policy. It 
   4. every `<!-- owner-question id=X -->` (body or trusted comment) has a matching trusted
      `<!-- owner-answer id=X -->` comment — resolving a thread is not an answer;
   5. an independent agent session or an allowlisted review bot approves the current SHA;
-     a machine-verified pure revert needs no review;
+     a machine-verified pure revert needs no review. An agent approval of an earlier commit is
+     carried forward when the PR's own diff against its current base is unchanged;
   6. critical/major and unclassified conversations are resolved; explicit minor/nitpick findings may stay open;
   7. configured and GitHub-required checks pass. Optional checks are advisory when
-     required_checks_only is enabled.
+     required_checks_only is enabled;
+  8. agent-managed PRs that change the gate or the workflows are class `policy`.
+
+Waiting is `pending`, not `failure`: a missing, stale or requested review only waits for the
+reviewer. `failure` is kept for problems the author must fix.
+
+Agent verdict markers are read from trusted PR comments and from submitted PR review bodies.
+CodeRabbit is required only when the PR carries the `coderabbit` label or CodeRabbit has already
+approved, requested changes or been dismissed on it.
 
 A filled agent-author marker opts a PR into agent metadata requirements. Human and
 other bot PRs without a marker (or with untouched template placeholders) still need
@@ -43,6 +52,7 @@ Stdlib only; `evaluate()` is pure and unit-tested in test_agent_gate.py.
 from __future__ import annotations
 
 import fnmatch
+import hashlib
 import json
 import os
 import re
@@ -67,6 +77,11 @@ REPORT_BOTS = frozenset({"github-actions[bot]"})
 CLASSES = ("quick-fix", "feature", "policy", "revert")
 NEEDS_OWNER_APPROVAL = frozenset({"feature", "policy"})
 GREEN_CONCLUSIONS = frozenset({"success", "skipped", "neutral"})
+# Changing these needs a separate `policy` PR, so a fix PR cannot weaken the checks it must pass.
+POLICY_CLASS_PATHS = (".github/agent-gate/", ".github/workflows/")
+CODERABBIT_LABEL = "coderabbit"
+# The compare API lists at most this many files; a full list cannot be told apart from a truncated one.
+COMPARE_FILE_LIMIT = 300
 
 _SHA = re.compile(r"^[0-9a-f]{40}$")
 _VALUE = re.compile(r"^[A-Za-z0-9._:/@+-]{1,200}$")
@@ -77,6 +92,8 @@ _AUTHOR = re.compile(r"<!--[ \t]*agent-author[ \t]+(.*?)[ \t]*-->", re.S)
 _REVERT = re.compile(r"<!--[ \t]*agent-revert[ \t]+([^>]*?)[ \t]*-->")
 # Line-anchored: a marker quoted in a reply (`> <!-- agent-review ... -->`) is not a review.
 _REVIEW = re.compile(r"^[ \t]*<!--[ \t]*agent-review[ \t]+([^>]*?)[ \t]*-->", re.M)
+_REVIEW_START = re.compile(r"^[ \t]*<!--[ \t]*agent-review\b", re.M)
+_RUN_LINK = re.compile(r"\(\[run\]\([^)]*\)\)")
 # Owner markers, line-anchored like reviews.
 _OWNER_APPROVAL = re.compile(r"^[ \t]*<!--[ \t]*owner-approval[ \t]+([^>]*?)[ \t]*-->", re.M)
 _OWNER_QUESTION = re.compile(r"^[ \t]*<!--[ \t]*owner-question[ \t]+([^>]*?)[ \t]*-->", re.M)
@@ -173,19 +190,31 @@ def parse_reverted(body: str) -> list[str]:
     return []
 
 
-def parse_review(body: str) -> dict[str, str] | None:
-    """The LAST valid review marker in one comment (a comment is one verdict)."""
-    found = None
-    for match in _REVIEW.finditer(strip_code(body)):
-        attrs = parse_attrs(match.group(1))
+def review_attempts(body: str) -> list[dict[str, str] | None]:
+    """Every line-anchored agent-review marker attempt in one body, in order; None where the
+    attempt is malformed. Each attempt is judged on its own, so a valid earlier marker cannot
+    hide a malformed later one."""
+    text = strip_code(body)
+    attempts: list[dict[str, str] | None] = []
+    for start in _REVIEW_START.finditer(text):
+        match = _REVIEW.match(text, start.start())
+        attrs = parse_attrs(match.group(1)) if match else {}
         if (
             attrs.get("verdict") in {"approve", "changes"}
             and _SHA.match(attrs.get("sha", "").lower())
             and _valid(attrs, ("reviewer", "session"))
         ):
             attrs["sha"] = attrs["sha"].lower()
-            found = attrs
-    return found
+            attempts.append(attrs)
+        else:
+            attempts.append(None)
+    return attempts
+
+
+def parse_review(body: str) -> dict[str, str] | None:
+    """The verdict of one comment or review body: its LAST marker attempt, if that is valid."""
+    attempts = review_attempts(body)
+    return attempts[-1] if attempts else None
 
 
 def risk_section_problems(body: str) -> list[str]:
@@ -218,6 +247,14 @@ def risk_section_problems(body: str) -> list[str]:
 
 
 @dataclass
+class CarryForward:
+    """Whether an approval of the earlier commit `sha` still covers the head (see gather)."""
+    sha: str
+    allowed: bool
+    detail: str
+
+
+@dataclass
 class Inputs:
     number: int
     state: str  # "open" | "closed"
@@ -237,6 +274,10 @@ class Inputs:
     native_reviews: list[dict[str, Any]] = field(default_factory=list)
     allow_minor_coderabbit_findings: bool = False
     review_comments: list[dict[str, Any]] = field(default_factory=list)
+    # Submitted PR reviews in comment shape (review_records); their bodies can carry verdict markers.
+    review_bodies: list[dict[str, Any]] = field(default_factory=list)
+    approval_carry_forward: CarryForward | None = None
+    coderabbit_label: bool = False
     # Compatibility for legacy owner-approval configurations.
     owner_label: bool = False
     owner_label_name: str = "approved"
@@ -272,13 +313,27 @@ def trusted(comment: dict[str, Any]) -> bool:
         and REPORT_MARKER not in (comment.get("body") or "")
 
 
-def latest_review(
-    comments: list[dict[str, Any]], reviewer_logins: frozenset[str] = frozenset()
-) -> tuple[dict[str, str] | None, dict[str, Any] | None]:
-    """The newest trusted comment that carries a valid review marker. With `reviewer_logins`
-    configured, only those accounts (e.g. a dedicated reviewer GitHub App) can post verdicts."""
-    ordered = sorted(comments, key=lambda c: (c.get("created_at") or "", c.get("id") or 0))
-    for comment in reversed(ordered):
+def review_records(reviews: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Submitted PR reviews in the comment shape used by latest_review(). Reviewers often submit
+    their verdict as a GitHub review rather than a PR comment. Pending drafts are not published
+    and a dismissed review is withdrawn, like a deleted comment, so neither carries a verdict."""
+    return [
+        {"id": r.get("id") or 0, "body": r.get("body") or "", "created_at": r["submitted_at"],
+         "login": (r.get("user") or {}).get("login", ""), "association": r.get("author_association", "")}
+        for r in reviews
+        if r.get("submitted_at") and r.get("state") not in {"PENDING", "DISMISSED"}
+    ]
+
+
+def _verdict_candidates(
+    comments: list[dict[str, Any]], reviewer_logins: frozenset[str]
+) -> list[tuple[tuple[str, bool, int], dict[str, str] | None, dict[str, Any]]]:
+    """Accepted comments and review bodies containing an agent-review marker, oldest first. The
+    verdict is None when the body's last marker attempt is malformed. IDs are not comparable across
+    comments and reviews, so a same-second tie sorts `changes` and malformed markers as newest
+    (fail closed)."""
+    found = []
+    for comment in comments:
         if reviewer_logins:
             ok = comment.get("login") in reviewer_logins
         else:
@@ -286,10 +341,41 @@ def latest_review(
         body = comment.get("body") or ""
         if not ok or REPORT_MARKER in body:
             continue
-        review = parse_review(body)
+        attempts = review_attempts(body)
+        if not attempts:
+            continue
+        review = attempts[-1]
+        key = (comment.get("created_at") or "", review is None or review["verdict"] == "changes",
+               comment.get("id") or 0)
+        found.append((key, review, comment))
+    return sorted(found, key=lambda candidate: candidate[0])
+
+
+def latest_review(
+    comments: list[dict[str, Any]], reviewer_logins: frozenset[str] = frozenset()
+) -> tuple[dict[str, str] | None, dict[str, Any] | None]:
+    """The newest trusted comment or review body that carries a valid review marker. With
+    `reviewer_logins` configured, only those accounts (e.g. a dedicated reviewer GitHub App) can
+    post verdicts."""
+    for _, review, comment in reversed(_verdict_candidates(comments, reviewer_logins)):
         if review:
             return review, comment
     return None, None
+
+
+def malformed_review(
+    comments: list[dict[str, Any]], reviewer_logins: frozenset[str] = frozenset()
+) -> dict[str, Any] | None:
+    """The newest marker-bearing comment, if its last agent-review marker attempt is malformed.
+    An older malformed marker that a later valid verdict superseded is harmless."""
+    candidates = _verdict_candidates(comments, reviewer_logins)
+    if candidates and candidates[-1][1] is None:
+        return candidates[-1][2]
+    return None
+
+
+def verdict_sources(inputs: Inputs) -> list[dict[str, Any]]:
+    return [*inputs.comments, *inputs.review_bodies]
 
 
 def family(model: str) -> str:
@@ -394,18 +480,66 @@ def recorded_review_fallback(inputs: Inputs) -> bool:
     return False
 
 
+def agent_terminal_items(inputs: Inputs, author: dict[str, str] | None) -> list[tuple[str, str]]:
+    """Agent verdict problems the author must fix. They hold whatever CodeRabbit decided or is
+    still to decide, so a native approval or a requested CodeRabbit review never hides them."""
+    sources = verdict_sources(inputs)
+    malformed = malformed_review(sources, inputs.reviewer_logins)
+    if malformed is not None:
+        return [("fail", f"latest agent-review marker (by {malformed.get('login') or 'unknown'} at "
+                         f"{malformed.get('created_at') or 'unknown time'}) is malformed — post a valid "
+                         "`<!-- agent-review verdict=.. sha=<full sha> reviewer=.. session=.. -->`")]
+    review, _ = latest_review(sources, inputs.reviewer_logins)
+    if review is None:
+        return []
+    if review["verdict"] == "changes" and review["sha"] == inputs.head_sha.lower():
+        return [("fail", f"latest agent review of {inputs.head_sha[:7]} requests changes ({review['reviewer']})")]
+    if review["verdict"] == "approve" and author and review["session"] == author["session"]:
+        return [("fail", "reviewer session equals the author session — use a separate reviewer")]
+    return []
+
+
+def agent_review_items(inputs: Inputs) -> list[tuple[str, str]]:
+    """The agent verdict once agent_terminal_items() found nothing terminal: approved, or waiting."""
+    sha7 = inputs.head_sha[:7]
+    review, _ = latest_review(verdict_sources(inputs), inputs.reviewer_logins)
+    if review is None:
+        return [("pending", f"waiting for an agent review — a separate reviewer session must approve sha {sha7}")]
+    reviewed7 = review["sha"][:7]
+    if review["verdict"] != "approve":
+        return [("pending", f"latest agent review requested changes at {reviewed7}; "
+                            f"waiting for a re-review of {sha7}")]
+    who = f"{review['reviewer']} session {review['session']}"
+    if review["sha"] == inputs.head_sha.lower():
+        return [("ok", f"approved at {sha7} by {who}")]
+    carry = inputs.approval_carry_forward
+    if carry is not None and carry.sha == review["sha"] and carry.allowed:
+        return [("ok", f"approval carried forward from {reviewed7} ({who}): {carry.detail}; "
+                       "changes that arrived through the base were not reviewed")]
+    why = carry.detail if carry is not None and carry.sha == review["sha"] else "carry-forward not evaluated"
+    return [("pending", f"latest agent approval is for {reviewed7}, head is {sha7} and cannot be carried "
+                        f"forward ({why}); waiting for a re-review")]
+
+
 def review_items(inputs: Inputs, author: dict[str, str] | None) -> list[tuple[str, str]]:
+    terminal = agent_terminal_items(inputs, author)
+    if terminal:
+        return terminal
     # Native reviews come from the GitHub API, not text that a PR can imitate.
     bot_reviews = [r for r in inputs.native_reviews
                    if (r.get("user") or {}).get("type") == "Bot"
                    and inputs.review_bots.get((r.get("user") or {}).get("login"))
                        == (r.get("user") or {}).get("id")]
     decisions = [r for r in bot_reviews if r.get("state") in {"APPROVED", "CHANGES_REQUESTED", "DISMISSED"}]
+    sha7 = inputs.head_sha[:7]
+    if not decisions and inputs.coderabbit_label and not recorded_review_fallback(inputs):
+        return [("pending", f"label `{CODERABBIT_LABEL}` requests a CodeRabbit review; waiting for it on {sha7}"),
+                *agent_review_items(inputs)]
     if decisions:
         review = max(decisions, key=lambda r: r.get("id", 0))
         login = review["user"]["login"]
         if review.get("commit_id") != inputs.head_sha:
-            fallback, _ = latest_review(inputs.comments, inputs.reviewer_logins)
+            fallback, _ = latest_review(verdict_sources(inputs), inputs.reviewer_logins)
             if fallback is None or (review.get("state") != "APPROVED" and not recorded_review_fallback(inputs)):
                 return [("pending", f"{login} must review the current head SHA")]
             # Validate the replacement review below; fallback never waives other gates.
@@ -418,17 +552,15 @@ def review_items(inputs: Inputs, author: dict[str, str] | None) -> list[tuple[st
             return [("fail", f"{login} requests changes on the current head")]
         else:
             return [("pending", f"{login} has not approved the current head")]
-    sha7 = inputs.head_sha[:7]
-    review, _ = latest_review(inputs.comments, inputs.reviewer_logins)
-    if review is None:
-        return [("fail", f"no agent review — a separate reviewer session must approve sha {sha7}")]
-    if review["sha"] != inputs.head_sha.lower():
-        return [("fail", f"latest agent review is for {review['sha'][:7]}, head is {sha7} — re-review")]
-    if review["verdict"] != "approve":
-        return [("fail", f"latest agent review of {sha7} requests changes ({review['reviewer']})")]
-    if author and review["session"] == author["session"]:
-        return [("fail", "reviewer session equals the author session — use a separate reviewer")]
-    return [("ok", f"approved at {sha7} by {review['reviewer']} session {review['session']}")]
+    return agent_review_items(inputs)
+
+
+def scope_guard_items(inputs: Inputs, klass: str) -> list[tuple[str, str]]:
+    touched = [path for path in inputs.changed_files if path.startswith(POLICY_CLASS_PATHS)]
+    if not touched or klass == "policy":
+        return []
+    return [("fail", f"class={klass or 'none'} changes {touched[0]}: CI and gate changes must be a separate "
+                     "`policy` PR; fix a failing check in the code under test, not by weakening the check")]
 
 
 def policy_files(inputs: Inputs) -> list[str]:
@@ -478,6 +610,7 @@ def evaluate(inputs: Inputs) -> Decision:
         items.extend(("fail", p) for p in risk)
         if not risk:
             items.append(("ok", "Risk & rollback section filled"))
+        items.extend(scope_guard_items(inputs, klass))
     else:
         items.append(("ok", "PR has no agent authorship declaration; agent metadata is not required"))
 
@@ -495,7 +628,7 @@ def evaluate(inputs: Inputs) -> Decision:
             notes.append(f"Revert fast-track not applied (class={klass or 'none'}): {inputs.revert[1]}")
         reviewed = review_items(inputs, author)
         items.extend(reviewed)
-        review, _ = latest_review(inputs.comments, inputs.reviewer_logins)
+        review, _ = latest_review(verdict_sources(inputs), inputs.reviewer_logins)
         if reviewed[0][0] == "ok" and author and review \
                 and family(review["reviewer"].split("/")[-1]) == family(author["model"]):
             notes.append("Reviewer is the same model family as the author; a different provider is preferred "
@@ -548,7 +681,24 @@ def _git(repo: Path, *args: str, stdin: bytes | None = None) -> bytes:
 def patch_id(repo: Path, old: str, new: str) -> str:
     diff = _git(repo, "diff", "--no-color", "--no-ext-diff", "--full-index", old, new)
     out = _git(repo, "patch-id", "--stable", stdin=diff).decode().split()
-    return out[0] if out else ""
+    if not out:
+        return ""
+    # Binary and `-diff` files appear only as "Binary files ... differ". Older git hashes that line
+    # without the content, and `--text` would not help: patch-id stops hashing a line at a NUL byte.
+    # Pinning each such file to its exact blobs keeps a revert that alters one from passing as an
+    # exact inverse, whatever the git version.
+    binary_files: list[bytes] = []
+    file_header = index_line = b""
+    for line in diff.splitlines():
+        if line.startswith(b"diff --git "):
+            file_header, index_line = line, b""
+        elif line.startswith(b"index "):
+            index_line = line
+        elif line.startswith(b"Binary files ") or line == b"GIT binary patch":
+            binary_files.append(file_header + b"\n" + index_line)
+    if not binary_files:
+        return out[0]
+    return hashlib.sha256(b"\n".join([out[0].encode(), *sorted(binary_files)])).hexdigest()
 
 
 def verify_pure_revert(repo: Path, base: str, head: str, reverted: list[str]) -> tuple[bool, str]:
@@ -687,6 +837,68 @@ class GitHub:
                 out.append(f["previous_filename"])
         return out
 
+    def diff_fingerprint(self, base: str, commit: str) -> tuple[str | None, str]:
+        """A hash of the PR-style diff `base...commit` (merge base to commit), or None and why not."""
+        comparison_name = f"{base}...{commit[:7]}"
+        try:
+            comparison = self.get(f"repos/{self.repo}/compare/{urllib.parse.quote(base, safe='')}...{commit}")
+        except urllib.error.HTTPError as error:
+            return None, f"{comparison_name} is not resolvable through the compare API (HTTP {error.code})"
+        files = comparison.get("files") or []
+        if len(files) >= COMPARE_FILE_LIMIT:
+            return None, f"{comparison_name} lists {len(files)} files and may be truncated"
+        without_patch = [changed["filename"] for changed in files if "patch" not in changed]
+        if without_patch:
+            return None, f"{without_patch[0]} has no patch in {comparison_name}"
+        entries = sorted([changed["filename"], changed.get("previous_filename") or "", changed["status"],
+                          changed["patch"]] for changed in files)
+        return hashlib.sha256(json.dumps(entries).encode()).hexdigest(), ""
+
+    def force_pushed_heads(self, number: int) -> set[str]:
+        """Heads before and after each force-push of this PR: API evidence that a commit no longer
+        in the PR's commits once was its head."""
+        owner, name = self.repo.split("/")
+        query = """query($o:String!,$n:String!,$p:Int!,$c:String){repository(owner:$o,name:$n){
+          pullRequest(number:$p){timelineItems(itemTypes:[HEAD_REF_FORCE_PUSHED_EVENT],first:100,after:$c){
+            nodes{... on HeadRefForcePushedEvent{beforeCommit{oid} afterCommit{oid}}}
+            pageInfo{hasNextPage endCursor}}}}}"""
+        heads: set[str] = set()
+        cursor = None
+        while True:
+            data = self.graphql(query, {"o": owner, "n": name, "p": number, "c": cursor})
+            timeline = data["repository"]["pullRequest"]["timelineItems"]
+            for event in timeline["nodes"]:
+                for side in ("beforeCommit", "afterCommit"):
+                    if (event.get(side) or {}).get("oid"):
+                        heads.add(event[side]["oid"].lower())
+            if not timeline["pageInfo"]["hasNextPage"]:
+                return heads
+            cursor = timeline["pageInfo"]["endCursor"]
+
+    def approval_carry_forward(self, number: int, base: str, approved: str, head: str) -> CarryForward:
+        """An approval of `approved` still covers `head` when that commit belonged to this PR and
+        the PR's own diff against its current base is identical. Comparing through the API, not
+        local git objects, keeps the approval across a base merge, update-branch or a stacked PR's
+        new base, while any change to the PR's own patch needs a new review."""
+        pull_request_commits = {commit["sha"].lower()
+                                for commit in self.paginate(f"repos/{self.repo}/pulls/{number}/commits")}
+        if approved in pull_request_commits:
+            origin = "a commit of this PR"
+        elif approved in self.force_pushed_heads(number):
+            origin = "a head of this PR before a force-push"
+        else:
+            return CarryForward(approved, False, f"{approved[:7]} is neither a commit of this PR nor a head "
+                                                 "it had before a force-push")
+        approved_fingerprint, problem = self.diff_fingerprint(base, approved)
+        if approved_fingerprint is None:
+            return CarryForward(approved, False, problem)
+        head_fingerprint, problem = self.diff_fingerprint(base, head)
+        if head_fingerprint is None:
+            return CarryForward(approved, False, problem)
+        if approved_fingerprint != head_fingerprint:
+            return CarryForward(approved, False, f"the PR's own diff against {base} changed since {approved[:7]}")
+        return CarryForward(approved, True, f"{approved[:7]} is {origin} and the PR's own diff against {base} is identical")
+
     def ruleset_required_checks(self, branch: str) -> list[str]:
         try:
             rules = self.paginate(f"repos/{self.repo}/rules/branches/{urllib.parse.quote(branch)}")
@@ -750,7 +962,14 @@ def gather(gh: GitHub, number: int, config: dict[str, Any], repo_dir: Path | Non
          "association": comment.get("author_association", "")}
         for comment in review_comments
     )
-    native_reviews = gh.paginate(f"repos/{gh.repo}/pulls/{number}/reviews") if review_bots else []
+    reviews = gh.paginate(f"repos/{gh.repo}/pulls/{number}/reviews")
+    native_reviews = reviews if review_bots else []
+    review_bodies = review_records(reviews)
+    reviewer_logins = frozenset(config.get("reviewer_logins", []))
+    latest, _ = latest_review([*comments, *review_bodies], reviewer_logins)
+    carry_forward = None
+    if latest and latest["verdict"] == "approve" and latest["sha"] != head.lower():
+        carry_forward = gh.approval_carry_forward(number, base, latest["sha"], head)
     return Inputs(
         number=number, state=pr["state"], draft=bool(pr.get("draft")), head_sha=head, body=body,
         comments=comments,
@@ -759,11 +978,13 @@ def gather(gh: GitHub, number: int, config: dict[str, Any], repo_dir: Path | Non
         unresolved_threads=gh.unresolved_threads(number, review_bots if allow_minor else None, review_comments),
         required_checks=required,
         ignore_checks=frozenset(config.get("ignore_checks", [])),
-        reviewer_logins=frozenset(config.get("reviewer_logins", [])),
+        reviewer_logins=reviewer_logins,
         require_owner_approval=require_owner,
         required_checks_only=config.get("required_checks_only", False),
         review_bots=review_bots, native_reviews=native_reviews,
         allow_minor_coderabbit_findings=allow_minor, review_comments=review_comments,
+        review_bodies=review_bodies, approval_carry_forward=carry_forward,
+        coderabbit_label=CODERABBIT_LABEL in labels,
         owner_label=gh.owner_label(number, labels, label_name) if require_owner else False,
         owner_label_name=label_name,
         changed_files=gh.changed_files(number),
@@ -783,7 +1004,8 @@ def publish(gh: GitHub, inputs: Inputs, decision: Decision, run_url: str) -> Non
         if c["login"] in REPORT_BOTS and c["body"].startswith(REPORT_MARKER)
     ]
     if existing:
-        if existing[-1]["body"].strip() != report.strip():
+        # The run link differs on every run; edit only when the verdict text itself changed.
+        if _RUN_LINK.sub("", existing[-1]["body"]).strip() != _RUN_LINK.sub("", report).strip():
             gh.request("PATCH", f"repos/{gh.repo}/issues/comments/{existing[-1]['id']}", {"body": report})
     elif inputs.state == "open":
         gh.request("POST", f"repos/{gh.repo}/issues/{inputs.number}/comments", {"body": report})
