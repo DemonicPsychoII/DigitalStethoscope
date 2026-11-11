@@ -684,36 +684,27 @@ def _git(repo: Path, *args: str, stdin: bytes | None = None) -> bytes:
     ).stdout
 
 
-def patch_id(repo: Path, old: str, new: str) -> str:
-    diff = _git(repo, "diff", "--no-color", "--no-ext-diff", "--full-index", old, new)
-    # `--stable` alone ignores whitespace, so a "revert" that only re-indents a line, such as moving
-    # a return out of its condition, would pass as the exact inverse. `--verbatim` (git 2.39+)
-    # hashes whitespace too; an older git fails the call, and verification then fails closed.
-    out = _git(repo, "patch-id", "--verbatim", stdin=diff).decode().split()
-    if not out:
-        return ""
-    # Binary and `-diff` files appear only as "Binary files ... differ". Older git hashes that line
-    # without the content, and `--text` would not help: patch-id stops hashing a line at a NUL byte.
-    # Pinning each such file to its exact blobs keeps a revert that alters one from passing as an
-    # exact inverse, whatever the git version.
-    binary_files: list[bytes] = []
-    file_header = index_line = b""
-    for line in diff.splitlines():
-        if line.startswith(b"diff --git "):
-            file_header, index_line = line, b""
-        elif line.startswith(b"index "):
-            index_line = line
-        elif line.startswith(b"Binary files ") or line == b"GIT binary patch":
-            binary_files.append(file_header + b"\n" + index_line)
-    if not binary_files:
-        return out[0]
-    return hashlib.sha256(b"\n".join([out[0].encode(), *sorted(binary_files)])).hexdigest()
+def revert_tree(repo: Path, merge: str, first_parent: str, onto: str) -> str | None:
+    """The tree `git revert -m 1 <merge>` produces on `onto`: the three-way merge of the merge's first
+    parent into `onto`, with the merge itself as the base. None when that merge conflicts. Comparing
+    whole trees catches what a patch-id comparison cannot: whitespace, hunk positions, and bytes
+    after a NUL. `--merge-base` needs git 2.40 or later; an older git fails closed."""
+    result = subprocess.run(
+        ["git", "-C", str(repo), "merge-tree", "--write-tree", "--no-messages",
+         f"--merge-base={merge}", onto, first_parent],
+        capture_output=True, timeout=120,
+    )
+    if result.returncode == 1:
+        return None
+    if result.returncode != 0:
+        raise subprocess.CalledProcessError(result.returncode, result.args, result.stdout, result.stderr)
+    return result.stdout.split()[0].decode()
 
 
 def verify_pure_revert(repo: Path, base: str, head: str, reverted: list[str]) -> tuple[bool, str]:
-    """True only if head..base is exactly one non-merge commit per reverted merge, each the clean
-    inverse of a `git revert -m 1` of a merge already on base. Conflict-resolved reverts differ in
-    patch-id and fall back to a normal agent review."""
+    """True only if head..base is exactly one non-merge commit per reverted merge, each with exactly
+    the tree a conflict-free `git revert -m 1` of a merge already on base produces on its parent.
+    Conflict-resolved or edited reverts fall back to a normal agent review."""
     try:
         commits = _git(repo, "rev-list", "--reverse", "--parents", head, f"^{base}").decode().split("\n")
         commits = [c.split() for c in commits if c.strip()]
@@ -721,22 +712,22 @@ def verify_pure_revert(repo: Path, base: str, head: str, reverted: list[str]) ->
             return False, f"{len(commits)} commit(s) on the branch for {len(reverted)} reverted merge(s)"
         if any(len(c) != 2 for c in commits):
             return False, "branch contains a merge commit"
-        wanted: list[str] = []
+        wanted: list[tuple[str, str]] = []
         for merge in reverted:
             parents = _git(repo, "rev-list", "--parents", "-n1", merge).decode().split()
             if len(parents) != 3:
                 return False, f"{merge[:7]} is not a merge commit"
             if subprocess.run(["git", "-C", str(repo), "merge-base", "--is-ancestor", merge, base]).returncode:
                 return False, f"{merge[:7]} is not on the base branch"
-            pid = patch_id(repo, parents[1], merge)
-            if not pid:
+            if _git(repo, "rev-parse", f"{parents[0]}^{{tree}}") == _git(repo, "rev-parse", f"{parents[1]}^{{tree}}"):
                 return False, f"{merge[:7]} has an empty diff"
-            wanted.append(pid)
+            wanted.append((parents[0], parents[1]))
         for sha, parent in commits:
-            pid = patch_id(repo, sha, parent)  # inverse of the revert commit == the merge's change
-            if pid not in wanted:
-                return False, f"{sha[:7]} is not a clean inverse of a listed merge"
-            wanted.remove(pid)
+            tree = _git(repo, "rev-parse", f"{sha}^{{tree}}").decode().strip()
+            match = next((pair for pair in wanted if revert_tree(repo, *pair, onto=parent) == tree), None)
+            if match is None:
+                return False, f"{sha[:7]} is not the exact revert of a listed merge"
+            wanted.remove(match)
         return True, "reverts " + ", ".join(m[:7] for m in reverted)
     except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as exc:
         return False, f"git verification failed: {exc}"

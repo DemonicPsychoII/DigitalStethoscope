@@ -152,7 +152,7 @@ Reason: $reason
 ## Risk & rollback
 
 - **What could break:** whatever the reverted change fixed or added is removed again; later PRs that build on it may need follow-up.
-- **How verified:** agent-gate checks this branch is exactly the inverse of the listed merge(s) (git patch-id), and CI runs on the result.
+- **How verified:** agent-gate checks that this branch has exactly the tree a clean `git revert -m 1` of the listed merge(s) produces, and CI runs on the result.
 - **How to revert:** revert this revert: \`$SELF <this PR number>\`.
 
 ## Verification checklist

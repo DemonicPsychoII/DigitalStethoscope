@@ -549,11 +549,19 @@ class RevertVerificationTests(unittest.TestCase):
         self.assertTrue(ok, detail)
 
 
-class WhitespaceExactRevertVerificationTests(unittest.TestCase):
-    """A revert that differs from the exact inverse only in whitespace can change behavior."""
+def gate_source(agent_value, bot_value, agent_indent="        "):
+    """Two functions whose surrounding lines are identical, so their hunks differ only in position."""
+    def function(name, value, indent):
+        return (f"def {name}(approved):\n    checked = approved\n    checked = checked\n    checked = checked\n"
+                f"    if checked:\n{indent}return {value}\n    return False\n\n\n")
+    return (function("agent", agent_value, agent_indent) + function("bot", bot_value, "        ")).encode()
+
+
+class TreeExactRevertVerificationTests(unittest.TestCase):
+    """A pure revert must produce exactly the tree `git revert -m 1` produces, byte for byte."""
 
     GATE = ".github/agent-gate/agent_gate.py"
-    ORIGINAL = "def decide(agent_approved, bot_approved):\n    if agent_approved:\n        return True\n    return False\n"
+    LATE_NUL = b"A" * 9000 + b"\x00"
 
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
@@ -562,26 +570,45 @@ class WhitespaceExactRevertVerificationTests(unittest.TestCase):
         for key, value in (("user.email", "t@t"), ("user.name", "t"), ("commit.gpgsign", "false"),
                            ("core.autocrlf", "false")):
             git(self.repo, "config", key, value)
-        self.gate = self.repo / self.GATE
-        self.gate.parent.mkdir(parents=True)
-        self.gate.write_text(self.ORIGINAL, newline="\n")
+        self.write(".gitattributes", b"rendered/*.svg -diff\n")
+        self.write(self.GATE, gate_source("True", "bot_approved"))
+        self.write("crlf.txt", b"first\r\nsecond\r\n")
+        self.write("trailing.txt", b"value   \nother\t\n")
+        self.write("old-name.txt", b"".join(b"renamed line %d\n" % i for i in range(20)))
+        self.write("image.bin", b"header\x00first\x00")
+        self.write("rendered/overview.svg", b"<svg><text>first</text></svg>\n")
+        self.write("late-nul.dat", self.LATE_NUL + b"before\n")
         git(self.repo, "add", ".")
         git(self.repo, "commit", "-qm", "base")
         git(self.repo, "checkout", "-qb", "feature")
-        self.gate.write_text(self.ORIGINAL.replace("return True", "return bot_approved"), newline="\n")
-        git(self.repo, "commit", "-qam", "use the bot verdict")
+        self.write(self.GATE, gate_source("bot_approved", "bot_approved"))
+        self.write("crlf.txt", b"first\r\nchanged\r\n")
+        self.write("trailing.txt", b"value \nother\t\t\n")
+        git(self.repo, "mv", "old-name.txt", "new-name.txt")
+        self.write("image.bin", b"header\x00second\x00")
+        self.write("rendered/overview.svg", b"<svg><text>second</text></svg>\n")
+        self.write("late-nul.dat", self.LATE_NUL + b"after\n")
+        git(self.repo, "commit", "-qam", "change everything")
         git(self.repo, "checkout", "-q", "integration")
         git(self.repo, "merge", "-q", "--no-ff", "-m", "Merge feature", "feature")
         self.merge = git(self.repo, "rev-parse", "HEAD")
+        diff = git(self.repo, "diff", "-M", f"{self.merge}^1", self.merge)
+        self.assertIn("Binary files", diff)
+        self.assertIn("rename from old-name.txt", diff)
 
     def tearDown(self):
         self.tmp.cleanup()
 
-    def revert_branch(self, content=None):
+    def write(self, path, content):
+        target = self.repo / path
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(content)
+
+    def revert_branch(self, tamper=None):
         git(self.repo, "checkout", "-qb", "revert", "integration")
         git(self.repo, "revert", "--no-edit", "-m", "1", self.merge)
-        if content is not None:
-            self.gate.write_text(content, newline="\n")
+        if tamper is not None:
+            self.write(*tamper)
             git(self.repo, "commit", "-qa", "--amend", "--no-edit")
         head = git(self.repo, "rev-parse", "HEAD")
         git(self.repo, "checkout", "-q", "integration")
@@ -589,9 +616,15 @@ class WhitespaceExactRevertVerificationTests(unittest.TestCase):
         return head
 
     def tampered_reverts(self):
-        dedented = self.ORIGINAL.replace("        return True", "    return True")
-        added = self.ORIGINAL.replace("    return False", "    return True\n    return False")
-        return {"dedented out of the condition": dedented, "statement added": added}
+        return {
+            "re-indented": (self.GATE, gate_source("True", "bot_approved", agent_indent="    ")),
+            "statement added": (self.GATE, gate_source("True", "bot_approved").replace(
+                b"return False", b"return True\n    return False", 1)),
+            "wrong function": (self.GATE, gate_source("bot_approved", "True")),
+            "late NUL file": ("late-nul.dat", self.LATE_NUL + b"smuggled\n"),
+            "altered binary": ("image.bin", b"header\x00smuggled\x00"),
+            "altered non-diffable": ("rendered/overview.svg", b"<svg><text>smuggled</text></svg>\n"),
+        }
 
     def evaluate(self, head):
         verification = g.verify_pure_revert(self.repo, "integration", head, [self.merge])
@@ -605,95 +638,17 @@ class WhitespaceExactRevertVerificationTests(unittest.TestCase):
         d = self.evaluate(head)
         self.assertEqual(d.state, "success", d.items)
 
-    def test_revert_that_changes_indentation_or_adds_a_statement_does_not_verify(self):
-        for name, content in self.tampered_reverts().items():
+    def test_tampered_revert_does_not_verify(self):
+        for name, tamper in self.tampered_reverts().items():
             with self.subTest(case=name):
-                head = self.revert_branch(content)
+                head = self.revert_branch(tamper)
                 ok, detail = g.verify_pure_revert(self.repo, "integration", head, [self.merge])
                 self.assertFalse(ok, detail)
                 d = self.evaluate(head)
                 self.assertEqual(d.state, "failure", d.items)
-                self.assertIn("separate `policy` PR", " ".join(t for s, t in d.items if s == "fail"))
-
-
-class NonDiffableRevertVerificationTests(unittest.TestCase):
-    """Files marked `-diff` (such as generated renders) or binary must be compared by content."""
-
-    def setUp(self):
-        self.tmp = tempfile.TemporaryDirectory()
-        self.repo = Path(self.tmp.name)
-        git(self.repo, "init", "-q", "-b", "integration")
-        for key, value in (("user.email", "t@t"), ("user.name", "t"), ("commit.gpgsign", "false"),
-                           ("core.autocrlf", "false")):
-            git(self.repo, "config", key, value)
-        (self.repo / ".gitattributes").write_bytes(b"rendered/*.svg -diff\n")
-        (self.repo / "rendered").mkdir()
-        self.render = self.repo / "rendered" / "overview.svg"
-        self.render.write_bytes(b"<svg><text>first</text></svg>\n")
-        self.binary = self.repo / "image.bin"
-        self.binary.write_bytes(b"header\x00first\x00")
-        git(self.repo, "add", ".")
-        git(self.repo, "commit", "-qm", "base")
-        git(self.repo, "checkout", "-qb", "feature")
-        self.render.write_bytes(b"<svg><text>second</text></svg>\n")
-        self.binary.write_bytes(b"header\x00second\x00")
-        git(self.repo, "commit", "-qam", "update render and image")
-        git(self.repo, "checkout", "-q", "integration")
-        git(self.repo, "merge", "-q", "--no-ff", "-m", "Merge feature", "feature")
-        self.merge = git(self.repo, "rev-parse", "HEAD")
-        self.assertIn("Binary files", git(self.repo, "diff", f"{self.merge}^1", self.merge))
-
-    def tearDown(self):
-        self.tmp.cleanup()
-
-    def revert_branch(self, tamper=None):
-        git(self.repo, "checkout", "-qb", "revert", "integration")
-        git(self.repo, "revert", "--no-edit", "-m", "1", self.merge)
-        if tamper:
-            path, content = tamper
-            path.write_bytes(content)
-            git(self.repo, "commit", "-qa", "--amend", "--no-edit")
-        head = git(self.repo, "rev-parse", "HEAD")
-        git(self.repo, "checkout", "-q", "integration")
-        return head
-
-    def test_exact_revert_of_non_diffable_and_binary_files_verifies(self):
-        ok, detail = g.verify_pure_revert(self.repo, "integration", self.revert_branch(), [self.merge])
-        self.assertTrue(ok, detail)
-
-    def test_revert_that_alters_a_non_diffable_or_binary_file_does_not_verify(self):
-        for tamper in ((self.render, b"<svg><text>smuggled</text></svg>\n"), (self.binary, b"header\x00smuggled\x00")):
-            with self.subTest(path=tamper[0].name):
-                head = self.revert_branch(tamper)
-                ok, detail = g.verify_pure_revert(self.repo, "integration", head, [self.merge])
-                self.assertFalse(ok, detail)
-                git(self.repo, "branch", "-qD", "revert")
-
-    def test_patch_id_hashes_non_diffable_content(self):
-        original = git(self.repo, "rev-parse", f"{self.merge}^1")
-        changed = self.revert_branch((self.render, b"<svg><text>smuggled</text></svg>\n"))
-        self.assertNotEqual(g.patch_id(self.repo, changed, self.merge), g.patch_id(self.repo, original, self.merge))
-
-    def test_binary_files_are_pinned_even_when_patch_id_ignores_their_content(self):
-        real_git = g._git
-
-        def patch_id_without_binary_content(repo, *args, stdin=None):
-            if args[:1] == ("patch-id",):
-                return b"0123456789abcdef0123456789abcdef01234567 " + b"0" * 40 + b"\n"
-            return real_git(repo, *args, stdin=stdin)
-
-        original = git(self.repo, "rev-parse", f"{self.merge}^1")
-        exact = self.revert_branch()
-        git(self.repo, "branch", "-qD", "revert")
-        for path, content in ((self.render, b"<svg><text>smuggled</text></svg>\n"),
-                              (self.binary, b"header\x00smuggled\x00")):
-            with self.subTest(path=path.name), patch.object(g, "_git", patch_id_without_binary_content):
-                changed = self.revert_branch((path, content))
-                git(self.repo, "branch", "-qD", "revert")
-                expected = g.patch_id(self.repo, original, self.merge)
-                self.assertEqual(g.patch_id(self.repo, exact, self.merge), expected)
-                self.assertNotEqual(g.patch_id(self.repo, changed, self.merge), expected)
-
+                failures = " ".join(t for s, t in d.items if s == "fail")
+                self.assertIn("not a verified pure revert", failures)
+                self.assertIn("separate `policy` PR", failures)
 
 
 class AutomatedPolicyTests(unittest.TestCase):
