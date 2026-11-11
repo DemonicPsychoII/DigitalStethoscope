@@ -1924,3 +1924,31 @@ The Zephyr Project, *ZMS allocation table entry, settings ZMS entries and ESP32-
 Mbed TLS contributors. *`mbedtls_ssl_check_cert_usage` in `library/ssl_tls.c`*. Zephyr Mbed TLS module, revision `098e120afb51877ed814bdc04443890ae12e0642`, as pinned by Zephyr `357467a011cd2557a1a3f0b4be83d817c4addc9b`; publication year unverified. [Source](https://github.com/zephyrproject-rtos/mbedtls/blob/098e120afb51877ed814bdc04443890ae12e0642/library/ssl_tls.c#L8639), accessed 5 November 2026. Inspected: TLS 1.3 requires `digitalSignature` when Key Usage is present; a client requires `serverAuth` (or `anyExtendedKeyUsage`) when Extended Key Usage is present. Source reading, not a target measurement.
 
 **Cited by:** [Server profile design](../Development/system/design/STORAGE/server-profile.md#certificate-checks).
+
+
+<a id="zephyr_esp32_i2s_driver_357467a"></a>
+### zephyr_esp32_i2s_driver_357467a
+
+The Zephyr Project, *ESP32 I2S driver and its Kconfig*, source revision `357467a011cd2557a1a3f0b4be83d817c4addc9b`, [i2s_esp32.c](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/drivers/i2s/i2s_esp32.c) and [Kconfig.esp32](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/drivers/i2s/Kconfig.esp32), accessed 10 November 2026. The driver accepts only two channels and configures standard-mode stereo slots, 32 bits wide for words above 16 bits; it clocks both directions from `I2S_CLK_SRC_DEFAULT` and derives the dividers from sample rate, channel count and word size (a 24-bit word uses a different master-clock multiple than a 32-bit word). An empty TX queue after a completed block sets the error state and stops TX; RX also enters the error state when no free memory-slab block is available for the next transfer. `CONFIG_I2S_ESP32_RX_BLOCK_COUNT` and `CONFIG_I2S_ESP32_TX_BLOCK_COUNT` set the queue depths (default 5). Blocks larger than 4092 bytes are split across DMA descriptors. Source reading, not a target measurement.
+
+**Cited by:** [AUDIO architecture](../Development/system/architecture/AUDIO/README.md), [decision record 10 November 2026](../Development/system/planning/mvp-decisions-2026-11-10.md#first-audio-path).
+
+
+<a id="nico_audio_path_decision_20261110"></a>
+### nico_audio_path_decision_20261110
+
+Nico. *First audio path: internal RAM, 16 kHz, 64-frame blocks, five RX and five TX blocks, left microphone slot*. Personal communication, T3 Code and homelab whiteboard board `audio-path-architecture`, 10 November 2026. Conversation link not recorded.
+
+**Source type:** Project decision. No claim of implementation, measurement or standards conformity.
+
+**Cited by:** [Decision record 10 November 2026](../Development/system/planning/mvp-decisions-2026-11-10.md#first-audio-path), [AUDIO architecture](../Development/system/architecture/AUDIO/README.md).
+
+
+<a id="nico_bringup_hardware_protocol_20260814"></a>
+### nico_bringup_hardware_protocol_20260814
+
+Nico F., *Hardware Test Protocol — ESP32-S3 Bring-up*, DigitalStethoscope repository, [TEST-PROTOCOL.md](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/2a3f03b087f59b114bc5c4c53cb5ecb678a767fe/preThesis/06-bringup-zephyr/TEST-PROTOCOL.md) and wiring notes [HARDWARE.md](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/2a3f03b087f59b114bc5c4c53cb5ecb678a767fe/preThesis/06-bringup-zephyr/HARDWARE.md), repository revision `2a3f03b087f59b114bc5c4c53cb5ecb678a767fe`. Session of 14 August 2026 on an ESP32-S3-DevKitC-1 N16R8; bring-up firmware commit `2cd6d4c818be92f0bf1e1181ef0b4cd7de7ceb14` (retrospective mapping, no flashed-binary hash captured), Zephyr `357467a011cd2557a1a3f0b4be83d817c4addc9b`. Relevant verdicts: T07 INMP441 microphone PASS (left slot with L/R tied to ground, 30 s without errors); T08 PCM5102A probe only; T09 microphone-to-DAC loopback not run; T05 the I2S stream stopped permanently at the first full display redraw because RX overran and stayed in the driver's error state.
+
+**Source type:** Own measurement on archived pre-thesis firmware; not acceptance of the application firmware.
+
+**Cited by:** [AUDIO architecture](../Development/system/architecture/AUDIO/README.md).

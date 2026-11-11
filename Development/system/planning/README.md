@@ -14,6 +14,7 @@ Other documents link here instead of naming the latest decision date.
 | Time synchronization and secure transport | [2 November](mvp-decisions-2026-11-02.md): SNTP inside every TLS setup, computed 12.5 h mapping limit, separate image for URL and certificate; [5 November](mvp-decisions-2026-11-05.md): named server profile | [SNTP design](../design/COMMUNICATION/time-synchronization.md), [TLS design](../design/COMMUNICATION/secure-transport.md), [flash layout](../design/STORAGE/interfaces-and-behavior.md#flash-layout), [server profile](../design/STORAGE/server-profile.md) |
 | Wi-Fi setup, portal and recovery | [19 October](mvp-decisions-2026-10-19.md); [18 October](mvp-decisions-2026-10-18.md) is the discussion record; hotspot name [2 November](mvp-decisions-2026-11-02.md) | [Detailed design](../design/COMMUNICATION/interfaces-and-behavior.md#wi-fi-setup-and-recovery), [Wi-Fi views](../architecture/README.md) |
 | LED and error feedback | [19 October](mvp-decisions-2026-10-19.md) catalogue; [2 November](mvp-decisions-2026-11-02.md) removes the time-synchronization error; [10 November](mvp-decisions-2026-11-10.md): status light on GPIO48, fixed volume until the potentiometer is fitted, rows grouped by subject with unchanged blink codes | [Detailed design](../design/FEEDBACK/catalogue.md), [LED standards](../design/FEEDBACK/led-indication-standards.md) |
+| First audio path | [10 November](mvp-decisions-2026-11-10.md#first-audio-path): internal RAM and a copy step, no PSRAM; 16 kHz with 64-frame blocks; five RX and five TX blocks; microphone on the left slot, copied to both DAC channels; silence-primed Start, Stop discards both queues | [AUDIO architecture](../architecture/AUDIO/README.md) |
 | Schedule | [14 October](mvp-decisions-2026-10-14.md); Jira holds current dates | [Implementation timeline](mvp-implementation-timeline.md) |
 
 ## Decision log
@@ -30,7 +31,7 @@ Other documents link here instead of naming the latest decision date.
 | 19 October | [mvp-decisions-2026-10-19.md](mvp-decisions-2026-10-19.md) | Wi-Fi, portal and feedback resolutions |
 | 2 November | [mvp-decisions-2026-11-02.md](mvp-decisions-2026-11-02.md) | Review of time, TLS and FHIR design: SNTP in TLS setup, drift calculation, provisioning image, flash layout, hotspot name, newest request wins |
 | 5 November | [mvp-decisions-2026-11-05.md](mvp-decisions-2026-11-05.md) | Provisioning image renamed to server profile, apart from Wi-Fi provisioning; on-flash format unchanged |
-| 10 November | [mvp-decisions-2026-11-10.md](mvp-decisions-2026-11-10.md) | First fitted evaluation carrier: RGB status light on GPIO48, fixed 100 % volume until J7 is fitted; catalogue rows grouped by subject, blink codes unchanged |
+| 10 November | [mvp-decisions-2026-11-10.md](mvp-decisions-2026-11-10.md) | First fitted evaluation carrier: RGB status light on GPIO48, fixed 100 % volume until J7 is fitted; catalogue rows grouped by subject, blink codes unchanged; first audio path: 16 kHz, 64-frame blocks, five RX and five TX blocks in internal RAM |
 
 ## Recording a new decision
 
