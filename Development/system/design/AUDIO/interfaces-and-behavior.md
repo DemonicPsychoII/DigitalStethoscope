@@ -70,8 +70,8 @@ block before it requests a TX block, so the thread never holds more than one blo
 | Stop command | Leave the loop, `i2s_stop` | `stopped` event; output silent |
 | Any non-OK result in the loop | `i2s_stop`; the thread waits for commands | Fault event with the failed link; `L2_CONTROL` shows the catalogue error, which requires a restart |
 
-A stream fault includes a deadline miss. If the thread falls more than three blocks behind, the
-driver stops the stream itself [1]. The bring-up session showed that such a stream stays stopped
+A stream fault includes a deadline miss. If the thread falls more than three blocks (12 ms,
+processing included) behind, the driver stops the stream itself [1]. The bring-up session showed that such a stream stays stopped
 until it is configured and started again [2]. A stream fault stays a restart-required error under
 the catalogue ([decision of 11 November](../../planning/mvp-decisions-2026-11-11.md)): a Start after a fault needs a device
 restart.
@@ -107,15 +107,18 @@ yet.
 | RX pool | 3 completed blocks waiting + 1 in DMA + 1 lent to the audio thread | 5 blocks, 2,560 bytes |
 | TX pool | 4 queued blocks (the primed ones, 1 of them in DMA) + 1 being filled | 5 blocks, 2,560 bytes |
 | Mono working buffer | 64 samples × 4 bytes | 256 bytes |
-| RX reserve | 3 waiting blocks × 4 ms | The thread may be up to 12 ms late before RX overruns |
-| TX reserve | 3 queued blocks behind the one in DMA × 4 ms | The thread may be up to 12 ms late before TX runs empty |
-| Transport delay | 1 RX block + 4 TX blocks, × 4 ms | About 20 ms plus processing, at most 23 ms with the 3 ms budget; below the P03 target of 30 ms |
-| 128-frame blocks instead | 8 ms per block; a reserve of at least 12 ms needs 3 TX blocks in flight, (3 − 1) × 8 ms = 16 ms, and the delay becomes (1 + 3) × 8 ms = 32 ms | Above the 30 ms target, so 64 frames were chosen |
+| RX reserve | 3 waiting blocks × 4 ms | 12 ms for processing and lateness together before RX overruns |
+| TX reserve | 3 queued blocks behind the one in DMA × 4 ms | 12 ms for processing and lateness together before TX runs empty; with the 3 ms budget the thread may start a block up to 9 ms late |
+| Transport delay | 4 primed TX blocks × 4 ms. The first RX block fills and is processed while the primed blocks play, so neither adds delay; processing time uses up reserve instead | 16 ms, constant |
+| Converter delay | Digital filters at 16 kHz: INMP441 17.2 ÷ fS [3]; PCM5102A normal-latency filter 20 ÷ fS, selected because FLT is tied to ground on the carrier ([pin map](../../testing/hardware/carrier-bringup/README.md#board-and-pin-map)) [4] | 1.08 ms + 1.25 ms; about 18 ms from sound to line output, below the P03 target of 30 ms |
+| 128-frame blocks instead | 8 ms per block, 6 ms processing budget; the same 9 ms of lateness needs (n − 1) × 8 ms − 6 ms ≥ 9 ms, so n = 3 primed TX blocks | 3 × 8 ms = 24 ms; below 30 ms, but 8 ms more than 64 frames |
+| 32-frame blocks instead | 2 ms per block, 1.5 ms processing budget; (n − 1) × 2 ms − 1.5 ms ≥ 9 ms, so n = 7 primed TX blocks | 7 × 2 ms = 14 ms; 2 ms less than 64 frames, but 1.5 ms per block for processing and twice as many thread wake-ups |
 | Processing budget | Three quarters of the block period (P02) | At most 3 ms per block |
 | Block waits | 5 block periods (P11) | 20 ms; a normal block arrives within 4 ms |
 | Internal RAM | 2,560 + 2,560 + 256 bytes | 5,376 bytes, plus thread stack and driver descriptors |
 
-The transport delay and the reserves are derived from the driver behavior [1], not measured. P03
+The transport delay and the reserves are derived from the driver behavior [1] and the converter
+datasheets [3] [4], not measured. P03
 remains judged by ear under REQ-05.
 
 ## Monitoring
@@ -136,7 +139,7 @@ run at the same rate.
 | Heart sounds after Start | REQ-02 | Audible on both channels within 2 s |
 | Copy step with a known RX block | VT-03 | Both TX slots of every frame equal the left RX slot with its low 8 bits cleared; the right RX slot is ignored |
 | Receive wait expires | VT-01 | Microphone failure; stream stopped; catalogue error |
-| Thread delayed more than 12 ms | VT-02 | Driver stops the stream; fault reported; no hang and no repeated stale audio |
+| Thread more than 12 ms behind, processing included | VT-02 | Driver stops the stream; fault reported; no hang and no repeated stale audio |
 | 10 min of listening under load | VT-02 | No fault; longest iteration time ≤ 3 ms; pool use never reaches 5 blocks; constant TX queue level (no drift) |
 | Tap on the chestpiece | REQ-05 | No noticeable delay |
 
@@ -158,3 +161,16 @@ firmware commit `2cd6d4c818be92f0bf1e1181ef0b4cd7de7ceb14`, Zephyr
 [audio_loopback.c](../../../../preThesis/06-bringup-zephyr/src/audio_loopback.c). Own measurement
 and code on archived pre-thesis firmware.
 [Source register](../../../../thesis-material/quellen.md#nico_bringup_hardware_protocol_20260814).
+
+[3] TDK InvenSense, *INMP441 Omnidirectional Microphone with Bottom Port and I²S Digital Output*,
+document DS-INMP441-00, revision 1.0, 6 February 2014, Table 1 "Electrical Characteristics"
+(digital filter group delay 17.2/fS) and Table 3 "Serial Data Port Timing Specifications" (WS
+frequency 7.8–50 kHz), [datasheet](https://www.farnell.com/datasheets/1824785.pdf), accessed
+11 November 2026.
+[Source register](../../../../thesis-material/quellen.md#tdk_inmp441_datasheet_2014).
+
+[4] Texas Instruments, *PCM510xA 2.1 VRMS, 112/106/100 dB Audio Stereo DAC with PLL and 32-bit,
+384 kHz PCM Interface*, SLAS859C, revised May 2015, electrical characteristics "Filter
+Characteristics–1: Normal" (delay time 20 tS) and Table 11 (BCK rates for PLL operation),
+[datasheet](https://www.ti.com/lit/ds/symlink/pcm5102a.pdf), accessed 11 November 2026.
+[Source register](../../../../thesis-material/quellen.md#ti_pcm510xa_datasheet_2015).

@@ -16,8 +16,9 @@ faults. These are project decisions, not measurements. They build on the
    and separate RX and TX threads were considered and not chosen.
 3. **Processing budget of 3 ms.** One iteration, from the received block to the queued TX block, may
    take at most 3 ms of the 4 ms block period (P02). This replaces the 2 ms proposal.
-4. **Four primed TX blocks.** TX starts with four silent blocks, so the thread may be up to 12 ms
-   late and the transport delay is about 20 ms plus processing.
+4. **Four primed TX blocks.** TX starts with four silent blocks. The thread then has 12 ms for
+   processing and lateness together, so with the 3 ms budget it may start a block up to 9 ms
+   late, and the transport delay is a constant 16 ms.
 5. **Left-aligned samples.** The mono working sample keeps the 24-bit microphone value left-aligned
    in 32 bits with the low 8 bits cleared.
 6. **Stream faults need a restart.** When a stream fails, `L2_AUDIO` stops both links and reports

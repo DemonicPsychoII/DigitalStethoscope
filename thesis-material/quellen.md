@@ -1952,3 +1952,17 @@ Nico F., *Hardware Test Protocol — ESP32-S3 Bring-up*, DigitalStethoscope repo
 **Source type:** Own measurement on archived pre-thesis firmware; not acceptance of the application firmware.
 
 **Cited by:** [AUDIO architecture](../Development/system/architecture/AUDIO/README.md), [AUDIO design](../Development/system/design/AUDIO/interfaces-and-behavior.md).
+
+<a id="tdk_inmp441_datasheet_2014"></a>
+### tdk_inmp441_datasheet_2014
+
+TDK InvenSense, *INMP441 Omnidirectional Microphone with Bottom Port and I²S Digital Output*, document DS-INMP441-00, revision 1.0, 6 February 2014, Table 1 *Electrical Characteristics* (digital filter group delay 17.2/fS; frequency response −3 dB at 60 Hz and 15 kHz) and Table 3 *Serial Data Port Timing Specifications* (SCK 0.5–3.2 MHz, WS frequency 7.8–50 kHz), <https://www.farnell.com/datasheets/1824785.pdf>, accessed 11 November 2026. Distributor copy; the manufacturer download at product.tdk.com refused access on that date.
+
+**Cited by:** [AUDIO design, timing and sizing](../Development/system/design/AUDIO/interfaces-and-behavior.md#timing-and-sizing).
+
+<a id="ti_pcm510xa_datasheet_2015"></a>
+### ti_pcm510xa_datasheet_2015
+
+Texas Instruments, *PCM510xA 2.1 VRMS, 112/106/100 dB Audio Stereo DAC with PLL and 32-bit, 384 kHz PCM Interface*, SLAS859C, May 2012, revised May 2015, electrical characteristics *Filter Characteristics–1: Normal* (delay time 20 tS) and *Filter Characteristics–2: Low Latency* (3.5 tS), and Table 11 *BCK Rates (MHz) by LRCK Sample Rate for PCM510xA PLL Operation* (no entry at 8 kHz; 16 kHz only with BCK = 64 fS), <https://www.ti.com/lit/ds/symlink/pcm5102a.pdf>, accessed 11 November 2026.
+
+**Cited by:** [AUDIO design, timing and sizing](../Development/system/design/AUDIO/interfaces-and-behavior.md#timing-and-sizing).
