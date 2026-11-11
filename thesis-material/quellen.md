@@ -1956,7 +1956,7 @@ Nico F., *Hardware Test Protocol — ESP32-S3 Bring-up*, DigitalStethoscope repo
 <a id="tdk_inmp441_datasheet_2014"></a>
 ### tdk_inmp441_datasheet_2014
 
-TDK InvenSense, *INMP441 Omnidirectional Microphone with Bottom Port and I²S Digital Output*, document DS-INMP441-00, revision 1.0, 6 February 2014, Table 1 *Electrical Characteristics* (digital filter group delay 17.2/fS; frequency response −3 dB at 60 Hz and 15 kHz) and Table 3 *Serial Data Port Timing Specifications* (SCK 0.5–3.2 MHz, WS frequency 7.8–50 kHz), <https://www.farnell.com/datasheets/1824785.pdf>, accessed 11 November 2026. Distributor copy; the manufacturer download at product.tdk.com refused access on that date.
+TDK InvenSense, *INMP441 Omnidirectional Microphone with Bottom Port and I²S Digital Output*, document DS-INMP441-00, revision 1.0, 6 February 2014, Table 1 *Electrical Characteristics* (digital filter group delay 17.2/fS; frequency response −3 dB at 60 Hz and 15 kHz) and Table 3 *Serial Data Port Timing Specifications* (SCK 0.5–3.2 MHz, WS frequency 7.8–50 kHz) and section *I²S Data Interface* (24-bit two's complement, MSB first, 64 SCK per stereo frame, L/R pin selects the channel, SD tri-stated after the LSB), <https://www.farnell.com/datasheets/1824785.pdf>, accessed 11 November 2026. Distributor copy; the manufacturer download at product.tdk.com refused access on that date.
 
 **Cited by:** [AUDIO design, timing and sizing](../Development/system/design/AUDIO/interfaces-and-behavior.md#timing-and-sizing).
 

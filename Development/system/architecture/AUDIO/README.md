@@ -89,6 +89,5 @@ firmware commit `2cd6d4c818be92f0bf1e1181ef0b4cd7de7ceb14`, Zephyr
 pre-thesis firmware.
 [Source register](../../../../thesis-material/quellen.md#nico_bringup_hardware_protocol_20260814).
 
-The INMP441 datasheet describes the L/R pin and slot format; its download was not available when
-this page was written, so the slot assignment above rests on the bring-up evidence [3], not on the
-datasheet.
+The INMP441 datasheet confirms the L/R pin and the slot format that the bring-up evidence [3]
+showed; the [AUDIO design](../../design/AUDIO/interfaces-and-behavior.md#sample-format) cites it.

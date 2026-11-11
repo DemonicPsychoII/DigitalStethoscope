@@ -78,11 +78,11 @@ restart.
 
 ## Sample format
 
-The bring-up firmware treated the 24-bit microphone sample as the top 24 bits of the 32-bit left
-slot: it shifted the slot right by 8 bits, or scaled the whole slot by 2³¹, and its microphone test
-passed [2]. Nothing in this evidence defines the 8 low bits after the sample, so the loop clears
-them. The INMP441 datasheet would state the slot format; its download was not available, so the
-format rests on the bring-up evidence, not on the datasheet.
+The INMP441 sends each sample as 24-bit two's complement, MSB first, in a word of 32 bit clocks,
+and stops driving its data pin after the LSB [3]. The sample therefore fills the top 24 bits of the
+32-bit left slot. The bring-up firmware treated it the same way, shifting the slot right by 8 bits
+or scaling it by 2³¹, and its microphone test passed [2]. The microphone does not drive the 8 bits
+after the LSB, so the loop clears them.
 
 Two alignments of the mono working sample are possible:
 
@@ -164,8 +164,9 @@ and code on archived pre-thesis firmware.
 
 [3] TDK InvenSense, *INMP441 Omnidirectional Microphone with Bottom Port and I²S Digital Output*,
 document DS-INMP441-00, revision 1.0, 6 February 2014, Table 1 "Electrical Characteristics"
-(digital filter group delay 17.2/fS) and Table 3 "Serial Data Port Timing Specifications" (WS
-frequency 7.8–50 kHz), [datasheet](https://www.farnell.com/datasheets/1824785.pdf), accessed
+(digital filter group delay 17.2/fS), Table 3 "Serial Data Port Timing Specifications" (WS
+frequency 7.8–50 kHz) and section "I²S Data Interface" (24-bit words, 64 SCK per stereo frame,
+data pin tri-stated after the LSB), [datasheet](https://www.farnell.com/datasheets/1824785.pdf), accessed
 11 November 2026.
 [Source register](../../../../thesis-material/quellen.md#tdk_inmp441_datasheet_2014).
 
