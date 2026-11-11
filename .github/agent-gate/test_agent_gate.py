@@ -7,7 +7,7 @@ import sys
 import tempfile
 import unittest
 import urllib.error
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 from dataclasses import replace
 from pathlib import Path
 
@@ -547,6 +547,85 @@ class RevertVerificationTests(unittest.TestCase):
         self._merge_feature("feat3", "a.txt", 25, "changed 25 later")
         ok, detail = g.verify_pure_revert(self.repo, "integration", head, [self.merge])
         self.assertTrue(ok, detail)
+
+
+class NonDiffableRevertVerificationTests(unittest.TestCase):
+    """Files marked `-diff` (such as generated renders) or binary must be compared by content."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.repo = Path(self.tmp.name)
+        git(self.repo, "init", "-q", "-b", "integration")
+        for key, value in (("user.email", "t@t"), ("user.name", "t"), ("commit.gpgsign", "false"),
+                           ("core.autocrlf", "false")):
+            git(self.repo, "config", key, value)
+        (self.repo / ".gitattributes").write_bytes(b"rendered/*.svg -diff\n")
+        (self.repo / "rendered").mkdir()
+        self.render = self.repo / "rendered" / "overview.svg"
+        self.render.write_bytes(b"<svg><text>first</text></svg>\n")
+        self.binary = self.repo / "image.bin"
+        self.binary.write_bytes(b"header\x00first\x00")
+        git(self.repo, "add", ".")
+        git(self.repo, "commit", "-qm", "base")
+        git(self.repo, "checkout", "-qb", "feature")
+        self.render.write_bytes(b"<svg><text>second</text></svg>\n")
+        self.binary.write_bytes(b"header\x00second\x00")
+        git(self.repo, "commit", "-qam", "update render and image")
+        git(self.repo, "checkout", "-q", "integration")
+        git(self.repo, "merge", "-q", "--no-ff", "-m", "Merge feature", "feature")
+        self.merge = git(self.repo, "rev-parse", "HEAD")
+        self.assertIn("Binary files", git(self.repo, "diff", f"{self.merge}^1", self.merge))
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def revert_branch(self, tamper=None):
+        git(self.repo, "checkout", "-qb", "revert", "integration")
+        git(self.repo, "revert", "--no-edit", "-m", "1", self.merge)
+        if tamper:
+            path, content = tamper
+            path.write_bytes(content)
+            git(self.repo, "commit", "-qa", "--amend", "--no-edit")
+        head = git(self.repo, "rev-parse", "HEAD")
+        git(self.repo, "checkout", "-q", "integration")
+        return head
+
+    def test_exact_revert_of_non_diffable_and_binary_files_verifies(self):
+        ok, detail = g.verify_pure_revert(self.repo, "integration", self.revert_branch(), [self.merge])
+        self.assertTrue(ok, detail)
+
+    def test_revert_that_alters_a_non_diffable_or_binary_file_does_not_verify(self):
+        for tamper in ((self.render, b"<svg><text>smuggled</text></svg>\n"), (self.binary, b"header\x00smuggled\x00")):
+            with self.subTest(path=tamper[0].name):
+                head = self.revert_branch(tamper)
+                ok, detail = g.verify_pure_revert(self.repo, "integration", head, [self.merge])
+                self.assertFalse(ok, detail)
+                git(self.repo, "branch", "-qD", "revert")
+
+    def test_patch_id_hashes_non_diffable_content(self):
+        original = git(self.repo, "rev-parse", f"{self.merge}^1")
+        changed = self.revert_branch((self.render, b"<svg><text>smuggled</text></svg>\n"))
+        self.assertNotEqual(g.patch_id(self.repo, changed, self.merge), g.patch_id(self.repo, original, self.merge))
+
+    def test_binary_files_are_pinned_even_when_patch_id_ignores_their_content(self):
+        real_git = g._git
+
+        def patch_id_without_binary_content(repo, *args, stdin=None):
+            if args[:1] == ("patch-id",):
+                return b"0123456789abcdef0123456789abcdef01234567 " + b"0" * 40 + b"\n"
+            return real_git(repo, *args, stdin=stdin)
+
+        original = git(self.repo, "rev-parse", f"{self.merge}^1")
+        exact = self.revert_branch()
+        git(self.repo, "branch", "-qD", "revert")
+        for path, content in ((self.render, b"<svg><text>smuggled</text></svg>\n"),
+                              (self.binary, b"header\x00smuggled\x00")):
+            with self.subTest(path=path.name), patch.object(g, "_git", patch_id_without_binary_content):
+                changed = self.revert_branch((path, content))
+                git(self.repo, "branch", "-qD", "revert")
+                expected = g.patch_id(self.repo, original, self.merge)
+                self.assertEqual(g.patch_id(self.repo, exact, self.merge), expected)
+                self.assertNotEqual(g.patch_id(self.repo, changed, self.merge), expected)
 
 
 

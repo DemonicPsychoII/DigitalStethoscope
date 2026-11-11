@@ -681,7 +681,24 @@ def _git(repo: Path, *args: str, stdin: bytes | None = None) -> bytes:
 def patch_id(repo: Path, old: str, new: str) -> str:
     diff = _git(repo, "diff", "--no-color", "--no-ext-diff", "--full-index", old, new)
     out = _git(repo, "patch-id", "--stable", stdin=diff).decode().split()
-    return out[0] if out else ""
+    if not out:
+        return ""
+    # Binary and `-diff` files appear only as "Binary files ... differ". Older git hashes that line
+    # without the content, and `--text` would not help: patch-id stops hashing a line at a NUL byte.
+    # Pinning each such file to its exact blobs keeps a revert that alters one from passing as an
+    # exact inverse, whatever the git version.
+    binary_files: list[bytes] = []
+    file_header = index_line = b""
+    for line in diff.splitlines():
+        if line.startswith(b"diff --git "):
+            file_header, index_line = line, b""
+        elif line.startswith(b"index "):
+            index_line = line
+        elif line.startswith(b"Binary files ") or line == b"GIT binary patch":
+            binary_files.append(file_header + b"\n" + index_line)
+    if not binary_files:
+        return out[0]
+    return hashlib.sha256(b"\n".join([out[0].encode(), *sorted(binary_files)])).hexdigest()
 
 
 def verify_pure_revert(repo: Path, base: str, head: str, reverted: list[str]) -> tuple[bool, str]:
