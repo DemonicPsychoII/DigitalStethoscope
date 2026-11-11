@@ -561,8 +561,10 @@ def review_items(inputs: Inputs, author: dict[str, str] | None) -> list[tuple[st
 
 def scope_guard_items(inputs: Inputs, klass: str, verified_revert: bool) -> list[tuple[str, str]]:
     touched = [path for path in inputs.changed_files if path.startswith(POLICY_CLASS_PATHS)]
-    if not touched or klass == "policy" or (klass == "revert" and verified_revert):
+    if not touched or klass == "policy":
         return []
+    if klass == "revert" and verified_revert:
+        return [("ok", f"changes CI or the gate ({touched[0]}) only as a verified pure revert")]
     return [("fail", f"class={klass or 'none'} changes {touched[0]}: CI and gate changes must be a separate "
                      "`policy` PR; fix a failing check in the code under test, not by weakening the check")]
 
@@ -684,7 +686,10 @@ def _git(repo: Path, *args: str, stdin: bytes | None = None) -> bytes:
 
 def patch_id(repo: Path, old: str, new: str) -> str:
     diff = _git(repo, "diff", "--no-color", "--no-ext-diff", "--full-index", old, new)
-    out = _git(repo, "patch-id", "--stable", stdin=diff).decode().split()
+    # `--stable` alone ignores whitespace, so a "revert" that only re-indents a line, such as moving
+    # a return out of its condition, would pass as the exact inverse. `--verbatim` (git 2.39+)
+    # hashes whitespace too; an older git fails the call, and verification then fails closed.
+    out = _git(repo, "patch-id", "--verbatim", stdin=diff).decode().split()
     if not out:
         return ""
     # Binary and `-diff` files appear only as "Binary files ... differ". Older git hashes that line

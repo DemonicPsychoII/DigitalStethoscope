@@ -58,8 +58,8 @@ workflows may remain hosted. Preserve required check names and existing gate pol
   required checks run. `failure` means the author must act.
 - **CI and gate changes:** keep changes to `.github/agent-gate/**` or `.github/workflows/**` in a
   separate PR of class `policy`. The gate fails an agent PR that changes these paths without class
-  `policy`, unless it is a verified pure revert; it does not check what else the PR contains. Fix a failing check in the code under
-  test, never by weakening the check, gate or workflow.
+  `policy`, unless it is a verified pure revert; it does not check what else the PR contains.
+  Fix a failing check in the code under test, never by weakening the check, gate or workflow.
 - **Reviewers:** the independent agent review is the default reviewer. CodeRabbit (confirmed free OSS
   access) reviews only high-impact PRs, next to the agent review. Automatic CodeRabbit reviews are
   off. On a high-impact PR, add the `coderabbit` label, check for an active or completed

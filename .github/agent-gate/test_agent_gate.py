@@ -549,6 +549,73 @@ class RevertVerificationTests(unittest.TestCase):
         self.assertTrue(ok, detail)
 
 
+class WhitespaceExactRevertVerificationTests(unittest.TestCase):
+    """A revert that differs from the exact inverse only in whitespace can change behavior."""
+
+    GATE = ".github/agent-gate/agent_gate.py"
+    ORIGINAL = "def decide(agent_approved, bot_approved):\n    if agent_approved:\n        return True\n    return False\n"
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.repo = Path(self.tmp.name)
+        git(self.repo, "init", "-q", "-b", "integration")
+        for key, value in (("user.email", "t@t"), ("user.name", "t"), ("commit.gpgsign", "false"),
+                           ("core.autocrlf", "false")):
+            git(self.repo, "config", key, value)
+        self.gate = self.repo / self.GATE
+        self.gate.parent.mkdir(parents=True)
+        self.gate.write_text(self.ORIGINAL, newline="\n")
+        git(self.repo, "add", ".")
+        git(self.repo, "commit", "-qm", "base")
+        git(self.repo, "checkout", "-qb", "feature")
+        self.gate.write_text(self.ORIGINAL.replace("return True", "return bot_approved"), newline="\n")
+        git(self.repo, "commit", "-qam", "use the bot verdict")
+        git(self.repo, "checkout", "-q", "integration")
+        git(self.repo, "merge", "-q", "--no-ff", "-m", "Merge feature", "feature")
+        self.merge = git(self.repo, "rev-parse", "HEAD")
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def revert_branch(self, content=None):
+        git(self.repo, "checkout", "-qb", "revert", "integration")
+        git(self.repo, "revert", "--no-edit", "-m", "1", self.merge)
+        if content is not None:
+            self.gate.write_text(content, newline="\n")
+            git(self.repo, "commit", "-qa", "--amend", "--no-edit")
+        head = git(self.repo, "rev-parse", "HEAD")
+        git(self.repo, "checkout", "-q", "integration")
+        git(self.repo, "branch", "-qD", "revert")
+        return head
+
+    def tampered_reverts(self):
+        dedented = self.ORIGINAL.replace("        return True", "    return True")
+        added = self.ORIGINAL.replace("    return False", "    return True\n    return False")
+        return {"dedented out of the condition": dedented, "statement added": added}
+
+    def evaluate(self, head):
+        verification = g.verify_pure_revert(self.repo, "integration", head, [self.merge])
+        return g.evaluate(inputs(body=body_with_class("revert"), comments=[], changed_files=[self.GATE],
+                                 revert=verification, require_owner_approval=False))
+
+    def test_exact_revert_verifies(self):
+        head = self.revert_branch()
+        ok, detail = g.verify_pure_revert(self.repo, "integration", head, [self.merge])
+        self.assertTrue(ok, detail)
+        d = self.evaluate(head)
+        self.assertEqual(d.state, "success", d.items)
+
+    def test_revert_that_changes_indentation_or_adds_a_statement_does_not_verify(self):
+        for name, content in self.tampered_reverts().items():
+            with self.subTest(case=name):
+                head = self.revert_branch(content)
+                ok, detail = g.verify_pure_revert(self.repo, "integration", head, [self.merge])
+                self.assertFalse(ok, detail)
+                d = self.evaluate(head)
+                self.assertEqual(d.state, "failure", d.items)
+                self.assertIn("separate `policy` PR", " ".join(t for s, t in d.items if s == "fail"))
+
+
 class NonDiffableRevertVerificationTests(unittest.TestCase):
     """Files marked `-diff` (such as generated renders) or binary must be compared by content."""
 
@@ -1013,6 +1080,7 @@ class ScopeGuardTests(unittest.TestCase):
         d = g.evaluate(inputs(body=body_with_class("revert"), comments=[], changed_files=list(self.GUARDED),
                               revert=(True, "reverts abc1234"), require_owner_approval=False))
         self.assertEqual(d.state, "success", d.items)
+        self.assertIn(("ok", f"changes CI or the gate ({self.GUARDED[0]}) only as a verified pure revert"), d.items)
 
     def test_unverified_revert_changing_gate_or_workflows_fails_the_guard(self):
         d = g.evaluate(inputs(body=body_with_class("revert"), changed_files=list(self.GUARDED),
