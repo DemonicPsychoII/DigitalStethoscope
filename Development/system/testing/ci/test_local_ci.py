@@ -1,5 +1,6 @@
 import json
 import shlex
+import shutil
 import struct
 import subprocess
 import sys
@@ -229,6 +230,79 @@ class RemoteCleanupTest(unittest.TestCase):
             reaper.join(timeout=10)
             self.assertEqual(finished.read_text().strip(), "graceful")
             self.assertFalse(scratch.exists())
+
+
+FAKE_SYSTEMD_INHIBIT = """#!/bin/bash
+if [ "$1" = --list ]; then cat "$FAKE_LISTING" 2>/dev/null; exit 0; fi
+[ -n "$FAKE_REFUSE" ] && { echo "Failed to inhibit: Access denied" >&2; exit 1; }
+printf '%s\\n' "$*" > "$FAKE_ARGUMENTS"
+while [ "${1#--}" != "$1" ]; do
+  case "$1" in --why=*) reason="${1#--why=}" ;; esac
+  shift
+done
+echo "stethoscope-local-ci 1000 fleet $$ systemd-inhibit sleep $reason block" > "$FAKE_LISTING"
+exec "$@"
+"""
+
+FAKE_PYTHON = """#!/bin/bash
+echo "stages ran: $*"
+exit 7
+"""
+
+
+@unittest.skipUnless(
+    sys.platform.startswith("linux"), "GNU tail and bash as on the annex"
+)
+class RemoteWrapperTest(unittest.TestCase):
+    def run_wrapper(self, refuse: bool) -> tuple[Path, str]:
+        directory = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, directory, ignore_errors=True)
+        tools = directory / "bin"
+        tools.mkdir()
+        for name, text in (
+            ("systemd-inhibit", FAKE_SYSTEMD_INHIBIT),
+            ("python3", FAKE_PYTHON),
+        ):
+            (tools / name).write_text(text)
+            (tools / name).chmod(0o755)
+        tree = directory / "tree"
+        tree.mkdir()
+        environment = {
+            "PATH": f"{tools}:/usr/bin:/bin",
+            "FAKE_LISTING": str(directory / "listing"),
+            "FAKE_ARGUMENTS": str(directory / "arguments"),
+            "FAKE_REFUSE": "1" if refuse else "",
+        }
+        subprocess.run(
+            ["bash", "-c", local_ci.remote_wrapper(["static"], "run-1")],
+            cwd=tree,
+            env=environment,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            timeout=30,
+            check=True,
+        )
+        return directory, (directory / "progress.log").read_text()
+
+    def test_the_stages_run_once_the_inhibitor_is_listed(self):
+        directory, progress = self.run_wrapper(refuse=False)
+        self.assertEqual((directory / "exit-code").read_text().strip(), "7")
+        self.assertIn(
+            "stages ran: Development/system/testing/ci/local_ci.py run static", progress
+        )
+        arguments = (directory / "arguments").read_text()
+        self.assertTrue(arguments.startswith("--what=sleep --mode=block"))
+        self.assertIn("--why=local CI run run-1", arguments)
+
+    def test_a_refused_inhibitor_stops_the_run_before_the_stages(self):
+        directory, progress = self.run_wrapper(refuse=True)
+        self.assertEqual(
+            (directory / "exit-code").read_text().strip(),
+            str(local_ci.REMOTE_NO_INHIBITOR),
+        )
+        self.assertIn("Failed to inhibit: Access denied", progress)
+        self.assertIn("No sleep inhibitor on", progress)
+        self.assertNotIn("stages ran", progress)
 
 
 if __name__ == "__main__":
