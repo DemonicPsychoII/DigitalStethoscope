@@ -3,10 +3,15 @@
 # Dot-source it: . (Join-Path $PSScriptRoot 'firmware-common.ps1')
 
 $FwRepo = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..\..\..'))
-$FwWorkspace = Join-Path $FwRepo '.ci-workspace'
+. (Join-Path $PSScriptRoot 'toolchain\toolchain-resolver.ps1')
+
+# The pinned workspace is shared by all checkouts and worktrees; Python resolves it like CI.
+$FwLocations = Invoke-ToolchainResolver -Arguments '--format', 'locations' | ConvertFrom-Json
+$FwWorkspace = $FwLocations.workspace
 $FwPins = Get-Content (Join-Path $PSScriptRoot 'toolchain\toolchain.json') -Raw | ConvertFrom-Json
 $FwWest = Join-Path $FwWorkspace '.venv\Scripts\west.exe'
-$FwSdk = Join-Path $FwWorkspace "zephyr-sdk-$($FwPins.sdk_version)"
+# west may reuse an SDK of the pinned version outside the workspace; setup records it.
+$FwSdk = $FwLocations.sdk
 $FwToolBin = Join-Path $FwSdk "gnu\$($FwPins.toolchain)\bin"
 $FwOpenOcdDir = Join-Path $FwWorkspace 'openocd-esp32'
 
@@ -43,12 +48,10 @@ function Assert-FwBuild {
 function Invoke-FwWest {
     param([string[]]$Arguments)
     Assert-FwToolchain
-    $resolvedWorkspace = & (Join-Path $FwWorkspace '.venv\Scripts\python.exe') -c 'import pathlib, sys; print(pathlib.Path(sys.argv[1]).resolve())' $FwWorkspace
-    if ($LASTEXITCODE -ne 0) { throw 'Could not resolve the pinned toolchain workspace.' }
     $toolEnv = @{
         # The ESP32 runner starts esptool by name, so its pinned launcher must be on PATH.
         PATH                     = "$(Join-Path $FwWorkspace '.venv\Scripts');$env:PATH"
-        ZEPHYR_BASE              = Join-Path $resolvedWorkspace 'zephyr'
+        ZEPHYR_BASE              = Join-Path $FwWorkspace 'zephyr'
         ZEPHYR_SDK_INSTALL_DIR   = $FwSdk
         ZEPHYR_TOOLCHAIN_VARIANT = 'zephyr'
     }

@@ -45,14 +45,27 @@ workflows may remain hosted. Preserve required check names and existing gate pol
   declaration do not need agent metadata; untouched template placeholders are ignored. They still
   need current-head independent review, required CI, answered owner questions and resolved blocking or unclassified threads.
   Agents must declare their authorship even when using the owner's GitHub account. Another agent session records
-  `<!-- agent-review verdict=<approve|changes> sha=<head sha> reviewer=<harness>/<model> session=<id> -->`.
-  Prefer a different provider/model; a push invalidates the verdict. Configured CodeRabbit native
-  approval also counts when it approves the current head; a progress check alone does not.
-- **Primary reviewer:** use CodeRabbit through the confirmed free OSS access. Request reviews
-  manually: once the PR head is ready, check for an active or completed current-head review,
-  then comment `@coderabbitai review` once if needed and use the app's PR watcher.
-  Do not rely on automatic opening/push triggers or request another review while one is running.
-  Batch fixes before pushing; a changed head needs a new independent verdict.
+  `<!-- agent-review verdict=<approve|changes> sha=<head sha> reviewer=<harness>/<model> session=<id> -->`
+  in a PR comment or a submitted PR review body.
+  Prefer a different provider/model. A push invalidates the verdict unless the gate carries the
+  approval forward: only when no newer `changes` verdict exists, the approved commit belongs to the
+  PR (one of its commits, or a head it had before a force-push), and the PR's own diff against its
+  current base is unchanged, as after a base merge, update-branch or a stacked PR's new base.
+  A carried approval did not see the changes that arrived through the base. Configured CodeRabbit
+  native approval also counts when it approves the current head; a progress check alone does not.
+- `agent-gate` reports `pending` while a review is missing, stale or requested, and while
+  required checks run. `failure` means the author must act.
+- **CI and gate changes:** keep changes to `.github/agent-gate/**` or `.github/workflows/**` in a
+  separate PR of class `policy`. The gate fails an agent PR that changes these paths without class
+  `policy`; it does not check what else the PR contains. Fix a failing check in the code under
+  test, never by weakening the check, gate or workflow.
+- **Reviewers:** the independent agent review is the default reviewer. CodeRabbit (confirmed free OSS
+  access) reviews only high-impact PRs, next to the agent review. Automatic CodeRabbit reviews are
+  off. On a high-impact PR, add the `coderabbit` label, check for an active or completed
+  current-head review, then comment `@coderabbitai review` once and use the app's PR watcher.
+  Do not request another review while one is running. The gate waits for CodeRabbit only when the
+  PR carries the `coderabbit` label or CodeRabbit has already reviewed it.
+  Batch fixes before pushing; a changed head needs a new independent verdict unless carried forward.
   If CodeRabbit is unavailable, rate-limited, fails, or remains stuck without completing a review
   across two watcher updates at least 15 minutes apart, use the existing GlobalAgentContext
   `rules/git.md` and `review` skill workflow with a separate agent session as the fallback.
@@ -88,9 +101,17 @@ workflows may remain hosted. Preserve required check names and existing gate pol
   corrective PR instead and close the revert. Never merge a revert for an unconfirmed failure.
   By hand: `bash .github/agent-gate/revert-last-merge.sh <pr|sha|last>...` (`--deploy` is not
   supported in this repository).
-- Before pushing, run `python Development/system/testing/ci/run_ci.py static`, the relevant
-  [local checks](Development/system/testing/ci/OPERATIONS.md#setup-and-local-checks), and
-  for firmware changes `run_ci.py build`.
+- Before pushing, run the CI stages your change affects with
+  `python Development/system/testing/ci/local_ci.py run static unit` (add `host` for application
+  or host-test changes, `build` for firmware changes) from any checkout or worktree on Windows or
+  Linux. Stages without a local toolchain, such as `host` and `build` on Windows, run on
+  homelab-annex automatically; the tool wakes and releases it. Start runs that can exceed the
+  10-minute foreground limit with `--detach`, then repeat
+  `local_ci.py follow --timeout 540` until it exits with the run's code instead of 3
+  (2 means the run died; read its log). Do not set
+  PATH, `ZEPHYR_BASE` or `ZEPHYR_SDK_INSTALL_DIR` by hand, create per-worktree `.ci-workspace`
+  copies or WSL virtual environments. Decode crashes with the ELF whose path and SHA-256 the
+  `build` stage prints. See [local checks](Development/system/testing/ci/OPERATIONS.md#setup-and-local-checks).
   Hardware flashing, serial and device-network operations still need the owner.
 
 See [CI operations](Development/system/testing/ci/OPERATIONS.md) for suite selection, artifacts,

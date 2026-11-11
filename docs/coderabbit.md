@@ -1,8 +1,9 @@
 # CodeRabbit reviews
 
 Nico confirmed free OSS review access for DigitalStethoscope on 26 October 2026.
-The repository uses manual review requests rather than relying on automatic PR
-opening or push triggers. Keep the GitHub App installed and leave optional
+CodeRabbit reviews only high-impact PRs, next to the independent agent review.
+Automatic and incremental reviews are off in `.coderabbit.yaml`; a manual
+`@coderabbitai review` still works. Keep the GitHub App installed and leave optional
 usage-based reviews and paid agent services disabled.
 
 [.coderabbit.yaml](../.coderabbit.yaml) applies different review guidance to:
@@ -20,24 +21,27 @@ human inspection verify the rendered thesis.
 
 ## Daily workflow
 
-CodeRabbit is the primary independent reviewer for DigitalStethoscope. Keep the
-existing GlobalAgentContext `rules/git.md` and `review` skill process as the
-fallback: use a separate agent session if CodeRabbit is unavailable, rate-limited,
+The independent agent review, from a separate session, reviews every PR. On a
+high-impact PR, CodeRabbit reviews next to it. The gate waits for CodeRabbit only
+when the PR carries the `coderabbit` label or CodeRabbit has already reviewed it.
+Keep the existing GlobalAgentContext `rules/git.md` and `review` skill process as the
+fallback: rely on the agent review alone if CodeRabbit is unavailable, rate-limited,
 fails, or remains stuck across two watcher updates at least 15 minutes apart.
-Request a missing review once with `@coderabbitai review`, then use the app's
-PR watcher. Record why fallback was needed. A fallback verdict must approve the
+Add the `coderabbit` label, request the review once with `@coderabbitai review`,
+then use the app's PR watcher. Record why fallback was needed. A fallback verdict must approve the
 current head and address any material CodeRabbit findings already posted; it cannot
 override unresolved findings, required CI, or owner questions. Do not enable
 paid reviews or Agent usage to work around limits.
 
-1. Open a focused, ready-for-review PR into `integration`. Check for an active
-   or completed review of the current head; otherwise comment `@coderabbitai review`
-   once. Do not duplicate a running review. Use the app's PR watcher.
+1. Open a focused, ready-for-review PR into `integration`. For a high-impact PR,
+   add the `coderabbit` label, check for an active or completed review of the
+   current head, and otherwise comment `@coderabbitai review` once. Do not
+   duplicate a running review. Use the app's PR watcher.
 2. Read the feedback. Fix material issues and explain false positives or
    declined optional suggestions in their original review threads.
 3. Batch fixes before pushing. A push invalidates the previous head's verdict;
-   request review of the new head once when ready. Do not assume an automatic
-   incremental review will start.
+   request review of the new head once when ready. No automatic incremental
+   review starts.
 4. Address critical/major and unclassified findings and wait for required repository checks. Minor findings and nitpicks may remain open or be deferred.
    The existing gate recognizes CodeRabbit's native approval of the current
    head or a fully accounted, explicitly minor/nitpick-only current-head changes request. A summary or progress check alone does not count as review.
@@ -72,4 +76,4 @@ A schema-valid configuration does not prove the quality of the live reviews.
 - [Path instructions](https://docs.coderabbit.ai/configuration/path-instructions)
 - [Review commands](https://docs.coderabbit.ai/reference/review-commands)
 
-Updated by GPT-6.1-Sol on behalf of Nico running in codex.
+Updated by Claude-Opus-5.5 on behalf of Nico Friedrich running in T3 Code through Claude Code.
