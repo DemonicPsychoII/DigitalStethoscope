@@ -33,11 +33,12 @@ not retry.
 | --- | --- | --- |
 | `i2s_initialize()` | One call at boot | Checks that both devices are ready and configures both links. No stream runs afterwards. |
 | `i2s_start()` | Called while stopped | Configures both links again, primes 4 silent TX blocks, starts RX, then TX. On failure it stops both links and returns the failed link. |
-| `i2s_stop()` | Any time, also after a failure | Discards both queues at once and returns every pool block; no further sound. Repeated calls are harmless. |
+| `i2s_stop()` | Any time, also after a failure | Stops both links in the [Stop sequence](#stop-sequence) and returns every pool block; no further sound. Repeated calls are harmless. |
 | `i2s_receiveBlock(receivedFrames)` | Pointer for the result | Waits at most the receive wait (P11) for the next completed RX block and lends it to the caller. A timeout or driver error is a microphone failure. |
 | `i2s_releaseReceivedBlock(receivedFrames)` | A lent RX block | Returns it to the RX pool. |
 | `i2s_allocateTransmitBlock(transmitFrames)` | Pointer for the result | Waits at most the TX-block wait (P11) for a free TX block. A timeout is an output failure. |
 | `i2s_transmitBlock(transmitFrames)` | A filled TX block | Queues it for the DAC; ownership passes to the driver. On failure `L1_I2S` returns the block to the pool and reports an output failure. |
+| `i2s_getPoolUse(receivePoolHighestUse, transmitBlocksInDriver)` (proposed) | Pointers for the two values | Read-only, for [monitoring](#monitoring): the RX pool's highest use since boot and the TX blocks currently held by the driver. Always `I2S_RESULT_OK`. |
 
 ## Block loop
 
@@ -69,6 +70,25 @@ block before it requests a TX block, so the thread never holds more than one blo
 | Start command while stopped | `i2s_start`, then the block loop | `started` event, or the start failure |
 | Stop command | Leave the loop, `i2s_stop` | `stopped` event; output silent |
 | Any non-OK result in the loop | `i2s_stop`; the thread waits for commands | Fault event with the failed link; `L2_CONTROL` shows the catalogue error, which requires a restart |
+
+### Stop sequence
+
+`I2S_TRIGGER_DROP` alone would leak blocks. It frees the blocks waiting in the driver queue, but
+for the block currently in DMA the driver only clears its pointer without returning the block to
+the pool [1]. Each Stop would then lose one RX and one TX block, and after a few sessions the RX
+pool would be too small to start. `I2S_TRIGGER_STOP` lets the block in DMA finish; the driver then
+puts it into the RX queue or returns it to the TX pool, and the queued TX blocks are not played
+[1]. `i2s_stop` therefore:
+
+1. Triggers `STOP` on both links.
+2. Waits 8 ms, two block periods, so the block in DMA completes on both links.
+3. Triggers `DROP` on both links, which returns the queued blocks.
+4. Checks that both pools have 0 blocks in use and logs a mismatch.
+
+A link in the driver's error state rejects `STOP` [1], so `i2s_stop` triggers `DROP` alone on that
+link. The block the driver held when the error occurred may then stay in use; a fault requires a
+restart anyway. The sequence is a source reading; the repeated Start and Stop in the
+[expected verification](#expected-verification) confirms it on the target.
 
 A stream fault includes a deadline miss. If the thread falls more than three blocks (12 ms,
 processing included) behind, the driver stops the stream itself [1]. The bring-up session showed that such a stream stays stopped
@@ -125,9 +145,14 @@ remains judged by ear under REQ-05.
 
 `L2_AUDIO` counts processed blocks and stream faults, records the longest iteration time, the
 pools' highest use and the TX queue level over time ([decision of 11 November](../../planning/mvp-decisions-2026-11-11.md)). These
-values feed VT-02. The iteration time and pool use make a deadline miss visible before it becomes a
-stream fault; a TX queue level that drifts over a long run would show that the two links do not
-run at the same rate.
+values feed VT-02. The pools are private to `L1_I2S`, so `L2_AUDIO` reads them through the
+proposed `i2s_getPoolUse`: the RX pool's highest use (`k_mem_slab_max_used_get`, which needs
+`CONFIG_MEM_SLAB_TRACE_MAX_UTILIZATION`) and the TX blocks in the driver (5 −
+`k_mem_slab_num_free_get`, read before the thread allocates its TX block). The iteration time and
+pool use make a deadline miss visible before it becomes a stream fault; a TX queue level that drifts over a long run would show that the two links do not
+run at the same rate. Only the RX pool has a fixed limit below 5 blocks. RX starts before TX, so
+the thread can queue its TX block just before the DAC returns the played one; the TX pool can then
+reach 5 blocks and the TX driver queue 4 in normal operation [1].
 
 ## Expected verification
 
@@ -135,12 +160,12 @@ run at the same rate.
 | --- | --- | --- |
 | Boot with both links ready | VT-01, REQ-01 | Stopped; no TX stream and no sound before Start |
 | Boot with one device missing | VT-01 | Failure for the missing link; `L2_CONTROL` shows `MICROPHONE_FAILURE` or `AUDIO_OUTPUT_FAILURE` |
-| Start, then Stop | REQ-01, REQ-02, VT-04 | `started` after priming and RX before TX; `stopped`, all pool blocks returned, output silent |
+| Start, then Stop, 10 times in a row | REQ-01, REQ-02, VT-04 | `started` after priming and RX before TX; `stopped`, output silent; after every Stop all 5 blocks of each pool are free |
 | Heart sounds after Start | REQ-02 | Audible on both channels within 2 s |
 | Copy step with a known RX block | VT-03 | Both TX slots of every frame equal the left RX slot with its low 8 bits cleared; the right RX slot is ignored |
 | Receive wait expires | VT-01 | Microphone failure; stream stopped; catalogue error |
 | Thread more than 12 ms behind, processing included | VT-02 | Driver stops the stream; fault reported; no hang and no repeated stale audio |
-| 10 min of listening under load | VT-02 | No fault; longest iteration time ≤ 3 ms; pool use never reaches 5 blocks; constant TX queue level (no drift) |
+| 10 min of listening under load | VT-02 | No fault; longest iteration time ≤ 3 ms; RX pool use below 5; constant TX level (no drift) |
 | Tap on the chestpiece | REQ-05 | No noticeable delay |
 
 ## Sources

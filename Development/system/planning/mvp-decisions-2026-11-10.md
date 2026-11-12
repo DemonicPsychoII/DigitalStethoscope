@@ -60,7 +60,8 @@ measurements. The derived sizes follow from the decisions and the pinned Zephyr 
    ground, as on the bring-up wiring, so the microphone sends on the left slot. The audio path
    takes the left slot and writes the same sample to both DAC slots.
 8. **Start and Stop order.** Start fills the TX queue with silence, then starts RX, then TX. Stop
-   and faults discard both queues at once.
+   lets the block in DMA finish, then discards both queues; faults discard both queues at once.
+   Corrected after reading the driver source ([Stop sequence](../design/AUDIO/interfaces-and-behavior.md#stop-sequence)).
 
 Both I2S controllers use the same word size and sample rate. Nico asked on 10 November 2026 whether
 one clock can drive both links; the pinned driver clocks both controllers from the same default
