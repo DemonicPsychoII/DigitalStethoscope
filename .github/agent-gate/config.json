@@ -1,11 +1,14 @@
 {
-  "_comment": "Required CI contexts and ruleset checks block merging; optional checks are advisory. Human approval is not required. review_bots maps native reviewer logins to immutable GitHub user IDs.",
+  "_comment": "Required CI contexts and ruleset checks block merging; optional checks are advisory. Human approval is not required. review_bots maps native reviewer logins to immutable GitHub user IDs. Only the review App demonic-fleet-review posts agent-review verdicts (reviewer_logins); agent accounts and humans cannot, so an author cannot record its own verdict.",
   "required_checks": [
     "Quality / Static Checks",
     "Zephyr / Firmware Build"
   ],
   "require_owner_approval": false,
   "required_checks_only": true,
+  "reviewer_logins": [
+    "demonic-fleet-review[bot]"
+  ],
   "review_bots": {
     "coderabbitai[bot]": 136622811
   },

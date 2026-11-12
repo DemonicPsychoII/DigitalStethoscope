@@ -13,12 +13,14 @@ BOT = {"login": "coderabbitai[bot]", "type": "Bot", "id": 136622811}
 BOTS = {BOT["login"]: BOT["id"]}
 MINOR = "_⚠️ Potential issue_ | _🟡 Minor_\n\nOptional diagnostic wording."
 MAJOR = "_⚠️ Potential issue_ | _🟠 Major_\n\nCredential loss."
+AGENT_APPROVAL = {"id": 5, "created_at": "2026-10-02T10:00:00Z", "login": "DemonicPsychoII", "association": "OWNER",
+                  "body": f"<!-- agent-review verdict=approve sha={HEAD} reviewer=codex/gpt-5.5 session=rev-1 -->"}
 
 
 def decision(body="**Actionable comments posted: 1**", findings=None, **changes):
     review = {"id": 99, "state": "CHANGES_REQUESTED", "commit_id": HEAD, "body": body, "user": BOT}
     values = dict(number=1, state="open", draft=False, head_sha=HEAD, body="Human PR",
-                  comments=[], check_runs=[], statuses=[], unresolved_threads=0, required_checks=[],
+                  comments=[AGENT_APPROVAL], check_runs=[], statuses=[], unresolved_threads=0, required_checks=[],
                   require_owner_approval=False, review_bots=BOTS, native_reviews=[review],
                   allow_minor_coderabbit_findings=True, review_comments=findings if findings is not None else [
                       {"id": 1, "user": BOT, "pull_request_review_id": 99, "body": MINOR}])
@@ -72,8 +74,11 @@ class FindingSeverityTests(unittest.TestCase):
                     self.assertFalse(nonblocking_finding("> " + body))
                     self.assertFalse(nonblocking_finding("```\n" + body + "\n```"))
 
-    def test_current_head_minor_changes_request_satisfies_review(self):
+    def test_current_head_minor_changes_request_satisfies_the_bot_review(self):
         self.assertEqual(decision().state, "success")
+
+    def test_minor_changes_request_still_waits_for_the_agent_review(self):
+        self.assertEqual(decision(comments=[]).state, "pending")
 
     def test_missing_mismatched_or_extra_findings_block(self):
         for findings in ([], [{"body": MINOR}], [
