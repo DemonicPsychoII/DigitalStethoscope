@@ -15,3 +15,6 @@
 *.zip binary
 *.xlsx binary
 *.docx binary
+# PlantUML renders are regenerated from their .puml sources; validate_docs.py checks them,
+# so reviews collapse them and git diff skips their content.
+**/rendered/*.svg linguist-generated=true -diff

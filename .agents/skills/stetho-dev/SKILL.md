@@ -75,8 +75,9 @@ links to real agreed decisions in the project PR template. Update affected
 trace links and explicit gaps without maintaining a separate status document.
 
 Use ship for authorized end-to-end delivery, or file-pr when asked only to
-file a PR. Follow current repository and user review rules: CodeRabbit first,
-current-head independent review, required CI and answered owner questions.
+file a PR. Follow current repository and user review rules: current-head
+independent review, CodeRabbit only on high-impact PRs, required CI and
+answered owner questions.
 Minor findings may remain open under Nico's current instructions. Do not
 reinterpret case-list agreement or manual sign-off as routine merge approval.
 
