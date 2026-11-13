@@ -103,6 +103,19 @@ static const char *result_name(int result)
     return other;
 }
 
+/* The blocked driver calls return: the stop queue runs its held work in submission order. */
+static void release_service_stops(void)
+{
+    service_stop_driver_blocks = false;
+    for(size_t index = 0; index < held_service_stop_count; index++)
+    {
+        struct k_work *work = held_service_stops[index];
+        held_service_stops[index] = NULL;
+        work->handler(work);
+    }
+    held_service_stop_count = 0;
+}
+
 static const char time_server_name[] = "pool.ntp.org";
 static struct normalised_time untouched_time_sample;
 static int64_t running_cancel_call_milliseconds;
@@ -571,6 +584,34 @@ static void run_wifi_case(const char *scenario, const char *argument)
         assert(!hotspot_is_enabled && !hotspot_dhcp_is_running);
         assert(hotspot_disable_calls == 1 && hotspot_dhcp_stop_calls == 1);
         assert(time_milliseconds == 0);
+    }
+    else if(strcmp(scenario, "service-stop-blocks") == 0)
+    {
+        assert(wifi_startHotspot() == 0);
+        assert(wifi_startDHCPServer() == 0);
+        service_stop_driver_blocks = true;
+        int64_t started_milliseconds = time_milliseconds;
+        const int dhcp_stop = wifi_stopDHCPServer();
+        printf("dhcp_stop=%s dhcp_stop_milliseconds=%lld ", result_name(dhcp_stop), (long long)(time_milliseconds - started_milliseconds));
+        started_milliseconds = time_milliseconds;
+        const int hotspot_stop = wifi_stopHotspot();
+        printf("hotspot_stop=%s hotspot_stop_milliseconds=%lld ", result_name(hotspot_stop), (long long)(time_milliseconds - started_milliseconds));
+        started_milliseconds = time_milliseconds;
+        const int repeated_dhcp_stop = wifi_stopDHCPServer();
+        printf("repeated_dhcp_stop=%s repeated_dhcp_stop_milliseconds=%lld ", result_name(repeated_dhcp_stop), (long long)(time_milliseconds - started_milliseconds));
+        printf("blocked_dhcp_running=%d blocked_hotspot_enabled=%d blocked_dhcp_driver_calls=%d blocked_hotspot_driver_calls=%d ",
+               hotspot_dhcp_is_running,
+               hotspot_is_enabled,
+               hotspot_dhcp_stop_calls,
+               hotspot_disable_calls);
+        release_service_stops();
+        printf("late_dhcp_running=%d late_hotspot_enabled=%d late_dhcp_driver_calls=%d late_hotspot_driver_calls=%d ",
+               hotspot_dhcp_is_running,
+               hotspot_is_enabled,
+               hotspot_dhcp_stop_calls,
+               hotspot_disable_calls);
+        const int next_dhcp_stop = wifi_stopDHCPServer();
+        printf("next_dhcp_stop=%s next_hotspot_stop=%s\n", result_name(next_dhcp_stop), result_name(wifi_stopHotspot()));
     }
     else if(strcmp(scenario, "disconnect-at-address-boundary") == 0)
     {
