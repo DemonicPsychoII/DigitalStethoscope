@@ -48,9 +48,8 @@ SIMULATED_UTC = datetime(2026, 11, 9, tzinfo=timezone.utc)
 SERVER_CONNECTION_FAILURE = "SERVER_CONNECTION_FAILURE"
 
 
-@pytest.fixture
-def simulate(simulation_executable, record_property):
-    run = create_simulation_runner(simulation_executable, record_property)
+def create_delivery_runner(executable, record_property):
+    run = create_simulation_runner(executable, record_property)
 
     def delivery(
         script="",
@@ -59,15 +58,27 @@ def simulate(simulation_executable, record_property):
         server=True,
         stored=True,
         submit=SUBMIT,
+        after_submit="",
     ):
         script = f"server {int(server)}\nregistration 1\n" + script
         if submit is not None:
-            script += (
-                f"event {submit} deliver {kind}\nevent {submit + GLOBAL} outcome 0\n"
-            )
+            # Same-time events arrive in script order, so after_submit follows the admission.
+            script += f"event {submit} deliver {kind}\n" + after_submit
+            script += f"event {submit + GLOBAL} outcome 0\n"
         return run(script, until=until, stored=stored)
 
     return delivery
+
+
+@pytest.fixture
+def simulate(simulation_executable, record_property):
+    return create_delivery_runner(simulation_executable, record_property)
+
+
+@pytest.fixture
+def simulate_white_box(memory_executable, record_property):
+    """Delivery runner whose white_box events change worker state that no public input reaches."""
+    return create_delivery_runner(memory_executable, record_property)
 
 
 def evidence(
@@ -605,6 +616,81 @@ def test_stale_anchor_at_stop_is_replaced_by_the_delivery_setup_clock(
     observation = json.loads(logged(trace, "observation_body"))
     assert observation["effectiveDateTime"] == expected_end(
         trace, submit, delivery_anchor
+    )
+
+
+WHITE_BOX_REGISTRATION_CHANGE = 1
+WHITE_BOX_CLOCK_STEP = 2
+
+
+def white_box(value, time=SUBMIT):
+    return f"event {time} white_box {value}\n"
+
+
+def test_device_id_is_frozen_at_admission(simulate_white_box, record_property):
+    evidence(
+        record_property,
+        "registration publishes another Device id right after admission",
+        DESIGN + "interfaces-and-behavior.md (NetworkJob)",
+        "the Observation carries the Device id valid at admission, never the live one",
+    )
+    trace = simulate_white_box(
+        plan("exchange", [503, 201]),
+        after_submit=white_box(WHITE_BOX_REGISTRATION_CHANGE),
+    )
+    assert_final(trace, DELIVERED)
+    assert trace.count("exchange") == 2
+    observation = json.loads(logged(trace, "observation_body"))
+    assert observation["device"] == {"reference": "Device/7400"}
+    assert "|7400%3A" in logged(trace, "observation_condition")
+
+
+def test_qualifying_anchor_at_admission_freezes_the_end_against_a_later_clock_step(
+    simulate_white_box, record_property
+):
+    evidence(
+        record_property,
+        "qualifying anchor at admission, clock steps one hour before the first attempt",
+        TIME + "clock-mapping-and-native-behavior",
+        "the end mapped at admission is sent; the step and the retry's new setup clock do not change it",
+    )
+    trace = simulate_white_box(
+        plan("exchange", [ECONNRESET, 201]),
+        after_submit=white_box(WHITE_BOX_CLOCK_STEP),
+    )
+    assert_final(trace, DELIVERED)
+    assert trace.count("exchange") == 2
+    assert len(between(trace, "sntp", SUBMIT, SUBMIT + GLOBAL)) == 1
+    observation = json.loads(logged(trace, "observation_body"))
+    assert observation["effectiveDateTime"] == expected_end(trace, anchor=BOOT_ANCHOR)
+
+
+def test_end_without_an_anchor_at_admission_is_frozen_once_from_the_delivery_setup(
+    simulate, record_property
+):
+    evidence(
+        record_property,
+        "no qualifying anchor at admission, two reconnects with their own clocks",
+        TIME + "clock-mapping-and-native-behavior",
+        "the first delivery setup's anchor freezes the end; retries resend identical bytes",
+    )
+    submit = BOOT_ANCHOR + MAPPING_LIMIT + 1
+    trace = simulate(
+        plan("exchange", [ECONNRESET, ECONNRESET, 201]),
+        until=submit + GLOBAL + 1_000,
+        submit=submit,
+    )
+    assert trace.last("delivery_outcome") == DELIVERED
+    assert trace.values("exchange_same_observation") == [1, 1, 1]
+    delivery_anchors = between(trace, "sntp", submit, submit + GLOBAL)
+    assert len(delivery_anchors) == 3
+    assert delivery_anchors[0] < trace.times("exchange")[0]
+    observation = json.loads(logged(trace, "observation_body"))
+    assert observation["effectiveDateTime"] == expected_end(
+        trace, submit, delivery_anchors[0]
+    )
+    assert observation["effectiveDateTime"] != expected_end(
+        trace, submit, delivery_anchors[-1]
     )
 
 

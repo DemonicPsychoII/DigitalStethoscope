@@ -195,8 +195,16 @@ static bool communication_WiFiIsConfigured;                               /**< A
 static bool communication_DeliveryIsPossible;                             /**< Saved Device registration and configured server; published by the thread. */
 static bool communication_DeliveryIsPending;                              /**< An admitted job waits for or runs in the thread. */
 static struct communication_delivery communication_Delivery;              /**< Frozen copy of the admitted result. */
+static char communication_DeliveryServerDeviceId[FHIR_SERVER_DEVICE_ID_SIZE]; /**< Server Device id published at admission; never resnapshotted. */
+static struct timespec communication_DeliveryUtcEnd;                      /**< UTC measurement end once frozen; the thread may freeze it while the job is pending. */
+static bool communication_DeliveryUtcEndIsFrozen;                         /**< DeliveryUtcEnd is frozen, at admission or by the thread's first qualifying mapping. */
 static k_timepoint_t communication_DeliveryDeadline;                      /**< P13 global deadline of the admitted job. */
 static enum communication_delivery_outcome communication_DeliveryOutcome; /**< Outcome of the latest job. */
+static char communication_PublishedServerDeviceId[FHIR_SERVER_DEVICE_ID_SIZE]; /**< Copy of ServerDeviceId for admission; valid while DeliveryIsPossible. */
+
+/* Written only by the communication thread, under communication_ControlLock; the thread reads them without it. */
+static struct applied_time_anchor communication_AppliedTimeAnchor; /**< Anchor from the last successful Apply. */
+static bool communication_AppliedTimeAnchorIsValid;                /**< AppliedTimeAnchor holds an applied anchor. */
 
 /* Used by the communication thread only. */
 static bool communication_ListeningIsActive;            /**< Copy of ListeningIsRequested from the last event check. */
@@ -210,8 +218,6 @@ static bool communication_RecoveryIsAllowed;                               /**< 
 static struct portal_request communication_PageRequest;                    /**< Last page request, with password. */
 static struct wifi_scan_entry communication_ScanList[WIFI_SCAN_LIST_SIZE]; /**< Networks for the page. */
 static size_t communication_ScanCount;                                     /**< Valid entries in ScanList. */
-static struct applied_time_anchor communication_AppliedTimeAnchor;         /**< Anchor from the last successful Apply. */
-static bool communication_AppliedTimeAnchorIsValid;                        /**< AppliedTimeAnchor holds an applied anchor. */
 
 static struct storage_server_profile communication_ServerProfile EXT_RAM_BSS_ATTR; /**< Boot copy of the server profile image, in PSRAM. */
 static enum communication_server_profile_state communication_ServerProfileState;   /**< Boot result; secure transport requires CONFIGURED. */
@@ -322,6 +328,9 @@ static uint64_t communication_getAnchorAgeMicroseconds(void);
 
 /**
  * @brief Map a measurement-end monotonic timestamp using the retained time anchor.
+ *
+ * The thread calls this freely; any other context must hold communication_ControlLock.
+ *
  * @param[in] measurementEndMonotonicMicroseconds Measurement-end kernel timestamp.
  * @param[out] utcEnd UTC measurement end; unchanged on failure.
  * @return 0 for an eligible mapping, or a negative error code.
@@ -607,7 +616,11 @@ static int communication_attemptDelivery(k_timepoint_t deadline);
 /**
  * @brief Freeze the Observation body and conditional-create identity once per job.
  *
- * @return 0 when frozen, or -ENODATA / -ERANGE while no qualifying anchor maps the measurement end.
+ * Serializes only the job's frozen inputs: the result, the Device id from admission and the
+ * UTC end. An end not frozen at admission is frozen here from the first qualifying anchor.
+ *
+ * @return 0 when frozen, -ENODATA while no qualifying anchor maps the measurement end, or
+ *         the L1_FHIR error.
  */
 static int communication_freezeObservation(void);
 
@@ -732,6 +745,9 @@ int communication_submitDelivery(const struct communication_delivery *delivery, 
         else
         {
             communication_Delivery = *delivery;
+            (void)memcpy(communication_DeliveryServerDeviceId, communication_PublishedServerDeviceId, sizeof(communication_DeliveryServerDeviceId));
+            /* A qualifying anchor freezes the end now; otherwise the thread freezes it once from a later setup's anchor. */
+            communication_DeliveryUtcEndIsFrozen = (communication_mapMeasurementEndTime(delivery->measurementEndMonotonicMicroseconds, &communication_DeliveryUtcEnd) == 0);
             communication_DeliveryDeadline = deadline;
             communication_DeliveryIsPending = true;
             communication_DeliveryOutcome = COMMUNICATION_DELIVERY_PENDING;
@@ -1566,6 +1582,7 @@ static void communication_publishDeliveryPrerequisites(void)
 
     communication_WiFiIsConfigured = communication_StoredNetworkIsValid;
     communication_DeliveryIsPossible = (communication_RegistrationIsReady && (communication_ServerProfileState == COMMUNICATION_SERVER_PROFILE_CONFIGURED));
+    (void)memcpy(communication_PublishedServerDeviceId, communication_ServerDeviceId, sizeof(communication_PublishedServerDeviceId));
 
     k_spin_unlock(&communication_ControlLock, key);
 }
@@ -1749,21 +1766,26 @@ static int communication_attemptDelivery(k_timepoint_t deadline)
 
 static int communication_freezeObservation(void)
 {
-    struct timespec utcEnd = {0};
     size_t conditionLength = 0U;
     int result = 0;
 
     if(!communication_ObservationIsFrozen)
     {
-        result = communication_mapMeasurementEndTime(communication_Delivery.measurementEndMonotonicMicroseconds, &utcEnd);
+        if(!communication_DeliveryUtcEndIsFrozen)
+        {
+            /* Only the thread writes the anchor and the pending job, so no lock is needed here. */
+            communication_DeliveryUtcEndIsFrozen = (communication_mapMeasurementEndTime(communication_Delivery.measurementEndMonotonicMicroseconds, &communication_DeliveryUtcEnd) == 0);
+        }
+
+        result = (communication_DeliveryUtcEndIsFrozen ? 0 : -ENODATA);
 
         if(result == 0)
         {
             /* No subject: the request adapter for the patient reference is still open in the design. */
             const struct fhir_observation observation = {
-                .serverDeviceId = communication_ServerDeviceId,
-                .measurementEndUtcSeconds = (uint64_t)utcEnd.tv_sec,
-                .measurementEndUtcMilliseconds = (uint16_t)(utcEnd.tv_nsec / (long)NSEC_PER_MSEC),
+                .serverDeviceId = communication_DeliveryServerDeviceId,
+                .measurementEndUtcSeconds = (uint64_t)communication_DeliveryUtcEnd.tv_sec,
+                .measurementEndUtcMilliseconds = (uint16_t)(communication_DeliveryUtcEnd.tv_nsec / (long)NSEC_PER_MSEC),
                 .patientReference = NULL,
                 .kind = ((communication_Delivery.kind == COMMUNICATION_DELIVERY_POOR_SIGNAL) ? FHIR_OBSERVATION_KIND_POOR_SIGNAL : FHIR_OBSERVATION_KIND_HEART_RATE),
                 .heartRateScaled = communication_Delivery.heartRateScaled,
@@ -1958,8 +1980,11 @@ static int communication_synchronizeTime(k_timepoint_t deadline)
                 result = wifi_applyTimeSynchronization(&sample, &candidateAnchor);
                 if(result == 0)
                 {
+                    /* CONTROL maps a measurement end with this anchor when it admits a delivery. */
+                    k_spinlock_key_t key = k_spin_lock(&communication_ControlLock);
                     communication_AppliedTimeAnchor = candidateAnchor;
                     communication_AppliedTimeAnchorIsValid = true;
+                    k_spin_unlock(&communication_ControlLock, key);
                 }
             }
         }

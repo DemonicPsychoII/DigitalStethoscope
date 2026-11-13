@@ -81,6 +81,7 @@ static int secure_cancel_failures;           /* Cancellations that cannot prove 
 static int observation_requests;             /* Observation requests of the current job. */
 static char observation_first_body[2048];    /* First request of the job; every retry must repeat it. */
 static char observation_first_condition[256];
+static void (*white_box_handler)(int value); /* Set only by a harness that includes communication.c; "white_box" events call it. */
 
 static void trace(const char *kind, int value)
 {
@@ -146,6 +147,12 @@ static void dispatch(struct event *event)
         connected = false;
     else if(strcmp(event->kind, "snapshot") == 0)
         snapshot();
+    else if(strcmp(event->kind, "white_box") == 0)
+    {
+        if(white_box_handler == NULL)
+            abort();
+        white_box_handler(event->value);
+    }
     else if(strcmp(event->kind, "late_link") == 0)
     {
         connected = true;
