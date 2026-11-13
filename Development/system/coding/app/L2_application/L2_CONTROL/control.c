@@ -211,6 +211,11 @@ static void control_handleVolume(const struct physicalinterface_volume_reading *
 
 static void control_handleWiFiFeedback(enum feedback_code code)
 {
+    if(code == FEEDBACK_WIFI_CLEANUP_FAILURE)
+    {
+        LOG_ERR("WIFI_CLEANUP_FAILURE reported; Wi-Fi disabled until restart");
+    }
+
     bool isQuickFlash = (code == FEEDBACK_WIFI_CONNECTED);
     enum feedback_code wifiIndication = ((code == FEEDBACK_WIFI_CONNECTING) || (code == FEEDBACK_PORTAL_OPEN)) ? code : FEEDBACK_NONE;
 
