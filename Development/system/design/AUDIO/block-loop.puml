@@ -16,7 +16,7 @@ skinparam note {
  BorderColor #61738a
  FontColor #e6edf7
 }
-title L2_AUDIO block loop: one iteration per 4 ms block (design, not implemented)
+title L2_AUDIO block loop: one iteration per 4 ms block
 start
 :Start command from L2_CONTROL;
 :i2s_start\nprime 4 silent TX blocks, start RX, then TX;

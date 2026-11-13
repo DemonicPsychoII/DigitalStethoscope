@@ -21,7 +21,7 @@ skinparam note {
  BorderColor #61738a
  FontColor #e6edf7
 }
-title Who holds each 512-byte block, and how it returns to its pool (design, not implemented)
+title Who holds each 512-byte block, and how it returns to its pool
 left to right direction
 rectangle "RX: 5 blocks" as receiveSide {
   rectangle "RX pool, free\nL1_I2S, internal RAM" as receivePool

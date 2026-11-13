@@ -24,7 +24,7 @@ skinparam note {
  BorderColor #61738a
  FontColor #e6edf7
 }
-title L2_AUDIO states and the system states they correspond to (design, not implemented)
+title L2_AUDIO states and the system states they correspond to
 hide empty description
 state "Initializing" as Initializing : i2s_initialize\nsystem: Boot
 state "Stopped" as Stopped : no stream; output silent; waits for commands\nsystem: Idle, Portal, Analysing, Sending, ReportingError

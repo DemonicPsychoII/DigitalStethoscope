@@ -4,8 +4,7 @@
 `L2_CONTROL`. The [AUDIO architecture](../../architecture/AUDIO/README.md) defines these
 responsibilities and the [decision record](../../planning/mvp-decisions-2026-11-10.md#first-audio-path)
 the chosen values, confirmed on [13 November](../../planning/mvp-decisions-2026-11-13.md). This page
-covers the first audio step: microphone to DAC with a copy step. Nothing on this page is
-implemented yet; `L2_AUDIO` and `L1_I2S` are skeletons.
+covers the first audio step: microphone to DAC with a copy step.
 
 | View | Editable source | Answers |
 | --- | --- | --- |
