@@ -1,8 +1,8 @@
-# Delivery start, Start during sending, cleanup services, result freeze points and filter roles — 13 November 2026
+# Delivery start, Start during sending, cleanup services, result freeze points, filter roles and error handling with one button — 13 November 2026
 
 Nico decided on 13 November 2026 in T3 Code
 ([conversation](t3-thread://v2/ebfb7799-1b91-4733-8204-77deebceece3/e7c027fb-ffa0-4ff4-bf3f-83155f894937))
-how to resolve five findings of an audit that compared the architecture and design documents with the
+how to resolve findings of an audit that compared the architecture and design documents with the
 firmware. These are project decisions, not measurements. The file name carries a topic because the
 audio decisions of the same day have their own record.
 
@@ -27,6 +27,14 @@ audio decisions of the same day have their own record.
    automated BPM analysis. Murmur is a separate listening filter estimated to be better for murmur
    detection. BPM analysis always applies the BPM filter, whatever the switch position, and estimates BPM
    while the doctor listens with Raw, Murmur or BPM.
+6. **First short press acknowledges.** With an error shown that clears by short press, the first short
+   press acknowledges it. The device then keeps the normal audio workflow, in which the doctor starts
+   and stops the examination with the button, offline where the error concerns Wi-Fi or the server.
+7. **Errors during listening are shown after the manual Stop.** A non-audio halting error that occurs
+   while listening is latched without indication and takes effect when the operator stops the
+   examination.
+8. **Audio errors halt the device.** With AUDIO in fault no Start is possible: every input is blocked
+   until restart.
 
 ## Applied in
 
@@ -35,6 +43,7 @@ audio decisions of the same day have their own record.
 - [COMMUNICATION parameters](../design/COMMUNICATION/parameters.md#cleanup-limits-p23),
   [TLS design](../design/COMMUNICATION/secure-transport.md#delivery-budget-boundary) and
   [SNTP design](../design/COMMUNICATION/time-synchronization.md#clock-mapping-and-native-behavior)
+- [Feedback catalogue](../design/FEEDBACK/catalogue.md) and parameter P12
 - [Product scope](../spec/product-scope.md), VT-09 in the
   [verification catalogue](../testing/specification-verification.md) and the session and measurement views
   of the [system architecture](../architecture/system/README.md)

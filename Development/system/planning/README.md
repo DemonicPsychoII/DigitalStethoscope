@@ -31,7 +31,7 @@ Other documents link here instead of naming the latest decision date.
 | 2 November | [mvp-decisions-2026-11-02.md](mvp-decisions-2026-11-02.md) | Review of time, TLS and FHIR design: SNTP in TLS setup, drift calculation, provisioning image, flash layout, hotspot name, newest request wins |
 | 5 November | [mvp-decisions-2026-11-05.md](mvp-decisions-2026-11-05.md) | Provisioning image renamed to server profile, apart from Wi-Fi provisioning; on-flash format unchanged |
 | 10 November | [mvp-decisions-2026-11-10.md](mvp-decisions-2026-11-10.md) | First fitted evaluation carrier: RGB status light on GPIO48, fixed 100 % volume until J7 is fitted; catalogue rows grouped by subject, blink codes unchanged |
-| 13 November | [mvp-decisions-2026-11-13-delivery-and-filters.md](mvp-decisions-2026-11-13-delivery-and-filters.md) | Start during sending cancels the delivery; delivery connection setup at job submission; seven cleanup services; result freeze points; filter roles |
+| 13 November | [mvp-decisions-2026-11-13-delivery-and-filters.md](mvp-decisions-2026-11-13-delivery-and-filters.md) | Start during sending cancels the delivery; delivery connection setup at job submission; seven cleanup services; result freeze points; filter roles; first short press acknowledges, errors during listening shown after Stop, audio errors halt all input |
 
 ## Recording a new decision
 
