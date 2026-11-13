@@ -1,0 +1,29 @@
+@startuml shared_delivery_provenance
+!theme cyborg
+!pragma layout smetana
+skinparam shadowing false
+skinparam rectangle {
+}
+skinparam defaultFontName SansSerif
+title Where is each Observation input frozen?
+top to bottom direction
+rectangle "Mutable inputs (live state)\nswitch / filter, Heart / Lung, point, configuration,\npending examination request, server Device id,\nSNTP clock anchors, BPM estimates" as live
+rectangle "Session admission (accepted Start)\ncopy point, configuration, filter IDs,\nexamination identity / supplied patient reference" as admission
+rectangle "Finalized result (Finalizing): frozen context + this session's estimates\nkind: heart rate or poor-signal report,\nBPM value + declared precision,\nmonotonic measurement end" as result
+rectangle "Admitted job: CONTROL submits the finalized result\ncopy of the result; freeze server Device id;\nfreeze UTC measurement end if a qualifying\nanchor already maps it (dashed: read once from live state)" as job
+rectangle "First delivery connection setup (only if UTC end still open)\nits SNTP exchange supplies the anchor;\nfreeze UTC end once if still open" as setup
+rectangle "Serialize once before the first request\nObservation body + If-None-Exist condition\n(identifier = Device id : UTC end)" as bytes
+rectangle "Attempts 1..4 (P13)\nevery retry sends the identical bytes" as retries
+live --> admission
+admission --> result
+live --> result
+result --> job
+live ..> job
+job --> setup
+job --> bytes
+setup --> bytes
+bytes --> retries
+legend bottom
+ After its freeze point a value is never read again from live state; no anchor by the deadline: SERVER_CONNECTION_FAILURE, nothing sent.
+endlegend
+@enduml

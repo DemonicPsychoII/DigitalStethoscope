@@ -6,6 +6,12 @@ This Design-stage contract refines [TLS architecture PR #80](https://github.com/
 
 Nico accepted TLS 1.3 only, server-only authentication, a separate public server certificate, connection reuse, bounded preparation and recovery, offline listening, delivery-budget interaction and clock invalidation in this conversation [1]. Connection keep-alive, reconnect timing and the connection-setup budget within the delivery timeout and retry parameter [P13](../system/parameters.md) were decided in a follow-up review on 29 October 2026 [7]. The design review of 2 November 2026 moved endpoint and certificate into a separate server profile image and placed one SNTP exchange inside every connection setup [8]. The service interfaces below are proposed refinements; agreement on behavior is not target acceptance.
 
+## TLS 1.3 handshake (generic protocol)
+
+![Generic TLS 1.3 handshake](rendered/tls13_handshake.svg)
+
+*What does a TLS 1.3 handshake exchange before application data flows?* Source: [tls13-handshake.puml](tls13-handshake.puml). This is the protocol as RFC 8446 defines it [10], not project policy; the sections below add the policy.
+
 ## Trust and server profile inputs
 
 Each device talks to exactly one server. Its HTTPS endpoint (hostname or IP, port and base path), the PEM public server certificate and the server keep-alive timeout travel together in a server profile image, separate from the firmware. A separate flash command writes that image to the server profile partition of the [flash layout](../STORAGE/interfaces-and-behavior.md#flash-layout); a firmware update leaves it unchanged. Boot validates the image once (format version, lengths, CRC-32 and certificate parsing). A missing or invalid image leaves secure transport unavailable with a configuration cause; there is no fallback endpoint or certificate. Never place the server private key or keystore in the image. Network or portal enrollment, a project CA, older TLS versions and plain-HTTP fallback are outside this version.
@@ -47,6 +53,10 @@ Track station-address readiness, transport verification and Device registration 
 Before every new application request, check the retained peer's validity interval against the current clock. Configuration change, certificate expiry or a clock correction that makes validity fail immediately removes transport eligibility. During listening this is logical invalidation only; close under the lease afterward. A new setup, starting with its SNTP exchange, must verify the server before further requests. A clock correction that remains within the peer-validity interval does not itself require reconnection.
 
 ## Delivery budget boundary
+
+![Delivery budget timeline](rendered/delivery_budget.svg)
+
+*How many delivery attempts fit into 10 s after Stop?* Source: [delivery-budget.puml](delivery-budget.puml). The examples assume submission at Stop.
 
 Reconnection is the expected delivery path; reuse is an optimisation. P13 keeps one ten-second deadline from Stop, at most four attempts and two-second gaps after transient failure. Within an attempt, connection setup (SNTP, DNS, TCP, TLS and verification) has its own three-second limit and write plus receipt keep one second, both capped by the remaining global time. A failed connection setup counts as a failed attempt. Delivery connection setup starts when CONTROL submits the finalized job, not at Stop; the deadline still runs from Stop, so finalization time comes out of the same budget [9]. No setup is then wasted or cancelled when no job is granted (Stop before 15 s, Wi-Fi unconfigured or failed delivery prerequisites), and an eligible retained verified connection is reused without any setup. It never uses the ten-second Idle preparation allowance. A Start during Sending cancels the delivery job [9]: a connection setup or exchange in flight is cancelled, a retry gap ends at once and no further attempt starts. The job ends with `DELIVERY_FAILURE`, or with `SERVER_CONNECTION_FAILURE` when no qualifying clock anchor ever froze its UTC end, and the result is lost; a failed cancellation follows `WIFI_CLEANUP_FAILURE` under P23. The three-second and one-second values are provisional until TICKET-213 measures handshake and conditional-POST times on the target.
 
@@ -112,3 +122,5 @@ These are future verification expectations, not an executed or generated test ba
 [8] Andreas Summerer and Nico, *Design review of time, TLS and FHIR*, review meeting, 2 November 2026, with Nico's resolutions in the [decision record](../../planning/mvp-decisions-2026-11-02.md), accessed 2 November 2026. Project decisions, not measurements.
 
 [9] Nico, *Delivery start, Start during sending, cleanup services, result freeze points and filter roles*, personal communication, T3 Code, 13 November 2026, recorded in the [decision record](../../planning/mvp-decisions-2026-11-13-delivery-and-filters.md), accessed 13 November 2026. Project decisions, not measurements.
+
+[10] Eric Rescorla, *The Transport Layer Security (TLS) Protocol Version 1.3*, IETF RFC 8446, August 2018, section 2 (Figure 1) and sections 4.1.2, 4.1.3, 4.3.1, 4.4.2, 4.4.3 and 4.4.4, DOI [10.17487/RFC8446](https://doi.org/10.17487/RFC8446), accessed 13 November 2026.

@@ -1616,7 +1616,7 @@ Espressif Systems, *Wi-Fi Provisioning*, ESP-IDF Programming Guide v5.4.2, secti
 <a id="ietf_sntp_4330_2006"></a>
 ### ietf_sntp_4330_2006
 
-David L. Mills. *Simple Network Time Protocol (SNTP) Version 4 for IPv4, IPv6 and OSI*. IETF RFC 4330, January 2006, DOI 10.17487/RFC4330. 2006. <https://www.rfc-editor.org/rfc/rfc4330#section-9>. Accessed 2026-10-24. No page number claimed.
+David L. Mills. *Simple Network Time Protocol (SNTP) Version 4 for IPv4, IPv6 and OSI*. IETF RFC 4330, January 2006, DOI 10.17487/RFC4330. 2006. <https://www.rfc-editor.org/rfc/rfc4330#section-11>. Accessed 2026-10-24. No page number claimed.
 
 
 <a id="iec_alarm_edition_22_2020"></a>
@@ -1952,3 +1952,9 @@ Nico F., *Hardware Test Protocol — ESP32-S3 Bring-up*, DigitalStethoscope repo
 **Source type:** Own measurement on archived pre-thesis firmware; not acceptance of the application firmware.
 
 **Cited by:** [AUDIO architecture](../Development/system/architecture/AUDIO/README.md).
+<a id="ietf_ntp_5905_2010"></a>
+### ietf_ntp_5905_2010
+
+David L. Mills, Jim Martin (editor), Jack Burbank, William Kasch. *Network Time Protocol Version 4: Protocol and Algorithms Specification*. IETF RFC 5905, June 2010, DOI 10.17487/RFC5905. 2010. <https://www.rfc-editor.org/rfc/rfc5905>. Accessed 2026-11-13. No page number claimed.
+
+**Cited by:** [SNTP synchronization](../Development/system/design/COMMUNICATION/time-synchronization.md), sections 8 and 14.
