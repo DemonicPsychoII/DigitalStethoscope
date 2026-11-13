@@ -10,7 +10,7 @@ if (Heart + microphone + audio ready?) then (yes)
  repeat
   :Stream independent BPM analysis while listening;
   :Reject identity changes;
-  :If SESSION_CONTEXT_CHANGE: halt, restart required;
+  :If SESSION_CONTEXT_CHANGE: latch silently, keep listening;\nhalt after the manual Stop, discard the result, restart required;
   if (Essential audio fault?) then (yes)
    :Mute and latch Error;
    :Follow catalogue clear rule; restart for microphone/DAC faults;

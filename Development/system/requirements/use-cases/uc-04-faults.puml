@@ -3,10 +3,14 @@ skinparam shadowing false
 skinparam defaultFontName SansSerif
 title F4 Handle faults (REQ-13, REQ-14)
 start
-:Detect fault; log cause;\nShow catalogue context and counted red code;
+:Detect fault; log cause;\nShow catalogue context and counted red code,\nafter the manual Stop if it occurred while listening;
 if (Wi-Fi-only fault?) then (yes)
  :Preserve working audio; permit offline Start;\nRun selected retry/setup/offline recovery;
+elseif (Audio fault?) then (yes)
+ :Halt at once; mute; block every input;
+ :Restart; run startup checks;
 else (no)
+ :While listening: continue until the manual Stop,\nthen discard the result;
  :Halt active workflow; mute/cancel audio; block Start;
  if (Catalogue requires restart?) then (yes)
   :Restart; run startup checks;

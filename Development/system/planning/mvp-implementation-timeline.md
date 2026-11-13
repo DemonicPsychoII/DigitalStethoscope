@@ -104,7 +104,7 @@ All dates are 2026. The carrier board (around 25 October) and the external equip
 
 **Inputs:** Verified streaming result and network/controller contracts.
 
-**Output and acceptance evidence:** Real microphone Heart session produces one frozen result with measured interval/time; stop, analysis and send block Start. Server receipt (`201`/`200`) for the result; invalid BPM generates only agreed error report. The outgoing Observation references the stored Device id and carries `subject` only when the server-requested examination supplies that patient reference; otherwise subject is omitted. The device never selects or adds a patient ID (owner clarification, 27 October 2026). Failed sends abort, Lung/offline/cancel and muted-Error paths verified. Remove rolling-estimate 2.5 s age gate from completed-result eligibility; retain provenance/time guards.
+**Output and acceptance evidence:** Real microphone Heart session produces one frozen result with measured interval/time; stop and analysis block Start; Start during sending cancels the delivery. Server receipt (`201`/`200`) for the result; invalid BPM generates only agreed error report. The outgoing Observation references the stored Device id and carries `subject` only when the server-requested examination supplies that patient reference; otherwise subject is omitted. The device never selects or adds a patient ID (owner clarification, 27 October 2026). Failed sends abort, Lung/offline/cancel and muted-Error paths verified. Remove rolling-estimate 2.5 s age gate from completed-result eligibility; retain provenance/time guards.
 
 ## VERIFY — Verify MVP timing, resources and fault containment
 

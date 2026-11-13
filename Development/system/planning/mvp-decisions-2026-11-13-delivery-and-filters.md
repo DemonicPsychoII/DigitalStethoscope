@@ -8,8 +8,7 @@ audio decisions of the same day have their own record.
 
 ## Decisions
 
-1. **Start during Sending cancels the delivery.** The firmware already behaves this way and Nico accepted
-   it. The job ends with DELIVERY_FAILURE, or with SERVER_CONNECTION_FAILURE when its UTC measurement end
+1. **Start during Sending cancels the delivery.** Nico accepted the behaviour the audit found in the firmware. The job ends with DELIVERY_FAILURE, or with SERVER_CONNECTION_FAILURE when its UTC measurement end
    was never frozen, and the result is lost. The error indication stays, although the operator caused
    the cancellation, because the result is lost. Start during Analysing stays Busy. This replaces the Busy
    rejection during sending of the [11 October record](mvp-decisions-2026-10-11.md).
@@ -18,7 +17,7 @@ audio decisions of the same day have their own record.
    finalized job, not at Stop in parallel with finalization. The ten-second deadline still runs from
    Stop. No setup is wasted or cancelled when no job is granted, and an eligible retained connection needs
    no setup. The cost is that finalization time is no longer used for connecting. Nico confirmed this choice.
-3. **Seven cleanup services.** The P23 cleanup covers the seven services the firmware stops: time
+3. **Seven cleanup services.** The P23 cleanup covers seven services: time
    synchronization, secure connection, scan, connect request, setup page, DHCP server and hotspot. At most
    five are pending together, so the five-second cleanup pass remains.
 4. **Result freeze points.** A delivery freezes the server Device id at job admission. It freezes the UTC
@@ -52,4 +51,4 @@ audio decisions of the same day have their own record.
 - [Feedback catalogue](../design/FEEDBACK/catalogue.md) and parameter P12
 - [Product scope](../spec/product-scope.md), VT-09 in the
   [verification catalogue](../testing/specification-verification.md) and the session and measurement views
-  of the [system architecture](../architecture/system/README.md)
+  of the [system architecture](../architecture/system/README.md), and use case F4

@@ -13,8 +13,10 @@ Portal --> Idle : verified join + save (or save warning) / 10 s result, close AP
 Portal --> Idle : cancel or inactivity / notice, teardown, retain station if connected
 Portal --> Listening : Start / safe setup teardown first; retain established station
 Listening --> Measuring : Heart session begins / freeze context
-Listening --> Muted : catalogue halting fault / mute
-Measuring --> Muted : catalogue halting fault / mute, invalidate
+Listening --> Muted : audio fault / mute, block every input
+Listening --> Muted : manual Stop with a deferred halting fault / show error
+Measuring --> Muted : audio fault / mute, invalidate, block every input
+Measuring --> Muted : manual Stop with a deferred halting fault / discard result, show error
 Listening --> Idle : Stop in Lung (optional) / mute, no BPM or send
 Measuring --> Idle : Stop before 15 s / cancel, no send
 Measuring --> Analysing : Stop at or after 15 s / mute, finalize
@@ -59,7 +61,9 @@ note bottom of Measuring
   acknowledgement does not change an active workflow.
 end note
 note bottom of Muted
-  Non-Wi-Fi faults halt according to current catalogue.
+  Non-Wi-Fi faults halt according to current catalogue;
+  during listening only audio faults halt at once,
+  other halting faults wait for the manual Stop.
   Mute; invalidate incomplete work; block Start.
   Restart-required faults cannot be cleared by short press.
 end note
