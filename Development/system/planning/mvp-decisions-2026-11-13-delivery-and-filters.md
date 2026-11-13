@@ -32,7 +32,9 @@ audio decisions of the same day have their own record.
    and stops the examination with the button, offline where the error concerns Wi-Fi or the server.
 7. **Errors during listening are shown after the manual Stop.** A non-audio halting error that occurs
    while listening is latched without indication and takes effect when the operator stops the
-   examination.
+   examination, so the doctor is not disturbed mid-examination. This applies to all four restart-required
+   non-audio errors: SESSION_CONTEXT_CHANGE, CONTROL_INPUT_FAILURE, HEART_RATE_WORKER_STALL and
+   SETTINGS_SAVE_FAILURE. REQ-13 changes accordingly.
 8. **Audio errors halt the device.** With AUDIO in fault no Start is possible: every input is blocked
    until restart.
 
@@ -43,6 +45,7 @@ audio decisions of the same day have their own record.
 - [COMMUNICATION parameters](../design/COMMUNICATION/parameters.md#cleanup-limits-p23),
   [TLS design](../design/COMMUNICATION/secure-transport.md#delivery-budget-boundary) and
   [SNTP design](../design/COMMUNICATION/time-synchronization.md#clock-mapping-and-native-behavior)
+- REQ-13 in the [system requirements](../requirements/system-requirements.md)
 - [Feedback catalogue](../design/FEEDBACK/catalogue.md) and parameter P12
 - [Product scope](../spec/product-scope.md), VT-09 in the
   [verification catalogue](../testing/specification-verification.md) and the session and measurement views
