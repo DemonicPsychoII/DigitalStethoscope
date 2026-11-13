@@ -13,8 +13,10 @@ Portal --> Idle : verified join + save (or save warning) / 10 s result, close AP
 Portal --> Idle : cancel or inactivity / notice, teardown, retain station if connected
 Portal --> Listening : Start, AUDIO reports started / safe setup teardown first; retain established station
 Listening --> Measuring : Heart session begins / freeze context
-Listening --> Muted : catalogue halting fault / mute
-Measuring --> Muted : catalogue halting fault / mute, invalidate
+Listening --> Muted : audio fault / mute, block every input
+Listening --> Muted : manual Stop with a deferred halting fault / show error
+Measuring --> Muted : audio fault / mute, invalidate, block every input
+Measuring --> Muted : manual Stop with a deferred halting fault / discard result, show error
 Listening --> Idle : Stop in Lung (optional) / mute, no BPM or send
 Measuring --> Idle : Stop before 15 s / cancel, no send
 Measuring --> Analysing : Stop at or after 15 s / mute, finalize
@@ -27,6 +29,8 @@ Sending --> Idle : attempts exhausted or P13 deadline reached with a qualifying 
 Sending --> Idle : terminal outcome (TLS certificate, name or validity; HTTP 412, unsupported conditional create or another non-success other than 5xx) / latch DELIVERY_FAILURE at once
 Sending --> Idle : no qualifying clock anchor by P13 deadline / latch SERVER_CONNECTION_FAILURE
 ReportingError --> Idle : error report received / no numeric BPM
+Sending --> Listening : Start, AUDIO reports started / cancel the delivery, latch DELIVERY_FAILURE,\nor SERVER_CONNECTION_FAILURE before the UTC end is frozen
+ReportingError --> Listening : Start, AUDIO reports started / cancel the report, same latches
 ReportingError --> Idle : report attempts exhausted or P13 deadline reached with a qualifying anchor / latch DELIVERY_FAILURE
 ReportingError --> Idle : terminal outcome (TLS certificate, name or validity; HTTP 412, unsupported conditional create or another non-success other than 5xx) / latch DELIVERY_FAILURE at once
 ReportingError --> Idle : no qualifying clock anchor by P13 deadline / latch SERVER_CONNECTION_FAILURE
@@ -44,7 +48,8 @@ note right of Analysing
   No cancellation or queued Start.
 end note
 note right of Sending
-  Same Busy rule during both send paths.
+  Start cancels the delivery on both send paths;
+  the result is lost. Start is never queued.
   Exclusive network lease; audio stopped.
 end note
 note bottom of Measuring
@@ -56,7 +61,9 @@ note bottom of Measuring
   acknowledgement does not change an active workflow.
 end note
 note bottom of Muted
-  Non-Wi-Fi faults halt according to current catalogue.
+  Non-Wi-Fi faults halt according to current catalogue;
+  during listening only audio faults halt at once,
+  other halting faults wait for the manual Stop.
   Mute; invalidate incomplete work; block Start.
   Restart-required faults cannot be cleared by short press.
 end note

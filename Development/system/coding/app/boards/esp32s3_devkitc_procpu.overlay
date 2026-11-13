@@ -7,6 +7,7 @@
 /* The board default describes the WROOM-N8 module and its 4 MB table; match the fitted N16R8. */
 #include "flash-layout.dtsi"
 
+#include <zephyr/dt-bindings/adc/adc.h>
 #include <zephyr/dt-bindings/led/led.h>
 
 &psram0 
@@ -57,10 +58,41 @@
     status = "disabled";
 };
 
+/*
+ * Volume potentiometer J7 wiper on GPIO1, ADC1 channel 0, through R13 1k with C8 100 nF.
+ * Gain 1/4 and 12 bits as in the carrier peripheral test, whose sweep read up to 3083 mV.
+ */
+&adc0
+{
+    status = "okay";
+    #address-cells = <1>;
+    #size-cells = <0>;
+
+    channel@0
+    {
+        reg = <0>;
+        zephyr,gain = "ADC_GAIN_1_4";
+        zephyr,reference = "ADC_REF_INTERNAL";
+        zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
+        zephyr,resolution = <12>;
+    };
+};
+
 / {
     zephyr,user
     {
         /* Illuminated Start/Stop button J6: closes to ground; the carrier also has a pull-up. */
         start-stop-button-gpios = <&gpio0 16 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+
+        /*
+         * Raw/Murmur/BPM switch J8 on GPIO18, GPIO21 and GPIO38 (gpio1 pin 6), in this order;
+         * carrier pull-ups R14 to R16. The fitted switch has its common on the GPIO18 pad,
+         * so the driver reads Murmur and BPM by driving GPIO18 low.
+         */
+        listening-filter-switch-gpios = <&gpio0 18 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>,
+                                        <&gpio0 21 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>,
+                                        <&gpio1 6 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+
+        io-channels = <&adc0 0>;
     };
 };

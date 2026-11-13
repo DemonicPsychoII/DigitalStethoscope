@@ -38,7 +38,9 @@ workflows may remain hosted. Preserve required check names and existing gate pol
   never invent an owner quote. The required `agent-gate` status enforces this policy until native review migration is validated.
   Native mode requires one eligible GitHub approval and dismisses stale approvals; separate
   reviewer credentials are necessary when agents share the PR author identity.
-  Legacy mode waives review only for a machine-verified pure revert; additional changes need review.
+  A machine-verified pure revert gets no review of its content: a reviewer session checks the revert
+  verification and records an `approve` verdict through the review App, which `agent-gate` requires
+  too. If the verification does not hold, or the PR has additional changes, it needs normal review.
 - Agent-managed PRs carry
   `<!-- agent-author harness=<claude-code|codex> model=<id> session=<id> class=<quick-fix|feature|policy|revert> -->`
   and concrete `## Risk & rollback` evidence. Human and other bot PRs without an agent-author
@@ -97,8 +99,8 @@ workflows may remain hosted. Preserve required check names and existing gate pol
 
   Runtime comes first. Red builds never publish firmware, so the last working firmware on
   Personal Cloud stays available without any merge. The revert only restores a green
-  `integration`. Legacy mode can waive review for machine-verified pure reverts. Native mode requires
-  approval for reverts too. Merge after the active protections pass, or land a
+  `integration`. A machine-verified pure revert needs the review App's approval too; its reviewer only
+  checks the verification. Merge after the active protections pass, or land a
   corrective PR instead and close the revert. Never merge a revert for an unconfirmed failure.
   By hand: `bash .github/agent-gate/revert-last-merge.sh <pr|sha|last>...` (`--deploy` is not
   supported in this repository).
