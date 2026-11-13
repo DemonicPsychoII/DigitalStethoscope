@@ -7,11 +7,11 @@ title MVP session and error transitions (Lung transitions optional)
 [*] --> Boot
 Boot --> Idle : software-observable startup checks pass
 Boot --> Muted : non-Wi-Fi startup check fails / Error, mute
-Idle --> Listening : Start / Heart or Lung (optional)
+Idle --> Listening : Start, AUDIO reports started / Heart or Lung (optional)
 Idle --> Portal : long press >= 2 s, or automatically when no Wi-Fi credentials are stored / Idle network lease, scan then open hotspot
 Portal --> Idle : verified join + save (or save warning) / 10 s result, close AP/server, retain station
 Portal --> Idle : cancel or inactivity / notice, teardown, retain station if connected
-Portal --> Listening : Start / safe setup teardown first; retain established station
+Portal --> Listening : Start, AUDIO reports started / safe setup teardown first; retain established station
 Listening --> Measuring : Heart session begins / freeze context
 Listening --> Muted : audio fault / mute, block every input
 Listening --> Muted : manual Stop with a deferred halting fault / show error
@@ -29,8 +29,8 @@ Sending --> Idle : attempts exhausted or P13 deadline reached with a qualifying 
 Sending --> Idle : terminal outcome (TLS certificate, name or validity; HTTP 412, unsupported conditional create or another non-success other than 5xx) / latch DELIVERY_FAILURE at once
 Sending --> Idle : no qualifying clock anchor by P13 deadline / latch SERVER_CONNECTION_FAILURE
 ReportingError --> Idle : error report received / no numeric BPM
-Sending --> Listening : Start / cancel the delivery, latch DELIVERY_FAILURE,\nor SERVER_CONNECTION_FAILURE before the UTC end is frozen
-ReportingError --> Listening : Start / cancel the report, same latches
+Sending --> Listening : Start, AUDIO reports started / cancel the delivery, latch DELIVERY_FAILURE,\nor SERVER_CONNECTION_FAILURE before the UTC end is frozen
+ReportingError --> Listening : Start, AUDIO reports started / cancel the report, same latches
 ReportingError --> Idle : report attempts exhausted or P13 deadline reached with a qualifying anchor / latch DELIVERY_FAILURE
 ReportingError --> Idle : terminal outcome (TLS certificate, name or validity; HTTP 412, unsupported conditional create or another non-success other than 5xx) / latch DELIVERY_FAILURE at once
 ReportingError --> Idle : no qualifying clock anchor by P13 deadline / latch SERVER_CONNECTION_FAILURE

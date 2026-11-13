@@ -1,0 +1,96 @@
+@startuml start_stop_sequence
+!theme cyborg
+!pragma layout smetana
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam backgroundColor #0b1018
+skinparam defaultFontColor #e6edf7
+skinparam ArrowColor #a9b8ca
+skinparam ArrowFontColor #e6edf7
+skinparam sequence {
+ ParticipantBackgroundColor #273241
+ ParticipantBorderColor #61738a
+ ParticipantFontColor #e6edf7
+ LifeLineBorderColor #61738a
+ GroupBorderColor #61738a
+ GroupHeaderFontColor #e6edf7
+ GroupBackgroundColor #1b2533
+}
+skinparam sequenceGroupBodyBackGroundColor #121a26
+skinparam note {
+ BackgroundColor #1b2533
+ BorderColor #61738a
+ FontColor #e6edf7
+}
+title Start, Stop and fault shutdown across the audio components (designed mechanism, from driver source reading)
+participant "L2_CONTROL" as control
+participant "L2_AUDIO\naudio thread" as audio
+participant "L1_I2S" as transport
+participant "i2s0 driver\nmicrophone RX" as receiveDriver
+participant "i2s1 driver\nDAC TX" as transmitDriver
+
+group Start
+  control -> audio : Start (k_msgq)
+  audio -> transport : i2s_start()
+  transport -> receiveDriver : configure
+  transport -> transmitDriver : configure
+  loop 4 times (priming)
+    transport -> transmitDriver : write silent block\n(accepted while TX is configured, not started)
+  end
+  transport -> receiveDriver : trigger START
+  transport -> transmitDriver : trigger START
+  note right of transmitDriver
+    TX START with an empty queue fails,
+    so priming comes first.
+  end note
+  alt both links started
+    transport --> audio : I2S_RESULT_OK
+    audio -> control : started (k_msgq)
+  else a link fails
+    transport -> transport : DROP both links at once
+    transport --> audio : failed link
+    audio -> control : start failure (fault event)
+  end
+end
+
+== block loop runs; the command queue is checked once per iteration ==
+
+group Normal Stop
+  control -> audio : Stop (k_msgq)
+  audio -> transport : i2s_stop()
+  transport -> receiveDriver : trigger STOP
+  transport -> transmitDriver : trigger STOP
+  alt a link rejects STOP (driver ERROR state)
+    transport --> audio : failed link, at once, no wait
+    audio -> audio : fault path below
+  else both links accept STOP
+    note right of transmitDriver
+      STOP lets the block in DMA complete:
+      RX puts it into its queue, TX returns it
+      to the pool. Queued TX blocks are not played.
+    end note
+    transport -> transport : wait 8 ms (two block periods)
+    transport -> receiveDriver : trigger DROP (frees the RX queue)
+    transport -> transmitDriver : trigger DROP (frees the TX queue)
+    transport -> transport : check 0 blocks in use in both pools
+    alt all blocks free
+      transport --> audio : I2S_RESULT_OK
+      audio -> control : stopped (k_msgq)
+    else blocks stay in use
+      transport --> audio : failed link
+      audio -> audio : fault path below
+    end
+  end
+end
+
+group Fault: non-OK result in the loop
+  audio -> transport : i2s_abort()
+  transport -> receiveDriver : trigger DROP
+  transport -> transmitDriver : trigger DROP
+  note right of transmitDriver
+    No STOP and no wait.
+  end note
+  transport --> audio : done
+  audio -> control : fault event with the failed link
+end
+@enduml

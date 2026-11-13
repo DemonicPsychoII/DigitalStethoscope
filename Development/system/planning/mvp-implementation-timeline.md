@@ -110,7 +110,7 @@ All dates are 2026. The carrier board (around 25 October) and the external equip
 
 **Inputs:** Integrated current image plus latency fixture/equipment access.
 
-**Output and acceptance evidence:** 30 min load soak; no audio deadline misses/drops, <=4 ms critical execution per 8 ms block, <=100 ms input effect, <=500 ms status, >=25% measured stack/internal-heap headroom. The <30 ms end-to-end latency target (<10 ms stretch) stays unverified: no two-channel measurement setup is available. REQ-05 is checked by ear only. Visibility verification remains an unresolved conflict between P22 and the 19 October decision not to plan MVP visibility checks. Separate detection from mute latency in software traces.
+**Output and acceptance evidence:** 30 min load soak; no audio deadline misses/drops, <=3 ms critical execution per 4 ms block (P01, P02), <=100 ms input effect, <=500 ms status, >=25% measured stack/internal-heap headroom. The <30 ms end-to-end latency target (<10 ms stretch) stays unverified: no two-channel measurement setup is available. REQ-05 is checked by ear only. Visibility verification remains an unresolved conflict between P22 and the 19 October decision not to plan MVP visibility checks. Separate detection from mute latency in software traces.
 
 ## BUFFER — Resolve integration findings and freeze MVP evidence
 

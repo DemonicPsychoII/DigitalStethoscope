@@ -3,6 +3,7 @@
 | Area | Contracts |
 | --- | --- |
 | [System](system/README.md) | Shared data, ownership, audio, measurement, delivery and general parameters. |
+| [AUDIO](AUDIO/README.md) | I2S service boundary, block loop, Start/Stop order, sizing and stream faults. |
 | [WIFI](WIFI/README.md) | Radio and address operations. |
 | [STORAGE](STORAGE/README.md) | Named complete-record persistence. |
 | [COMMUNICATION](COMMUNICATION/README.md) | Setup orchestration, retry, recovery and listening priority. |
