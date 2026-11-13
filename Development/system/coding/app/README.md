@@ -56,10 +56,11 @@ or GPIO failure or a switch position that stays invalid for the debounce time; A
 marks a potentiometer that is not fitted. The safe values are Raw and 0 %, so an unusable
 input mutes the audio (Nico, 13 November 2026). The 30 ms debounce also applies to slow switch
 slides: a pause of 30 ms or more between positions is reported FAILED, which Nico accepted on
-13 November 2026 because what matters is a valid position when one is needed. J7 is not fitted, so `CONFIG_PHYSICALINTERFACE_VOLUME_POTENTIOMETER_FITTED`
-stays off, the ADC is not read and the volume is reported ABSENT once; the
-[10 November decision](../../planning/mvp-decisions-2026-11-10.md) assigns CONTROL a fixed
-100 % until J7 is fitted.
+13 November 2026 because what matters is a valid position when one is needed. J7 is fitted, so
+`CONFIG_PHYSICALINTERFACE_VOLUME_POTENTIOMETER_FITTED` is on by default and the ADC is read; with
+the option off, the ADC is not read and the volume is reported ABSENT once. The fixed 100 % of the
+[10 November decision](../../planning/mvp-decisions-2026-11-10.md) no longer applies (Nico,
+13 November 2026); a failed or absent reading keeps the safe value 0 %.
 
 CONTROL only logs the switch and volume events so far. It does not select a filter,
 apply the volume or latch CONTROL_INPUT_FAILURE, and the button LED on GPIO17 and the
@@ -90,7 +91,7 @@ provisioning commands can contain credentials; raw memory access is disabled.
 `prj.conf` selects values for options already defined by Zephyr and its modules.
 The application `Kconfig` includes `Kconfig.zephyr` as its configuration entry point.
 The application `Kconfig` defines one option,
-`CONFIG_PHYSICALINTERFACE_VOLUME_POTENTIOMETER_FITTED`, which tells L1 whether J7 is fitted.
+`CONFIG_PHYSICALINTERFACE_VOLUME_POTENTIOMETER_FITTED` (default on), which tells L1 whether J7 is fitted.
 
 ### Manual build
 

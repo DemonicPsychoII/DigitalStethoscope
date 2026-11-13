@@ -18,7 +18,7 @@ DEBOUNCE = (
     "Development/system/design/system/parameters.md (P10 candidate debounce 30 ms)"
 )
 SWITCH = "Development/system/testing/hardware/carrier-bringup/README.md (J8 as fitted)"
-VOLUME = "Development/system/planning/mvp-decisions-2026-11-10.md (fixed volume until J7 is fitted)"
+VOLUME = "Development/system/coding/app/Kconfig (PHYSICALINTERFACE_VOLUME_POTENTIOMETER_FITTED off: potentiometer absent)"
 SAFE_VOLUME_PERCENT = 0
 
 
