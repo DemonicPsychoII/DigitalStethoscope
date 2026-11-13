@@ -44,7 +44,7 @@ The tool writes the canonical form into the image; registration binds to the sam
 
 ### Certificate checks
 
-Before anything is written, the tool applies all five rules, so a mismatch fails on the developer PC. Where and when the device applies each rule is in [Validation stages](#validation-stages):
+Before anything is written, the tool applies all five rules, so a mismatch fails on the developer PC. Where and when the device applies each rule is in [Validation stages](#validation-stages); rule 4 waits for each connection setup, because boot has no valid clock yet:
 
 1. The text is exactly one parsable X.509 certificate.
 2. It is self-issued and its signature verifies with its own public key, because the device trusts it directly.

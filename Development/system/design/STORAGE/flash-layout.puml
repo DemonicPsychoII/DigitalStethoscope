@@ -44,6 +44,6 @@ End -right-> Zoom : enlarged
 legend bottom left
  Values from boards/flash-layout.dtsi. Both region starts are aligned to the 4 KiB erase sector and to 64 KiB.
  The limits of each growth area follow from the fixed starts: settings end before 0xF00000, the server profile ends within 16 MB;
- storage.c build assertions enforce this, the fixed server profile start and that the largest image fits its partition.
+ A build check requires this, the fixed server profile start and that the largest image fits its partition.
 endlegend
 @enduml
