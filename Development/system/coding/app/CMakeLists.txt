@@ -31,6 +31,7 @@ target_sources(app PRIVATE
     L1_services/L1_PORTAL/portal.c
     L1_services/L1_STORAGE/storage.c
     L1_services/L1_PHYSICALINTERFACE/physicalinterface.c
+    L1_services/L1_PHYSICALINTERFACE/physicalinterface_input.c
     L1_services/L1_FILTER/filter.c
     L1_services/L1_BPM/bpm.c
     L1_services/L1_FHIR/fhir.c

@@ -16,7 +16,7 @@ COMMUNICATION consumes its requests and publishes its state.
 | `L2_application/L2_AUDIO/` | Audio path and BPM worker, driven by control commands | L1, `common` |
 | `L2_application/L2_COMMUNICATION/` | Builds via FHIR, sends via WIFI under the lease; Device registration; hotspot Wi-Fi setup page | L1, `common` |
 | `L2_application/L2_SHELL/` | Shell commands and read-back through CONTROL | L2_CONTROL, `common` |
-| `L1_services/` adapters | `L1_I2S` (mic RX, DAC TX), `L1_WIFI`, `L1_PORTAL` (Wi-Fi setup page), `L1_STORAGE` (settings records in flash), `L1_PHYSICALINTERFACE` (buttons, LEDs) | Zephyr, `common` |
+| `L1_services/` adapters | `L1_I2S` (mic RX, DAC TX), `L1_WIFI`, `L1_PORTAL` (Wi-Fi setup page), `L1_STORAGE` (settings records in flash), `L1_PHYSICALINTERFACE` (button, switch, potentiometer, status light) | Zephyr, `common` |
 | `L1_services/` libraries | `L1_FILTER`, `L1_BPM` (envelope, autocorrelation, aggregation), `L1_FHIR` (serialization); pure C | `common` |
 | `L0_platform/` | Empty: Zephyr drivers and the board overlay | — |
 | `MONITOR/` | Runtime supervision | All layers, read-only |
@@ -34,6 +34,39 @@ The board overlay and `prj.conf` set the fitted N16R8 module (16 MB flash,
 8 MB octal PSRAM; GPIO33–37 stay reserved). The serial shell and deferred logging
 are enabled; Wi-Fi and the setup page are implemented but not yet tested on the board (TICKET-182).
 No audio processing, SD storage, UI or monitoring is active.
+
+### Physical inputs
+
+`L1_PHYSICALINTERFACE` reports debounced, timestamped input events to CONTROL on the
+system work queue ([input contract](../../design/system/interfaces-and-behavior.md#design-constraints)):
+
+| Input | Pins | Acquisition | Event |
+|---|---|---|---|
+| Start/Stop button J6 | GPIO16 | Edge interrupt starts a 30 ms debounce (P10) | Short press; long press after 2 s |
+| Raw/Murmur/BPM switch J8 | GPIO18/21/38 | Polled every 10 ms, 30 ms debounce | First stable position, then one per stable transition |
+| Volume potentiometer J7 | GPIO1, ADC1 channel 0 | Polled every 50 ms | First reading, then each change of status, of at least 2 %, or to 0 % or 100 % |
+
+The switch is polled because Murmur and BPM leave all three pins high at rest: the
+fitted J8 has its common on the GPIO18 pad, so the adapter drives GPIO18 low to tell them
+apart ([J8 as fitted](../../testing/hardware/carrier-bringup/README.md#j8-as-fitted)).
+The volume is clamped to 0–100 %, with 100 % at the 3083 mV that the carrier sweep reached.
+
+A reading that cannot be used carries a status and a safe value. FAILED marks an ADC
+or GPIO failure or a switch position that stays invalid for the debounce time; ABSENT
+marks a potentiometer that is not fitted. The safe values are Raw and 0 %, so an unusable
+input mutes the audio (Nico, 13 November 2026). The 30 ms debounce also applies to slow switch
+slides: a pause of 30 ms or more between positions is reported FAILED, which Nico accepted on
+13 November 2026 because what matters is a valid position when one is needed. J7 is fitted, so
+`CONFIG_PHYSICALINTERFACE_VOLUME_POTENTIOMETER_FITTED` is on by default and the ADC is read; with
+the option off, the ADC is not read and the volume is reported ABSENT once. The fixed 100 % of the
+[10 November decision](../../planning/mvp-decisions-2026-11-10.md) no longer applies (Nico,
+13 November 2026); a failed or absent reading keeps the safe value 0 %.
+
+CONTROL only logs the switch and volume events so far. It does not select a filter,
+apply the volume or latch CONTROL_INPUT_FAILURE, and the button LED on GPIO17 and the
+short-press acknowledgement are not implemented. The decoding and debounce logic in
+`physicalinterface_input.c` has host tests (VT-04, `tests/host/l1_physicalinterface/`);
+REQ-03 and REQ-04 still need target evidence.
 
 ### Shell and configuration
 
@@ -57,8 +90,8 @@ provisioning commands can contain credentials; raw memory access is disabled.
 
 `prj.conf` selects values for options already defined by Zephyr and its modules.
 The application `Kconfig` includes `Kconfig.zephyr` as its configuration entry point.
-No application-specific options are defined yet. A local Kconfig is optional until
-the application needs its own options.
+The application `Kconfig` defines one option,
+`CONFIG_PHYSICALINTERFACE_VOLUME_POTENTIOMETER_FITTED` (default on), which tells L1 whether J7 is fitted.
 
 ### Manual build
 
