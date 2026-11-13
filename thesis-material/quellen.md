@@ -1957,7 +1957,6 @@ The Zephyr Project, *hal_espressif ESP32-S3 clock tree definitions and I2S low-l
 C. E. Shannon, "Communication in the Presence of Noise", *Proceedings of the IRE*, vol. 37, no. 1, pp. 10–21, January 1949, DOI [10.1109/JRPROC.1949.232969](https://doi.org/10.1109/JRPROC.1949.232969). Metadata checked against Crossref on 13 November 2026. Sampling theorem: a signal limited to W hertz is determined by samples 1/(2W) seconds apart.
 
 **Cited by:** [AUDIO design, sample-rate and block-size rationale](../Development/system/design/AUDIO/interfaces-and-behavior.md#sample-rate-and-block-size-rationale).
-**Cited by:** [AUDIO architecture](../Development/system/architecture/AUDIO/README.md).
 
 <a id="ietf_ntp_5905_2010"></a>
 ### ietf_ntp_5905_2010
