@@ -38,3 +38,7 @@ five blocks.
   [system design](../design/system/interfaces-and-behavior.md#ownership-memory-and-queues)
 - D10 in the [decision register](implementation-readiness.md#decision-register) and the
   integration notes of the [thesis material](../../../thesis-material/README.md)
+- Decision 2 in the [MVP session state view](../architecture/system/mvp-session-state.puml):
+  Listening is entered when AUDIO reports started
+- Decision 3 in the system session and workflow views and P12: applied by
+  [#162](https://github.com/DemonicPsychoII/DigitalStethoscope/pull/162)

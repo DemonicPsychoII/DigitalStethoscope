@@ -150,7 +150,7 @@ Mapping rules decided on [13 November](../../planning/mvp-decisions-2026-11-13.m
 - **Start while stopped:** `i2s_start`, then the block loop; `started` event or the start failure.
   Priming comes first because a TX `START` with an empty queue fails [1].
 - **Stop:** leave the loop, `i2s_stop`; `stopped` event; output silent.
-- **Any non-OK result in the loop:** `i2s_abort`; the thread waits for commands. Fault event with the
+- **Any non-OK result in the loop:** `i2s_abort`; the thread waits for restart. Fault event with the
   failed link; `L2_CONTROL` shows the catalogue error, which requires a restart. No automatic
   stream restart ([decision of 11 November](../../planning/mvp-decisions-2026-11-11.md)).
 

@@ -20,6 +20,13 @@ title L2_AUDIO block loop: one iteration per 4 ms block
 start
 :Start command from L2_CONTROL;
 :i2s_start\nprime 4 silent TX blocks, start RX, then TX;
+if (start result) then (a link fails)
+  :i2s_start drops both links;
+  :start failure (fault event) to L2_CONTROL;
+  :wait for restart;
+  stop
+else (OK)
+endif
 :started event to L2_CONTROL;
 repeat
   :**WAIT** i2s_receiveBlock\nwaits for the next completed RX block, at most 20 ms (P11); <<#345E87>>
@@ -65,7 +72,7 @@ partition "Fault exit, reached from every (F)" {
 (F)
 :i2s_abort: DROP on both links at once;
 :fault event with the failed link to L2_CONTROL;
-:wait for commands; restart required;
+:wait for restart;
 stop
 }
 @enduml
