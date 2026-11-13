@@ -187,19 +187,19 @@ K_SEM_DEFINE(communication_ControlChanged, 0, 1);                            /**
 static struct k_thread communication_ThreadData; /**< Communication thread. */
 
 /* Shared with CONTROL; protected by communication_ControlLock. */
-static struct k_spinlock communication_ControlLock;                       /**< Protects the variables below. */
-static bool communication_ListeningIsRequested;                           /**< CONTROL listens or is about to. */
-static bool communication_SetupIsRequested;                               /**< 2 s hold not yet handled. */
-static enum communication_state communication_State;                      /**< State of the thread. */
-static bool communication_WiFiIsConfigured;                               /**< A stored network exists; published by the thread. */
-static bool communication_DeliveryIsPossible;                             /**< Saved Device registration and configured server; published by the thread. */
-static bool communication_DeliveryIsPending;                              /**< An admitted job waits for or runs in the thread. */
-static struct communication_delivery communication_Delivery;              /**< Frozen copy of the admitted result. */
-static char communication_DeliveryServerDeviceId[FHIR_SERVER_DEVICE_ID_SIZE]; /**< Server Device id published at admission; never resnapshotted. */
-static struct timespec communication_DeliveryUtcEnd;                      /**< UTC measurement end once frozen; the thread may freeze it while the job is pending. */
-static bool communication_DeliveryUtcEndIsFrozen;                         /**< DeliveryUtcEnd is frozen, at admission or by the thread's first qualifying mapping. */
-static k_timepoint_t communication_DeliveryDeadline;                      /**< P13 global deadline of the admitted job. */
-static enum communication_delivery_outcome communication_DeliveryOutcome; /**< Outcome of the latest job. */
+static struct k_spinlock communication_ControlLock;                            /**< Protects the variables below. */
+static bool communication_ListeningIsRequested;                                /**< CONTROL listens or is about to. */
+static bool communication_SetupIsRequested;                                    /**< 2 s hold not yet handled. */
+static enum communication_state communication_State;                           /**< State of the thread. */
+static bool communication_WiFiIsConfigured;                                    /**< A stored network exists; published by the thread. */
+static bool communication_DeliveryIsPossible;                                  /**< Saved Device registration and configured server; published by the thread. */
+static bool communication_DeliveryIsPending;                                   /**< An admitted job waits for or runs in the thread. */
+static struct communication_delivery communication_Delivery;                   /**< Frozen copy of the admitted result. */
+static char communication_DeliveryServerDeviceId[FHIR_SERVER_DEVICE_ID_SIZE];  /**< Server Device id published at admission; never resnapshotted. */
+static struct timespec communication_DeliveryUtcEnd;                           /**< UTC measurement end once frozen; the thread may freeze it while the job is pending. */
+static bool communication_DeliveryUtcEndIsFrozen;                              /**< DeliveryUtcEnd is frozen, at admission or by the thread's first qualifying mapping. */
+static k_timepoint_t communication_DeliveryDeadline;                           /**< P13 global deadline of the admitted job. */
+static enum communication_delivery_outcome communication_DeliveryOutcome;      /**< Outcome of the latest job. */
 static char communication_PublishedServerDeviceId[FHIR_SERVER_DEVICE_ID_SIZE]; /**< Copy of ServerDeviceId for admission; valid while DeliveryIsPossible. */
 
 /* Written only by the communication thread, under communication_ControlLock; the thread reads them without it. */
