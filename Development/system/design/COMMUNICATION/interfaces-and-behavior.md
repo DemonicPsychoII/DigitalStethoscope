@@ -77,7 +77,9 @@ Wait the normal retry gap before resuming. Boot exhaustion remains JOIN_FAILURE
 with manual setup; it never becomes link-loss recovery or automatic setup.
 
 An interrupted or timed-out scan or join is cancelled once when it ends. Cleanup then
-tries each stop that is still pending once: scan, join, HTTP, DHCP and hotspot.
+tries each stop that is still pending once, in the order of the
+[P23 cleanup limits](parameters.md#cleanup-limits-p23): time synchronization, secure connection,
+scan, connect request, setup page (HTTP), DHCP and hotspot.
 If all stops succeed, audio is released normally. If any stop fails, latch
 WIFI_CLEANUP_FAILURE (restart to clear; indication follows the feedback catalogue), disable further Wi-Fi
 work until restart and release audio under REQ-13's Wi-Fi-only exception. Keep failed
