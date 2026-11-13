@@ -82,10 +82,13 @@ The [documentation check](ci/validate_docs.py) requires each VT ID to occur in a
 - VT-01: Not yet covered — startup fault procedures need to be added.
 - VT-02: Not yet covered — target timing and resource procedures need to be added.
 - VT-03: Not yet covered — application DSP (digital signal processing) cases need to be added. Before final REQ-03 acceptance, the filter study (TICKET-189 / design decision D06) must freeze the listening coefficients, tone frequencies and expected pass/attenuated classifications in the run configuration. No approved study result or quantitative attenuation threshold exists in this baseline; that filter demonstration remains blocked. REQ-03 is an audible selector/filter demonstration, not a filter-superiority claim.
-- VT-04: Not yet covered — control and input cases need to be added.
 - VT-06: Not yet covered — BPM (beats per minute) session cases need to be added. Freeze signal-validity criteria and reference selection before recording or excluding sessions; REQ-06 acceptance is blocked until then (TICKET-208).
 - VT-10: Not yet covered — filter comparison procedure needs to be added.
 - VT-12: Not yet covered — electrical inspection procedure needs to be added.
+
+VT-04 host cases cover only the input decoding of L1_PHYSICALINTERFACE: switch decoding and debounce,
+volume clamping and reporting, and failed or absent inputs, in [the physical interface batch](../coding/app/tests/host/l1_physicalinterface/test_physicalinterface.py).
+CONTROL transitions, queue saturation, Busy, LED patterns, snapshot consistency and all target checks remain uncovered.
 
 VT-14 host cases are in [the communication batch](../coding/app/tests/host/test_communication.py). Target-only radio, phone/QR/page, restart persistence, retained-station audio and private-log checks are covered by the [Wi-Fi procedure](WIFI/VT-14-target.md) and [portal procedure](PORTAL/VT-14-target.md). Both procedures are unexecuted; target results remain pending (TICKET-182).
 

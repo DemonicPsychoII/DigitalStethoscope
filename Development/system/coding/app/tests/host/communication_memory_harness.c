@@ -15,8 +15,34 @@ static bool memory_is_clear(const void *data, size_t size)
     return is_clear;
 }
 
+enum
+{
+    WHITE_BOX_REGISTRATION_CHANGE = 1, /* A later registration publishes another server Device id. */
+    WHITE_BOX_CLOCK_STEP = 2,          /* The thread applies an anchor that steps UTC forward by one hour. */
+};
+
+static void change_worker_state(int value)
+{
+    if(value == WHITE_BOX_REGISTRATION_CHANGE)
+    {
+        snprintf(communication_ServerDeviceId, sizeof(communication_ServerDeviceId), "%s", "7999");
+        communication_publishDeliveryPrerequisites();
+    }
+    else if(value == WHITE_BOX_CLOCK_STEP)
+    {
+        k_spinlock_key_t key = k_spin_lock(&communication_ControlLock);
+        communication_AppliedTimeAnchor.utc_seconds += 3600U;
+        k_spin_unlock(&communication_ControlLock, key);
+    }
+    else
+    {
+        abort();
+    }
+}
+
 int main(int argument_count, char **arguments)
 {
+    white_box_handler = change_worker_state;
     if(argument_count == 2 && strcmp(arguments[1], "coalesced-boot-resume") == 0)
     {
         horizon_milliseconds = 6000;

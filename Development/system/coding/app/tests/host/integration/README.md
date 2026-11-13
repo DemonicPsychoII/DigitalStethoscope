@@ -22,6 +22,7 @@ posted events and advances simulated time; locks do not provide real concurrency
 | Join failure | Driver wrong-password result reaches L2 and the portal; a completed rescan restores selection without saving. |
 | Invalid form | Real portal validation returns 400 and no join/save is issued. |
 | Start / Cancel | Typed portal/control input reaches L2 and closes the real services; Start releases audio. |
+| Start with blocked stops | DHCP server stop and AP disable driver calls that do not return each fail at the 1 s P23 bound; L2 latches WIFI_CLEANUP_FAILURE, reports it once through the feedback handler and releases audio. |
 | Refresh exhaustion | Four failed refresh attempts close setup with Closing, preserving the established station and requiring a new setup hold. |
 
 Production line/branch coverage and the JUnit scenario traces are retained by the
