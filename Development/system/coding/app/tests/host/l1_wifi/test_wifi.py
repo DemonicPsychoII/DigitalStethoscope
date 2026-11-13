@@ -479,6 +479,38 @@ TIME_CASES = [
 ]
 
 
+SERVICE_STOP_CASES = [
+    (
+        "wifi-blocked-dhcp-and-hotspot-stops-fail-within-stop-bound",
+        "service-stop-blocks",
+        "",
+        {
+            "dhcp_stop": "ETIMEDOUT",
+            "dhcp_stop_milliseconds": (AT_MOST, 1000),
+            "hotspot_stop": "ETIMEDOUT",
+            "hotspot_stop_milliseconds": (AT_MOST, 1000),
+            "repeated_dhcp_stop": "ETIMEDOUT",
+            "repeated_dhcp_stop_milliseconds": (AT_MOST, 1000),
+            "blocked_dhcp_running": "1",
+            "blocked_hotspot_enabled": "1",
+            "blocked_dhcp_driver_calls": "0",
+            "blocked_hotspot_driver_calls": "0",
+            "late_dhcp_running": "0",
+            "late_hotspot_enabled": "0",
+            "late_dhcp_driver_calls": "1",
+            "late_hotspot_driver_calls": "1",
+            "next_dhcp_stop": "0",
+            "next_hotspot_stop": "0",
+        },
+        SERVICE + "; " + STOP_BOUND,
+        "While the DHCP server stop and AP disable driver calls do not return, each stop returns failure by the 1 s bound instead of reporting the service stopped, "
+        "and a repeated stop waits for the running call instead of queueing it again; the late driver calls then complete once each, and later stops succeed. "
+        "The single-threaded substitute holds the stop queue's work while the driver blocks and releases it afterwards.",
+        WIFI_VT,
+    ),
+]
+
+
 def matches(actual, expected):
     if isinstance(expected, tuple):
         comparison, value = expected
@@ -486,6 +518,26 @@ def matches(actual, expected):
             return actual is not None and int(actual) <= value
         return actual is not None and actual != value
     return actual == expected
+
+
+def check_key_value_case(
+    scenario, operation, argument, expected, basis, description, vt, service, record_property
+):
+    for name, value in (
+        ("scenario", scenario),
+        ("vt_id", vt),
+        ("basis", basis),
+        ("expected", description),
+    ):
+        record_property(name, value)
+    output = service("wifi", operation, argument)
+    actual = dict(token.split("=", 1) for token in output.split())
+    mismatches = {
+        key: (actual.get(key), value)
+        for key, value in expected.items()
+        if not matches(actual.get(key), value)
+    }
+    assert not mismatches, output
 
 
 @pytest.mark.parametrize(
@@ -503,18 +555,26 @@ def test_time_synchronization(
     service,
     record_property,
 ):
-    for name, value in (
-        ("scenario", scenario),
-        ("vt_id", vt),
-        ("basis", basis),
-        ("expected", description),
-    ):
-        record_property(name, value)
-    output = service("wifi", operation, argument)
-    actual = dict(token.split("=", 1) for token in output.split())
-    mismatches = {
-        key: (actual.get(key), value)
-        for key, value in expected.items()
-        if not matches(actual.get(key), value)
-    }
-    assert not mismatches, output
+    check_key_value_case(
+        scenario, operation, argument, expected, basis, description, vt, service, record_property
+    )
+
+
+@pytest.mark.parametrize(
+    "scenario,operation,argument,expected,basis,description,vt",
+    [pytest.param(*case, id=case[0]) for case in SERVICE_STOP_CASES],
+)
+def test_service_stop(
+    scenario,
+    operation,
+    argument,
+    expected,
+    basis,
+    description,
+    vt,
+    service,
+    record_property,
+):
+    check_key_value_case(
+        scenario, operation, argument, expected, basis, description, vt, service, record_property
+    )

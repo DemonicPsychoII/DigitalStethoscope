@@ -98,6 +98,12 @@ void simulation_log(const char *format, ...)
     va_end(arguments);
 }
 
+static void record_feedback(enum feedback_code code)
+{
+    if(code == FEEDBACK_WIFI_CLEANUP_FAILURE)
+        trace("cleanup_failure_feedback", 0);
+}
+
 static void snapshot(void)
 {
     trace("connected", connected);
@@ -1040,6 +1046,7 @@ int main(void)
         else
             abort();
     }
+    communication_setFeedbackHandler(record_feedback);
     communication_init();
     if(setjmp(finished) == 0)
     {

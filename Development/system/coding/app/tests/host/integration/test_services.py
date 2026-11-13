@@ -39,6 +39,7 @@ def integration_executable(host_build_directory):
         "join-failure",
         "invalid-form",
         "start-selection",
+        "start-selection-stops-block",
         "cancel-selection",
         "rescan-exhaustion",
         "boot-disconnect-before-ipv4",
@@ -69,7 +70,16 @@ def test_real_services(scenario, integration_executable, record_property):
         key: int(value)
         for key, value in (line.split() for line in result.stdout.splitlines())
     }
+    if scenario == "start-selection-stops-block":
+        # Start at 1 s; the DHCP server stop and AP disable each end at the 1 s P23 bound.
+        assert observed["cleanup_fault"] == 1
+        assert observed["cleanup_feedback_count"] == 1
+        assert observed["cleanup_feedback_milliseconds"] == 1000 + 2 * 1000
+        assert observed["dhcp_driver_calls"] == 0 and observed["hotspot_driver_calls"] == 0
+        assert observed["ack"] == 0 and observed["page"] == 0
+        return
     assert observed["cleanup_fault"] == 0
+    assert observed["cleanup_feedback_count"] == 0
     if scenario == "boot-disconnect-before-ipv4":
         assert observed["connect_calls"] == 4 and observed["boot_attempts"] == 4
         assert observed["first_join_milliseconds"] == 0

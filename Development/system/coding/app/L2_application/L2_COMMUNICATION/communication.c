@@ -320,7 +320,7 @@ static bool communication_isRetainedConnectionReusable(void);
  */
 static k_timeout_t communication_timeUntilTransportDuty(k_timeout_t limit);
 
-/** @brief Latch WIFI_CLEANUP_FAILURE: network work stays disabled until restart; audio may still start. */
+/** @brief Latch WIFI_CLEANUP_FAILURE and report it to CONTROL once: network work stays disabled until restart; audio may still start. */
 static void communication_latchCleanupFault(void);
 
 /** @brief Monotonic time since the retained clock anchor was applied, in microseconds. */
@@ -1869,9 +1869,16 @@ static uint64_t communication_getAnchorAgeMicroseconds(void)
 
 static void communication_latchCleanupFault(void)
 {
+    const bool isNewlyLatched = !communication_CleanupFaultIsLatched;
+
     communication_CleanupFaultIsLatched = true;
     communication_RecoveryIsAllowed = false;
     communication_BootJoinIsPending = false;
+
+    if(isNewlyLatched)
+    {
+        communication_reportFeedback(FEEDBACK_WIFI_CLEANUP_FAILURE);
+    }
 }
 
 static int communication_synchronizeTime(k_timepoint_t deadline)

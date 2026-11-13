@@ -355,6 +355,7 @@ def test_cleanup_fault_still_ends_a_pending_job(simulate, record_property):
     trace = simulate(script, submit=1_500)
     assert trace.values("deliver_result") == [0]
     assert "WIFI_CLEANUP_FAILURE" in trace.production_log
+    assert trace.count("cleanup_failure_feedback") == 1
     assert trace.values("exchange_observation") == []
     assert trace.last("delivery_outcome") in (FAILED, NO_CLOCK)
 
@@ -549,6 +550,7 @@ def test_unproven_release_latches_cleanup_failure_instead_of_a_retry(
     trace = simulate(script + plan("exchange", [201]))
     assert trace.values("deliver_result") == [0]
     assert "WIFI_CLEANUP_FAILURE" in trace.production_log
+    assert trace.count("cleanup_failure_feedback") == 1
     cancel = trace.times("secure_cancel")[0]
     assert trace.count("exchange") == 1
     for key in ("sntp_request", "tls", "exchange"):
