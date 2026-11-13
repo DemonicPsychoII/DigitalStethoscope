@@ -1,0 +1,49 @@
+@startuml flash_layout
+!theme cyborg
+!pragma layout smetana
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam backgroundColor #0b1018
+skinparam defaultFontColor #e6edf7
+skinparam ArrowColor #a9b8ca
+skinparam rectangle {
+ BackgroundColor #111826
+ BorderColor #a9b8ca
+ BackgroundColor<<application>> #1f2f45
+ BorderColor<<application>> #6f9fd8
+ BackgroundColor<<settings>> #1f3b2d
+ BorderColor<<settings>> #5fbf8a
+ BackgroundColor<<profile>> #3a2a45
+ BorderColor<<profile>> #b48ead
+ BackgroundColor<<unassigned>> #0b1018
+ BorderColor<<unassigned>> #61738a
+ FontColor<<unassigned>> #b8c4d4
+ BorderStyle<<unassigned>> dashed
+}
+hide stereotype
+title 16 MB flash: whole map and the enlarged settings/server-profile end
+
+rectangle "Whole flash, 0x000000 to 0xFFFFFF (16 MB, not to scale)" as Whole {
+ rectangle "0x000000 to 0xE7FFFF  (14848 KiB)\n\nslot0_partition, label application\nalso boot_partition, zephyr,code-partition\nSimple Boot image: header, loaded segments,\nflash-mapped code and data" as Application <<application>>
+ rectangle "0xE80000 to 0xFFFFFF  (1536 KiB)\nsettings, server profile and their growth room\nenlarged on the right" as End
+ Application -[hidden]down- End
+}
+
+rectangle "Enlarged: 0xE80000 to 0xFFFFFF" as Zoom {
+ rectangle "0xE80000 to 0xEAFFFF  (192 KiB)\nstorage_partition, label storage\nsettings (ZMS): wifi/network, fhir/device-registration" as Settings <<settings>>
+ rectangle "0xEB0000 to 0xEFFFFF  (320 KiB)\nunassigned, not reserved\nsettings can grow to 512 KiB without moving the server profile" as SettingsGrowth <<unassigned>>
+ rectangle "0xF00000 to 0xF2FFFF  (192 KiB)\nserver_profile_partition, label server-profile, read-only\nfixed start 0xF00000 for every firmware version\nserver profile image: at most 8,465 bytes" as Profile <<profile>>
+ rectangle "0xF30000 to 0xFFFFFF  (832 KiB)\nunassigned, not reserved\nthe server profile can grow to 1 MB without moving settings" as ProfileGrowth <<unassigned>>
+ Settings -[hidden]down- SettingsGrowth
+ SettingsGrowth -[hidden]down- Profile
+ Profile -[hidden]down- ProfileGrowth
+}
+
+End -right-> Zoom : enlarged
+
+legend bottom left
+ Values from boards/flash-layout.dtsi. Both region starts are aligned to the 4 KiB erase sector and to 64 KiB.
+ The limits of each growth area follow from the fixed starts: settings end before 0xF00000, the server profile ends within 16 MB;
+ storage.c build assertions enforce this, the fixed server profile start and that the largest image fits its partition.
+endlegend
+@enduml

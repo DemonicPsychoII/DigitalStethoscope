@@ -1,0 +1,62 @@
+@startuml input_ownership
+!theme cyborg
+!pragma layout smetana
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam backgroundColor #0b1018
+skinparam defaultFontColor #e6edf7
+skinparam ArrowColor #a9b8ca
+skinparam componentStyle rectangle
+skinparam rectangle {
+}
+skinparam package {
+ BackgroundColor #111826
+ BorderColor #a9b8ca
+ FontColor #e6edf7
+}
+title Input ownership: contact handling, policy and commanded effects
+left to right direction
+
+package "Physical contact" {
+ rectangle "Start/Stop button\nGPIO16" as Button
+ rectangle "Raw/Murmur/BPM switch\nGPIO18/21/38" as Switch
+ rectangle "Volume potentiometer\nGPIO1, ADC1 channel 0" as Potentiometer
+}
+
+package "L1_PHYSICALINTERFACE: contact handling" {
+ rectangle "Debounce: level stable for 30 ms (P10 candidate)\nLong press: held 2 s, reported once\nRelease after a long press is not a short press" as ButtonAdapter
+ rectangle "Stable-state reconciliation:\nreport the settled switch position and volume;\non input-queue overflow: reconcile stable values,\nreject and report transient actions" as StableAdapter
+}
+
+package "L2_CONTROL: policy" {
+ rectangle "Long press in Idle -> setup request\nLong press outside Idle -> rejected" as LongPressPolicy
+ rectangle "Short press: Start/Stop admission,\nBusy during analysis,\ncancels a running delivery,\nerror acknowledgement" as ShortPressPolicy
+ rectangle "Filter and volume admission;\nchange during a session ->\nSESSION_CONTEXT_CHANGE" as SettingPolicy
+}
+
+package "Commanded effects" {
+ rectangle "COMMUNICATION\nWi-Fi setup workflow" as SetupEffect
+ rectangle "RGB status light\nINPUT_REJECTED dim" as RejectEffect
+ rectangle "AUDIO\nlisten, measure, filter, volume" as AudioEffect
+ rectangle "COMMUNICATION\nnetwork lease release" as LeaseEffect
+ rectangle "Red button LED\nerror code, acknowledgement flash" as RedEffect
+}
+
+Button --> ButtonAdapter : GPIO edge
+Switch --> StableAdapter : GPIO levels
+Potentiometer --> StableAdapter : ADC samples
+ButtonAdapter --> LongPressPolicy : LONG_PRESS
+ButtonAdapter --> ShortPressPolicy : SHORT_PRESS
+StableAdapter --> SettingPolicy : settled value
+LongPressPolicy --> SetupEffect : SETUP_REQUESTED
+LongPressPolicy --> RejectEffect : rejected
+ShortPressPolicy --> AudioEffect
+ShortPressPolicy --> LeaseEffect
+ShortPressPolicy --> RedEffect
+SettingPolicy --> AudioEffect
+
+legend bottom left
+ The adapter decides what a contact means physically (stable level, press duration);
+ CONTROL alone decides whether it is admitted; effects never read contacts directly.
+endlegend
+@enduml

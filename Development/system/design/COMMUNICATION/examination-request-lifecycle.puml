@@ -1,0 +1,43 @@
+@startuml examination_request_lifecycle
+!theme cyborg
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam backgroundColor #0b1018
+skinparam defaultFontColor #e6edf7
+skinparam ArrowColor #a9b8ca
+!pragma layout smetana
+title Which examination context does an Observation carry?
+hide empty description
+state "OPEN: external request adapter\nprotocol, acknowledgement, durability,\ncancellation/expiry" as Adapter
+state "Pending slot (one request)" as Slot {
+ state "No pending request" as Empty
+ state "Pending request\nvalidated for this device and server binding\nrequest identity, optional patient reference" as Pending
+}
+state "Session context" as Session {
+ state "No session" as NoSession
+ state "Examination session\nrequest identity and patient reference copied\nimmutable until the session ends" as Active
+ state "Standalone session\nno request: no subject" as Standalone
+}
+state "Observation\nsubject = supplied patient reference,\nomitted when none was supplied" as Observation
+Adapter -[dashed]-> Pending : valid offer
+Adapter -[dashed]-> Empty : wrong target, malformed\nor oversized: rejected
+[*] --> Empty
+Empty --> Pending : valid offer
+Pending --> Pending : newest wins: a newer offer replaces and drops it;\nduplicate of the same request: no new examination;\nrejected Start consumes nothing
+Pending --> Empty : accepted local Start consumes it (removed at once)
+[*] --> NoSession
+NoSession --> Active : accepted local Start\nwith a pending request
+NoSession --> Standalone : accepted local Start\nwithout a pending request
+Active --> Observation : result of this session
+Standalone --> Observation : result
+Active --> NoSession : session ends (also cancellation, poor signal,\ndelivery failure, acknowledgement):\ncontext is not restored or reused
+Standalone --> NoSession : session ends
+note right of Active
+ New external context cannot replace it or start a measurement;
+ an attempted change follows SESSION_CONTEXT_CHANGE handling.
+ A request arriving now becomes the pending offer for the next
+ examination; a later request never attaches to a running one.
+ No adapter network work while listening; an acknowledgement
+ may be queued for the next permitted network lease.
+end note
+@enduml

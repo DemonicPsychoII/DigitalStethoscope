@@ -1,0 +1,39 @@
+@startuml communication_lifecycle
+!theme cyborg
+!pragma layout smetana
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam backgroundColor #0b1018
+skinparam defaultFontColor #e6edf7
+skinparam ArrowColor #a9b8ca
+title COMMUNICATION lifecycle: from Wi-Fi join to delivery after Stop
+hide empty description
+state "Wi-Fi join\nboot join, link recovery or setup page" as Join
+state "Idle network work (CONTROL lease)" as Idle {
+ state "Idle check\nwhat is due?" as Check
+ state "Connection preparation\none setup = SNTP exchange, DNS, TCP, TLS 1.3, verification\none 10 s deadline per setup" as Preparation
+ state "Registration\nconditional POST /Device, validate, save record\n10 s per attempt" as Registration
+ state "Prepared\nverified connection retained as reuse candidate\nregistration ready (record saved)" as Prepared
+}
+state "Listening (CONTROL)\nno network work: no request, no setup, no SNTP\nstation association retained\nverified TLS connection retained dormant" as Listening
+state "Finalizing (CONTROL)\nresult frozen; no network work yet" as Finalizing
+state "Delivery\nstarts when CONTROL submits the finalized job\ndeadline = Stop + 10 s (P13)\nreuse an eligible retained connection, else new setup" as Delivery
+[*] --> Join
+Join -down-> Check : station address
+Check --> Preparation : transport unverified,\nserver profile valid, gap over
+Check --> Registration : verified, no saved\nregistration for this server, gap over
+Check --> Prepared : verified and registered
+Preparation --> Check : failed setup: SERVER_CONNECTION_FAILURE,\nnext setup after 60 s
+Preparation --> Registration : verified; no saved\nregistration for this server
+Preparation --> Prepared : verified; saved\nregistration matches
+Registration --> Prepared : record committed
+Registration --> Check : failed attempt: next after 60, 120, 240 s;\n4th failure: unavailable until restart
+Idle -down-> Listening : Start: pending services stopped,\nrelease acknowledged
+Join --> Listening : Start: join cancelled
+Listening -up-> Check : Stop before 15 s or no result:\nnothing sent
+Listening -down-> Finalizing : Stop that enters finalization
+Finalizing -up-> Check : no job: Wi-Fi unconfigured\nor DELIVERY_NOT_POSSIBLE
+Finalizing -down-> Delivery : communication_submitDelivery
+Delivery -up-> Check : job ends: receipt, DELIVERY_FAILURE or\nSERVER_CONNECTION_FAILURE (no clock)
+Delivery -up-> Listening : Start cancels the job:\nDELIVERY_FAILURE, result lost
+@enduml

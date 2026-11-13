@@ -1,0 +1,57 @@
+@startuml clock_mapping
+!theme cyborg
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam backgroundColor #0b1018
+skinparam defaultFontColor #e6edf7
+skinparam ArrowColor #a9b8ca
+title Which clock setting labels the measurement end, and when is it frozen? (not to scale)
+concise "Measurement\n(kernel monotonic time)" as Measurement
+concise "Case 1: anchor before the end\nqualifies at admission" as Before
+concise "Case 2: no qualifying anchor\nat admission" as After
+concise "Case 3: no qualifying anchor\nby the deadline" as None
+concise "Device real-time clock\n(UTC, set by SNTP)" as Clock
+hide time-axis
+scale 1 as 16 pixels
+@0
+Measurement is Idle
+Before is "Idle setup applies anchor A"
+After is "anchor A older than 12.5 h before the end"
+None is "no anchor, or every anchor too far"
+Clock is "set by anchor A"
+@12
+Before is "A within 12.5 h of the end"
+@20
+Measurement is "acquisition start ... end"
+@40
+Measurement is Finalizing
+@48
+Measurement is "job admitted"
+Before is "freeze at admission"
+After is "delivery SNTP: anchor B"
+None is "delivery setup fails or anchor not usable"
+@60
+Measurement is "delivery attempts"
+Before is "frozen: same UTC end, Device id, bytes"
+@64
+After is "freeze before first request"
+@76
+After is "frozen: same UTC end, Device id, bytes"
+@80
+Clock is "later SNTP exchange steps the clock"
+@82
+Measurement is {-}
+None is "deadline: SERVER_CONNECTION_FAILURE"
+@100
+Measurement@20 <-> @40 : listening: monotonic duration, never relabelled
+note bottom of Before
+ UTC end = anchor UTC + (measurement end - anchor monotonic time).
+ An anchor qualifies only if |measurement end - anchor| <= 12.5 h,
+ that is (1 s - 100 ms) / 20 ppm; it may lie before or after the end.
+ Case 3 sends nothing.
+end note
+note bottom of Clock
+ Frozen exactly once: later exchanges, retries and backward or forward
+ clock steps never change the frozen UTC end, identifier or body bytes.
+end note
+@enduml

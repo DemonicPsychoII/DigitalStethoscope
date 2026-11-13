@@ -1,0 +1,82 @@
+@startuml shared_runtime_handoffs
+!theme cyborg
+!pragma layout smetana
+skinparam shadowing false
+skinparam component {
+ BackgroundColor<<optional>> #273241
+ BorderColor<<optional>> #61738a
+ FontColor<<optional>> #b8c4d4
+ BackgroundColor<<thread>> #16324a
+ BorderColor<<thread>> #4aa3df
+ FontColor<<thread>> #e6edf7
+ BackgroundColor<<interrupt>> #3a3020
+ BorderColor<<interrupt>> #c9a35a
+ FontColor<<interrupt>> #f0e5cf
+}
+skinparam queue {
+ BackgroundColor<<specified>> #12384a
+ BorderColor<<specified>> #4aa3df
+ FontColor<<specified>> #e6edf7
+ BackgroundColor<<proposed>> #2b2f1d
+ BorderColor<<proposed>> #b8a14a
+ FontColor<<proposed>> #e8dca8
+ BackgroundColor<<optional>> #273241
+ BorderColor<<optional>> #61738a
+ FontColor<<optional>> #b8c4d4
+}
+skinparam componentStyle rectangle
+skinparam defaultFontName SansSerif
+title Threads and bounded handoffs: what happens when the receiver falls behind?
+top to bottom direction
+component "GPIO ISR" as irq <<interrupt>>
+component "Input\nL1_PHYSICALINTERFACE\nbuttons / switches / volume\ntouch (optional)" as inp <<thread>>
+component "Shell\nL2_SHELL" as shell <<thread>>
+component "Controller\nL2_CONTROL\nonly writer of mode state" as ctl <<thread>>
+component "Audio\nL2_AUDIO · L1_I2S, L1_FILTER" as audio <<thread>>
+component "BPM worker\nL2_AUDIO · L1_FILTER, L1_BPM" as bpm <<thread>>
+component "Communication\nL2_COMMUNICATION\nL1_FHIR, L1_WIFI, L1_STORAGE" as net <<thread>>
+component "Portal HTTP server\nL1_PORTAL" as portal <<thread>>
+component "Display (optional)" as display <<optional>>
+component "Storage (optional)" as storage <<optional>>
+
+queue "Control events · values\nproposed k_msgq, 16 (P11)\nfull: reconcile stable values,\nreject + report transient actions" as controlEvents <<proposed>>
+queue "AudioCommand · values\nproposed k_msgq\nstale generation discarded" as audioCommands <<proposed>>
+queue "Analysis blocks · copied payloads + handles\ncandidate pool of 4 (P11)\nfull: mark gap, reset window;\nlistening continues" as analysisBlocks <<proposed>>
+queue "Results / completion / faults · values\nproposed k_msgq" as workerEvents <<proposed>>
+queue "StateSnapshot · value copy\nproposed\nslow reader: latest snapshot wins" as snapshots <<proposed>>
+queue "Listening / setup request · values\nspinlock flags + semaphore\nlatest Start / Stop wins;\nrelease confirmed through a\nsynchronized stopped state" as listeningRequest <<specified>>
+queue "Delivery job · value copy\n1 slot (P11); occupied: Busy,\nno overwrite, no retry queue" as deliveryJob <<specified>>
+queue "Wi-Fi feedback / delivery outcome · values\ncallback on the\ncommunication thread; outcome read\nunder spinlock" as networkFeedback <<specified>>
+queue "Portal requests · values\nring of 4 (P24) + semaphore\nfull: HTTP 503, Retry-After 1 s" as portalRequests <<specified>>
+queue "File audio · block handles\noptional" as fileBlocks <<optional>>
+
+irq --> inp : wake-up
+inp ..> controlEvents
+shell ..> controlEvents
+controlEvents ..> ctl
+ctl ..> audioCommands
+audioCommands ..> audio
+audio ..> analysisBlocks
+analysisBlocks ..> bpm
+bpm ..> workerEvents
+audio ..> workerEvents
+workerEvents ..> ctl
+ctl ..> snapshots
+snapshots ..> shell
+snapshots ..> display
+ctl --> listeningRequest
+listeningRequest --> net
+ctl ..> deliveryJob
+deliveryJob --> net
+net --> networkFeedback
+networkFeedback --> ctl
+portal --> portalRequests
+portalRequests --> net
+ctl ..> storage
+storage ..> fileBlocks
+fileBlocks ..> audio
+legend bottom
+ Blue handoff / solid arrow = specified. Yellow handoff / dashed arrow = proposed. Grey = optional beyond the MVP.
+ "Full" is not one policy: each handoff states its own overload rule. Values are copied; handles point into a bounded pool.
+endlegend
+@enduml
