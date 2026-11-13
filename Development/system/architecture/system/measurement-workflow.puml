@@ -22,7 +22,7 @@ if (Heart + microphone + audio ready?) then (yes)
   :Cancel measurement, no send;
   stop
  endif
- :Indicate Busy; reject Start without queuing;
+ :Indicate Busy during analysis; reject Start without queuing.\nStart during sending cancels the delivery; the result is lost;
  :Aggregate retained valid estimates and interval;
  if (Invalid BPM?) then (yes)
   :Latch normal BPM fault; no numeric value;

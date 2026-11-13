@@ -27,6 +27,8 @@ Sending --> Idle : attempts exhausted or P13 deadline reached with a qualifying 
 Sending --> Idle : terminal outcome (TLS certificate, name or validity; HTTP 412, unsupported conditional create or another non-success other than 5xx) / latch DELIVERY_FAILURE at once
 Sending --> Idle : no qualifying clock anchor by P13 deadline / latch SERVER_CONNECTION_FAILURE
 ReportingError --> Idle : error report received / no numeric BPM
+Sending --> Listening : Start / cancel the delivery, latch DELIVERY_FAILURE,\nor SERVER_CONNECTION_FAILURE before the UTC end is frozen
+ReportingError --> Listening : Start / cancel the report, same latches
 ReportingError --> Idle : report attempts exhausted or P13 deadline reached with a qualifying anchor / latch DELIVERY_FAILURE
 ReportingError --> Idle : terminal outcome (TLS certificate, name or validity; HTTP 412, unsupported conditional create or another non-success other than 5xx) / latch DELIVERY_FAILURE at once
 ReportingError --> Idle : no qualifying clock anchor by P13 deadline / latch SERVER_CONNECTION_FAILURE
@@ -44,7 +46,8 @@ note right of Analysing
   No cancellation or queued Start.
 end note
 note right of Sending
-  Same Busy rule during both send paths.
+  Start cancels the delivery on both send paths;
+  the result is lost. Start is never queued.
   Exclusive network lease; audio stopped.
 end note
 note bottom of Measuring

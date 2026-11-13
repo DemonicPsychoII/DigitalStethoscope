@@ -74,7 +74,7 @@ All dates are 2026. The carrier board (around 25 October) and the external equip
 
 **Inputs:** Confirmed Start/Stop/session decisions and network completion events.
 
-**Output and acceptance evidence:** Start blocked with busy indication during analysis/sending. Reject mode/context changes in session without mutation; SESSION_CONTEXT_CHANGE halts and requires restart. Separate acknowledgement click clears normal Wi-Fi latch only manually; no implicit Start. Fault clear/restart behaviour follows the current feedback catalogue ([19 October](mvp-decisions-2026-10-19.md)). Stop <15 s cancels; Lung no BPM/FHIR. Setup: long press accepted only in Idle; Start safely terminates setup before audio. Retain established station association; Wi-Fi-only errors do not mute working audio. Host race/state matrix passes.
+**Output and acceptance evidence:** Start blocked with busy indication during analysis; Start during sending cancels the delivery. Reject mode/context changes in session without mutation; SESSION_CONTEXT_CHANGE halts and requires restart. Separate acknowledgement click clears normal Wi-Fi latch only manually; no implicit Start. Fault clear/restart behaviour follows the current feedback catalogue ([19 October](mvp-decisions-2026-10-19.md)). Stop <15 s cancels; Lung no BPM/FHIR. Setup: long press accepted only in Idle; Start safely terminates setup before audio. Retain established station association; Wi-Fi-only errors do not mute working audio. Host race/state matrix passes.
 
 ## BOARD — Verify latest evaluation carrier and component wiring
 
