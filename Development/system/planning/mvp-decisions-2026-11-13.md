@@ -19,12 +19,15 @@ five blocks.
    no longer describe the design.
 2. **Listening starts at the started event.** The system enters Listening when `L2_AUDIO` reports
    that the stream has started, not when the Start command is sent.
-3. **Non-audio halting faults during listening are deferred.** When a halting error that is not an
-   audio error occurs while listening, its indication is muted and listening continues; the error
+3. **Non-audio halting faults during listening are deferred.** When one of the restart-required
+   errors that are not audio errors (`SESSION_CONTEXT_CHANGE`, `CONTROL_INPUT_FAILURE`, `HEART_RATE_WORKER_STALL` and `SETTINGS_SAVE_FAILURE`) occurs while listening, its indication is muted and listening continues; the error
    is shown, and its halt and clear rule applies, after the operator stops the examination
    manually.
 4. **An audio fault halts the device.** In Fault, `L2_AUDIO` cannot be started again; every input,
    including Start, is blocked until restart.
+5. **An audio fault drops both links at once.** On any audio fault, including a failed start, both
+   links are dropped at once with no 8 ms wait, as the 10 November decision says. The normal Stop
+   keeps its STOP, 8 ms wait and DROP sequence. Nico: "yes to dropping both".
 
 ## Applied in
 

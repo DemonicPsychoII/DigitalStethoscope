@@ -83,8 +83,9 @@ not retry.
 | Interface | Inputs | Outputs and ownership |
 | --- | --- | --- |
 | `i2s_initialize()` | One call at boot | Checks that both devices are ready and configures both links. No stream runs afterwards. |
-| `i2s_start()` | Called while stopped | Configures both links again, primes 4 silent TX blocks, starts RX, then TX. On failure it stops both links and returns the failed link. |
-| `i2s_stop()` | Any time, also after a failure | Stops both links in the [Stop sequence](#stop-sequence) and returns every pool block; no further sound. Repeated calls are harmless. |
+| `i2s_start()` | Called while stopped | Configures both links again, primes 4 silent TX blocks, starts RX, then TX. On failure it drops both links as `i2s_abort()` does and returns the failed link. |
+| `i2s_stop()` | While running, for a normal Stop | Stops both links in the [Stop sequence](#stop-sequence) and returns every pool block; no further sound. Repeated calls are harmless. |
+| `i2s_abort()` | After an audio fault | Triggers `DROP` on both links at once, without `STOP` or a wait; no further sound. Blocks the driver held at that moment may stay in use; the required restart clears them. Repeated calls are harmless. |
 | `i2s_receiveBlock(receivedFrames)` | Pointer for the result | Waits at most the receive wait (P11) for the next completed RX block and lends it to the caller. A timeout or driver error is a microphone failure. |
 | `i2s_releaseReceivedBlock(receivedFrames)` | A lent RX block | Returns it to the RX pool. |
 | `i2s_allocateTransmitBlock(transmitFrames)` | Pointer for the result | Waits at most the TX-block wait (P11) for a free TX block. A timeout is an output failure. |
@@ -133,7 +134,7 @@ the [system design](../system/interfaces-and-behavior.md#state-entryprocessexit)
 Mapping rules decided on [13 November](../../planning/mvp-decisions-2026-11-13.md):
 
 - The system enters Listening at the `started` event, not at the Start command.
-- A non-audio halting fault during listening (for example `SESSION_CONTEXT_CHANGE`) does not stop
+- A non-audio restart-required error during listening (`SESSION_CONTEXT_CHANGE`, `CONTROL_INPUT_FAILURE`, `HEART_RATE_WORKER_STALL` and `SETTINGS_SAVE_FAILURE`) does not stop
   `L2_AUDIO`: `L2_CONTROL` latches it silently, listening continues, and the error is shown and
   applies its clear rule after the operator stops the examination manually.
 - `L2_AUDIO` in Fault never starts again: the device is halted, every input including Start is
@@ -150,7 +151,7 @@ Mapping rules decided on [13 November](../../planning/mvp-decisions-2026-11-13.m
 - **Start while stopped:** `i2s_start`, then the block loop; `started` event or the start failure.
   Priming comes first because a TX `START` with an empty queue fails [1].
 - **Stop:** leave the loop, `i2s_stop`; `stopped` event; output silent.
-- **Any non-OK result in the loop:** `i2s_stop`; the thread waits for commands. Fault event with the
+- **Any non-OK result in the loop:** `i2s_abort`; the thread waits for commands. Fault event with the
   failed link; `L2_CONTROL` shows the catalogue error, which requires a restart. No automatic
   stream restart ([decision of 11 November](../../planning/mvp-decisions-2026-11-11.md)).
 
@@ -169,9 +170,9 @@ Three things are recorded separately here.
 
 **Recorded decision** ([10 November](../../planning/mvp-decisions-2026-11-10.md#first-audio-path),
 point 8): normal Stop lets the block in DMA finish, then discards both queues; faults discard both
-queues at once.
+queues at once, with no wait ([13 November](../../planning/mvp-decisions-2026-11-13.md)).
 
-**Designed mechanism** (source reading of the pinned driver [1]): `i2s_stop`
+**Designed mechanism for normal Stop** (source reading of the pinned driver [1]): `i2s_stop`
 
 1. triggers `STOP` on both links: the block in DMA completes; the driver puts it into the RX queue
    or returns it to the TX pool, and queued TX blocks are not played;
@@ -182,19 +183,10 @@ queues at once.
 | Driver behavior [1] | Consequence |
 | --- | --- |
 | `DROP` alone frees the queued blocks, but for the block in DMA only clears its pointer | Each Stop would lose one RX and one TX block; after a few sessions the RX pool would be too small to start. Hence `STOP` first. |
-| A link in the driver's error state rejects `STOP` | `i2s_stop` triggers `DROP` alone on that link. The block the driver held at the error may stay in use; a fault requires a restart anyway. |
 
 **Verification status:** source reading only. The repeated Start and Stop in the
 [expected verification](#expected-verification) confirms the sequence on the target; that
 confirmation is pending.
-
-**Agreement:**
-
-- Normal Stop: mechanism and decision agree.
-- Faults: they do not fully agree. The decision discards both queues at once. The mechanism
-  discards at once only on a link in the error state. A link that is not in the error state, such
-  as the healthy link or a link whose 20 ms wait timed out, still gets `STOP`, 8 ms and `DROP`. This
-  needs Nico's decision.
 
 ## Sample format
 

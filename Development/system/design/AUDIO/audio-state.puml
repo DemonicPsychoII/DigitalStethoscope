@@ -37,10 +37,10 @@ Initializing --> Stopped : both devices ready, links configured
 Initializing --> Fault : device not ready or configuration failed\n/ failure reported to L2_CONTROL
 Stopped --> Starting : Start command
 Starting --> Running : priming and start succeed\n/ started event
-Starting --> Fault : a link fails to start\n/ i2s_start stops both links, start failure reported
+Starting --> Fault : a link fails to start\n/ i2s_start drops both links, start failure reported
 Running --> Stopping : Stop command, checked once per iteration
 Stopping --> Stopped : / stopped event; all pool blocks free
-Running --> Fault : receive or TX-block wait over 20 ms (P11),\ndriver error, for example > 12 ms behind\n/ i2s_stop, fault event with the failed link
+Running --> Fault : receive or TX-block wait over 20 ms (P11),\ndriver error, for example > 12 ms behind\n/ i2s_abort, fault event with the failed link
 Running --> Running : Wi-Fi-only fault\n/ audio preserved (P12)\nnon-audio halting fault\n/ latched, shown after manual Stop
 Fault --> [*] : device restart (catalogue: restart required)
 note bottom of Fault
@@ -49,8 +49,9 @@ note bottom of Fault
   is blocked until restart (decision of 13 November).
 end note
 note left of Running
-  Non-audio halting fault during listening
-  (for example SESSION_CONTEXT_CHANGE): AUDIO keeps
+  Non-audio restart-required error during listening
+  (SESSION_CONTEXT_CHANGE, CONTROL_INPUT_FAILURE,
+  HEART_RATE_WORKER_STALL, SETTINGS_SAVE_FAILURE): AUDIO keeps
   running; the error is latched silently and shown
   after the manual Stop (decision of 13 November).
 end note

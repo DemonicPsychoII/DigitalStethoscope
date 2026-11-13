@@ -63,7 +63,7 @@ repeat while (Stop received?) is (no)
 stop
 partition "Fault exit, reached from every (F)" {
 (F)
-:i2s_stop on both links;
+:i2s_abort: DROP on both links at once;
 :fault event with the failed link to L2_CONTROL;
 :wait for commands; restart required;
 stop

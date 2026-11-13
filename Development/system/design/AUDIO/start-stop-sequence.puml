@@ -47,7 +47,7 @@ group Start
     transport --> audio : I2S_RESULT_OK
     audio -> control : started (k_msgq)
   else a link fails
-    transport -> transport : stop both links
+    transport -> transport : DROP both links at once
     transport --> audio : failed link
     audio -> control : start failure (fault event)
   end
@@ -74,22 +74,13 @@ group Normal Stop
 end
 
 group Fault: non-OK result in the loop
-  audio -> transport : i2s_stop()
-  alt link in the driver's error state (rejects STOP)
-    transport -> receiveDriver : trigger DROP only
-    note right of receiveDriver
-      Example: RX overran. The block the driver
-      held at the error may stay in use;
-      restart required anyway.
-    end note
-  end
-  transport -> transmitDriver : link not in error state:\nSTOP, wait 8 ms, DROP
+  audio -> transport : i2s_abort()
+  transport -> receiveDriver : trigger DROP
+  transport -> transmitDriver : trigger DROP
+  note right of transmitDriver
+    No STOP and no wait.
+  end note
   transport --> audio : done
   audio -> control : fault event with the failed link
-  note over transport, transmitDriver #3a3320
-    **unclear**: the decision of 10 November discards both queues
-    at once on a fault; this mechanism still waits 8 ms on a link
-    that is not in the error state. Needs Nico's decision.
-  end note
 end
 @enduml
