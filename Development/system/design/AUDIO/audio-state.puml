@@ -33,13 +33,14 @@ state "Running" as Running <<running>> : block loop, one iteration per 4 ms, ≤
 state "Stopping" as Stopping : i2s_stop (Stop sequence)\nsystem: Listening → Idle,\nMeasuring → Idle or Analysing
 state "Fault" as Fault <<fault>> : both links dropped; waits for restart\nsystem: Muted (shared design: Error, audio affected)
 [*] --> Initializing : boot
-Initializing --> Stopped : both devices ready, links configured
-Initializing --> Fault : device not ready or configuration failed\n/ failure reported to L2_CONTROL
+Initializing --> Stopped : both I2S controllers ready, links configured
+Initializing --> Fault : I2S controller not ready or configuration failed\n/ failure reported to L2_CONTROL
 Stopped --> Starting : Start command
 Starting --> Running : priming and start succeed\n/ started event
 Starting --> Fault : a link fails to start\n/ i2s_start drops both links, start failure reported
 Running --> Stopping : Stop command, checked once per iteration
 Stopping --> Stopped : / stopped event; all pool blocks free
+Stopping --> Fault : a link rejects STOP or blocks stay in use\n/ i2s_abort, fault event with the failed link
 Running --> Fault : receive or TX-block wait over 20 ms (P11),\ndriver error, for example > 12 ms behind\n/ i2s_abort, fault event with the failed link
 Running --> Running : Wi-Fi-only fault\n/ audio preserved (P12)\nnon-audio halting fault\n/ latched, shown after manual Stop
 Fault --> [*] : device restart (catalogue: restart required)

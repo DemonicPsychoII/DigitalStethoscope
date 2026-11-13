@@ -66,6 +66,11 @@ end note
 repeat while (Stop received?) is (no)
 ->yes;
 :i2s_stop (see Stop sequence);
+if (result) then (a link rejects STOP\nor blocks stay in use)
+  (F)
+  detach
+else (OK)
+endif
 :stopped event to L2_CONTROL;
 stop
 partition "Fault exit, reached from every (F)" {

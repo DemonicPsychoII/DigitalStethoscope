@@ -81,9 +81,9 @@ not retry.
 
 | Interface | Inputs | Outputs and ownership |
 | --- | --- | --- |
-| `i2s_initialize()` | One call at boot | Checks that both devices are ready and configures both links. No stream runs afterwards. |
+| `i2s_initialize()` | One call at boot | Checks that both I2S controllers are ready and configures both links. No stream runs afterwards. It cannot tell whether the microphone or the DAC is connected: neither answers on its link, so a missing device is not detected at boot. |
 | `i2s_start()` | Called while stopped | Configures both links again, primes 4 silent TX blocks, starts RX, then TX. On failure it drops both links as `i2s_abort()` does and returns the failed link. |
-| `i2s_stop()` | While running, for a normal Stop | Stops both links in the [Stop sequence](#stop-sequence) and returns every pool block; no further sound. Repeated calls are harmless. |
+| `i2s_stop()` | While running, for a normal Stop | Stops both links in the [Stop sequence](#stop-sequence) and returns every pool block; no further sound. Returns the failed link if a link rejects `STOP` or blocks stay in use. Repeated calls are harmless. |
 | `i2s_abort()` | After an audio fault | Triggers `DROP` on both links at once, without `STOP` or a wait; no further sound. Blocks the driver held at that moment may stay in use; the required restart clears them. Repeated calls are harmless. |
 | `i2s_receiveBlock(receivedFrames)` | Pointer for the result | Waits at most the receive wait (P11) for the next completed RX block and lends it to the caller. A timeout or driver error is a microphone failure. |
 | `i2s_releaseReceivedBlock(receivedFrames)` | A lent RX block | Returns it to the RX pool. |
@@ -149,7 +149,8 @@ Mapping rules decided on [13 November](../../planning/mvp-decisions-2026-11-13.m
   `L2_CONTROL`.
 - **Start while stopped:** `i2s_start`, then the block loop; `started` event or the start failure.
   Priming comes first because a TX `START` with an empty queue fails [1].
-- **Stop:** leave the loop, `i2s_stop`; `stopped` event; output silent.
+- **Stop:** leave the loop, `i2s_stop`; on success `stopped` event and output silent. A failed
+  `i2s_stop` is an audio fault and takes the fault path below.
 - **Any non-OK result in the loop:** `i2s_abort`; the thread waits for restart. Fault event with the
   failed link; `L2_CONTROL` shows the catalogue error, which requires a restart. No automatic
   stream restart ([decision of 11 November](../../planning/mvp-decisions-2026-11-11.md)).
@@ -174,10 +175,12 @@ queues at once, with no wait ([13 November](../../planning/mvp-decisions-2026-11
 **Designed mechanism for normal Stop** (source reading of the pinned driver [1]): `i2s_stop`
 
 1. triggers `STOP` on both links: the block in DMA completes; the driver puts it into the RX queue
-   or returns it to the TX pool, and queued TX blocks are not played;
+   or returns it to the TX pool, and queued TX blocks are not played. A link that entered the
+   driver's ERROR state, for example after an RX DMA error, rejects `STOP`; `i2s_stop` then
+   returns that link at once, without the wait;
 2. waits 8 ms, two block periods, so the block in DMA completes on both links;
 3. triggers `DROP` on both links, which returns the queued blocks;
-4. checks that both pools have 0 blocks in use and logs a mismatch.
+4. checks that both pools have 0 blocks in use; blocks still in use are a failure.
 
 | Driver behavior [1] | Consequence |
 | --- | --- |
@@ -261,7 +264,8 @@ and the TX driver queue 4 in normal operation [1].
 | Scenario | Basis | Expected result |
 | --- | --- | --- |
 | Boot with both links ready | VT-01, REQ-01 | Stopped; no TX stream and no sound before Start |
-| Boot with one device missing | VT-01 | Failure for the missing link; `L2_CONTROL` shows `MICROPHONE_FAILURE` or `AUDIO_OUTPUT_FAILURE` |
+| Boot with an I2S controller not ready or its configuration rejected, injected on the host at the driver boundary | VT-01 | Failure for that link; `L2_CONTROL` shows `MICROPHONE_FAILURE` or `AUDIO_OUTPUT_FAILURE` |
+| Stop while a link is in the driver's ERROR state, injected on the host at the driver boundary | VT-01 | No `stopped` event; both links dropped; restart-required fault reported |
 | Start, then Stop, 10 times in a row | REQ-01, REQ-02, VT-04 | `started` after priming and RX before TX; `stopped`, output silent; after every Stop all 5 blocks of each pool are free |
 | Heart sounds after Start | REQ-02 | Audible on both channels within 2 s |
 | Copy step with a known RX block | VT-03 | Both TX slots of every frame equal the left RX slot with its low 8 bits cleared; the right RX slot is ignored |

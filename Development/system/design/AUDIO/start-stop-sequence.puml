@@ -60,17 +60,27 @@ group Normal Stop
   audio -> transport : i2s_stop()
   transport -> receiveDriver : trigger STOP
   transport -> transmitDriver : trigger STOP
-  note right of transmitDriver
-    STOP lets the block in DMA complete:
-    RX puts it into its queue, TX returns it
-    to the pool. Queued TX blocks are not played.
-  end note
-  transport -> transport : wait 8 ms (two block periods)
-  transport -> receiveDriver : trigger DROP (frees the RX queue)
-  transport -> transmitDriver : trigger DROP (frees the TX queue)
-  transport -> transport : check 0 blocks in use in both pools;\nlog a mismatch
-  transport --> audio : I2S_RESULT_OK
-  audio -> control : stopped (k_msgq)
+  alt a link rejects STOP (driver ERROR state)
+    transport --> audio : failed link, at once, no wait
+    audio -> audio : fault path below
+  else both links accept STOP
+    note right of transmitDriver
+      STOP lets the block in DMA complete:
+      RX puts it into its queue, TX returns it
+      to the pool. Queued TX blocks are not played.
+    end note
+    transport -> transport : wait 8 ms (two block periods)
+    transport -> receiveDriver : trigger DROP (frees the RX queue)
+    transport -> transmitDriver : trigger DROP (frees the TX queue)
+    transport -> transport : check 0 blocks in use in both pools
+    alt all blocks free
+      transport --> audio : I2S_RESULT_OK
+      audio -> control : stopped (k_msgq)
+    else blocks stay in use
+      transport --> audio : failed link
+      audio -> audio : fault path below
+    end
+  end
 end
 
 group Fault: non-OK result in the loop
