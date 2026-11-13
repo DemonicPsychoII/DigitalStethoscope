@@ -54,8 +54,14 @@ worker placement and ISR wake-up primitives remain proposed implementation choic
 | `StateSnapshot` | snapshot revision, effective and requested settings, source/provenance, playback/measurement/delivery states, active IDs, capabilities, BPM validity/time, clip progress, pending replay speed, error/outcome counters. Read as a coherent copy; UI never edits it. |
 | `Clip` | ID/generation, source, raw format/rate, allocated capacity and valid length, capture sample interval, evaluation metadata. Ownership REC; immutable after finalization until discarded. Never patient-persisted. |
 | `MeasurementResult` | result/session ID, source/generation, valid flag/reason, BPM value and declared precision, quality definition/value, coverage, first/last sample index, measurement monotonic interval and UTC mapping, frozen Device id/point/config/filter IDs and consumed examination identity/optional supplied patient reference, completion status. Invalid results carry no sendable numeric value. |
-| `NetworkJob` | stable Observation identifier (Device id frozen at job admission plus measurement end time frozen at admission or, without a qualifying clock anchor then, once from the first delivery connection setup), immutable result/payload serialized once before the first request, frozen endpoint/profile/auth-config reference, attempt count (up to 4: 1 attempt + 3 retries, all within 10 s), lease ID. Secrets stay outside evidence. Result device/time/value never resnapshotted from live state. |
+| `NetworkJob` | stable Observation identifier (Device id plus measurement end time, frozen as [result provenance](#result-provenance) shows), immutable result/payload serialized once before the first request, frozen endpoint/profile/auth-config reference, attempt count (up to 4: 1 attempt + 3 retries, all within 10 s), lease ID. Secrets stay outside evidence. Result device/time/value never resnapshotted from live state. |
 | `HealthEvent` | component, error class, time/generation, severity, evidence level and counter reference. Hardware physical proof references explicit test evidence. |
+
+### Result provenance
+
+![Data provenance from mutable inputs to the retried Observation bytes](rendered/shared_delivery_provenance.svg)
+
+*Where is each Observation input frozen?* Source: [shared-delivery-provenance.puml](shared-delivery-provenance.puml).
 
 ## Ownership, memory and queues
 
@@ -68,9 +74,14 @@ A ref-counted shared pool is an alternative only if its no-starvation behavior i
 DSP state is worker-local. Settings/snapshots are bounded copies made under a short lock or message
 hand-off; no lock spans I2S wait, SPI, file access, TLS or rendering. `k_msgq` carries bounded values
 or handles, not audio payloads of unbounded length. Use nonblocking enqueue on the audio path.
-Analysis overflow marks a gap and resets its window; display coalesces to latest snapshot; input
-queue overflow reconciles stable values but rejects/report transient actions. A full network slot
-returns Busy without overwriting a job; a terminal failure retains only redacted outcome metadata, with no retry queue. The completed measurement is lost after that visible failure; server recovery does not resend it. This is the bounded failure outcome of REQ-10, separate from REQ-09's available-server success path.
+
+Each bounded handoff has its own overload rule:
+
+![Threads and bounded handoffs with their overload rules](rendered/shared_runtime_handoffs.svg)
+
+*What happens at each bounded handoff when the receiver falls behind?* Source: [shared-runtime-handoffs.puml](shared-runtime-handoffs.puml); the [thread view](../../architecture/system/runtime-ownership.puml) shows the workers without capacities.
+
+For the delivery slot, a terminal failure retains only redacted outcome metadata, with no retry queue. The completed measurement is lost after that visible failure; server recovery does not resend it. This is the bounded failure outcome of REQ-10, separate from REQ-09's available-server success path.
 
 Candidate memory accounting:
 
@@ -107,7 +118,9 @@ A completed result does not wait for delivery prerequisites. When Wi-Fi is confi
 
 ## DSP and measurement design
 
-The switch selects the listening filter only. Raw applies no band filter, Murmur a filter estimated to be better for murmur detection, and BPM the filter of the BPM analysis, so the listener hears what the analysis gets. BPM analysis always applies the BPM filter to its own pre-volume input, whatever the switch position, with its own filter instance and state; it estimates BPM while the doctor listens with Raw, Murmur or BPM. The filter study (TICKET-189) chooses the BPM and Murmur coefficients.
+![Signal flow from the original-rate branch point to the analysis and listening paths](rendered/shared_filter_signal_flow.svg)
+
+*Which filter does each path apply, and where do volume and saturation sit?* Source: [shared-filter-signal-flow.puml](shared-filter-signal-flow.puml).
 
 Draft listening candidates: second-order Butterworth high/low sections (Murmur 40–800 Hz;
 BPM emphasis 25–150 Hz), with Raw unity and a 20 ms exponential crossfade. Preserve state for
@@ -121,9 +134,12 @@ autocorrelation or an equivalent method → range/harmonic/quality checks → pe
 window at 100 Hz envelope rate is 800 samples; a 3 s window at 30 BPM contains only 1.5 cycles
 and needs justification. Candidate update 1 s and session 30 s are open. Define a quality score
 mathematically and validate it; it is not probability of clinical correctness. Aggregate using a
-proposed median of accepted BPM estimates; coverage is the union of accepted window intervals
-clipped to session bounds, not number_of_windows × window_length. Warm-up treatment, temporal
-weighting, minimum windows and thresholds remain open (TICKET-192). No window includes missing blocks.
+proposed median of accepted BPM estimates. Warm-up treatment, temporal
+weighting, minimum windows and thresholds remain open (TICKET-192).
+
+![Coverage as the clipped union of accepted analysis windows](rendered/shared_analysis_coverage.svg)
+
+*Which part of the session counts as coverage?* Source: [shared-analysis-coverage.puml](shared-analysis-coverage.puml).
 
 Replay candidate is WSOLA with bounded overlap/search buffers. Output length should equal
 `ceil(valid_clip_frames / speed)` under a rounding policy that remains to be fixed, with final partial blocks
@@ -136,7 +152,7 @@ stage at the current source cursor without pretending the duration was constant-
 A completed measurement has separate identity from a replay clip. The project identifier
 system is `urn:stethoscope:measurement`. Its value is `<device-id>:<measurement-end-UTC>`:
 the persisted server Device id, a colon, and the immutable interval end formatted as
-`YYYY-MM-DDTHH:mm:ss.SSSZ`. Freeze the Device id at job admission and the end time at admission or, without a qualifying clock anchor then, once from the first delivery connection setup (see the [SNTP mapping](../COMMUNICATION/time-synchronization.md#clock-mapping-and-native-behavior)); do not regenerate
+`YYYY-MM-DDTHH:mm:ss.SSSZ`. Freeze both at the points of [result provenance](#result-provenance) (see the [SNTP mapping](../COMMUNICATION/time-synchronization.md#clock-mapping-and-native-behavior)); do not regenerate
 the end time or identity on retry. One device must not finalize two measurements with
 the same end timestamp. Send `POST /Observation`, `Content-Type: application/fhir+json`,
 with `identifier: [{"system":"urn:stethoscope:measurement","value":"<value>"}]` in the body

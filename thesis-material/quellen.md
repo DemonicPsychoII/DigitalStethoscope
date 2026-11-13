@@ -1573,6 +1573,7 @@ iTeh catalogue entry, EN 60601-1-8:2007 (priority definitions, Table 1). [Source
 **Verification:** Inherited LED desk-research reference S16. Author, full publication title, venue/publisher, year/version and clause metadata remain unverified. Original reported access: 19 October 2026; not independently re-accessed in this implementation review.
 
 **Cited by:** [LED indication standards](../Development/system/design/FEEDBACK/led-indication-standards.md). Secondary evidence; no conformity or completed hazard-analysis claim.
+
 <a id="stethoscope_prethesis_wiring_2026"></a>
 ### stethoscope_prethesis_wiring_2026
 
@@ -1612,24 +1613,20 @@ Espressif Systems, *Wi-Fi Driver — ESP32-S3*, ESP-IDF Programming Guide v5.4.2
 
 Espressif Systems, *Wi-Fi Provisioning*, ESP-IDF Programming Guide v5.4.2, section “Provisioning Manager”, version v5.4.2 (publication year not stated on the cited page), https://docs.espressif.com/projects/esp-idf/en/v5.4.2/esp32s3/api-reference/provisioning/wifi_provisioning.html (accessed 24 October 2026).
 
-
 <a id="ietf_sntp_4330_2006"></a>
 ### ietf_sntp_4330_2006
 
-David L. Mills. *Simple Network Time Protocol (SNTP) Version 4 for IPv4, IPv6 and OSI*. IETF RFC 4330, January 2006, DOI 10.17487/RFC4330. 2006. <https://www.rfc-editor.org/rfc/rfc4330#section-9>. Accessed 2026-10-24. No page number claimed.
-
+David L. Mills. *Simple Network Time Protocol (SNTP) Version 4 for IPv4, IPv6 and OSI*. IETF RFC 4330, January 2006, DOI 10.17487/RFC4330. 2006. <https://www.rfc-editor.org/rfc/rfc4330#section-11>. Accessed 2026-10-24. No page number claimed.
 
 <a id="iec_alarm_edition_22_2020"></a>
 ### iec_alarm_edition_22_2020
 
 International Electrotechnical Commission. *Medical electrical equipment — Part 1-8: General requirements for basic safety and essential performance — Collateral standard: General requirements, tests and guidance for alarm systems in medical electrical equipment and medical electrical systems*. IEC 60601-1-8:2006+AMD1:2012+AMD2:2020 CSV, edition 2.2; consolidated clauses unverified. 2020. <https://webstore.iec.ch/en/products/>. Accessed 2026-10-24. No page number claimed.
 
-
 <a id="espressif_devkitc_v11"></a>
 ### espressif_devkitc_v11
 
 Espressif Systems. *ESP32-S3-DevKitC-1 v1.1 User Guide*. ESP-Dev-Kits documentation; online revision and publication year not stated. . <https://docs.espressif.com/projects/esp-dev-kits/en/latest/esp32s3/esp32-s3-devkitc-1/user_guide_v1.1.html>. Accessed 2026-10-24. No page number claimed.
-
 
 <a id="hl7_fhir_r4_vitalsigns_2019"></a>
 ### hl7_fhir_r4_vitalsigns_2019
@@ -1661,14 +1658,12 @@ Nico. *SNTP detailed-design decisions*. Personal communication, T3 Code, 2026. <
 
 **Cited by:** [SNTP design](../Development/system/design/COMMUNICATION/time-synchronization.md).
 
-
 <a id="nico_tls_design_20261029"></a>
 ### nico_tls_design_20261029
 
 Nico. *TLS detailed-design decisions*. Personal communication, T3 Code, 29 October 2026. [Conversation](t3-thread://v2/d5e44f69-2ecc-4a3e-917b-31a7b084c12b/576e10df-527c-41cc-86cd-4e7c0ff0c290), accessed 29 October 2026. Project decisions, not target acceptance.
 
 **Cited by:** [TLS design](../Development/system/design/COMMUNICATION/secure-transport.md).
-
 
 <a id="ietf_tls13_8446_2018"></a>
 ### ietf_tls13_8446_2018
@@ -1677,14 +1672,12 @@ Eric Rescorla. *The Transport Layer Security (TLS) Protocol Version 1.3*. IETF R
 
 **Cited by:** [TLS design](../Development/system/design/COMMUNICATION/secure-transport.md), [server profile design](../Development/system/design/STORAGE/server-profile.md#certificate-checks) (section 4.4.2.2, Key Usage of the server certificate).
 
-
 <a id="stetho_hapi_tls_probe_20261029"></a>
 ### stetho_hapi_tls_probe_20261029
 
 GPT-6.1-Sol on behalf of Nico. *Local HAPI TLS investigation*. Own desktop observations, 29 October 2026. [Evidence and limitations](../Development/system/design/COMMUNICATION/secure-transport.md#investigation-basis-and-limitations). Python desktop probe, no device firmware revision; public certificate fingerprint and image content ID recorded; registry manifest digest not captured. Read-only metadata success is not write authorization evidence.
 
 **Cited by:** [TLS design](../Development/system/design/COMMUNICATION/secure-transport.md).
-
 
 <a id="pulsoxy_fhirservice_pinned"></a>
 ### pulsoxy_fhirservice_pinned
@@ -1693,14 +1686,12 @@ nt-medlink contributors (individual authors unverified). *PulsOxy FhirService im
 
 **Cited by:** [TLS design](../Development/system/design/COMMUNICATION/secure-transport.md).
 
-
 <a id="zephyr_tls_socket_pinned"></a>
 ### zephyr_tls_socket_pinned
 
 Zephyr Project contributors. *TLS socket implementation*. Zephyr Project, revision `357467a011cd2557a1a3f0b4be83d817c4addc9b`; publication year unverified. [Source](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/subsys/net/lib/sockets/sockets_tls.c), accessed 29 October 2026. Presence of a TLS 1.3 path is not ESP32-S3 interoperability evidence.
 
 **Cited by:** [TLS design](../Development/system/design/COMMUNICATION/secure-transport.md).
-
 
 <a id="nico_tls_keepalive_20261029"></a>
 ### nico_tls_keepalive_20261029
@@ -1709,14 +1700,12 @@ Nico. *TLS keep-alive and reconnect decisions*. Personal communication, T3 Code,
 
 **Cited by:** [TLS design](../Development/system/design/COMMUNICATION/secure-transport.md).
 
-
 <a id="nico_fhir_design_20261029"></a>
 ### nico_fhir_design_20261029
 
 Nico, *FHIR registration and examination-context design decisions*, personal communication, T3 Code, 29 October 2026, [conversation](t3-thread://v2/d5e44f69-2ecc-4a3e-917b-31a7b084c12b/576e10df-527c-41cc-86cd-4e7c0ff0c290), accessed 29 October 2026. Project decisions, not target measurements.
 
 **Cited by:** [Server communication design](../Development/system/design/COMMUNICATION/server-communication.md).
-
 
 <a id="stetho_hotspot_identity_2026"></a>
 ### stetho_hotspot_identity_2026
@@ -1725,14 +1714,12 @@ DigitalStethoscope contributors, *WIFI hotspot identity implementation*, project
 
 **Cited by:** [Server communication design](../Development/system/design/COMMUNICATION/server-communication.md).
 
-
 <a id="hl7_fhir_r4_device_2019"></a>
 ### hl7_fhir_r4_device_2019
 
 Health Level Seven International, *FHIR R4 Device*, version 4.0.1, 2019, <https://hl7.org/fhir/R4/device.html>, accessed 29 October 2026.
 
 **Cited by:** [Server communication design](../Development/system/design/COMMUNICATION/server-communication.md).
-
 
 <a id="hl7_fhir_r4_datatypes_2019"></a>
 ### hl7_fhir_r4_datatypes_2019
@@ -1741,14 +1728,12 @@ Health Level Seven International, *FHIR R4 Data Types*, version 4.0.1, 2019, Ide
 
 **Cited by:** [Server communication design](../Development/system/design/COMMUNICATION/server-communication.md).
 
-
 <a id="pulsoxy_fhir_lifecycle_pinned"></a>
 ### pulsoxy_fhir_lifecycle_pinned
 
 nt-medlink contributors (individual authors unverified), *PulsOxy InitState, MeasuringState and FhirResourceFactory*, NewTec GitLab, revision `e38b98fc8b881af01e23a8f4935567e73d00de28`, publication year unverified, [initialization](https://gitlab.newtec.zz/newtec/student-projects/nt-medlink/ntmedlinkremdev/-/blob/e38b98fc8b881af01e23a8f4935567e73d00de28/lib/App_PulsOxy/src/InitState.cpp), [sending](https://gitlab.newtec.zz/newtec/student-projects/nt-medlink/ntmedlinkremdev/-/blob/e38b98fc8b881af01e23a8f4935567e73d00de28/lib/App_PulsOxy/src/MeasuringState.cpp), [builder](https://gitlab.newtec.zz/newtec/student-projects/nt-medlink/ntmedlinkremdev/-/blob/e38b98fc8b881af01e23a8f4935567e73d00de28/lib/FhirService/src/FhirResourceFactory.cpp), accessed 29 October 2026. Initialization PUTs Patient/Device; measurement sends Observations without registration per message.
 
 **Cited by:** [Server communication design](../Development/system/design/COMMUNICATION/server-communication.md).
-
 
 <a id="hl7_fhir_r4_observation_2019"></a>
 ### hl7_fhir_r4_observation_2019
@@ -1757,14 +1742,12 @@ Health Level Seven International, *FHIR R4 Observation*, version 4.0.1, 2019, <h
 
 **Cited by:** [Server communication design](../Development/system/design/COMMUNICATION/server-communication.md).
 
-
 <a id="hl7_fhir_r4_request_workflow_2019"></a>
 ### hl7_fhir_r4_request_workflow_2019
 
 Health Level Seven International, *FHIR R4 Task* and *ServiceRequest*, version 4.0.1, 2019, <https://hl7.org/fhir/R4/task.html> and <https://hl7.org/fhir/R4/servicerequest.html>, accessed 29 October 2026.
 
 **Cited by:** [Server communication design](../Development/system/design/COMMUNICATION/server-communication.md).
-
 
 <a id="stetho_hapi_capabilities_20261029"></a>
 ### stetho_hapi_capabilities_20261029
@@ -1773,14 +1756,12 @@ GPT-6.1-Sol on behalf of Nico, *Read-only HAPI FHIR capability and request-deliv
 
 **Cited by:** [Server communication design](../Development/system/design/COMMUNICATION/server-communication.md).
 
-
 <a id="hapi_websocket_812"></a>
 ### hapi_websocket_812
 
 HAPI FHIR contributors, *WebsocketDispatcherConfig*, HAPI FHIR 8.12.0, 2026 (source copyright year), [source](https://github.com/hapifhir/hapi-fhir/blob/v8.12.0/hapi-fhir-jpaserver-subscription/src/main/java/ca/uhn/fhir/jpa/subscription/match/config/WebsocketDispatcherConfig.java), accessed 29 October 2026. Source capability, not deployment enablement.
 
 **Cited by:** [Server communication design](../Development/system/design/COMMUNICATION/server-communication.md).
-
 
 <a id="hl7_fhir_r4_subscription_2019"></a>
 ### hl7_fhir_r4_subscription_2019
@@ -1789,14 +1770,12 @@ Health Level Seven International, *FHIR R4 Subscription*, version 4.0.1, 2019, <
 
 **Cited by:** [Server communication design](../Development/system/design/COMMUNICATION/server-communication.md).
 
-
 <a id="ietf_websocket_6455_2011"></a>
 ### ietf_websocket_6455_2011
 
 Ian Fette and Alexey Melnikov, *The WebSocket Protocol*, IETF RFC 6455, December 2011, sections 1.3 and 1.7, DOI [10.17487/RFC6455](https://doi.org/10.17487/RFC6455), accessed 29 October 2026.
 
 **Cited by:** [Server communication design](../Development/system/design/COMMUNICATION/server-communication.md).
-
 
 <a id="hl7_fhir_r4_data_absent_reason_2019"></a>
 ### hl7_fhir_r4_data_absent_reason_2019
@@ -1805,14 +1784,12 @@ Health Level Seven International, *FHIR R4 DataAbsentReason code system*, versio
 
 **Cited by:** [Server communication design](../Development/system/design/COMMUNICATION/server-communication.md).
 
-
 <a id="summerer_design_review_20261102"></a>
 ### summerer_design_review_20261102
 
 Andreas Summerer and Nico, *Design review of time, TLS and FHIR*, review meeting, 2 November 2026, 10:30–11:30, notes by Nico with resolutions in the [T3 conversation](t3-thread://v1/d5e44f69-2ecc-4a3e-917b-31a7b084c12b), accessed 2 November 2026. Project decisions, not measurements.
 
 **Cited by:** [Server profile architecture](../Development/system/architecture/system/server-profile.md), separate server profile image and physical-access trust assumption; [decision record 2 November 2026](../Development/system/planning/mvp-decisions-2026-11-02.md).
-
 
 <a id="espressif_esp32s3_wroom1_datasheet_v18"></a>
 ### espressif_esp32s3_wroom1_datasheet_v18
@@ -1821,14 +1798,12 @@ Espressif Systems, *ESP32-S3-WROOM-1 & ESP32-S3-WROOM-1U Datasheet*, version 1.8
 
 **Cited by:** [Decision record 2 November 2026, drift calculation](../Development/system/planning/mvp-decisions-2026-11-02.md#drift-calculation).
 
-
 <a id="zephyr_esp32s3_timer_clock_357467a"></a>
 ### zephyr_esp32s3_timer_clock_357467a
 
 The Zephyr Project, *Xtensa system timer and ESP32-S3 devicetree*, source revision `357467a011cd2557a1a3f0b4be83d817c4addc9b`, [Kconfig.xtensa](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/drivers/timer/Kconfig.xtensa) and [esp32s3_common.dtsi](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/dts/xtensa/espressif/esp32s3/esp32s3_common.dtsi), accessed 2 November 2026. CCOUNT-based kernel timer on Xtensa; 240 MHz CPU clock from the PLL with a 40 MHz crystal.
 
 **Cited by:** [Decision record 2 November 2026, drift calculation](../Development/system/planning/mvp-decisions-2026-11-02.md#drift-calculation).
-
 
 <a id="zephyr_esp32s3_flash_layout_357467a"></a>
 ### zephyr_esp32s3_flash_layout_357467a
@@ -1837,14 +1812,12 @@ The Zephyr Project, *ESP32-S3-DevKitC devicetree, Espressif partition tables, Si
 
 **Cited by:** [STORAGE flash layout](../Development/system/design/STORAGE/interfaces-and-behavior.md#flash-layout).
 
-
 <a id="ihe_iti_consistent_time_rev20_2023"></a>
 ### ihe_iti_consistent_time_rev20_2023
 
 IHE International, *IHE IT Infrastructure (ITI) Technical Framework*, Revision 20.0, Final Text, 4 August 2023, Volume 1 section 7 *Consistent Time (CT)* and Volume 2 section 3.1.4.1.2 *Maintain Time [ITI-1]*, <https://profiles.ihe.net/ITI/TF/Volume1/ch-7.html> and <https://profiles.ihe.net/ITI/TF/Volume2/ITI-1.html>, accessed 2 November 2026. Requires synchronization with a median error of less than one second and names SNTP sufficient for one-second time clients; its use as a worst-case bound is a project decision.
 
 **Cited by:** [Decision record 2 November 2026](../Development/system/planning/mvp-decisions-2026-11-02.md#drift-calculation), [SNTP design](../Development/system/design/COMMUNICATION/time-synchronization.md).
-
 
 <a id="hl7_fhir_r4_security_2019"></a>
 ### hl7_fhir_r4_security_2019
@@ -1925,14 +1898,12 @@ Mbed TLS contributors. *`mbedtls_ssl_check_cert_usage` in `library/ssl_tls.c`*. 
 
 **Cited by:** [Server profile design](../Development/system/design/STORAGE/server-profile.md#certificate-checks).
 
-
 <a id="zephyr_esp32_i2s_driver_357467a"></a>
 ### zephyr_esp32_i2s_driver_357467a
 
 The Zephyr Project, *ESP32 I2S driver and its Kconfig*, source revision `357467a011cd2557a1a3f0b4be83d817c4addc9b`, [i2s_esp32.c](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/drivers/i2s/i2s_esp32.c) and [Kconfig.esp32](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/drivers/i2s/Kconfig.esp32), accessed 10 November 2026. The driver accepts only two channels and configures standard-mode stereo slots, 32 bits wide for words above 16 bits; it clocks both directions from `I2S_CLK_SRC_DEFAULT` and derives the dividers from sample rate, channel count and word size (a 24-bit word uses a different master-clock multiple than a 32-bit word). An empty TX queue after a completed block sets the error state and stops TX; RX also enters the error state when no free memory-slab block is available for the next transfer. `CONFIG_I2S_ESP32_RX_BLOCK_COUNT` and `CONFIG_I2S_ESP32_TX_BLOCK_COUNT` set the queue depths (default 5). Blocks larger than 4092 bytes are split across DMA descriptors. Source reading, not a target measurement.
 
 **Cited by:** [AUDIO architecture](../Development/system/architecture/AUDIO/README.md), [AUDIO design](../Development/system/design/AUDIO/interfaces-and-behavior.md), [decision record 10 November 2026](../Development/system/planning/mvp-decisions-2026-11-10.md#first-audio-path).
-
 
 <a id="nico_audio_path_decision_20261110"></a>
 ### nico_audio_path_decision_20261110
@@ -1942,7 +1913,6 @@ Nico. *First audio path: internal RAM, 16 kHz, 64-frame blocks, five RX and five
 **Source type:** Project decision. No claim of implementation, measurement or standards conformity.
 
 **Cited by:** [Decision record 10 November 2026](../Development/system/planning/mvp-decisions-2026-11-10.md#first-audio-path), [AUDIO architecture](../Development/system/architecture/AUDIO/README.md).
-
 
 <a id="nico_bringup_hardware_protocol_20260814"></a>
 ### nico_bringup_hardware_protocol_20260814
@@ -1987,3 +1957,11 @@ The Zephyr Project, *hal_espressif ESP32-S3 clock tree definitions and I2S low-l
 C. E. Shannon, "Communication in the Presence of Noise", *Proceedings of the IRE*, vol. 37, no. 1, pp. 10–21, January 1949, DOI [10.1109/JRPROC.1949.232969](https://doi.org/10.1109/JRPROC.1949.232969). Metadata checked against Crossref on 13 November 2026. Sampling theorem: a signal limited to W hertz is determined by samples 1/(2W) seconds apart.
 
 **Cited by:** [AUDIO design, sample-rate and block-size rationale](../Development/system/design/AUDIO/interfaces-and-behavior.md#sample-rate-and-block-size-rationale).
+**Cited by:** [AUDIO architecture](../Development/system/architecture/AUDIO/README.md).
+
+<a id="ietf_ntp_5905_2010"></a>
+### ietf_ntp_5905_2010
+
+David L. Mills, Jim Martin (editor), Jack Burbank, William Kasch. *Network Time Protocol Version 4: Protocol and Algorithms Specification*. IETF RFC 5905, June 2010, DOI 10.17487/RFC5905. 2010. <https://www.rfc-editor.org/rfc/rfc5905>. Accessed 2026-11-13. No page number claimed.
+
+**Cited by:** [SNTP synchronization](../Development/system/design/COMMUNICATION/time-synchronization.md), sections 8 and 14.

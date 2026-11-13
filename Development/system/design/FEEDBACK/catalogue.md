@@ -48,11 +48,7 @@ conformity or implemented firmware. Recovery and acknowledgement are separate.
   they show the error that latched first. The serial log lists all errors.
 - **Where the error occurred.** An error does not change the RGB context: it keeps the colour of the context in
   which the error occurred, so the user sees where it happened. The red LED shows the code.
-- **Clear and retry are separate.** A short press only clears errors whose catalogue row permits acknowledgement. It does not repeat the failed
-  workflow. A separate 2 s hold in Idle starts Wi-Fi setup again, even with a Wi-Fi error latched.
-  Automatic reconnect/portal recovery remains automatic; acknowledgement is not its gate.
-- **Server connection.** [TLS failure handling](../COMMUNICATION/secure-transport.md#failure-indication) latches `SERVER_CONNECTION_FAILURE` after failed preparation, including a failed [SNTP exchange](../COMMUNICATION/time-synchronization.md#failure-indication-and-acknowledgement) at its start, and for a result that has no valid time when delivery ends. There is no separate time-synchronization error; the serial log names the time cause. No time work or time indication happens during listening. Acknowledgement clears only its indication; automatic recovery continues independently. Repeated failed retries in one unavailable episode do not re-latch after acknowledgement. Start cancellation alone raises no error. Delivery failures retain their separate catalogue behavior.
-- **Device registration.** [Registration recovery](../COMMUNICATION/server-communication.md#registration-flow-and-recovery) covers request, response and registration-record failures. Standalone listening remains available. Acknowledgement clears only the indication; recovery is automatic, and repeated failures in the same unavailable episode do not re-latch an acknowledged indication. Start cancellation alone raises no registration error. Resource-release faults retain the existing cleanup/restart policy.
+- **Clear, retry and recovery** are separate regions; see [Fault handling](#fault-handling) below the table.
 - **Restart** means the reset button or a power off/on cycle.
 - **One button.** With an error shown that clears by short press, the first short press acknowledges it;
   later presses Start and Stop the examination, offline where the error concerns Wi-Fi or the server.
@@ -108,3 +104,14 @@ conformity or implemented firmware. Recovery and acknowledgement are separate.
 | Error  | Context change during a session                              | CONTROL           | SESSION_CONTEXT_CHANGE       | Low         | white     | steady                               | 5 blinks, pause        | Restart     |
 | Status | Input rejected                                               | CONTROL           | INPUT_REJECTED               | Information | no change | short dimming by at least 50 %, once | off                    |             |
 | Status | Error acknowledged                                           | CONTROL           | ERROR_ACKNOWLEDGED           | Information | no change | no change                            | 1 long flash, once     |             |
+
+## Fault handling
+
+![Fault handling: recovery episode, indication latch and workflow admission as separate regions](rendered/fault_handling_state.svg)
+
+*Which fault events change the indication, which change Start admission, and which only drive recovery?* Editable source: [fault-handling-state.puml](fault-handling-state.puml).
+
+- **Retry.** A separate 2 s hold in Idle starts Wi-Fi setup again, even with a Wi-Fi error latched. Automatic reconnect and portal recovery stay automatic; acknowledgement is not their gate.
+- **Server connection.** [TLS failure handling](../COMMUNICATION/secure-transport.md#failure-indication) latches `SERVER_CONNECTION_FAILURE` after a failed preparation, including a failed [SNTP exchange](../COMMUNICATION/time-synchronization.md#failure-indication-and-acknowledgement) at its start, and for a result without valid time when delivery ends. There is no separate time-synchronization error; the serial log names the time cause. No time work or time indication happens during listening.
+- **Device registration.** [Registration recovery](../COMMUNICATION/server-communication.md#registration-flow-and-recovery) covers request, response and registration-record failures; standalone listening remains available.
+- **Other categories.** Delivery failures keep their own rows. Resource-release faults keep the existing cleanup/restart policy.

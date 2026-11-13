@@ -16,13 +16,9 @@ The ESP32-S3-WROOM-1-N16R8 has 16 MB flash. The application overlay widens `flas
 
 The project layout uses the whole 16 MB. Settings and the server profile each have a fixed start address; their sizes are independent [5]:
 
-| Range | Size | Partition | Content |
-| --- | --- | --- | --- |
-| `0x000000`–`0xE7FFFF` | 14848 KiB (14.5 MB) | `slot0_partition` (`application`), `zephyr,code-partition` | Simple Boot image: header, loaded segments and flash-mapped code and data |
-| `0xE80000`–`0xEAFFFF` | 192 KiB | `storage_partition` (`storage`) | Settings (ZMS): `wifi/network`, `fhir/device-registration` |
-| `0xEB0000`–`0xEFFFFF` | 320 KiB | unassigned | Growth room for settings |
-| `0xF00000`–`0xF2FFFF` | 192 KiB | `server_profile_partition` (`server-profile`) | Server profile image: server endpoint, keep-alive and certificate; read-only for the firmware |
-| `0xF30000`–`0xFFFFFF` | 832 KiB | unassigned | Growth room for the server profile |
+![Whole 16 MB flash map with the enlarged settings and server profile end](rendered/flash_layout.svg)
+
+*Where do the application, settings and server profile sit, and how far can each grow without moving the other?* Editable source: [flash-layout.puml](flash-layout.puml), with the project layout values. The application partition holds the Simple Boot image (header, loaded segments and flash-mapped code and data); both unassigned areas are growth room, not reserved.
 
 Neither start depends on the other partition's size. Settings can grow to 512 KiB without moving the server profile, and the server profile can grow to 1 MB without moving settings. The server profile start must never change between firmware versions, because an updated firmware must still find an image that was flashed earlier. Both starts are aligned to the 4 KiB erase sector and to 64 KiB. This placement is a project decision [5].
 

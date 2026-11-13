@@ -45,17 +45,11 @@ workflow again by holding the button for 2 s in Idle.
 
 ### Listening priority and safe teardown
 
-A Start request during setup cancels active setup, waits for safe teardown and then
-starts audio. Preserve an established station association. Serialize cancellation
-against join completion, reject stale callbacks and finish an atomic settings write
-safely. Preserve the final requested Start/Stop state when commands coalesce.
-CONTROL serializes its commands with the release wait. No acknowledgement is
-valid until L1_WIFI and L1_PORTAL confirm scan/connect cancellation and portal/DHCP/AP shutdown;
-cleanup tries each pending stop once (see below); a latched Wi-Fi-only cleanup fault releases audio and prevents further Wi-Fi work until restart. This exception follows REQ-13; it does not assert that the radio is physically off. A new Start invalidates the
-previous acknowledgement. The 200 ms wait interval is a candidate event-check
-interval, not a measured bound on total teardown or settings-write latency.
-Setup/reconnect/delivery work is prohibited during listening; retained radio
-association and background traffic still require interference measurements.
+![Network-to-audio handover sequence](rendered/network_audio_handover.svg)
+
+*When may audio start after Start?* Source: [network-audio-handover.puml](network-audio-handover.puml). The [COMMUNICATION lifecycle](../../architecture/COMMUNICATION/communication-lifecycle.puml) ([SVG](../../architecture/COMMUNICATION/rendered/communication_lifecycle.svg)) places this handover between Idle network work and listening.
+
+Cancellation is serialized against join completion. The stop bounds are the [P23 cleanup limits](parameters.md#cleanup-limits-p23). Setup, reconnect and delivery work is prohibited during listening; retained radio association and background traffic still require interference measurements.
 
 
 ### Specified failures and interrupted boot
