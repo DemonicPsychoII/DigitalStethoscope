@@ -4,11 +4,14 @@ reviews:
   # Native current-head approval can satisfy the existing independent-review gate.
   request_changes_workflow: true
   allow_author_approval: true
-  # Keep only inline findings and review status. Summaries, walkthrough extras and
-  # metadata dropdowns add reading load without improving the review.
+  # Keep only inline findings. Summaries, walkthrough extras and metadata dropdowns
+  # add reading load without improving the review.
   # Agents read the finding itself; the generated fix prompt only repeats it.
   enable_prompt_for_ai_agents: false
   high_level_summary: false
+  # No comment when a review is skipped, for example because automatic reviews are off.
+  # The `CodeRabbit` check still shows whether a review ran, was skipped or was rate limited.
+  review_status: false
   review_info: false
   review_details: false
   changed_files_summary: false

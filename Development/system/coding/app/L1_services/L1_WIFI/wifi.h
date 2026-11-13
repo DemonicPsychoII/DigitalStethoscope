@@ -266,9 +266,12 @@ int wifi_startHotspot(void);
 /**
  * @brief Close the setup hotspot.
  *
- * On error, the hotspot can still be open.
+ * The blocking driver call runs on a separate work queue and is awaited for at
+ * most the 1 s stop bound (P23). On error, the hotspot can still be open; after
+ * -ETIMEDOUT the driver call can still complete later.
  *
- * @return 0 on success or if already closed, or a negative error code.
+ * @return 0 on success or if already closed, -ETIMEDOUT if the driver call
+ *         has not returned within the stop bound, or another negative error code.
  */
 int wifi_stopHotspot(void);
 
@@ -284,9 +287,12 @@ int wifi_startDHCPServer(void);
 /**
  * @brief Stop the DHCP server of the hotspot.
  *
- * On error, the server can still be running.
+ * The blocking driver call runs on a separate work queue and is awaited for at
+ * most the 1 s stop bound (P23). On error, the server can still be running; after
+ * -ETIMEDOUT the driver call can still complete later.
  *
- * @return 0 on success or if already stopped, or a negative error code.
+ * @return 0 on success or if already stopped, -ETIMEDOUT if the driver call
+ *         has not returned within the stop bound, or another negative error code.
  */
 int wifi_stopDHCPServer(void);
 

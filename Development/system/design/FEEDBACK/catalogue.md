@@ -17,8 +17,13 @@ conformity or implemented firmware. Recovery and acknowledgement are separate.
 
 - **One feedback catalogue.** Wi-Fi-only failures, server-connection `SERVER_CONNECTION_FAILURE` (including its time synchronization) and registration-only `DEVICE_REGISTRATION_FAILURE` preserve working audio and permit
   offline Start. Recovery follows the [Wi-Fi rules](../COMMUNICATION/interfaces-and-behavior.md#wi-fi-setup-and-recovery) and need not wait for error
-  acknowledgement. Other errors stop the active workflow, mute/cancel active audio
-  and block Start until the catalogue clear rule is met. Restart means reset/power cycle.
+  acknowledgement. Audio errors (`MICROPHONE_FAILURE`, `AUDIO_WORKER_STALL`, `AUDIO_OUTPUT_FAILURE`)
+  halt the device at once: audio is muted and every input, including Start, is blocked until restart.
+  Other errors stop the active workflow, mute/cancel active audio and block Start until the catalogue
+  clear rule is met; when one occurs while listening, it is latched without indication, listening
+  continues, and it is shown and takes effect after the operator stops the examination manually;
+  the result of that examination is discarded.
+  Restart means reset/power cycle.
   Generic device settings failures are distinct from Wi-Fi credential-save failures.
 - **RGB LED = context.** The colour shows the context in which a status or error occurs, not the module that
   detects it. CONTROL decides what can run, so each context has one colour: white = device (startup,
@@ -49,6 +54,13 @@ conformity or implemented firmware. Recovery and acknowledgement are separate.
 - **Server connection.** [TLS failure handling](../COMMUNICATION/secure-transport.md#failure-indication) latches `SERVER_CONNECTION_FAILURE` after failed preparation, including a failed [SNTP exchange](../COMMUNICATION/time-synchronization.md#failure-indication-and-acknowledgement) at its start, and for a result that has no valid time when delivery ends. There is no separate time-synchronization error; the serial log names the time cause. No time work or time indication happens during listening. Acknowledgement clears only its indication; automatic recovery continues independently. Repeated failed retries in one unavailable episode do not re-latch after acknowledgement. Start cancellation alone raises no error. Delivery failures retain their separate catalogue behavior.
 - **Device registration.** [Registration recovery](../COMMUNICATION/server-communication.md#registration-flow-and-recovery) covers request, response and registration-record failures. Standalone listening remains available. Acknowledgement clears only the indication; recovery is automatic, and repeated failures in the same unavailable episode do not re-latch an acknowledged indication. Start cancellation alone raises no registration error. Resource-release faults retain the existing cleanup/restart policy.
 - **Restart** means the reset button or a power off/on cycle.
+- **One button.** With an error shown that clears by short press, the first short press acknowledges it;
+  later presses Start and Stop the examination, offline where the error concerns Wi-Fi or the server.
+  One press acknowledges only the error shown; with several latched, the next one is shown afterwards.
+  Automatic recovery keeps running whether or not the error was acknowledged.
+  A non-audio error that occurs while listening is not shown until the examination is stopped, so a
+  short press during listening Stops. An audio error is shown at once and blocks the button with every
+  other input.
 - **Code naming.** `<SUBJECT>_<OUTCOME>` in upper case with underscores and no abbreviations, for example
   `SCAN_FAILURE`. Outcome words: no suffix, `RUNNING`, `OPEN`, `PENDING`, `SENDING` or `CONNECTING` for a normal status;
   `SUCCESSFUL`, `RECEIVED`, `VALID`, `CONNECTED`, `ACKNOWLEDGED` or `MINIMUM_REACHED` for a positive result; `REJECTED`, `FAILURE`, `STALL`, `INVALID`, `UNEXPECTED`, `CHANGE` or `NOT_POSSIBLE` for a negative result.

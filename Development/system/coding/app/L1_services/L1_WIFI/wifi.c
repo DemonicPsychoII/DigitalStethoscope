@@ -57,6 +57,8 @@
 
 #define WIFI_EVENT_TIME_SYNCHRONIZED    BIT(4) /**< Wake time synchronization waiters; the protected state holds the terminal result. */
 #define WIFI_EVENT_TIME_SERVER_RESOLVED BIT(5) /**< Wake the time synchronization worker; only DNS has ended, not the synchronization. */
+#define WIFI_EVENT_DHCP_SERVER_STOPPED  BIT(6) /**< Wake the DHCP server stop waiter; the stop request holds the driver result. */
+#define WIFI_EVENT_HOTSPOT_STOPPED      BIT(7) /**< Wake the hotspot stop waiter; the stop request holds the driver result. */
 
 #define WIFI_TIME_SYNCHRONIZATION_STACK_SIZE (2048) /**< Stack of the time synchronization work queue; proposed value pending target measurement. */
 #define WIFI_TIME_SYNCHRONIZATION_PRIORITY   (10)   /**< Same preemptive priority as the communication thread that waits for it. */
@@ -73,6 +75,10 @@
 #define WIFI_SNTP_STRATUM_MAXIMUM      (15) /**< Strata 16 to 255 are reserved. */
 
 #define WIFI_SCAN_CANCEL_TIMEOUT_MS (1000) /**< Longest wait for a running scan to end. */
+
+#define WIFI_SERVICE_STOP_TIMEOUT_MS (1000) /**< P23 per-service stop bound. */
+#define WIFI_SERVICE_STOP_STACK_SIZE (4096) /**< Same as the communication thread stack that ran these driver calls before; proposed value pending target measurement. */
+#define WIFI_SERVICE_STOP_PRIORITY   (10)   /**< Same preemptive priority as the communication thread that waits for it. */
 
 /* Zephyr link-layer and network-layer events use separate callback masks. */
 #define WIFI_LINK_LAYER_EVENTS    (NET_EVENT_WIFI_CONNECT_RESULT | NET_EVENT_WIFI_DISCONNECT_RESULT | NET_EVENT_WIFI_SCAN_RESULT | NET_EVENT_WIFI_SCAN_DONE)
@@ -98,6 +104,14 @@ enum wifi_time_synchronization_state
     WIFI_TIME_SYNCHRONIZATION_PENDING,    /**< Started; no terminal result yet. */
     WIFI_TIME_SYNCHRONIZATION_CANCELLING, /**< Cancellation requested; resources not yet quiescent. */
     WIFI_TIME_SYNCHRONIZATION_COMPLETED,  /**< Terminal result stored; Wait returns it repeatedly. */
+};
+
+/** A blocking driver stop that runs on the service stop queue, so its caller can give up at the stop bound. */
+struct wifi_service_stop
+{
+    struct k_work work;      /**< Runs the driver call on the service stop queue. */
+    uint32_t completedEvent; /**< WIFI_EVENT_* bit posted after result is written. */
+    int result;              /**< Driver result; written before completedEvent is posted. */
 };
 
 /***********************************************************************/
@@ -162,6 +176,12 @@ K_THREAD_STACK_DEFINE(wifi_TimeSynchronizationStack, WIFI_TIME_SYNCHRONIZATION_S
 static struct k_work_q wifi_TimeSynchronizationQueue; /**< Runs the network exchange outside the caller's thread. */
 static struct k_work wifi_TimeSynchronizationWork;
 
+/* The pinned DHCP server and ESP32 AP disable calls block without a timeout, so they run outside the caller's thread. */
+K_THREAD_STACK_DEFINE(wifi_ServiceStopStack, WIFI_SERVICE_STOP_STACK_SIZE);
+static struct k_work_q wifi_ServiceStopQueue; /**< Runs DHCP server and hotspot stops in the order they were requested. */
+static struct wifi_service_stop wifi_DHCPServerStop = {.completedEvent = WIFI_EVENT_DHCP_SERVER_STOPPED};
+static struct wifi_service_stop wifi_HotspotStop = {.completedEvent = WIFI_EVENT_HOTSPOT_STOPPED};
+
 /***********************************************************************/
 /* LOCAL FUNCTION PROTOTYPES                                           */
 /***********************************************************************/
@@ -205,6 +225,40 @@ static bool wifi_isSupportedSecurity(enum wifi_security_type security);
 
 /** Roll back a partially started hotspot immediately; L2 retains responsibility for failed stops. */
 static void wifi_rollbackHotspot(void);
+
+/**
+ * @brief Run a driver stop on the service stop queue and wait for it at most the stop bound.
+ *
+ * A stop that is still running for an earlier caller is waited for instead of being queued again.
+ *
+ * @param[in,out] serviceStop Stop request of the service.
+ *
+ * @return The driver result, -ETIMEDOUT if the driver call has not returned
+ *         within the stop bound, or a negative submission error.
+ */
+static int wifi_runServiceStop(struct wifi_service_stop *serviceStop);
+
+/**
+ * @brief Store a driver stop result and wake the waiting caller.
+ *
+ * @param[in,out] serviceStop Stop request of the service.
+ * @param[in]     result      Driver result; 0 when the service is stopped.
+ */
+static void wifi_completeServiceStop(struct wifi_service_stop *serviceStop, int result);
+
+/**
+ * @brief Stop the DHCP server in the driver; runs on the service stop queue.
+ *
+ * @param[in] work Work item of wifi_DHCPServerStop.
+ */
+static void wifi_stopDHCPServerInDriver(struct k_work *work);
+
+/**
+ * @brief Disable the access point in the driver; runs on the service stop queue.
+ *
+ * @param[in] work Work item of wifi_HotspotStop.
+ */
+static void wifi_stopHotspotInDriver(struct k_work *work);
 
 /**
  * @brief Normalize one received SNTP result without applying the clock.
@@ -313,6 +367,17 @@ int wifi_init(void)
                            K_THREAD_STACK_SIZEOF(wifi_TimeSynchronizationStack),
                            WIFI_TIME_SYNCHRONIZATION_PRIORITY,
                            &queueConfiguration);
+
+        const struct k_work_queue_config serviceStopQueueConfiguration = {
+            .name = "wifi_service_stop",
+        };
+        k_work_init(&wifi_DHCPServerStop.work, wifi_stopDHCPServerInDriver);
+        k_work_init(&wifi_HotspotStop.work, wifi_stopHotspotInDriver);
+        k_work_queue_start(&wifi_ServiceStopQueue,
+                           wifi_ServiceStopStack,
+                           K_THREAD_STACK_SIZEOF(wifi_ServiceStopStack),
+                           WIFI_SERVICE_STOP_PRIORITY,
+                           &serviceStopQueueConfiguration);
     }
 
     return result;
@@ -703,12 +768,7 @@ int wifi_stopHotspot(void)
 
     if(wifi_HotspotInterface != NULL)
     {
-        result = net_mgmt(NET_REQUEST_WIFI_AP_DISABLE, wifi_HotspotInterface, NULL, 0);
-
-        if(result == -EALREADY) /**< Requested state is already active. */
-        {
-            result = 0;
-        }
+        result = wifi_runServiceStop(&wifi_HotspotStop);
     }
 
     return result;
@@ -745,13 +805,7 @@ int wifi_stopDHCPServer(void)
 
     if(wifi_HotspotInterface != NULL)
     {
-        result = net_dhcpv4_server_stop(wifi_HotspotInterface);
-
-        if(result == -ENOENT) /**< Requested record or network was not found. */
-        {
-            /* Not running. */
-            result = 0;
-        }
+        result = wifi_runServiceStop(&wifi_DHCPServerStop);
     }
 
     return result;
@@ -1207,6 +1261,69 @@ static void wifi_rollbackHotspot(void)
     {
         LOG_ERR("Hotspot rollback failed (%d)", result);
     }
+}
+
+static int wifi_runServiceStop(struct wifi_service_stop *serviceStop)
+{
+    int result = 0;
+
+    /* A stop that outlived an earlier caller's bound is waited for; queueing it again would repeat the driver call. */
+    if(k_work_busy_get(&serviceStop->work) == 0)
+    {
+        (void)k_event_clear(&wifi_Events, serviceStop->completedEvent);
+        result = k_work_submit_to_queue(&wifi_ServiceStopQueue, &serviceStop->work);
+    }
+
+    if(result >= 0)
+    {
+        if(wifi_waitForEvents(serviceStop->completedEvent, K_MSEC(WIFI_SERVICE_STOP_TIMEOUT_MS)) == 0U)
+        {
+            LOG_ERR("Driver stop did not return within %d ms", WIFI_SERVICE_STOP_TIMEOUT_MS);
+
+            result = -ETIMEDOUT; /**< The driver call still runs; the service can still be active. */
+        }
+        else
+        {
+            result = serviceStop->result;
+        }
+    }
+
+    return result;
+}
+
+static void wifi_completeServiceStop(struct wifi_service_stop *serviceStop, int result)
+{
+    serviceStop->result = result;
+    (void)k_event_post(&wifi_Events, serviceStop->completedEvent);
+}
+
+static void wifi_stopDHCPServerInDriver(struct k_work *work)
+{
+    ARG_UNUSED(work);
+
+    int result = net_dhcpv4_server_stop(wifi_HotspotInterface);
+
+    if(result == -ENOENT) /**< Requested record or network was not found. */
+    {
+        /* Not running. */
+        result = 0;
+    }
+
+    wifi_completeServiceStop(&wifi_DHCPServerStop, result);
+}
+
+static void wifi_stopHotspotInDriver(struct k_work *work)
+{
+    ARG_UNUSED(work);
+
+    int result = net_mgmt(NET_REQUEST_WIFI_AP_DISABLE, wifi_HotspotInterface, NULL, 0);
+
+    if(result == -EALREADY) /**< Requested state is already active. */
+    {
+        result = 0;
+    }
+
+    wifi_completeServiceStop(&wifi_HotspotStop, result);
 }
 
 static void wifi_handleEvent(struct net_mgmt_event_callback *callback, uint64_t event, struct net_if *iface)

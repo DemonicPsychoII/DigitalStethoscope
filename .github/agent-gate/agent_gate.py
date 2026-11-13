@@ -11,7 +11,8 @@ that status (from the GitHub Actions app), so this file is the merge policy. It 
   4. every `<!-- owner-question id=X -->` (body or trusted comment) has a matching trusted
      `<!-- owner-answer id=X -->` comment — resolving a thread is not an answer;
   5. an independent agent session approves the current SHA, also when an allowlisted review bot
-     approved it; a machine-verified pure revert needs no review. An agent approval of an earlier
+     approved it; for a machine-verified pure revert that review only confirms the verification,
+     and CodeRabbit is not waited for. An agent approval of an earlier
      commit is carried forward when the PR's own diff against its current base is unchanged;
   6. critical/major and unclassified conversations are resolved; explicit minor/nitpick findings may stay open;
   7. configured and GitHub-required checks pass. Optional checks are advisory when
@@ -625,7 +626,9 @@ def evaluate(inputs: Inputs) -> Decision:
 
     if klass == "revert":
         if verified_revert:
-            items.append(("ok", f"verified pure revert ({inputs.revert[1]}); review and owner approval waived"))
+            items.append(("ok", f"verified pure revert ({inputs.revert[1]}); owner approval and CodeRabbit waived, "
+                                "and the agent review only needs to confirm this verification"))
+            items.extend(agent_terminal_items(inputs, author) or agent_review_items(inputs))
         else:
             why = inputs.revert[1] if inputs.revert is not None else "no `<!-- agent-revert of=<merge sha> -->` marker"
             items.append(("fail", f"class=revert but not a verified pure revert ({why}) — re-class it and get a review"))

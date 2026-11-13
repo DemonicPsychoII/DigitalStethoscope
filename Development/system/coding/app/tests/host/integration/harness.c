@@ -37,6 +37,8 @@ static bool integration_bad_form;
 static bool integration_disconnects_before_ipv4;
 static int64_t integration_first_join_milliseconds;
 static int64_t integration_last_join_milliseconds;
+static int integration_cleanup_feedback_count;
+static int64_t integration_cleanup_feedback_milliseconds = -1;
 
 static void schedule_event(int64_t due_milliseconds, enum integration_event_type type)
 {
@@ -105,6 +107,15 @@ static int network_request(int request, struct net_if *interface, void *data, si
     else if(request == NET_REQUEST_WIFI_AP_DISABLE)
         integration_status_at_stop = portal_Status;
     return result;
+}
+
+static void record_feedback(enum feedback_code code)
+{
+    if(code == FEEDBACK_WIFI_CLEANUP_FAILURE)
+    {
+        integration_cleanup_feedback_count++;
+        integration_cleanup_feedback_milliseconds = time_milliseconds;
+    }
 }
 
 static void add_network(const char *name, enum wifi_security_type security, int signal_strength)
@@ -296,12 +307,16 @@ int main(int argument_count, char **arguments)
         schedule_event(1500, INTEGRATION_RESCAN);
         integration_horizon_milliseconds = 25000;
     }
-    else if(strcmp(scenario, "start-selection") == 0)
+    else if(strcmp(scenario, "start-selection") == 0 || strcmp(scenario, "start-selection-stops-block") == 0)
+    {
         schedule_event(1000, INTEGRATION_START);
+        service_stop_driver_blocks = strcmp(scenario, "start-selection-stops-block") == 0;
+    }
     else if(strcmp(scenario, "cancel-selection") == 0)
         schedule_event(1000, INTEGRATION_CANCEL);
     else
         schedule_event(1500, INTEGRATION_CONNECT_FORM);
+    communication_setFeedbackHandler(record_feedback);
     communication_init();
     if(setjmp(integration_finished) == 0)
         integration_worker(NULL, NULL, NULL);
@@ -321,6 +336,13 @@ int main(int argument_count, char **arguments)
            communication_CleanupFaultIsLatched,
            maximum_hotspot_clients);
     printf("not_connected_error %d\n", -ENOTCONN);
+    printf("cleanup_feedback_count %d\ncleanup_feedback_milliseconds %lld\ndhcp_running %d\nhotspot_enabled %d\ndhcp_driver_calls %d\nhotspot_driver_calls %d\n",
+           integration_cleanup_feedback_count,
+           (long long)integration_cleanup_feedback_milliseconds,
+           hotspot_dhcp_is_running,
+           hotspot_is_enabled,
+           hotspot_dhcp_stop_calls,
+           hotspot_disable_calls);
     printf("first_join_milliseconds %lld\nlast_join_milliseconds %lld\nboot_attempts %d\njoin_failure %d\n",
            (long long)integration_first_join_milliseconds,
            (long long)integration_last_join_milliseconds,
