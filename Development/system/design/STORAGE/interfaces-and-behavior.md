@@ -12,13 +12,13 @@ The `wifi/network` record contains the complete 98-byte `wifi_network` record de
 
 ## Flash layout
 
-The ESP32-S3-WROOM-1-N16R8 has 16 MB flash. The board default describes a 4 MB Espressif table (`partitions_0x0_amp.dtsi` → `partitions_0x0_amp_4M.dtsi`) [1]; the application overlay includes [`boards/flash-layout.dtsi`](../../coding/app/boards/flash-layout.dtsi), which widens `flash0` to 16 MB, deletes that table and defines the three partitions below. The application boots with Espressif Simple Boot, without the MCUboot bootloader: a single image is flashed at an SoC-defined offset, and over-the-air (OTA) updates and slot management are unavailable [2]; the build sets `CONFIG_FLASH_LOAD_OFFSET=0`. Settings use the ZMS (Zephyr Memory Storage) backend in `storage_partition`, because no `zephyr,settings-partition` is chosen [3].
+The ESP32-S3-WROOM-1-N16R8 has 16 MB flash. The application overlay widens `flash0` to 16 MB, but the partitions still come from the board's 4 MB Espressif default table (`partitions_0x0_amp.dtsi` → `partitions_0x0_amp_4M.dtsi`) [1]. The application boots with Espressif Simple Boot, without the MCUboot bootloader: a single image is flashed at an SoC-defined offset, and over-the-air (OTA) updates and slot management are unavailable [2]; the build sets `CONFIG_FLASH_LOAD_OFFSET=0`. Settings use the ZMS (Zephyr Memory Storage) backend in `storage_partition`, because no `zephyr,settings-partition` is chosen [3].
 
 The project layout uses the whole 16 MB. Settings and the server profile each have a fixed start address; their sizes are independent [5]:
 
 ![Whole 16 MB flash map with the enlarged settings and server profile end](rendered/flash_layout.svg)
 
-*Where do the application, settings and server profile sit, and how far can each grow without moving the other?* Editable source: [flash-layout.puml](flash-layout.puml), with the values of `flash-layout.dtsi`. The application partition holds the Simple Boot image (header, loaded segments and flash-mapped code and data); both unassigned areas are growth room, not reserved.
+*Where do the application, settings and server profile sit, and how far can each grow without moving the other?* Editable source: [flash-layout.puml](flash-layout.puml), with the project layout values. The application partition holds the Simple Boot image (header, loaded segments and flash-mapped code and data); both unassigned areas are growth room, not reserved.
 
 Neither start depends on the other partition's size. Settings can grow to 512 KiB without moving the server profile, and the server profile can grow to 1 MB without moving settings. The server profile start must never change between firmware versions, because an updated firmware must still find an image that was flashed earlier. Both starts are aligned to the 4 KiB erase sector and to 64 KiB. This placement is a project decision [5].
 
@@ -28,7 +28,7 @@ Worst-case sizing, calculated from source and not measured:
 - **Server profile.** The version 1 format below has at most 8,465 bytes, which fits in three 4 KiB sectors. The lab image built from `lab-hapi.toml` has 1,446 bytes: a 30-byte base URL and a 1,399-byte PEM certificate (calculated from the file at commit `3535a857aacc7a99d3db3ff61c6515514b1670d9`, 4 November 2026).
 - **Flash geometry.** Erase sector 4 KiB, write block 4 bytes [4].
 
-Deleting the board table removes its `boot`, `sys`, second image, second-core, low-power-core, scratch and core-dump partitions; Simple Boot reads the image header through the `boot_partition` label, which therefore stays on the application partition. They are not needed: Simple Boot needs no MCUboot, there is no OTA, only one core runs the application and no core dump is configured. The observed image of 2 November 2026 places loaded segments at `0x20`, `0x4F2C` and `0x15BAC` and flash-mapped code and data at `0x20000` and `0x90000`; about 656 KiB of the application partition are in use. The partition size only bounds the image; SoC mapping limits must be checked if the image grows far.
+The board default's `boot`, `sys`, second image, second-core, low-power-core, scratch and core-dump partitions are not defined: Simple Boot needs no MCUboot, there is no OTA, only one core runs the application and no core dump is configured. The observed image of 2 November 2026 places loaded segments at `0x20`, `0x4F2C` and `0x15BAC` and flash-mapped code and data at `0x20000` and `0x90000`; about 656 KiB of the application partition are in use. The partition size only bounds the image; SoC mapping limits must be checked if the image grows far.
 
 Moving settings from `0x3B0000` to `0xE80000` loses the stored Wi-Fi network and Device registration once. The device then opens Wi-Fi setup, and conditional registration recovers the same Device through its physical identifier. A full chip erase also removes the server profile image, which must then be flashed again.
 

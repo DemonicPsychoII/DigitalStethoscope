@@ -35,5 +35,5 @@ Listening -down-> Finalizing : Stop that enters finalization
 Finalizing -up-> Check : no job: Wi-Fi unconfigured\nor DELIVERY_NOT_POSSIBLE
 Finalizing -down-> Delivery : communication_submitDelivery
 Delivery -up-> Check : job ends: receipt, DELIVERY_FAILURE or\nSERVER_CONNECTION_FAILURE (no clock)
-Delivery -up-> Listening : Start cancels the job:\nDELIVERY_FAILURE, result lost
+Delivery -up-> Listening : Start cancels the job: DELIVERY_FAILURE, or\nSERVER_CONNECTION_FAILURE (no clock); result lost
 @enduml

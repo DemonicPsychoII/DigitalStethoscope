@@ -68,8 +68,9 @@ endif
 :6. L2_COMMUNICATION pre-handshake validity
 certificate validity against the prepared UTC time;
 if (valid at that time?) then (no)
- :No ClientHello sent,
- SERVER_CONNECTION_FAILURE path, later retry; <<#3b2a1a>>
+ :No ClientHello sent.
+ Idle preparation: SERVER_CONNECTION_FAILURE, later retry.
+ Delivery: terminal DELIVERY_FAILURE; <<#3b2a1a>>
  detach
 endif
 :7. L1_WIFI handshake verification (mbedTLS)
@@ -77,8 +78,9 @@ TLS 1.3, verification required, only this
 certificate trusted; Key Usage and Extended
 Key Usage (rule 5); peer dates again;
 if (handshake verified?) then (no)
- :Connection fails,
- failure handled by the TLS design; <<#3b2a1a>>
+ :Connection fails.
+ Idle preparation: SERVER_CONNECTION_FAILURE, later retry.
+ Delivery: terminal DELIVERY_FAILURE; <<#3b2a1a>>
  detach
 endif
 :Verified connection retained at most for the
@@ -87,8 +89,8 @@ stop
 
 legend bottom left
  COMMUNICATION checks the keep-alive before it hands URL and certificate to L1_WIFI.
- Device-side rule 2 (self-issued, self-signature) needs implementation evidence: the device configures the certificate as the only
- trust anchor, but no device test shows that verification rejects a directly trusted certificate that is not self-issued.
+ Device-side rule 2 (self-issued, self-signature): whether the verifier checks it for a directly trusted
+ certificate is still to be demonstrated by L1_WIFI work.
  The CRC-32 detects corruption, not tampering; the image has no signature.
 endlegend
 @enduml

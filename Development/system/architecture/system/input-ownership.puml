@@ -31,7 +31,7 @@ package "L1_PHYSICALINTERFACE: contact handling" {
 package "L2_CONTROL: policy" {
  rectangle "Long press in Idle -> setup request\nLong press outside Idle -> rejected" as LongPressPolicy
  rectangle "Short press: Start/Stop admission,\nBusy during analysis,\ncancels a running delivery,\nerror acknowledgement" as ShortPressPolicy
- rectangle "Filter and volume admission;\nchange during a session ->\nSESSION_CONTEXT_CHANGE" as SettingPolicy
+ rectangle "Filter and volume:\napplied as settings,\nalso while listening" as SettingPolicy
 }
 
 package "Commanded effects" {

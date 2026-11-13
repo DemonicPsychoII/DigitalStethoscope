@@ -8,7 +8,7 @@ skinparam ArrowColor #a9b8ca
 !pragma layout smetana
 title Which examination context does an Observation carry?
 hide empty description
-state "OPEN: external request adapter\nprotocol, acknowledgement, durability,\ncancellation/expiry" as Adapter
+state "OPEN: external request adapter\nprotocol, acknowledgement, durability,\ncancellation/expiry\n—\nwrong target, malformed or oversized offers\nare rejected; the pending slot stays unchanged" as Adapter
 state "Pending slot (one request)" as Slot {
  state "No pending request" as Empty
  state "Pending request\nvalidated for this device and server binding\nrequest identity, optional patient reference" as Pending
@@ -20,7 +20,6 @@ state "Session context" as Session {
 }
 state "Observation\nsubject = supplied patient reference,\nomitted when none was supplied" as Observation
 Adapter -[dashed]-> Pending : valid offer
-Adapter -[dashed]-> Empty : wrong target, malformed\nor oversized: rejected
 [*] --> Empty
 Empty --> Pending : valid offer
 Pending --> Pending : newest wins: a newer offer replaces and drops it;\nduplicate of the same request: no new examination;\nrejected Start consumes nothing
@@ -30,7 +29,7 @@ NoSession --> Active : accepted local Start\nwith a pending request
 NoSession --> Standalone : accepted local Start\nwithout a pending request
 Active --> Observation : result of this session
 Standalone --> Observation : result
-Active --> NoSession : session ends (also cancellation, poor signal,\ndelivery failure, acknowledgement):\ncontext is not restored or reused
+Active --> NoSession : session ends; cancellation, poor signal,\ndelivery failure or acknowledgement never\nrestore or reuse the context
 Standalone --> NoSession : session ends
 note right of Active
  New external context cannot replace it or start a measurement;

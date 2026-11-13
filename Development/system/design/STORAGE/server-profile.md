@@ -84,7 +84,7 @@ The tool lives in `Development/system/coding/tools/server-profile/`. Every rejec
 
 *Which check runs on the PC, at boot or during connection setup, who owns it, and what does its failure do?* Editable source: [server-profile-validation.puml](server-profile-validation.puml).
 
-Rule 2 is enforced only by the tool so far: the device trusts this certificate directly, and whether its verifier also rejects a directly trusted certificate that is not self-issued is still to be demonstrated by L1_WIFI work ([TLS trust inputs](../COMMUNICATION/secure-transport.md#trust-and-server-profile-inputs)).
+For rule 2 the device trusts only this certificate; whether the pinned verifier also checks self-issuance and signature of a directly trusted certificate is still to be demonstrated by L1_WIFI work ([TLS trust inputs](../COMMUNICATION/secure-transport.md#trust-and-server-profile-inputs)).
 
 ## Device behavior
 
