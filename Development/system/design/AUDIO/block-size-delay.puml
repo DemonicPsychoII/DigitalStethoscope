@@ -1,0 +1,32 @@
+@startuml block_size_delay
+!theme cyborg
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam backgroundColor #0b1018
+skinparam defaultFontColor #e6edf7
+skinparam ArrowColor #a9b8ca
+skinparam ArrowFontColor #e6edf7
+title Transport delay per block size at 16 kHz with the same 9 ms lateness (axis in ms; project calculation)
+concise "32 frames, 2 ms blocks\n1.5 ms processing budget" as small
+concise "64 frames, 4 ms blocks (chosen)\n3 ms processing budget" as chosen
+concise "128 frames, 8 ms blocks\n6 ms processing budget" as large
+scale 4 as 70 pixels
+@0
+small is "7 primed × 2 ms = 14 ms"
+chosen is "4 primed × 4 ms = 16 ms"
+large is "3 primed × 8 ms = 24 ms"
+@14
+small is {-}
+@16
+chosen is {-}
+@24
+large is {-}
+@32
+highlight 29.8 to 30.2 #f08a7c : P03 target 30 ms
+legend bottom
+  Block period = frames ÷ 16,000 Hz. Processing budget = 3/4 of the block period (P02).
+  Primed TX blocks n: smallest n with (n − 1) × block period − processing budget ≥ 9 ms, the lateness the chosen 64-frame design allows.
+  Transport delay = n × block period. Converter filter delays (about 2.3 ms) come on top and are equal for all three.
+  32 frames: 2 ms less delay, but 1.5 ms per block for processing and twice the thread wake-ups. 128 frames: 8 ms more delay.
+endlegend
+@enduml

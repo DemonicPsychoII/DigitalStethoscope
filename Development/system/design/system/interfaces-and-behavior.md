@@ -74,8 +74,9 @@ returns Busy without overwriting a job; a terminal failure retains only redacted
 
 Candidate memory accounting:
 
-- 64 stereo 32-bit frames = 512 bytes per transport block; 5 RX + 5 TX = 5,120 bytes
-  before DMA descriptors, alignment and driver overhead ([AUDIO sizing](../AUDIO/interfaces-and-behavior.md#timing-and-sizing)).
+- 64 stereo 32-bit frames = 512 bytes per transport block; 5 RX + 5 TX = 5,120 bytes, plus the
+  256-byte mono working buffer of the audio thread = 5,376 bytes, before DMA descriptors, alignment
+  and driver overhead ([AUDIO sizing](../AUDIO/interfaces-and-behavior.md#timing-and-sizing)).
 - A mono int32 analysis block is 256 bytes; four payloads = 1,024 bytes plus handles/metadata.
 - 5 s raw int32 mono at 16 kHz = 320,000 bytes; 30 s = 1,920,000 bytes. Allocate separate
   fixture/clip regions only when their simultaneous use and budgets are justified.
@@ -88,7 +89,7 @@ Candidate memory accounting:
 
 | Region / state | Entry | Process | Exit / cancellation |
 |---|---|---|---|
-| Playback Boot | zero gain, capability checks, silent TX prime | bounded adapter initialization | Idle on essential readiness; Fault otherwise |
+| Playback Boot | zero gain, capability checks; no I2S stream (silent TX priming happens at Start, [AUDIO states](../AUDIO/interfaces-and-behavior.md#states)) | bounded adapter initialization | Idle on essential readiness; Fault otherwise |
 | Idle | mute; no active transport/listening operation | allow configuration and network lease | Start is Busy during analysis and sending; otherwise start only after lease released |
 | Live | reset source-dependent state on source generation change | 64-frame normalized fan-out; selected listening filter; gain/saturation; TX | stop/fault mute; capture keeps live path |
 | Capture | allocate/claim bounded clip and ID; LED active | copy raw prefilter/pregain; normal live listening continues | full → Replay; cancel → Live; stop/fault → Idle/Fault, incomplete clip invalid |

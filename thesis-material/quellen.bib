@@ -1141,3 +1141,33 @@
   urldate = {2026-11-11},
   note = {Digital filter delay: normal 20 tS, low latency 3.5 tS. Table 11: BCK rates for PLL operation.}
 }
+
+@manual{espressif_esp32s3_trm_v18,
+  author = {{Espressif Systems}},
+  title = {ESP32-S3 Technical Reference Manual},
+  version = {1.8},
+  year = {2026},
+  url = {https://www.espressif.com/sites/default/files/documentation/esp32-s3_technical_reference_manual_en.pdf},
+  urldate = {2026-11-13},
+  note = {Chapter 28 I2S Controller, section 28.6 TX/RX Clock, pp. 1044--1046: clock sources 40 MHz XTAL, 160 MHz PLL\_F160M, 240 MHz PLL\_D2, external MCLK; integer divider N from 2 to 256 plus fractional part; fractional divider may add jitter. Revision history dates v1.8 as 2026-03--04; exact release day unverified.}
+}
+
+@misc{zephyr_hal_espressif_i2s_clock_3d4d922,
+  author = {{The Zephyr Project}},
+  title = {hal\_espressif ESP32-S3 clock tree definitions and I2S low-level divider limits},
+  version = {3d4d922a4d2994f844790ec031a584ec71240485},
+  url = {https://github.com/zephyrproject-rtos/hal_espressif/blob/3d4d922a4d2994f844790ec031a584ec71240485/components/soc/esp32s3/include/soc/clk_tree_defs.h},
+  urldate = {2026-11-13},
+  note = {Publication year unverified; revision pinned by Zephyr 357467a011cd2557a1a3f0b4be83d817c4addc9b. Further source: \url{https://github.com/zephyrproject-rtos/hal_espressif/blob/3d4d922a4d2994f844790ec031a584ec71240485/components/esp_hal_i2s/esp32s3/include/hal/i2s_ll.h}. Source reading, not a target measurement.}
+}
+
+@article{shannon_communication_noise_1949,
+  author = {Shannon, Claude E.},
+  title = {Communication in the Presence of Noise},
+  journal = {Proceedings of the IRE},
+  volume = {37},
+  number = {1},
+  pages = {10--21},
+  year = {1949},
+  doi = {10.1109/JRPROC.1949.232969}
+}

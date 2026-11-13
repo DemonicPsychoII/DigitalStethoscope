@@ -1956,13 +1956,34 @@ Nico F., *Hardware Test Protocol — ESP32-S3 Bring-up*, DigitalStethoscope repo
 <a id="tdk_inmp441_datasheet_2014"></a>
 ### tdk_inmp441_datasheet_2014
 
-TDK InvenSense, *INMP441 Omnidirectional Microphone with Bottom Port and I²S Digital Output*, document DS-INMP441-00, revision 1.0, 6 February 2014, Table 1 *Electrical Characteristics* (digital filter group delay 17.2/fS; frequency response −3 dB at 60 Hz and 15 kHz) and Table 3 *Serial Data Port Timing Specifications* (SCK 0.5–3.2 MHz, WS frequency 7.8–50 kHz) and section *I²S Data Interface* (24-bit two's complement, MSB first, 64 SCK per stereo frame, L/R pin selects the channel, SD tri-stated after the LSB), <https://www.farnell.com/datasheets/1824785.pdf>, accessed 11 November 2026. Distributor copy; the manufacturer download at product.tdk.com refused access on that date.
+TDK InvenSense, *INMP441 Omnidirectional Microphone with Bottom Port and I²S Digital Output*, document DS-INMP441-00, revision 1.0, 6 February 2014, Table 1 *Electrical Characteristics* (digital filter group delay 17.2/fS; frequency response −3 dB at 60 Hz and 15 kHz) and Table 3 *Serial Data Port Timing Specifications* (SCK 0.5–3.2 MHz, WS frequency 7.8–50 kHz) and section *I²S Data Interface* (24-bit two's complement, MSB first, 64 SCK per stereo frame, L/R pin selects the channel, SD tri-stated after the LSB) and Figure 9 *Mono-Output I²S Format Left Channel (L/R = 0)*; pages 4, 5, 11 and 12, checked 13 November 2026, <https://www.farnell.com/datasheets/1824785.pdf>, accessed 11 November 2026. Distributor copy; the manufacturer download at product.tdk.com refused access on that date.
 
-**Cited by:** [AUDIO design, timing and sizing](../Development/system/design/AUDIO/interfaces-and-behavior.md#timing-and-sizing).
+**Cited by:** [AUDIO design, timing and sizing](../Development/system/design/AUDIO/interfaces-and-behavior.md#timing-and-sizing), [sample format](../Development/system/design/AUDIO/interfaces-and-behavior.md#sample-format) and [sample-rate and block-size rationale](../Development/system/design/AUDIO/interfaces-and-behavior.md#sample-rate-and-block-size-rationale).
 
 <a id="ti_pcm510xa_datasheet_2015"></a>
 ### ti_pcm510xa_datasheet_2015
 
-Texas Instruments, *PCM510xA 2.1 VRMS, 112/106/100 dB Audio Stereo DAC with PLL and 32-bit, 384 kHz PCM Interface*, SLAS859C, May 2012, revised May 2015, electrical characteristics *Filter Characteristics–1: Normal* (delay time 20 tS) and *Filter Characteristics–2: Low Latency* (3.5 tS), and Table 11 *BCK Rates (MHz) by LRCK Sample Rate for PCM510xA PLL Operation* (no entry at 8 kHz; 16 kHz only with BCK = 64 fS), <https://www.ti.com/lit/ds/symlink/pcm5102a.pdf>, accessed 11 November 2026.
+Texas Instruments, *PCM510xA 2.1 VRMS, 112/106/100 dB Audio Stereo DAC with PLL and 32-bit, 384 kHz PCM Interface*, SLAS859C, May 2012, revised May 2015, electrical characteristics *Filter Characteristics–1: Normal* (delay time 20 tS) and *Filter Characteristics–2: Low Latency* (3.5 tS), *Electrical Characteristics* (sampling frequency 8–384 kHz, p. 7), Table 2 (32-bit words with BCK = 64 fS, p. 15), section 9.3.5.3 (PLL generates the internal clock from BCK when SCK stays at ground) and Table 11 *BCK Rates (MHz) by LRCK Sample Rate for PCM510xA PLL Operation* (p. 25; no entry at 8 kHz; 16 kHz only with BCK = 64 fS), <https://www.ti.com/lit/ds/symlink/pcm5102a.pdf>, accessed 11 November 2026; pages checked 13 November 2026.
 
-**Cited by:** [AUDIO design, timing and sizing](../Development/system/design/AUDIO/interfaces-and-behavior.md#timing-and-sizing).
+**Cited by:** [AUDIO design, timing and sizing](../Development/system/design/AUDIO/interfaces-and-behavior.md#timing-and-sizing), [sample format](../Development/system/design/AUDIO/interfaces-and-behavior.md#sample-format) and [sample-rate and block-size rationale](../Development/system/design/AUDIO/interfaces-and-behavior.md#sample-rate-and-block-size-rationale).
+
+<a id="espressif_esp32s3_trm_v18"></a>
+### espressif_esp32s3_trm_v18
+
+Espressif Systems, *ESP32-S3 Technical Reference Manual*, version 1.8, 2026 (revision history: "2026-03–04"; exact release day unverified), chapter 28 *I2S Controller (I2S)*, section 28.6 *TX/RX Clock*, pp. 1044–1046: the I2S TX/RX clock is divided from 40 MHz XTAL_CLK, 160 MHz PLL_F160M_CLK, 240 MHz PLL_D2_CLK or an external MCLK; f = source ÷ (N + b/a) with integer N from 2 to 256; using the fractional divider may introduce clock jitter; BCK = TX/RX clock ÷ (BCK_DIV_NUM + 1), with BCK_DIV_NUM not 1. <https://www.espressif.com/sites/default/files/documentation/esp32-s3_technical_reference_manual_en.pdf>, accessed 13 November 2026.
+
+**Cited by:** [AUDIO design, sample-rate and block-size rationale](../Development/system/design/AUDIO/interfaces-and-behavior.md#sample-rate-and-block-size-rationale).
+
+<a id="zephyr_hal_espressif_i2s_clock_3d4d922"></a>
+### zephyr_hal_espressif_i2s_clock_3d4d922
+
+The Zephyr Project, *hal_espressif ESP32-S3 clock tree definitions and I2S low-level divider limits*, revision `3d4d922a4d2994f844790ec031a584ec71240485` (pinned by Zephyr `357467a011cd2557a1a3f0b4be83d817c4addc9b`), [clk_tree_defs.h](https://github.com/zephyrproject-rtos/hal_espressif/blob/3d4d922a4d2994f844790ec031a584ec71240485/components/soc/esp32s3/include/soc/clk_tree_defs.h) (`I2S_CLK_SRC_DEFAULT = SOC_MOD_CLK_PLL_F160M`) and [i2s_ll.h](https://github.com/zephyrproject-rtos/hal_espressif/blob/3d4d922a4d2994f844790ec031a584ec71240485/components/esp_hal_i2s/esp32s3/include/hal/i2s_ll.h) (integer divider at most 256, fractional a/b at most 512), accessed 13 November 2026. Source reading, not a target measurement.
+
+**Cited by:** [AUDIO design, sample-rate and block-size rationale](../Development/system/design/AUDIO/interfaces-and-behavior.md#sample-rate-and-block-size-rationale).
+
+<a id="shannon_communication_noise_1949"></a>
+### shannon_communication_noise_1949
+
+C. E. Shannon, "Communication in the Presence of Noise", *Proceedings of the IRE*, vol. 37, no. 1, pp. 10–21, January 1949, DOI [10.1109/JRPROC.1949.232969](https://doi.org/10.1109/JRPROC.1949.232969). Metadata checked against Crossref on 13 November 2026. Sampling theorem: a signal limited to W hertz is determined by samples 1/(2W) seconds apart.
+
+**Cited by:** [AUDIO design, sample-rate and block-size rationale](../Development/system/design/AUDIO/interfaces-and-behavior.md#sample-rate-and-block-size-rationale).

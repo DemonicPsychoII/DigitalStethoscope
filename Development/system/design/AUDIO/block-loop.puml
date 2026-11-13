@@ -1,0 +1,71 @@
+@startuml block_loop
+!theme cyborg
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam backgroundColor #0b1018
+skinparam defaultFontColor #e6edf7
+skinparam ArrowColor #a9b8ca
+skinparam ArrowFontColor #e6edf7
+skinparam activity {
+ BackgroundColor #273241
+ BorderColor #61738a
+ FontColor #e6edf7
+}
+skinparam note {
+ BackgroundColor #1b2533
+ BorderColor #61738a
+ FontColor #e6edf7
+}
+title L2_AUDIO block loop: one iteration per 4 ms block (design, not implemented)
+start
+:Start command from L2_CONTROL;
+:i2s_start\nprime 4 silent TX blocks, start RX, then TX;
+:started event to L2_CONTROL;
+repeat
+  :**WAIT** i2s_receiveBlock\nwaits for the next completed RX block, at most 20 ms (P11); <<#345E87>>
+  if (result) then (timeout or driver error)
+    :microphone failure;
+    (F)
+    detach
+  else (OK: RX block lent)
+  endif
+  :take the left slot (even index) of each of the 64 frames\ninto the 64-entry mono working buffer (low 8 bits cleared);
+  :**i2s_releaseReceivedBlock**\nRX block back to the RX pool;
+  :process the mono buffer\nthis step: copy; later listening filter and volume;
+note right
+  Processing budget (P02): from the received block
+  to the queued TX block at most 3 ms of the 4 ms period;
+  the receive wait is not part of it.
+  No lock is held across a block wait.
+  The thread holds at most one RX and one TX block:
+  RX is returned before TX is requested.
+end note
+  :**WAIT** i2s_allocateTransmitBlock\nwaits for a free TX block, at most 20 ms (P11); <<#345E87>>
+  if (result) then (timeout)
+    :output failure;
+    (F)
+    detach
+  else (OK: TX block held)
+  endif
+  :write each mono sample into both slots of its frame;
+  :**i2s_transmitBlock**\nownership passes to the driver;
+  if (result) then (failure)
+    :L1_I2S returns the block to the TX pool,\nthen output failure;
+    (F)
+    detach
+  else (OK)
+  endif
+  :**STOP CHECK** command queue, without waiting; <<#4a3a1a>>
+repeat while (Stop received?) is (no)
+->yes;
+:i2s_stop (see Stop sequence);
+:stopped event to L2_CONTROL;
+stop
+partition "Fault exit, reached from every (F)" {
+(F)
+:i2s_stop on both links;
+:fault event with the failed link to L2_CONTROL;
+:wait for commands; restart required;
+stop
+}
+@enduml

@@ -1,0 +1,53 @@
+@startuml buffer_circulation
+!theme cyborg
+!pragma layout smetana
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam backgroundColor #0b1018
+skinparam defaultFontColor #e6edf7
+skinparam ArrowColor #a9b8ca
+skinparam ArrowFontColor #e6edf7
+skinparam rectangle {
+ BackgroundColor #273241
+ BorderColor #61738a
+ FontColor #e6edf7
+ BackgroundColor<<thread>> #10302b
+ BorderColor<<thread>> #52c7b4
+ BackgroundColor<<driver>> #182436
+ BorderColor<<driver>> #78b0e4
+}
+skinparam note {
+ BackgroundColor #1b2533
+ BorderColor #61738a
+ FontColor #e6edf7
+}
+title Who holds each 512-byte block, and how it returns to its pool (design, not implemented)
+left to right direction
+rectangle "RX: 5 blocks" as receiveSide {
+  rectangle "RX pool, free\nL1_I2S, internal RAM" as receivePool
+  rectangle "i2s0 DMA\nfills 1 block, 4 ms" as receiveDMA <<driver>>
+  rectangle "i2s0 driver RX queue\nup to 3 completed blocks\nnormally empty" as receiveQueue <<driver>>
+  rectangle "audio thread\n1 block lent\n**returns it** with\ni2s_releaseReceivedBlock\nbefore requesting a TX block" as receiveThread <<thread>>
+}
+rectangle "TX: 5 blocks" as transmitSide {
+  rectangle "TX pool, free\nL1_I2S, internal RAM" as transmitPool
+  rectangle "audio thread\nfills 1 block" as transmitThread <<thread>>
+  rectangle "i2s1 driver TX queue\n3 queued after priming" as transmitQueue <<driver>>
+  rectangle "i2s1 DMA\nplays 1 block, 4 ms\n**driver returns**\nthe played block" as transmitDMA <<driver>>
+}
+receivePool --> receiveDMA : driver takes a free block
+receiveDMA --> receiveQueue : block complete
+receiveQueue --> receiveThread : i2s_receiveBlock
+receivePool <-- receiveThread
+transmitPool --> transmitThread : i2s_allocateTransmitBlock
+transmitThread --> transmitQueue : i2s_transmitBlock
+transmitQueue --> transmitDMA : next block to play
+transmitPool <-- transmitDMA
+legend bottom
+  RX reserve: 3 queued blocks × 4 ms = 12 ms. No free block when the DMA needs one: RX error state, stream stops.
+  TX reserve: 3 queued blocks × 4 ms = 12 ms. Empty queue when a block completes: TX error state, stream stops.
+  RX starts before TX, so in normal operation the TX queue can briefly hold 4 blocks and all 5 TX blocks can be in use.
+  Stop: STOP lets each DMA block finish and return (RX into its queue, TX to its pool); DROP then frees both queues.
+  Block = 64 frames × 2 slots × 4 bytes. Pools fixed at build time in internal DMA-capable RAM; no PSRAM.
+endlegend
+@enduml

@@ -3,7 +3,20 @@
 `L1_I2S` owns both I2S links and their block pools; `L2_AUDIO` owns the block loop and reports to
 `L2_CONTROL`. The [AUDIO architecture](../../architecture/AUDIO/README.md) defines these
 responsibilities and the [decision record](../../planning/mvp-decisions-2026-11-10.md#first-audio-path)
-the chosen values. This page covers the first audio step: microphone to DAC with a copy step.
+the chosen values, confirmed on [13 November](../../planning/mvp-decisions-2026-11-13.md). This page
+covers the first audio step: microphone to DAC with a copy step. Nothing on this page is
+implemented yet; `L2_AUDIO` and `L1_I2S` are skeletons.
+
+| View | Editable source | Answers |
+| --- | --- | --- |
+| Block loop | [block-loop.puml](block-loop.puml) | In which order does one block pass, where does the thread wait, where is Stop checked? |
+| States | [audio-state.puml](audio-state.puml) | Which states does `L2_AUDIO` have, and which system states do they correspond to? |
+| Start and Stop | [start-stop-sequence.puml](start-stop-sequence.puml) | In which order are the links primed, started and shut down? |
+| Sample format | [sample-format.puml](sample-format.puml) | Where is the sample in the 32-bit slot, and how does it reach both DAC channels? |
+| Buffer circulation | [buffer-circulation.puml](buffer-circulation.puml) | Who holds each block, and how does it return to its pool? |
+| Priming and playback | [priming-timing.puml](priming-timing.puml) | Where do the 16 ms of transport delay come from? |
+| Sample rate | [sample-rate-range.puml](sample-rate-range.puml) | Which sample rates do all three parts accept? |
+| Block size | [block-size-delay.puml](block-size-delay.puml) | What does the block size cost in delay? |
 
 ## Stream configuration
 
@@ -15,11 +28,49 @@ default clock source [1].
 | Links | `i2s0` RX from the INMP441, `i2s1` TX to the PCM5102A | [Electrical interface baseline](../../spec/product-scope.md#electrical-interface-baseline) |
 | Format | Zephyr `I2S_FMT_DATA_FORMAT_I2S`, the ESP32-S3 drives bit and frame clock on both links | The microphone and the DAC both take their clocks from the ESP32-S3, as configured in the bring-up firmware [2] |
 | Channels, word size | 2 channels, 32-bit words | The driver accepts only two channels [1]; equal word sizes keep the dividers equal [1] |
-| Sample rate | 16,000 Hz (P01) | Decision of 10 November 2026 |
-| Block | 64 frames × 2 slots × 4 bytes = 512 bytes, 4 ms | P01; below the 4092-byte DMA descriptor limit, so one descriptor per block [1] |
+| Sample rate | 16,000 Hz (P01) | Decision of 10 November 2026; [rationale](#sample-rate-and-block-size-rationale) |
+| Block | 64 frames × 2 slots × 4 bytes = 512 bytes, 4 ms | P01, confirmed 13 November; below the 4092-byte DMA descriptor limit, so one descriptor per block [1] |
 | RX pool | 5 blocks; `CONFIG_I2S_ESP32_RX_BLOCK_COUNT` = 3 | 3 completed blocks waiting, 1 in DMA, 1 lent to the audio thread |
 | TX pool | 5 blocks; `CONFIG_I2S_ESP32_TX_BLOCK_COUNT` = 4 | 4 blocks primed before TX starts (1 in DMA and 3 queued afterwards), 1 being filled |
 | Memory | Both pools in internal DMA-capable RAM, defined at build time | No PSRAM in this step |
+
+## Sample-rate and block-size rationale
+
+Device ranges come from the cited datasheets and manuals; everything marked *project calculation*
+is derived by the project from those inputs and is not measured.
+
+![Sample-rate ranges of microphone, DAC and controller on the carrier](rendered/sample_rate_range.svg)
+
+*Which sample rates do all three parts accept on this carrier?*
+
+| Part | Range or limit | Source |
+| --- | --- | --- |
+| INMP441 | WS (frame clock) frequency 7.8–50 kHz; 64 SCK per stereo frame | [3], Table 3 (p. 5) and section "I²S Data Interface" (p. 11) |
+| PCM5102A | Sampling frequency 8–384 kHz in general. On the carrier SCK is tied to ground [8], so the DAC builds its clock from BCK with its PLL. For that mode, Table 11 lists BCK for 16, 32, 44.1, 48, 96, 192 and 384 kHz at 64 fS and has no entry at 8 kHz; 32-bit words need BCK = 64 fS | [4], "Electrical Characteristics" (p. 7), Table 2 (p. 15), section 9.3.5.3 and Table 11 (p. 25) |
+| ESP32-S3 I2S | Master clock = source ÷ (N + b/a), integer part N = 2…256; source 160 MHz (`PLL_F160M`, the driver default) | [5], section 28.6; [1]; [6] |
+| ESP32-S3 I2S at 32-bit words | *Project calculation:* the driver sets the master clock to 256 × fS, so with the integer divider fS = 160 MHz ÷ (256 × N), about 2.44–312.5 kHz. At 16 kHz, N = 39.0625, so the fractional divider is used; the TRM notes it may add clock jitter. The fractional range was not evaluated | [1], [5], [6] |
+
+- 16 kHz is the lowest rate that the microphone accepts and the DAC lists for its PLL mode on this
+  carrier; 8 kHz is not listed for the DAC. *Project calculation from [3] and [4].*
+- Taking the lowest common rate keeps data and processing per second lowest. *Project decision*
+  ([10 November](../../planning/mvp-decisions-2026-11-10.md#first-audio-path)).
+- A 16 kHz rate represents content up to 8 kHz [7]; the candidate filter bands end at 800 Hz
+  ([P08](../system/parameters.md), a candidate, not a measured heart-sound bandwidth).
+- 48 kHz with 240-frame blocks was considered and not chosen (decision of 10 November).
+
+![Transport delay for 32-, 64- and 128-frame blocks against the 30 ms target](rendered/block_size_delay.svg)
+
+*What does the block size cost in delay, for the same lateness the 64-frame design allows?*
+
+| Block | Period | Processing budget (P02 share) | Primed TX blocks n | Transport delay |
+| --- | --- | --- | --- | --- |
+| 32 frames | 2 ms | 1.5 ms | (n − 1) × 2 ms − 1.5 ms ≥ 9 ms → 7 | 14 ms; 2 ms less, but twice as many thread wake-ups |
+| 64 frames (chosen) | 4 ms | 3 ms | 4 | 16 ms |
+| 128 frames | 8 ms | 6 ms | (n − 1) × 8 ms − 6 ms ≥ 9 ms → 3 | 24 ms; below 30 ms, but 8 ms more |
+
+All values in this table are *project calculations* from the driver's queue behavior [1]; the
+block size is a project decision ([10 November](../../planning/mvp-decisions-2026-11-10.md#first-audio-path),
+confirmed [13 November](../../planning/mvp-decisions-2026-11-13.md)).
 
 ## Service boundary
 
@@ -43,82 +94,138 @@ not retry.
 ## Block loop
 
 `L2_AUDIO` runs one audio thread with one deterministic processing path: read, process, send
-([decision of 11 November](../../planning/mvp-decisions-2026-11-11.md)). It runs at the highest application thread priority; the
-numeric priority is an implementation choice measured under VT-02. It waits for commands while
-stopped and runs the loop below while started. Each iteration, from the received block to the
-queued TX block, finishes within the processing budget of 3 ms (P02); the wait for the next block
-is not part of it. No lock is held across a block wait.
+([decision of 11 November](../../planning/mvp-decisions-2026-11-11.md)).
 
-1. `i2s_receiveBlock`.
-2. For each of the 64 frames, take the left slot (even index) into a 64-entry mono working buffer,
-   using the [sample format](#sample-format).
-3. `i2s_releaseReceivedBlock`.
-4. Processing step: copy. The listening filter and volume replace this step later; until the
-   potentiometer is fitted, the volume is a fixed 100 %.
-5. `i2s_allocateTransmitBlock`, then write each mono sample into both slots of its frame.
-6. `i2s_transmitBlock`.
-7. Check the command queue without waiting; Stop ends the loop.
+![L2_AUDIO block loop with its two waits, the Stop check and the fault exit](rendered/block_loop.svg)
 
-The mono working buffer is 256 bytes owned by the audio thread. Each iteration returns the received
-block before it requests a TX block, so the thread never holds more than one block of each pool.
+*In which order does one block pass, where does the thread wait, and where is Stop checked?*
+
+- The thread runs at the highest application thread priority; the numeric priority is an
+  implementation choice measured under VT-02.
+- Processing budget (P02): from the received block to the queued TX block at most 3 ms; the wait
+  for the next block is not part of it. No lock is held across a block wait.
+- The processing step only copies. The listening filter and volume replace it later; until the
+  potentiometer is fitted, the volume is a fixed 100 %.
+- The mono working buffer has 64 entries, 256 bytes, owned by the audio thread. Left-slot
+  extraction follows the [sample format](#sample-format).
+- The thread returns the RX block before it requests a TX block, so it never holds more than one
+  block of each pool.
+
+## States
+
+![L2_AUDIO statechart with the corresponding system states](rendered/audio_state.svg)
+
+*Which states does `L2_AUDIO` have, and which system states do they correspond to?*
+
+The states are design names for `L2_AUDIO`. The system vocabulary comes from the
+[MVP session state view](../../architecture/system/mvp-session-state.puml) and the state table of
+the [system design](../system/interfaces-and-behavior.md#state-entryprocessexit).
+
+| `L2_AUDIO` state | System state | Basis |
+| --- | --- | --- |
+| Initializing | Boot (session view); Playback Boot (system design) | `i2s_initialize` at boot; no stream |
+| Stopped | Idle, Portal, Analysing, Sending, ReportingError | Idle is muted with no transport; sending holds the network lease with audio stopped |
+| Starting | **unclear** | Not documented whether the system enters Listening at the Start command or at the `started` event |
+| Running | Listening, Measuring (session view); Live (system design) | The block loop runs; Wi-Fi-only faults preserve it (P12) |
+| Stopping | Listening → Idle; Measuring → Idle or Analysing | Every system Stop mutes audio |
+| Fault | Muted (session view); Error, audio affected (system design) | `MICROPHONE_FAILURE` and `AUDIO_OUTPUT_FAILURE` require a restart ([catalogue](../FEEDBACK/catalogue.md)) |
+
+Open mapping points, shown as unclear in the diagram and not decided here:
+
+- When the system enters Listening: at the Start command or at the `started` event.
+- A non-audio halting fault (system Muted, for example `SESSION_CONTEXT_CHANGE`): whether
+  `L2_CONTROL` sends Stop to `L2_AUDIO`, and how the output is muted.
+- What `L2_AUDIO` does with a Start command received in Fault. `L2_CONTROL` blocks Start while the
+  system is Muted.
 
 ## Start, Stop and faults
 
-| Event | Behavior | Result |
-| --- | --- | --- |
-| Boot | `i2s_initialize`; no stream is started | Ready: stopped. Failure: reported to `L2_CONTROL` |
-| Start command while stopped | `i2s_start`, then the block loop | `started` event, or the start failure |
-| Stop command | Leave the loop, `i2s_stop` | `stopped` event; output silent |
-| Any non-OK result in the loop | `i2s_stop`; the thread waits for commands | Fault event with the failed link; `L2_CONTROL` shows the catalogue error, which requires a restart |
+![Start, normal Stop and fault shutdown across L2_CONTROL, L2_AUDIO, L1_I2S and both drivers](rendered/start_stop_sequence.svg)
+
+*In which order are the links primed, started and shut down?*
+
+- **Boot:** `i2s_initialize`; no stream is started. Ready: Stopped. Failure: reported to
+  `L2_CONTROL`.
+- **Start while stopped:** `i2s_start`, then the block loop; `started` event or the start failure.
+  Priming comes first because a TX `START` with an empty queue fails [1].
+- **Stop:** leave the loop, `i2s_stop`; `stopped` event; output silent.
+- **Any non-OK result in the loop:** `i2s_stop`; the thread waits for commands. Fault event with the
+  failed link; `L2_CONTROL` shows the catalogue error, which requires a restart. No automatic
+  stream restart ([decision of 11 November](../../planning/mvp-decisions-2026-11-11.md)).
+
+### Stream faults
+
+- A stream fault includes a deadline miss. If the thread falls more than three blocks (12 ms,
+  processing included) behind, the driver stops the stream itself [1].
+- The bring-up session showed that such a stream stays stopped until it is configured and started
+  again [2].
+- A stream fault stays a restart-required error under the catalogue: a Start after a fault needs a
+  device restart.
 
 ### Stop sequence
 
-`I2S_TRIGGER_DROP` alone would leak blocks. It frees the blocks waiting in the driver queue, but
-for the block currently in DMA the driver only clears its pointer without returning the block to
-the pool [1]. Each Stop would then lose one RX and one TX block, and after a few sessions the RX
-pool would be too small to start. `I2S_TRIGGER_STOP` lets the block in DMA finish; the driver then
-puts it into the RX queue or returns it to the TX pool, and the queued TX blocks are not played
-[1]. `i2s_stop` therefore:
+Three things are recorded separately here.
 
-1. Triggers `STOP` on both links.
-2. Waits 8 ms, two block periods, so the block in DMA completes on both links.
-3. Triggers `DROP` on both links, which returns the queued blocks.
-4. Checks that both pools have 0 blocks in use and logs a mismatch.
+**Recorded decision** ([10 November](../../planning/mvp-decisions-2026-11-10.md#first-audio-path),
+point 8): normal Stop lets the block in DMA finish, then discards both queues; faults discard both
+queues at once.
 
-A link in the driver's error state rejects `STOP` [1], so `i2s_stop` triggers `DROP` alone on that
-link. The block the driver held when the error occurred may then stay in use; a fault requires a
-restart anyway. The sequence is a source reading; the repeated Start and Stop in the
-[expected verification](#expected-verification) confirms it on the target.
+**Designed mechanism** (source reading of the pinned driver [1]): `i2s_stop`
 
-A stream fault includes a deadline miss. If the thread falls more than three blocks (12 ms,
-processing included) behind, the driver stops the stream itself [1]. The bring-up session showed that such a stream stays stopped
-until it is configured and started again [2]. A stream fault stays a restart-required error under
-the catalogue ([decision of 11 November](../../planning/mvp-decisions-2026-11-11.md)): a Start after a fault needs a device
-restart.
+1. triggers `STOP` on both links: the block in DMA completes; the driver puts it into the RX queue
+   or returns it to the TX pool, and queued TX blocks are not played;
+2. waits 8 ms, two block periods, so the block in DMA completes on both links;
+3. triggers `DROP` on both links, which returns the queued blocks;
+4. checks that both pools have 0 blocks in use and logs a mismatch.
+
+| Driver behavior [1] | Consequence |
+| --- | --- |
+| `DROP` alone frees the queued blocks, but for the block in DMA only clears its pointer | Each Stop would lose one RX and one TX block; after a few sessions the RX pool would be too small to start. Hence `STOP` first. |
+| A link in the driver's error state rejects `STOP` | `i2s_stop` triggers `DROP` alone on that link. The block the driver held at the error may stay in use; a fault requires a restart anyway. |
+
+**Verification status:** source reading only. The repeated Start and Stop in the
+[expected verification](#expected-verification) confirms the sequence on the target; that
+confirmation is pending.
+
+**Agreement:**
+
+- Normal Stop: mechanism and decision agree.
+- Faults: they do not fully agree. The decision discards both queues at once. The mechanism
+  discards at once only on a link in the error state. A link that is not in the error state, such
+  as the healthy link or a link whose 20 ms wait timed out, still gets `STOP`, 8 ms and `DROP`. This
+  needs Nico's decision.
 
 ## Sample format
 
-The INMP441 sends each sample as 24-bit two's complement, MSB first, in a word of 32 bit clocks,
-and stops driving its data pin after the LSB [3]. The sample therefore fills the top 24 bits of the
-32-bit left slot. The bring-up firmware treated it the same way, shifting the slot right by 8 bits
-or scaling it by 2³¹, and its microphone test passed [2]. The microphone does not drive the 8 bits
-after the LSB, so the loop clears them.
+![Bit layout of the 32-bit slot, left-slot extraction and duplication to both DAC slots](rendered/sample_format.svg)
 
-Two alignments of the mono working sample are possible:
+*Where is the sample in the 32-bit slot, and how does it reach both DAC channels?*
 
-- **Left-aligned, low 8 bits cleared.** The sample keeps the full 32-bit scale of the DAC slot and
-  passes through without shifting.
-- **Signed 24-bit, right-aligned.** This matches the current `AudioBlock` wording "signed 24-bit
-  normalized into int32", but needs an 8-bit shift into the TX slot.
-
-The mono working sample is left-aligned with its low 8 bits cleared
-([decision of 11 November](../../planning/mvp-decisions-2026-11-11.md)), so the copy step writes the DAC slot unchanged.
-
-The PCM5102A receives 32-bit words. The bring-up's DAC test only showed that the link accepts
-blocks, and its loopback test was not run [2], so audible output from these words is not verified
-yet.
+- The INMP441 sends each sample as 24-bit two's complement, MSB first, in a word of 32 bit clocks,
+  and stops driving its data pin after the LSB [3]. With L/R tied to ground it sends on the left
+  slot only [3].
+- The sample therefore fills the top 24 bits of the 32-bit left slot. The microphone does not drive
+  the 8 bits after the LSB, so the loop clears them.
+- The bring-up firmware treated the sample the same way, shifting the slot right by 8 bits or
+  scaling it by 2³¹, and its microphone test passed [2].
+- The mono working sample is left-aligned with its low 8 bits cleared
+  ([decision of 11 November](../../planning/mvp-decisions-2026-11-11.md)), so the copy step writes
+  the DAC slot unchanged. Not chosen: signed 24-bit, right-aligned, which matches the earlier
+  `AudioBlock` wording "signed 24-bit normalized into int32" but needs an 8-bit shift into the TX
+  slot.
+- The PCM5102A receives 32-bit words. The bring-up's DAC test only showed that the link accepts
+  blocks, and its loopback test was not run [2], so audible output from these words is not
+  verified yet.
 
 ## Timing and sizing
+
+![Buffer ownership: DMA, driver queue and audio thread, and the return to each pool](rendered/buffer_circulation.svg)
+
+*Who holds each block, and how does it return to its pool?*
+
+![Timeline after Start: four silent blocks play while R1 fills and is processed](rendered/priming_timing.svg)
+
+*Where do the 16 ms of transport delay come from?*
 
 | Quantity | Derivation | Value |
 | --- | --- | --- |
@@ -131,28 +238,31 @@ yet.
 | TX reserve | 3 queued blocks behind the one in DMA × 4 ms | 12 ms for processing and lateness together before TX runs empty; with the 3 ms budget the thread may start a block up to 9 ms late |
 | Transport delay | 4 primed TX blocks × 4 ms. The first RX block fills and is processed while the primed blocks play, so neither adds delay; processing time uses up reserve instead | 16 ms, constant |
 | Converter delay | Digital filters at 16 kHz: INMP441 17.2 ÷ fS [3]; PCM5102A normal-latency filter 20 ÷ fS, selected because FLT is tied to ground on the carrier ([pin map](../../testing/hardware/carrier-bringup/README.md#board-and-pin-map)) [4] | 1.08 ms + 1.25 ms; about 18 ms from sound to line output, below the P03 target of 30 ms |
-| 128-frame blocks instead | 8 ms per block, 6 ms processing budget; the same 9 ms of lateness needs (n − 1) × 8 ms − 6 ms ≥ 9 ms, so n = 3 primed TX blocks | 3 × 8 ms = 24 ms; below 30 ms, but 8 ms more than 64 frames |
-| 32-frame blocks instead | 2 ms per block, 1.5 ms processing budget; (n − 1) × 2 ms − 1.5 ms ≥ 9 ms, so n = 7 primed TX blocks | 7 × 2 ms = 14 ms; 2 ms less than 64 frames, but 1.5 ms per block for processing and twice as many thread wake-ups |
 | Processing budget | Three quarters of the block period (P02) | At most 3 ms per block |
 | Block waits | 5 block periods (P11) | 20 ms; a normal block arrives within 4 ms |
 | Internal RAM | 2,560 + 2,560 + 256 bytes | 5,376 bytes, plus thread stack and driver descriptors |
 
-The transport delay and the reserves are derived from the driver behavior [1] and the converter
-datasheets [3] [4], not measured. P03
-remains judged by ear under REQ-05.
+The transport delay and the reserves are *project calculations* from the driver behavior [1] and
+the converter datasheets [3] [4], not measured. The time between the RX and TX start triggers is
+not measured either. P03 remains judged by ear under REQ-05. The
+[block-size comparison](#sample-rate-and-block-size-rationale) applies the same derivation to 32-
+and 128-frame blocks.
 
 ## Monitoring
 
-`L2_AUDIO` counts processed blocks and stream faults, records the longest iteration time, the
-pools' highest use and the TX queue level over time ([decision of 11 November](../../planning/mvp-decisions-2026-11-11.md)). These
-values feed VT-02. The pools are private to `L1_I2S`, so `L2_AUDIO` reads them through the
-proposed `i2s_getPoolUse`: the RX pool's highest use (`k_mem_slab_max_used_get`, which needs
-`CONFIG_MEM_SLAB_TRACE_MAX_UTILIZATION`) and the TX blocks in the driver (5 −
-`k_mem_slab_num_free_get`, read before the thread allocates its TX block). The iteration time and
-pool use make a deadline miss visible before it becomes a stream fault; a TX queue level that drifts over a long run would show that the two links do not
-run at the same rate. Only the RX pool has a fixed limit below 5 blocks. RX starts before TX, so
-the thread can queue its TX block just before the DAC returns the played one; the TX pool can then
-reach 5 blocks and the TX driver queue 4 in normal operation [1].
+`L2_AUDIO` records these values for VT-02
+([decision of 11 November](../../planning/mvp-decisions-2026-11-11.md)):
+
+| Value | Read from | Shows |
+| --- | --- | --- |
+| Processed blocks, stream faults | Counters in `L2_AUDIO` | Activity and faults |
+| Longest iteration time | Measured per iteration | A deadline miss before it becomes a stream fault |
+| RX pool highest use | `i2s_getPoolUse` (proposed): `k_mem_slab_max_used_get`, which needs `CONFIG_MEM_SLAB_TRACE_MAX_UTILIZATION` | A deadline miss before it becomes a stream fault; only the RX pool has a fixed limit below 5 blocks |
+| TX blocks in the driver, over time | `i2s_getPoolUse`: 5 − `k_mem_slab_num_free_get`, read before the thread allocates its TX block | A level that drifts over a long run shows that the two links do not run at the same rate |
+
+The pools are private to `L1_I2S`, hence the proposed query. RX starts before TX, so the thread can
+queue its TX block just before the DAC returns the played one; the TX pool can then reach 5 blocks
+and the TX driver queue 4 in normal operation [1].
 
 ## Expected verification
 
@@ -189,14 +299,36 @@ and code on archived pre-thesis firmware.
 
 [3] TDK InvenSense, *INMP441 Omnidirectional Microphone with Bottom Port and I²S Digital Output*,
 document DS-INMP441-00, revision 1.0, 6 February 2014, Table 1 "Electrical Characteristics"
-(digital filter group delay 17.2/fS), Table 3 "Serial Data Port Timing Specifications" (WS
-frequency 7.8–50 kHz) and section "I²S Data Interface" (24-bit words, 64 SCK per stereo frame,
-data pin tri-stated after the LSB), [datasheet](https://www.farnell.com/datasheets/1824785.pdf), accessed
-11 November 2026.
+(digital filter group delay 17.2/fS, p. 4), Table 3 "Serial Data Port Timing Specifications" (WS
+frequency 7.8–50 kHz, p. 5), section "I²S Data Interface" (24-bit words, 64 SCK per stereo frame,
+L/R pin selects the channel, data pin tri-stated after the LSB, p. 11) and Figure 9 (mono output,
+left channel, p. 12), [datasheet](https://www.farnell.com/datasheets/1824785.pdf), accessed
+11 November 2026; page numbers checked 13 November 2026.
 [Source register](../../../../thesis-material/quellen.md#tdk_inmp441_datasheet_2014).
 
 [4] Texas Instruments, *PCM510xA 2.1 VRMS, 112/106/100 dB Audio Stereo DAC with PLL and 32-bit,
-384 kHz PCM Interface*, SLAS859C, revised May 2015, electrical characteristics "Filter
-Characteristics–1: Normal" (delay time 20 tS) and Table 11 (BCK rates for PLL operation),
-[datasheet](https://www.ti.com/lit/ds/symlink/pcm5102a.pdf), accessed 11 November 2026.
+384 kHz PCM Interface*, SLAS859C, revised May 2015, "Electrical Characteristics" (sampling
+frequency 8–384 kHz, p. 7), "Filter Characteristics–1: Normal" (delay time 20 tS, p. 9), Table 2
+(32-bit words with BCK = 64 fS, p. 15), section 9.3.5.3 and Table 11 (BCK rates for PLL
+operation, p. 25), [datasheet](https://www.ti.com/lit/ds/symlink/pcm5102a.pdf), accessed
+11 November 2026; pages checked 13 November 2026.
 [Source register](../../../../thesis-material/quellen.md#ti_pcm510xa_datasheet_2015).
+
+[5] Espressif Systems, *ESP32-S3 Technical Reference Manual*, version 1.8, 2026, chapter 28
+"I2S Controller", section 28.6 "TX/RX Clock" (pp. 1044–1046),
+[manual](https://www.espressif.com/sites/default/files/documentation/esp32-s3_technical_reference_manual_en.pdf),
+accessed 13 November 2026.
+[Source register](../../../../thesis-material/quellen.md#espressif_esp32s3_trm_v18).
+
+[6] Zephyr Project, *hal_espressif ESP32-S3 clock tree definitions and I2S low-level divider
+limits*, revision `3d4d922a4d2994f844790ec031a584ec71240485` (the revision pinned by Zephyr
+`357467a`), `I2S_CLK_SRC_DEFAULT = SOC_MOD_CLK_PLL_F160M`, accessed 13 November 2026. Source
+reading, not a target measurement.
+[Source register](../../../../thesis-material/quellen.md#zephyr_hal_espressif_i2s_clock_3d4d922).
+
+[7] C. E. Shannon, "Communication in the Presence of Noise", *Proceedings of the IRE*, vol. 37,
+no. 1, pp. 10–21, January 1949, DOI [10.1109/JRPROC.1949.232969](https://doi.org/10.1109/JRPROC.1949.232969).
+[Source register](../../../../thesis-material/quellen.md#shannon_communication_noise_1949).
+
+[8] Carrier [pin map](../../testing/hardware/carrier-bringup/README.md#board-and-pin-map): J4
+PCM5102A with SCK, FMT, FLT and DMP to ground (PLL mode).

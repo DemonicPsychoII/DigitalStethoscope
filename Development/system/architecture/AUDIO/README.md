@@ -3,7 +3,8 @@
 The first audio step carries microphone audio to the DAC line output without a listening filter,
 volume control or BPM analysis. It fixes the transport that those later steps build on. The
 [decision record](../../planning/mvp-decisions-2026-11-10.md#first-audio-path) defines its scope,
-sample rate, block size and pool sizes [1].
+sample rate, block size and pool sizes [1]; block and pool sizes were confirmed on
+[13 November](../../planning/mvp-decisions-2026-11-13.md).
 
 | View | Editable source | Preview |
 | --- | --- | --- |
@@ -24,35 +25,42 @@ later without changing the transport boundary.
 
 ## Data path and block ownership
 
-Every block has exactly one holder at a time: the driver (DMA or queue), `L1_I2S`, or the audio
-thread. `L2_AUDIO` holds at most one received and one TX block per iteration, and no block leaves
-the audio thread. Both pools are fixed at build time in internal, DMA-capable RAM; this step uses
-no PSRAM [1].
-
-The pinned driver only supports two-slot frames, so RX blocks contain a filled left slot and an
-unused right slot, and TX blocks must carry both slots [2]. The microphone's L/R pin is tied to
-ground, which selects the left slot. The bring-up firmware read the microphone from that slot
-without errors over 30 s on 14 August 2026 [3]. The DAC path from these blocks to the line output
-has not been verified physically yet: the bring-up's loopback test was not run [3].
+- Every block has exactly one holder at a time: the driver (DMA or queue), `L1_I2S`, or the audio
+  thread. `L2_AUDIO` holds at most one received and one TX block per iteration, and no block leaves
+  the audio thread. The [buffer circulation view](../../design/AUDIO/interfaces-and-behavior.md#timing-and-sizing)
+  shows the cycle.
+- Both pools are fixed at build time in internal, DMA-capable RAM; this step uses no PSRAM [1].
+- The pinned driver only supports two-slot frames, so RX blocks contain a filled left slot and an
+  unused right slot, and TX blocks must carry both slots [2].
+- The microphone's L/R pin is tied to ground, which selects the left slot. The bring-up firmware
+  read the microphone from that slot without errors over 30 s on 14 August 2026 [3].
+- The DAC path from these blocks to the line output has not been verified physically yet: the
+  bring-up's loopback test was not run [3].
 
 ## Clocking
 
-Both links use the same sample rate, slot width and word size. The pinned driver clocks both
-controllers from the same default clock source and derives their dividers from these settings,
-so the microphone and the DAC run at the same rate on their separate pins and the path needs no
-rate adaptation [2]. A different word size on one link would change its master-clock multiple and
-could make the rates differ slightly [2]. This is a source reading; a long-running check of the TX
-queue level is part of the verification below.
+- Both links use the same sample rate, slot width and word size.
+- The pinned driver clocks both controllers from the same default clock source and derives their
+  dividers from these settings, so the microphone and the DAC run at the same rate on their
+  separate pins and the path needs no rate adaptation [2].
+- A different word size on one link would change its master-clock multiple and could make the
+  rates differ slightly [2].
+- This is a source reading; a long-running check of the TX queue level is part of the verification
+  below. The [sample-rate rationale](../../design/AUDIO/interfaces-and-behavior.md#sample-rate-and-block-size-rationale)
+  cites the device ranges behind 16 kHz.
 
 ## Stream faults
 
-When the audio thread falls behind, the driver stops the stream: an empty TX queue sets its error
-state and stops TX, and RX enters the error state when no free pool block is left [2]. The stream
-stays stopped until it is configured and started again [2]. The bring-up session showed this on
-hardware: a blocking full-screen display redraw, estimated in the protocol at about 120 ms,
-overran RX, and audio stopped permanently [3]. The pool sizes therefore bound how late the audio thread may be, and `L2_AUDIO`
-treats a driver error as a fault it reports to `L2_CONTROL`. Start and Stop order and fault
-handling belong to the detailed design.
+- When the audio thread falls behind, the driver stops the stream: an empty TX queue sets its error
+  state and stops TX, and RX enters the error state when no free pool block is left [2].
+- The stream stays stopped until it is configured and started again [2]. The bring-up session
+  showed this on hardware: a blocking full-screen display redraw, estimated in the protocol at
+  about 120 ms, overran RX, and audio stopped permanently [3].
+- The pool sizes therefore bound how late the audio thread may be, and `L2_AUDIO` treats a driver
+  error as a fault it reports to `L2_CONTROL`.
+- Start and Stop order, fault handling and the `L2_AUDIO` states belong to the detailed design:
+  [states](../../design/AUDIO/interfaces-and-behavior.md#states) and
+  [Start, Stop and faults](../../design/AUDIO/interfaces-and-behavior.md#start-stop-and-faults).
 
 ## Expected verification
 

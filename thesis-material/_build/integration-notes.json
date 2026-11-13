@@ -290,7 +290,7 @@
     "C027": {
       "label": "Überholt",
       "changed": "Die 10–40-ms-DMA-Startwerte sind durch die gewählte Blockgröße ersetzt.",
-      "current": "128 Frames bei 16 kHz (8 ms) je Block; Vorschlag ≤4 ms kritische Ausführung pro Block, Scheduling- und Wartezeiten getrennt messen.",
+      "current": "Seit 10./11./13.11.2026: 64 Frames bei 16 kHz (4 ms) je Block, höchstens 3 ms Verarbeitung je Block, je fünf RX- und TX-Blöcke; Scheduling- und Wartezeiten getrennt messen.",
       "refs": [
         [
           "Latenzbudgets 11.10.",
@@ -301,6 +301,11 @@
           "Entscheidungsregister D10",
           "Development/system/planning/implementation-readiness.md",
           "decision-register"
+        ],
+        [
+          "MVP-Entscheidungen 13.11. (Audioblöcke)",
+          "Development/system/planning/mvp-decisions-2026-11-13.md",
+          "decision"
         ]
       ]
     },
@@ -673,8 +678,8 @@
     },
     "dma": {
       "label": "Neuerer Stand",
-      "changed": "Die Blockgröße ist auf 128 Frames/8 ms festgelegt.",
-      "current": "Vorschlag ≤4 ms kritische Ausführung je 8-ms-Block; die End-to-End-Latenz wird laut 14.10. nur nach Gehör geprüft.",
+      "changed": "Die Blockgröße ist seit 13.11.2026 auf 64 Frames/4 ms festgelegt (vorher 128 Frames/8 ms).",
+      "current": "Höchstens 3 ms Verarbeitung je 4-ms-Block, je fünf RX- und TX-Blöcke, 16 ms berechnete Transportverzögerung (nicht gemessen); die End-to-End-Latenz wird laut 14.10. nur nach Gehör geprüft.",
       "refs": [
         [
           "Latenzbudgets 11.10.",
@@ -685,6 +690,11 @@
           "MVP-Entscheidungen 14.10. (Umfang)",
           "Development/system/planning/mvp-decisions-2026-10-14.md",
           "scope"
+        ],
+        [
+          "MVP-Entscheidungen 13.11. (Audioblöcke)",
+          "Development/system/planning/mvp-decisions-2026-11-13.md",
+          "decision"
         ]
       ]
     }

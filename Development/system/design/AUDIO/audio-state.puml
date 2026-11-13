@@ -1,0 +1,61 @@
+@startuml audio_state
+!theme cyborg
+!pragma layout smetana
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam backgroundColor #0b1018
+skinparam defaultFontColor #e6edf7
+skinparam ArrowColor #a9b8ca
+skinparam ArrowFontColor #e6edf7
+skinparam state {
+ BackgroundColor #273241
+ BorderColor #61738a
+ FontColor #e6edf7
+ AttributeFontColor #cdd5d5
+ BackgroundColor<<running>> #10302b
+ BorderColor<<running>> #52c7b4
+ BackgroundColor<<fault>> #2a1714
+ BorderColor<<fault>> #f08a7c
+ BackgroundColor<<unclear>> #3a3320
+ BorderColor<<unclear>> #dcbb63
+}
+skinparam note {
+ BackgroundColor #1b2533
+ BorderColor #61738a
+ FontColor #e6edf7
+}
+title L2_AUDIO states and the system states they correspond to (design, not implemented)
+hide empty description
+state "Initializing" as Initializing : i2s_initialize\nsystem: Boot
+state "Stopped" as Stopped : no stream; output silent; waits for commands\nsystem: Idle, Portal, Analysing, Sending, ReportingError
+state "Starting" as Starting : i2s_start: configure both links,\nprime 4 silent TX blocks, start RX, then TX\nsystem: unclear
+state "Running" as Running <<running>> : block loop, one iteration per 4 ms, ≤ 3 ms (P02)\nsystem: Listening, Measuring (shared design: Live)
+state "Stopping" as Stopping : i2s_stop (Stop sequence)\nsystem: Listening → Idle,\nMeasuring → Idle or Analysing
+state "Fault" as Fault <<fault>> : both links stopped; waits for commands\nsystem: Muted (shared design: Error, audio affected)
+[*] --> Initializing : boot
+Initializing --> Stopped : both devices ready, links configured
+Initializing --> Fault : device not ready or configuration failed\n/ failure reported to L2_CONTROL
+Stopped --> Starting : Start command
+Starting --> Running : priming and start succeed\n/ started event
+Starting --> Fault : a link fails to start\n/ i2s_start stops both links, start failure reported
+Running --> Stopping : Stop command, checked once per iteration
+Stopping --> Stopped : / stopped event; all pool blocks free
+Running --> Fault : receive or TX-block wait over 20 ms (P11),\ndriver error, for example > 12 ms behind\n/ i2s_stop, fault event with the failed link
+Running --> Running : Wi-Fi-only fault\n/ audio preserved (P12)
+Fault --> [*] : device restart (catalogue: restart required)
+note bottom of Fault
+  No automatic stream restart (decision of 11 November).
+  L2_CONTROL blocks Start while system Muted.
+  What L2_AUDIO does with a Start received in Fault: unclear.
+end note
+note left of Running
+  **unclear**: non-audio halting fault (system Muted,
+  for example SESSION_CONTEXT_CHANGE). Whether
+  L2_CONTROL then sends Stop (to Stopping) or how
+  the output is muted is not documented for AUDIO.
+end note
+note right of Starting
+  Whether the system enters Listening at the Start
+  command or at the started event: unclear.
+end note
+@enduml
