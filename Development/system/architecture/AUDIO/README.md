@@ -25,8 +25,8 @@ later without changing the transport boundary.
 ## Data path and block ownership
 
 Every block has exactly one holder at a time: the driver (DMA or queue), `L1_I2S`, or the audio
-thread. `L2_AUDIO` holds at most one received and one TX block per iteration, and no block leaves
-the audio thread. Both pools are fixed at build time in internal, DMA-capable RAM; this step uses
+thread. `L2_AUDIO` holds at most one received and one TX block per iteration, and no transport block
+leaves the audio thread; a later analysis step receives copies. Both pools are fixed at build time in internal, DMA-capable RAM; this step uses
 no PSRAM [1].
 
 The pinned driver only supports two-slot frames, so RX blocks contain a filled left slot and an
@@ -48,7 +48,7 @@ queue level is part of the verification below.
 
 When the audio thread falls behind, the driver stops the stream: an empty TX queue sets its error
 state and stops TX, and RX enters the error state when no free pool block is left [2]. The stream
-stays stopped until it is configured and started again [2]. The bring-up session showed this on
+stays stopped until it is prepared and started again [2]. The bring-up session showed this on
 hardware: a blocking full-screen display redraw, estimated in the protocol at about 120 ms,
 overran RX, and audio stopped permanently [3]. The pool sizes therefore bound how late the audio thread may be, and `L2_AUDIO`
 treats a driver error as a fault it reports to `L2_CONTROL`. Start and Stop order and fault

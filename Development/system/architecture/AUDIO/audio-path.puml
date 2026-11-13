@@ -20,10 +20,10 @@ title First audio path: microphone to DAC
 top to bottom direction
 component "INMP441 microphone\nL/R to ground: left slot" as microphone <<hardware>>
 component "L0 Zephyr I2S driver\ni2s0 RX + DMA" as receiveDriver
-artifact "RX pool\n5 blocks, internal RAM" as receivePool <<pool>>
+artifact "RX pool\ninternal RAM" as receivePool <<pool>>
 component "L1_I2S\nconfigure, prime, start, stop\nborrow and return blocks" as transport
 component "L2_AUDIO audio thread\nleft slot to mono\ncopy step\nmono to both slots" as audio <<thread>>
-artifact "TX pool\n5 blocks, internal RAM" as transmitPool <<pool>>
+artifact "TX pool\ninternal RAM" as transmitPool <<pool>>
 component "L0 Zephyr I2S driver\ni2s1 TX + DMA" as transmitDriver
 component "PCM5102A DAC\nline output" as dac <<hardware>>
 component "L2_CONTROL" as control <<thread>>
@@ -38,7 +38,8 @@ transmitDriver --> dac : I2S frames, left = right
 control --> audio : Start / Stop · k_msgq
 audio --> control : started, stopped, fault · k_msgq
 legend bottom
-  Both controllers: same clock source, 16 kHz, 32-bit slots.
+  Both controllers: same clock source, sample rate and word size.
+  Rate, block and pool sizes: decision record of 10 November 2026.
   Later steps: listening filter, volume, BPM fan-out. No PSRAM in this step.
 endlegend
 @enduml
