@@ -53,8 +53,10 @@ The volume is clamped to 0–100 %, with 100 % at the 3083 mV that the carrier s
 
 A reading that cannot be used carries a status and a safe value. FAILED marks an ADC
 or GPIO failure or a switch position that stays invalid for the debounce time; ABSENT
-marks a potentiometer that is not fitted. The safe values, Raw and 0 %, are proposals:
-the design names none. J7 is not fitted, so `CONFIG_PHYSICALINTERFACE_VOLUME_POTENTIOMETER_FITTED`
+marks a potentiometer that is not fitted. The safe values are Raw and 0 %, so an unusable
+input mutes the audio (Nico, 13 November 2026). The 30 ms debounce also applies to slow switch
+slides: a pause of 30 ms or more between positions is reported FAILED, which Nico accepted on
+13 November 2026 because what matters is a valid position when one is needed. J7 is not fitted, so `CONFIG_PHYSICALINTERFACE_VOLUME_POTENTIOMETER_FITTED`
 stays off, the ADC is not read and the volume is reported ABSENT once; the
 [10 November decision](../../planning/mvp-decisions-2026-11-10.md) assigns CONTROL a fixed
 100 % until J7 is fitted.
