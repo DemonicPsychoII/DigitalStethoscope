@@ -1616,7 +1616,7 @@ Espressif Systems, *Wi-Fi Provisioning*, ESP-IDF Programming Guide v5.4.2, secti
 <a id="ietf_sntp_4330_2006"></a>
 ### ietf_sntp_4330_2006
 
-David L. Mills. *Simple Network Time Protocol (SNTP) Version 4 for IPv4, IPv6 and OSI*. IETF RFC 4330, January 2006, DOI 10.17487/RFC4330. 2006. <https://www.rfc-editor.org/rfc/rfc4330#section-9>. Accessed 2026-10-24. No page number claimed.
+David L. Mills. *Simple Network Time Protocol (SNTP) Version 4 for IPv4, IPv6 and OSI*. IETF RFC 4330, January 2006, DOI 10.17487/RFC4330. 2006. <https://www.rfc-editor.org/rfc/rfc4330#section-11>. Accessed 2026-10-24. No page number claimed.
 
 
 <a id="iec_alarm_edition_22_2020"></a>
@@ -1924,3 +1924,11 @@ The Zephyr Project, *ZMS allocation table entry, settings ZMS entries and ESP32-
 Mbed TLS contributors. *`mbedtls_ssl_check_cert_usage` in `library/ssl_tls.c`*. Zephyr Mbed TLS module, revision `098e120afb51877ed814bdc04443890ae12e0642`, as pinned by Zephyr `357467a011cd2557a1a3f0b4be83d817c4addc9b`; publication year unverified. [Source](https://github.com/zephyrproject-rtos/mbedtls/blob/098e120afb51877ed814bdc04443890ae12e0642/library/ssl_tls.c#L8639), accessed 5 November 2026. Inspected: TLS 1.3 requires `digitalSignature` when Key Usage is present; a client requires `serverAuth` (or `anyExtendedKeyUsage`) when Extended Key Usage is present. Source reading, not a target measurement.
 
 **Cited by:** [Server profile design](../Development/system/design/STORAGE/server-profile.md#certificate-checks).
+
+
+<a id="ietf_ntp_5905_2010"></a>
+### ietf_ntp_5905_2010
+
+David L. Mills, Jim Martin (editor), Jack Burbank, William Kasch. *Network Time Protocol Version 4: Protocol and Algorithms Specification*. IETF RFC 5905, June 2010, DOI 10.17487/RFC5905. 2010. <https://www.rfc-editor.org/rfc/rfc5905>. Accessed 2026-11-13. No page number claimed.
+
+**Cited by:** [SNTP synchronization](../Development/system/design/COMMUNICATION/time-synchronization.md), sections 8 and 14.

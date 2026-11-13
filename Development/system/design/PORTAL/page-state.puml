@@ -1,0 +1,70 @@
+@startuml page_state
+!theme cyborg
+!pragma layout smetana
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam backgroundColor #0b1018
+skinparam defaultFontColor #e6edf7
+skinparam ArrowColor #a9b8ca
+skinparam state {
+ BackgroundColor #111826
+ BorderColor #a9b8ca
+}
+title Setup page: browser-local view versus controller status
+hide empty description
+
+state "Browser view (portal.html)" as Browser {
+ state "Interactive views" as Interactive {
+  state "list\nnetworks, Rescan, Cancel setup" as List
+  state "form\nselected network, password" as Form
+  state "busy\nLoading, Scanning, Connecting" as Busy
+  [*] --> Busy : page load / poll at once
+  Busy --> List : poll: selecting or connect_failed;\nConnect not 2xx / rejection message
+  List --> List : poll: list changed / redraw
+  List --> Form : select network / Activity
+  Form --> List : Back / Activity
+  Form --> Form : poll: scanning, selecting,\nconnect_failed / form kept
+  Form --> Busy : Connect / POST /connect;\npoll: connecting
+  List --> Busy : Rescan / POST /rescan;\npoll: scanning or connecting
+ }
+ state "done\nresult, closed or no-answer guidance" as Done
+ Interactive --> Done : poll: connected, save_failed, closing,\nunknown status or poll failure;\nCancel setup / POST /cancel
+ Done --> Interactive : poll: selecting, connect_failed,\nscanning or connecting
+}
+
+state "Controller status (published by PORTAL and COMMUNICATION)" as Controller {
+ state "selecting" as Selecting
+ state "scanning" as Scanning
+ state "connecting" as Connecting
+ state "connect_failed\nselection stays ready" as ConnectFailed
+ state "connected" as Connected
+ state "save_failed" as SaveFailed
+ state "closing" as Closing
+ [*] --> Selecting : setup opens with the completed list
+ Selecting --> Scanning : Rescan accepted
+ ConnectFailed --> Scanning : Rescan accepted
+ Scanning --> Selecting : scan completed
+ Selecting --> Connecting : Connect accepted
+ ConnectFailed --> Connecting : Connect accepted
+ Connecting --> ConnectFailed : join failed / list refreshed
+ Connecting --> Connected : joined and saved
+ Connecting --> SaveFailed : joined, save failed
+ Connected --> Closing : after 10 s result display
+ SaveFailed --> Closing : after 10 s result display
+ Selecting --> Closing : Cancel, inactivity
+ ConnectFailed --> Closing : Cancel, inactivity,\nlist refresh failed
+ Scanning --> Closing : scan failed
+ Closing --> [*] : 2 s notice (Cancel, inactivity,\nscan failure), then teardown
+}
+
+Browser -[hidden]right-> Controller
+
+legend bottom left
+ Implemented at integration 994ce24 and matching the design unless stated. The page polls /status once per second, one poll outstanding.
+ A poll failure also replaces an open form with guidance; the next successful poll (selecting, connect_failed) restores the list.
+ Start from CONTROL publishes closing from any status without a notice delay. Accepting Connect, Rescan or Cancel sets
+ connecting, scanning or closing at once, before COMMUNICATION reads the request; Activity keeps the status and cause.
+ Known issue TICKET-223 / GitHub #158, not fixed: responses are applied in arrival order, so a stale poll or POST reply
+ can replace a newer view (see the command and poll sequence).
+endlegend
+@enduml

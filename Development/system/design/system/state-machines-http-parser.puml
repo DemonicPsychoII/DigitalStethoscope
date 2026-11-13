@@ -1,0 +1,57 @@
+@startuml state_machines_http_parser
+!theme cyborg
+!pragma layout smetana
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam backgroundColor #0b1018
+skinparam defaultFontColor #e6edf7
+skinparam ArrowColor #a9b8ca
+skinparam state {
+ BackgroundColor #16324a
+ BorderColor #4aa3df
+ FontColor #e6edf7
+ BackgroundColor<<terminal>> #3a1d22
+ BorderColor<<terminal>> #e06c75
+ BackgroundColor<<finding>> #3a2a12
+ BorderColor<<finding>> #e5a50a
+ BackgroundColor<<documented>> #273241
+ BorderColor<<documented>> #61738a
+ FontColor<<documented>> #b8c4d4
+}
+skinparam note {
+ BackgroundColor #1b2330
+ BorderColor #61738a
+ FontColor #e6edf7
+}
+hide empty description
+title HTTP response reader: which parser events end one response?\n(implemented; wifi_http.c, one wifi_http_reader per exchange, Zephyr http_parser callbacks)
+state "Status line" as Status
+state "Header name\nheaderNameLength" as HeaderName
+state "Header value\nisInHeaderValue, isReadingLocation" as HeaderValue
+state "Body\nbodyLength; drains on overflow\n(bodyHasOverflowed)" as Body
+state "Complete\nisComplete; parser paused;\nkeepsConnection = keep-alive ∧ no overflow\n∧ no bytes behind the message" as Complete <<terminal>>
+state "Failed\nfailure (first error wins)" as Failed <<terminal>>
+state "Interim 1xx taken as final\n(H1, reproduced on host)" as Interim <<finding>>
+[*] --> Status
+Status --> HeaderName : on_status
+HeaderName --> HeaderValue : on_header_value
+HeaderValue --> HeaderName : on_header_field\n(next header)
+HeaderValue --> Body : on_headers_complete
+HeaderName --> Body : on_headers_complete
+Body --> Complete : on_message_complete, or close-delimited end\n(wifi_finishHttpResponse)
+HeaderValue --> Interim : status 100 to 199 ends without body:\non_message_complete
+Interim --> Complete : status = 1xx;\nthe final response stays unread
+Status --> Failed : parser error, header or Location limit
+HeaderName --> Failed
+HeaderValue --> Failed
+Body --> Failed
+note bottom of Interim
+ Missing transition. A possible fix (not decided): for 1xx other than 101, reset and parse the next message.
+ If the final response arrives in a later TLS record, the connection is kept with it unread,
+ and the next exchange reads it as its own response. Triggered only by a server or proxy
+ (103 Early Hints, unsolicited 100 Continue); the device sends no Expect header.
+end note
+note right of Complete
+ Any further read returns -EBADMSG.
+end note
+@enduml

@@ -1,6 +1,6 @@
 # Portal interfaces and behavior
 
-`L1_PORTAL` wraps the HTTP (Hypertext Transfer Protocol) server and one HTML document with changing views. The page is a separate documented HTML document embedded at build time. Its JavaScript maintains list/form/busy/completed views, polls status once per second, posts URL-encoded form data and escapes network text before display. A rejected form returns to selection; lost status responses show closure guidance while polling continues, so reconnection can recover. It does not operate the radio or save credentials. L2_COMMUNICATION reads typed requests, performs the Wi-Fi workflow and publishes page data through the operations defined in [Requests and published state](#requests-and-published-state).
+`L1_PORTAL` wraps the HTTP (Hypertext Transfer Protocol) server and one HTML document with changing views, embedded at build time. It does not operate the radio or save credentials. L2_COMMUNICATION reads typed requests, performs the Wi-Fi workflow and publishes page data through the operations defined in [Requests and published state](#requests-and-published-state). [Page behavior design](#page-behavior-design) shows how the page's local views follow that published status.
 
 ## Page entry and network selection
 
@@ -53,23 +53,28 @@ The open-hotspot transport is an accepted MVP limitation; the [dated risk accept
 
 ## Page behavior design
 
-The page shall maintain four local views: network list, selected-network form, busy progress and completed/closed guidance. The controller's published status is authoritative; local form state preserves an unfinished password while status is polled.
+The controller's published status is authoritative. The page keeps four local views (network list, selected-network form, busy progress, completed/closed guidance) so that an unfinished password survives status polling.
 
-| Trigger | Required page behavior |
-| --- | --- |
-| Entry | Show Loading, immediately request status, then request it again P24 after each response/failure completes. Only one poll is outstanding. |
-| Selecting / changed list | Show the completed network list with a password marker for protected entries, Rescan and Cancel setup. Replace the list when it changes; do not destroy an active form. |
-| Network selection | Open the form for that network. Show a masked password field only for a protected network, plus Connect and Back. Back returns to the list without submitting. Selection, Back and typing send throttled Activity. |
-| Connect | Replace the form with busy progress; POST URL-encoded `network` and `password` fields (empty password for open networks). Treat acceptance as queued work, never as successful association or save. A non-success HTTP response returns to selection with a request-rejection message. Polling supplies the eventual connection/save result. |
-| Scanning | Show busy scanning unless a local form is already in progress. Rescan sends its command and shows scanning; a completed controller list permits selection again. |
-| Connecting | Show busy progress and no form/cancel controls while join/save is in progress. |
-| Failed join | Return from busy/completed to selection with the published cause; refresh a displayed list when its snapshot changes. Keep a local form intact until its submit or Back. |
-| Connected | Show saved success and the station address with guidance that the setup hotspot closes and the page can be closed. |
-| Failed save | Show that connection succeeded, credentials were not saved and will be lost at restart; include cause and station address. |
-| Cancel / closing / other terminal status | Cancel shows Closing immediately and posts the command; controller closing or an unrecognized terminal state shows closed guidance and any cause. |
-| Poll or JSON failure | Show “No answer from the device. If its hotspot is gone, setup has ended.” unless completed guidance is already visible. Continue polling so restored connectivity can replace the message. This observation does not prove controller closure. |
+![Setup page: browser-local view and controller status as two regions](rendered/page_state.svg)
 
-Polls do not reset setup inactivity. Activity is rate-limited according to P24; controller operations pause the timer. A browser can lose the hotspot during channel changes, so completed guidance must remain useful without another response. POST transport failures and command rejection rely on later polls for reconciliation; the page does not retry a connection submission automatically.
+*Which local view does the page show for each controller status, and what keeps an open form intact?* Editable source: [page-state.puml](page-state.puml).
+
+![Setup page: command and status-poll ordering](rendered/command_poll_sequence.svg)
+
+*In which order do commands, their HTTP replies and status polls take effect?* Editable source: [command-poll-sequence.puml](command-poll-sequence.puml).
+
+Page rules shown in the views, kept here as the reference list:
+
+- **Polling.** Show Loading, request status at once, then again P24 after each response or failure completes; only one poll is outstanding. Polls do not reset setup inactivity.
+- **List.** The completed list with a password marker for protected entries, Rescan and Cancel setup. Replace the list when it changes; never destroy an active form.
+- **Form.** Selecting a network opens its form: a masked password field only for a protected network, plus Connect and Back. Back returns to the list without submitting. Selection, Back and typing send Activity, rate-limited according to P24; controller operations pause the inactivity timer.
+- **Connect.** Replace the form with busy progress and POST URL-encoded `network` and `password` (empty for open networks). Acceptance is queued work, never association or save. A non-success response returns to selection with a request-rejection message. Later polls supply the result; the page never retries a connection submission automatically, and POST transport failures and rejections rely on later polls for reconciliation.
+- **Scanning and connecting.** Scanning shows busy progress unless a local form is open; Rescan sends its command and shows scanning. Connecting shows busy progress without form or cancel controls.
+- **Failed join (`connect_failed`).** Recoverable: return from busy or completed guidance to selection with the published cause; refresh a displayed list when it changes; keep an open form until its submit or Back. Rescan or another Connect is accepted.
+- **Results.** Connected shows saved success, the station address and guidance that the setup hotspot closes and the page can be closed. Failed save shows that the connection succeeded, the credentials were not saved and are lost at restart, with cause and station address. A browser can lose the hotspot during channel changes, so this guidance must stay useful without another response.
+- **Closing.** Cancel shows Closing at once and posts the command. Controller closing or an unrecognized status shows closed guidance and any cause.
+- **Lost status.** A failed poll or invalid JSON shows "No answer from the device. If its hotspot is gone, setup has ended." unless completed guidance is visible; this also replaces an open form. Polling continues, so restored connectivity replaces the message. The observation does not prove that the controller closed.
+- **Known issue [TICKET-223](https://nfrie.atlassian.net/browse/TICKET-223) / [GitHub #158](https://github.com/DemonicPsychoII/DigitalStethoscope/issues/158), not fixed.** Responses are applied in arrival order without an operation generation, so a poll sent before Connect can reopen the list while Connect is pending, and a delayed rejected Connect reply can replace a newer connected view. PORTAL admission still guards the device-side work; hotspot closure can prevent a later poll from correcting the view.
 
 Treat all network names, error causes and station addresses as untrusted display text. Escape `&`, `<`, `>`, apostrophe and double quote before inserting text into HTML. Encode form values with URL-encoded form rules, separately from HTML escaping. Never include submitted passwords in the status response or visible messages. The password marker is a boolean, not a credential.
 

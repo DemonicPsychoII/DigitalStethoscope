@@ -1,0 +1,74 @@
+@startuml state_machines_wifi_station_scan
+!theme cyborg
+!pragma layout smetana
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam backgroundColor #0b1018
+skinparam defaultFontColor #e6edf7
+skinparam ArrowColor #a9b8ca
+skinparam state {
+ BackgroundColor #16324a
+ BorderColor #4aa3df
+ FontColor #e6edf7
+ BackgroundColor<<terminal>> #3a1d22
+ BorderColor<<terminal>> #e06c75
+ BackgroundColor<<finding>> #3a2a12
+ BorderColor<<finding>> #e5a50a
+ BackgroundColor<<documented>> #273241
+ BorderColor<<documented>> #61738a
+ FontColor<<documented>> #b8c4d4
+}
+skinparam note {
+ BackgroundColor #1b2330
+ BorderColor #61738a
+ FontColor #e6edf7
+}
+hide empty description
+title WIFI station and scan: which driver event moves each state, and which late events are ignored?\n(implemented; wifi.c wifi_connect, wifi_disconnect, wifi_startScan, wifi_cancelScan, wifi_handleEvent)
+state "Station (atomics StationIsActive, ConnectionIsRequested, DisconnectIsPending; k_event bits)" as Station {
+  state "Idle\nActive = 0, Requested = 0" as StationIdle
+  state "Disconnecting\nPending = 1; caller waits ≤ 1 s" as Disconnecting
+  state "Joining\nActive = 1, Requested = 1\nCONNECTED, FAILED cleared" as Joining
+  state "Online\nCONNECTED set (address present)" as Online
+  state "Join failed\nFAILED set, FailureCause" as JoinFailed
+  state "Disconnect unconfirmed\nActive = 1, Requested = 0, Pending = 0" as Unconfirmed
+  state "Late failure ignored: Active stays 1\nwhile the driver is idle (S1, plausible)" as Stuck <<finding>>
+  [*] --> StationIdle
+  StationIdle --> Joining : wifi_connect [Active = 0]
+  Joining --> Disconnecting : wifi_connect or wifi_disconnect\n(drain the old link before rearm)
+  Online --> Disconnecting : wifi_disconnect
+  Disconnecting --> StationIdle : DISCONNECT_RESULT, or\nCONNECT_RESULT failure [Pending]
+  Disconnecting --> Unconfirmed : 1 s timeout: -ETIMEDOUT
+  Joining --> Online : CONNECT_RESULT ok [Requested ∧ address]\nor IPV4_ADDR_ADD [Requested]
+  Joining --> JoinFailed : CONNECT_RESULT failure [Requested],\nor DISCONNECT_RESULT before Online (-ENOTCONN)
+  Online --> StationIdle : DISCONNECT_RESULT (link lost)
+  Online --> Joining : IPV4_ADDR_DEL clears CONNECTED
+  JoinFailed --> Joining : wifi_connect
+  Unconfirmed --> Disconnecting : wifi_disconnect again
+  Unconfirmed --> StationIdle : late DISCONNECT_RESULT
+  Unconfirmed --> Stuck : late CONNECT_RESULT failure:\nno branch matches [¬Pending ∧ ¬Requested]
+}
+state "Scan (wifi_ScanLock: ScanIsRunning, ScanResultsAreAccepted; SCAN_DONE bit)" as Scan {
+  state "Idle\nRunning = 0" as ScanIdle
+  state "Running\nRunning = 1, Accepted = 1" as ScanRunning
+  state "Draining after cancel\nRunning = 1, Accepted = 0\nlate results dropped" as Draining
+  state "Done\nresults (Accepted) or -ECANCELED" as ScanDone
+  [*] --> ScanIdle
+  ScanIdle --> ScanRunning : wifi_startScan
+  ScanRunning --> ScanRunning : SCAN_RESULT kept
+  ScanRunning --> Draining : wifi_cancelScan (waits ≤ 1 s)
+  ScanRunning --> ScanDone : SCAN_DONE
+  Draining --> ScanDone : SCAN_DONE
+  ScanDone --> ScanRunning : wifi_startScan
+}
+note bottom of Station
+ Driver events carry no request identity: the Requested and Pending gates are the only filters.
+ S2 (plausible): an unsolicited disconnect inside the Disconnecting window satisfies the drain;
+ the real confirmation then fails the new join. Both S1 and S2 depend on unverified ESP-IDF behaviour.
+end note
+note bottom of Scan
+ wifi_startScan returns -EBUSY while Running.
+ SCAN_DONE status is ignored here; the pinned ESP32 driver always reports 0,
+ so a failed scan looks like an empty or partial list (driver-side, minor).
+end note
+@enduml

@@ -54,23 +54,61 @@ worker placement and ISR wake-up primitives remain proposed implementation choic
 | `StateSnapshot` | snapshot revision, effective and requested settings, source/provenance, playback/measurement/delivery states, active IDs, capabilities, BPM validity/time, clip progress, pending replay speed, error/outcome counters. Read as a coherent copy; UI never edits it. |
 | `Clip` | ID/generation, source, raw format/rate, allocated capacity and valid length, capture sample interval, evaluation metadata. Ownership REC; immutable after finalization until discarded. Never patient-persisted. |
 | `MeasurementResult` | result/session ID, source/generation, valid flag/reason, BPM value and declared precision, quality definition/value, coverage, first/last sample index, measurement monotonic interval and UTC mapping, frozen Device id/point/config/filter IDs and consumed examination identity/optional supplied patient reference, completion status. Invalid results carry no sendable numeric value. |
-| `NetworkJob` | stable Observation identifier (Device id plus measurement end time), immutable result/payload, frozen endpoint/profile/auth-config reference, attempt count (up to 4: 1 attempt + 3 retries, all within 10 s), lease ID. Secrets stay outside evidence. Result device/time/value never resnapshotted from live state. |
+| `NetworkJob` | stable Observation identifier (Device id frozen at admission plus measurement end time frozen at admission or at the first delivery connection setup), immutable result and Observation bytes serialized once before the first request, frozen endpoint/profile/auth-config reference, attempt count (up to 4: 1 attempt + 3 retries, all within 10 s), lease ID. Secrets stay outside evidence. Result device/time/value never resnapshotted from live state. |
 | `HealthEvent` | component, error class, time/generation, severity, evidence level and counter reference. Hardware physical proof references explicit test evidence. |
+
+### Result provenance
+
+![Data provenance from mutable inputs to the retried Observation bytes](rendered/shared_delivery_provenance.svg)
+
+*Where is each Observation input frozen, and which freeze points exist in code?*
+
+The contracts above describe a richer result than the firmware produces. Today a finalized result reaches
+COMMUNICATION as `communication_delivery`: kind (heart rate or poor-signal report), scaled BPM value with
+declared precision, and the monotonic measurement end. Point, configuration, filter IDs and examination
+identity are not produced yet: BPM, FILTER and AUDIO are skeletons, CONTROL has no session, and examination
+reception is unimplemented. Only the host simulation submits jobs.
+
+Freeze points (decided; the Device id and admission-time UTC freeze arrive with a parallel COMMUNICATION change):
+
+- At `communication_submitDelivery` the job copies the result and freezes the server Device id.
+- The UTC measurement end is frozen at admission when a qualifying clock anchor already maps it; otherwise
+  once, from the SNTP anchor of the first delivery connection setup.
+- The Observation body and its `If-None-Exist` condition are serialized once, before the first request;
+  every retry sends these bytes.
+- No anchor by the deadline: nothing is sent and SERVER_CONNECTION_FAILURE latches (P13).
 
 ## Ownership, memory and queues
 
-DMA allocations stay in internal DMA-capable SRAM. AUD owns RX/TX transport; pool handles never
-escape without defined lifetime. Preferred draft fan-out: copy normalized analysis blocks into a
-fixed analysis pool (4 blocks candidate) so a stalled BPM worker cannot pin RX buffers. REC copies
-raw samples into its bounded PSRAM clip; LIS consumes the current transport block synchronously.
-A ref-counted shared pool is an alternative only if its no-starvation behavior is proven.
+![Threads and bounded handoffs with their overload rules](../../architecture/system/rendered/runtime_ownership.svg)
 
-DSP state is worker-local. Settings/snapshots are bounded copies made under a short lock or message
-hand-off; no lock spans I2S wait, SPI, file access, TLS or rendering. `k_msgq` carries bounded values
-or handles, not audio payloads of unbounded length. Use nonblocking enqueue on the audio path.
-Analysis overflow marks a gap and resets its window; display coalesces to latest snapshot; input
-queue overflow reconciles stable values but rejects/report transient actions. A full network slot
-returns Busy without overwriting a job; a terminal failure retains only redacted outcome metadata, with no retry queue. The completed measurement is lost after that visible failure; server recovery does not resend it. This is the bounded failure outcome of REQ-10, separate from REQ-09's available-server success path.
+*What happens at each bounded handoff when the receiver falls behind?* Each handoff has its own rule;
+"queue full" is not one policy.
+
+| Handoff | Capacity | Full or slow receiver | Status |
+|---|---|---|---|
+| Control events (input, shell → CONTROL) | 16 (P11 candidate) | reconcile stable values; reject and report transient actions | proposed; button events reach CONTROL by callback today |
+| Analysis blocks (AUDIO → BPM) | 4-block pool (P11 candidate) | mark a gap and reset the window; listening continues | proposed |
+| `StateSnapshot` (CONTROL → shell, display) | latest copy | coalesce to the latest snapshot | proposed |
+| Listening / setup request (CONTROL → COMMUNICATION) | flags + 1 semaphore count | latest Start/Stop wins; release confirmed separately | implemented |
+| Delivery job (CONTROL → COMMUNICATION) | 1 slot (P11) | Busy without overwriting the job; no retry queue | implemented in COMMUNICATION; no CONTROL caller yet |
+| Portal requests (PORTAL → COMMUNICATION) | 4 (P24) | HTTP 503 with `Retry-After: 1` | implemented |
+
+Invariants:
+
+- DMA allocations stay in internal DMA-capable SRAM. AUD owns RX/TX transport; pool handles never
+  escape without defined lifetime.
+- Preferred draft fan-out copies normalized analysis blocks into the fixed analysis pool so a stalled
+  BPM worker cannot pin RX buffers. A ref-counted shared pool is an alternative only if its
+  no-starvation behavior is proven. REC copies raw samples into its bounded PSRAM clip; LIS consumes
+  the current transport block synchronously.
+- DSP state is worker-local. Settings/snapshots are bounded copies made under a short lock or message
+  hand-off; no lock spans I2S wait, SPI, file access, TLS or rendering.
+- `k_msgq` carries bounded values or handles, not audio payloads of unbounded length. Use nonblocking
+  enqueue on the audio path.
+- A terminal delivery failure retains only redacted outcome metadata. The completed measurement is
+  lost after that visible failure; server recovery does not resend it. This is the bounded failure
+  outcome of REQ-10, separate from REQ-09's available-server success path.
 
 Candidate memory accounting:
 
@@ -89,37 +127,88 @@ Candidate memory accounting:
 | Region / state | Entry | Process | Exit / cancellation |
 |---|---|---|---|
 | Playback Boot | zero gain, capability checks, silent TX prime | bounded adapter initialization | Idle on essential readiness; Fault otherwise |
-| Idle | mute; no active transport/listening operation | allow configuration and network lease | Start is Busy during analysis and sending; otherwise start only after lease released |
+| Idle | mute; no active transport/listening operation | allow configuration and network lease | Start is Busy during analysis; Start during sending cancels the delivery job; otherwise start only after lease released |
 | Live | reset source-dependent state on source generation change | 128-frame normalized fan-out; selected listening filter; gain/saturation; TX | stop/fault mute; capture keeps live path |
 | Capture | allocate/claim bounded clip and ID; LED active | copy raw prefilter/pregain; normal live listening continues | full → Replay; cancel → Live; stop/fault → Idle/Fault, incomplete clip invalid |
 | Replay | freeze valid clip; initialize speed stage; LED active | raw clip → filter → WSOLA → gain/saturation; fresh mic still feeds analysis | end/cancel → Live; release clip cursor; stop/fault mutes |
-| Measurement Acquiring | freeze context/config/ID and clear aggregation | original-rate windows; independent filter; valid estimates | Stop <15 s cancels; Stop ≥15 s → Finalizing; identity change rejected; an Error with audio muted invalidates the session |
-| Finalizing | stop accepting windows for that interval; once audio is stopped and Wi-Fi is configured, grant the exclusive network lease to delivery preparation | aggregate and union valid temporal coverage; in parallel, P13 connection setup only (no request) | freeze valid/invalid result once; late blocks cannot mutate result; if the delivery decision grants no job, cancel the setup and release the lease |
-| Delivery decision (end of Analysing) | after the valid/invalid latch, check Wi-Fi configuration and, only when Wi-Fi is configured, the delivery prerequisites (Device id and a valid server profile image with endpoint and certificate) once after finalization; no waiting | Wi-Fi unconfigured: no send or Wi-Fi error; result not retained. Delivery prerequisites fail: latch DELIVERY_NOT_POSSIBLE and release Busy at once. Delivery prerequisites pass: grant the one job to Sending for a valid BPM, or to ReportingError for an invalid BPM (validated error report, no numeric value) |
-| Sending | keep the lease taken at Finalizing; snapshot payload | bounded connect/TLS/conditional POST, receipt | outcome event + release lease; Start is Busy, never queued; terminal failure latches DELIVERY_FAILURE and releases Busy |
+| Measurement Acquiring | freeze context/config/ID and clear aggregation | original-rate windows; BPM filter, independent of the switch; valid estimates | Stop <15 s cancels; Stop ≥15 s → Finalizing; identity change rejected; an Error with audio muted invalidates the session |
+| Finalizing | stop accepting windows for that interval; audio stopped | aggregate and union valid temporal coverage; no delivery connection setup (P13 starts it at job submission) | freeze valid/invalid result once; late blocks cannot mutate result |
+| Delivery decision (end of Analysing) | after the valid/invalid latch, check Wi-Fi configuration and, only when Wi-Fi is configured, the delivery prerequisites (Device id and a valid server profile image with endpoint and certificate) once after finalization; no waiting | Wi-Fi unconfigured: no send or Wi-Fi error; result not retained. Delivery prerequisites fail: latch DELIVERY_NOT_POSSIBLE and release Busy at once. Delivery prerequisites pass: submit the one job with the exclusive network lease to Sending for a valid BPM, or to ReportingError for an invalid BPM (validated error report, no numeric value) |
+| Sending | job submitted with the lease; freeze Device id and, if a qualifying anchor exists, UTC end ([provenance](#result-provenance)) | connection setup starts at once unless an eligible retained verified connection is reused; serialize once before the first request; bounded connect/TLS/conditional POST, receipt | outcome event + release lease; terminal failure latches DELIVERY_FAILURE and releases Busy; Start cancels the job (below) |
 | Error, audio affected | mute and invalidate active acquisition; block Start | expose latched cause on the red LED and serial log | use the catalogue clear rule; restart-required faults remain halted until restart |
 
 Changing Heart/Lung, source or point during a session leaves the frozen context unchanged and raises SESSION_CONTEXT_CHANGE with the catalogue halt/restart rule. Outside a session the controller may accept configuration changes and reset source-dependent histories. Generation checks reject stale completions. Separate acknowledgement clears the indication of an Error that the catalogue allows to clear, without starting, retrying or changing an active workflow. A halted Error follows the catalogue clear rule; a short press cannot clear a restart-required fault.
 
-A completed result does not wait for delivery prerequisites. When Wi-Fi is configured and they fail after finalization, CONTROL releases Busy at once and latches DELIVERY_NOT_POSSIBLE; the result is not retained. When Wi-Fi is configured and they hold, the single job is granted to Sending, CONTROL rejects Start before acquisition with Busy, and it does not queue Start or a second result. Admission resumes only after delivery succeeds or terminates with DELIVERY_FAILURE and the network lease is released; the normal error-clear rules still apply to these latches. This preserves the one-slot/no-retry-queue contract and the bounded delivery outcomes of REQ-09/REQ-10: success confirms the result, failure visibly loses it. A later measurement needs a fresh Start; the lost result cannot be reconstructed or retried.
+One result, one job:
+
+- A completed result does not wait for delivery prerequisites. With Wi-Fi configured and failed
+  prerequisites, CONTROL releases Busy at once and latches DELIVERY_NOT_POSSIBLE; the result is not retained.
+- With Wi-Fi configured and prerequisites holding, the single job is granted to Sending. CONTROL never
+  queues Start or a second result.
+- Start during Analysing is rejected with Busy before acquisition.
+- Start during Sending cancels the delivery and the result is lost (accepted owner decision; behavior of
+  `communication.c` at `994ce24`, see below).
+- Admission resumes only after delivery succeeds, terminates or is cancelled and the network lease is released;
+  the normal error-clear rules apply to the latches.
+- This preserves the one-slot/no-retry-queue contract and the bounded outcomes of REQ-09/REQ-10: success
+  confirms the result, failure visibly loses it. A later measurement needs a fresh Start; a lost result
+  cannot be reconstructed or retried.
+
+Start during Sending, as COMMUNICATION implements it (reached through its service interface and the host
+simulation; CONTROL does not route measurement Start/Stop yet):
+
+1. Start sets the listening request; COMMUNICATION ends the job at its next check, wherever it is: a
+   connection setup is cancelled, a request in flight is cancelled and its connection closed, not retained,
+   and a retry gap ends at once. No further attempt starts.
+2. The outcome is DELIVERY_FAILURE when the Observation was already frozen, otherwise
+   SERVER_CONNECTION_FAILURE (no qualifying anchor yet). If the server had already committed the request it
+   keeps the Observation; without readback the device does not learn this.
+3. If cancellation cannot be proven, WIFI_CLEANUP_FAILURE follows under P23 instead.
+4. COMMUNICATION frees the job slot, stops Wi-Fi work and confirms Stopped; CONTROL starts listening after
+   that release.
+5. If the worker had not begun the job yet (occupied by setup, TICKET-222), the job stays pending while
+   listening and runs after the next Stop with whatever remains of its deadline.
 
 ## DSP and measurement design
 
-Draft listening candidates: second-order Butterworth high/low sections (Murmur 40–800 Hz;
-BPM emphasis 25–150 Hz), with Raw unity and a 20 ms exponential crossfade. Preserve state for
-continuously evaluated paths; clear histories on source reset. These are engineering candidates,
-not established optimum bands. Measure response and transients before approving coefficients.
-Normalize signed microphone values once; saturate only at output conversion, with clipping
-counters. Raw replay precision policy must be settled before reusing the bring-up int16 clip API.
+![Signal flow from the original-rate branch point to the analysis and listening paths](rendered/shared_filter_signal_flow.svg)
 
-Draft BPM: independent band filter → rectified envelope/downsampled representation → whole-cycle
-autocorrelation or an equivalent method → range/harmonic/quality checks → periodic update. An 8 s
-window at 100 Hz envelope rate is 800 samples; a 3 s window at 30 BPM contains only 1.5 cycles
-and needs justification. Candidate update 1 s and session 30 s are open. Define a quality score
-mathematically and validate it; it is not probability of clinical correctness. Aggregate using a
-proposed median of accepted BPM estimates; coverage is the union of accepted window intervals
-clipped to session bounds, not number_of_windows × window_length. Warm-up treatment, temporal
-weighting, minimum windows and thresholds remain open (TICKET-192). No window includes missing blocks.
+*Which filter does each path apply, and where do volume and saturation sit?*
+
+Three separate filter concepts:
+
+- **BPM listening filter:** the BPM switch position applies the filter used for automated BPM analysis
+  to the audible output, so the listener hears what the analysis gets.
+- **Murmur listening filter:** a selectable filter estimated to be better for murmur detection. Raw
+  applies no band filter.
+- **BPM analysis:** always applies the BPM filter to its own pre-volume input, whatever the switch
+  position. It estimates BPM automatically while the doctor listens with Raw, Murmur or BPM.
+
+The filter study (TICKET-189) chooses the BPM and Murmur coefficients; it does not decide whether
+analysis follows the switch. Draft candidates: second-order Butterworth high/low sections (Murmur
+40–800 Hz; BPM 25–150 Hz), Raw unity and a 20 ms exponential crossfade. These are engineering
+candidates, not established optimum bands; measure response and transients before approving
+coefficients.
+
+- Analysis and listening keep separate filter instances and state. Preserve state for continuously
+  evaluated paths; clear histories on source reset.
+- Normalize signed microphone values once; saturate only at output conversion, with clipping counters.
+- Raw replay precision policy must be settled before reusing the bring-up int16 clip API.
+
+Draft BPM chain: BPM filter → rectified envelope/downsampled representation → whole-cycle
+autocorrelation or an equivalent method → range/harmonic/quality checks → periodic update.
+
+- An 8 s window at 100 Hz envelope rate is 800 samples; a 3 s window at 30 BPM contains only 1.5 cycles
+  and needs justification. Candidate update 1 s and session 30 s are open.
+- Define a quality score mathematically and validate it; it is not probability of clinical correctness.
+- Aggregate using a proposed median of accepted BPM estimates.
+
+![Coverage as the clipped union of accepted analysis windows](rendered/shared_analysis_coverage.svg)
+
+*Which part of the session counts as coverage?* The union of accepted window intervals clipped to the
+session bounds, not number_of_windows × window_length. No window includes missing blocks. Warm-up
+treatment, temporal weighting, minimum windows and thresholds remain open (TICKET-192); the P07 values
+are proposals.
 
 Replay candidate is WSOLA with bounded overlap/search buffers. Output length should equal
 `ceil(valid_clip_frames / speed)` under a rounding policy that remains to be fixed, with final partial blocks
@@ -129,25 +218,27 @@ stage at the current source cursor without pretending the duration was constant-
 
 ## Delivery, clock and configuration
 
-A completed measurement has separate identity from a replay clip. The project identifier
-system is `urn:stethoscope:measurement`. Its value is `<device-id>:<measurement-end-UTC>`:
-the persisted server Device id, a colon, and the immutable interval end formatted as
-`YYYY-MM-DDTHH:mm:ss.SSSZ`. Freeze both before the first request (see the [SNTP mapping](../COMMUNICATION/time-synchronization.md#clock-mapping-and-native-behavior)); do not regenerate
-the end time or identity on retry. One device must not finalize two measurements with
-the same end timestamp. Send `POST /Observation`, `Content-Type: application/fhir+json`,
-with `identifier: [{"system":"urn:stethoscope:measurement","value":"<value>"}]` in the body
-and, for the example value below, `If-None-Exist: identifier=urn%3Astethoscope%3Ameasurement|device-42%3A2026-10-23T12%3A00%3A00.000Z`.
-Percent-encode each search value using UTF-8 URI query encoding before constructing
-the header; the separator `|` separates system and value. For example the logical value
-`device-42:2026-10-23T12:00:00.000Z` is encoded as
-`device-42%3A2026-10-23T12%3A00%3A00.000Z` (the system is
-`urn%3Astethoscope%3Ameasurement`). Never update an Observation.
-The server assigns the resource ID. `201` (created) or `200` (one existing match)
-confirms success. Uncertain transport responses, including a lost receipt after a
-committed write, must retry with the identical body and conditional-create identity
-under P13 while an attempt and time budget remain. P13 classifies retryable and
-terminal outcomes. A visible delivery failure releases the job only on a terminal
-outcome or exhausted attempt/deadline budget; there is no unconditional-create fallback.
+A completed measurement has separate identity from a replay clip.
+
+- **Identifier:** system `urn:stethoscope:measurement`; value `<device-id>:<measurement-end-UTC>`, the
+  persisted server Device id, a colon, and the immutable interval end formatted as
+  `YYYY-MM-DDTHH:mm:ss.SSSZ`. Both are frozen before the first request at the points in
+  [result provenance](#result-provenance) (see the [SNTP mapping](../COMMUNICATION/time-synchronization.md#clock-mapping-and-native-behavior)); do not regenerate
+  the end time or identity on retry. One device must not finalize two measurements with the same end timestamp.
+- **Request:** `POST /Observation`, `Content-Type: application/fhir+json`, with
+  `identifier: [{"system":"urn:stethoscope:measurement","value":"<value>"}]` in the body and, for the
+  example value below, `If-None-Exist: identifier=urn%3Astethoscope%3Ameasurement|device-42%3A2026-10-23T12%3A00%3A00.000Z`.
+  Percent-encode each search value using UTF-8 URI query encoding before constructing the header; the
+  separator `|` separates system and value. For example the logical value
+  `device-42:2026-10-23T12:00:00.000Z` is encoded as `device-42%3A2026-10-23T12%3A00%3A00.000Z` (the
+  system is `urn%3Astethoscope%3Ameasurement`). Never update an Observation.
+- **Receipt and retry:** the server assigns the resource ID. `201` (created) or `200` (one existing match)
+  confirms success. Uncertain transport responses, including a lost receipt after a committed write, must
+  retry with the identical body and conditional-create identity under P13 while an attempt and time
+  budget remain. P13 classifies retryable and terminal outcomes. A visible delivery failure releases the
+  job only on a terminal outcome, an exhausted attempt/deadline budget or a cancelling Start; there is no
+  unconditional-create fallback.
+
 FHIR conditional-create semantics: Health Level Seven International, FHIR R4
 v4.0.1, HTTP, Conditional create, 2019,
 <https://hl7.org/fhir/R4/http.html#ccreate> (accessed 2026-10-23).
@@ -157,19 +248,26 @@ The device never selects or adds a patient ID. It serializes Observation.subject
 Map sample/monotonic measurement interval to UTC from a clock anchor at most 12.5 hours away from the
 measurement end ([SNTP mapping](../COMMUNICATION/time-synchronization.md#clock-mapping-and-native-behavior)). Use measurement
 time, not send time; a result without a qualifying anchor is not sent, never rewritten. FHIR `effectiveDateTime` carries the end of the aggregate interval. This is a project representation choice. The interval stays in the local result. Preserve the Device id, point (approved coding or
-evaluation-only metadata), value, interval and analysis settings in the immutable local result.
+evaluation-only metadata), value, interval and analysis settings in the immutable local result
+(documented; the implemented subset is in [result provenance](#result-provenance)).
 The local profile/metadata mapping, validation of `effectiveDateTime` against `effectivePeriod`, and decimal precision remain open (TICKET-181).
 
 NET verifies the server profile's public server certificate, endpoint identity and validity against the clock set by the SNTP exchange that opens each connection setup under the [TLS design](../COMMUNICATION/secure-transport.md), and checks bounded status/body parsing. A missing retained connection alone permits reconnect within P13; a missing or invalid server profile image fails prerequisites. `201 Created` or `200` (existing conditional create) is the receipt and marks the result Sent; there is no readback.
 An uncertain response is retried within the same bounded job; a single matching identifier returns the existing resource; multiple matches fail with 412. Configuration/auth errors and server failures remain visible after the last attempt.
-The [SNTP contract](../COMMUNICATION/time-synchronization.md) records the accepted MVP use of unauthenticated `pool.ntp.org` time, Zephyr uncertainty estimation, one exchange directly before every ClientHello and the computed mapping limit. This is a deployment trust assumption, not authenticated time. Reference/drift and timestamp acceptance evidence remain pending (TICKET-180, TICKET-209). David L. Mills, *Simple Network Time Protocol (SNTP) Version 4 for IPv4, IPv6 and OSI*, IETF RFC 4330, January 2006, §9, DOI: 10.17487/RFC4330, <https://www.rfc-editor.org/rfc/rfc4330#section-9> (accessed 2026-10-24), describes unauthenticated SNTP security limitations. Credentials are private deployment configuration.
+The [SNTP contract](../COMMUNICATION/time-synchronization.md) records the accepted MVP use of unauthenticated `pool.ntp.org` time, Zephyr uncertainty estimation, one exchange directly before every ClientHello and the computed mapping limit. This is a deployment trust assumption, not authenticated time. Reference/drift and timestamp acceptance evidence remain pending (TICKET-180, TICKET-209). David L. Mills, *Simple Network Time Protocol (SNTP) Version 4 for IPv4, IPv6 and OSI*, IETF RFC 4330, January 2006, §11, DOI: 10.17487/RFC4330, <https://www.rfc-editor.org/rfc/rfc4330#section-11> (accessed 2026-10-24), describes unauthenticated SNTP security limitations. Credentials are private deployment configuration.
 
-Active network work and live listening use an exclusive controller lease. Retain an
-established station association during listening; do not run setup/reconnect/delivery jobs.
-Start during Wi-Fi setup requests safe teardown before audio; stop audio before granting network;
-Start during analysis or sending is rejected Busy, with no cancellation or queued start. A fresh Start after release primes/starts audio.
-If release cannot be proven, remain stopped and show the reason. Exception under REQ-13: a failed network-service stop or SNTP cancellation follows P23 instead: latch WIFI_CLEANUP_FAILURE, disable network work until restart and release audio without claiming quiescence. Radio/driver background behavior
-must be measured; disabling application jobs alone is not proof of interference isolation.
+Active network work and live listening use an exclusive controller lease:
+
+- Retain an established station association during listening; do not run setup/reconnect/delivery jobs.
+- Stop audio before granting network work.
+- Start during Wi-Fi setup requests safe teardown before audio. Start during sending cancels the delivery
+  job ([above](#state-entryprocessexit)). Start during analysis is rejected Busy; Start is never queued.
+- A fresh Start after release primes/starts audio. If release cannot be proven, remain stopped and show
+  the reason.
+- Exception under REQ-13: a failed network-service stop or SNTP cancellation follows P23 instead: latch
+  WIFI_CLEANUP_FAILURE, disable network work until restart and release audio without claiming quiescence.
+- Radio/driver background behavior must be measured; disabling application jobs alone is not proof of
+  interference isolation.
 
 [Wi-Fi setup and recovery](../COMMUNICATION/interfaces-and-behavior.md#wi-fi-setup-and-recovery), [SNTP synchronization](../COMMUNICATION/time-synchronization.md) and [portal behavior](../PORTAL/interfaces-and-behavior.md) define the communication-specific contracts. Start cancels pending synchronization before audio; time and server-connection failures preserve offline listening. Other failure/cleanup rules remain as specified.
 
@@ -207,13 +305,13 @@ Values are in [design parameters](parameters.md). Optional parts (replay, Lung, 
 | Hardware | ESP32-S3 N16R8, INMP441 on I2S0, PCM5102A on I2S1, maintained carrier pin map, potentiometer on ADC1. The device ends at the DAC line output; the amplifier is outside the project scope. Document chestpiece coupling and the microphone low-frequency limit. |
 | Audio | Convert INMP441 signed 24-bit left-channel data into normalized mono blocks with sequence numbers. DMA buffers in internal RAM, TX primed with silence, mono duplicated to both DAC channels. Listening continues when analysis cannot accept a block; the gap invalidates the affected BPM window. On microphone/DAC failure: silence, cancel the session, Error with audio muted; restore the cause and restart as required by the catalogue. |
 | Input | Debounced, timestamped events, one per stable transition. Interrupt handlers only signal deferred work. Volume clamped to 0–100 %. On potentiometer ADC failure or an invalid switch position: safe value, then CONTROL_INPUT_FAILURE (restart). A long press (≥2 s) is a distinct event and suppresses the ordinary press. |
-| Controller | Only writer of mode, filter and workflow state; others send events and read snapshots. Context changes during a session are rejected with SESSION_CONTEXT_CHANGE halt/restart handling. Active network work only at boot/Idle; Start cancels Wi-Fi setup safely; Start during analysis or sending is Busy. Start/Stop and acknowledgement are separate. Portal only from Idle. |
-| Listening | Raw, Murmur and BPM listening filters; Raw applies no band filter. Output saturates before integer conversion. Listening filter and volume never change the analysis input. DSP core in pure C without Zephyr headers or heap use per block. |
-| BPM | BPM analysis gets audio before the volume control. Which filter it uses (own analysis filter or a listening filter) is decided by the filter study (TICKET-189). Whole-cycle periodicity, not single S1/S2 peaks. Invalid windows carry a reason; an old BPM is never reused. Aggregation counts overlapping windows once and freezes value, interval and settings. Cancel discards the aggregation. No fixed numeric quality threshold. |
+| Controller | Only writer of mode, filter and workflow state; others send events and read snapshots. Context changes during a session are rejected with SESSION_CONTEXT_CHANGE halt/restart handling. Active network work only at boot/Idle; Start cancels Wi-Fi setup safely and cancels a delivery in Sending (result lost); Start during analysis is Busy. Start/Stop and acknowledgement are separate. Portal only from Idle. |
+| Listening | Raw, Murmur and BPM listening filters; Raw applies no band filter; the BPM position applies the BPM analysis filter. Output saturates before integer conversion. Listening filter and volume never change the analysis input. DSP core in pure C without Zephyr headers or heap use per block. |
+| BPM | BPM analysis gets audio before the volume control and always applies the BPM filter, independent of the listening switch; the filter study (TICKET-189) chooses its coefficients. Whole-cycle periodicity, not single S1/S2 peaks. Invalid windows carry a reason; an old BPM is never reused. Aggregation counts overlapping windows once and freezes value, interval and settings. Cancel discards the aggregation. No fixed numeric quality threshold. |
 | Network | Connection, time sync, TLS and HTTP only under the Idle lease. FHIR R4 Observation (LOINC 8867-4, UCUM /min, `effectiveDateTime` = interval end), conditional create with `device` reference, `subject` copied only from a server-requested examination with a supplied patient reference, otherwise omitted, up to 3 retries, `201`/`200` as receipt, no readback. TLS 1.3 verifies the server profile's public server certificate, endpoint SAN and validity against the clock of the SNTP exchange directly before each ClientHello; no older TLS or plain-HTTP fallback. No device certificate is configured. See [TLS preparation and reuse](../COMMUNICATION/secure-transport.md). Credentials stay out of source and logs. Wi-Fi credentials and the server-assigned Device id persist in the flash settings partition; Device registration conditionally creates/recovers the resource and reuses its committed server-bound id after restart; Wi-Fi changes alone do not invalidate it. See [registration and FHIR messages](../COMMUNICATION/server-communication.md). |
 | Indication | RGB LED shows the context colour and status pattern; during an error it keeps the colour of the context where the error occurred. The red button LED shows the blink code of the highest-priority error (see [status and error catalogue](../FEEDBACK/catalogue.md#status-and-error-catalogue)). The catalogue is one append-only `FEEDBACK_` enum. Errors also go to the serial log, written by the component that detects them. Hotspot: open AP, setup at boot/Idle only, inactivity timeout, bounded clients; no credentials in logs. |
 | Monitoring | Count stalls, dropped blocks, deadline misses, clipping, analysis gaps and queue saturation. Report stack/heap watermarks. A stalled required worker raises an Error with audio muted. Initialization alone never counts as verified operation. |
 
 ## Firmware layer structure
 
-L2 owns orchestration; L1 remains thin. `L2_COMMUNICATION` is the only path to a send: it has `L1_FHIR` serialize the frozen `MeasurementResult` and passes the payload to `L1_WIFI` under the CONTROL lease. It never selects or adds a patient ID; only an examination-supplied reference may be reused. The server-request mechanism remains an open integration design input. MON observes delivery. Test recordings are handled like patient data. `L2_AUDIO` owns the real-time audio thread and executes `AudioCommand`s; CONTROL remains the single writer of mode state.
+L2 owns orchestration; L1 remains thin. `L2_COMMUNICATION` is the only path to a send: it has `L1_FHIR` serialize the admitted job once before the first request and passes the payload to `L1_WIFI` under the CONTROL lease. It never selects or adds a patient ID; only an examination-supplied reference may be reused. The server-request mechanism remains an open integration design input. MON observes delivery. Test recordings are handled like patient data. `L2_AUDIO` owns the real-time audio thread and executes `AudioCommand`s; CONTROL remains the single writer of mode state.

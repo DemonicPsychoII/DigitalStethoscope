@@ -1,0 +1,58 @@
+@startuml state_machines_portal_page
+!theme cyborg
+!pragma layout smetana
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam backgroundColor #0b1018
+skinparam defaultFontColor #e6edf7
+skinparam ArrowColor #a9b8ca
+skinparam state {
+ BackgroundColor #16324a
+ BorderColor #4aa3df
+ FontColor #e6edf7
+ BackgroundColor<<terminal>> #3a1d22
+ BorderColor<<terminal>> #e06c75
+ BackgroundColor<<finding>> #3a2a12
+ BorderColor<<finding>> #e5a50a
+ BackgroundColor<<documented>> #273241
+ BorderColor<<documented>> #61738a
+ FontColor<<documented>> #b8c4d4
+}
+skinparam note {
+ BackgroundColor #1b2330
+ BorderColor #61738a
+ FontColor #e6edf7
+}
+hide empty description
+title Setup page: what state would an explicit page machine need besides the view?\n(implemented; portal.html inline script; TICKET-223 race shown as finding)
+state "View (variable view)" as View {
+  state "busy (initial)" as Busy
+  state "list\nnetworks, last" as List
+  state "form\nselectedNetwork" as FormView
+  state "done" as Done
+  [*] --> Busy
+  Busy --> List : poll: selecting / connect_failed
+  List --> FormView : pick(index)
+  FormView --> List : back
+  FormView --> Busy : go (POST /connect)
+  List --> Busy : rescan (POST /rescan)
+  List --> Done : stop (POST /cancel)
+  Busy --> Done : poll: connected, save_failed, closing
+  FormView --> FormView : poll while scanning, selecting,\nconnect_failed (form preserved)
+}
+state "Outstanding operations (not tracked as state)" as Operations {
+  state "One status poll chain\nfetch('/status') → show → setTimeout 1 s" as Poll
+  state "Untracked POSTs\n/activity (≤ 1 per s), /connect, /rescan, /cancel" as Posts
+  state "Stale completion applied\n(TICKET-223)" as Stale <<finding>>
+  [*] --> Poll
+  Poll --> Poll : completion or failure re-arms the poll
+  Posts --> Stale : response of an older command\nor poll started before it
+}
+Stale --> View : overwrites a newer view
+note bottom of Operations
+ Neither the poll nor the POSTs have a timeout or abort (P1, plausible): a stalled
+ connection stops the poll chain without the "no answer" guidance.
+ Rejected POST promises are not caught; a 503 is not retried (P2, cosmetic).
+ An explicit page machine needs an operation generation per command next to the view.
+end note
+@enduml

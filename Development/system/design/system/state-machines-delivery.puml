@@ -1,0 +1,61 @@
+@startuml state_machines_delivery
+!theme cyborg
+!pragma layout smetana
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam backgroundColor #0b1018
+skinparam defaultFontColor #e6edf7
+skinparam ArrowColor #a9b8ca
+skinparam state {
+ BackgroundColor #16324a
+ BorderColor #4aa3df
+ FontColor #e6edf7
+ BackgroundColor<<terminal>> #3a1d22
+ BorderColor<<terminal>> #e06c75
+ BackgroundColor<<finding>> #3a2a12
+ BorderColor<<finding>> #e5a50a
+ BackgroundColor<<documented>> #273241
+ BorderColor<<documented>> #61738a
+ FontColor<<documented>> #b8c4d4
+}
+skinparam note {
+ BackgroundColor #1b2330
+ BorderColor #61738a
+ FontColor #e6edf7
+}
+hide empty description
+title Delivery job: when does an admitted job reach a terminal outcome?\n(implemented; communication.c submitDelivery, runDelivery, attemptDelivery)
+state "No job\nOutcome = NONE or last terminal outcome" as NoJob
+state "Rejected, no state change\n-EBUSY (job pending), -ENOENT (no stored network),\n-ENODEV (DELIVERY_NOT_POSSIBLE), -EINVAL" as Rejected
+state "Admitted, waiting for the worker\nDeliveryIsPending, Outcome = PENDING\nDelivery copy + deadline frozen under ControlLock" as Waiting <<finding>>
+state "Running (worker; end = deadline − 1 s cleanup reserve)" as Running {
+  state "Freeze\nObservationIsFrozen := false; build body + condition once\nif a qualifying anchor maps the measurement end" as Freeze
+  state "Attempt\nconnection setup ≤ 3 s if not reusable (refreezes if still open),\nwrite and receipt ≤ 1 s" as Attempt
+  state "Gap 2 s" as RetryGap
+  [*] --> Freeze
+  Freeze --> Attempt : [time left]
+  Attempt --> RetryGap : retryable (-EAGAIN, -ENODATA, 5xx)\n[attempts < 4 ∧ remaining > gap]
+  RetryGap --> Attempt : gap passed
+  Attempt --> Attempt : stale retained connection (-ENOTCONN),\nonce per job, not counted
+}
+state "DELIVERED\n200/201 receipt" as Delivered <<terminal>>
+state "FAILED (DELIVERY_FAILURE)\nterminal status, Start, fault,\nattempts or budget used up" as Failed <<terminal>>
+state "NO_CLOCK (SERVER_CONNECTION_FAILURE)\nnever frozen, nothing sent" as NoClock <<terminal>>
+NoJob --> Rejected : submitDelivery
+NoJob --> Waiting : submitDelivery accepted\n(semaphore given)
+Waiting --> Running : runDelivery in the Idle pass or the fault branch
+Running --> Delivered
+Running --> Failed
+Running --> NoClock
+RetryGap --> Failed : Start (accepted behavior)
+Delivered --> NoJob : DeliveryIsPending := false
+Failed --> NoJob : DeliveryIsPending := false
+NoClock --> NoJob : DeliveryIsPending := false
+note right of Waiting
+ **No deadline transition here (TICKET-222).**
+ While Setup, a boot join, its resumption or link recovery
+ occupies the worker, the job stays PENDING past its deadline
+ and blocks the slot. No request is sent after the budget:
+ runDelivery checks the end before every attempt.
+end note
+@enduml

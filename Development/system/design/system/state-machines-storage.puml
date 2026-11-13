@@ -1,0 +1,64 @@
+@startuml state_machines_storage
+!theme cyborg
+!pragma layout smetana
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam backgroundColor #0b1018
+skinparam defaultFontColor #e6edf7
+skinparam ArrowColor #a9b8ca
+skinparam state {
+ BackgroundColor #16324a
+ BorderColor #4aa3df
+ FontColor #e6edf7
+ BackgroundColor<<terminal>> #3a1d22
+ BorderColor<<terminal>> #e06c75
+ BackgroundColor<<finding>> #3a2a12
+ BorderColor<<finding>> #e5a50a
+ BackgroundColor<<documented>> #273241
+ BorderColor<<documented>> #61738a
+ FontColor<<documented>> #b8c4d4
+}
+skinparam note {
+ BackgroundColor #1b2330
+ BorderColor #61738a
+ FontColor #e6edf7
+}
+hide empty description
+title STORAGE: which result does a reader get at each stage?\n(implemented; storage.c, sequential, single caller: the COMMUNICATION thread)
+state "Module" as Module {
+  state "Uninitialized" as Uninitialized
+  state "Ready\nsettings_subsys_init = 0" as Ready
+  state "Init failed\nresult ignored by the caller" as InitFailed <<finding>>
+  [*] --> Uninitialized
+  Uninitialized --> Ready : storage_init
+  Uninitialized --> InitFailed : storage_init error
+}
+state "Record read (storage_read_context.result)" as Read {
+  state "Not found\n-ENOENT (initial)" as NotFound
+  state "Found\n0" as Found
+  state "Size mismatch -EINVAL\nShort read -EIO" as Bad <<terminal>>
+  [*] --> NotFound
+  NotFound --> Found : value of the requested size
+  NotFound --> Bad : other size or short read
+  Found --> NotFound : deleted record
+}
+state "Server profile image (storage_readServerProfile)" as Profile {
+  state "Magic" as Magic
+  state "Version, URL length and URL,\nkeep-alive, certificate length and certificate" as Fields
+  state "CRC-32 and embedded-NUL check" as Crc
+  state "Valid" as Valid
+  state "Invalid: structure zeroed\n-ENOENT (erased) or -EBADMSG" as Invalid <<terminal>>
+  [*] --> Magic
+  Magic --> Fields : magic ok
+  Fields --> Crc : all in bounds
+  Crc --> Valid : match
+  Magic --> Invalid
+  Fields --> Invalid
+  Crc --> Invalid
+}
+note bottom of Module
+ D2 (plausible by source reasoning): after a failed init no settings source is registered,
+ so reads report -ENOENT ("not stored") instead of an error: setup opens (accepted in a comment)
+ and registration repeats on every boot with a save that always fails.
+end note
+@enduml

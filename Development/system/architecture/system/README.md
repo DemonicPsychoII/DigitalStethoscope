@@ -10,6 +10,7 @@ Shared views remain at system level. The [viewer](review.html) presents the prod
 | System components | [system-components.puml](system-components.puml) | [SVG](rendered/system_components.svg) |
 | Electrical interfaces | [electrical-interfaces.puml](electrical-interfaces.puml) | [SVG](rendered/electrical_interfaces.svg) |
 | Software components | [software-components.puml](software-components.puml) | [SVG](rendered/software_components.svg) |
+| Input ownership | [input-ownership.puml](input-ownership.puml) | [SVG](rendered/input_ownership.svg) |
 | Threads | [runtime-ownership.puml](runtime-ownership.puml) | [SVG](rendered/runtime_ownership.svg) |
 | Listening | [listening-workflow.puml](listening-workflow.puml) | [SVG](rendered/listening_workflow.svg) |
 | MVP session / alarms | [mvp-session-state.puml](mvp-session-state.puml) | [SVG](rendered/mvp_session_state.svg) |
@@ -18,7 +19,7 @@ Shared views remain at system level. The [viewer](review.html) presents the prod
 
 Lung mode is optional beyond the MVP (TICKET-203); its paths are marked optional in the listening and MVP session views.
 
-[Feedback ground rules](feedback-principles.md) define indication ownership and fault containment.
+[Feedback ground rules](feedback-principles.md) define indication ownership and fault containment. The session view's error latch is refined in the [FEEDBACK fault-handling view](../../design/FEEDBACK/catalogue.md#fault-handling).
 
 [Server profile](server-profile.md) allocates how a device receives its one server, endpoint and trusted certificate.
 

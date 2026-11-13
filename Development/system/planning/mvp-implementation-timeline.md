@@ -27,7 +27,7 @@ for example Device registration moved to the FHIR phase on 19 October.
 | [TICKET-186](https://nfrie.atlassian.net/browse/TICKET-186) | Verify carrier wiring and physical audio operation | 12 h | 11-03 → 11-04 | BOARD |
 | [TICKET-187](https://nfrie.atlassian.net/browse/TICKET-187) | Buttons, mode selection, volume and status indicators | 10 h | 11-04 → 11-06 | CTL |
 | [TICKET-188](https://nfrie.atlassian.net/browse/TICKET-188) | Session controller, Start/Stop and alarm states | 15 h | 11-06 → 11-09 | CTL |
-| [TICKET-189](https://nfrie.atlassian.net/browse/TICKET-189) | Filter study: listening and BPM filters (each listening filter also as BPM input) | 10 h | 11-10 → 11-11 | DSP |
+| [TICKET-189](https://nfrie.atlassian.net/browse/TICKET-189) | Filter study: BPM and Murmur filter coefficients (BPM analysis always uses the BPM filter) | 10 h | 11-10 → 11-11 | DSP |
 | [TICKET-190](https://nfrie.atlassian.net/browse/TICKET-190) | Selected listening filters and BPM preprocessing | 10 h | 11-11 → 11-12 | DSP |
 | [TICKET-191](https://nfrie.atlassian.net/browse/TICKET-191) | Filtering latency and CPU/RAM cost | 5 h | 11-12 → 11-13 | VERIFY |
 | [TICKET-192](https://nfrie.atlassian.net/browse/TICKET-192) | BPM estimation, rejection and aggregation | 36 h | 11-13 → 11-19 | BPM |

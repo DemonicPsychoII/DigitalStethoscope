@@ -1,0 +1,68 @@
+@startuml state_machines_worker
+!theme cyborg
+!pragma layout smetana
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam backgroundColor #0b1018
+skinparam defaultFontColor #e6edf7
+skinparam ArrowColor #a9b8ca
+skinparam state {
+ BackgroundColor #16324a
+ BorderColor #4aa3df
+ FontColor #e6edf7
+ BackgroundColor<<terminal>> #3a1d22
+ BorderColor<<terminal>> #e06c75
+ BackgroundColor<<finding>> #3a2a12
+ BorderColor<<finding>> #e5a50a
+ BackgroundColor<<documented>> #273241
+ BorderColor<<documented>> #61738a
+ FontColor<<documented>> #b8c4d4
+}
+skinparam note {
+ BackgroundColor #1b2330
+ BorderColor #61738a
+ FontColor #e6edf7
+}
+hide empty description
+title COMMUNICATION worker: which activity runs, and where are Start, a setup request and a delivery seen?\n(implemented, integration 994ce24; communication.c runIdleCycle)
+state "Boot\nstorage_init, wifi_init,\nloadServerProfile, loadRegistration" as Boot
+state "Offline: thread ended\nState = OFFLINE" as Offline <<terminal>>
+state Dispatch <<choice>>
+state "Network activities: Start is checked at least every 200 ms;\nthe activity returns -ECANCELED and stops its own work" as Network {
+  state "Boot join\nBootJoinIsPending = true\nBootAttemptsUsed ≤ 4, 5 s gap" as BootJoin
+  state "Resume boot join\nBootJoinIsPending\n5 s delay, remaining attempts" as Resume
+  state "Idle wait\nk_sem_take(ControlChanged)\n≤ 2 min or next transport duty;\n0 s while DeliveryIsPending" as IdleWait
+  state "Idle pass, in this order:\nrunDelivery → recoverConnection →\ncloseIdleSecureConnection →\nprepareTransportInIdle → registerInIdle" as IdlePass
+  state "Setup\nState = SETUP\n(see setup statechart)" as Setup
+}
+state "Listening\nListeningIsActive; stopWiFiWork();\nState = STOPPED = acknowledgement\nwait for a control event, no timeout" as Listening
+state "Cleanup fault latched\nCleanupFaultIsLatched (until restart)\nonly runDelivery → terminal FAILED" as Fault <<terminal>>
+[*] --> Boot
+Boot --> Offline : wifi_init fails
+Boot --> BootJoin : stored network valid
+Boot --> Setup : no or invalid stored network
+Network --> Dispatch : activity returns\n(joined, JOIN_FAILURE, setup closed,\nIdle pass done)
+IdleWait --> IdlePass : semaphore or timeout\n[not listening]
+IdlePass --> Setup : RECONNECT_FAILURE
+Dispatch --> Listening : [ListeningIsActive]
+Dispatch --> Fault : [CleanupFaultIsLatched]
+Dispatch --> Setup : [SetupIsRequested]
+Dispatch --> Resume : [BootJoinIsPending]
+Dispatch --> IdleWait : [else]
+Network --> Listening : Start observed
+Listening --> Dispatch : Stop (an interrupted\nboot join resumes first)
+Network --> Fault : a stop or cancel\nwithout proven release
+Fault --> Listening : Start\n(acknowledged at once)
+Listening --> Fault : Stop [latched]
+note right of Network
+ **Delivery is serviced only in the Idle pass and in the fault branch.**
+ A job admitted while Boot join, Resume, link recovery inside the
+ Idle pass or Setup runs keeps outcome PENDING past its P13 deadline:
+ TICKET-222 (reproduced for setup, boot join and link recovery).
+end note
+note bottom of Dispatch
+ Checked at the top of every pass after a non-blocking event check,
+ in this priority: listening, fault, setup request, interrupted boot join.
+ A consumed semaphore is not lost: flags and DeliveryIsPending are re-read.
+end note
+@enduml

@@ -1,0 +1,68 @@
+@startuml state_machines_transport_registration
+!theme cyborg
+!pragma layout smetana
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam backgroundColor #0b1018
+skinparam defaultFontColor #e6edf7
+skinparam ArrowColor #a9b8ca
+skinparam state {
+ BackgroundColor #16324a
+ BorderColor #4aa3df
+ FontColor #e6edf7
+ BackgroundColor<<terminal>> #3a1d22
+ BorderColor<<terminal>> #e06c75
+ BackgroundColor<<finding>> #3a2a12
+ BorderColor<<finding>> #e5a50a
+ BackgroundColor<<documented>> #273241
+ BorderColor<<documented>> #61738a
+ FontColor<<documented>> #b8c4d4
+}
+skinparam note {
+ BackgroundColor #1b2330
+ BorderColor #61738a
+ FontColor #e6edf7
+}
+hide empty description
+title Transport readiness and registration: which facts must hold before a request, and how does each recover?\n(implemented; communication.c prepareTransportInIdle, prepareSecureConnection, registerInIdle)
+state "Transport readiness" as Transport {
+  state "Unavailable until restart\nServerProfileState ≠ CONFIGURED" as Unconfigured <<terminal>>
+  state "Unverified, due\n¬TransportIsVerified, NextPreparationTime passed" as Due
+  state "Retry gap 60 s\nNextPreparationTime in the future\nSERVER_CONNECTION_FAILURE latched once per episode" as Gap
+  state "Preparing (10 s in Idle, 3 s in delivery)\nTransportIsVerified := false\nclose retained → SNTP → certificate dates → DNS, TCP, TLS" as Preparing
+  state "Verified, retained\nTransportIsVerified ∧ SecureConnectionIsRetained\nidle deadline = min(keep-alive − 5 s, anchor limit 12.5 h)" as Retained
+  state "Verified, closed\nTransportIsVerified ∧ ¬SecureConnectionIsRetained" as Closed
+  [*] --> Unconfigured : invalid or missing profile
+  [*] --> Due : CONFIGURED
+  Due --> Preparing : Idle pass [connected, not listening, no fault]
+  Preparing --> Retained : verified
+  Preparing --> Gap : failed, or Start (no error latched)
+  Gap --> Due : time passed
+  Retained --> Closed : idle deadline, or response without keep-alive,\nor -ENOTCONN from the exchange
+  Closed --> Preparing : next registration or delivery request
+  Retained --> Preparing : request finds it stale (-ENOTCONN), once
+}
+state "Device registration" as Registration {
+  state "Unavailable until restart\nRegistrationIsAvailable = false" as RegistrationUnavailable <<terminal>>
+  state "Needed\n¬RegistrationIsReady ∧ ¬RegistrationIsUnsaved" as Needed
+  state "Waiting gap\nNextRegistrationTime: 60 s × 2^(n−1)" as RegistrationGap
+  state "Attempt (10 s)\nconditional POST Device, parse id" as Post
+  state "Id unsaved\nRegistrationIsUnsaved; next attempt only saves" as Unsaved
+  state "Ready\nRegistrationIsReady → DeliveryIsPossible published" as Ready
+  [*] --> RegistrationUnavailable : no identity or record unreadable
+  [*] --> Ready : stored record decodes for this server and board
+  [*] --> Needed : no or unusable record
+  Needed --> Post : Idle pass [Transport verified, connected,\nnot listening, no fault, gap passed]
+  Post --> Ready : id received and record saved
+  Post --> Unsaved : id received, save failed
+  Unsaved --> Ready : save succeeded
+  Post --> RegistrationGap : failed (n += 1) or Start (n unchanged)
+  Unsaved --> RegistrationGap : save failed again
+  RegistrationGap --> Needed : time passed
+  RegistrationGap --> RegistrationUnavailable : n = 4
+}
+note bottom of Transport
+ "Verified" means the last handshake verified the server with the clock of its own setup;
+ it is not "link up". These facts stay separate on purpose: one "ready" flag would lose meaning.
+end note
+@enduml

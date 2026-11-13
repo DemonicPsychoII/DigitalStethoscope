@@ -1,0 +1,27 @@
+@startuml tls13_handshake
+!theme cyborg
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam backgroundColor #0b1018
+skinparam defaultFontColor #e6edf7
+skinparam ArrowColor #a9b8ca
+skinparam sequenceMessageAlign left
+title Generic TLS 1.3 full handshake with server-only authentication (RFC 8446 sec. 2, Figure 1)
+participant Client
+participant Server
+Client -> Server : ClientHello: supported_versions, key_share,\nsignature_algorithms (sec. 4.1.2)
+Server -> Client : ServerHello: selected version, key_share (sec. 4.1.3)
+note over Client, Server : handshake keys derived; following messages encrypted
+Server -> Client : {EncryptedExtensions} (sec. 4.3.1)
+Server -> Client : {Certificate}: server certificate chain (sec. 4.4.2)
+Server -> Client : {CertificateVerify}: signature over the transcript (sec. 4.4.3)
+Server -> Client : {Finished}: MAC over the transcript (sec. 4.4.4)
+Client -> Client : verify certificate, CertificateVerify and Finished
+Client -> Server : {Finished} (sec. 4.4.4)
+note over Client, Server : application traffic keys; [Application Data] in both directions (sec. 2)
+Client <-> Server : [Application Data]
+note over Client, Server
+ Without CertificateRequest the client sends no Certificate: only the server is authenticated.
+ A connection can carry several requests; a new request needs no new handshake.
+end note
+@enduml

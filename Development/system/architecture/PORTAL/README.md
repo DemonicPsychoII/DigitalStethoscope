@@ -6,4 +6,4 @@ L1_PORTAL owns the HTTP server and page. It validates and queues typed Connect, 
 | --- | --- | --- |
 | Page/controller boundary sequence | [portal-boundary.puml](portal-boundary.puml) | [SVG](rendered/portal_boundary.svg) |
 
-[COMMUNICATION](../COMMUNICATION/README.md) defines the setup workflow. Detailed design defines the page views, transitions, endpoint table, status format and parameter values.
+[COMMUNICATION](../COMMUNICATION/README.md) defines the setup workflow. Detailed design defines the page views, transitions, endpoint table, status format and parameter values; its [page-state and command/poll views](../../design/PORTAL/interfaces-and-behavior.md#page-behavior-design) show the browser-local state that this boundary sequence leaves out.

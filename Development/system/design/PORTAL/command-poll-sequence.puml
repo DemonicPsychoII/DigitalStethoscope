@@ -1,0 +1,70 @@
+@startuml command_poll_sequence
+!theme cyborg
+!pragma layout smetana
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam backgroundColor #0b1018
+skinparam defaultFontColor #e6edf7
+skinparam ArrowColor #a9b8ca
+skinparam sequence {
+ LifeLineBorderColor #a9b8ca
+ ParticipantBorderColor #a9b8ca
+ ParticipantBackgroundColor #111826
+ GroupBodyBackgroundColor #111826
+ GroupBackgroundColor #273241
+ DividerBackgroundColor #273241
+}
+title Setup page: command and status-poll ordering
+participant "Browser page\n(local view)" as Page
+participant "L1_PORTAL\nHTTP server, queue" as Portal
+participant "L2_COMMUNICATION\nsetup workflow" as Communication
+
+== Polling: one request outstanding, next one 1 s after completion ==
+loop until the page is closed
+ Page -> Portal : GET /status
+ Portal --> Page : 200 status, cause, address, networks
+ Page -> Page : apply to view; an open form stays\nwhile status is scanning, selecting or connect_failed
+end
+
+== Connect: acceptance is queued work, not a result ==
+Page -> Page : form -> busy "Connecting"
+Page -> Portal : POST /connect (network, password)
+alt fields valid, network listed, selection ready, queue has room
+ Portal -> Portal : enqueue; publish connecting
+ Portal --> Page : 202
+else rejected
+ Portal --> Page : 400, 409, 413 or 503 (Retry-After: 1)
+ Page -> Page : busy -> list "The device did not accept the request."
+end
+Communication -> Portal : portal_waitForRequest(): Connect
+Communication -> Communication : join (portal join: 1 attempt)
+alt joined
+ Communication -> Portal : address; connected or save_failed
+ Page -> Portal : GET /status
+ Portal --> Page : connected or save_failed
+ Page -> Page : done: result, address,\nhotspot closes, page can be closed
+ Communication -> Communication : 10 s result display
+ Communication -> Portal : closing; stop server
+else join failed (recoverable)
+ Communication -> Portal : connect_failed with cause; refresh list
+ Page -> Portal : GET /status
+ Portal --> Page : connect_failed
+ Page -> Page : busy -> list "Could not connect." and cause;\nRescan or another Connect accepted
+end
+
+== Lost status: unknown connectivity, not proof of closure ==
+Page -> Portal : GET /status
+Portal -[#d08770]x Page : no answer or invalid JSON
+Page -> Page : "No answer from the device.\nIf its hotspot is gone, setup has ended."
+Page -> Portal : GET /status (polling continues)
+Portal --> Page : current status replaces the guidance if reachable
+
+note over Page, Portal #3b2a1a
+ Known issue TICKET-223 / GitHub #158, not fixed:
+ the page applies responses in arrival order without an operation
+ generation. A poll sent before Connect can return "selecting"
+ after it and reopen the list while Connect is pending; a delayed
+ rejected Connect reply can replace a newer "connected" view.
+ PORTAL admission still guards the device-side work.
+end note
+@enduml

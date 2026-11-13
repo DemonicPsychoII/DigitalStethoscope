@@ -10,9 +10,22 @@ the proposed thesis product.
 | System components | [system-components.puml](system-components.puml) | Hardware and external connections; ESP32 remains a black box. Networking is Wi-Fi plus HTTPS. |
 | Electrical interfaces | [electrical-interfaces.puml](electrical-interfaces.puml) | Product connection types and chip roles; the electrical baseline below defines the planned application wiring. Optional interfaces are outside MVP acceptance. |
 | Software components | [software-components.puml](software-components.puml) | Firmware modules: L2 orchestration, L1 hardware adapters and pure C libraries, L0 Zephyr. Libraries include no Zephyr headers; MONITOR observes across layers. |
-| Threads | [runtime-ownership.puml](runtime-ownership.puml) | Proposed workers, the modules they run and data/communication methods. Touch belongs to Input; the BPM worker belongs to `L2_AUDIO`; original-rate blocks reach BPM before the volume control; BPM uses its own analysis filter, independent of the listening switch (S04 decision D5); the filter study decides the band. |
+| Input ownership | [input-ownership.puml](input-ownership.puml) | Contact handling in L1_PHYSICALINTERFACE, policy in L2_CONTROL, commanded effects. Implemented and documented elements are marked; see [Input ownership](#input-ownership). |
+| Threads | [runtime-ownership.puml](runtime-ownership.puml) | Workers, the modules they run and their bounded handoffs; each handoff states values or handles, its overload rule (analysis gap/reset, latest-snapshot coalescing, stable-input reconciliation, delivery Busy without overwrite, portal 503) and whether it is implemented or proposed. Touch belongs to Input; the BPM worker belongs to `L2_AUDIO`; original-rate blocks reach BPM before the volume control; BPM analysis always applies the BPM filter, independent of the listening switch (S04 decision D5; 13 November 2026); the filter study decides the BPM and Murmur coefficients. |
 | Listening | [listening-workflow.puml](listening-workflow.puml) | Selected filter or Raw bypass, volume, playback and optional bounded capture/replay. Heart can select Raw; optional Lung mode is Raw listening only (TICKET-203). |
+| MVP session / alarms | [mvp-session-state.puml](mvp-session-state.puml) | Documented intent, not an implemented state machine: at `994ce24` CONTROL handles only the long press. Error latch, acknowledgement and Start admission are detailed in the [FEEDBACK fault-handling view](../../design/FEEDBACK/catalogue.md#fault-handling). |
 | BPM measurement | [measurement-workflow.puml](measurement-workflow.puml) | Freeze measurement settings and acquire until Stop; cancel without sending before 15 s, or finalize at or after 15 s subject to quality/coverage. Aggregate after listening stops, then deliver the result or validated error report. |
+
+## Input ownership
+
+![Input ownership: physical contact, contact handling, CONTROL policy and commanded effects](rendered/input_ownership.svg)
+
+*Where does debouncing end, where does policy begin, and which effects does CONTROL command?*
+
+- **Contact handling** (L1_PHYSICALINTERFACE) turns contacts into stable events: debounce, long-press detection and stable-state reconciliation of the switch and potentiometer. It decides no admission.
+- **Policy** (L2_CONTROL) alone decides admission, Busy and acknowledgement ([feedback ground rules](feedback-principles.md), [component table](../../design/system/interfaces-and-behavior.md)).
+- **Effects** (AUDIO, COMMUNICATION, LEDs) act only on CONTROL commands and never read contacts.
+- **Implemented at `994ce24`:** button debounce, long press reported once, long press in Idle → Wi-Fi setup request, long press outside Idle → `INPUT_REJECTED` dim. The short press reaches CONTROL and is ignored. Start/Stop, Busy, acknowledgement, the red button LED and the switch/potentiometer path are documented, not implemented here.
 
 ## Hardware naming
 

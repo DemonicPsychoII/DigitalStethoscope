@@ -1,0 +1,78 @@
+@startuml network_audio_handover
+!theme cyborg
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam backgroundColor #0b1018
+skinparam defaultFontColor #e6edf7
+skinparam ArrowColor #a9b8ca
+skinparam sequenceMessageAlign left
+title When may audio start after Start? Network-to-audio handover
+participant CONTROL
+participant COMMUNICATION
+participant WIFI
+participant PORTAL
+database STORAGE
+participant AUDIO
+note over CONTROL, AUDIO
+ Implemented in COMMUNICATION, WIFI, PORTAL and STORAGE at 994ce24.
+ Documented, not implemented: CONTROL sends no Start/Stop yet, never waits for the
+ release and AUDIO admission is not integrated (CONTROL posts only the setup request).
+end note
+note over CONTROL
+ Start during Analysing: Busy, nothing cancelled (documented).
+ Start during Sending: cancels the delivery job (accepted).
+end note
+CONTROL -> COMMUNICATION : Start: communication_postEvent(LISTENING_STARTED)\nwithdraws the network lease
+CONTROL -> COMMUNICATION : communication_waitForWiFiStop(timeout)\nCONTROL sends no other event during the wait
+note right of COMMUNICATION
+ Seen at the next event check; 200 ms is a candidate
+ check interval, not a bound on teardown or flash writes.
+end note
+group Cancel the operation in progress, once (in-line)
+ COMMUNICATION -> WIFI : cancel scan, disconnect join, cancel SNTP\nor cancel TLS setup/exchange (1 s stop bound)
+ WIFI --> COMMUNICATION : released, or not confirmed
+ note over WIFI
+  Stale completions rejected: SNTP, TLS and DNS check the
+  operation generation; scan results are no longer accepted.
+ end note
+end
+opt Settings commit pending
+ COMMUNICATION -> STORAGE : finish wifi/network write (up to 2 tries)\nor Device registration record save
+ note right of STORAGE
+  Not interrupted by Start. Atomicity and power-loss
+  behavior remain target evidence.
+ end note
+end
+group Cleanup pass: one stop try per service still pending (1 s each)
+ COMMUNICATION -> WIFI : time synchronization, secure connection,\nscan, connect request
+ COMMUNICATION -> PORTAL : stop setup page (HTTP server); queued requests discarded
+ COMMUNICATION -> WIFI : stop DHCP server, stop hotspot
+end
+note over WIFI
+ Retained, not work: station association and a dormant verified TLS connection.
+end note
+alt All stops confirmed
+ COMMUNICATION --> CONTROL : release acknowledged (state Stopped)
+ CONTROL -> AUDIO : admit audio: prime and start
+else A stop failed: latch WIFI_CLEANUP_FAILURE (REQ-13 Wi-Fi-only exception)
+ COMMUNICATION -> COMMUNICATION : network work disabled until restart;\nfailed services stay recorded
+ COMMUNICATION --> CONTROL : release acknowledged without proof of quiescence\nno claim that the radio is off
+ CONTROL -> AUDIO : admit audio: prime and start
+ note right of CONTROL
+  Indication through the feedback boundary is documented;
+  COMMUNICATION does not report this code at 994ce24.
+ end note
+else Release not provable: no acknowledgement within CONTROL's wait
+ CONTROL -> CONTROL : audio stays stopped; show the reason
+ note right of CONTROL
+  At 994ce24 every failed stop takes the exception
+  branch above; this branch remains for a missing
+  acknowledgement, for example a blocked worker.
+ end note
+end
+note over CONTROL, COMMUNICATION
+ Coalescing: COMMUNICATION acts on the latest requested state only.
+ A Stop before the acknowledgement leaves listening unrequested; a new
+ Start needs a new acknowledgement. CONTROL serializes Start/Stop with the wait.
+end note
+@enduml

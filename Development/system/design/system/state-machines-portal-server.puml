@@ -1,0 +1,68 @@
+@startuml state_machines_portal_server
+!theme cyborg
+!pragma layout smetana
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam backgroundColor #0b1018
+skinparam defaultFontColor #e6edf7
+skinparam ArrowColor #a9b8ca
+skinparam state {
+ BackgroundColor #16324a
+ BorderColor #4aa3df
+ FontColor #e6edf7
+ BackgroundColor<<terminal>> #3a1d22
+ BorderColor<<terminal>> #e06c75
+ BackgroundColor<<finding>> #3a2a12
+ BorderColor<<finding>> #e5a50a
+ BackgroundColor<<documented>> #273241
+ BorderColor<<documented>> #61738a
+ FontColor<<documented>> #b8c4d4
+}
+skinparam note {
+ BackgroundColor #1b2330
+ BorderColor #61738a
+ FontColor #e6edf7
+}
+hide empty description
+title PORTAL server: which state admits a page request, and when is the server proven stopped?\n(implemented; portal.c, all under portal_Lock except the start/stop waits)
+state "Server lifecycle (StopIsConfirmed, IsOpen, ServerHasListener; Zephyr fd)" as Lifecycle {
+  state "Stopped\nStopIsConfirmed, ¬IsOpen" as Stopped
+  state "Starting\nIsOpen, ¬HasListener" as Starting
+  state "Open\nHasListener (fd ≥ 0 within 1 s)" as Open
+  state "Start failed\n¬IsOpen, ¬StopIsConfirmed" as StartFailed
+  state "Stopping\n¬IsOpen, SelectionIsReady cleared;\nqueue and form wiped" as Stopping
+  state "Stop unconfirmed\nportal_start → -EBUSY until restart" as StopUnconfirmed <<terminal>>
+  [*] --> Stopped
+  Stopped --> Starting : portal_start
+  Starting --> Open : listener fd ≥ 0
+  Starting --> StartFailed : 1 s without listener
+  Open --> Stopping : portal_stop
+  Starting --> Stopping : portal_stop
+  StartFailed --> Stopping : portal_stop (bit was set before start)
+  Stopping --> Stopped : fd < 0 within 1 s\n(-EALREADY alone is no proof)
+  Stopping --> StopUnconfirmed : timeout → caller latches cleanup fault
+}
+state "Request admission (HTTP server thread)" as Admission {
+  state "Rejected\n409 wrong state, 400 invalid or unlisted network" as Rejected
+  state "Queued\nRequestCount ≤ 4; semaphore given under the lock" as Queued
+  state "Queue full\n503, Retry-After: 1" as Full
+  state Check <<choice>>
+  [*] --> Check : POST /connect, /rescan, /cancel, /activity
+  Check --> Rejected : [¬IsOpen ∨ status ∉ {SELECTING, CONNECT_FAILED}\n∨ (¬SelectionIsReady ∧ not a Rescan after a failed join)]
+  Check --> Full : [4 queued]
+  Check --> Queued : [else] publish CONNECTING, SCANNING or CLOSING
+  Queued --> [*] : portal_waitForRequest copies and wipes the entry
+}
+state "Form ownership (FormClient, Form, FormLength, FormIsTooLong)" as Form {
+  state "Free" as FormFree
+  state "Owned by one client\nchunks accumulate (≤ 320 bytes)" as FormOwned
+  [*] --> FormFree
+  FormFree --> FormOwned : first /connect chunk
+  FormOwned --> FormFree : DATA_FINAL parsed and wiped, COMPLETE,\nABORTED, rejection, or portal_stop
+}
+note bottom of Admission
+ D1 (confirmed by code reading): the status JSON turns control characters into "?"
+ and the browser replaces invalid UTF-8; a Connect then fails the strcmp against the raw
+ name and is rejected with 400. Browser response ordering: TICKET-223.
+end note
+@enduml

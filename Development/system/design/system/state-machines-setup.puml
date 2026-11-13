@@ -1,0 +1,67 @@
+@startuml state_machines_setup
+!theme cyborg
+!pragma layout smetana
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam backgroundColor #0b1018
+skinparam defaultFontColor #e6edf7
+skinparam ArrowColor #a9b8ca
+skinparam state {
+ BackgroundColor #16324a
+ BorderColor #4aa3df
+ FontColor #e6edf7
+ BackgroundColor<<terminal>> #3a1d22
+ BorderColor<<terminal>> #e06c75
+ BackgroundColor<<finding>> #3a2a12
+ BorderColor<<finding>> #e5a50a
+ BackgroundColor<<documented>> #273241
+ BorderColor<<documented>> #61738a
+ FontColor<<documented>> #b8c4d4
+}
+skinparam note {
+ BackgroundColor #1b2330
+ BorderColor #61738a
+ FontColor #e6edf7
+}
+hide empty description
+title Setup: which steps can end setup, and what does the page see at each?\n(implemented; communication.c runSetup, servePage, handlePageRequest; portal status in brackets)
+state "Setup (State = SETUP; a 2 s hold is ignored)" as Setup {
+  state "Scan\nSCAN bit; ≤ 4 attempts, 10 s each, 5 s gap" as Scan
+  state "Open services\nHOTSPOT, DHCP, PORTAL bits\nset before each start" as Open
+  state "Serving [SELECTING]\nidle deadline 5 min, restarted\nafter each handled request" as Serving
+  state "Rescan [SCANNING]" as Rescan
+  state "Join [CONNECTING]\n1 attempt, 15 s" as Join
+  state "Join failed [CONNECT_FAILED]\nqueued requests discarded and wiped;\nautomatic rescan" as JoinFailed
+  state "Save network\n2 attempts" as Save
+  state "Result display [CONNECTED or SAVE_FAILED]\n10 s; requests stay queued" as Result
+  state "Close notice [CLOSING]\n2 s" as Notice
+  [*] --> Scan
+  Scan --> Open : list ready
+  Open --> Serving : PORTAL_OPEN
+  Serving --> Rescan : Rescan request
+  Rescan --> Serving : list ready
+  Serving --> Join : Connect request (valid network)
+  Serving --> JoinFailed : Connect request (invalid network)
+  Join --> Save : joined
+  Join --> JoinFailed : failed or timed out
+  JoinFailed --> Serving : list ready
+  Save --> Result : StoredNetwork updated even if unsaved
+  Serving --> Notice : Cancel request or 5 min idle
+  Rescan --> Notice : SCAN_FAILURE
+  JoinFailed --> Notice : SCAN_FAILURE
+}
+state "Closed\nstopWiFiWork(); State = RUNNING" as Closed
+state "Not opened [CLOSING]\nSCAN_FAILURE or HOTSPOT_START_FAILURE" as NotOpened
+Scan --> NotOpened : 4 scans failed
+Open --> NotOpened : a service start failed
+Result --> Closed : 10 s or Start\n→ Idle preparation and registration
+Notice --> Closed
+Setup --> Closed : Start observed (INTERRUPTED, no notice)
+NotOpened --> Closed
+Closed --> [*]
+note right of Setup
+ submitDelivery still admits a job here (State = SETUP is not checked);
+ it is serviced only after Closed: TICKET-222.
+ Delayed page responses overwriting a newer view: TICKET-223 (page side).
+end note
+@enduml

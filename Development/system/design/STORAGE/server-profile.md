@@ -44,7 +44,7 @@ The tool writes the canonical form into the image; registration binds to the sam
 
 ### Certificate checks
 
-Before anything is written, the tool applies the device's certificate rules, so a mismatch fails on the developer PC. The device applies rules 1 and 3 at boot, enforces rule 5 through its handshake verification and applies rule 4 against its synchronized clock before each handshake, because boot has no valid clock yet. For rule 2 the device trusts only this certificate; whether the pinned verifier also checks self-issuance and signature of a directly trusted certificate is still to be demonstrated by L1_WIFI work ([TLS trust inputs](../COMMUNICATION/secure-transport.md#trust-and-server-profile-inputs)):
+Before anything is written, the tool applies all five rules, so a mismatch fails on the developer PC. Where and when the device applies each rule is in [Validation stages](#validation-stages):
 
 1. The text is exactly one parsable X.509 certificate.
 2. It is self-issued and its signature verifies with its own public key, because the device trusts it directly.
@@ -78,9 +78,28 @@ The tool rejects an image larger than the server profile area. It takes the area
 
 The tool lives in `Development/system/coding/tools/server-profile/`. Every rejection names the key and the violated rule, exits with status 1 and writes nothing to the device.
 
+## Validation stages
+
+![Server profile validation: stages, owners, timing and failure outcomes](rendered/server_profile_validation.svg)
+
+*Which check runs on the PC, at boot or during connection setup, who owns it, and what does its failure do?* Editable source: [server-profile-validation.puml](server-profile-validation.puml). The device order is the implemented order at integration `994ce24`.
+
+| Stage | Owner | When | Checks | Failure outcome | Implementation evidence |
+| --- | --- | --- | --- | --- | --- |
+| 1 Input validation | Server profile tool, `check` | Developer PC, before an image exists | File rules, canonical URL, certificate rules 1 to 5; rule 4 on the PC date | Exit 1, key and rule named, nothing written | Host tests [test_server_profile.py](../../coding/app/tests/host/server_profile_tool/test_server_profile.py) |
+| 2 Image construction | Server profile tool, `build` | Developer PC | Field table, CRC-32, image within the partition taken from the build devicetree | Rejected before writing | Same host tests (image layout, largest image, partition node) |
+| 3 Structural checks | L1_STORAGE | Device boot, once | Erased partition, magic, version, lengths, CRC-32 | Missing or invalid image; secure transport unavailable | Host test `test_server_profile_reader` in [test_storage.py](../../coding/app/tests/host/l1_storage/test_storage.py) |
+| 4 Keep-alive check | L2_COMMUNICATION | Device boot, after stage 3 | Server keep-alive above 5 s | Invalid configuration; secure transport unavailable | `communication_loadServerProfile` in [communication.c](../../coding/app/L2_application/L2_COMMUNICATION/communication.c); no boot-rejection test found |
+| 5 Endpoint and certificate | L1_WIFI | Device boot, after stage 4 | Usable URL, exactly one parsable certificate (rule 1), Subject Alternative Name matching the host type (rule 3) | Invalid configuration; secure transport unavailable | `wifi_configureSecureServer` in [wifi_secure_connection.c](../../coding/app/L1_services/L1_WIFI/wifi_secure_connection.c); no host test found |
+| 6 Pre-handshake validity | L2_COMMUNICATION | Each secure connection setup, after its SNTP exchange | Rule 4 against the prepared UTC time | No ClientHello; failed preparation (`SERVER_CONNECTION_FAILURE` path) | Host simulation `test_certificate_outside_its_validity_is_rejected_before_the_handshake` in [test_delivery.py](../../coding/app/tests/host/test_delivery.py) |
+| 7 Handshake verification | L1_WIFI with Mbed TLS | Each handshake | TLS 1.3 with required verification, only this certificate trusted, rule 5, peer dates again | Handshake fails; [TLS failure handling](../COMMUNICATION/secure-transport.md#failure-indication) | Hardware procedure `foreign-certificate` in [device_regression.py](../../testing/hardware/device_regression.py); no result cited here |
+| Keep-alive use | L2_COMMUNICATION | While a verified connection is retained | Close at server keep-alive minus 5 s or the clock-anchor limit | Connection replaced at the next use | Host simulation keep-alive tests in [test_delivery.py](../../coding/app/tests/host/test_delivery.py) |
+
+**Rule 2 on the device needs implementation evidence.** The device configures the server certificate as its only trust anchor with required verification. It has no explicit self-issuance or self-signature check, and no device test shows that verification rejects a directly trusted certificate that is not self-issued. Later L1_WIFI work must demonstrate this or add the check ([TLS trust inputs](../COMMUNICATION/secure-transport.md#trust-and-server-profile-inputs)). Until then rule 2 is enforced only by the tool.
+
 ## Device behavior
 
-Boot reads and validates the image once, as the [flash layout](interfaces-and-behavior.md#flash-layout) defines; WIFI then applies certificate rules 1 and 3. Every boot failure leaves secure transport unavailable with a configuration cause and keeps Wi-Fi setup and offline listening working. Validity is checked later, after the setup's time synchronization and before each handshake, as the [TLS design](../COMMUNICATION/secure-transport.md) defines:
+Boot results of [validation stages](#validation-stages) 3 to 5. Every boot failure leaves secure transport unavailable with a configuration cause and keeps Wi-Fi setup and offline listening working; validity (rule 4) is checked later, before each handshake ([TLS design](../COMMUNICATION/secure-transport.md)):
 
 | Image state | Boot result |
 | --- | --- |

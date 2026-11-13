@@ -1,0 +1,61 @@
+@startuml state_machines_wifi_workers
+!theme cyborg
+!pragma layout smetana
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam backgroundColor #0b1018
+skinparam defaultFontColor #e6edf7
+skinparam ArrowColor #a9b8ca
+skinparam state {
+ BackgroundColor #16324a
+ BorderColor #4aa3df
+ FontColor #e6edf7
+ BackgroundColor<<terminal>> #3a1d22
+ BorderColor<<terminal>> #e06c75
+ BackgroundColor<<finding>> #3a2a12
+ BorderColor<<finding>> #e5a50a
+ BackgroundColor<<documented>> #273241
+ BorderColor<<documented>> #61738a
+ FontColor<<documented>> #b8c4d4
+}
+skinparam note {
+ BackgroundColor #1b2330
+ BorderColor #61738a
+ FontColor #e6edf7
+}
+hide empty description
+title SNTP and TLS workers: when may a new operation start after a cancel?\n(implemented; wifi.c time synchronization, wifi_secure_connection.c; explicit state enums plus implicit ownership)
+state "Shared lifecycle (SNTP: wifi_TimeSynchronizationState, TLS: wifi_SecureState; under each module's lock)" as Lifecycle {
+  state "IDLE" as Idle
+  state "PENDING, unclaimed\ngeneration += 1; work submitted" as Unclaimed
+  state "PENDING, claimed\nIsClaimed: the worker owns socket, session, DNS lookup\n100 ms polls re-check admission" as Claimed
+  state "CANCELLING\nStart returns -EBUSY" as Cancelling
+  state "COMPLETED\nresult published after resources are released" as Completed
+  [*] --> Idle
+  Idle --> Unclaimed : Start
+  Completed --> Unclaimed : Start [TLS connect: no retained connection]
+  Unclaimed --> Claimed : worker claims [current generation]
+  Claimed --> Completed : resources released, publish [generation current]
+  Unclaimed --> Completed : Cancel before claim: publish -ECANCELED
+  Claimed --> Cancelling : Cancel
+  Cancelling --> Completed : worker released resources
+  Cancelling --> Cancelling : Cancel waits ≤ 1 s: -ETIMEDOUT,\nstate kept (caller latches the cleanup fault)
+}
+state "TLS retained connection (wifi_SecureConnectionIsRetained, orthogonal)" as Retention {
+  state "None" as NoConnection
+  state "Retained\nverified socket and session" as Kept
+  state "Exchange PENDING\none request and response" as Exchange
+  [*] --> NoConnection
+  NoConnection --> Kept : connect COMPLETED ok\n(retain + publish in one locked step)
+  Kept --> Exchange : wifi_startSecureExchange\n(no connection: -ENOTCONN)
+  Exchange --> Kept : response complete, keep-alive,\nno buffered TLS bytes
+  Exchange --> NoConnection : otherwise, cancel, or failure
+  Kept --> NoConnection : wifi_closeSecureConnection\n[not PENDING or CANCELLING]
+}
+note bottom of Lifecycle
+ Protections to keep: generation + state in the "is current" check; one claim per generation;
+ CANCELLING blocks Start; release before publish; a stale publish is ignored;
+ cancellation wins over a sample or connection that arrived meanwhile;
+ the DNS lookup is released outside the module lock (resolver lock → module lock only).
+end note
+@enduml

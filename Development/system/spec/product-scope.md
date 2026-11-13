@@ -71,8 +71,8 @@ overlay is an implementation, not a wiring source.
 | Term | Meaning |
 |---|---|
 | Raw | No listening band filter; sample normalization, gain and output saturation still apply. |
-| Listening filter | Operator-selected Raw / Murmur / BPM emphasis applied to audible output. |
-| Analysis filter | Independently selected processing for BPM; never silently follows the listening switch. |
+| Listening filter | Operator-selected switch position applied to the audible output: Raw (no band filter), Murmur (filter estimated to be better for murmur detection) or BPM (the analysis filter, so the listener hears what the analysis gets). |
+| Analysis filter | The BPM filter, always applied by BPM analysis to its own pre-volume input; independent of the listening switch. The filter study (TICKET-189) chooses its coefficients. |
 | Recording / clip | Bounded volatile raw audio for replay; not a completed BPM result. |
 | Measurement session | Bounded original-rate interval aggregated into one frozen result with a unique identifier. |
 | Ready | Essential audio capability initialized; physical operation still needs target evidence. |

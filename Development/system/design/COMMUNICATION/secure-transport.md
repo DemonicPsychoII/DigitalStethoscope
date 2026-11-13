@@ -6,6 +6,18 @@ This Design-stage contract refines [TLS architecture PR #80](https://github.com/
 
 Nico accepted TLS 1.3 only, server-only authentication, a separate public server certificate, connection reuse, bounded preparation and recovery, offline listening, delivery-budget interaction and clock invalidation in this conversation [1]. Connection keep-alive, reconnect timing and the connection-setup budget within the delivery timeout and retry parameter [P13](../system/parameters.md) were decided in a follow-up review on 29 October 2026 [7]. The design review of 2 November 2026 moved endpoint and certificate into a separate server profile image and placed one SNTP exchange inside every connection setup [8]. The service interfaces below are proposed refinements; agreement on behavior is not target acceptance.
 
+## TLS 1.3 handshake (generic protocol)
+
+![Generic TLS 1.3 handshake](rendered/tls13_handshake.svg)
+
+*What does a TLS 1.3 handshake exchange before application data flows?* Source: [tls13-handshake.puml](tls13-handshake.puml). This is the protocol as RFC 8446 defines it [9], not project policy:
+
+- The client opens with ClientHello; ServerHello completes the key exchange, and every later handshake message is encrypted.
+- The server proves its identity with Certificate, CertificateVerify (a signature over the handshake transcript) and Finished. The client sends a Certificate only if the server sent a CertificateRequest.
+- After both Finished messages, application data flows in both directions; one connection can carry several requests without a new handshake [2].
+
+Project policy follows in the sections below: TLS 1.3 only, one directly trusted server certificate, endpoint SAN and validity checked against the clock of the SNTP exchange that opens the setup, and no client certificate.
+
 ## Trust and server profile inputs
 
 Each device talks to exactly one server. Its HTTPS endpoint (hostname or IP, port and base path), the PEM public server certificate and the server keep-alive timeout travel together in a server profile image, separate from the firmware. A separate flash command writes that image to the server profile partition of the [flash layout](../STORAGE/interfaces-and-behavior.md#flash-layout); a firmware update leaves it unchanged. Boot validates the image once (format version, lengths, CRC-32 and certificate parsing). A missing or invalid image leaves secure transport unavailable with a configuration cause; there is no fallback endpoint or certificate. Never place the server private key or keystore in the image. Network or portal enrollment, a project CA, older TLS versions and plain-HTTP fallback are outside this version.
@@ -48,9 +60,42 @@ Before every new application request, check the retained peer's validity interva
 
 ## Delivery budget boundary
 
-Reconnection is the expected delivery path; reuse is an optimisation. P13 keeps one ten-second deadline from Stop, at most four attempts and two-second gaps after transient failure. Within an attempt, connection setup (SNTP, DNS, TCP, TLS and verification) has its own three-second limit and write plus receipt keep one second, both capped by the remaining global time. A failed connection setup counts as a failed attempt. Delivery reconnection starts at a Stop that enters finalisation, once audio is stopped and CONTROL has handed the network lease to delivery preparation; it runs in parallel with result finalisation, issues no request before the delivery decision, and never uses the ten-second Idle preparation allowance. If the delivery decision grants no job, the setup is cancelled and the lease released. The three-second and one-second values are provisional until TICKET-213 measures handshake and conditional-POST times on the target.
+![Delivery budget timeline](rendered/delivery_budget.svg)
 
-A usable retained connection is preferred but is not a mandatory delivery prerequisite: transport loss alone allows a bounded reconnect if the other delivery prerequisites hold. A missing or invalid server profile image follows `DELIVERY_NOT_POSSIBLE` before issuance. Certificate/name/validity failure discovered during an issued attempt is terminal `DELIVERY_FAILURE`; transient loss, including a failed SNTP exchange, follows P13 retry rules. A result that has no qualifying clock anchor when P13 ends latches `SERVER_CONNECTION_FAILURE` under the SNTP design. Delivery reconnects are governed by P13 rather than the Idle 60-second recovery gap. Frozen payload, identity and timestamp remain unchanged; no delayed queue is introduced. Registration eligibility remains the later FHIR design's responsibility.
+*How many delivery attempts fit into 10 s after Stop?* Source: [delivery-budget.puml](delivery-budget.puml). The examples assume submission at Stop; finalization time comes out of the same budget. The three-second and one-second values are provisional until TICKET-213 measures handshake and conditional-POST times on the target.
+
+Reconnection is the expected delivery path; reuse is an optimisation. P13 keeps one ten-second deadline from Stop:
+
+| Rule | Value or behavior |
+| --- | --- |
+| Attempts | At most four; a failed connection setup counts as a failed attempt |
+| Connection setup per attempt | Three seconds for SNTP, DNS, TCP, TLS and verification, only when no eligible retained connection exists; never the ten-second Idle preparation allowance |
+| Write and receipt per attempt | One second |
+| Truncation | Both limits are capped by the remaining budget, which ends one P23 stop bound (1 s) before the deadline |
+| Retry gap | Two seconds, starting after the failed attempt has quiesced; no gap that would reach the end of the budget |
+| Cleanup reserve | 1 s: at most one service, time synchronization or secure connection, is pending during an attempt ([P23 cleanup limits](parameters.md#cleanup-limits-p23)) |
+| Nominal arithmetic | Four full attempts need 4 × (3 s + 1 s) + 3 × 2 s = 22 s and cannot fit |
+
+**Reconnect trigger (project decision of 13 November 2026 [10], aligned with the code).** Delivery connection setup starts when CONTROL submits the finalized job with `communication_submitDelivery`, not at Stop in parallel with finalization. The deadline stays Stop + 10 s; CONTROL passes it with the job. Reasons:
+
+- No connection setup is wasted or must be cancelled when no job is granted: Stop before 15 s, Wi-Fi unconfigured or failed delivery prerequisites.
+- Finalization is short.
+- An eligible retained verified connection is reused without any setup.
+
+Known issue, not fixed: if Idle preparation, registration or Wi-Fi setup occupies the worker at submission, the job waits and can stay pending past its deadline ([TICKET-222](https://nfrie.atlassian.net/browse/TICKET-222), [GitHub #157](https://github.com/DemonicPsychoII/DigitalStethoscope/issues/157)).
+
+**Start during Sending (accepted behavior [10]).** Start cancels the delivery job instead of being rejected as Busy. Start during Analysing stays Busy. In `communication.c` at `994ce24`:
+
+| Start arrives during | What happens |
+| --- | --- |
+| Connection setup (SNTP or TLS) | The setup is cancelled in-line; the attempt is terminal and no further attempt starts |
+| Write and receipt | The exchange is cancelled and the connection closed; the server may already hold the Observation |
+| Retry gap | The gap ends at once; no further attempt starts |
+| Admission, before the worker starts the job | The job waits until listening ends, then ends without an attempt once its budget has passed |
+
+In every case the job ends with outcome FAILED (`DELIVERY_FAILURE`), or NO_CLOCK (`SERVER_CONNECTION_FAILURE`) if no qualifying clock anchor ever froze the result. The result is lost; nothing is queued. The job slot is released, the cleanup pass runs and COMMUNICATION acknowledges the release, so audio starts. If the cancellation itself fails, WIFI_CLEANUP_FAILURE is latched and audio is still released under REQ-13. CONTROL latching the indication from the outcome is documented, not implemented.
+
+A usable retained connection is preferred but is not a mandatory delivery prerequisite: transport loss alone allows a bounded reconnect if the other delivery prerequisites hold. A missing or invalid server profile image follows `DELIVERY_NOT_POSSIBLE` before issuance. Certificate/name/validity failure discovered during an issued attempt is terminal `DELIVERY_FAILURE`; transient loss, including a failed SNTP exchange, follows P13 retry rules. A result that has no qualifying clock anchor when P13 ends latches `SERVER_CONNECTION_FAILURE` under the SNTP design. Delivery reconnects are governed by P13 rather than the Idle 60-second recovery gap. Frozen payload, identity and timestamp remain unchanged; no delayed queue is introduced. The [conditional-create retry](server-communication.md#observation-construction-and-delivery) shows why a retry is safe. Registration eligibility remains the FHIR design's responsibility.
 
 ## Failure indication
 
@@ -66,7 +111,7 @@ Failed TLS preparation latches `SERVER_CONNECTION_FAILURE`, preserving standalon
 | P26-RETRY | 60 seconds after failed/interrupted issued preparation completes; ongoing recovery while Idle |
 | P26-REUSE | Retain a dormant verified context; no application heartbeat or proactive reconnect during listening; recheck time/configuration/peer validity, idle age and a non-blocking close poll before reuse; fall back to closing at Start if TICKET-213 shows the connection does not survive |
 | P26-KEEPALIVE | Device keep-alive timeout = server keep-alive minus 5 seconds, server value from the server profile image; test deployment server keep-alive 10 minutes, default 60 seconds as comparison |
-| P26-DELIVERY | P13 remains authoritative: per attempt three seconds connection setup including SNTP plus one second write and receipt, ten seconds total from Stop; reconnection starts at Stop; provisional until TICKET-213 |
+| P26-DELIVERY | P13 remains authoritative: per attempt three seconds connection setup including SNTP plus one second write and receipt, ten seconds total from Stop; reconnection starts at job submission; provisional until TICKET-213 |
 
 ## Investigation basis and limitations
 
@@ -110,3 +155,7 @@ These are future verification expectations, not an executed or generated test ba
 [7] Nico, *TLS keep-alive and reconnect decisions*, personal communication, T3 Code, 29 October 2026, [conversation](t3-thread://v2/d5e44f69-2ecc-4a3e-917b-31a7b084c12b/e4e74eaa-efe8-48c5-8071-2589f46555a2), accessed 29 October 2026. Project decisions, not measurements.
 
 [8] Andreas Summerer and Nico, *Design review of time, TLS and FHIR*, review meeting, 2 November 2026, with Nico's resolutions in the [decision record](../../planning/mvp-decisions-2026-11-02.md), accessed 2 November 2026. Project decisions, not measurements.
+
+[9] Eric Rescorla, *The Transport Layer Security (TLS) Protocol Version 1.3*, IETF RFC 8446, August 2018, section 2 (Figure 1) and sections 4.1.2, 4.1.3, 4.3.1, 4.4.2, 4.4.3 and 4.4.4, DOI [10.17487/RFC8446](https://doi.org/10.17487/RFC8446), accessed 13 November 2026.
+
+[10] Nico, *Decisions on the explanatory-diagram audit of 13 November 2026*, items 16 and 17, personal communication relayed by the coordinating agent session, T3 Code, 13 November 2026, accessed 13 November 2026. Project decisions, not measurements; no conversation link was available to the authoring session.

@@ -6,6 +6,21 @@ This Design-stage contract refines [SNTP architecture PR #78](https://github.com
 
 Nico accepted the source/trust assumption, Zephyr uncertainty estimate, shared certificate/measurement clock basis, monotonic durations and cancellation during the SNTP grilling rounds [1]. The design review of 2 November 2026 placed SNTP inside every TLS connection setup, replaced the Idle refresh schedule by a computed mapping limit and merged the time error into the server-connection error [4]. Agreement on those behaviors is distinct from approval of the proposed interfaces below or target verification.
 
+## SNTP exchange (generic protocol)
+
+![Generic SNTP request and response](rendered/sntp_exchange.svg)
+
+*Which clock supplies each SNTP timestamp?* Source: [sntp-exchange.puml](sntp-exchange.puml). This is the protocol as the standards define it, not project policy:
+
+| Timestamp | Meaning | Clock |
+| --- | --- | --- |
+| T1, Originate | Request sent; the client writes it into the request's Transmit Timestamp and the server copies it | Client |
+| T2, Receive | Request received | Server |
+| T3, Transmit | Reply sent | Server |
+| T4, Destination | Reply received; not carried in the packet | Client |
+
+Round-trip delay d = (T4 − T1) − (T3 − T2); clock offset t = ((T2 − T1) + (T3 − T4)) / 2 [3, section 5; 6, section 8]. RFC 5905 obsoletes RFC 4330 and keeps SNTP as an interoperable subset of NTPv4 [6, section 14]. Without cryptographic authentication the reply is not authenticated [3, section 11]. Project policy, including the uncertainty estimate the device uses instead of its own offset calculation, follows in the sections below.
+
 ## Ownership and proposed interfaces
 
 CONTROL grants the exclusive network lease. COMMUNICATION owns deadlines, readiness and scheduling. WIFI owns DNS/SNTP resources, native-result normalization and platform clock access. Callbacks publish results; they do not apply the clock, change controller state or retry.
@@ -25,6 +40,10 @@ Each accepted operation produces one terminal result. Cancellation invalidates i
 
 ## Flow and scheduling
 
+![SNTP exchange inside one connection setup](rendered/connection_setup.svg)
+
+*What runs inside one connection setup, and under which deadline?* Source: [connection-setup.puml](connection-setup.puml). This replaces the superseded independent refresh and expiry schedule of the presentation of 2 November 2026; that presentation stays unchanged as historical evidence.
+
 1. Boot starts without a valid anchor. A persisted timestamp does not establish freshness; offline listening remains available.
 2. Every TLS connection setup under the [TLS design](secure-transport.md) begins with one SNTP exchange, so that only the server DNS lookup and TCP connection lie between the applied clock and the ClientHello, the first message of the TLS handshake. This applies to the Idle preparation and every delivery reconnect. Reusing an open verified connection sends no ClientHello and runs no SNTP. There is no separate SNTP schedule, refresh timer or internet/HTTP probe.
 3. The exchange shares the deadline of the connection setup that contains it: the ten-second Idle preparation of the [P26 TLS parameters](secure-transport.md#parameters), or the three-second connection-setup budget of a delivery attempt under the delivery timeout and retry parameter [P13](../system/parameters.md). DNS, request, response, normalization and clock application share the remaining budget; short waits never reset it. Cancellation cleanup has the separate P23 stop bound.
@@ -40,7 +59,16 @@ Enable `CONFIG_SNTP_UNCERTAINTY` and retain Zephyr's estimate [2]. It estimates 
 
 Set Zephyr's real-time software clock; no battery-backed RTC is assumed. Advance the receive-time estimate by elapsed kernel monotonic time before applying it. Keep the applied UTC/monotonic anchor and record the measurement end in monotonic time. Corrections occur outside listening and may step real time without changing duration or rewriting a frozen result.
 
-Map the measurement end to UTC only from a qualifying anchor: the monotonic distance between anchor and measurement end is at most 12.5 hours. The limit is (1 s − 100 ms) / 20 ppm: 1 second maximum deviation, a 100 ms SNTP uncertainty budget (observed about 50 ms × safety factor 2) and 20 ppm drift (datasheet ±10 ppm × safety factor 2). An exchange that reports more than 100 ms uncertainty does not fit the budget and fails like any other exchange. The 1 second maximum deviation follows the Consistent Time profile of IHE (Integrating the Healthcare Enterprise), which requires a median error of less than one second and names SNTP sufficient for it [5]; FHIR, the HAPI FHIR server and TLS give no tighter limit. If the anchor held at Stop qualifies, freeze the UTC end at Stop. Otherwise, for example after a long Idle period without a new setup, freeze it from the anchor applied by the delivery connection setup, before the first request. The UTC end and measurement identity are frozen exactly once; retries, later exchanges and backward corrections never change them. The existing uniqueness rule remains mandatory; never invent a timestamp to avoid a collision.
+![Clock mapping timeline](rendered/clock_mapping.svg)
+
+*Which clock setting labels the measurement end, and when is it frozen?* Source: [clock-mapping.puml](clock-mapping.puml).
+
+- **Qualifying anchor.** Map the measurement end to UTC only from an anchor whose monotonic distance from the measurement end is at most 12.5 hours; it may lie before or after the end. UTC end = anchor UTC + (measurement end − anchor monotonic time).
+- **Limit derivation.** (1 s − 100 ms) / 20 ppm: 1 second maximum deviation, a 100 ms SNTP uncertainty budget (observed about 50 ms × safety factor 2) and 20 ppm drift (datasheet ±10 ppm × safety factor 2). An exchange that reports more than 100 ms uncertainty does not fit the budget and fails like any other exchange.
+- **Deviation basis.** The 1 second maximum deviation follows the Consistent Time profile of IHE (Integrating the Healthcare Enterprise), which requires a median error of less than one second and names SNTP sufficient for it [5]; FHIR, the HAPI FHIR server and TLS give no tighter limit.
+- **Freeze point.** At job admission (`communication_submitDelivery`), freeze the server Device id and, if the anchor held then qualifies, map and freeze the UTC end. Otherwise, for example after a long Idle period without a new setup, map it from the anchor applied by the first delivery connection setup's SNTP exchange, before the first request. Serialize the body once before the first request; every retry sends these bytes.
+- **Once only.** The UTC end and measurement identity are frozen exactly once; retries, later exchanges and backward or forward corrections never change them. The existing uniqueness rule remains mandatory; never invent a timestamp to avoid a collision.
+- **Implementation status.** The admission freeze point is introduced by a parallel code change in a separate pull request. At `994ce24` the code freezes when the worker starts the job and reads the Device id at that moment.
 
 A result without a qualifying anchor by the end of the P13 budget is not sent and latches `SERVER_CONNECTION_FAILURE`. No delayed delivery queue is introduced. A retained connection is reused for delivery only while the anchor of its handshake qualifies; otherwise delivery opens a new setup with a fresh exchange.
 
@@ -74,7 +102,7 @@ The initial source requires usable DNS and reachable public UDP/123; Wi-Fi alone
 | Boot and successful exchange | REQ-09/11; VT-07/08 | No persisted ready clock; the first TLS setup applies the UTC/monotonic anchor before its ClientHello. |
 | DNS failure, blocked UDP, rejected response (including leap indicator 3 or stratum outside 1–15) | REQ-09/13; VT-08/09 | The containing connection setup fails within its deadline and follows P26 or P13 recovery; `SERVER_CONNECTION_FAILURE` without blocking listening. |
 | Start during DNS/wait/completion race | REQ-02/13; VT-08/09 | Quiesce before audio; stale completion cannot apply time; cancellation raises no time-sync error. |
-| Mapping limit and long Idle period | REQ-09/10/13; VT-07/08/09 | A qualifying anchor freezes the end at Stop; otherwise the delivery setup anchor freezes it; no qualifying anchor sends nothing and latches `SERVER_CONNECTION_FAILURE`. |
+| Mapping limit and long Idle period | REQ-09/10/13; VT-07/08/09 | A qualifying anchor at job admission freezes the end there; otherwise the first delivery setup anchor freezes it; no qualifying anchor sends nothing and latches `SERVER_CONNECTION_FAILURE`. |
 | Correction and frozen measurement | REQ-09/10; VT-07 | Monotonic duration and frozen UTC/identity stay unchanged across retries and later exchanges; no delayed resend. |
 | Native units, unset time, subsecond carry | REQ-09/11; VT-07/08 | Consistent UTC conversion and independently sampled monotonic anchor. |
 | Cleanup fault | REQ-13/14; VT-08/09/11 | Failed cancellation latches `WIFI_CLEANUP_FAILURE`, disables network work and releases audio without reporting quiescence. |
@@ -87,8 +115,10 @@ These allocate future verification, not generated tests or execution. DNS/socket
 
 [2] The Zephyr Project, *SNTP API, Kconfig, implementation and DNS resolver API*, Zephyr source repository revision `357467a011cd2557a1a3f0b4be83d817c4addc9b`, publication year unverified; [SNTP header](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/include/zephyr/net/sntp.h), [Kconfig](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/subsys/net/lib/sntp/Kconfig), [parser](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/subsys/net/lib/sntp/sntp.c), [helper](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/subsys/net/lib/sntp/sntp_simple.c), [DNS header](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/include/zephyr/net/dns_resolve.h), accessed 28 October 2026. The convenience helper resolves before its exchange timeout and resends internally; split DNS/SNTP APIs underpin the proposed cancellable adapter. Target behavior remains unverified.
 
-[3] David L. Mills, *Simple Network Time Protocol (SNTP) Version 4 for IPv4, IPv6 and OSI*, IETF RFC 4330, January 2006, sections 4, 5 and 9, DOI: 10.17487/RFC4330, <https://www.rfc-editor.org/rfc/rfc4330#section-9>. Access recorded 24 October 2026 in the [source register](../../../../thesis-material/quellen.md#ietf_sntp_4330_2006); no new access claimed.
+[3] David L. Mills, *Simple Network Time Protocol (SNTP) Version 4 for IPv4, IPv6 and OSI*, IETF RFC 4330, January 2006, sections 4, 5 and 11, DOI: 10.17487/RFC4330, <https://www.rfc-editor.org/rfc/rfc4330#section-11>. Access recorded 24 October 2026 in the [source register](../../../../thesis-material/quellen.md#ietf_sntp_4330_2006); section numbers rechecked 13 November 2026: section 11, not 9, holds the security considerations.
 
 [4] Andreas Summerer and Nico, *Design review of time, TLS and FHIR*, review meeting, 2 November 2026, with Nico's resolutions in the [decision record](../../planning/mvp-decisions-2026-11-02.md), accessed 2 November 2026. Project decisions; the drift figure is a datasheet calculation, not a measurement.
 
 [5] IHE International, *IHE IT Infrastructure (ITI) Technical Framework, Volume 1, section 7 Consistent Time (CT)* and *Volume 2, section 3.1.4.1.2 Maintain Time [ITI-1]*, Revision 20.0, Final Text, 4 August 2023, <https://profiles.ihe.net/ITI/TF/Volume1/ch-7.html> and <https://profiles.ihe.net/ITI/TF/Volume2/ITI-1.html>, accessed 2 November 2026. The profile states a median error; using 1 s as a worst-case bound is a project decision.
+
+[6] David L. Mills, Jim Martin (editor), Jack Burbank and William Kasch, *Network Time Protocol Version 4: Protocol and Algorithms Specification*, IETF RFC 5905, June 2010, sections 8 and 14, DOI: 10.17487/RFC5905, <https://www.rfc-editor.org/rfc/rfc5905>, accessed 13 November 2026.

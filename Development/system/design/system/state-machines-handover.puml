@@ -1,0 +1,61 @@
+@startuml state_machines_handover
+!theme cyborg
+!pragma layout smetana
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam backgroundColor #0b1018
+skinparam defaultFontColor #e6edf7
+skinparam ArrowColor #a9b8ca
+skinparam state {
+ BackgroundColor #16324a
+ BorderColor #4aa3df
+ FontColor #e6edf7
+ BackgroundColor<<terminal>> #3a1d22
+ BorderColor<<terminal>> #e06c75
+ BackgroundColor<<finding>> #3a2a12
+ BorderColor<<finding>> #e5a50a
+ BackgroundColor<<documented>> #273241
+ BorderColor<<documented>> #61738a
+ FontColor<<documented>> #b8c4d4
+}
+skinparam note {
+ BackgroundColor #1b2330
+ BorderColor #61738a
+ FontColor #e6edf7
+}
+hide empty description
+title Network/audio handover: when may CONTROL treat the network work as released?\n(implemented; communication.c PendingWork, stopWiFiWork, waitForWiFiStop)
+state "Per network service (7 bits in PendingWork)" as Service {
+  state "Not running\nbit clear" as Clear
+  state "Accepted or running\nbit set before the start call,\nso a partly started service is stopped too" as Running
+  state "Stop requested\nwork->stop() with its own bounded wait" as Stopping
+  state "Release proven\nstop returned 0; bit cleared" as Released
+  state "Release unproven\nbit stays set" as Unproven <<terminal>>
+  [*] --> Clear
+  Clear --> Running : start call
+  Running --> Clear : terminal completion inside the activity\n(L1 has already released its resources)
+  Running --> Stopping : Start observed, or the activity's own deadline
+  Stopping --> Released : 0
+  Stopping --> Unproven : error or timeout
+  Released --> Clear
+}
+state "Acknowledgement to CONTROL" as Acknowledgement {
+  state "Running\nState = RUNNING" as NotAcknowledged
+  state "Stopped\nState = STOPPED, ListeningIsRequested" as Acknowledged
+  [*] --> NotAcknowledged
+  NotAcknowledged --> Acknowledged : thread in Listening branch after stopWiFiWork()\n[all bits clear, or cleanup fault latched]
+  Acknowledged --> NotAcknowledged : postEvent(Start or Stop):\na new confirmation is needed
+}
+Unproven --> Acknowledged : latchCleanupFault():\nnetwork disabled until restart;\naudio may start (REQ-13 exception)
+note bottom of Service
+ Stop order (communication_WorkList): time synchronization, secure connection,
+ scan, connect request, setup page, DHCP server, hotspot.
+ A retained station association and a retained TLS connection are not work.
+ **Unclear:** the design lists five setup services with one total stop bound (P23);
+ the implementation tracks seven bits and has no total cap. No total bound is drawn.
+end note
+note bottom of Acknowledgement
+ communication_waitForWiFiStop returns 0 only for ListeningIsRequested and
+ State STOPPED or OFFLINE; otherwise it polls in 200 ms steps until its timeout.
+end note
+@enduml

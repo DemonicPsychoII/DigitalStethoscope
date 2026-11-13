@@ -1,0 +1,40 @@
+@startuml shared_delivery_provenance
+!theme cyborg
+!pragma layout smetana
+skinparam shadowing false
+skinparam rectangle {
+ BackgroundColor<<implemented>> #16324a
+ BorderColor<<implemented>> #4aa3df
+ BackgroundColor<<decided>> #2b2f1d
+ BorderColor<<decided>> #b8a14a
+ FontColor<<decided>> #e8dca8
+ BackgroundColor<<documented>> #273241
+ BorderColor<<documented>> #61738a
+ FontColor<<documented>> #b8c4d4
+}
+skinparam defaultFontName SansSerif
+title Where is each Observation input frozen?
+top to bottom direction
+rectangle "Mutable inputs (live state)\nswitch / filter, Heart / Lung, point, configuration,\npending examination request, server Device id,\nSNTP clock anchors, BPM estimates" as live
+rectangle "Session admission (accepted Start)\ncopy point, configuration, filter IDs,\nexamination identity / supplied patient reference\n—\nnot produced: CONTROL session, point, BPM / filter / AUDIO\nare skeletons; examination reception unimplemented" as admission <<documented>>
+rectangle "Finalized result (Finalizing): frozen context + this session's estimates\nimplemented subset communication_delivery:\nkind: heart rate or poor-signal report,\nBPM value + declared precision,\nmonotonic measurement end\n—\nfull MeasurementResult fields: documented only" as result <<implemented>>
+rectangle "Admitted job: CONTROL calls communication_submitDelivery\ncopy of the result; freeze server Device id;\nfreeze UTC measurement end if a qualifying\nanchor already maps it (dashed: read once from live state)" as job <<decided>>
+rectangle "First delivery connection setup (only if UTC end still open)\nits SNTP exchange supplies the anchor;\nfreeze UTC end once if still open" as setup <<implemented>>
+rectangle "Serialize once before the first request\nObservation body + If-None-Exist condition\n(identifier = Device id : UTC end)" as bytes <<implemented>>
+rectangle "Attempts 1..4 (P13)\nevery retry sends the identical bytes" as retries <<implemented>>
+live --> admission
+admission --> result
+live --> result
+result --> job
+live ..> job
+job --> setup
+job --> bytes
+setup --> bytes
+bytes --> retries
+legend bottom
+ Blue = implemented in COMMUNICATION (host simulation; no CONTROL caller yet).
+ Yellow = decided; COMMUNICATION change in a parallel PR (at 994ce24 both are read at the first successful freeze: job start or after a setup).
+ Grey = documented, not implemented.
+ After its freeze point a value is never read again from live state; no anchor by the deadline: SERVER_CONNECTION_FAILURE, nothing sent.
+endlegend
+@enduml

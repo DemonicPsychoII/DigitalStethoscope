@@ -1,0 +1,51 @@
+@startuml shared_filter_signal_flow
+!theme cyborg
+!pragma layout smetana
+skinparam shadowing false
+skinparam component {
+ BackgroundColor<<candidate>> #2b2f1d
+ BorderColor<<candidate>> #b8a14a
+ FontColor<<candidate>> #e8dca8
+ BackgroundColor<<optional>> #273241
+ BorderColor<<optional>> #61738a
+ FontColor<<optional>> #b8c4d4
+}
+skinparam componentStyle rectangle
+skinparam defaultFontName SansSerif
+title Which filter does each path apply?
+left to right direction
+component "INMP441 RX\nnormalized mono blocks\n16 kHz original rate" as source
+component "Branch point\nfan-out" as branch <<candidate>>
+package "Analysis path · BPM worker" {
+ component "Analysis pool copy\nbefore volume\n(4 blocks: candidate)" as pool <<candidate>>
+ component "BPM filter\nalways applied,\nown instance" as analysisFilter
+ component "Envelope · periodicity\n· windows · estimates\n(draft algorithm)" as estimator
+}
+package "Listening path · audio thread" {
+ component "Switch position\nRaw: no filter\nMurmur: Murmur filter\nBPM: BPM filter, hears what\nthe analysis gets (same\ncoefficients, own state)" as listeningFilter
+ component "Volume\n(potentiometer)" as volume
+ component "Saturation\nat output conversion" as saturation
+ component "PCM5102A TX\nline output" as sink
+}
+component "Capture tap\nraw, before filter / volume" as capture <<optional>>
+source --> branch
+branch --> pool
+pool --> analysisFilter
+analysisFilter --> estimator
+branch --> listeningFilter
+listeningFilter --> volume
+volume --> saturation
+saturation --> sink
+branch --> capture
+note bottom of analysisFilter
+ Independent of the switch: BPM
+ is estimated while the listener
+ uses Raw, Murmur or BPM.
+end note
+legend bottom
+ Filter study TICKET-189 chooses the BPM and Murmur coefficients;
+ it does not decide whether analysis follows the switch (it never does).
+ Volume and saturation sit after the branch, so they never change the analysis input.
+ Yellow = candidate (not decided). Grey = optional beyond the MVP. BPM / filter code is a skeleton.
+endlegend
+@enduml
