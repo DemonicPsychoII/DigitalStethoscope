@@ -58,8 +58,9 @@ conformity or implemented firmware. Recovery and acknowledgement are separate.
   later presses Start and Stop the examination, offline where the error concerns Wi-Fi or the server.
   One press acknowledges only the error shown; with several latched, the next one is shown afterwards.
   Automatic recovery keeps running whether or not the error was acknowledged.
-  An error that occurs while listening is not shown until the examination is stopped, so a short press
-  during listening always Stops.
+  A non-audio error that occurs while listening is not shown until the examination is stopped, so a
+  short press during listening Stops. An audio error is shown at once and blocks the button with every
+  other input.
 - **Code naming.** `<SUBJECT>_<OUTCOME>` in upper case with underscores and no abbreviations, for example
   `SCAN_FAILURE`. Outcome words: no suffix, `RUNNING`, `OPEN`, `PENDING`, `SENDING` or `CONNECTING` for a normal status;
   `SUCCESSFUL`, `RECEIVED`, `VALID`, `CONNECTED`, `ACKNOWLEDGED` or `MINIMUM_REACHED` for a positive result; `REJECTED`, `FAILURE`, `STALL`, `INVALID`, `UNEXPECTED`, `CHANGE` or `NOT_POSSIBLE` for a negative result.
