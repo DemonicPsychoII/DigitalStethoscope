@@ -31,9 +31,8 @@ connect to ground with pull-ups; the button LED is active high.
 The RGB status light uses GPIO48, so GPIO38 stays the switch input
 ([specification baseline](../../spec/product-scope.md#electrical-interface-baseline)).
 The [specification baseline](../../spec/product-scope.md#electrical-interface-baseline)
-defines these project assignments and their limits. The application overlay assigns
-the status light, the Start/Stop button, the switch and the potentiometer, but not the
-button LED; it does not establish application wiring or physical verification. The device ends at the DAC line
+defines these project assignments and their limits; `L1_PHYSICALINTERFACE` owns these
+buttons, switches, potentiometer and LEDs. The device ends at the DAC line
 output; the headphone amplifier is outside the project scope.
 
 ## Scope and source material
