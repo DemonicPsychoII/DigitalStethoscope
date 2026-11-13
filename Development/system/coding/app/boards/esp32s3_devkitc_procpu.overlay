@@ -1,7 +1,6 @@
 /*
  * ESP32-S3-DevKitC-1 with the N16R8 module: 16 MB flash, 8 MB octal PSRAM.
  * GPIO33..37 are reserved for the octal PSRAM and must not be assigned.
- * Add application peripherals when their adapters are implemented.
  */
 
 /* The board default describes the WROOM-N8 module and its 4 MB table; match the fitted N16R8. */
@@ -51,6 +50,59 @@
     };
 };
 
+/*
+ * I2S links of the first audio path, pins from the carrier pin map: i2s0 receives from the
+ * INMP441 on J3, i2s1 transmits to the PCM5102A on J4. The ESP32-S3 drives bit and frame clock
+ * on both links. These groups replace the board defaults, which put i2s0 on GPIO36..38, 41 and
+ * 42, partly octal PSRAM pins, and i2s1 on GPIO4..6, 12 and 48.
+ */
+&pinctrl
+{
+    i2s0_default: i2s0_default
+    {
+        group1
+        {
+            pinmux = <I2S0_I_BCK_GPIO4>, <I2S0_I_WS_GPIO5>;
+            output-enable;
+        };
+
+        group2
+        {
+            pinmux = <I2S0_I_SD_GPIO6>;
+            input-enable;
+        };
+    };
+
+    i2s1_default: i2s1_default
+    {
+        group1
+        {
+            pinmux = <I2S1_O_BCK_GPIO40>, <I2S1_O_WS_GPIO41>, <I2S1_O_SD_GPIO42>;
+            output-enable;
+        };
+    };
+};
+
+/* The ESP32-S3 I2S driver needs GDMA; CONFIG_DMA alone is not enough. */
+&dma
+{
+    status = "okay";
+};
+
+&i2s0
+{
+    status = "okay";
+    pinctrl-0 = <&i2s0_default>;
+    pinctrl-names = "default";
+};
+
+&i2s1
+{
+    status = "okay";
+    pinctrl-0 = <&i2s1_default>;
+    pinctrl-names = "default";
+};
+
 /* The board default routes SPI2 to GPIO10 to GPIO13; nothing uses it. */
 &spi2
 {
@@ -58,6 +110,12 @@
 };
 
 / {
+    aliases
+    {
+        i2s-microphone = &i2s0;
+        i2s-dac = &i2s1;
+    };
+
     zephyr,user
     {
         /* Illuminated Start/Stop button J6: closes to ground; the carrier also has a pull-up. */
