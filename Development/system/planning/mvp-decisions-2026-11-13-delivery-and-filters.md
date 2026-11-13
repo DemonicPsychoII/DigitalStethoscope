@@ -10,13 +10,14 @@ audio decisions of the same day have their own record.
 
 1. **Start during Sending cancels the delivery.** The firmware already behaves this way and Nico accepted
    it. The job ends with DELIVERY_FAILURE, or with SERVER_CONNECTION_FAILURE when its UTC measurement end
-   was never frozen, and the result is lost. Start during Analysing stays Busy. This replaces the Busy
+   was never frozen, and the result is lost. The error indication stays, although the operator caused
+   the cancellation, because the result is lost. Start during Analysing stays Busy. This replaces the Busy
    rejection during sending of the [11 October record](mvp-decisions-2026-10-11.md).
 2. **Delivery connection setup starts at job submission.** Nico asked to settle the start point "based on
    code and what's smart". The design now follows the firmware: setup starts when CONTROL submits the
    finalized job, not at Stop in parallel with finalization. The ten-second deadline still runs from
    Stop. No setup is wasted or cancelled when no job is granted, and an eligible retained connection needs
-   no setup. The cost is that finalization time is no longer used for connecting.
+   no setup. The cost is that finalization time is no longer used for connecting. Nico confirmed this choice.
 3. **Seven cleanup services.** The P23 cleanup covers the seven services the firmware stops: time
    synchronization, secure connection, scan, connect request, setup page, DHCP server and hotspot. At most
    five are pending together, so the five-second cleanup pass remains.
@@ -30,11 +31,13 @@ audio decisions of the same day have their own record.
 6. **First short press acknowledges.** With an error shown that clears by short press, the first short
    press acknowledges it. The device then keeps the normal audio workflow, in which the doctor starts
    and stops the examination with the button, offline where the error concerns Wi-Fi or the server.
+   One press acknowledges only the error shown. Automatic reconnection keeps running after the
+   acknowledgement, so a later examination can deliver again.
 7. **Errors during listening are shown after the manual Stop.** A non-audio halting error that occurs
    while listening is latched without indication and takes effect when the operator stops the
    examination, so the doctor is not disturbed mid-examination. This applies to all four restart-required
    non-audio errors: SESSION_CONTEXT_CHANGE, CONTROL_INPUT_FAILURE, HEART_RATE_WORKER_STALL and
-   SETTINGS_SAVE_FAILURE. REQ-13 changes accordingly.
+   SETTINGS_SAVE_FAILURE. The result of that examination is discarded. REQ-13 changes accordingly.
 8. **Audio errors halt the device.** With AUDIO in fault no Start is possible: every input is blocked
    until restart.
 

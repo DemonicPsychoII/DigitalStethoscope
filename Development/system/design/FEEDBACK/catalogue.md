@@ -21,7 +21,8 @@ conformity or implemented firmware. Recovery and acknowledgement are separate.
   halt the device at once: audio is muted and every input, including Start, is blocked until restart.
   Other errors stop the active workflow, mute/cancel active audio and block Start until the catalogue
   clear rule is met; when one occurs while listening, it is latched without indication, listening
-  continues, and it is shown and takes effect after the operator stops the examination manually.
+  continues, and it is shown and takes effect after the operator stops the examination manually;
+  the result of that examination is discarded.
   Restart means reset/power cycle.
   Generic device settings failures are distinct from Wi-Fi credential-save failures.
 - **RGB LED = context.** The colour shows the context in which a status or error occurs, not the module that
@@ -55,6 +56,8 @@ conformity or implemented firmware. Recovery and acknowledgement are separate.
 - **Restart** means the reset button or a power off/on cycle.
 - **One button.** With an error shown that clears by short press, the first short press acknowledges it;
   later presses Start and Stop the examination, offline where the error concerns Wi-Fi or the server.
+  One press acknowledges only the error shown; with several latched, the next one is shown afterwards.
+  Automatic recovery keeps running whether or not the error was acknowledged.
   An error that occurs while listening is not shown until the examination is stopped, so a short press
   during listening always Stops.
 - **Code naming.** `<SUBJECT>_<OUTCOME>` in upper case with underscores and no abbreviations, for example
