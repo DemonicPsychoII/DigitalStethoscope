@@ -44,7 +44,7 @@ The tool writes the canonical form into the image; registration binds to the sam
 
 ### Certificate checks
 
-Before anything is written, the tool applies the device's certificate rules, so a mismatch fails on the developer PC. The device applies rules 1 and 3 at boot, enforces rule 5 through its handshake verification and applies rule 4 against its synchronized clock before each handshake, because boot has no valid clock yet. For rule 2 the device trusts only this certificate; whether the pinned verifier also checks self-issuance and signature of a directly trusted certificate is still to be demonstrated by L1_WIFI work ([TLS trust inputs](../COMMUNICATION/secure-transport.md#trust-and-server-profile-inputs)):
+Before anything is written, the tool applies all five rules, so a mismatch fails on the developer PC. Where and when the device applies each rule is in [Validation stages](#validation-stages); rule 4 waits for each connection setup, because boot has no valid clock yet:
 
 1. The text is exactly one parsable X.509 certificate.
 2. It is self-issued and its signature verifies with its own public key, because the device trusts it directly.
@@ -78,9 +78,17 @@ The tool rejects an image larger than the server profile area. It takes the area
 
 The tool lives in `Development/system/coding/tools/server-profile/`. Every rejection names the key and the violated rule, exits with status 1 and writes nothing to the device.
 
+## Validation stages
+
+![Server profile validation: stages, owners, timing and failure outcomes](rendered/server_profile_validation.svg)
+
+*Which check runs on the PC, at boot or during connection setup, who owns it, and what does its failure do?* Editable source: [server-profile-validation.puml](server-profile-validation.puml).
+
+For rule 2 the device trusts only this certificate; whether the pinned verifier also checks self-issuance and signature of a directly trusted certificate is still to be demonstrated by L1_WIFI work ([TLS trust inputs](../COMMUNICATION/secure-transport.md#trust-and-server-profile-inputs)).
+
 ## Device behavior
 
-Boot reads and validates the image once, as the [flash layout](interfaces-and-behavior.md#flash-layout) defines; WIFI then applies certificate rules 1 and 3. Every boot failure leaves secure transport unavailable with a configuration cause and keeps Wi-Fi setup and offline listening working. Validity is checked later, after the setup's time synchronization and before each handshake, as the [TLS design](../COMMUNICATION/secure-transport.md) defines:
+Boot results of [validation stages](#validation-stages) 3 to 5. Every boot failure leaves secure transport unavailable with a configuration cause and keeps Wi-Fi setup and offline listening working; validity (rule 4) is checked later, before each handshake ([TLS design](../COMMUNICATION/secure-transport.md)):
 
 | Image state | Boot result |
 | --- | --- |

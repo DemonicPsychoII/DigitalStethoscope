@@ -1,0 +1,73 @@
+@startuml delivery_budget
+!theme cyborg
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam backgroundColor #0b1018
+skinparam defaultFontColor #e6edf7
+skinparam ArrowColor #a9b8ca
+title How many delivery attempts fit into 10 s after Stop? (P13, provisional until TICKET-213)
+concise "Four full nominal attempts\n(needs 22 s)" as Full
+concise "Example A: each step\nuses its full limit" as Timeouts
+concise "Example B: every attempt\nfails after 0.5 s" as Fast
+scale 1 as 85 pixels
+@0
+Full is "setup 3 s"
+Timeouts is "setup 3 s"
+Fast is "A1"
+@0.5
+Fast is "gap 2 s"
+@2.5
+Fast is "A2"
+@3
+Full is "receipt 1 s"
+Timeouts is "receipt 1 s"
+Fast is "gap 2 s"
+@4
+Full is "gap 2 s"
+Timeouts is "gap 2 s"
+@5
+Fast is "A3"
+@5.5
+Fast is "gap 2 s"
+@6
+Full is "setup 3 s"
+Timeouts is "setup truncated"
+@7.5
+Fast is "A4"
+@8
+Fast is {-}
+@9
+Full is "receipt 1 s"
+Timeouts is "cleanup reserve"
+@10
+Full is "gap 2 s"
+Timeouts is {-}
+@12
+Full is "setup 3 s"
+@15
+Full is "receipt 1 s"
+@16
+Full is "gap 2 s"
+@18
+Full is "setup 3 s"
+@21
+Full is "receipt 1 s"
+@22
+Full is {-}
+highlight 9 to 10 #4a3a14
+highlight 10 to 22 #3a1620
+Timeouts@0 <-> @10 : deadline = Stop + 10 s
+note bottom of Timeouts
+ Yellow: 1 s cleanup reserve; red: past the deadline.
+ "receipt 1 s" = write request and receive receipt.
+ Attempts end 1 s before the deadline: setup and write+receipt
+ limits are truncated by the remaining budget. A second attempt
+ starts at 6 s and its setup is cut at 9 s: one full attempt
+ plus one truncated attempt fit.
+end note
+note bottom of Fast
+ A gap starts only after the failed attempt has quiesced and only
+ if more than 2 s of budget remain. Short failures let all 4
+ attempts fit (8 s). A reused connection skips the setup.
+end note
+@enduml

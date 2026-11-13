@@ -1,0 +1,23 @@
+@startuml sntp_exchange
+!theme cyborg
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam backgroundColor #0b1018
+skinparam defaultFontColor #e6edf7
+skinparam ArrowColor #a9b8ca
+skinparam sequenceMessageAlign left
+title Generic SNTP exchange: which clock supplies each timestamp (RFC 4330 sec. 4-5, RFC 5905 sec. 8)
+participant "Client\n(client clock)" as Client
+participant "Server\n(server clock)" as Server
+Client -> Server : request; Transmit Timestamp = T1 (client clock)
+note over Server : T2 = receive time (server clock)
+note over Server : T3 = transmit time (server clock)
+Server -> Client : reply: Originate = T1 (copied), Receive = T2, Transmit = T3
+note over Client : T4 = destination time (client clock)
+note over Client, Server
+ Round-trip delay d = (T4 - T1) - (T3 - T2)
+ Clock offset t = ((T2 - T1) + (T3 - T4)) / 2
+ T1 needs no synchronized client clock (RFC 4330 sec. 5).
+ Without authentication the reply is not authenticated (RFC 4330 sec. 11).
+end note
+@enduml

@@ -10,9 +10,18 @@ the proposed thesis product.
 | System components | [system-components.puml](system-components.puml) | Hardware and external connections; ESP32 remains a black box. Networking is Wi-Fi plus HTTPS. |
 | Electrical interfaces | [electrical-interfaces.puml](electrical-interfaces.puml) | Product connection types and chip roles; the electrical baseline below defines the planned application wiring. Optional interfaces are outside MVP acceptance. |
 | Software components | [software-components.puml](software-components.puml) | Firmware modules: L2 orchestration, L1 hardware adapters and pure C libraries, L0 Zephyr. Libraries include no Zephyr headers; MONITOR observes across layers. |
+| Input ownership | [input-ownership.puml](input-ownership.puml) | Contact handling in L1_PHYSICALINTERFACE, policy in L2_CONTROL, commanded effects. See [Input ownership](#input-ownership). |
 | Threads | [runtime-ownership.puml](runtime-ownership.puml) | Proposed workers, the modules they run and data/communication methods. Touch belongs to Input; the BPM worker belongs to `L2_AUDIO`; original-rate blocks reach BPM before the volume control; BPM uses its own analysis filter, independent of the listening switch (S04 decision D5); the filter study decides the band. |
 | Listening | [listening-workflow.puml](listening-workflow.puml) | Selected filter or Raw bypass, volume, playback and optional bounded capture/replay. Heart can select Raw; optional Lung mode is Raw listening only (TICKET-203). |
 | BPM measurement | [measurement-workflow.puml](measurement-workflow.puml) | Freeze measurement settings and acquire until Stop; cancel without sending before 15 s, or finalize at or after 15 s subject to quality/coverage. Aggregate after listening stops, then deliver the result or validated error report. |
+
+## Input ownership
+
+![Input ownership: physical contact, contact handling, CONTROL policy and commanded effects](rendered/input_ownership.svg)
+
+*Where does debouncing end, where does policy begin, and which effects does CONTROL command?*
+
+The adapter decides what a contact means physically; CONTROL alone decides admission, Busy and acknowledgement ([feedback ground rules](feedback-principles.md)); effects act only on CONTROL commands.
 
 ## Hardware naming
 

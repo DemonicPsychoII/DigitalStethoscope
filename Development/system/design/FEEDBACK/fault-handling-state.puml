@@ -1,0 +1,63 @@
+@startuml fault_handling_state
+!theme cyborg
+!pragma layout smetana
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam backgroundColor #0b1018
+skinparam defaultFontColor #e6edf7
+skinparam ArrowColor #a9b8ca
+skinparam state {
+ BackgroundColor #111826
+ BorderColor #a9b8ca
+}
+title Fault handling: recovery, indication and workflow admission are separate regions
+hide empty description
+
+state "Recovery episode: SERVER_CONNECTION_FAILURE and DEVICE_REGISTRATION_FAILURE only" as Recovery {
+ state "Available" as Available
+ state "Unavailable episode" as Unavailable
+ [*] --> Available
+ Available --> Unavailable : preparation or registration fails\n/ log cause, request latch
+ Unavailable --> Unavailable : automatic retry fails\n/ log only, no re-latch
+ Unavailable --> Available : automatic retry succeeds\n/ episode ends, indication unchanged
+}
+
+state "Indication latch (red button LED)" as Indication {
+ state "No error shown" as Clear
+ state "Error latched" as Latched
+ state "Shown until restart" as RestartLatched
+ [*] --> Clear
+ Clear --> Latched : catalogue error\n[row cleared by short press]
+ Clear --> RestartLatched : catalogue error\n[row cleared by restart]
+ Latched --> Latched : recovery succeeds\n[server, registration]\n/ stays latched
+ Latched --> Clear : short press acknowledges\n/ ERROR_ACKNOWLEDGED flash
+ RestartLatched --> RestartLatched : short press\n/ no effect
+}
+
+state "Workflow admission (CONTROL)" as Admission {
+ state "Start permitted" as Permitted
+ state "Start blocked, audio muted" as Blocked
+ state "Blocked until restart" as BlockedRestart
+ state "Deferred: listening continues" as Deferred
+ [*] --> Permitted
+ Permitted --> Permitted : Wi-Fi, server or registration error\n/ working audio kept, offline Start
+ Permitted --> Blocked : other error [cleared by short press]\n/ stop workflow, mute, invalidate
+ Permitted --> BlockedRestart : other error [cleared by restart]\n/ stop workflow, mute, invalidate
+ Permitted --> BlockedRestart : audio error\n/ halt, every input blocked
+ Permitted --> Deferred : non-audio halting error\nwhile listening / latch silently
+ Deferred --> Blocked : manual Stop\n[cleared by short press] / show error
+ Deferred --> BlockedRestart : manual Stop\n[cleared by restart] / show error
+ Blocked --> Permitted : acknowledgement\n/ no Start, no retry
+}
+
+Recovery -[hidden]right-> Indication
+Indication -[hidden]right-> Admission
+
+legend bottom left
+ The regions are coupled only by the catalogue error event and the acknowledgement; recovery success does not acknowledge.
+ Recovery episode: start cancellation alone raises no error; Wi-Fi and delivery errors have no episode rule.
+ Indication: several errors show the highest priority, then the first latched. With a short-press-clearable error shown,
+ the first short press acknowledges it; later presses Start and Stop. Errors during listening are shown after Stop.
+ Admission: acknowledgement never starts, retries or changes an active workflow. Restart = reset button or power off/on.
+endlegend
+@enduml
