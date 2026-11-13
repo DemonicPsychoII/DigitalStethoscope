@@ -1,0 +1,45 @@
+@startuml audio_path
+!theme cyborg
+!pragma layout smetana
+skinparam shadowing false
+skinparam componentStyle rectangle
+skinparam defaultFontName SansSerif
+skinparam component {
+ BackgroundColor<<thread>> #DCEBFA
+ BorderColor<<thread>> #345E87
+ FontColor<<thread>> #0b1018
+ BackgroundColor<<hardware>> #F0E5CF
+ FontColor<<hardware>> #0b1018
+}
+skinparam artifact {
+ BackgroundColor<<pool>> #273241
+ BorderColor<<pool>> #61738a
+ FontColor<<pool>> #e6edf7
+}
+title First audio path: microphone to DAC
+top to bottom direction
+component "INMP441 microphone\nL/R to ground: left slot" as microphone <<hardware>>
+component "L0 Zephyr I2S driver\ni2s0 RX + DMA" as receiveDriver
+artifact "RX pool\ninternal RAM" as receivePool <<pool>>
+component "L1_I2S\nconfigure, prime, start, stop\nborrow and return blocks" as transport
+component "L2_AUDIO audio thread\nleft slot to mono\ncopy step\nmono to both slots" as audio <<thread>>
+artifact "TX pool\ninternal RAM" as transmitPool <<pool>>
+component "L0 Zephyr I2S driver\ni2s1 TX + DMA" as transmitDriver
+component "PCM5102A DAC\nline output" as dac <<hardware>>
+component "L2_CONTROL" as control <<thread>>
+microphone --> receiveDriver : I2S frames
+receiveDriver --> receivePool : DMA fills a block
+receivePool --> transport : completed block
+transport --> audio : received block, lent
+audio --> transport : filled TX block\nreceived block returned
+transport --> transmitPool : queued block
+transmitPool --> transmitDriver : DMA plays a block
+transmitDriver --> dac : I2S frames, left = right
+control --> audio : Start / Stop · k_msgq
+audio --> control : started, stopped, fault · k_msgq
+legend bottom
+  Both controllers: same clock source, sample rate and word size.
+  Rate, block and pool sizes: decision record of 10 November 2026.
+  Later steps: listening filter, volume, BPM fan-out. No PSRAM in this step.
+endlegend
+@enduml
