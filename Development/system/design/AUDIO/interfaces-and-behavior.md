@@ -125,18 +125,19 @@ the [system design](../system/interfaces-and-behavior.md#state-entryprocessexit)
 | --- | --- | --- |
 | Initializing | Boot (session view); Playback Boot (system design) | `i2s_initialize` at boot; no stream |
 | Stopped | Idle, Portal, Analysing, Sending, ReportingError | Idle is muted with no transport; sending holds the network lease with audio stopped |
-| Starting | **unclear** | Not documented whether the system enters Listening at the Start command or at the `started` event |
+| Starting | Idle until the `started` event | The system enters Listening at the `started` event, not at the Start command ([13 November](../../planning/mvp-decisions-2026-11-13.md)) |
 | Running | Listening, Measuring (session view); Live (system design) | The block loop runs; Wi-Fi-only faults preserve it (P12) |
 | Stopping | Listening → Idle; Measuring → Idle or Analysing | Every system Stop mutes audio |
-| Fault | Muted (session view); Error, audio affected (system design) | `MICROPHONE_FAILURE` and `AUDIO_OUTPUT_FAILURE` require a restart ([catalogue](../FEEDBACK/catalogue.md)) |
+| Fault | Muted (session view); Error, audio affected (system design) | `MICROPHONE_FAILURE`, `AUDIO_WORKER_STALL` and `AUDIO_OUTPUT_FAILURE` require a restart ([catalogue](../FEEDBACK/catalogue.md)); the device is halted and blocks every input, including Start, until restart ([13 November](../../planning/mvp-decisions-2026-11-13.md)) |
 
-Open mapping points, shown as unclear in the diagram and not decided here:
+Mapping rules decided on [13 November](../../planning/mvp-decisions-2026-11-13.md):
 
-- When the system enters Listening: at the Start command or at the `started` event.
-- A non-audio halting fault (system Muted, for example `SESSION_CONTEXT_CHANGE`): whether
-  `L2_CONTROL` sends Stop to `L2_AUDIO`, and how the output is muted.
-- What `L2_AUDIO` does with a Start command received in Fault. `L2_CONTROL` blocks Start while the
-  system is Muted.
+- The system enters Listening at the `started` event, not at the Start command.
+- A non-audio halting fault during listening (for example `SESSION_CONTEXT_CHANGE`) does not stop
+  `L2_AUDIO`: `L2_CONTROL` latches it silently, listening continues, and the error is shown and
+  applies its clear rule after the operator stops the examination manually.
+- `L2_AUDIO` in Fault never starts again: the device is halted, every input including Start is
+  blocked, and only a restart leaves Fault.
 
 ## Start, Stop and faults
 

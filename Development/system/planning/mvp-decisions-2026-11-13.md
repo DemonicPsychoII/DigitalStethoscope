@@ -17,6 +17,14 @@ five blocks.
    16 kHz and pools of five RX and five TX blocks. The processing budget stays at most 3 ms per
    block. Statements of 128-frame or 8 ms blocks, a 4 ms execution budget or four plus four blocks
    no longer describe the design.
+2. **Listening starts at the started event.** The system enters Listening when `L2_AUDIO` reports
+   that the stream has started, not when the Start command is sent.
+3. **Non-audio halting faults during listening are deferred.** When a halting error that is not an
+   audio error occurs while listening, its indication is muted and listening continues; the error
+   is shown, and its halt and clear rule applies, after the operator stops the examination
+   manually.
+4. **An audio fault halts the device.** In Fault, `L2_AUDIO` cannot be started again; every input,
+   including Start, is blocked until restart.
 
 ## Applied in
 
