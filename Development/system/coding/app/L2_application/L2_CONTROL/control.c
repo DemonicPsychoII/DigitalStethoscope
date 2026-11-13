@@ -64,8 +64,23 @@ static struct k_work_delayable control_quickFlashesEndWork;
  * @brief Act on a debounced Start/Stop button event.
  *
  * @param[in] event Button event from PHYSICALINTERFACE.
+ * @param[in] timestampMilliseconds Uptime at which PHYSICALINTERFACE recognized the event.
  */
-static void control_handleButton(enum physicalinterface_button_event event);
+static void control_handleButton(enum physicalinterface_button_event event, int64_t timestampMilliseconds);
+
+/**
+ * @brief Log a stable Raw/Murmur/BPM switch reading; selecting the filter is not implemented.
+ *
+ * @param[in] reading Switch reading from PHYSICALINTERFACE.
+ */
+static void control_handleListeningFilter(const struct physicalinterface_listening_filter_reading *reading);
+
+/**
+ * @brief Log a volume reading; applying the volume is not implemented.
+ *
+ * @param[in] reading Volume reading from PHYSICALINTERFACE.
+ */
+static void control_handleVolume(const struct physicalinterface_volume_reading *reading);
 
 /**
  * @brief Show a Wi-Fi workflow status from COMMUNICATION while Idle.
@@ -97,7 +112,13 @@ void control_init(void)
     control_lampTestEnd = sys_timepoint_calc(K_MSEC(CONTROL_LAMP_TEST_MINIMUM_MILLISECONDS));
     k_work_init_delayable(&control_quickFlashesEndWork, control_endQuickFlashes);
 
-    if(physicalinterface_init(control_handleButton) != 0)
+    const struct physicalinterface_input_handlers inputHandlers = {
+        .button = control_handleButton,
+        .listeningFilter = control_handleListeningFilter,
+        .volume = control_handleVolume,
+    };
+
+    if(physicalinterface_init(&inputHandlers) != 0)
     {
         LOG_WRN("Continuing with incomplete physical interface");
     }
@@ -121,8 +142,10 @@ void control_completeStartup(void)
 /* LOCAL FUNCTIONS                                                     */
 /***********************************************************************/
 
-static void control_handleButton(enum physicalinterface_button_event event)
+static void control_handleButton(enum physicalinterface_button_event event, int64_t timestampMilliseconds)
 {
+    ARG_UNUSED(timestampMilliseconds);
+
     switch(event)
     {
     case PHYSICALINTERFACE_BUTTON_LONG_PRESS:
@@ -149,6 +172,40 @@ static void control_handleButton(enum physicalinterface_button_event event)
 
     default:
         break;
+    }
+}
+
+static void control_handleListeningFilter(const struct physicalinterface_listening_filter_reading *reading)
+{
+    static const char *const filterNames[] = {
+        [PHYSICALINTERFACE_LISTENING_FILTER_RAW] = "Raw",
+        [PHYSICALINTERFACE_LISTENING_FILTER_MURMUR] = "Murmur",
+        [PHYSICALINTERFACE_LISTENING_FILTER_BPM] = "BPM",
+    };
+
+    if(reading->status == PHYSICALINTERFACE_INPUT_VALID)
+    {
+        LOG_INF("Listening filter switch: %s", filterNames[reading->filter]);
+    }
+    else
+    {
+        LOG_WRN("Listening filter switch has no valid position");
+    }
+}
+
+static void control_handleVolume(const struct physicalinterface_volume_reading *reading)
+{
+    if(reading->status == PHYSICALINTERFACE_INPUT_VALID)
+    {
+        LOG_DBG("Volume: %u %%", reading->percent);
+    }
+    else if(reading->status == PHYSICALINTERFACE_INPUT_ABSENT)
+    {
+        LOG_INF("Volume potentiometer absent");
+    }
+    else
+    {
+        LOG_WRN("Volume potentiometer reading failed");
     }
 }
 

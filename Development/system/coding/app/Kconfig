@@ -1,3 +1,13 @@
 mainmenu "DigitalStethoscope"
 
+config PHYSICALINTERFACE_VOLUME_POTENTIOMETER_FITTED
+	bool "Volume potentiometer J7 fitted"
+	depends on ADC
+	help
+	  Read the volume potentiometer on GPIO1, ADC1 channel 0. Without it,
+	  L1_PHYSICALINTERFACE does not read the ADC and reports the volume as
+	  absent, because an unfitted wiper floats and its readings mean nothing.
+	  J7 is not fitted on the first evaluation carrier (decision of
+	  10 November 2026).
+
 source "Kconfig.zephyr"
