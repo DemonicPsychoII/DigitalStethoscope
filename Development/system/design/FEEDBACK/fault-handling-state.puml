@@ -42,10 +42,15 @@ state "Workflow admission (CONTROL)" as Admission <<documented>> {
  state "Start permitted" as Permitted
  state "Start blocked, audio muted" as Blocked
  state "Blocked until restart" as BlockedRestart
+ state "Deferred: listening continues" as Deferred
  [*] --> Permitted
  Permitted --> Permitted : Wi-Fi, server or registration error\n/ working audio kept, offline Start
  Permitted --> Blocked : other error [cleared by short press]\n/ stop workflow, mute, invalidate
  Permitted --> BlockedRestart : other error [cleared by restart]\n/ stop workflow, mute, invalidate
+ Permitted --> BlockedRestart : audio error\n/ halt, every input blocked
+ Permitted --> Deferred : non-audio halting error\nwhile listening / latch silently
+ Deferred --> Blocked : manual Stop\n[cleared by short press] / show error
+ Deferred --> BlockedRestart : manual Stop\n[cleared by restart] / show error
  Blocked --> Permitted : acknowledgement\n/ no Start, no retry
 }
 
@@ -57,8 +62,8 @@ legend bottom left
  Green: implemented at integration 994ce24 (COMMUNICATION keeps an internal log-once flag per episode; it reports no catalogue code).
  Grey: documented, not implemented. CONTROL handles only the long press; there is no red LED driver and no short-press acknowledgement.
  Recovery episode: start cancellation alone raises no error; Wi-Fi and delivery errors have no episode rule.
- Indication: several errors show the highest priority, then the first latched. Acknowledgement versus Start or Stop
- while an offline-permitting error is latched is not determined (see the catalogue).
+ Indication: several errors show the highest priority, then the first latched. With a short-press-clearable error shown,
+ the first short press acknowledges it; later presses Start and Stop (13 November). Errors during listening are shown after Stop.
  Admission: acknowledgement never starts, retries or changes an active workflow. Restart = reset button or power off/on.
 endlegend
 @enduml

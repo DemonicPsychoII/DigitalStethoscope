@@ -23,8 +23,12 @@ Wi-Fi connecting, Wi-Fi connected, portal open and input rejected are implemente
 
 - **One feedback catalogue.** Wi-Fi-only failures, server-connection `SERVER_CONNECTION_FAILURE` (including its time synchronization) and registration-only `DEVICE_REGISTRATION_FAILURE` preserve working audio and permit
   offline Start. Recovery follows the [Wi-Fi rules](../COMMUNICATION/interfaces-and-behavior.md#wi-fi-setup-and-recovery) and need not wait for error
-  acknowledgement. Other errors stop the active workflow, mute/cancel active audio
-  and block Start until the catalogue clear rule is met. Restart means reset/power cycle.
+  acknowledgement. Audio errors (`MICROPHONE_FAILURE`, `AUDIO_WORKER_STALL`, `AUDIO_OUTPUT_FAILURE`)
+  halt the device at once: audio is muted and every input, including Start, is blocked until restart.
+  Other errors stop the active workflow, mute/cancel active audio and block Start until the catalogue
+  clear rule is met; when one occurs while listening, it is latched without indication, listening
+  continues, and it is shown and takes effect after the operator stops the examination manually
+  (Nico, 13 November 2026). Restart means reset/power cycle.
   Generic device settings failures are distinct from Wi-Fi credential-save failures.
 - **RGB LED = context.** The colour shows the context in which a status or error occurs, not the module that
   detects it. CONTROL decides what can run, so each context has one colour: white = device (startup,
@@ -122,6 +126,7 @@ The Start/Stop button on GPIO16 carries three meanings. What the documents deter
 | Start/Stop and acknowledgement | Distinct actions; acknowledgement never starts, retries or changes a workflow. | [11 October](../../planning/mvp-decisions-2026-10-11.md), REQ-14 in the [system requirements](../../requirements/system-requirements.md) |
 | Error whose row clears by short press, other than the categories below | The error blocks Start until it is cleared, so a short press can only acknowledge. A later press can Start. | Rules above the table |
 | Error that requires restart | Start stays blocked; a short press does not clear it. | Rules above the table, REQ-13 |
-| Wi-Fi, `SERVER_CONNECTION_FAILURE` or `DEVICE_REGISTRATION_FAILURE` latched | Offline Start is permitted **and** a short press acknowledges. | Rules above the table, REQ-13/REQ-14 |
+| Wi-Fi, `SERVER_CONNECTION_FAILURE` or `DEVICE_REGISTRATION_FAILURE` latched | The first short press acknowledges the shown error. The device then operates offline with the normal audio workflow: later presses Start and Stop the examination. | Nico, 13 November 2026; REQ-13/REQ-14 |
+| Error that occurs while listening | Not shown during listening, so a short press Stops the examination; the error is shown afterwards and the next short press acknowledges it if its row allows. | Nico, 13 November 2026 |
 
-**Not determined:** for the last row, no document says what a single short press in Idle does: acknowledge only (Start needs a further press), Start and leave the error latched, or something else. The same gap applies to Stop while listening with such an error latched, and to whether one press acknowledges only the shown error or every clearable one. Open question for Nico; until it is answered, no precedence is specified.
+**Still open:** whether one short press acknowledges only the shown error or every latched error that clears by short press.
