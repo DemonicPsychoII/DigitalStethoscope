@@ -11,9 +11,10 @@
 # 3. Pushes and opens a PR whose body carries `<!-- agent-author ... class=revert -->`, a filled
 #    Risk & rollback section and `<!-- agent-revert of=<sha>[,<sha>...] -->`. agent-gate verifies
 #    that marker against git (clean inverse of those merges on integration, nothing else) and
-#    waives the review, so a ready pure revert merges once CI is green:
-#    `gh pr merge <n> --merge --match-head-commit <sha>`. Any other change on the branch turns it
-#    into a fix: change class=, retitle, and it needs a normal review.
+#    waives the content review. agent-gate and the ruleset still require the review App's approval:
+#    a reviewer session checks the verification and records `approve`, then a ready pure revert
+#    merges once CI is green: `gh pr merge <n> --merge --match-head-commit <sha>`. Any other change
+#    on the branch turns it into a fix: change class=, retitle, and it needs a normal review.
 #    --draft opens it as a draft recovery PR (deploy.sh uses this after it restored production
 #    itself): nothing merges until an agent decides a repository revert is really the fix.
 # 4. --deploy (only where scripts/deploy/deploy.sh exists; elsewhere it errors out at once) rolls
@@ -136,7 +137,8 @@ merges automatically. Diagnose the failure, then either:
 - push the fix to this branch, set \`class=quick-fix\` (or \`feature\`/\`policy\` with owner approval)
   in the agent-author marker, delete the agent-revert marker and retitle: normal review applies; or
 - only if a repository revert is genuinely needed to restore service, mark this unchanged pure
-  revert ready for review: agent-gate verifies it and it merges once checks pass.
+  revert ready for review: agent-gate verifies it, a reviewer session checks that verification
+  and records the review App's approval, and it merges once checks pass.
 "
   fi
   cat >"$body" <<EOF

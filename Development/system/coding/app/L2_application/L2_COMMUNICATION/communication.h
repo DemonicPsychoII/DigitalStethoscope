@@ -140,6 +140,13 @@ int communication_waitForWiFiStop(k_timeout_t timeout);
  * the job as running until communication_getDeliveryOutcome() reports a final
  * outcome. Prerequisites are checked once, at this call, without waiting.
  *
+ * Admission freezes the job's provenance: the result, the server Device id of the
+ * Device registration valid now, and, when the current clock anchor qualifies (at most
+ * 12.5 h from the measurement end), the UTC measurement end. Without a qualifying anchor
+ * the UTC end is frozen once, before the first request, from the anchor of a later
+ * connection setup. A later registration change or clock step never changes a frozen
+ * value, and every attempt sends the identical Observation body and identity.
+ *
  * @param[in] delivery Result; copied.
  * @param[in] deadline P13: Stop plus 10 s, for all attempts, cancellation and release.
  *

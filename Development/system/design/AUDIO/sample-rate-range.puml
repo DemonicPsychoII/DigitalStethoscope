@@ -1,0 +1,51 @@
+@startuml sample_rate_range
+!theme cyborg
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam backgroundColor #0b1018
+skinparam defaultFontColor #e6edf7
+skinparam ArrowColor #a9b8ca
+skinparam ArrowFontColor #e6edf7
+title Which sample rates all three parts accept on this carrier (axis in kHz, cut at 60 kHz)
+robust "INMP441 microphone\nWS frequency (datasheet Table 3)" as microphone
+robust "PCM5102A, SCK to ground, PLL from BCK\nBCK = 64 fS (datasheet Table 11)" as dac
+robust "ESP32-S3 I2S, 160 MHz source\nproject calculation (TRM 28.6, driver)" as controller
+microphone has accepted,outside
+dac has listed,unlisted
+controller has reachable,outside
+scale 4 as 50 pixels
+@0
+microphone is outside
+dac is unlisted
+controller is outside
+@2.44
+controller is reachable
+@7.8
+microphone is accepted
+@15.6
+dac is listed
+@16.4
+dac is unlisted
+@31.6
+dac is listed
+@32.4
+dac is unlisted
+@43.7
+dac is listed
+@44.5
+dac is unlisted
+@47.6
+dac is listed
+@48.4
+dac is unlisted
+@50
+microphone is outside
+@60
+highlight 15.8 to 16.2 #52c7b4 : 16 kHz chosen
+legend bottom
+  Microphone: 7.8 to 50 kHz. DAC: Table 11 lists 16, 32, 44.1 and 48 kHz (and 96, 192, 384 kHz) for BCK = 64 fS, and no entry at 8 kHz;
+  rates between the listed ones are not stated. Controller: fS = 160 MHz ÷ (256 × N) with the integer divider N = 2…256, so about 2.44 to 312.5 kHz;
+  the fractional divider is not evaluated, and this range is a project calculation, not a documented limit.
+  16 kHz is the lowest rate that all three accept; it carries content up to 8 kHz (sampling theorem); the candidate filter bands end at 800 Hz (P08).
+endlegend
+@enduml

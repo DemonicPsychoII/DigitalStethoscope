@@ -1,0 +1,40 @@
+@startuml sample_format
+!theme cyborg
+!pragma layout smetana
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam backgroundColor #0b1018
+skinparam defaultFontColor #e6edf7
+skinparam ArrowColor #a9b8ca
+skinparam ArrowFontColor #e6edf7
+skinparam rectangle {
+ BackgroundColor #273241
+ BorderColor #61738a
+ FontColor #e6edf7
+}
+skinparam note {
+ BackgroundColor #1b2533
+ BorderColor #61738a
+ FontColor #e6edf7
+}
+title Sample bits in a 32-bit slot and the mono channel mapping
+top to bottom direction
+rectangle "**RX frame from the INMP441** (i2s0, L/R pin to ground)\n\n<#273241,#61738a>|= Left slot, 32 bits |= Right slot, 32 bits |\n| <#10302b> bits 31…8: 24-bit sample, two's complement, MSB first | <#2a1714> not driven by the microphone |\n| <#2a1714> bits 7…0: not driven after the LSB | <#2a1714> ignored by the loop |" as receiveFrame
+rectangle "**Mono working sample** (int32, one per frame, 64 per block)\n\n<#273241,#61738a>|= bits 31…8 |= bits 7…0 |\n| <#10302b> 24-bit sample, left-aligned | cleared to 0 |" as monoSample
+rectangle "**Processing step**\nthis step: copy, sample unchanged\nlater: listening filter and volume" as processing
+rectangle "**TX frame to the PCM5102A** (i2s1, 32-bit words)\n\n<#273241,#61738a>|= Left slot, 32 bits |= Right slot, 32 bits |\n| <#10302b> mono sample | <#10302b> same mono sample |" as transmitFrame
+receiveFrame --> monoSample : take the left slot (even index),\nclear bits 7…0
+monoSample --> processing
+processing --> transmitFrame : write the result into both slots
+note right of monoSample
+  Left-aligned keeps the full 32-bit DAC scale,
+  so the copy step needs no shift
+  (decision of 11 November).
+  Not chosen: signed 24-bit, right-aligned,
+  which needs an 8-bit shift into the TX slot.
+end note
+legend bottom
+  Bit layout: INMP441 datasheet, section "I²S Data Interface" and Figure 9 (mono, left channel).
+  Both DAC channels carry the same sample; audible output is not verified yet (bring-up T09 not run).
+endlegend
+@enduml

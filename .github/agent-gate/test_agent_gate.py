@@ -36,6 +36,7 @@ def comment(text, created="2026-10-02T09:00:00Z", association="OWNER", login="De
 
 
 APPROVAL_ANY = '<!-- owner-approval sha=any quote="yes, ship the new dashboard" -->'
+APP = "demonic-fleet-review[bot]"
 POLICY_PATHS = (".github/agent-gate/*", ".github/workflows/*", "AGENTS.md")
 
 
@@ -285,12 +286,33 @@ class EvaluateTests(unittest.TestCase):
         d = g.evaluate(inputs(required_checks=["ext"], statuses=[{"context": "ext", "state": "success"}]))
         self.assertEqual(d.state, "success")
 
-    def test_verified_revert_waives_review(self):
-        d = g.evaluate(inputs(body=body_with_class("revert"), comments=[], revert=(True, "reverts abc1234")))
-        self.assertEqual(d.state, "success", d.items)
+    def test_verified_revert_with_app_approval_passes(self):
+        for coderabbit_label in (False, True):
+            with self.subTest(coderabbit_label=coderabbit_label):
+                d = g.evaluate(inputs(body=body_with_class("revert"), revert=(True, "reverts abc1234"),
+                                      comments=[review(login=APP, association="NONE")],
+                                      reviewer_logins=frozenset({APP}), coderabbit_label=coderabbit_label))
+                self.assertEqual(d.state, "success", d.items)
+                self.assertTrue(any("only needs to confirm this verification" in t for _, t in d.items), d.items)
+
+    def test_verified_revert_without_app_approval_does_not_pass(self):
+        for name, comments in {
+            "no verdict": [],
+            "verdict from a non-App account": [review()],
+            "App approval of an older head": [review(login=APP, association="NONE", sha=OLD)],
+        }.items():
+            with self.subTest(name):
+                d = g.evaluate(inputs(body=body_with_class("revert"), revert=(True, "reverts abc1234"),
+                                      comments=comments, reviewer_logins=frozenset({APP})))
+                self.assertEqual(d.state, "pending", d.items)
+                self.assertTrue(any("only needs to confirm this verification" in t for _, t in d.items), d.items)
+        d = g.evaluate(inputs(body=body_with_class("revert"), revert=(True, "reverts abc1234"),
+                              comments=[review(verdict="changes", login=APP, association="NONE")],
+                              reviewer_logins=frozenset({APP})))
+        self.assertEqual(d.state, "failure", d.items)
 
     def test_verified_revert_waives_owner_approval_even_on_policy_paths(self):
-        d = g.evaluate(inputs(body=body_with_class("revert"), comments=[], revert=(True, "reverts abc1234"),
+        d = g.evaluate(inputs(body=body_with_class("revert"), revert=(True, "reverts abc1234"),
                               changed_files=["AGENTS.md"], owner_approval_paths=POLICY_PATHS))
         self.assertEqual(d.state, "success", d.items)
 
@@ -310,6 +332,14 @@ class EvaluateTests(unittest.TestCase):
         d = g.evaluate(inputs(comments=[], revert=(False, "conflict-resolved")))
         self.assertEqual(d.state, "pending")
         self.assertTrue(any("conflict-resolved" in n for n in d.notes))
+
+    def test_revert_with_extra_changes_keeps_the_normal_review_path(self):
+        extra = (False, "1 commit(s) on the branch for 1 reverted merge(s)")
+        d = g.evaluate(inputs(body=body_with_class("feature"), revert=extra, owner_label=True, comments=[]))
+        self.assertEqual(d.state, "pending", d.items)
+        self.assertFalse(any("only needs to confirm" in t for _, t in d.items), d.items)
+        d = g.evaluate(inputs(body=body_with_class("feature"), revert=extra, owner_label=True))
+        self.assertEqual(d.state, "success", d.items)
 
     def test_open_owner_question_blocks_merge_even_for_reverts(self):
         q = comment("<!-- owner-question id=q1 -->\nShould this also cover the backup path? (asked in chat)")
@@ -650,7 +680,7 @@ class TreeExactRevertVerificationTests(unittest.TestCase):
 
     def evaluate(self, head):
         verification = g.verify_pure_revert(self.repo, "integration", head, [self.merge])
-        return g.evaluate(inputs(body=body_with_class("revert"), comments=[], changed_files=[self.GATE],
+        return g.evaluate(inputs(body=body_with_class("revert"), changed_files=[self.GATE],
                                  revert=verification, require_owner_approval=False))
 
     def test_exact_revert_verifies(self):
@@ -1054,7 +1084,7 @@ class ScopeGuardTests(unittest.TestCase):
         self.assertEqual(d.state, "success", d.items)
 
     def test_verified_pure_revert_may_change_gate_and_workflows(self):
-        d = g.evaluate(inputs(body=body_with_class("revert"), comments=[], changed_files=list(self.GUARDED),
+        d = g.evaluate(inputs(body=body_with_class("revert"), changed_files=list(self.GUARDED),
                               revert=(True, "reverts abc1234"), require_owner_approval=False))
         self.assertEqual(d.state, "success", d.items)
         self.assertIn(("ok", f"changes CI or the gate ({self.GUARDED[0]}) only as a verified pure revert"), d.items)

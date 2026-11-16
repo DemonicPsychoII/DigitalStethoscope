@@ -1,0 +1,48 @@
+@startuml registration_persistence
+!theme cyborg
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam backgroundColor #0b1018
+skinparam defaultFontColor #e6edf7
+skinparam ArrowColor #a9b8ca
+skinparam sequenceMessageAlign left
+title When is Device registration ready? Only after the record is saved
+participant COMMUNICATION
+database STORAGE
+participant "WIFI\n(verified TLS 1.3)" as WIFI
+participant "FHIR server" as Server
+COMMUNICATION -> STORAGE : boot: read fhir/device-registration once
+alt Valid record for this server and physical identity
+ STORAGE --> COMMUNICATION : record
+ COMMUNICATION -> COMMUNICATION : registration ready from cache\n(no POST, no readback; not proof the server still holds it)
+else Missing, malformed or other binding
+ COMMUNICATION -> COMMUNICATION : registration needed (Idle, verified transport, gap over)
+ COMMUNICATION -> WIFI : POST /Device, If-None-Exist: identifier=urn%3Astethoscope%3Adevice|stetho-AABBCCDDEEFF\nsame physical identifier every time; 10 s attempt budget
+ WIFI -> Server : request
+ Server --> WIFI : 201 Created or 200 OK (existing match)
+ WIFI --> COMMUNICATION : status, Location, body
+ COMMUNICATION -> COMMUNICATION : validate: Location base path and type, body identifier,\nids agree; else attempt failed
+ note right of COMMUNICATION : HTTP 200/201 alone is not readiness
+ COMMUNICATION -> COMMUNICATION : candidate Device id in memory only
+ COMMUNICATION -> STORAGE : write complete record (URL, identifier, Device id)
+ alt Save succeeded
+  STORAGE --> COMMUNICATION : committed
+  COMMUNICATION -> COMMUNICATION : publish registration ready
+ else Save failed
+  STORAGE --> COMMUNICATION : error; previous committed record preserved
+  COMMUNICATION -> COMMUNICATION : not ready; DEVICE_REGISTRATION_FAILURE;\nnext attempt repeats only the save (same boot)
+ end
+end
+group Lost receipt (server committed, response lost)
+ Server -->x WIFI : 201 Created lost
+ COMMUNICATION -> COMMUNICATION : attempt failed; after the gap repeat the conditional POST\nwith the same physical identifier
+ Server --> COMMUNICATION : 200 OK for the existing Device; validate and save as above
+end
+note over COMMUNICATION, Server
+ Failed attempt, never a fallback: 412 (multiple matches), unsupported conditional create, authentication,
+ configuration or trust failure latch DEVICE_REGISTRATION_FAILURE; never an unconditional POST, never a new identity.
+ Recovery: 60 s after the first failure, doubling (120, 240 s); the 4th failure leaves registration
+ unavailable until restart. After a restart with no saved record the conditional POST is repeated.
+ Atomicity and power-loss behavior of the save remain target evidence.
+end note
+@enduml

@@ -55,6 +55,10 @@ The open-hotspot transport is an accepted MVP limitation; the [dated risk accept
 
 The page shall maintain four local views: network list, selected-network form, busy progress and completed/closed guidance. The controller's published status is authoritative; local form state preserves an unfinished password while status is polled.
 
+![Setup page: browser-local view and controller status as two regions](rendered/page_state.svg)
+
+*Which local view does the page show for each controller status?* Editable source: [page-state.puml](page-state.puml). The table states what each view shows.
+
 | Trigger | Required page behavior |
 | --- | --- |
 | Entry | Show Loading, immediately request status, then request it again P24 after each response/failure completes. Only one poll is outstanding. |

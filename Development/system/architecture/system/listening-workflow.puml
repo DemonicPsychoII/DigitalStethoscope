@@ -28,8 +28,8 @@ repeat
  endif
  :Update listening filter / volume;
  :Reject session identity changes;
- :If SESSION_CONTEXT_CHANGE: halt, restart required;
-repeat while (Stop / halting fault?) is (no) not (yes)
+ :If SESSION_CONTEXT_CHANGE: latch silently, keep listening;\nhalt after the manual Stop, restart required;
+repeat while (Stop / audio fault?) is (no) not (yes)
 :Mute;
 :Idle / Fault;
 stop

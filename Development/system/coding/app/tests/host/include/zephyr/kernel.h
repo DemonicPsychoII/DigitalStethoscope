@@ -101,6 +101,7 @@ struct k_work_queue_config
 void k_work_init(struct k_work *, k_work_handler_t);
 void k_work_queue_start(struct k_work_q *, char *, size_t, int, const struct k_work_queue_config *);
 int k_work_submit_to_queue(struct k_work_q *, struct k_work *);
+int k_work_busy_get(const struct k_work *);
 int64_t k_uptime_ticks(void);
 uint64_t k_ticks_to_us_floor64(uint64_t);
 

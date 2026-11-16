@@ -123,6 +123,13 @@ remain a coverage gap. Wi-Fi setup interruption by Start is a separate rule.
 
 Created by GPT-6.1-Sol on behalf of Nico running in codex.
 
+## Physical interface input decoding
+
+`l1_physicalinterface/` compiles the production `physicalinterface_input.c` unchanged
+(VT-04): switch decoding and debounce, volume clamping and reporting, and failed or absent
+inputs. GPIO, ADC and work-queue access in `physicalinterface.c` need Zephyr and are not
+exercised; switch and potentiometer behavior on the board remains a target check.
+
 ## Production integration and coverage
 
 The [integration batch](integration/README.md) runs real L2 with real L1 services.

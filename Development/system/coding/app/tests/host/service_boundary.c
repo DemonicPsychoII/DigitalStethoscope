@@ -75,6 +75,11 @@ static void (*host_time_request_hook)(void);
 /* Scenarios that run the submitted worker themselves; all others keep the failing submission. */
 static bool time_worker_is_modelled;
 static struct k_work *submitted_work;
+/* A blocked stop driver call never returns on its own: the caller's thread waits for it inline, the stop queue holds it until release_service_stops(). */
+static bool service_stop_driver_blocks;
+static int service_stop_driver_block_milliseconds = 5000;
+static struct k_work *held_service_stops[2];
+static size_t held_service_stop_count;
 
 enum time_server_lookup
 {
@@ -317,9 +322,35 @@ void k_work_queue_start(struct k_work_q *queue, char *stack, size_t size, int pr
     (void)configuration;
 }
 
+static bool is_service_stop_held(const struct k_work *work)
+{
+    bool isHeld = false;
+    for(size_t index = 0; index < held_service_stop_count; index++)
+        isHeld = isHeld || (held_service_stops[index] == work);
+    return isHeld;
+}
+
+int k_work_busy_get(const struct k_work *work)
+{
+    return is_service_stop_held(work) ? 1 : 0;
+}
+
 int k_work_submit_to_queue(struct k_work_q *queue, struct k_work *work)
 {
-    (void)queue;
+    /* Besides time synchronization, the units compiled here use only the service stop queue. */
+    if(queue != &wifi_TimeSynchronizationQueue)
+    {
+        /* Zephyr returns 0 for work that is already queued; production does not queue a busy stop again. */
+        assert(!is_service_stop_held(work));
+        if(service_stop_driver_blocks)
+        {
+            assert(held_service_stop_count < ARRAY_SIZE(held_service_stops));
+            held_service_stops[held_service_stop_count++] = work;
+        }
+        else
+            work->handler(work);
+        return 1;
+    }
     if(!time_worker_is_modelled)
         return -ENODEV; /**< No work queue thread in the host model. */
     /* Zephyr returns 0 for work that is already queued and 1 for newly queued work. */
@@ -621,6 +652,8 @@ int net_mgmt(int request, struct net_if *interface, void *data, size_t size)
     }
     else if(request == NET_REQUEST_WIFI_AP_DISABLE)
     {
+        if(service_stop_driver_blocks)
+            advance_clock(time_milliseconds + service_stop_driver_block_milliseconds);
         hotspot_disable_calls++;
         hotspot_is_enabled = false;
     }
@@ -725,6 +758,8 @@ int net_dhcpv4_server_start(struct net_if *interface, struct net_in_addr *addres
 int net_dhcpv4_server_stop(struct net_if *interface)
 {
     (void)interface;
+    if(service_stop_driver_blocks)
+        advance_clock(time_milliseconds + service_stop_driver_block_milliseconds);
     hotspot_dhcp_stop_calls++;
     hotspot_dhcp_is_running = false;
     return 0;

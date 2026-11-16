@@ -1,0 +1,43 @@
+@startuml conditional_create_retry
+!theme cyborg
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam backgroundColor #0b1018
+skinparam defaultFontColor #e6edf7
+skinparam ArrowColor #a9b8ca
+skinparam sequenceMessageAlign left
+title Why is a retry after a lost receipt safe? Conditional create of one Observation
+participant COMMUNICATION
+participant "WIFI\n(verified TLS 1.3)" as WIFI
+participant "FHIR server" as Server
+note over COMMUNICATION
+ Frozen once before the first request: body bytes and
+ identifier <server-device-id>:<measurement-end-UTC>.
+ Every attempt sends exactly these bytes.
+end note
+COMMUNICATION -> WIFI : attempt 1: POST /Observation\nIf-None-Exist: identifier=urn%3Astethoscope%3Ameasurement|<identifier>
+WIFI -> Server : request
+Server -> Server : no match: create and commit the resource
+Server -->x WIFI : 201 Created (lost: reset or receipt timeout)
+WIFI --> COMMUNICATION : no complete receipt
+COMMUNICATION -> COMMUNICATION : lost receipt is retryable; cancel and quiesce,\nthen 2 s gap if budget remains
+COMMUNICATION -> WIFI : attempt 2: new connection setup (SNTP, DNS, TCP, TLS)\nthen identical POST, identical identifier and body
+WIFI -> Server : request
+alt One existing match
+ Server -> Server : search finds the committed resource; nothing created
+ Server --> WIFI : 200 OK
+ WIFI --> COMMUNICATION : receipt: result Sent, no readback
+else Terminal rejection
+ Server --> WIFI : 412 (multiple matches), unsupported conditional create,\nauthentication or configuration error, other non-success status
+ WIFI --> COMMUNICATION : terminal: no further attempt, no unconditional POST
+ COMMUNICATION -> COMMUNICATION : DELIVERY_FAILURE; result visibly lost
+else Retryable failure (5xx, timeout, lost receipt) until attempts or deadline run out
+ COMMUNICATION -> COMMUNICATION : 4 attempts used or Stop + 10 s reached:\nDELIVERY_FAILURE; result visibly lost
+end
+note over COMMUNICATION, Server
+ No delayed queue: a lost result is never resent, also not after the server recovers.
+ A result that never gets a qualifying clock anchor sends no request: SERVER_CONNECTION_FAILURE at the deadline.
+ Duplicate prevention follows the FHIR R4 conditional-create rules; whether the deployed
+ HAPI FHIR server returns 200 for the existing match is unverified (integration evidence pending).
+end note
+@enduml

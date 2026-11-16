@@ -1,0 +1,83 @@
+@startuml shared_analysis_coverage
+!theme cyborg
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam backgroundColor #0b1018
+skinparam defaultFontColor #e6edf7
+skinparam ArrowColor #a9b8ca
+title How much of the session counts as coverage?
+concise "Session" as session
+concise "Window A" as windowA
+concise "Window B" as windowB
+concise "Window C" as windowC
+concise "Window D" as windowD
+concise "Window E" as windowE
+concise "Window F" as windowF
+concise "Audio blocks" as blocks
+concise "Coverage (clipped union)" as coverage
+
+@0
+session is "before Start"
+windowA is "accepted"
+windowB is {-}
+windowC is {-}
+windowD is {-}
+windowE is {-}
+windowF is {-}
+blocks is "complete"
+coverage is {-}
+
+@4
+session is "session"
+windowB is "accepted"
+coverage is "covered"
+
+@6
+windowC is "accepted"
+
+@8
+windowA is {-}
+windowD is "rejected"
+
+@12
+windowB is {-}
+
+@14
+windowC is {-}
+coverage is "not covered"
+
+@15
+blocks is "gap"
+
+@16
+windowD is {-}
+
+@17
+blocks is "complete"
+
+@18
+windowE is "accepted"
+coverage is "covered"
+
+@20
+windowF is "accepted"
+
+@26
+windowE is {-}
+
+@28
+session is "after Stop"
+windowF is {-}
+coverage is {-}
+
+highlight 15 to 17 #3a2a2a : missing blocks
+legend bottom
+ Illustrative subset: P05 proposes 8 s windows updated every 1 s; windows are thinned for readability.
+ Coverage = union of accepted window intervals clipped to the session bounds (Start at 4 s, Stop at 28 s):
+ [4 s, 14 s] + [18 s, 28 s] = 20 s of 24 s = 83 %. Overlaps count once.
+ Not window count x window length: 5 accepted x 8 s = 40 s would exceed the session.
+ No window includes missing blocks, so Window D is rejected and the gap stays uncovered.
+ Window A starts before Start; whether such warm-up windows are accepted is open (TICKET-192).
+ Validity thresholds (>= 3 valid windows, >= 80 % coverage) are P07 proposals, not accepted values.
+endlegend
+@enduml

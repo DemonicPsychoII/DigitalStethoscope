@@ -692,6 +692,7 @@ def cleanup_failure(simulation):
     )
     assert trace.count("page_stop_failed") == 1 and trace.count("page_stop") == 0
     assert "WIFI_CLEANUP_FAILURE" in trace.production_log
+    assert trace.times("cleanup_failure_feedback") == [2000]
     assert trace.last("ack") == 0
 
 
@@ -1130,6 +1131,7 @@ for service_name, setting, failure_name, setup_script, stored, stop_tries in (
             assert trace.last("ack") == 0
             if latches:
                 assert "WIFI_CLEANUP_FAILURE" in trace.production_log
+                assert trace.count("cleanup_failure_feedback") == 1
                 if service_name == "scan":
                     expected_scan_count = 1
                 elif stored:
@@ -1140,6 +1142,7 @@ for service_name, setting, failure_name, setup_script, stored, stop_tries in (
                 assert trace.count("join") == int(stored)
             else:
                 assert "WIFI_CLEANUP_FAILURE" not in trace.production_log
+                assert trace.count("cleanup_failure_feedback") == 0
 
 
 @case(

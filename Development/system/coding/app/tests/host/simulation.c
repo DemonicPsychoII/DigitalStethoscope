@@ -81,6 +81,7 @@ static int secure_cancel_failures;           /* Cancellations that cannot prove 
 static int observation_requests;             /* Observation requests of the current job. */
 static char observation_first_body[2048];    /* First request of the job; every retry must repeat it. */
 static char observation_first_condition[256];
+static void (*white_box_handler)(int value); /* Set only by a harness that includes communication.c; "white_box" events call it. */
 
 static void trace(const char *kind, int value)
 {
@@ -95,6 +96,12 @@ void simulation_log(const char *format, ...)
     vfprintf(stderr, format, arguments);
     fputc('\n', stderr);
     va_end(arguments);
+}
+
+static void record_feedback(enum feedback_code code)
+{
+    if(code == FEEDBACK_WIFI_CLEANUP_FAILURE)
+        trace("cleanup_failure_feedback", 0);
 }
 
 static void snapshot(void)
@@ -146,6 +153,12 @@ static void dispatch(struct event *event)
         connected = false;
     else if(strcmp(event->kind, "snapshot") == 0)
         snapshot();
+    else if(strcmp(event->kind, "white_box") == 0)
+    {
+        if(white_box_handler == NULL)
+            abort();
+        white_box_handler(event->value);
+    }
     else if(strcmp(event->kind, "late_link") == 0)
     {
         connected = true;
@@ -1033,6 +1046,7 @@ int main(void)
         else
             abort();
     }
+    communication_setFeedbackHandler(record_feedback);
     communication_init();
     if(setjmp(finished) == 0)
     {

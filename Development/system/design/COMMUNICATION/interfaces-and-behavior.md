@@ -45,17 +45,11 @@ workflow again by holding the button for 2 s in Idle.
 
 ### Listening priority and safe teardown
 
-A Start request during setup cancels active setup, waits for safe teardown and then
-starts audio. Preserve an established station association. Serialize cancellation
-against join completion, reject stale callbacks and finish an atomic settings write
-safely. Preserve the final requested Start/Stop state when commands coalesce.
-CONTROL serializes its commands with the release wait. No acknowledgement is
-valid until L1_WIFI and L1_PORTAL confirm scan/connect cancellation and portal/DHCP/AP shutdown;
-cleanup tries each pending stop once (see below); a latched Wi-Fi-only cleanup fault releases audio and prevents further Wi-Fi work until restart. This exception follows REQ-13; it does not assert that the radio is physically off. A new Start invalidates the
-previous acknowledgement. The 200 ms wait interval is a candidate event-check
-interval, not a measured bound on total teardown or settings-write latency.
-Setup/reconnect/delivery work is prohibited during listening; retained radio
-association and background traffic still require interference measurements.
+![Network-to-audio handover sequence](rendered/network_audio_handover.svg)
+
+*When may audio start after Start?* Source: [network-audio-handover.puml](network-audio-handover.puml). The [COMMUNICATION lifecycle](../../architecture/COMMUNICATION/communication-lifecycle.puml) ([SVG](../../architecture/COMMUNICATION/rendered/communication_lifecycle.svg)) places this handover between Idle network work and listening.
+
+Cancellation is serialized against join completion. The stop bounds are the [P23 cleanup limits](parameters.md#cleanup-limits-p23). Setup, reconnect and delivery work is prohibited during listening; retained radio association and background traffic still require interference measurements.
 
 
 ### Specified failures and interrupted boot
@@ -77,7 +71,9 @@ Wait the normal retry gap before resuming. Boot exhaustion remains JOIN_FAILURE
 with manual setup; it never becomes link-loss recovery or automatic setup.
 
 An interrupted or timed-out scan or join is cancelled once when it ends. Cleanup then
-tries each stop that is still pending once: scan, join, HTTP, DHCP and hotspot.
+tries each stop that is still pending once, in the order of the
+[P23 cleanup limits](parameters.md#cleanup-limits-p23): time synchronization, secure connection,
+scan, connect request, setup page (HTTP), DHCP and hotspot.
 If all stops succeed, audio is released normally. If any stop fails, latch
 WIFI_CLEANUP_FAILURE (restart to clear; indication follows the feedback catalogue), disable further Wi-Fi
 work until restart and release audio under REQ-13's Wi-Fi-only exception. Keep failed
