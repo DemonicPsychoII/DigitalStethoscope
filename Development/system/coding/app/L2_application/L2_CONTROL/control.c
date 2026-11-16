@@ -634,6 +634,10 @@ static void control_handleLongPress(void)
         {
             LOG_WRN("Wi-Fi setup request was not accepted");
         }
+        else
+        {
+            physicalinterface_showFeedback(FEEDBACK_BUTTON_HOLD_ACKNOWLEDGED);
+        }
     }
 }
 
