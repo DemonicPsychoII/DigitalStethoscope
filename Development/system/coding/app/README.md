@@ -85,6 +85,12 @@ errors that occur during startup or while listening are latched silently and sho
 the startup or after the manual Stop ([13 November](../../planning/mvp-decisions-2026-11-13.md)).
 Wi-Fi errors from COMMUNICATION pass through the control queue and permit Start.
 
+While the button is down the red light is steady on instead of its code, and the code
+resumes at the release. When CONTROL accepts a 2 s hold in Idle, the red light blinks at
+4 Hz until the release (`FEEDBACK_BUTTON_HOLD_ACKNOWLEDGED`); a hold outside Idle stays
+steady. This is a project decision (Nico, 16 November 2026) that the feedback catalogue
+does not contain yet.
+
 The decoding and debounce logic in `physicalinterface_input.c` has host tests (VT-04,
 `tests/host/l1_physicalinterface/`). The indication table and patterns in
 `physicalinterface_indication.c`, the error policy in `control_error_policy.c` and the volume in
