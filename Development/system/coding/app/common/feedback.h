@@ -64,6 +64,7 @@ enum feedback_code
     FEEDBACK_SESSION_CONTEXT_CHANGE,      /**< Error: context change during a session. */
     FEEDBACK_INPUT_REJECTED,              /**< Status overlay: input rejected. */
     FEEDBACK_ERROR_ACKNOWLEDGED,          /**< Status overlay: error acknowledged. */
+    FEEDBACK_BUTTON_HOLD_ACKNOWLEDGED,    /**< Status overlay: button hold accepted; shown while the button stays down. */
     FEEDBACK_CODE_COUNT,                  /**< Number of codes; not a code. */
 };
 
