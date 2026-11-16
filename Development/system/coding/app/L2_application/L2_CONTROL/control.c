@@ -406,7 +406,7 @@ static void control_handleListeningFilter(const struct physicalinterface_listeni
 
 static void control_handleVolume(const struct physicalinterface_volume_reading *reading)
 {
-    uint8_t volumePercent = (reading->status == PHYSICALINTERFACE_INPUT_VALID) ? reading->percent : PHYSICALINTERFACE_SAFE_VOLUME_PERCENT;
+    uint8_t volumePercent = ((reading->status == PHYSICALINTERFACE_INPUT_VALID) ? reading->percent : PHYSICALINTERFACE_SAFE_VOLUME_PERCENT);
 
     audio_setVolume(volumePercent);
 
@@ -727,8 +727,7 @@ static void control_raiseError(enum feedback_code code, const char *cause)
 
 static void control_applyErrorEffects(void)
 {
-    bool isAudioStarted = (control_currentState == CONTROL_STATE_STARTING) || (control_currentState == CONTROL_STATE_LISTENING) ||
-                          (control_currentState == CONTROL_STATE_STOPPING);
+    bool isAudioStarted = ((control_currentState == CONTROL_STATE_STARTING) || (control_currentState == CONTROL_STATE_LISTENING) || (control_currentState == CONTROL_STATE_STOPPING));
 
     if(control_hasAdmission(&control_errorLatch, CONTROL_ADMISSION_HALTED_AT_ONCE) && (control_currentState != CONTROL_STATE_HALTED))
     {
@@ -785,7 +784,7 @@ static void control_applyWiFiFeedback(enum feedback_code code)
     }
     else
     {
-        control_wifiIndication = ((code == FEEDBACK_WIFI_CONNECTING) || (code == FEEDBACK_PORTAL_OPEN)) ? code : FEEDBACK_NONE;
+        control_wifiIndication = (((code == FEEDBACK_WIFI_CONNECTING) || (code == FEEDBACK_PORTAL_OPEN)) ? code : FEEDBACK_NONE);
         control_isQuickFlashActive = false;
         control_updateIndication();
     }
@@ -798,9 +797,8 @@ static void control_checkInputs(void)
     bool isVolumeFailed = control_isVolumeFailed;
     k_spin_unlock(&control_inputLock, key);
 
-    bool isListening = (control_currentState == CONTROL_STATE_STARTING) || (control_currentState == CONTROL_STATE_LISTENING);
-    bool isSwitchFailureLong = (switchReading.status != PHYSICALINTERFACE_INPUT_VALID) &&
-                               ((k_uptime_get() - switchReading.timestampMilliseconds) >= CONTROL_SWITCH_FAILURE_MILLISECONDS);
+    bool isListening = ((control_currentState == CONTROL_STATE_STARTING) || (control_currentState == CONTROL_STATE_LISTENING));
+    bool isSwitchFailureLong = ((switchReading.status != PHYSICALINTERFACE_INPUT_VALID) && ((k_uptime_get() - switchReading.timestampMilliseconds) >= CONTROL_SWITCH_FAILURE_MILLISECONDS));
 
     if(isVolumeFailed)
     {
@@ -833,8 +831,7 @@ static struct physicalinterface_listening_filter_reading control_getSwitchReadin
 
 static bool control_isIndicationDeferred(void)
 {
-    return (control_currentState == CONTROL_STATE_STARTUP) || (control_currentState == CONTROL_STATE_STARTING) ||
-           (control_currentState == CONTROL_STATE_LISTENING) || (control_currentState == CONTROL_STATE_STOPPING);
+    return ((control_currentState == CONTROL_STATE_STARTUP) || (control_currentState == CONTROL_STATE_STARTING) || (control_currentState == CONTROL_STATE_LISTENING) || (control_currentState == CONTROL_STATE_STOPPING));
 }
 
 static enum feedback_code control_getStatusFeedback(void)
