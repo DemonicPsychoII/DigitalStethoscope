@@ -419,6 +419,11 @@ static void physicalinterface_debounceButton(struct k_work *work)
 
     physicalinterface_isButtonPressed = isPressed;
 
+    k_spinlock_key_t key = k_spin_lock(&physicalinterface_indicationLock);
+    physicalinterface_setIndicationButtonPressed(&physicalinterface_lightsIndication, isPressed);
+    k_spin_unlock(&physicalinterface_indicationLock, key);
+    (void)k_work_reschedule(&physicalinterface_lightsWork, K_NO_WAIT);
+
     if(isPressed)
     {
         physicalinterface_isLongPressReported = false;
