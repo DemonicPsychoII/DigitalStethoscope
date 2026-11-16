@@ -234,6 +234,10 @@ static void physicalinterface_debounceButton(struct k_work *work);
  */
 static void physicalinterface_reportLongPress(struct k_work *work);
 
+/***********************************************************************/
+/* MACROS                                                              */
+/***********************************************************************/
+
 LOG_MODULE_REGISTER(physicalinterface, LOG_LEVEL_INF);
 
 /***********************************************************************/

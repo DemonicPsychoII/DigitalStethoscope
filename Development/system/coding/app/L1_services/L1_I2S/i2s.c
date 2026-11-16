@@ -120,10 +120,14 @@ static enum i2s_result i2s_configureLinks(void);
 static enum i2s_result i2s_primeTransmitQueue(void);
 
 /***********************************************************************/
-/* GLOBAL FUNCTIONS                                                    */
+/* MACROS                                                              */
 /***********************************************************************/
 
 LOG_MODULE_REGISTER(i2s, LOG_LEVEL_INF);
+
+/***********************************************************************/
+/* GLOBAL FUNCTIONS                                                    */
+/***********************************************************************/
 
 enum i2s_result i2s_initialize(void)
 {
