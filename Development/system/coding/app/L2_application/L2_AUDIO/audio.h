@@ -30,7 +30,7 @@
 /** Command from CONTROL to the audio thread. */
 enum audio_command
 {
-    AUDIO_COMMAND_START, /**< Start both links and the block loop; ignored while running. */
+    AUDIO_COMMAND_START, /**< Start both links and the block loop; ignored while running and after a fault. */
     AUDIO_COMMAND_STOP,  /**< Leave the block loop and stop both links; ignored while stopped. */
 };
 
@@ -39,7 +39,7 @@ enum audio_event
 {
     AUDIO_EVENT_STARTED, /**< Both links run and the block loop has started. */
     AUDIO_EVENT_STOPPED, /**< Stopped after AUDIO_COMMAND_STOP; output silent. */
-    AUDIO_EVENT_FAULT,   /**< A link failed; both links are stopped and need a device restart. */
+    AUDIO_EVENT_FAULT,   /**< A link failed; both links are dropped and the thread starts no stream until the device restarts. */
 };
 
 /**

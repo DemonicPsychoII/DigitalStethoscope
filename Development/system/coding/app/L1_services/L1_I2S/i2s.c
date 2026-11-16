@@ -119,6 +119,16 @@ static enum i2s_result i2s_configureLinks(void);
  */
 static enum i2s_result i2s_primeTransmitQueue(void);
 
+/**
+ * @brief Name the failed link from one finding per link; the microphone link comes first.
+ *
+ * @param[in] microphoneFinding Non-zero if the microphone link failed.
+ * @param[in] outputFinding Non-zero if the DAC link failed.
+ *
+ * @return I2S_RESULT_OK if both findings are 0, otherwise the failed link.
+ */
+static enum i2s_result i2s_getFailedLink(int microphoneFinding, int outputFinding);
+
 /***********************************************************************/
 /* MACROS                                                              */
 /***********************************************************************/
@@ -184,7 +194,7 @@ enum i2s_result i2s_start(void)
 
     if(result != I2S_RESULT_OK)
     {
-        (void)i2s_stop();
+        (void)i2s_abort();
     }
 
     return result;
@@ -195,28 +205,50 @@ enum i2s_result i2s_stop(void)
     /* DROP alone would lose the block in DMA: the driver clears its pointer without freeing it. STOP lets it complete first. */
     int microphoneError = i2s_trigger(i2s_MicrophoneDevice, I2S_DIR_RX, I2S_TRIGGER_STOP);
     int outputError = i2s_trigger(i2s_DACDevice, I2S_DIR_TX, I2S_TRIGGER_STOP);
+    enum i2s_result result = i2s_getFailedLink(microphoneError, outputError);
 
-    if((microphoneError != 0) || (outputError != 0))
+    if(result != I2S_RESULT_OK)
     {
-        LOG_DBG("STOP not accepted (microphone %d, DAC %d); the link is stopped or in the error state", microphoneError, outputError);
+        LOG_ERR("STOP rejected (microphone %d, DAC %d)", microphoneError, outputError);
+    }
+    else
+    {
+        k_msleep(I2S_STOP_WAIT_MS);
+
+        microphoneError = i2s_trigger(i2s_MicrophoneDevice, I2S_DIR_RX, I2S_TRIGGER_DROP);
+        outputError = i2s_trigger(i2s_DACDevice, I2S_DIR_TX, I2S_TRIGGER_DROP);
+        result = i2s_getFailedLink(microphoneError, outputError);
+
+        if(result != I2S_RESULT_OK)
+        {
+            LOG_ERR("DROP failed (microphone %d, DAC %d)", microphoneError, outputError);
+        }
     }
 
-    k_msleep(I2S_STOP_WAIT_MS);
+    if(result == I2S_RESULT_OK)
+    {
+        uint32_t receiveBlocksInUse = k_mem_slab_num_used_get(&i2s_ReceivePool);
+        uint32_t transmitBlocksInUse = k_mem_slab_num_used_get(&i2s_TransmitPool);
 
-    microphoneError = i2s_trigger(i2s_MicrophoneDevice, I2S_DIR_RX, I2S_TRIGGER_DROP);
-    outputError = i2s_trigger(i2s_DACDevice, I2S_DIR_TX, I2S_TRIGGER_DROP);
+        result = i2s_getFailedLink((int)receiveBlocksInUse, (int)transmitBlocksInUse);
+
+        if(result != I2S_RESULT_OK)
+        {
+            LOG_ERR("Blocks still in use after stop: RX %u, TX %u", receiveBlocksInUse, transmitBlocksInUse);
+        }
+    }
+
+    return result;
+}
+
+enum i2s_result i2s_abort(void)
+{
+    int microphoneError = i2s_trigger(i2s_MicrophoneDevice, I2S_DIR_RX, I2S_TRIGGER_DROP);
+    int outputError = i2s_trigger(i2s_DACDevice, I2S_DIR_TX, I2S_TRIGGER_DROP);
 
     if((microphoneError != 0) || (outputError != 0))
     {
         LOG_ERR("DROP failed (microphone %d, DAC %d)", microphoneError, outputError);
-    }
-
-    uint32_t receiveBlocksInUse = k_mem_slab_num_used_get(&i2s_ReceivePool);
-    uint32_t transmitBlocksInUse = k_mem_slab_num_used_get(&i2s_TransmitPool);
-
-    if((receiveBlocksInUse != 0U) || (transmitBlocksInUse != 0U))
-    {
-        LOG_ERR("Blocks still in use after stop: RX %u, TX %u", receiveBlocksInUse, transmitBlocksInUse);
     }
 
     return I2S_RESULT_OK;
@@ -347,6 +379,26 @@ static enum i2s_result i2s_primeTransmitQueue(void)
         }
 
         primedBlocks++;
+    }
+
+    return result;
+}
+
+static enum i2s_result i2s_getFailedLink(int microphoneFinding, int outputFinding)
+{
+    enum i2s_result result = I2S_RESULT_OK;
+
+    if(microphoneFinding != 0)
+    {
+        result = I2S_RESULT_MICROPHONE_FAILURE;
+    }
+    else if(outputFinding != 0)
+    {
+        result = I2S_RESULT_OUTPUT_FAILURE;
+    }
+    else
+    {
+        result = I2S_RESULT_OK;
     }
 
     return result;

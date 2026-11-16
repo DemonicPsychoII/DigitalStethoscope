@@ -66,24 +66,33 @@ enum i2s_result i2s_initialize(void);
  * @brief Start both links while they are stopped.
  *
  * Configures both links again, queues 4 silent TX blocks, then starts RX and TX.
- * On failure both links are stopped again.
+ * On failure both links are dropped as i2s_abort() does.
  *
  * @return I2S_RESULT_OK, or the link that failed.
  */
 enum i2s_result i2s_start(void);
 
 /**
- * @brief Stop both links and return every block the driver holds to its pool.
+ * @brief Stop both running links for a normal Stop and return every block the driver holds to its pool.
  *
  * Triggers STOP on both links, waits two block periods so the block in DMA
- * completes, then triggers DROP on both. A link in the driver's error state
- * rejects STOP and gets DROP alone. Blocks the thread for about 8 ms.
- * Harmless when repeated. Errors are only logged, as are blocks still in use
- * afterwards, so the caller must not hold a block.
+ * completes, then triggers DROP on both. Blocks the thread for about 8 ms.
+ * A link that rejects STOP, for example in the driver's error state, ends the
+ * sequence at once, without the wait. The caller must not hold a block.
+ *
+ * @return I2S_RESULT_OK, or the link that rejected STOP or DROP or whose pool still has blocks in use; the caller then calls i2s_abort().
+ */
+enum i2s_result i2s_stop(void);
+
+/**
+ * @brief Drop both links at once after an audio fault, without STOP or a wait.
+ *
+ * Blocks the driver held at that moment may stay in use until the device
+ * restarts. Harmless when repeated.
  *
  * @return I2S_RESULT_OK.
  */
-enum i2s_result i2s_stop(void);
+enum i2s_result i2s_abort(void);
 
 /**
  * @brief Wait for the next completed RX block and lend it to the caller.

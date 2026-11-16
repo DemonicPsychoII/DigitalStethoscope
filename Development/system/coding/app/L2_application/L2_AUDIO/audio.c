@@ -70,6 +70,9 @@ struct audio_processing_time
 
 static audio_event_handler audio_EventHandler; /**< Set before the thread starts; only read afterwards. */
 
+/** Set at boot before the thread starts, afterwards only by the audio thread; a fault lasts until the device restarts. */
+static bool audio_HasFault;
+
 K_THREAD_STACK_DEFINE(audio_Stack, AUDIO_THREAD_STACK_SIZE);
 K_MSGQ_DEFINE(audio_Commands, sizeof(enum audio_command), AUDIO_COMMAND_QUEUE_LENGTH, 4);
 
@@ -92,9 +95,11 @@ static int32_t audio_MonoSamples[I2S_FRAMES_PER_BLOCK];
 static void audio_thread(void *first, void *second, void *third);
 
 /**
- * @brief Start both links, run the block loop until Stop or a fault, then stop both links.
+ * @brief Start both links, run the block loop until Stop or a fault, then stop or drop both links.
+ *
+ * @return I2S_RESULT_OK after a normal Stop, otherwise the link that failed.
  */
-static void audio_runStream(void);
+static enum i2s_result audio_runStream(void);
 
 /**
  * @brief Move one block from the microphone to the DAC: read, process, send.
@@ -145,6 +150,8 @@ enum feedback_code audio_init(audio_event_handler eventHandler)
 
     enum feedback_code result = audio_getFaultCode(i2s_initialize());
 
+    audio_HasFault = (result != FEEDBACK_NONE);
+
     (void)k_thread_create(&audio_ThreadData,
                           audio_Stack,
                           K_THREAD_STACK_SIZEOF(audio_Stack),
@@ -183,14 +190,14 @@ static void audio_thread(void *first, void *second, void *third)
 
         (void)k_msgq_get(&audio_Commands, &command, K_FOREVER);
 
-        if(command == AUDIO_COMMAND_START)
+        if((command == AUDIO_COMMAND_START) && !audio_HasFault)
         {
-            audio_runStream();
+            audio_HasFault = (audio_runStream() != I2S_RESULT_OK);
         }
     }
 }
 
-static void audio_runStream(void)
+static enum i2s_result audio_runStream(void)
 {
     enum i2s_result result = i2s_start();
     bool isStopRequested = false;
@@ -212,7 +219,15 @@ static void audio_runStream(void)
             }
         }
 
-        (void)i2s_stop();
+        if(result == I2S_RESULT_OK)
+        {
+            result = i2s_stop();
+        }
+
+        if(result != I2S_RESULT_OK)
+        {
+            (void)i2s_abort();
+        }
 
         LOG_DBG("Stream ended after %u blocks; longest block processing %u us",
                 processingTime.processedBlocks,
@@ -227,6 +242,8 @@ static void audio_runStream(void)
     {
         audio_EventHandler(AUDIO_EVENT_FAULT, audio_getFaultCode(result));
     }
+
+    return result;
 }
 
 static enum i2s_result audio_processBlock(uint32_t *processingCycles)

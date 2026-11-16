@@ -151,6 +151,8 @@ static void control_thread(void *first, void *second, void *third);
 /**
  * @brief Act on one event in the current state.
  *
+ * After an audio error the device is halted: button events are dropped without an indication.
+ *
  * @param[in] event Event from the queue.
  */
 static void control_dispatch(const struct control_event *event);
@@ -347,11 +349,19 @@ static void control_dispatch(const struct control_event *event)
     switch(event->type)
     {
     case CONTROL_EVENT_BUTTON_SHORT_PRESS:
-        control_handleShortPress(state);
+        if(state != CONTROL_STATE_HALTED)
+        {
+            control_handleShortPress(state);
+        }
+
         break;
 
     case CONTROL_EVENT_BUTTON_LONG_PRESS:
-        control_handleLongPress(state);
+        if(state != CONTROL_STATE_HALTED)
+        {
+            control_handleLongPress(state);
+        }
+
         break;
 
     case CONTROL_EVENT_AUDIO_STARTED:
