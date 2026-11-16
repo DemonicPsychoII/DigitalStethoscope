@@ -562,7 +562,7 @@ static int physicalinterface_initPotentiometer(void)
         }
     }
 
-    physicalinterface_isPotentiometerReady = IS_ENABLED(CONFIG_PHYSICALINTERFACE_VOLUME_POTENTIOMETER_FITTED) && (result == 0);
+    physicalinterface_isPotentiometerReady = (IS_ENABLED(CONFIG_PHYSICALINTERFACE_VOLUME_POTENTIOMETER_FITTED) && (result == 0));
     (void)k_work_schedule(&physicalinterface_volumePollWork, K_NO_WAIT);
 
     return result;
@@ -574,13 +574,13 @@ static void physicalinterface_pollVolume(struct k_work *work)
 
     bool isFitted = IS_ENABLED(CONFIG_PHYSICALINTERFACE_VOLUME_POTENTIOMETER_FITTED);
     int32_t millivolts = 0;
-    int result = isFitted ? physicalinterface_readPotentiometerMillivolts(&millivolts) : 0;
+    int result = (isFitted ? physicalinterface_readPotentiometerMillivolts(&millivolts) : 0);
     int64_t nowMilliseconds = k_uptime_get();
     enum physicalinterface_input_status status = PHYSICALINTERFACE_INPUT_ABSENT;
 
     if(isFitted)
     {
-        status = (result == 0) ? PHYSICALINTERFACE_INPUT_VALID : PHYSICALINTERFACE_INPUT_FAILED;
+        status = ((result == 0) ? PHYSICALINTERFACE_INPUT_VALID : PHYSICALINTERFACE_INPUT_FAILED);
     }
 
     if(physicalinterface_trackVolume(&physicalinterface_volumeTracker, status, millivolts))
@@ -609,7 +609,7 @@ static int physicalinterface_readPotentiometerMillivolts(int32_t *millivolts)
 {
     int16_t sample = 0;
     struct adc_sequence sequence = {.buffer = &sample, .buffer_size = sizeof(sample)};
-    int result = physicalinterface_isPotentiometerReady ? 0 : -ENODEV;
+    int result = (physicalinterface_isPotentiometerReady ? 0 : -ENODEV);
 
     if(result == 0)
     {
