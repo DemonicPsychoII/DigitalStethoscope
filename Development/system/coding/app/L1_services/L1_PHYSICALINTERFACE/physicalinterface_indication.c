@@ -61,6 +61,7 @@ static const struct physicalinterface_indication_row physicalinterface_indicatio
     [FEEDBACK_SESSION_CONTEXT_CHANGE] = {PHYSICALINTERFACE_COLOUR_WHITE, PHYSICALINTERFACE_PATTERN_STEADY, PHYSICALINTERFACE_BUTTON_LIGHT_BLINK_CODE, 5},
     [FEEDBACK_INPUT_REJECTED] = {PHYSICALINTERFACE_COLOUR_OFF, PHYSICALINTERFACE_PATTERN_DIM_ONCE, PHYSICALINTERFACE_BUTTON_LIGHT_NO_CHANGE, 0},
     [FEEDBACK_ERROR_ACKNOWLEDGED] = {PHYSICALINTERFACE_COLOUR_OFF, PHYSICALINTERFACE_PATTERN_NO_CHANGE, PHYSICALINTERFACE_BUTTON_LIGHT_LONG_FLASH_ONCE, 0},
+    [FEEDBACK_BUTTON_HOLD_ACKNOWLEDGED] = {PHYSICALINTERFACE_COLOUR_OFF, PHYSICALINTERFACE_PATTERN_NO_CHANGE, PHYSICALINTERFACE_BUTTON_LIGHT_HOLD_BLINK, 0},
 };
 
 /***********************************************************************/
@@ -112,6 +113,9 @@ void physicalinterface_resetIndication(struct physicalinterface_indication *indi
     indication->isLongFlashActive = false;
     indication->longFlashEndMilliseconds = 0;
     indication->rejectionDimEndMilliseconds = 0;
+    indication->isButtonPressed = false;
+    indication->isHoldBlinkActive = false;
+    indication->holdBlinkSinceMilliseconds = 0;
 }
 
 void physicalinterface_applyIndication(struct physicalinterface_indication *indication, enum feedback_code code, int64_t nowMilliseconds)
@@ -122,6 +126,14 @@ void physicalinterface_applyIndication(struct physicalinterface_indication *indi
     if(row->statusLightPattern == PHYSICALINTERFACE_PATTERN_DIM_ONCE)
     {
         indication->rejectionDimEndMilliseconds = nowMilliseconds + PHYSICALINTERFACE_REJECTION_DIM_MILLISECONDS;
+    }
+    else if(row->buttonLightPattern == PHYSICALINTERFACE_BUTTON_LIGHT_HOLD_BLINK)
+    {
+        if(indication->isButtonPressed && !indication->isHoldBlinkActive)
+        {
+            indication->isHoldBlinkActive = true;
+            indication->holdBlinkSinceMilliseconds = nowMilliseconds;
+        }
     }
     else if(row->buttonLightPattern == PHYSICALINTERFACE_BUTTON_LIGHT_LONG_FLASH_ONCE)
     {
@@ -140,6 +152,12 @@ void physicalinterface_applyIndication(struct physicalinterface_indication *indi
         indication->hasPendingCode = false;
         indication->isLongFlashActive = false;
     }
+}
+
+void physicalinterface_setIndicationButtonPressed(struct physicalinterface_indication *indication, bool isPressed)
+{
+    indication->isButtonPressed = isPressed;
+    indication->isHoldBlinkActive = false;
 }
 
 struct physicalinterface_indication_output physicalinterface_renderIndication(struct physicalinterface_indication *indication, int64_t nowMilliseconds)
@@ -172,7 +190,18 @@ struct physicalinterface_indication_output physicalinterface_renderIndication(st
         isStatusLightAnimated = true;
     }
 
-    if(indication->isLongFlashActive)
+    if(indication->isButtonPressed && indication->isHoldBlinkActive)
+    {
+        int64_t holdMilliseconds = nowMilliseconds - indication->holdBlinkSinceMilliseconds;
+
+        output.isButtonLightOn = ((holdMilliseconds / PHYSICALINTERFACE_HOLD_BLINK_HALF_PERIOD_MILLISECONDS) % 2) == 0;
+        isButtonLightAnimated = true;
+    }
+    else if(indication->isButtonPressed)
+    {
+        output.isButtonLightOn = true;
+    }
+    else if(indication->isLongFlashActive)
     {
         output.isButtonLightOn = true;
         isButtonLightAnimated = true;
