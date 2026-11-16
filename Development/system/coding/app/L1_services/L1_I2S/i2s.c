@@ -78,11 +78,18 @@ static const struct device *const i2s_DACDevice = DEVICE_DT_GET(I2S_DAC_NODE);
 K_MEM_SLAB_DEFINE_STATIC(i2s_ReceivePool, I2S_BLOCK_SIZE_BYTES, I2S_POOL_BLOCKS, I2S_POOL_ALIGNMENT_BYTES);
 K_MEM_SLAB_DEFINE_STATIC(i2s_TransmitPool, I2S_BLOCK_SIZE_BYTES, I2S_POOL_BLOCKS, I2S_POOL_ALIGNMENT_BYTES);
 
-/* Both links use the same settings, so both controllers derive the same clock dividers. */
+/*
+ * Both links use the same word size, slot count and rate, so both controllers derive the same clock dividers.
+ *
+ * With I2S_FMT_DATA_FORMAT_I2S the controller delivered every INMP441 sample one bit too far left: the sign bit
+ * was lost and loud samples wrapped. This is a measurement on the carrier; its cause in the driver or the timing
+ * is not known. Left-justified with the inverted frame clock keeps the left slot on WS low and samples one bit
+ * clock earlier, which aligns the sample.
+ */
 static const struct i2s_config i2s_ReceiveConfiguration = {
     .word_size = I2S_WORD_SIZE_BITS,
     .channels = I2S_SLOTS_PER_FRAME,
-    .format = I2S_FMT_DATA_FORMAT_I2S,
+    .format = I2S_FMT_DATA_FORMAT_LEFT_JUSTIFIED | I2S_FMT_FRAME_CLK_INV,
     .options = I2S_OPT_FRAME_CLK_CONTROLLER | I2S_OPT_BIT_CLK_CONTROLLER,
     .frame_clk_freq = I2S_SAMPLE_RATE_HZ,
     .mem_slab = &i2s_ReceivePool,

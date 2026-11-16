@@ -19,19 +19,36 @@ covers the first audio step: microphone to DAC with a copy step.
 
 ## Stream configuration
 
-Both links use the same settings, so both controllers derive the same clock dividers from the same
-default clock source [1].
+Both links use the same word size, slot count and sample rate, so both controllers derive the same
+clock dividers from the same default clock source [1].
 
 | Setting | Value | Reason |
 | --- | --- | --- |
 | Links | `i2s0` RX from the INMP441, `i2s1` TX to the PCM5102A | [Electrical interface baseline](../../spec/product-scope.md#electrical-interface-baseline) |
-| Format | Zephyr `I2S_FMT_DATA_FORMAT_I2S`, the ESP32-S3 drives bit and frame clock on both links | The microphone and the DAC both take their clocks from the ESP32-S3, as configured in the bring-up firmware [2] |
+| Format | RX: Zephyr `I2S_FMT_DATA_FORMAT_LEFT_JUSTIFIED` with `I2S_FMT_FRAME_CLK_INV`. TX: `I2S_FMT_DATA_FORMAT_I2S`. The ESP32-S3 drives bit and frame clock on both links | The microphone and the DAC both take their clocks from the ESP32-S3, as configured in the bring-up firmware [2]. RX: see [receive format](#receive-format). TX is not measured |
 | Channels, word size | 2 channels, 32-bit words | The driver accepts only two channels [1]; equal word sizes keep the dividers equal [1] |
 | Sample rate | 16,000 Hz (P01) | Decision of 10 November 2026; [rationale](#sample-rate-and-block-size-rationale) |
 | Block | 64 frames × 2 slots × 4 bytes = 512 bytes, 4 ms | P01, confirmed 13 November; below the 4092-byte DMA descriptor limit, so one descriptor per block [1] |
 | RX pool | 5 blocks; `CONFIG_I2S_ESP32_RX_BLOCK_COUNT` = 3 | 3 completed blocks waiting, 1 in DMA, 1 lent to the audio thread |
 | TX pool | 5 blocks; `CONFIG_I2S_ESP32_TX_BLOCK_COUNT` = 4 | 4 blocks primed before TX starts (1 in DMA and 3 queued afterwards), 1 being filled |
 | Memory | Both pools in internal DMA-capable RAM, defined at build time | No PSRAM in this step |
+
+## Receive format
+
+*Own measurement, 16 November 2026, on the carrier with the application firmware of this branch
+(parent commit `6c7233b`) and a temporary diagnostic that is not in the repository. The diagnostic
+collected, over every left-slot word of 10 s, which bits were ever 1.*
+
+| RX format | Bits of the 32-bit left slot that were ever 1 | Reading |
+| --- | --- | --- |
+| `I2S_FMT_DATA_FORMAT_I2S` | `0xFFFFFE00`: bit 8 never | The 24-bit sample sits one bit too far left: its sign bit is lost and its lowest bit position is always 0 |
+| `I2S_FMT_DATA_FORMAT_LEFT_JUSTIFIED` with `I2S_FMT_FRAME_CLK_INV` | `0xFFFFFF00`: bit 8 changes | The sample fills bits 31 to 8, as the [sample format](#sample-format) expects |
+
+- In the driver, the second setting keeps the left slot on WS low and only turns off the one-bit
+  shift after the WS edge [1], so the controller samples one bit clock earlier.
+- The cause of the one-bit offset with the standard format is not known; neither the driver nor
+  the signal timing was examined. The setting is a measured correction, not a derived one.
+- The TX link keeps the standard format and is not measured.
 
 ## Sample-rate and block-size rationale
 
