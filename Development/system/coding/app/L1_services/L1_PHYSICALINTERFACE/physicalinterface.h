@@ -142,16 +142,8 @@ int physicalinterface_init(const struct physicalinterface_input_handlers *handle
 /**
  * @brief Show a catalogue row on the RGB status light and the red button light.
  *
- * The status light takes the row's context colour and pattern; error rows show
- * their context colour steady while the red light repeats the error's blink
- * code. FEEDBACK_STARTUP_RUNNING is the lamp test: both lights steady on.
- * FEEDBACK_INPUT_REJECTED dims the status light to half brightness for 250 ms
- * and leaves the red light unchanged. FEEDBACK_ERROR_ACKNOWLEDGED gives one
- * long red flash and leaves the status light unchanged; a row shown during the
- * flash starts on both lights when the flash ends. While the button is down the
- * red light is steady on instead of its row; FEEDBACK_BUTTON_HOLD_ACKNOWLEDGED
- * turns that into a 4 Hz blink until the release.
- * Does not block; the patterns run on the system work queue.
+ * Does not block; the patterns run on the system work queue. While the button
+ * is down the red light shows the press instead of its row.
  *
  * @param[in] code Catalogue code to show; FEEDBACK_NONE switches both lights off.
  */
