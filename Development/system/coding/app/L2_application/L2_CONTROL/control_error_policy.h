@@ -6,11 +6,8 @@
 /** @addtogroup L2_CONTROL
  * @{
  * @file
- * Error policy of CONTROL without kernel access: priority, clear rule and
- * workflow admission of every catalogue error (design/FEEDBACK/catalogue.md
- * and fault-handling-state.puml), the error shown, short-press
- * acknowledgement and the indication deferred while audio runs. Private to
- * L2_CONTROL; pure C, so the host tests compile it unchanged.
+ * Priority, clear rule and workflow admission of every catalogue error
+ * (design/FEEDBACK/catalogue.md). Private to L2_CONTROL; pure C without kernel access.
  */
 
 #ifndef L2_CONTROL_ERROR_POLICY_H
@@ -164,9 +161,8 @@ bool control_isHalted(const struct control_error_latch *latch);
 /**
  * @brief Choose the code that the lights show.
  *
- * Without deferral the error shown wins over the status. While the indication
- * is deferred (startup, or audio starting, running or stopping) the status is
- * shown and latched errors stay silent, except audio errors, which show at once.
+ * The error shown wins over the status. While the indication is deferred only
+ * audio errors do.
  *
  * @param[in] latch Error latch.
  * @param[in] isIndicationDeferred True during startup and while audio is started.
@@ -179,11 +175,6 @@ enum feedback_code control_selectFeedback(const struct control_error_latch *latc
 /**
  * @brief Decide what a short press does.
  *
- * Audio errors drop every press. While the indication is deferred the press
- * goes to the workflow, so it Stops listening. Otherwise a halting error drops
- * the press, a shown short-press error is acknowledged, and an error that blocks
- * Start rejects the press.
- *
  * @param[in] latch Error latch.
  * @param[in] isIndicationDeferred True during startup and while audio is started.
  *
@@ -193,9 +184,6 @@ enum control_press_action control_decideShortPress(const struct control_error_la
 
 /**
  * @brief Decide what a long press does.
- *
- * A long press never acknowledges. It is dropped when the device is halted,
- * otherwise it goes to the workflow (Wi-Fi setup in Idle).
  *
  * @param[in] latch Error latch.
  * @param[in] isIndicationDeferred True during startup and while audio is started.
