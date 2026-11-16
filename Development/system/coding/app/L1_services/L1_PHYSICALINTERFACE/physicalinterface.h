@@ -148,7 +148,9 @@ int physicalinterface_init(const struct physicalinterface_input_handlers *handle
  * FEEDBACK_INPUT_REJECTED dims the status light to half brightness for 250 ms
  * and leaves the red light unchanged. FEEDBACK_ERROR_ACKNOWLEDGED gives one
  * long red flash and leaves the status light unchanged; a row shown during the
- * flash starts on both lights when the flash ends.
+ * flash starts on both lights when the flash ends. While the button is down the
+ * red light is steady on instead of its row; FEEDBACK_BUTTON_HOLD_ACKNOWLEDGED
+ * turns that into a 4 Hz blink until the release.
  * Does not block; the patterns run on the system work queue.
  *
  * @param[in] code Catalogue code to show; FEEDBACK_NONE switches both lights off.
