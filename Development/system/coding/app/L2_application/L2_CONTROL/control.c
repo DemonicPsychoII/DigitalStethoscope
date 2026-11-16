@@ -38,6 +38,9 @@
 #define CONTROL_THREAD_PRIORITY    (5)    /**< Below the audio thread, above COMMUNICATION. */
 #define CONTROL_EVENT_QUEUE_LENGTH (16)   /**< P11: 16 control events. */
 
+/** Queue slots that button events leave free: one stream reports started and then stopped or a fault, and a lost report would leave the state wrong. */
+#define CONTROL_AUDIO_EVENT_RESERVE (2U)
+
 /***********************************************************************/
 /* TYPES                                                               */
 /***********************************************************************/
@@ -133,7 +136,9 @@ static void control_handleVolume(const struct physicalinterface_volume_reading *
 static void control_handleAudioEvent(enum audio_event event, enum feedback_code fault);
 
 /**
- * @brief Queue an event without waiting; a full queue rejects it.
+ * @brief Queue an event without waiting.
+ *
+ * Button events leave CONTROL_AUDIO_EVENT_RESERVE slots free, so a report of AUDIO always fits.
  *
  * @param[in] event Event to queue.
  */
@@ -292,7 +297,15 @@ static void control_handleButton(enum physicalinterface_button_event event, int6
         .fault = FEEDBACK_NONE,
     };
 
-    control_postEvent(&controlEvent);
+    if(k_msgq_num_free_get(&control_events) <= CONTROL_AUDIO_EVENT_RESERVE)
+    {
+        LOG_WRN("Button event rejected: control queue full");
+        physicalinterface_showStatusLight(FEEDBACK_INPUT_REJECTED);
+    }
+    else
+    {
+        control_postEvent(&controlEvent);
+    }
 }
 
 static void control_handleAudioEvent(enum audio_event event, enum feedback_code fault)
@@ -323,7 +336,6 @@ static void control_postEvent(const struct control_event *event)
     if(k_msgq_put(&control_events, event, K_NO_WAIT) != 0)
     {
         LOG_ERR("Control event %d lost: queue full", event->type);
-        physicalinterface_showStatusLight(FEEDBACK_INPUT_REJECTED);
     }
 }
 
