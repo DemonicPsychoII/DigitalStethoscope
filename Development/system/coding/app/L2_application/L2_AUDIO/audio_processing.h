@@ -6,9 +6,7 @@
 /** @addtogroup L2_AUDIO
  * @{
  * @file
- * Block processing of the audio path without driver access: linear volume
- * with saturation on the mono working samples. Private to L2_AUDIO; pure C,
- * so the host tests compile it unchanged.
+ * Block processing of the audio path. Private to L2_AUDIO; pure C without driver access.
  */
 
 #ifndef L2_AUDIO_PROCESSING_H
@@ -36,9 +34,7 @@
 /**
  * @brief Scale samples linearly by a volume, saturating at the 24-bit limits.
  *
- * The samples are 24-bit values left-aligned in 32 bits; the result keeps that
- * format with the low 8 bits cleared. 100 % leaves every sample unchanged and
- * 0 % silences it.
+ * The samples are 24-bit values left-aligned in 32 bits. 100 % leaves them unchanged.
  *
  * @param[in,out] samples Mono working samples.
  * @param[in] sampleCount Number of samples.

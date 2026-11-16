@@ -91,8 +91,7 @@ int audio_postCommand(enum audio_command command);
 /**
  * @brief Set the volume of the audio output without waiting.
  *
- * Linear gain on the listening output, applied from the next block. The volume
- * is 0 % until the first call. Only CONTROL sets it; any thread may call this.
+ * Applies from the next block. The volume is 0 % until the first call.
  *
  * @param[in] volumePercent Volume, 0 to 100; higher values count as 100.
  */
