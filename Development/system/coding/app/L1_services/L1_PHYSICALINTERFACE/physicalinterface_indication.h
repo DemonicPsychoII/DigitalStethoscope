@@ -43,6 +43,9 @@
 #define PHYSICALINTERFACE_CODE_MAXIMUM_BLINKS                 6    /**< P22: at most 6 blinks per context. */
 #define PHYSICALINTERFACE_LONG_FLASH_MILLISECONDS             1000 /**< P22 long flash: 1 s. */
 
+/** Nico, 16 November 2026: an accepted hold blinks at 4 Hz, so it does not read as a 2 Hz error code. */
+#define PHYSICALINTERFACE_HOLD_BLINK_HALF_PERIOD_MILLISECONDS 125
+
 /***********************************************************************/
 /* TYPES                                                               */
 /***********************************************************************/
@@ -79,6 +82,7 @@ enum physicalinterface_button_light_pattern
     PHYSICALINTERFACE_BUTTON_LIGHT_STEADY,          /**< Lamp test. */
     PHYSICALINTERFACE_BUTTON_LIGHT_BLINK_CODE,      /**< "N blinks, pause", repeated until another row replaces it. */
     PHYSICALINTERFACE_BUTTON_LIGHT_LONG_FLASH_ONCE, /**< One long flash over the current indication, then the next row. */
+    PHYSICALINTERFACE_BUTTON_LIGHT_HOLD_BLINK,      /**< Fast blink over the current indication until the button is released. */
 };
 
 /** Both light columns of one catalogue row. */
@@ -100,6 +104,9 @@ struct physicalinterface_indication
     bool isLongFlashActive;              /**< The red light shows the long flash. */
     int64_t longFlashEndMilliseconds;    /**< Uptime at which the long flash ends. */
     int64_t rejectionDimEndMilliseconds; /**< Uptime at which the input-rejected dimming ends. */
+    bool isButtonPressed;                /**< The button is down: the red light shows the press instead of its row. */
+    bool isHoldBlinkActive;              /**< The press shown is an accepted hold: fast blink instead of steady. */
+    int64_t holdBlinkSinceMilliseconds;  /**< Uptime at which the hold blink started. */
 };
 
 /** What both lights show at one time. */
@@ -148,12 +155,25 @@ void physicalinterface_resetIndication(struct physicalinterface_indication *indi
  * flash ends, so the acknowledged error keeps its colour during the flash.
  * FEEDBACK_ERROR_ACKNOWLEDGED starts the long flash on the red light and keeps
  * the RGB light. FEEDBACK_INPUT_REJECTED dims the RGB light and keeps the red light.
+ * FEEDBACK_BUTTON_HOLD_ACKNOWLEDGED turns the steady red light of a press into a
+ * fast blink until the release; it has no effect once the button is up.
  *
  * @param[in,out] indication Indication state.
  * @param[in] code Catalogue code; must pass physicalinterface_isFeedbackCode().
  * @param[in] nowMilliseconds Uptime; must not decrease between calls.
  */
 void physicalinterface_applyIndication(struct physicalinterface_indication *indication, enum feedback_code code, int64_t nowMilliseconds);
+
+/**
+ * @brief Tell the indication whether the button is down.
+ *
+ * While the button is down the red light is steady on instead of its row, so
+ * the press is visible. The release ends this at once, and any hold blink with it.
+ *
+ * @param[in,out] indication Indication state.
+ * @param[in] isPressed True while the debounced button is down.
+ */
+void physicalinterface_setIndicationButtonPressed(struct physicalinterface_indication *indication, bool isPressed);
 
 /**
  * @brief Compute what both lights show at a time.
