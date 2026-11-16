@@ -307,6 +307,10 @@ static void physicalinterface_pollVolume(struct k_work *work);
  */
 static int physicalinterface_readPotentiometerMillivolts(int32_t *millivolts);
 
+/***********************************************************************/
+/* MACROS                                                              */
+/***********************************************************************/
+
 LOG_MODULE_REGISTER(physicalinterface, LOG_LEVEL_INF);
 
 /***********************************************************************/

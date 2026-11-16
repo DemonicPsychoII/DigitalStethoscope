@@ -38,7 +38,8 @@
 /***********************************************************************/
 
 /**
- * @brief Initialize the controller and show STARTUP_RUNNING.
+ * @brief Initialize the controller, show STARTUP_RUNNING, initialize AUDIO
+ * and start the control thread.
  *
  * Call first at boot, so the startup indication covers the
  * initialization of the other components.
@@ -46,10 +47,10 @@
 void control_init(void);
 
 /**
- * @brief End startup and show IDLE.
+ * @brief End startup and show IDLE, or the audio error that blocks Start.
  *
  * Blocks until STARTUP_RUNNING has been shown for the P22 lamp test
- * minimum.
+ * minimum. Afterwards a short button press starts and stops listening.
  */
 void control_completeStartup(void);
 
