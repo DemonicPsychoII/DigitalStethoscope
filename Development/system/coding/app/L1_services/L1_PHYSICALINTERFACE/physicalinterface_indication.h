@@ -6,10 +6,8 @@
 /** @addtogroup L1_PHYSICALINTERFACE
  * @{
  * @file
- * Indication of the status and error catalogue without driver access: one
- * table row per code for the RGB status light and the red button light, and
- * the light patterns over time. Private to L1_PHYSICALINTERFACE; pure C, so
- * the host tests compile it unchanged.
+ * Light patterns of the status and error catalogue, one table row per code.
+ * Private to L1_PHYSICALINTERFACE; pure C without driver access.
  */
 
 #ifndef L1_PHYSICALINTERFACE_INDICATION_H
@@ -150,13 +148,8 @@ void physicalinterface_resetIndication(struct physicalinterface_indication *indi
 /**
  * @brief Apply a catalogue code at a time.
  *
- * A row with its own patterns replaces the shown row on both lights and starts
- * its patterns. While a long flash runs, such a row waits and starts when the
- * flash ends, so the acknowledged error keeps its colour during the flash.
- * FEEDBACK_ERROR_ACKNOWLEDGED starts the long flash on the red light and keeps
- * the RGB light. FEEDBACK_INPUT_REJECTED dims the RGB light and keeps the red light.
- * FEEDBACK_BUTTON_HOLD_ACKNOWLEDGED turns the steady red light of a press into a
- * fast blink until the release; it has no effect once the button is up.
+ * A row replaces the shown row on both lights; while a long flash runs it waits
+ * for the end of the flash. The three overlay codes keep the shown row.
  *
  * @param[in,out] indication Indication state.
  * @param[in] code Catalogue code; must pass physicalinterface_isFeedbackCode().
@@ -167,8 +160,7 @@ void physicalinterface_applyIndication(struct physicalinterface_indication *indi
 /**
  * @brief Tell the indication whether the button is down.
  *
- * While the button is down the red light is steady on instead of its row, so
- * the press is visible. The release ends this at once, and any hold blink with it.
+ * While the button is down the red light shows the press instead of its row.
  *
  * @param[in,out] indication Indication state.
  * @param[in] isPressed True while the debounced button is down.
