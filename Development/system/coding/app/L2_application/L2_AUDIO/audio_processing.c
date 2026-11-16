@@ -34,14 +34,14 @@
 
 void audio_applyVolume(int32_t *samples, uint32_t sampleCount, uint32_t volumePercent)
 {
-    uint32_t clampedPercent = (volumePercent > AUDIO_FULL_VOLUME_PERCENT) ? AUDIO_FULL_VOLUME_PERCENT : volumePercent;
-    int64_t gain = ((int64_t)clampedPercent * AUDIO_GAIN_ONE) / (int64_t)AUDIO_FULL_VOLUME_PERCENT;
+    uint32_t clampedPercent = ((volumePercent > AUDIO_FULL_VOLUME_PERCENT) ? AUDIO_FULL_VOLUME_PERCENT : volumePercent);
+    int64_t gain = (((int64_t)clampedPercent * AUDIO_GAIN_ONE) / (int64_t)AUDIO_FULL_VOLUME_PERCENT);
 
     for(uint32_t index = 0U; index < sampleCount; index++)
     {
         /* Scaling the 24-bit value truncates positive and negative samples alike toward zero. */
-        int64_t value = (int64_t)samples[index] / AUDIO_SAMPLE_STEP;
-        int64_t scaled = (value * gain) / AUDIO_GAIN_ONE;
+        int64_t value = ((int64_t)samples[index] / AUDIO_SAMPLE_STEP);
+        int64_t scaled = ((value * gain) / AUDIO_GAIN_ONE);
 
         if(scaled > AUDIO_SAMPLE_MAXIMUM)
         {
