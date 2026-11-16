@@ -32,12 +32,25 @@
 
 #define AUDIO_COMMAND_QUEUE_LENGTH (4)
 
+/** One debug report per second: 250 blocks of 4 ms. */
+#define AUDIO_PROCESSING_REPORT_BLOCKS (250U)
+
 /** The INMP441 does not drive the 8 bits after the 24-bit sample. */
 #define AUDIO_SAMPLE_MASK (0xFFFFFF00U)
 
 /***********************************************************************/
 /* TYPES                                                               */
 /***********************************************************************/
+
+/** Block processing times of one stream, in CPU cycles. */
+struct audio_processing_time
+{
+    uint32_t processedBlocks;   /**< Blocks since Start. */
+    uint32_t longestSinceStart; /**< Longest block since Start. */
+    uint32_t blocksInReport;    /**< Blocks since the last report. */
+    uint32_t longestInReport;   /**< Longest block since the last report. */
+    uint64_t totalInReport;     /**< Sum since the last report; 64 bits because 250 slow blocks can exceed 32 bits of cycles. */
+};
 
 /***********************************************************************/
 /* GLOBAL CONSTANTS                                                    */
@@ -86,9 +99,19 @@ static void audio_runStream(void);
 /**
  * @brief Move one block from the microphone to the DAC: read, process, send.
  *
+ * @param[out] processingCycles CPU cycles from the received block to the queued TX block; the wait for the block is not included.
+ *
  * @return I2S_RESULT_OK, or the link that failed.
  */
-static enum i2s_result audio_processBlock(void);
+static enum i2s_result audio_processBlock(uint32_t *processingCycles);
+
+/**
+ * @brief Add the processing time of one block and log a debug report every AUDIO_PROCESSING_REPORT_BLOCKS blocks.
+ *
+ * @param[in,out] processingTime Processing times of the current stream.
+ * @param[in] processingCycles Processing time of the block, in CPU cycles.
+ */
+static void audio_recordProcessingTime(struct audio_processing_time *processingTime, uint32_t processingCycles);
 
 /**
  * @brief Check the command queue without waiting.
@@ -110,7 +133,7 @@ static enum feedback_code audio_getFaultCode(enum i2s_result result);
 /* MACROS                                                              */
 /***********************************************************************/
 
-LOG_MODULE_REGISTER(audio, LOG_LEVEL_INF);
+LOG_MODULE_REGISTER(audio, LOG_LEVEL_DBG);
 
 /***********************************************************************/
 /* GLOBAL FUNCTIONS                                                    */
@@ -171,6 +194,8 @@ static void audio_runStream(void)
 {
     enum i2s_result result = i2s_start();
     bool isStopRequested = false;
+    struct audio_processing_time processingTime = {0};
+    uint32_t processingCycles = 0U;
 
     if(result == I2S_RESULT_OK)
     {
@@ -178,15 +203,20 @@ static void audio_runStream(void)
 
         while((result == I2S_RESULT_OK) && !isStopRequested)
         {
-            result = audio_processBlock();
+            result = audio_processBlock(&processingCycles);
 
             if(result == I2S_RESULT_OK)
             {
+                audio_recordProcessingTime(&processingTime, processingCycles);
                 isStopRequested = audio_isStopRequested();
             }
         }
 
         (void)i2s_stop();
+
+        LOG_DBG("Stream ended after %u blocks; longest block processing %u us",
+                processingTime.processedBlocks,
+                k_cyc_to_us_ceil32(processingTime.longestSinceStart));
     }
 
     if(result == I2S_RESULT_OK)
@@ -199,15 +229,18 @@ static void audio_runStream(void)
     }
 }
 
-static enum i2s_result audio_processBlock(void)
+static enum i2s_result audio_processBlock(uint32_t *processingCycles)
 {
     int32_t *receivedFrames = NULL;
     int32_t *transmitFrames = NULL;
     uint32_t frame = 0U;
+    uint32_t startCycle = 0U;
     enum i2s_result result = i2s_receiveBlock(&receivedFrames);
 
     if(result == I2S_RESULT_OK)
     {
+        startCycle = k_cycle_get_32();
+
         for(frame = 0U; frame < I2S_FRAMES_PER_BLOCK; frame++)
         {
             uint32_t leftSlot = (uint32_t)receivedFrames[frame * I2S_SLOTS_PER_FRAME];
@@ -234,7 +267,33 @@ static enum i2s_result audio_processBlock(void)
         result = i2s_transmitBlock(transmitFrames);
     }
 
+    *processingCycles = k_cycle_get_32() - startCycle;
+
     return result;
+}
+
+static void audio_recordProcessingTime(struct audio_processing_time *processingTime, uint32_t processingCycles)
+{
+    processingTime->processedBlocks++;
+    processingTime->blocksInReport++;
+    processingTime->totalInReport += processingCycles;
+    processingTime->longestInReport = MAX(processingTime->longestInReport, processingCycles);
+    processingTime->longestSinceStart = MAX(processingTime->longestSinceStart, processingCycles);
+
+    if(processingTime->blocksInReport >= AUDIO_PROCESSING_REPORT_BLOCKS)
+    {
+        uint32_t meanCycles = (uint32_t)(processingTime->totalInReport / processingTime->blocksInReport);
+
+        LOG_DBG("Block processing over %u blocks: longest %u us, mean %u us; longest since Start %u us",
+                processingTime->blocksInReport,
+                k_cyc_to_us_ceil32(processingTime->longestInReport),
+                k_cyc_to_us_ceil32(meanCycles),
+                k_cyc_to_us_ceil32(processingTime->longestSinceStart));
+
+        processingTime->blocksInReport = 0U;
+        processingTime->longestInReport = 0U;
+        processingTime->totalInReport = 0U;
+    }
 }
 
 static bool audio_isStopRequested(void)
