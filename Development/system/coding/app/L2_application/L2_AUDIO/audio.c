@@ -21,6 +21,7 @@
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 
+#include "audio_processing.h"
 #include "i2s.h"
 
 /***********************************************************************/
@@ -35,8 +36,8 @@
 /** One debug report per second: 250 blocks of 4 ms. */
 #define AUDIO_PROCESSING_REPORT_BLOCKS (250U)
 
-/** The INMP441 does not drive the 8 bits after the 24-bit sample. */
-#define AUDIO_SAMPLE_MASK (0xFFFFFF00U)
+/** Volume until CONTROL passes the first reading: silent output. */
+#define AUDIO_SAFE_VOLUME_PERCENT (0)
 
 /***********************************************************************/
 /* TYPES                                                               */
@@ -78,6 +79,9 @@ K_MSGQ_DEFINE(audio_Commands, sizeof(enum audio_command), AUDIO_COMMAND_QUEUE_LE
 
 static struct k_thread audio_ThreadData;
 
+/** Written by CONTROL, read by the audio thread once per block; atomic, so neither side waits. */
+static atomic_t audio_VolumePercent = ATOMIC_INIT(AUDIO_SAFE_VOLUME_PERCENT);
+
 /** Mono working buffer of the audio thread: left-aligned 24-bit samples with the low 8 bits cleared. */
 static int32_t audio_MonoSamples[I2S_FRAMES_PER_BLOCK];
 
@@ -102,7 +106,7 @@ static void audio_thread(void *first, void *second, void *third);
 static enum i2s_result audio_runStream(void);
 
 /**
- * @brief Move one block from the microphone to the DAC: read, process, send.
+ * @brief Move one block from the microphone to the DAC: read, apply the volume, send.
  *
  * @param[out] processingCycles CPU cycles from the received block to the queued TX block; the wait for the block is not included.
  *
@@ -172,6 +176,13 @@ enum feedback_code audio_init(audio_event_handler eventHandler)
 int audio_postCommand(enum audio_command command)
 {
     return k_msgq_put(&audio_Commands, &command, K_NO_WAIT);
+}
+
+void audio_setVolume(uint8_t volumePercent)
+{
+    uint32_t clampedPercent = MIN((uint32_t)volumePercent, AUDIO_FULL_VOLUME_PERCENT);
+
+    (void)atomic_set(&audio_VolumePercent, (atomic_val_t)clampedPercent);
 }
 
 /***********************************************************************/
@@ -270,6 +281,8 @@ static enum i2s_result audio_processBlock(uint32_t *processingCycles)
 
     if(result == I2S_RESULT_OK)
     {
+        audio_applyVolume(audio_MonoSamples, I2S_FRAMES_PER_BLOCK, (uint32_t)atomic_get(&audio_VolumePercent));
+
         result = i2s_allocateTransmitBlock(&transmitFrames);
     }
 
