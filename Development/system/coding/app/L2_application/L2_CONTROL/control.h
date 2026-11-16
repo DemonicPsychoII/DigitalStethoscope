@@ -47,10 +47,11 @@
 void control_init(void);
 
 /**
- * @brief End startup and show IDLE, or the audio error that blocks Start.
+ * @brief End startup; the control thread then shows IDLE or the error shown first.
  *
  * Blocks until STARTUP_RUNNING has been shown for the P22 lamp test
- * minimum. Afterwards a short button press starts and stops listening.
+ * minimum. Errors latched during startup are shown afterwards. Then a short
+ * button press acknowledges the error shown or starts and stops listening.
  */
 void control_completeStartup(void);
 
