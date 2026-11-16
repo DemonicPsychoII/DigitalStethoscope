@@ -121,8 +121,11 @@ not retry.
   implementation choice measured under VT-02.
 - Processing budget (P02): from the received block to the queued TX block at most 3 ms; the wait
   for the next block is not part of it. No lock is held across a block wait.
-- The processing step only copies. The listening filter and volume replace it later; until the
-  potentiometer is fitted, the volume is a fixed 100 %.
+- The processing step applies the volume from `L2_CONTROL` as a linear gain of 0–100 % with
+  saturation, keeping the [sample format](#sample-format); the volume starts at 0 % and is 0 %
+  for a failed or absent potentiometer reading. The volume passes as an atomic value, so the
+  audio thread never waits for it. The listening filter comes later; all switch positions pass
+  audio through unfiltered (project decision, Nico, 16 November 2026).
 - The mono working buffer has 64 entries, 256 bytes, owned by the audio thread. Left-slot
   extraction follows the [sample format](#sample-format).
 - The thread returns the RX block before it requests a TX block, so it never holds more than one
