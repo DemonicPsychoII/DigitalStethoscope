@@ -142,6 +142,9 @@
         /* Illuminated Start/Stop button J6: closes to ground; the carrier also has a pull-up. */
         start-stop-button-gpios = <&gpio0 16 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
 
+        /* Red light of the illuminated button J6: anode on GPIO17 through R12 330 Ω, active high. */
+        start-stop-button-light-gpios = <&gpio0 17 GPIO_ACTIVE_HIGH>;
+
         /*
          * Raw/Murmur/BPM switch J8 on GPIO18, GPIO21 and GPIO38 (gpio1 pin 6), in this order;
          * carrier pull-ups R14 to R16. The fitted switch has its common on the GPIO18 pad,
