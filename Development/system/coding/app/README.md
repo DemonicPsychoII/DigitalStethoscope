@@ -16,7 +16,7 @@ COMMUNICATION consumes its requests and publishes its state.
 | `L2_application/L2_AUDIO/` | Audio path and BPM worker, driven by control commands | L1, `common` |
 | `L2_application/L2_COMMUNICATION/` | Builds via FHIR, sends via WIFI under the lease; Device registration; hotspot Wi-Fi setup page | L1, `common` |
 | `L2_application/L2_SHELL/` | Shell commands and read-back through CONTROL | L2_CONTROL, `common` |
-| `L1_services/` adapters | `L1_I2S` (mic RX, DAC TX), `L1_WIFI`, `L1_PORTAL` (Wi-Fi setup page), `L1_STORAGE` (settings records in flash), `L1_PHYSICALINTERFACE` (button, switch, potentiometer, status light) | Zephyr, `common` |
+| `L1_services/` adapters | `L1_I2S` (mic RX, DAC TX), `L1_WIFI`, `L1_PORTAL` (Wi-Fi setup page), `L1_STORAGE` (settings records in flash), `L1_PHYSICALINTERFACE` (button, switch, potentiometer, status light, button light) | Zephyr, `common` |
 | `L1_services/` libraries | `L1_FILTER`, `L1_BPM` (envelope, autocorrelation, aggregation), `L1_FHIR` (serialization); pure C | `common` |
 | `L0_platform/` | Empty: Zephyr drivers and the board overlay | — |
 | `MONITOR/` | Runtime supervision | All layers, read-only |
@@ -33,7 +33,7 @@ thread; most component `.c` / `.h` files reserve places for implementation.
 The board overlay and `prj.conf` set the fitted N16R8 module (16 MB flash,
 8 MB octal PSRAM; GPIO33–37 stay reserved). The serial shell and deferred logging
 are enabled; Wi-Fi and the setup page are implemented but not yet tested on the board (TICKET-182).
-No audio processing, SD storage, UI or monitoring is active.
+Audio processing applies only the volume; no listening filter, SD storage, UI or monitoring is active.
 
 ### Physical inputs
 
@@ -62,11 +62,39 @@ the option off, the ADC is not read and the volume is reported ABSENT once. The 
 [10 November decision](../../planning/mvp-decisions-2026-11-10.md) no longer applies (Nico,
 13 November 2026); a failed or absent reading keeps the safe value 0 %.
 
-CONTROL only logs the switch and volume events so far. It does not select a filter,
-apply the volume or latch CONTROL_INPUT_FAILURE, and the button LED on GPIO17 and the
-short-press acknowledgement are not implemented. The decoding and debounce logic in
-`physicalinterface_input.c` has host tests (VT-04, `tests/host/l1_physicalinterface/`);
-REQ-03 and REQ-04 still need target evidence.
+CONTROL passes the volume to AUDIO, which applies it as a linear gain of 0–100 % with
+saturation to every block (Nico, 16 November 2026); a failed or absent reading gives 0 %.
+The switch has only its physical interface so far (Nico, 16 November 2026): no filter is
+selected, and all three positions pass audio through unfiltered. CONTROL keeps the last
+stable switch reading and latches CONTROL_INPUT_FAILURE when there is no valid position at
+Start, or none for at least 1 s while listening; a failed reading outside these cases
+latches nothing, because slow slides report FAILED for a moment. A failed potentiometer
+reading also latches CONTROL_INPUT_FAILURE.
+
+### Indication and errors
+
+`physicalinterface_showFeedback()` takes one catalogue code and drives both lights from
+one table row: the RGB status light on GPIO48 and the red button light on GPIO17 (J6,
+active high through R12). The red light is steady during the lamp test, repeats an error's
+blink code (P22: 250 ms on and off, 2 s pause) and gives one 1 s flash for
+ERROR_ACKNOWLEDGED. CONTROL decides which code is shown. It latches every catalogue error
+in `control_error_policy.c`, shows the highest priority, then the first latched, and lists every
+latched error on the serial log. With an error shown that clears by short press, the first
+short press acknowledges it; restart errors ignore the press. Errors other than audio
+errors that occur during startup or while listening are latched silently and shown after
+the startup or after the manual Stop ([13 November](../../planning/mvp-decisions-2026-11-13.md)).
+Wi-Fi errors from COMMUNICATION pass through the control queue and permit Start.
+
+While the button is down the red light is steady on instead of its code, and the code
+resumes at the release. When CONTROL accepts a 2 s hold in Idle, the red light blinks at
+4 Hz until the release (`FEEDBACK_BUTTON_HOLD_ACKNOWLEDGED`); a hold outside Idle stays
+steady. This is a project decision (Nico, 16 November 2026) that the feedback catalogue
+does not contain yet.
+
+The decoding and debounce logic in `physicalinterface_input.c` has host tests (VT-04,
+`tests/host/l1_physicalinterface/`). The indication table and patterns in
+`physicalinterface_indication.c`, the error policy in `control_error_policy.c` and the volume in
+`audio_processing.c` have none yet; REQ-03 and REQ-04 still need target evidence.
 
 ### Shell and configuration
 

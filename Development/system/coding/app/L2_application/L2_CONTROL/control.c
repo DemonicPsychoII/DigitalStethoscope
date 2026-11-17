@@ -14,6 +14,7 @@
 /***********************************************************************/
 
 #include "control.h"
+#include "control_error_policy.h"
 
 #include <stdbool.h>
 
@@ -30,30 +31,40 @@
 /* DEFINES                                                             */
 /***********************************************************************/
 
-#define CONTROL_LAMP_TEST_MINIMUM_MILLISECONDS 1000 /**< P22: startup lamp test at least 1 s. */
-#define CONTROL_QUICK_FLASHES_MILLISECONDS     1500 /**< P22: three quick flashes at 2 Hz. */
-#define CONTROL_WIFI_STOP_WAIT_MILLISECONDS    5000 /**< P23: Wi-Fi cleanup is capped at 5 s. */
+#define CONTROL_LAMP_TEST_MINIMUM_MILLISECONDS     1000 /**< P22: startup lamp test at least 1 s. */
+#define CONTROL_QUICK_FLASHES_MILLISECONDS         1500 /**< P22: three quick flashes at 2 Hz. */
+#define CONTROL_ACKNOWLEDGEMENT_FLASH_MILLISECONDS 1000 /**< P22: long flash of 1 s after an acknowledgement. */
+#define CONTROL_WIFI_STOP_WAIT_MILLISECONDS        5000 /**< P23: Wi-Fi cleanup is capped at 5 s. */
+
+/** The control thread checks the input readings at least this often; within the P10 status budget of 500 ms. */
+#define CONTROL_INPUT_CHECK_MILLISECONDS 100
+
+/** Nico, 16 November 2026: no valid switch position for this long while listening is CONTROL_INPUT_FAILURE. */
+#define CONTROL_SWITCH_FAILURE_MILLISECONDS 1000
+
+/** Wait before the startup completion is posted again, if the queue had no free slot. */
+#define CONTROL_STARTUP_RETRY_MILLISECONDS 10
 
 #define CONTROL_THREAD_STACK_SIZE  (2048) /**< Proposed; measure under VT-02. */
 #define CONTROL_THREAD_PRIORITY    (5)    /**< Below the audio thread, above COMMUNICATION. */
 #define CONTROL_EVENT_QUEUE_LENGTH (16)   /**< P11: 16 control events. */
 
-/** Queue slots that button events leave free: one stream reports started and then stopped or a fault, and a lost report would leave the state wrong. */
+/** Queue slots that input events leave free: one stream reports started and then stopped or a fault, and a lost report would leave the state wrong. */
 #define CONTROL_AUDIO_EVENT_RESERVE (2U)
 
 /***********************************************************************/
 /* TYPES                                                               */
 /***********************************************************************/
 
-/** Workflow state; only the control thread changes it after startup. */
+/** Workflow state; only the control thread changes it. */
 enum control_state
 {
-    CONTROL_STATE_STARTUP,   /**< Until control_completeStartup(). */
+    CONTROL_STATE_STARTUP,   /**< Until the lamp test has ended. */
     CONTROL_STATE_IDLE,      /**< Audio stopped; Wi-Fi work allowed. */
     CONTROL_STATE_STARTING,  /**< Start sent to AUDIO; waiting for its report. */
     CONTROL_STATE_LISTENING, /**< Microphone to DAC. */
     CONTROL_STATE_STOPPING,  /**< Stop sent to AUDIO; waiting for its report. */
-    CONTROL_STATE_HALTED,    /**< Restart-required audio error latched; Start blocked. */
+    CONTROL_STATE_HALTED,    /**< Restart-required error in effect; every input is dropped. */
 };
 
 /** Input of the control thread. */
@@ -64,13 +75,15 @@ enum control_event_type
     CONTROL_EVENT_AUDIO_STARTED,
     CONTROL_EVENT_AUDIO_STOPPED,
     CONTROL_EVENT_AUDIO_FAULT,
+    CONTROL_EVENT_WIFI_FEEDBACK,
+    CONTROL_EVENT_STARTUP_COMPLETED,
 };
 
 /** One entry of the control event queue. */
 struct control_event
 {
     enum control_event_type type;
-    enum feedback_code fault; /**< Catalogue code for CONTROL_EVENT_AUDIO_FAULT, otherwise FEEDBACK_NONE. */
+    enum feedback_code code; /**< Catalogue code for CONTROL_EVENT_AUDIO_FAULT and CONTROL_EVENT_WIFI_FEEDBACK, otherwise FEEDBACK_NONE. */
 };
 
 /***********************************************************************/
@@ -90,11 +103,26 @@ struct control_event
 /***********************************************************************/
 
 static k_timepoint_t control_lampTestEnd;
-static struct k_spinlock control_indicationLock;                  /**< Protects the state and the Wi-Fi indication. */
-static enum control_state control_currentState;                   /**< Also read by the Wi-Fi feedback handler on the communication thread. */
+static enum feedback_code control_initialAudioFault = FEEDBACK_NONE; /**< Set before the control thread starts; afterwards only read by it. */
+
+/* Only the control thread uses these after control_init(). */
+static enum control_state control_currentState;
+static struct control_error_latch control_errorLatch;
 static enum feedback_code control_wifiIndication = FEEDBACK_NONE; /**< Wi-Fi status shown in Idle; NONE shows IDLE. */
-static enum feedback_code control_audioFault = FEEDBACK_NONE;     /**< First latched audio error. */
-static struct k_work_delayable control_quickFlashesEndWork;
+static bool control_isQuickFlashActive;                           /**< WIFI_CONNECTED is shown in Idle until control_quickFlashesEnd. */
+static k_timepoint_t control_quickFlashesEnd;
+static k_timepoint_t control_acknowledgementFlashEnd;            /**< Until then the next error is not shown yet, so a press must not acknowledge it. */
+static enum feedback_code control_shownFeedback = FEEDBACK_NONE; /**< Last row passed to PHYSICALINTERFACE, overlays excluded. */
+
+static struct k_spinlock control_inputLock; /**< Protects the readings that the input handlers store on the system work queue. */
+static struct physicalinterface_listening_filter_reading control_switchReading = {
+    .filter = PHYSICALINTERFACE_SAFE_LISTENING_FILTER,
+    .status = PHYSICALINTERFACE_INPUT_FAILED,
+    .timestampMilliseconds = 0,
+};
+static bool control_isVolumeFailed;
+
+K_MUTEX_DEFINE(control_inputEventLock); /**< Makes the free-slot check and the put of an input event one step. */
 
 K_THREAD_STACK_DEFINE(control_stack, CONTROL_THREAD_STACK_SIZE);
 K_MSGQ_DEFINE(control_events, sizeof(struct control_event), CONTROL_EVENT_QUEUE_LENGTH, 4);
@@ -114,14 +142,16 @@ static struct k_thread control_threadData;
 static void control_handleButton(enum physicalinterface_button_event event, int64_t timestampMilliseconds);
 
 /**
- * @brief Log a stable Raw/Murmur/BPM switch reading; selecting the filter is not implemented.
+ * @brief Keep the last stable Raw/Murmur/BPM switch reading for the control thread.
+ *
+ * All three positions pass audio through unchanged; filters are not selected yet.
  *
  * @param[in] reading Switch reading from PHYSICALINTERFACE.
  */
 static void control_handleListeningFilter(const struct physicalinterface_listening_filter_reading *reading);
 
 /**
- * @brief Log a volume reading; applying the volume is not implemented.
+ * @brief Pass the volume to AUDIO and keep a potentiometer failure for the control thread.
  *
  * @param[in] reading Volume reading from PHYSICALINTERFACE.
  */
@@ -136,16 +166,30 @@ static void control_handleVolume(const struct physicalinterface_volume_reading *
 static void control_handleAudioEvent(enum audio_event event, enum feedback_code fault);
 
 /**
- * @brief Queue an event without waiting.
+ * @brief Queue Wi-Fi workflow feedback of the communication thread for the control thread.
  *
- * Button events leave CONTROL_AUDIO_EVENT_RESERVE slots free, so a report of AUDIO always fits.
+ * @param[in] code Catalogue code from COMMUNICATION.
+ */
+static void control_handleWiFiFeedback(enum feedback_code code);
+
+/**
+ * @brief Queue an input event without waiting, leaving CONTROL_AUDIO_EVENT_RESERVE slots free.
+ *
+ * @param[in] event Event to queue.
+ *
+ * @return True if the event was queued.
+ */
+static bool control_postInputEvent(const struct control_event *event);
+
+/**
+ * @brief Queue a report of AUDIO without waiting; it may use the reserved slots.
  *
  * @param[in] event Event to queue.
  */
 static void control_postEvent(const struct control_event *event);
 
 /**
- * @brief Take events from the queue and dispatch them in arrival order.
+ * @brief Take events from the queue and dispatch them in arrival order; check the inputs and timers in between.
  *
  * @param[in] first Unused.
  * @param[in] second Unused.
@@ -156,70 +200,108 @@ static void control_thread(void *first, void *second, void *third);
 /**
  * @brief Act on one event in the current state.
  *
- * After an audio error the device is halted: button events are dropped without an indication.
- *
  * @param[in] event Event from the queue.
  */
 static void control_dispatch(const struct control_event *event);
 
 /**
+ * @brief Acknowledge the error shown, reject the press, drop it while halted, or pass it to the workflow.
+ */
+static void control_handleShortPress(void);
+
+/**
  * @brief Start in Idle, Stop while listening; otherwise reject.
- *
- * @param[in] state Current state.
  */
-static void control_handleShortPress(enum control_state state);
+static void control_handleWorkflowShortPress(void);
 
 /**
- * @brief Request Wi-Fi setup in Idle; otherwise reject.
- *
- * @param[in] state Current state.
+ * @brief Request Wi-Fi setup in Idle; drop the hold while halted; otherwise reject.
  */
-static void control_handleLongPress(enum control_state state);
+static void control_handleLongPress(void);
 
 /**
- * @brief Stop the Wi-Fi work, then send Start to AUDIO.
+ * @brief Check the switch, stop the Wi-Fi work, then send Start to AUDIO.
  *
+ * Without a valid switch position CONTROL_INPUT_FAILURE is latched and audio stays stopped.
  * Blocks the control thread until Wi-Fi work has stopped, at most the P23 cleanup cap.
  */
 static void control_startListening(void);
 
 /**
- * @brief Return to Idle, allow Wi-Fi work again and show the Idle indication.
+ * @brief Allow Wi-Fi work again after listening, then enter Idle.
  */
 static void control_returnToIdle(void);
 
 /**
- * @brief Read the workflow state.
- *
- * @return Current state.
+ * @brief Enter Idle, or Halted if a latched error halts the device, and show the indication.
  */
-static enum control_state control_getState(void);
+static void control_enterIdle(void);
 
 /**
- * @brief Change the workflow state.
- *
- * @param[in] state New state.
+ * @brief End the startup: latch a failed audio initialization and enter Idle.
  */
-static void control_setState(enum control_state state);
+static void control_finishStartup(void);
 
 /**
- * @brief Show a Wi-Fi workflow status from COMMUNICATION while Idle.
+ * @brief Latch an error and apply its effect, unless it is already latched.
+ *
+ * @param[in] code Catalogue error.
+ * @param[in] cause Short description for the serial log.
+ */
+static void control_raiseError(enum feedback_code code, const char *cause);
+
+/**
+ * @brief Halt the device if the latched errors require it now, then show the indication.
+ */
+static void control_applyErrorEffects(void);
+
+/**
+ * @brief List every latched error and the error shown on the serial log.
+ */
+static void control_logLatchedErrors(void);
+
+/**
+ * @brief Act on Wi-Fi workflow feedback: latch an error or keep the Wi-Fi status for Idle.
  *
  * @param[in] code Catalogue code from COMMUNICATION.
  */
-static void control_handleWiFiFeedback(enum feedback_code code);
+static void control_applyWiFiFeedback(enum feedback_code code);
 
 /**
- * @brief Show the Idle indication again after the quick flashes.
+ * @brief Latch CONTROL_INPUT_FAILURE for a failed potentiometer or for a switch without a valid position while listening.
+ */
+static void control_checkInputs(void);
+
+/**
+ * @brief Show the Idle indication again once the quick flashes have ended.
+ */
+static void control_checkQuickFlashes(void);
+
+/**
+ * @brief Read the last stable switch reading.
  *
- * @param[in] work Quick-flashes end work item.
+ * @return Copy of the reading.
  */
-static void control_endQuickFlashes(struct k_work *work);
+static struct physicalinterface_listening_filter_reading control_getSwitchReading(void);
 
 /**
- * @brief Show the current Wi-Fi status, or IDLE if there is none.
+ * @brief Tell whether error indications wait: during startup and while audio is started.
+ *
+ * @return True in Startup, Starting, Listening and Stopping.
  */
-static void control_showIdleIndication(void);
+static bool control_isIndicationDeferred(void);
+
+/**
+ * @brief Status of the current state.
+ *
+ * @return Catalogue status to show when no error is shown.
+ */
+static enum feedback_code control_getStatusFeedback(void);
+
+/**
+ * @brief Show the code that the latch and the state select, if it changed.
+ */
+static void control_updateIndication(void);
 
 /***********************************************************************/
 /* MACROS                                                              */
@@ -234,7 +316,7 @@ LOG_MODULE_REGISTER(control, LOG_LEVEL_INF);
 void control_init(void)
 {
     control_lampTestEnd = sys_timepoint_calc(K_MSEC(CONTROL_LAMP_TEST_MINIMUM_MILLISECONDS));
-    k_work_init_delayable(&control_quickFlashesEndWork, control_endQuickFlashes);
+    control_resetErrorLatch(&control_errorLatch);
 
     const struct physicalinterface_input_handlers inputHandlers = {
         .button = control_handleButton,
@@ -247,10 +329,10 @@ void control_init(void)
         LOG_WRN("Continuing with incomplete physical interface");
     }
 
-    physicalinterface_showStatusLight(FEEDBACK_STARTUP_RUNNING);
+    control_updateIndication();
     communication_setFeedbackHandler(control_handleWiFiFeedback);
 
-    control_audioFault = audio_init(control_handleAudioEvent);
+    control_initialAudioFault = audio_init(control_handleAudioEvent);
 
     (void)k_thread_create(&control_threadData,
                           control_stack,
@@ -269,18 +351,16 @@ void control_init(void)
 
 void control_completeStartup(void)
 {
+    const struct control_event event = {
+        .type = CONTROL_EVENT_STARTUP_COMPLETED,
+        .code = FEEDBACK_NONE,
+    };
+
     (void)k_sleep(sys_timepoint_timeout(control_lampTestEnd));
 
-    if(control_audioFault == FEEDBACK_NONE)
+    while(!control_postInputEvent(&event))
     {
-        control_setState(CONTROL_STATE_IDLE);
-        control_showIdleIndication();
-    }
-    else
-    {
-        LOG_ERR("Audio initialization failed; Start is blocked until restart");
-        control_setState(CONTROL_STATE_HALTED);
-        physicalinterface_showStatusLight(control_audioFault);
+        (void)k_sleep(K_MSEC(CONTROL_STARTUP_RETRY_MILLISECONDS));
     }
 }
 
@@ -293,18 +373,60 @@ static void control_handleButton(enum physicalinterface_button_event event, int6
     ARG_UNUSED(timestampMilliseconds);
 
     struct control_event controlEvent = {
-        .type = (event == PHYSICALINTERFACE_BUTTON_LONG_PRESS) ? CONTROL_EVENT_BUTTON_LONG_PRESS : CONTROL_EVENT_BUTTON_SHORT_PRESS,
-        .fault = FEEDBACK_NONE,
+        .type = ((event == PHYSICALINTERFACE_BUTTON_LONG_PRESS) ? CONTROL_EVENT_BUTTON_LONG_PRESS : CONTROL_EVENT_BUTTON_SHORT_PRESS),
+        .code = FEEDBACK_NONE,
     };
 
-    if(k_msgq_num_free_get(&control_events) <= CONTROL_AUDIO_EVENT_RESERVE)
+    if(!control_postInputEvent(&controlEvent))
     {
         LOG_WRN("Button event rejected: control queue full");
-        physicalinterface_showStatusLight(FEEDBACK_INPUT_REJECTED);
+        physicalinterface_showFeedback(FEEDBACK_INPUT_REJECTED);
+    }
+}
+
+static void control_handleListeningFilter(const struct physicalinterface_listening_filter_reading *reading)
+{
+    static const char *const filterNames[] = {
+        [PHYSICALINTERFACE_LISTENING_FILTER_RAW] = "Raw",
+        [PHYSICALINTERFACE_LISTENING_FILTER_MURMUR] = "Murmur",
+        [PHYSICALINTERFACE_LISTENING_FILTER_BPM] = "BPM",
+    };
+
+    k_spinlock_key_t key = k_spin_lock(&control_inputLock);
+    control_switchReading = *reading;
+    k_spin_unlock(&control_inputLock, key);
+
+    if(reading->status == PHYSICALINTERFACE_INPUT_VALID)
+    {
+        LOG_INF("Listening filter switch: %s; audio passes unfiltered", filterNames[reading->filter]);
     }
     else
     {
-        control_postEvent(&controlEvent);
+        LOG_WRN("Listening filter switch has no valid position");
+    }
+}
+
+static void control_handleVolume(const struct physicalinterface_volume_reading *reading)
+{
+    uint8_t volumePercent = ((reading->status == PHYSICALINTERFACE_INPUT_VALID) ? reading->percent : PHYSICALINTERFACE_SAFE_VOLUME_PERCENT);
+
+    audio_setVolume(volumePercent);
+
+    k_spinlock_key_t key = k_spin_lock(&control_inputLock);
+    control_isVolumeFailed = (control_isVolumeFailed || (reading->status == PHYSICALINTERFACE_INPUT_FAILED));
+    k_spin_unlock(&control_inputLock, key);
+
+    if(reading->status == PHYSICALINTERFACE_INPUT_VALID)
+    {
+        LOG_DBG("Volume: %u %%", volumePercent);
+    }
+    else if(reading->status == PHYSICALINTERFACE_INPUT_ABSENT)
+    {
+        LOG_INF("Volume potentiometer absent; volume %u %%", volumePercent);
+    }
+    else
+    {
+        LOG_WRN("Volume potentiometer reading failed; volume %u %%", volumePercent);
     }
 }
 
@@ -312,7 +434,7 @@ static void control_handleAudioEvent(enum audio_event event, enum feedback_code 
 {
     struct control_event controlEvent = {
         .type = CONTROL_EVENT_AUDIO_FAULT,
-        .fault = fault,
+        .code = fault,
     };
 
     if(event == AUDIO_EVENT_STARTED)
@@ -329,6 +451,35 @@ static void control_handleAudioEvent(enum audio_event event, enum feedback_code 
     }
 
     control_postEvent(&controlEvent);
+}
+
+static void control_handleWiFiFeedback(enum feedback_code code)
+{
+    struct control_event controlEvent = {
+        .type = CONTROL_EVENT_WIFI_FEEDBACK,
+        .code = code,
+    };
+
+    if(!control_postInputEvent(&controlEvent))
+    {
+        LOG_ERR("Wi-Fi feedback %d lost: control queue full", code);
+    }
+}
+
+static bool control_postInputEvent(const struct control_event *event)
+{
+    bool isPosted = false;
+
+    (void)k_mutex_lock(&control_inputEventLock, K_FOREVER);
+
+    if(k_msgq_num_free_get(&control_events) > CONTROL_AUDIO_EVENT_RESERVE)
+    {
+        isPosted = (k_msgq_put(&control_events, event, K_NO_WAIT) == 0);
+    }
+
+    (void)k_mutex_unlock(&control_inputEventLock);
+
+    return isPosted;
 }
 
 static void control_postEvent(const struct control_event *event)
@@ -349,45 +500,40 @@ static void control_thread(void *first, void *second, void *third)
     {
         struct control_event event;
 
-        (void)k_msgq_get(&control_events, &event, K_FOREVER);
-        control_dispatch(&event);
+        if(k_msgq_get(&control_events, &event, K_MSEC(CONTROL_INPUT_CHECK_MILLISECONDS)) == 0)
+        {
+            control_dispatch(&event);
+        }
+
+        control_checkInputs();
+        control_checkQuickFlashes();
     }
 }
 
 static void control_dispatch(const struct control_event *event)
 {
-    enum control_state state = control_getState();
-
     switch(event->type)
     {
     case CONTROL_EVENT_BUTTON_SHORT_PRESS:
-        if(state != CONTROL_STATE_HALTED)
-        {
-            control_handleShortPress(state);
-        }
-
+        control_handleShortPress();
         break;
 
     case CONTROL_EVENT_BUTTON_LONG_PRESS:
-        if(state != CONTROL_STATE_HALTED)
-        {
-            control_handleLongPress(state);
-        }
-
+        control_handleLongPress();
         break;
 
     case CONTROL_EVENT_AUDIO_STARTED:
-        if(state == CONTROL_STATE_STARTING)
+        if(control_currentState == CONTROL_STATE_STARTING)
         {
             LOG_INF("Listening");
-            control_setState(CONTROL_STATE_LISTENING);
-            physicalinterface_showStatusLight(FEEDBACK_LISTENING);
+            control_currentState = CONTROL_STATE_LISTENING;
+            control_updateIndication();
         }
 
         break;
 
     case CONTROL_EVENT_AUDIO_STOPPED:
-        if(state == CONTROL_STATE_STOPPING)
+        if(control_currentState == CONTROL_STATE_STOPPING)
         {
             LOG_INF("Listening stopped");
             control_returnToIdle();
@@ -396,15 +542,15 @@ static void control_dispatch(const struct control_event *event)
         break;
 
     case CONTROL_EVENT_AUDIO_FAULT:
-        /* The first latched error stays shown; Wi-Fi work stays stopped until the restart. */
-        if(state != CONTROL_STATE_HALTED)
-        {
-            LOG_ERR("Audio fault, catalogue code %d; restart required", event->fault);
-            control_audioFault = event->fault;
-            control_setState(CONTROL_STATE_HALTED);
-            physicalinterface_showStatusLight(event->fault);
-        }
+        control_raiseError(event->code, "Audio fault; restart required");
+        break;
 
+    case CONTROL_EVENT_WIFI_FEEDBACK:
+        control_applyWiFiFeedback(event->code);
+        break;
+
+    case CONTROL_EVENT_STARTUP_COMPLETED:
+        control_finishStartup();
         break;
 
     default:
@@ -412,9 +558,49 @@ static void control_dispatch(const struct control_event *event)
     }
 }
 
-static void control_handleShortPress(enum control_state state)
+static void control_handleShortPress(void)
 {
-    switch(state)
+    enum feedback_code shownError = control_getShownError(&control_errorLatch);
+
+    switch(control_decideShortPress(&control_errorLatch, control_isIndicationDeferred()))
+    {
+    case CONTROL_PRESS_ACKNOWLEDGE:
+        if(sys_timepoint_expired(control_acknowledgementFlashEnd))
+        {
+            (void)control_acknowledgeShownError(&control_errorLatch);
+            LOG_INF("Error %d acknowledged", shownError);
+            control_logLatchedErrors();
+
+            physicalinterface_showFeedback(FEEDBACK_ERROR_ACKNOWLEDGED);
+            control_shownFeedback = FEEDBACK_ERROR_ACKNOWLEDGED;
+            control_acknowledgementFlashEnd = sys_timepoint_calc(K_MSEC(CONTROL_ACKNOWLEDGEMENT_FLASH_MILLISECONDS));
+            control_updateIndication();
+        }
+        else
+        {
+            LOG_INF("Button press dropped: error %d is not shown yet", shownError);
+        }
+        break;
+
+    case CONTROL_PRESS_REJECT:
+        LOG_INF("Start blocked until the latched errors are acknowledged");
+        physicalinterface_showFeedback(FEEDBACK_INPUT_REJECTED);
+        break;
+
+    case CONTROL_PRESS_WORKFLOW:
+        control_handleWorkflowShortPress();
+        break;
+
+    case CONTROL_PRESS_IGNORE:
+    default:
+        LOG_DBG("Button press dropped: halted until restart");
+        break;
+    }
+}
+
+static void control_handleWorkflowShortPress(void)
+{
+    switch(control_currentState)
     {
     case CONTROL_STATE_IDLE:
         control_startListening();
@@ -423,7 +609,7 @@ static void control_handleShortPress(enum control_state state)
     case CONTROL_STATE_LISTENING:
         if(audio_postCommand(AUDIO_COMMAND_STOP) == 0)
         {
-            control_setState(CONTROL_STATE_STOPPING);
+            control_currentState = CONTROL_STATE_STOPPING;
         }
         else
         {
@@ -433,18 +619,22 @@ static void control_handleShortPress(enum control_state state)
         break;
 
     default:
-        LOG_INF("Button press in state %d rejected", state);
-        physicalinterface_showStatusLight(FEEDBACK_INPUT_REJECTED);
+        LOG_INF("Button press in state %d rejected", control_currentState);
+        physicalinterface_showFeedback(FEEDBACK_INPUT_REJECTED);
         break;
     }
 }
 
-static void control_handleLongPress(enum control_state state)
+static void control_handleLongPress(void)
 {
-    if(state != CONTROL_STATE_IDLE)
+    if(control_decideLongPress(&control_errorLatch, control_isIndicationDeferred()) == CONTROL_PRESS_IGNORE)
+    {
+        LOG_DBG("Button hold dropped: halted until restart");
+    }
+    else if(control_currentState != CONTROL_STATE_IDLE)
     {
         LOG_INF("Button hold outside Idle rejected");
-        physicalinterface_showStatusLight(FEEDBACK_INPUT_REJECTED);
+        physicalinterface_showFeedback(FEEDBACK_INPUT_REJECTED);
     }
     else
     {
@@ -454,138 +644,253 @@ static void control_handleLongPress(enum control_state state)
         {
             LOG_WRN("Wi-Fi setup request was not accepted");
         }
+        else
+        {
+            physicalinterface_showFeedback(FEEDBACK_BUTTON_HOLD_ACKNOWLEDGED);
+        }
     }
 }
 
 static void control_startListening(void)
 {
-    control_setState(CONTROL_STATE_STARTING);
-    (void)k_work_cancel_delayable(&control_quickFlashesEndWork);
-    (void)communication_postEvent(COMMUNICATION_EVENT_LISTENING_STARTED);
+    struct physicalinterface_listening_filter_reading switchReading = control_getSwitchReading();
 
-    if(communication_waitForWiFiStop(K_MSEC(CONTROL_WIFI_STOP_WAIT_MILLISECONDS)) != 0)
+    if(switchReading.status != PHYSICALINTERFACE_INPUT_VALID)
     {
-        LOG_WRN("Wi-Fi work did not stop in time; audio stays stopped");
-        control_returnToIdle();
-        physicalinterface_showStatusLight(FEEDBACK_INPUT_REJECTED);
-    }
-    else if(audio_postCommand(AUDIO_COMMAND_START) != 0)
-    {
-        LOG_ERR("AUDIO did not accept Start");
-        control_returnToIdle();
-        physicalinterface_showStatusLight(FEEDBACK_INPUT_REJECTED);
+        control_raiseError(FEEDBACK_CONTROL_INPUT_FAILURE, "No valid listening filter switch position at Start");
     }
     else
     {
-        LOG_INF("Start sent to AUDIO");
+        control_currentState = CONTROL_STATE_STARTING;
+        control_isQuickFlashActive = false;
+        (void)communication_postEvent(COMMUNICATION_EVENT_LISTENING_STARTED);
+
+        if(communication_waitForWiFiStop(K_MSEC(CONTROL_WIFI_STOP_WAIT_MILLISECONDS)) != 0)
+        {
+            LOG_WRN("Wi-Fi work did not stop in time; audio stays stopped");
+            control_returnToIdle();
+            physicalinterface_showFeedback(FEEDBACK_INPUT_REJECTED);
+        }
+        else if(audio_postCommand(AUDIO_COMMAND_START) != 0)
+        {
+            LOG_ERR("AUDIO did not accept Start");
+            control_returnToIdle();
+            physicalinterface_showFeedback(FEEDBACK_INPUT_REJECTED);
+        }
+        else
+        {
+            LOG_INF("Start sent to AUDIO");
+        }
     }
 }
 
 static void control_returnToIdle(void)
 {
-    control_setState(CONTROL_STATE_IDLE);
     (void)communication_postEvent(COMMUNICATION_EVENT_LISTENING_STOPPED);
-    control_showIdleIndication();
+    control_enterIdle();
 }
 
-static enum control_state control_getState(void)
+static void control_enterIdle(void)
 {
-    k_spinlock_key_t key = k_spin_lock(&control_indicationLock);
-    enum control_state state = control_currentState;
-    k_spin_unlock(&control_indicationLock, key);
-
-    return state;
-}
-
-static void control_setState(enum control_state state)
-{
-    k_spinlock_key_t key = k_spin_lock(&control_indicationLock);
-    control_currentState = state;
-    k_spin_unlock(&control_indicationLock, key);
-}
-
-static void control_handleListeningFilter(const struct physicalinterface_listening_filter_reading *reading)
-{
-    static const char *const filterNames[] = {
-        [PHYSICALINTERFACE_LISTENING_FILTER_RAW] = "Raw",
-        [PHYSICALINTERFACE_LISTENING_FILTER_MURMUR] = "Murmur",
-        [PHYSICALINTERFACE_LISTENING_FILTER_BPM] = "BPM",
-    };
-
-    if(reading->status == PHYSICALINTERFACE_INPUT_VALID)
+    if(control_isHalted(&control_errorLatch))
     {
-        LOG_INF("Listening filter switch: %s", filterNames[reading->filter]);
+        if(control_currentState != CONTROL_STATE_HALTED)
+        {
+            LOG_ERR("Halted: every input is blocked until restart");
+        }
+
+        control_currentState = CONTROL_STATE_HALTED;
     }
     else
     {
-        LOG_WRN("Listening filter switch has no valid position");
+        control_currentState = CONTROL_STATE_IDLE;
+    }
+
+    control_updateIndication();
+}
+
+static void control_finishStartup(void)
+{
+    if(control_initialAudioFault != FEEDBACK_NONE)
+    {
+        control_raiseError(control_initialAudioFault, "Audio initialization failed; restart required");
+    }
+
+    control_enterIdle();
+}
+
+static void control_raiseError(enum feedback_code code, const char *cause)
+{
+    if(control_latchError(&control_errorLatch, code))
+    {
+        LOG_ERR("%s: error %d latched", cause, code);
+
+        if(control_isIndicationDeferred())
+        {
+            LOG_INF("Unless it is an audio error, it is shown after the startup or after audio has stopped");
+        }
+
+        control_logLatchedErrors();
+        control_applyErrorEffects();
     }
 }
 
-static void control_handleVolume(const struct physicalinterface_volume_reading *reading)
+static void control_applyErrorEffects(void)
 {
-    if(reading->status == PHYSICALINTERFACE_INPUT_VALID)
+    bool isAudioStarted = ((control_currentState == CONTROL_STATE_STARTING) || (control_currentState == CONTROL_STATE_LISTENING) || (control_currentState == CONTROL_STATE_STOPPING));
+
+    if(control_hasAdmission(&control_errorLatch, CONTROL_ADMISSION_HALTED_AT_ONCE) && (control_currentState != CONTROL_STATE_HALTED))
     {
-        LOG_DBG("Volume: %u %%", reading->percent);
+        if(isAudioStarted)
+        {
+            /* AUDIO stops itself on its own faults; this also mutes it for an audio error that another component detected. */
+            (void)audio_postCommand(AUDIO_COMMAND_STOP);
+        }
+
+        LOG_ERR("Halted: every input is blocked until restart");
+        control_currentState = CONTROL_STATE_HALTED;
     }
-    else if(reading->status == PHYSICALINTERFACE_INPUT_ABSENT)
+    else if(!control_isIndicationDeferred())
     {
-        LOG_INF("Volume potentiometer absent");
+        control_enterIdle();
     }
     else
     {
-        LOG_WRN("Volume potentiometer reading failed");
+        /* The error takes effect when audio has stopped. */
+    }
+
+    control_updateIndication();
+}
+
+static void control_logLatchedErrors(void)
+{
+    for(uint32_t index = 0U; index < control_errorLatch.errorCount; index++)
+    {
+        LOG_INF("Latched error %u of %u: %d", index + 1U, control_errorLatch.errorCount, control_errorLatch.errors[index]);
+    }
+
+    LOG_INF("Error to show: %d", control_getShownError(&control_errorLatch));
+}
+
+static void control_applyWiFiFeedback(enum feedback_code code)
+{
+    if(control_isError(code))
+    {
+        if(code == FEEDBACK_WIFI_CLEANUP_FAILURE)
+        {
+            LOG_ERR("WIFI_CLEANUP_FAILURE reported; Wi-Fi disabled until restart");
+        }
+
+        control_wifiIndication = FEEDBACK_NONE;
+        control_isQuickFlashActive = false;
+        control_raiseError(code, "Wi-Fi workflow error");
+    }
+    else if(code == FEEDBACK_WIFI_CONNECTED)
+    {
+        control_wifiIndication = FEEDBACK_NONE;
+        control_isQuickFlashActive = true;
+        control_quickFlashesEnd = sys_timepoint_calc(K_MSEC(CONTROL_QUICK_FLASHES_MILLISECONDS));
+        control_updateIndication();
+    }
+    else
+    {
+        control_wifiIndication = (((code == FEEDBACK_WIFI_CONNECTING) || (code == FEEDBACK_PORTAL_OPEN)) ? code : FEEDBACK_NONE);
+        control_isQuickFlashActive = false;
+        control_updateIndication();
     }
 }
 
-static void control_handleWiFiFeedback(enum feedback_code code)
+static void control_checkInputs(void)
 {
-    if(code == FEEDBACK_WIFI_CLEANUP_FAILURE)
+    k_spinlock_key_t key = k_spin_lock(&control_inputLock);
+    struct physicalinterface_listening_filter_reading switchReading = control_switchReading;
+    bool isVolumeFailed = control_isVolumeFailed;
+    k_spin_unlock(&control_inputLock, key);
+
+    bool isListening = ((control_currentState == CONTROL_STATE_STARTING) || (control_currentState == CONTROL_STATE_LISTENING));
+    bool isSwitchFailureLong = ((switchReading.status != PHYSICALINTERFACE_INPUT_VALID) && ((k_uptime_get() - switchReading.timestampMilliseconds) >= CONTROL_SWITCH_FAILURE_MILLISECONDS));
+
+    if(isVolumeFailed)
     {
-        LOG_ERR("WIFI_CLEANUP_FAILURE reported; Wi-Fi disabled until restart");
+        control_raiseError(FEEDBACK_CONTROL_INPUT_FAILURE, "Volume potentiometer failed");
     }
 
-    bool isQuickFlash = (code == FEEDBACK_WIFI_CONNECTED);
-    enum feedback_code wifiIndication = ((code == FEEDBACK_WIFI_CONNECTING) || (code == FEEDBACK_PORTAL_OPEN)) ? code : FEEDBACK_NONE;
-
-    k_spinlock_key_t key = k_spin_lock(&control_indicationLock);
-    control_wifiIndication = wifiIndication;
-    bool isIdle = (control_currentState == CONTROL_STATE_IDLE);
-    k_spin_unlock(&control_indicationLock, key);
-
-    if(!isIdle)
+    if(isListening && isSwitchFailureLong)
     {
-        return;
-    }
-
-    if(isQuickFlash)
-    {
-        physicalinterface_showStatusLight(FEEDBACK_WIFI_CONNECTED);
-        (void)k_work_reschedule(&control_quickFlashesEndWork, K_MSEC(CONTROL_QUICK_FLASHES_MILLISECONDS));
-        return;
-    }
-
-    (void)k_work_cancel_delayable(&control_quickFlashesEndWork);
-    control_showIdleIndication();
-}
-
-static void control_endQuickFlashes(struct k_work *work)
-{
-    ARG_UNUSED(work);
-
-    if(control_getState() == CONTROL_STATE_IDLE)
-    {
-        control_showIdleIndication();
+        control_raiseError(FEEDBACK_CONTROL_INPUT_FAILURE, "Listening filter switch without a valid position for 1 s while listening");
     }
 }
 
-static void control_showIdleIndication(void)
+static void control_checkQuickFlashes(void)
 {
-    k_spinlock_key_t key = k_spin_lock(&control_indicationLock);
-    enum feedback_code wifiIndication = control_wifiIndication;
-    k_spin_unlock(&control_indicationLock, key);
+    if(control_isQuickFlashActive && sys_timepoint_expired(control_quickFlashesEnd))
+    {
+        control_isQuickFlashActive = false;
+        control_updateIndication();
+    }
+}
 
-    physicalinterface_showStatusLight((wifiIndication == FEEDBACK_NONE) ? FEEDBACK_IDLE : wifiIndication);
+static struct physicalinterface_listening_filter_reading control_getSwitchReading(void)
+{
+    k_spinlock_key_t key = k_spin_lock(&control_inputLock);
+    struct physicalinterface_listening_filter_reading reading = control_switchReading;
+    k_spin_unlock(&control_inputLock, key);
+
+    return reading;
+}
+
+static bool control_isIndicationDeferred(void)
+{
+    return ((control_currentState == CONTROL_STATE_STARTUP) || (control_currentState == CONTROL_STATE_STARTING) || (control_currentState == CONTROL_STATE_LISTENING) || (control_currentState == CONTROL_STATE_STOPPING));
+}
+
+static enum feedback_code control_getStatusFeedback(void)
+{
+    enum feedback_code status = FEEDBACK_IDLE;
+
+    switch(control_currentState)
+    {
+    case CONTROL_STATE_STARTUP:
+        status = FEEDBACK_STARTUP_RUNNING;
+        break;
+
+    case CONTROL_STATE_LISTENING:
+    case CONTROL_STATE_STOPPING:
+        status = FEEDBACK_LISTENING;
+        break;
+
+    case CONTROL_STATE_IDLE:
+    case CONTROL_STATE_STARTING:
+    case CONTROL_STATE_HALTED:
+    default:
+        if(control_isQuickFlashActive)
+        {
+            status = FEEDBACK_WIFI_CONNECTED;
+        }
+        else if(control_wifiIndication != FEEDBACK_NONE)
+        {
+            status = control_wifiIndication;
+        }
+        else
+        {
+            status = FEEDBACK_IDLE;
+        }
+
+        break;
+    }
+
+    return status;
+}
+
+static void control_updateIndication(void)
+{
+    enum feedback_code feedback = control_selectFeedback(&control_errorLatch, control_isIndicationDeferred(), control_getStatusFeedback());
+
+    if(feedback != control_shownFeedback)
+    {
+        physicalinterface_showFeedback(feedback);
+        control_shownFeedback = feedback;
+    }
 }
 
 /** @} */

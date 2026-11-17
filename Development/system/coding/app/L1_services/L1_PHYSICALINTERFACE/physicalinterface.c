@@ -14,6 +14,7 @@
 /***********************************************************************/
 
 #include "physicalinterface.h"
+#include "physicalinterface_indication.h"
 #include "physicalinterface_input.h"
 
 #include <errno.h>
@@ -31,18 +32,8 @@
 /* DEFINES                                                             */
 /***********************************************************************/
 
-/** Pattern steps are rendered at this period; fine enough for smooth breathing. */
+/** Pattern steps are rendered at this period; fine enough for smooth breathing and 250 ms code blinks. */
 #define PHYSICALINTERFACE_RENDER_PERIOD_MILLISECONDS 20
-
-#define PHYSICALINTERFACE_FULL_BRIGHTNESS_PERCENT     100
-#define PHYSICALINTERFACE_IDLE_DIM_BRIGHTNESS_PERCENT 20 /**< P22 Idle dim candidate. */
-#define PHYSICALINTERFACE_REJECTION_DIM_PERCENT       50 /**< Catalogue: input rejected dims by at least 50 %. */
-
-#define PHYSICALINTERFACE_SLOW_BLINK_HALF_PERIOD_MILLISECONDS  1000 /**< P22 slow blink: 0.5 Hz, 1 s on/off. */
-#define PHYSICALINTERFACE_BREATHING_PERIOD_MILLISECONDS        3000 /**< P22 breathing: 3 s. */
-#define PHYSICALINTERFACE_QUICK_FLASH_HALF_PERIOD_MILLISECONDS 250  /**< P22 flashes: 2 Hz, 250 ms on/off. */
-#define PHYSICALINTERFACE_QUICK_FLASH_COUNT                    3
-#define PHYSICALINTERFACE_REJECTION_DIM_MILLISECONDS           250 /**< P22 input-rejected dimming: 250 ms. */
 
 #define PHYSICALINTERFACE_STATUS_LIGHT_NODE DT_NODELABEL(status_light)
 
@@ -59,46 +50,6 @@
 /* TYPES                                                               */
 /***********************************************************************/
 
-/** Context colour of the RGB status light. */
-enum physicalinterface_colour
-{
-    PHYSICALINTERFACE_COLOUR_OFF,
-    PHYSICALINTERFACE_COLOUR_BLUE,   /**< FHIR. */
-    PHYSICALINTERFACE_COLOUR_CYAN,   /**< Audio. */
-    PHYSICALINTERFACE_COLOUR_GREEN,  /**< Idle. */
-    PHYSICALINTERFACE_COLOUR_VIOLET, /**< Wi-Fi. */
-    PHYSICALINTERFACE_COLOUR_WHITE,  /**< Device. */
-};
-
-/** Light pattern of a colour. */
-enum physicalinterface_pattern
-{
-    PHYSICALINTERFACE_PATTERN_NO_CHANGE, /**< Keep the current indication. */
-    PHYSICALINTERFACE_PATTERN_OFF,
-    PHYSICALINTERFACE_PATTERN_STEADY,
-    PHYSICALINTERFACE_PATTERN_STEADY_DIM,
-    PHYSICALINTERFACE_PATTERN_BLINK_SLOW,
-    PHYSICALINTERFACE_PATTERN_BREATHING_SLOW,
-    PHYSICALINTERFACE_PATTERN_THREE_QUICK_FLASHES, /**< Runs once, then the light stays off. */
-    PHYSICALINTERFACE_PATTERN_DIM_ONCE,            /**< Dims the current indication once; keeps its colour and pattern. */
-};
-
-/** RGB part of one catalogue row. */
-struct physicalinterface_status_light_row
-{
-    enum physicalinterface_colour colour;
-    enum physicalinterface_pattern pattern;
-};
-
-/** Indication currently rendered on the status light. */
-struct physicalinterface_status_light_state
-{
-    enum physicalinterface_colour colour;
-    enum physicalinterface_pattern pattern;
-    int64_t patternStartMilliseconds;
-    int64_t rejectionDimEndMilliseconds; /**< Uptime at which the input-rejected dimming ends. */
-};
-
 /***********************************************************************/
 /* GLOBAL CONSTANTS                                                    */
 /***********************************************************************/
@@ -106,46 +57,6 @@ struct physicalinterface_status_light_state
 /***********************************************************************/
 /* LOCAL CONSTANTS                                                     */
 /***********************************************************************/
-
-/** RGB column of the status and error catalogue, indexed by code. */
-static const struct physicalinterface_status_light_row physicalinterface_statusLightRows[FEEDBACK_CODE_COUNT] = {
-    [FEEDBACK_NONE] = {PHYSICALINTERFACE_COLOUR_OFF, PHYSICALINTERFACE_PATTERN_OFF},
-    [FEEDBACK_DELIVERY_SENDING] = {PHYSICALINTERFACE_COLOUR_BLUE, PHYSICALINTERFACE_PATTERN_BREATHING_SLOW},
-    [FEEDBACK_DELIVERY_PENDING] = {PHYSICALINTERFACE_COLOUR_BLUE, PHYSICALINTERFACE_PATTERN_BLINK_SLOW},
-    [FEEDBACK_DELIVERY_RECEIVED] = {PHYSICALINTERFACE_COLOUR_BLUE, PHYSICALINTERFACE_PATTERN_THREE_QUICK_FLASHES},
-    [FEEDBACK_DELIVERY_FAILURE] = {PHYSICALINTERFACE_COLOUR_BLUE, PHYSICALINTERFACE_PATTERN_STEADY},
-    [FEEDBACK_DELIVERY_NOT_POSSIBLE] = {PHYSICALINTERFACE_COLOUR_BLUE, PHYSICALINTERFACE_PATTERN_STEADY},
-    [FEEDBACK_SERVER_CONNECTION_FAILURE] = {PHYSICALINTERFACE_COLOUR_BLUE, PHYSICALINTERFACE_PATTERN_STEADY},
-    [FEEDBACK_DEVICE_REGISTRATION_FAILURE] = {PHYSICALINTERFACE_COLOUR_BLUE, PHYSICALINTERFACE_PATTERN_STEADY},
-    [FEEDBACK_LISTENING] = {PHYSICALINTERFACE_COLOUR_CYAN, PHYSICALINTERFACE_PATTERN_STEADY},
-    [FEEDBACK_MEASUREMENT_RUNNING] = {PHYSICALINTERFACE_COLOUR_CYAN, PHYSICALINTERFACE_PATTERN_BLINK_SLOW},
-    [FEEDBACK_MEASUREMENT_MINIMUM_REACHED] = {PHYSICALINTERFACE_COLOUR_CYAN, PHYSICALINTERFACE_PATTERN_STEADY},
-    [FEEDBACK_ANALYSIS_RUNNING] = {PHYSICALINTERFACE_COLOUR_CYAN, PHYSICALINTERFACE_PATTERN_BREATHING_SLOW},
-    [FEEDBACK_MICROPHONE_FAILURE] = {PHYSICALINTERFACE_COLOUR_CYAN, PHYSICALINTERFACE_PATTERN_STEADY},
-    [FEEDBACK_AUDIO_WORKER_STALL] = {PHYSICALINTERFACE_COLOUR_CYAN, PHYSICALINTERFACE_PATTERN_STEADY},
-    [FEEDBACK_AUDIO_OUTPUT_FAILURE] = {PHYSICALINTERFACE_COLOUR_CYAN, PHYSICALINTERFACE_PATTERN_STEADY},
-    [FEEDBACK_HEART_RATE_WORKER_STALL] = {PHYSICALINTERFACE_COLOUR_CYAN, PHYSICALINTERFACE_PATTERN_STEADY},
-    [FEEDBACK_MEASUREMENT_INVALID] = {PHYSICALINTERFACE_COLOUR_CYAN, PHYSICALINTERFACE_PATTERN_STEADY},
-    [FEEDBACK_CONTROL_INPUT_FAILURE] = {PHYSICALINTERFACE_COLOUR_CYAN, PHYSICALINTERFACE_PATTERN_STEADY},
-    [FEEDBACK_IDLE] = {PHYSICALINTERFACE_COLOUR_GREEN, PHYSICALINTERFACE_PATTERN_STEADY_DIM},
-    [FEEDBACK_WIFI_CONNECTING] = {PHYSICALINTERFACE_COLOUR_VIOLET, PHYSICALINTERFACE_PATTERN_BREATHING_SLOW},
-    [FEEDBACK_WIFI_CONNECTED] = {PHYSICALINTERFACE_COLOUR_VIOLET, PHYSICALINTERFACE_PATTERN_THREE_QUICK_FLASHES},
-    [FEEDBACK_PORTAL_OPEN] = {PHYSICALINTERFACE_COLOUR_VIOLET, PHYSICALINTERFACE_PATTERN_STEADY},
-    [FEEDBACK_JOIN_FAILURE] = {PHYSICALINTERFACE_COLOUR_VIOLET, PHYSICALINTERFACE_PATTERN_STEADY},
-    [FEEDBACK_RECONNECT_FAILURE] = {PHYSICALINTERFACE_COLOUR_VIOLET, PHYSICALINTERFACE_PATTERN_STEADY},
-    [FEEDBACK_SCAN_FAILURE] = {PHYSICALINTERFACE_COLOUR_VIOLET, PHYSICALINTERFACE_PATTERN_STEADY},
-    [FEEDBACK_HOTSPOT_START_FAILURE] = {PHYSICALINTERFACE_COLOUR_VIOLET, PHYSICALINTERFACE_PATTERN_STEADY},
-    [FEEDBACK_WIFI_SETTINGS_SAVE_FAILURE] = {PHYSICALINTERFACE_COLOUR_VIOLET, PHYSICALINTERFACE_PATTERN_STEADY},
-    [FEEDBACK_WIFI_CLEANUP_FAILURE] = {PHYSICALINTERFACE_COLOUR_VIOLET, PHYSICALINTERFACE_PATTERN_STEADY},
-    [FEEDBACK_STARTUP_RUNNING] = {PHYSICALINTERFACE_COLOUR_WHITE, PHYSICALINTERFACE_PATTERN_STEADY},
-    [FEEDBACK_SETTINGS_READ_FAILURE] = {PHYSICALINTERFACE_COLOUR_WHITE, PHYSICALINTERFACE_PATTERN_STEADY},
-    [FEEDBACK_SETTINGS_SAVE_FAILURE] = {PHYSICALINTERFACE_COLOUR_WHITE, PHYSICALINTERFACE_PATTERN_STEADY},
-    [FEEDBACK_STARTUP_FAILURE] = {PHYSICALINTERFACE_COLOUR_WHITE, PHYSICALINTERFACE_PATTERN_STEADY},
-    [FEEDBACK_RESET_UNEXPECTED] = {PHYSICALINTERFACE_COLOUR_WHITE, PHYSICALINTERFACE_PATTERN_STEADY},
-    [FEEDBACK_SESSION_CONTEXT_CHANGE] = {PHYSICALINTERFACE_COLOUR_WHITE, PHYSICALINTERFACE_PATTERN_STEADY},
-    [FEEDBACK_INPUT_REJECTED] = {PHYSICALINTERFACE_COLOUR_OFF, PHYSICALINTERFACE_PATTERN_DIM_ONCE},
-    [FEEDBACK_ERROR_ACKNOWLEDGED] = {PHYSICALINTERFACE_COLOUR_OFF, PHYSICALINTERFACE_PATTERN_NO_CHANGE},
-};
 
 /** Full-brightness components per colour. Violet keeps red low, because red is reserved for errors. */
 static const struct led_rgb physicalinterface_colourComponents[] = {
@@ -160,6 +71,7 @@ static const struct led_rgb physicalinterface_colourComponents[] = {
 static const struct device *const physicalinterface_statusLightDevice = DEVICE_DT_GET(PHYSICALINTERFACE_STATUS_LIGHT_NODE);
 
 static const struct gpio_dt_spec physicalinterface_button = GPIO_DT_SPEC_GET(PHYSICALINTERFACE_USER_NODE, start_stop_button_gpios);
+static const struct gpio_dt_spec physicalinterface_buttonLight = GPIO_DT_SPEC_GET(PHYSICALINTERFACE_USER_NODE, start_stop_button_light_gpios);
 
 static const struct gpio_dt_spec physicalinterface_rawContact = GPIO_DT_SPEC_GET_BY_IDX(PHYSICALINTERFACE_USER_NODE, listening_filter_switch_gpios, 0);
 static const struct gpio_dt_spec physicalinterface_murmurContact = GPIO_DT_SPEC_GET_BY_IDX(PHYSICALINTERFACE_USER_NODE, listening_filter_switch_gpios, 1);
@@ -175,12 +87,15 @@ static const struct adc_dt_spec physicalinterface_potentiometer = ADC_DT_SPEC_GE
 /* LOCAL VARIABLES                                                     */
 /***********************************************************************/
 
-static struct k_spinlock physicalinterface_statusLightLock;
-static struct physicalinterface_status_light_state physicalinterface_statusLight;
-static struct k_work_delayable physicalinterface_statusLightWork;
+static struct k_spinlock physicalinterface_indicationLock;
+static struct physicalinterface_indication physicalinterface_lightsIndication;
+static struct k_work_delayable physicalinterface_lightsWork;
 static struct led_rgb physicalinterface_shownPixel;
 static bool physicalinterface_isPixelShown;
 static bool physicalinterface_isStatusLightReady;
+static bool physicalinterface_isButtonLightShownOn;
+static bool physicalinterface_isButtonLightLevelShown;
+static bool physicalinterface_isButtonLightReady;
 
 static struct gpio_callback physicalinterface_buttonEdgeCallback;
 static struct k_work_delayable physicalinterface_buttonDebounceWork;
@@ -202,29 +117,40 @@ static bool physicalinterface_isPotentiometerReady;
 /***********************************************************************/
 
 /**
- * @brief Render the current pattern step and schedule the next step if the pattern is animated.
+ * @brief Render the current pattern step on both lights and schedule the next step if a pattern is animated.
  *
- * @param[in] work Status light work item.
+ * @param[in] work Lights work item.
  */
-static void physicalinterface_renderStatusLight(struct k_work *work);
+static void physicalinterface_updateLights(struct k_work *work);
 
 /**
- * @brief Brightness of a pattern at a time since its start.
+ * @brief Show a colour at a brightness on the status light, if it changed.
  *
- * @param[in] pattern Pattern to evaluate.
- * @param[in] elapsedMilliseconds Time since the pattern started.
- * @param[out] isAnimated True while later steps can still change the brightness.
- *
- * @return Brightness in percent.
+ * @param[in] colour Context colour.
+ * @param[in] brightnessPercent Brightness, 0 to 100.
  */
-static uint32_t physicalinterface_patternBrightnessPercent(enum physicalinterface_pattern pattern, int64_t elapsedMilliseconds, bool *isAnimated);
+static void physicalinterface_writeStatusLight(enum physicalinterface_colour colour, uint32_t brightnessPercent);
 
 /**
- * @brief Initialize the status light and switch it off.
+ * @brief Set the red button light, if its level changed.
+ *
+ * @param[in] isOn True to switch the light on.
+ */
+static void physicalinterface_writeButtonLight(bool isOn);
+
+/**
+ * @brief Initialize the status light.
  *
  * @return 0 on success, -ENODEV if the LED strip driver is not ready.
  */
 static int physicalinterface_initStatusLight(void);
+
+/**
+ * @brief Configure the red button light as an output, switched off.
+ *
+ * @return 0 on success, -ENODEV if the GPIO port is not ready, or the GPIO error.
+ */
+static int physicalinterface_initButtonLight(void);
 
 /**
  * @brief Configure the Start/Stop button input and its edge interrupt.
@@ -320,16 +246,25 @@ LOG_MODULE_REGISTER(physicalinterface, LOG_LEVEL_INF);
 int physicalinterface_init(const struct physicalinterface_input_handlers *handlers)
 {
     physicalinterface_handlers = *handlers;
+    physicalinterface_resetIndication(&physicalinterface_lightsIndication);
+    k_work_init_delayable(&physicalinterface_lightsWork, physicalinterface_updateLights);
 
     int statusLightResult = physicalinterface_initStatusLight();
+    int buttonLightResult = physicalinterface_initButtonLight();
     int buttonResult = physicalinterface_initButton();
     int switchResult = physicalinterface_initSwitch();
     int potentiometerResult = physicalinterface_initPotentiometer();
     int firstError = potentiometerResult;
 
+    physicalinterface_showFeedback(FEEDBACK_NONE);
+
     if(statusLightResult != 0)
     {
         firstError = statusLightResult;
+    }
+    else if(buttonLightResult != 0)
+    {
+        firstError = buttonLightResult;
     }
     else if(buttonResult != 0)
     {
@@ -347,42 +282,25 @@ int physicalinterface_init(const struct physicalinterface_input_handlers *handle
     return firstError;
 }
 
-void physicalinterface_showStatusLight(enum feedback_code code)
+void physicalinterface_showFeedback(enum feedback_code code)
 {
-    if(!physicalinterface_isStatusLightReady)
-    {
-        return;
-    }
-
-    if((code < FEEDBACK_NONE) || (code >= FEEDBACK_CODE_COUNT))
+    if(!physicalinterface_isFeedbackCode(code))
     {
         LOG_WRN("Unknown feedback code %d", code);
-        return;
     }
-
-    const struct physicalinterface_status_light_row *row = &physicalinterface_statusLightRows[code];
-
-    if(row->pattern == PHYSICALINTERFACE_PATTERN_NO_CHANGE)
+    else if(physicalinterface_isStatusLightReady || physicalinterface_isButtonLightReady)
     {
-        return;
-    }
+        k_spinlock_key_t key = k_spin_lock(&physicalinterface_indicationLock);
 
-    k_spinlock_key_t key = k_spin_lock(&physicalinterface_statusLightLock);
+        physicalinterface_applyIndication(&physicalinterface_lightsIndication, code, k_uptime_get());
+        k_spin_unlock(&physicalinterface_indicationLock, key);
 
-    if(row->pattern == PHYSICALINTERFACE_PATTERN_DIM_ONCE)
-    {
-        physicalinterface_statusLight.rejectionDimEndMilliseconds = k_uptime_get() + PHYSICALINTERFACE_REJECTION_DIM_MILLISECONDS;
+        (void)k_work_reschedule(&physicalinterface_lightsWork, K_NO_WAIT);
     }
     else
     {
-        physicalinterface_statusLight.colour = row->colour;
-        physicalinterface_statusLight.pattern = row->pattern;
-        physicalinterface_statusLight.patternStartMilliseconds = k_uptime_get();
+        /* Neither light works; the serial log keeps the cause. */
     }
-
-    k_spin_unlock(&physicalinterface_statusLightLock, key);
-
-    (void)k_work_reschedule(&physicalinterface_statusLightWork, K_NO_WAIT);
 }
 
 /***********************************************************************/
@@ -391,18 +309,41 @@ void physicalinterface_showStatusLight(enum feedback_code code)
 
 static int physicalinterface_initStatusLight(void)
 {
-    k_work_init_delayable(&physicalinterface_statusLightWork, physicalinterface_renderStatusLight);
+    int result = 0;
 
     if(!device_is_ready(physicalinterface_statusLightDevice))
     {
         LOG_ERR("Status light driver %s is not ready", physicalinterface_statusLightDevice->name);
-        return -ENODEV;
+        result = -ENODEV;
     }
 
-    physicalinterface_isStatusLightReady = true;
-    physicalinterface_showStatusLight(FEEDBACK_NONE);
+    physicalinterface_isStatusLightReady = (result == 0);
 
-    return 0;
+    return result;
+}
+
+static int physicalinterface_initButtonLight(void)
+{
+    int result = 0;
+
+    if(!gpio_is_ready_dt(&physicalinterface_buttonLight))
+    {
+        LOG_ERR("Button light GPIO port %s is not ready", physicalinterface_buttonLight.port->name);
+        result = -ENODEV;
+    }
+    else
+    {
+        result = gpio_pin_configure_dt(&physicalinterface_buttonLight, GPIO_OUTPUT_INACTIVE);
+
+        if(result != 0)
+        {
+            LOG_ERR("Button light output configuration failed: %d", result);
+        }
+    }
+
+    physicalinterface_isButtonLightReady = (result == 0);
+
+    return result;
 }
 
 static int physicalinterface_initButton(void)
@@ -478,6 +419,11 @@ static void physicalinterface_debounceButton(struct k_work *work)
 
     physicalinterface_isButtonPressed = isPressed;
 
+    k_spinlock_key_t key = k_spin_lock(&physicalinterface_indicationLock);
+    physicalinterface_setIndicationButtonPressed(&physicalinterface_lightsIndication, isPressed);
+    k_spin_unlock(&physicalinterface_indicationLock, key);
+    (void)k_work_reschedule(&physicalinterface_lightsWork, K_NO_WAIT);
+
     if(isPressed)
     {
         physicalinterface_isLongPressReported = false;
@@ -547,7 +493,7 @@ static void physicalinterface_pollSwitch(struct k_work *work)
     {
         struct physicalinterface_listening_filter_reading reading = {
             .filter = physicalinterface_switchDebounce.stable.filter,
-            .status = physicalinterface_switchDebounce.stable.isValid ? PHYSICALINTERFACE_INPUT_VALID : PHYSICALINTERFACE_INPUT_FAILED,
+            .status = (physicalinterface_switchDebounce.stable.isValid ? PHYSICALINTERFACE_INPUT_VALID : PHYSICALINTERFACE_INPUT_FAILED),
             .timestampMilliseconds = nowMilliseconds,
         };
 
@@ -616,7 +562,7 @@ static int physicalinterface_initPotentiometer(void)
         }
     }
 
-    physicalinterface_isPotentiometerReady = IS_ENABLED(CONFIG_PHYSICALINTERFACE_VOLUME_POTENTIOMETER_FITTED) && (result == 0);
+    physicalinterface_isPotentiometerReady = (IS_ENABLED(CONFIG_PHYSICALINTERFACE_VOLUME_POTENTIOMETER_FITTED) && (result == 0));
     (void)k_work_schedule(&physicalinterface_volumePollWork, K_NO_WAIT);
 
     return result;
@@ -628,13 +574,13 @@ static void physicalinterface_pollVolume(struct k_work *work)
 
     bool isFitted = IS_ENABLED(CONFIG_PHYSICALINTERFACE_VOLUME_POTENTIOMETER_FITTED);
     int32_t millivolts = 0;
-    int result = isFitted ? physicalinterface_readPotentiometerMillivolts(&millivolts) : 0;
+    int result = (isFitted ? physicalinterface_readPotentiometerMillivolts(&millivolts) : 0);
     int64_t nowMilliseconds = k_uptime_get();
     enum physicalinterface_input_status status = PHYSICALINTERFACE_INPUT_ABSENT;
 
     if(isFitted)
     {
-        status = (result == 0) ? PHYSICALINTERFACE_INPUT_VALID : PHYSICALINTERFACE_INPUT_FAILED;
+        status = ((result == 0) ? PHYSICALINTERFACE_INPUT_VALID : PHYSICALINTERFACE_INPUT_FAILED);
     }
 
     if(physicalinterface_trackVolume(&physicalinterface_volumeTracker, status, millivolts))
@@ -663,7 +609,7 @@ static int physicalinterface_readPotentiometerMillivolts(int32_t *millivolts)
 {
     int16_t sample = 0;
     struct adc_sequence sequence = {.buffer = &sample, .buffer_size = sizeof(sample)};
-    int result = physicalinterface_isPotentiometerReady ? 0 : -ENODEV;
+    int result = (physicalinterface_isPotentiometerReady ? 0 : -ENODEV);
 
     if(result == 0)
     {
@@ -684,33 +630,40 @@ static int physicalinterface_readPotentiometerMillivolts(int32_t *millivolts)
     return result;
 }
 
-static void physicalinterface_renderStatusLight(struct k_work *work)
+static void physicalinterface_updateLights(struct k_work *work)
 {
     ARG_UNUSED(work);
 
-    k_spinlock_key_t key = k_spin_lock(&physicalinterface_statusLightLock);
-    struct physicalinterface_status_light_state state = physicalinterface_statusLight;
-    k_spin_unlock(&physicalinterface_statusLightLock, key);
+    k_spinlock_key_t key = k_spin_lock(&physicalinterface_indicationLock);
+    struct physicalinterface_indication_output output = physicalinterface_renderIndication(&physicalinterface_lightsIndication, k_uptime_get());
+    k_spin_unlock(&physicalinterface_indicationLock, key);
 
-    int64_t nowMilliseconds = k_uptime_get();
-    bool isAnimated = false;
-    uint32_t brightnessPercent = physicalinterface_patternBrightnessPercent(state.pattern, nowMilliseconds - state.patternStartMilliseconds, &isAnimated);
-
-    if(nowMilliseconds < state.rejectionDimEndMilliseconds)
+    if(physicalinterface_isStatusLightReady)
     {
-        brightnessPercent = (brightnessPercent * PHYSICALINTERFACE_REJECTION_DIM_PERCENT) / PHYSICALINTERFACE_FULL_BRIGHTNESS_PERCENT;
-        isAnimated = true;
+        physicalinterface_writeStatusLight(output.colour, output.statusLightBrightnessPercent);
     }
 
-    const struct led_rgb *fullColour = &physicalinterface_colourComponents[state.colour];
+    if(physicalinterface_isButtonLightReady)
+    {
+        physicalinterface_writeButtonLight(output.isButtonLightOn);
+    }
+
+    if(output.isAnimated)
+    {
+        (void)k_work_schedule(&physicalinterface_lightsWork, K_MSEC(PHYSICALINTERFACE_RENDER_PERIOD_MILLISECONDS));
+    }
+}
+
+static void physicalinterface_writeStatusLight(enum physicalinterface_colour colour, uint32_t brightnessPercent)
+{
+    const struct led_rgb *fullColour = &physicalinterface_colourComponents[colour];
     struct led_rgb pixel = {
         .r = (uint8_t)((fullColour->r * brightnessPercent) / PHYSICALINTERFACE_FULL_BRIGHTNESS_PERCENT),
         .g = (uint8_t)((fullColour->g * brightnessPercent) / PHYSICALINTERFACE_FULL_BRIGHTNESS_PERCENT),
         .b = (uint8_t)((fullColour->b * brightnessPercent) / PHYSICALINTERFACE_FULL_BRIGHTNESS_PERCENT),
     };
 
-    bool isPixelChanged = !physicalinterface_isPixelShown || (pixel.r != physicalinterface_shownPixel.r) ||
-                          (pixel.g != physicalinterface_shownPixel.g) || (pixel.b != physicalinterface_shownPixel.b);
+    bool isPixelChanged = (!physicalinterface_isPixelShown || (pixel.r != physicalinterface_shownPixel.r) || (pixel.g != physicalinterface_shownPixel.g) || (pixel.b != physicalinterface_shownPixel.b));
 
     if(isPixelChanged)
     {
@@ -726,63 +679,23 @@ static void physicalinterface_renderStatusLight(struct k_work *work)
             LOG_WRN("Status light update failed: %d", result);
         }
     }
-
-    if(isAnimated)
-    {
-        (void)k_work_schedule(&physicalinterface_statusLightWork, K_MSEC(PHYSICALINTERFACE_RENDER_PERIOD_MILLISECONDS));
-    }
 }
 
-static uint32_t physicalinterface_patternBrightnessPercent(enum physicalinterface_pattern pattern, int64_t elapsedMilliseconds, bool *isAnimated)
+static void physicalinterface_writeButtonLight(bool isOn)
 {
-    *isAnimated = false;
-
-    switch(pattern)
+    if(!physicalinterface_isButtonLightLevelShown || (isOn != physicalinterface_isButtonLightShownOn))
     {
-    case PHYSICALINTERFACE_PATTERN_STEADY:
-        return PHYSICALINTERFACE_FULL_BRIGHTNESS_PERCENT;
+        int result = gpio_pin_set_dt(&physicalinterface_buttonLight, isOn ? 1 : 0);
 
-    case PHYSICALINTERFACE_PATTERN_STEADY_DIM:
-        return PHYSICALINTERFACE_IDLE_DIM_BRIGHTNESS_PERCENT;
-
-    case PHYSICALINTERFACE_PATTERN_BLINK_SLOW:
-    {
-        *isAnimated = true;
-        int64_t phaseMilliseconds = elapsedMilliseconds % (2 * PHYSICALINTERFACE_SLOW_BLINK_HALF_PERIOD_MILLISECONDS);
-
-        return (phaseMilliseconds < PHYSICALINTERFACE_SLOW_BLINK_HALF_PERIOD_MILLISECONDS) ? PHYSICALINTERFACE_FULL_BRIGHTNESS_PERCENT : 0;
-    }
-
-    case PHYSICALINTERFACE_PATTERN_BREATHING_SLOW:
-    {
-        *isAnimated = true;
-        int64_t halfPeriodMilliseconds = PHYSICALINTERFACE_BREATHING_PERIOD_MILLISECONDS / 2;
-        int64_t phaseMilliseconds = elapsedMilliseconds % PHYSICALINTERFACE_BREATHING_PERIOD_MILLISECONDS;
-        int64_t distanceFromPeakMilliseconds = (phaseMilliseconds < halfPeriodMilliseconds) ? phaseMilliseconds : (PHYSICALINTERFACE_BREATHING_PERIOD_MILLISECONDS - phaseMilliseconds);
-
-        return (uint32_t)((distanceFromPeakMilliseconds * PHYSICALINTERFACE_FULL_BRIGHTNESS_PERCENT) / halfPeriodMilliseconds);
-    }
-
-    case PHYSICALINTERFACE_PATTERN_THREE_QUICK_FLASHES:
-    {
-        int64_t flashSequenceMilliseconds = 2 * PHYSICALINTERFACE_QUICK_FLASH_COUNT * PHYSICALINTERFACE_QUICK_FLASH_HALF_PERIOD_MILLISECONDS;
-
-        if(elapsedMilliseconds >= flashSequenceMilliseconds)
+        if(result == 0)
         {
-            return 0;
+            physicalinterface_isButtonLightShownOn = isOn;
+            physicalinterface_isButtonLightLevelShown = true;
         }
-
-        *isAnimated = true;
-        bool isFlashOn = ((elapsedMilliseconds / PHYSICALINTERFACE_QUICK_FLASH_HALF_PERIOD_MILLISECONDS) % 2) == 0;
-
-        return isFlashOn ? PHYSICALINTERFACE_FULL_BRIGHTNESS_PERCENT : 0;
-    }
-
-    case PHYSICALINTERFACE_PATTERN_OFF:
-    case PHYSICALINTERFACE_PATTERN_NO_CHANGE:
-    case PHYSICALINTERFACE_PATTERN_DIM_ONCE:
-    default:
-        return 0;
+        else
+        {
+            LOG_WRN("Button light update failed: %d", result);
+        }
     }
 }
 

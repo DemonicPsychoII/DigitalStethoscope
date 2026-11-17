@@ -17,6 +17,8 @@
 /* INCLUDES                                                            */
 /***********************************************************************/
 
+#include <stdint.h>
+
 #include "feedback.h"
 
 /***********************************************************************/
@@ -85,6 +87,15 @@ enum feedback_code audio_init(audio_event_handler eventHandler);
  * @return 0 on success, -ENOMSG if the command queue is full.
  */
 int audio_postCommand(enum audio_command command);
+
+/**
+ * @brief Set the volume of the audio output without waiting.
+ *
+ * Applies from the next block. The volume is 0 % until the first call.
+ *
+ * @param[in] volumePercent Volume, 0 to 100; higher values count as 100.
+ */
+void audio_setVolume(uint8_t volumePercent);
 
 #endif /* L2_AUDIO_H */
 

@@ -122,11 +122,12 @@ struct physicalinterface_input_handlers
 /***********************************************************************/
 
 /**
- * @brief Initialize the RGB status light, switch it off, and start the inputs:
- *        Start/Stop button, Raw/Murmur/BPM switch and volume potentiometer.
+ * @brief Initialize the RGB status light and the red button light, switch both
+ *        off, and start the inputs: Start/Stop button, Raw/Murmur/BPM switch and
+ *        volume potentiometer.
  *
- * Each part works without the others: a failed status light does not stop the
- * inputs, and a failed input does not stop the other parts. A failed switch or
+ * Each part works without the others: a failed light does not stop the other
+ * light or the inputs, and a failed input does not stop the other parts. A failed switch or
  * potentiometer is also reported to its handler as a FAILED reading. Without
  * CONFIG_PHYSICALINTERFACE_VOLUME_POTENTIOMETER_FITTED the ADC is not read and
  * the volume handler receives one ABSENT reading.
@@ -139,18 +140,14 @@ struct physicalinterface_input_handlers
 int physicalinterface_init(const struct physicalinterface_input_handlers *handlers);
 
 /**
- * @brief Show the RGB part of a catalogue row on the status light.
+ * @brief Show a catalogue row on the RGB status light and the red button light.
  *
- * The light takes the row's context colour and pattern. Error rows show
- * their context colour steady. FEEDBACK_INPUT_REJECTED dims the current
- * indication to half brightness for 250 ms without replacing it. Rows without
- * an RGB change, such as FEEDBACK_ERROR_ACKNOWLEDGED, leave the current
- * indication unchanged.
- * Does not block; the pattern runs on the system work queue.
+ * Does not block; the patterns run on the system work queue. While the button
+ * is down the red light shows the press instead of its row.
  *
- * @param[in] code Catalogue code to show; FEEDBACK_NONE switches the light off.
+ * @param[in] code Catalogue code to show; FEEDBACK_NONE switches both lights off.
  */
-void physicalinterface_showStatusLight(enum feedback_code code);
+void physicalinterface_showFeedback(enum feedback_code code);
 
 #endif /* L1_PHYSICALINTERFACE_H */
 
