@@ -31,9 +31,10 @@
 /* DEFINES                                                             */
 /***********************************************************************/
 
-#define CONTROL_LAMP_TEST_MINIMUM_MILLISECONDS 1000 /**< P22: startup lamp test at least 1 s. */
-#define CONTROL_QUICK_FLASHES_MILLISECONDS     1500 /**< P22: three quick flashes at 2 Hz. */
-#define CONTROL_WIFI_STOP_WAIT_MILLISECONDS    5000 /**< P23: Wi-Fi cleanup is capped at 5 s. */
+#define CONTROL_LAMP_TEST_MINIMUM_MILLISECONDS     1000 /**< P22: startup lamp test at least 1 s. */
+#define CONTROL_QUICK_FLASHES_MILLISECONDS         1500 /**< P22: three quick flashes at 2 Hz. */
+#define CONTROL_ACKNOWLEDGEMENT_FLASH_MILLISECONDS 1000 /**< P22: long flash of 1 s after an acknowledgement. */
+#define CONTROL_WIFI_STOP_WAIT_MILLISECONDS        5000 /**< P23: Wi-Fi cleanup is capped at 5 s. */
 
 /** The control thread checks the input readings at least this often; within the P10 status budget of 500 ms. */
 #define CONTROL_INPUT_CHECK_MILLISECONDS 100
@@ -110,6 +111,7 @@ static struct control_error_latch control_errorLatch;
 static enum feedback_code control_wifiIndication = FEEDBACK_NONE; /**< Wi-Fi status shown in Idle; NONE shows IDLE. */
 static bool control_isQuickFlashActive;                           /**< WIFI_CONNECTED is shown in Idle until control_quickFlashesEnd. */
 static k_timepoint_t control_quickFlashesEnd;
+static k_timepoint_t control_acknowledgementFlashEnd;            /**< Until then the next error is not shown yet, so a press must not acknowledge it. */
 static enum feedback_code control_shownFeedback = FEEDBACK_NONE; /**< Last row passed to PHYSICALINTERFACE, overlays excluded. */
 
 static struct k_spinlock control_inputLock; /**< Protects the readings that the input handlers store on the system work queue. */
@@ -411,7 +413,7 @@ static void control_handleVolume(const struct physicalinterface_volume_reading *
     audio_setVolume(volumePercent);
 
     k_spinlock_key_t key = k_spin_lock(&control_inputLock);
-    control_isVolumeFailed = (reading->status == PHYSICALINTERFACE_INPUT_FAILED);
+    control_isVolumeFailed = (control_isVolumeFailed || (reading->status == PHYSICALINTERFACE_INPUT_FAILED));
     k_spin_unlock(&control_inputLock, key);
 
     if(reading->status == PHYSICALINTERFACE_INPUT_VALID)
@@ -563,13 +565,21 @@ static void control_handleShortPress(void)
     switch(control_decideShortPress(&control_errorLatch, control_isIndicationDeferred()))
     {
     case CONTROL_PRESS_ACKNOWLEDGE:
-        (void)control_acknowledgeShownError(&control_errorLatch);
-        LOG_INF("Error %d acknowledged", shownError);
-        control_logLatchedErrors();
+        if(sys_timepoint_expired(control_acknowledgementFlashEnd))
+        {
+            (void)control_acknowledgeShownError(&control_errorLatch);
+            LOG_INF("Error %d acknowledged", shownError);
+            control_logLatchedErrors();
 
-        physicalinterface_showFeedback(FEEDBACK_ERROR_ACKNOWLEDGED);
-        control_shownFeedback = FEEDBACK_ERROR_ACKNOWLEDGED;
-        control_updateIndication();
+            physicalinterface_showFeedback(FEEDBACK_ERROR_ACKNOWLEDGED);
+            control_shownFeedback = FEEDBACK_ERROR_ACKNOWLEDGED;
+            control_acknowledgementFlashEnd = sys_timepoint_calc(K_MSEC(CONTROL_ACKNOWLEDGEMENT_FLASH_MILLISECONDS));
+            control_updateIndication();
+        }
+        else
+        {
+            LOG_INF("Button press dropped: error %d is not shown yet", shownError);
+        }
         break;
 
     case CONTROL_PRESS_REJECT:
