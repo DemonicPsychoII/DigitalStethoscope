@@ -213,7 +213,7 @@ struct physicalinterface_indication_output physicalinterface_renderIndication(st
         output.isButtonLightOn = physicalinterface_isButtonLightOn(row, elapsedMilliseconds, &isButtonLightAnimated);
     }
 
-    output.isAnimated = (isStatusLightAnimated || isButtonLightAnimated);
+    output.isAnimated = (isStatusLightAnimated || isButtonLightAnimated || indication->isLongFlashActive);
 
     return output;
 }
