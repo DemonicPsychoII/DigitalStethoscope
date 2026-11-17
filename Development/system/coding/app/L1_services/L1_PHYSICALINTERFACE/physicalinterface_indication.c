@@ -127,7 +127,7 @@ void physicalinterface_applyIndication(struct physicalinterface_indication *indi
 
     if(row->statusLightPattern == PHYSICALINTERFACE_PATTERN_DIM_ONCE)
     {
-        indication->rejectionDimEndMilliseconds = nowMilliseconds + PHYSICALINTERFACE_REJECTION_DIM_MILLISECONDS;
+        indication->rejectionDimEndMilliseconds = (nowMilliseconds + PHYSICALINTERFACE_REJECTION_DIM_MILLISECONDS);
     }
     else if(row->buttonLightPattern == PHYSICALINTERFACE_BUTTON_LIGHT_HOLD_BLINK)
     {
@@ -140,7 +140,7 @@ void physicalinterface_applyIndication(struct physicalinterface_indication *indi
     else if(row->buttonLightPattern == PHYSICALINTERFACE_BUTTON_LIGHT_LONG_FLASH_ONCE)
     {
         indication->isLongFlashActive = true;
-        indication->longFlashEndMilliseconds = nowMilliseconds + PHYSICALINTERFACE_LONG_FLASH_MILLISECONDS;
+        indication->longFlashEndMilliseconds = (nowMilliseconds + PHYSICALINTERFACE_LONG_FLASH_MILLISECONDS);
     }
     else if(isLongFlashRunning)
     {
