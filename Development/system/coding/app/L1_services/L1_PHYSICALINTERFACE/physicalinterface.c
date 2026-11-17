@@ -493,7 +493,7 @@ static void physicalinterface_pollSwitch(struct k_work *work)
     {
         struct physicalinterface_listening_filter_reading reading = {
             .filter = physicalinterface_switchDebounce.stable.filter,
-            .status = physicalinterface_switchDebounce.stable.isValid ? PHYSICALINTERFACE_INPUT_VALID : PHYSICALINTERFACE_INPUT_FAILED,
+            .status = (physicalinterface_switchDebounce.stable.isValid ? PHYSICALINTERFACE_INPUT_VALID : PHYSICALINTERFACE_INPUT_FAILED),
             .timestampMilliseconds = nowMilliseconds,
         };
 
@@ -663,8 +663,7 @@ static void physicalinterface_writeStatusLight(enum physicalinterface_colour col
         .b = (uint8_t)((fullColour->b * brightnessPercent) / PHYSICALINTERFACE_FULL_BRIGHTNESS_PERCENT),
     };
 
-    bool isPixelChanged = !physicalinterface_isPixelShown || (pixel.r != physicalinterface_shownPixel.r) ||
-                          (pixel.g != physicalinterface_shownPixel.g) || (pixel.b != physicalinterface_shownPixel.b);
+    bool isPixelChanged = (!physicalinterface_isPixelShown || (pixel.r != physicalinterface_shownPixel.r) || (pixel.g != physicalinterface_shownPixel.g) || (pixel.b != physicalinterface_shownPixel.b));
 
     if(isPixelChanged)
     {
