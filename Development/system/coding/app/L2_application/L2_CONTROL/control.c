@@ -371,7 +371,7 @@ static void control_handleButton(enum physicalinterface_button_event event, int6
     ARG_UNUSED(timestampMilliseconds);
 
     struct control_event controlEvent = {
-        .type = (event == PHYSICALINTERFACE_BUTTON_LONG_PRESS) ? CONTROL_EVENT_BUTTON_LONG_PRESS : CONTROL_EVENT_BUTTON_SHORT_PRESS,
+        .type = ((event == PHYSICALINTERFACE_BUTTON_LONG_PRESS) ? CONTROL_EVENT_BUTTON_LONG_PRESS : CONTROL_EVENT_BUTTON_SHORT_PRESS),
         .code = FEEDBACK_NONE,
     };
 
