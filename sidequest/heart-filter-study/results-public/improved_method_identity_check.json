@@ -1,0 +1,191 @@
+{
+ "recording": "rest-1",
+ "configurations": [
+  {
+   "filter": "butterworth_hp2_40_lp2_150",
+   "configuration": "envelope_lowpass=two_pole,envelope_lowpass_hz=5.0,peak_choice=half_check",
+   "windows": 51,
+   "bit_identical": true
+  },
+  {
+   "filter": "butterworth_hp2_40_lp2_150",
+   "configuration": "default",
+   "windows": 51,
+   "bit_identical": true
+  },
+  {
+   "filter": "butterworth_hp2_25_lp2_150",
+   "configuration": "envelope_lowpass_hz=5.0,compression=log",
+   "windows": 51,
+   "bit_identical": true
+  },
+  {
+   "filter": "butterworth_hp2_25_lp2_150",
+   "configuration": "envelope_lowpass=two_pole,envelope_lowpass_hz=5.0",
+   "windows": 51,
+   "bit_identical": true
+  },
+  {
+   "filter": "butterworth_hp2_25_lp2_150",
+   "configuration": "envelope_lowpass_hz=8.0",
+   "windows": 51,
+   "bit_identical": true
+  },
+  {
+   "filter": "butterworth_hp2_25_lp2_150",
+   "configuration": "envelope_lowpass=two_pole,peak_choice=first_above",
+   "windows": 51,
+   "bit_identical": true
+  },
+  {
+   "filter": "butterworth_hp2_25_lp2_150",
+   "configuration": "envelope_rate_hz=50",
+   "windows": 51,
+   "bit_identical": true
+  },
+  {
+   "filter": "butterworth_hp2_25_lp2_150",
+   "configuration": "envelope_lowpass_hz=8.0,compression=log",
+   "windows": 51,
+   "bit_identical": true
+  },
+  {
+   "filter": "butterworth_hp2_25_lp2_150",
+   "configuration": "envelope_rate_hz=200",
+   "windows": 51,
+   "bit_identical": true
+  },
+  {
+   "filter": "butterworth_hp2_25_lp2_150",
+   "configuration": "peak_choice=first_above",
+   "windows": 51,
+   "bit_identical": true
+  },
+  {
+   "filter": "butterworth_hp2_25_lp2_150",
+   "configuration": "envelope_lowpass=boxcar",
+   "windows": 51,
+   "bit_identical": true
+  },
+  {
+   "filter": "butterworth_hp2_25_lp2_150",
+   "configuration": "envelope_lowpass_hz=5.0",
+   "windows": 51,
+   "bit_identical": true
+  },
+  {
+   "filter": "butterworth_hp2_25_lp2_150",
+   "configuration": "envelope_lowpass=boxcar,compression=log",
+   "windows": 51,
+   "bit_identical": true
+  },
+  {
+   "filter": "butterworth_hp2_25_lp2_150",
+   "configuration": "envelope_lowpass_hz=8.0,peak_choice=first_above",
+   "windows": 51,
+   "bit_identical": true
+  },
+  {
+   "filter": "butterworth_hp2_25_lp2_150",
+   "configuration": "rectification=square",
+   "windows": 51,
+   "bit_identical": true
+  },
+  {
+   "filter": "butterworth_hp2_25_lp2_150",
+   "configuration": "envelope_lowpass=two_pole,envelope_lowpass_hz=8.0,peak_choice=half_check",
+   "windows": 51,
+   "bit_identical": true
+  },
+  {
+   "filter": "butterworth_hp2_25_lp2_150",
+   "configuration": "envelope_lowpass=two_pole,compression=log",
+   "windows": 51,
+   "bit_identical": true
+  },
+  {
+   "filter": "butterworth_hp2_25_lp2_150",
+   "configuration": "envelope_lowpass_hz=20.0",
+   "windows": 51,
+   "bit_identical": true
+  },
+  {
+   "filter": "butterworth_hp2_25_lp2_150",
+   "configuration": "rectification=shannon",
+   "windows": 51,
+   "bit_identical": true
+  },
+  {
+   "filter": "butterworth_hp2_25_lp2_150",
+   "configuration": "envelope_lowpass_hz=5.0,peak_choice=first_above",
+   "windows": 51,
+   "bit_identical": true
+  },
+  {
+   "filter": "butterworth_hp2_25_lp2_150",
+   "configuration": "peak_choice=half_check",
+   "windows": 51,
+   "bit_identical": true
+  },
+  {
+   "filter": "butterworth_hp2_25_lp2_150",
+   "configuration": "envelope_lowpass=two_pole,envelope_lowpass_hz=8.0",
+   "windows": 51,
+   "bit_identical": true
+  },
+  {
+   "filter": "butterworth_hp2_25_lp2_150",
+   "configuration": "envelope_lowpass_hz=5.0,peak_choice=half_check",
+   "windows": 51,
+   "bit_identical": true
+  },
+  {
+   "filter": "butterworth_hp2_25_lp2_150",
+   "configuration": "envelope_lowpass=two_pole,compression=clip_mean3",
+   "windows": 51,
+   "bit_identical": true
+  },
+  {
+   "filter": "butterworth_hp2_25_lp2_150",
+   "configuration": "compression=clip_mean3",
+   "windows": 51,
+   "bit_identical": true
+  },
+  {
+   "filter": "butterworth_hp2_25_lp2_150",
+   "configuration": "envelope_lowpass_hz=5.0,compression=clip_mean3",
+   "windows": 51,
+   "bit_identical": true
+  },
+  {
+   "filter": "butterworth_hp2_25_lp2_150",
+   "configuration": "envelope_lowpass=two_pole",
+   "windows": 51,
+   "bit_identical": true
+  },
+  {
+   "filter": "butterworth_hp2_25_lp2_150",
+   "configuration": "peak_choice=comb",
+   "windows": 51,
+   "bit_identical": true
+  },
+  {
+   "filter": "butterworth_hp2_25_lp2_150",
+   "configuration": "envelope_lowpass=two_pole,peak_choice=half_check",
+   "windows": 51,
+   "bit_identical": true
+  },
+  {
+   "filter": "butterworth_hp2_25_lp2_150",
+   "configuration": "envelope_lowpass_hz=8.0,peak_choice=half_check",
+   "windows": 51,
+   "bit_identical": true
+  },
+  {
+   "filter": "butterworth_hp2_25_lp2_150",
+   "configuration": "compression=log",
+   "windows": 51,
+   "bit_identical": true
+  }
+ ]
+}

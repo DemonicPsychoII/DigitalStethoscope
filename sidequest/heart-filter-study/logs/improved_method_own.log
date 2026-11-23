@@ -1,0 +1,74 @@
+identical: envelope_lowpass=two_pole,envelope_lowpass_hz=5.0,peak_choice=half_check (51 windows)
+identical: default (51 windows)
+no filter      final                  all      MAE 4.217 within 0.937 gross 16 valid 0.980 windows 255
+no filter      final                  reliable MAE 0.422 within 1.000 gross 0 valid 1.000 windows 226
+no filter      half_check_only        all      MAE 3.893 within 0.945 gross 14 valid 0.957 windows 255
+no filter      half_check_only        reliable MAE 0.965 within 0.996 gross 1 valid 0.991 windows 226
+no filter      improved_peak_choice   all      MAE 2.839 within 0.957 gross 11 valid 0.969 windows 255
+no filter      improved_peak_choice   reliable MAE 0.422 within 1.000 gross 0 valid 1.000 windows 226
+no filter      improved               all      MAE 2.839 within 0.957 gross 11 valid 0.937 windows 255
+no filter      improved               reliable MAE 0.422 within 1.000 gross 0 valid 0.978 windows 226
+25-150 Hz      final                  all      MAE 0.691 within 0.996 gross 1 valid 1.000 windows 255
+25-150 Hz      final                  reliable MAE 0.296 within 1.000 gross 0 valid 1.000 windows 226
+25-150 Hz      half_check_only        all      MAE 0.663 within 1.000 gross 0 valid 0.980 windows 255
+25-150 Hz      half_check_only        reliable MAE 0.514 within 1.000 gross 0 valid 1.000 windows 226
+25-150 Hz      improved_peak_choice   all      MAE 0.358 within 1.000 gross 0 valid 0.996 windows 255
+25-150 Hz      improved_peak_choice   reliable MAE 0.296 within 1.000 gross 0 valid 1.000 windows 226
+25-150 Hz      improved               all      MAE 0.358 within 1.000 gross 0 valid 0.973 windows 255
+25-150 Hz      improved               reliable MAE 0.296 within 1.000 gross 0 valid 0.978 windows 226
+30-150 Hz      final                  all      MAE 0.353 within 1.000 gross 0 valid 1.000 windows 255
+30-150 Hz      final                  reliable MAE 0.296 within 1.000 gross 0 valid 1.000 windows 226
+30-150 Hz      half_check_only        all      MAE 0.653 within 1.000 gross 0 valid 0.980 windows 255
+30-150 Hz      half_check_only        reliable MAE 0.515 within 1.000 gross 0 valid 1.000 windows 226
+30-150 Hz      improved_peak_choice   all      MAE 0.354 within 1.000 gross 0 valid 1.000 windows 255
+30-150 Hz      improved_peak_choice   reliable MAE 0.296 within 1.000 gross 0 valid 1.000 windows 226
+30-150 Hz      improved               all      MAE 0.354 within 1.000 gross 0 valid 0.976 windows 255
+30-150 Hz      improved               reliable MAE 0.296 within 1.000 gross 0 valid 0.978 windows 226
+40-150 Hz      final                  all      MAE 0.354 within 1.000 gross 0 valid 0.996 windows 255
+40-150 Hz      final                  reliable MAE 0.301 within 1.000 gross 0 valid 1.000 windows 226
+40-150 Hz      half_check_only        all      MAE 0.662 within 1.000 gross 0 valid 0.980 windows 255
+40-150 Hz      half_check_only        reliable MAE 0.523 within 1.000 gross 0 valid 1.000 windows 226
+40-150 Hz      improved_peak_choice   all      MAE 0.354 within 1.000 gross 0 valid 0.996 windows 255
+40-150 Hz      improved_peak_choice   reliable MAE 0.301 within 1.000 gross 0 valid 1.000 windows 226
+40-150 Hz      improved               all      MAE 0.354 within 1.000 gross 0 valid 0.976 windows 255
+40-150 Hz      improved               reliable MAE 0.301 within 1.000 gross 0 valid 0.982 windows 226
+50-150 Hz      final                  all      MAE 0.362 within 1.000 gross 0 valid 0.996 windows 255
+50-150 Hz      final                  reliable MAE 0.307 within 1.000 gross 0 valid 1.000 windows 226
+50-150 Hz      half_check_only        all      MAE 0.679 within 1.000 gross 0 valid 0.988 windows 255
+50-150 Hz      half_check_only        reliable MAE 0.543 within 1.000 gross 0 valid 1.000 windows 226
+50-150 Hz      improved_peak_choice   all      MAE 0.362 within 1.000 gross 0 valid 0.996 windows 255
+50-150 Hz      improved_peak_choice   reliable MAE 0.307 within 1.000 gross 0 valid 1.000 windows 226
+50-150 Hz      improved               all      MAE 0.362 within 1.000 gross 0 valid 0.973 windows 255
+50-150 Hz      improved               reliable MAE 0.307 within 1.000 gross 0 valid 0.982 windows 226
+60-150 Hz      final                  all      MAE 0.365 within 1.000 gross 0 valid 0.992 windows 255
+60-150 Hz      final                  reliable MAE 0.307 within 1.000 gross 0 valid 1.000 windows 226
+60-150 Hz      half_check_only        all      MAE 0.692 within 1.000 gross 0 valid 0.980 windows 255
+60-150 Hz      half_check_only        reliable MAE 0.551 within 1.000 gross 0 valid 1.000 windows 226
+60-150 Hz      improved_peak_choice   all      MAE 0.365 within 1.000 gross 0 valid 0.992 windows 255
+60-150 Hz      improved_peak_choice   reliable MAE 0.307 within 1.000 gross 0 valid 1.000 windows 226
+60-150 Hz      improved               all      MAE 0.365 within 1.000 gross 0 valid 0.973 windows 255
+60-150 Hz      improved               reliable MAE 0.307 within 1.000 gross 0 valid 0.982 windows 226
+80-150 Hz      final                  all      MAE 0.365 within 1.000 gross 0 valid 0.984 windows 255
+80-150 Hz      final                  reliable MAE 0.304 within 1.000 gross 0 valid 1.000 windows 226
+80-150 Hz      half_check_only        all      MAE 1.612 within 0.988 gross 3 valid 0.973 windows 255
+80-150 Hz      half_check_only        reliable MAE 0.558 within 1.000 gross 0 valid 1.000 windows 226
+80-150 Hz      improved_peak_choice   all      MAE 0.521 within 0.996 gross 1 valid 0.984 windows 255
+80-150 Hz      improved_peak_choice   reliable MAE 0.305 within 1.000 gross 0 valid 1.000 windows 226
+80-150 Hz      improved               all      MAE 0.521 within 0.996 gross 1 valid 0.961 windows 255
+80-150 Hz      improved               reliable MAE 0.305 within 1.000 gross 0 valid 0.982 windows 226
+40-400 Hz      final                  all      MAE 0.354 within 1.000 gross 0 valid 0.996 windows 255
+40-400 Hz      final                  reliable MAE 0.300 within 1.000 gross 0 valid 1.000 windows 226
+40-400 Hz      half_check_only        all      MAE 0.671 within 1.000 gross 0 valid 0.980 windows 255
+40-400 Hz      half_check_only        reliable MAE 0.533 within 1.000 gross 0 valid 1.000 windows 226
+40-400 Hz      improved_peak_choice   all      MAE 0.354 within 1.000 gross 0 valid 0.996 windows 255
+40-400 Hz      improved_peak_choice   reliable MAE 0.300 within 1.000 gross 0 valid 1.000 windows 226
+40-400 Hz      improved               all      MAE 0.354 within 1.000 gross 0 valid 0.976 windows 255
+40-400 Hz      improved               reliable MAE 0.300 within 1.000 gross 0 valid 0.982 windows 226
+4+4 60-150 Hz  final                  all      MAE 3.487 within 0.961 gross 10 valid 0.996 windows 255
+4+4 60-150 Hz  final                  reliable MAE 1.165 within 0.991 gross 2 valid 1.000 windows 226
+4+4 60-150 Hz  half_check_only        all      MAE 2.881 within 0.969 gross 8 valid 0.973 windows 255
+4+4 60-150 Hz  half_check_only        reliable MAE 0.575 within 1.000 gross 0 valid 1.000 windows 226
+4+4 60-150 Hz  improved_peak_choice   all      MAE 2.741 within 0.969 gross 8 valid 0.996 windows 255
+4+4 60-150 Hz  improved_peak_choice   reliable MAE 0.323 within 1.000 gross 0 valid 1.000 windows 226
+4+4 60-150 Hz  improved               all      MAE 2.741 within 0.969 gross 8 valid 0.945 windows 255
+4+4 60-150 Hz  improved               reliable MAE 0.323 within 1.000 gross 0 valid 0.982 windows 226

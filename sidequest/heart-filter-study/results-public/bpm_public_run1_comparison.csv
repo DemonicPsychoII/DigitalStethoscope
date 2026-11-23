@@ -1,0 +1,37 @@
+table,identifier,lower_edge_hz,estimator,run1_reliable_mae_bpm,run1_all_mae_bpm,run1_all_gross_error_count,run1_all_window_count,run1_reliable_window_count,rest_reliable_mae_bpm,rest_reliable_interval,rest_all_mae_bpm,rest_reliable_gross_error_count,rest_reliable_window_count,rest_subject_count,overload_reliable_mae_bpm,overload_reliable_interval,overload_all_mae_bpm,overload_reliable_gross_error_count,overload_reliable_window_count,overload_subject_count,rest_matched_reliable_mae_bpm,rest_matched_reliable_interval,rest_matched_all_mae_bpm,rest_matched_reliable_gross_error_count,rest_matched_reliable_window_count,rest_matched_subject_count
+"lower edge sweep, other counting method",raw,none,first_draft,1.321,4.208,16,255,226,36.63,31.42-40.90,38.12,46589,87807,21,28.3,22.98-32.94,30.39,33846,87807,21,35.31,29.30-40.44,36.98,43260,87807,21
+"lower edge sweep, other counting method",raw,none,half_check_only,0.9653,3.893,14,255,226,29.73,24.69-34.32,31.16,37529,87807,21,21.13,16.62-25.17,23.15,24150,87807,21,28.44,22.75-33.41,29.97,33741,87807,21
+lower edge sweep,raw,none,final,0.4221,4.217,16,255,226,33.54,28.25-37.95,34.8,41641,87807,21,25.82,20.62-30.24,27.56,29207,87807,21,31.96,25.79-37.10,33.26,37517,87807,21
+"lower edge sweep, other counting method",raw,none,alternative_8hz,0.4596,3.306,13,255,226,31.49,26.36-35.99,32.83,39380,87807,21,23.4,18.50-27.76,25.28,26587,87807,21,30.17,24.29-35.34,31.58,35494,87807,21
+"lower edge sweep, other counting method",butterworth_hp2_10_lp2_150,10,first_draft,0.9213,3.391,13,255,226,36.68,31.56-41.02,38.17,46820,87807,21,27.37,22.25-31.95,29.51,32609,87807,21,,,,,,
+"lower edge sweep, other counting method",butterworth_hp2_10_lp2_150,10,half_check_only,,,,,,29.74,24.60-34.42,31.1,38058,87807,21,20.31,15.84-24.46,22.34,23427,87807,21,,,,,,
+lower edge sweep,butterworth_hp2_10_lp2_150,10,final,0.3481,2.46,10,255,226,33.72,28.50-38.22,34.93,42380,87807,21,25.13,20.03-29.50,26.85,28620,87807,21,,,,,,
+"lower edge sweep, other counting method",butterworth_hp2_10_lp2_150,10,alternative_8hz,,,,,,31.67,26.52-36.25,32.95,40116,87807,21,22.65,17.87-26.84,24.51,25927,87807,21,,,,,,
+"lower edge sweep, other counting method",butterworth_hp2_20_lp2_150,20,first_draft,0.7108,1.111,2,255,226,35.64,30.69-39.92,37.16,45444,87807,21,25.54,20.99-29.83,27.74,30107,87807,21,,,,,,
+"lower edge sweep, other counting method",butterworth_hp2_20_lp2_150,20,half_check_only,,,,,,28.59,23.74-33.19,29.99,36795,87807,21,18.69,14.86-22.44,20.81,21474,87807,21,,,,,,
+lower edge sweep,butterworth_hp2_20_lp2_150,20,final,0.3007,0.7416,1,255,226,32.36,27.40-36.78,33.6,41094,87807,21,23.13,18.65-27.22,24.97,26531,87807,21,,,,,,
+"lower edge sweep, other counting method",butterworth_hp2_20_lp2_150,20,alternative_8hz,,,,,,30.38,25.40-34.93,31.71,38870,87807,21,20.66,16.54-24.53,22.68,23823,87807,21,,,,,,
+"lower edge sweep, other counting method",butterworth_hp2_25_lp2_150,25,first_draft,0.6968,0.8248,1,255,226,34.41,29.62-38.66,36.02,43586,87807,21,24.6,20.20-28.75,26.88,28731,87807,21,33.74,28.30-38.56,35.43,41257,87807,21
+"lower edge sweep, other counting method",butterworth_hp2_25_lp2_150,25,half_check_only,0.5144,0.6632,0,255,226,27.34,22.63-31.85,28.81,34939,87807,21,17.9,14.24-21.44,20.08,20408,87807,21,26.6,21.41-31.39,28.17,32176,87807,21
+lower edge sweep,butterworth_hp2_25_lp2_150,25,final,0.2956,0.6908,1,255,226,31.03,26.14-35.38,32.36,39229,87807,21,21.99,17.87-25.73,23.94,25243,87807,21,30.63,25.07-35.66,31.97,36660,87807,21
+"lower edge sweep, other counting method",butterworth_hp2_25_lp2_150,25,alternative_8hz,0.3529,0.4384,0,255,226,28.92,24.11-33.46,30.35,36809,87807,21,19.58,15.71-23.25,21.71,22518,87807,21,28.46,23.10-33.45,29.95,34234,87807,21
+"lower edge sweep, other counting method",butterworth_hp2_30_lp2_150,30,first_draft,0.5152,0.6528,0,255,226,32.84,28.20-37.03,34.57,41221,87807,21,23.78,19.58-27.78,26.13,27545,87807,21,,,,,,
+"lower edge sweep, other counting method",butterworth_hp2_30_lp2_150,30,half_check_only,,,,,,25.86,21.29-30.25,27.41,32700,87807,21,17.21,13.76-20.60,19.43,19468,87807,21,,,,,,
+lower edge sweep,butterworth_hp2_30_lp2_150,30,final,0.2959,0.3535,0,255,226,29.4,24.59-33.67,30.82,36928,87807,21,21.12,17.29-24.64,23.18,24160,87807,21,,,,,,
+"lower edge sweep, other counting method",butterworth_hp2_30_lp2_150,30,alternative_8hz,,,,,,27.33,22.63-31.81,28.84,34519,87807,21,18.74,15.04-22.17,20.97,21410,87807,21,,,,,,
+"lower edge sweep, other counting method",butterworth_hp2_40_lp2_150,40,first_draft,0.5233,0.6621,0,255,226,29.92,25.55-34.20,31.79,36769,87807,21,22.68,18.75-26.57,25.11,25861,87807,21,30.89,26.11-35.23,32.86,37423,87807,21
+"lower edge sweep, other counting method",butterworth_hp2_40_lp2_150,40,half_check_only,,,,,,23.14,18.96-27.35,24.8,28497,87807,21,16.3,13.19-19.47,18.58,18098,87807,21,23.52,19.00-27.77,25.29,28365,87807,21
+lower edge sweep,butterworth_hp2_40_lp2_150,40,final,0.301,0.3542,0,255,226,26.64,22.25-30.69,28.27,32863,87807,21,20.17,16.64-23.55,22.35,22893,87807,21,27.54,22.59-31.93,29.18,32941,87807,21
+"lower edge sweep, other counting method",butterworth_hp2_40_lp2_150,40,alternative_8hz,,,,,,24.51,20.27-28.64,26.21,30338,87807,21,17.82,14.50-21.01,20.1,20132,87807,21,25.25,20.60-29.54,26.96,30343,87807,21
+"lower edge sweep, other counting method",butterworth_hp2_50_lp2_150,50,first_draft,0.5433,0.679,0,255,226,27.83,23.68-32.03,29.82,33553,87807,21,22.24,18.48-25.95,24.66,25143,87807,21,,,,,,
+"lower edge sweep, other counting method",butterworth_hp2_50_lp2_150,50,half_check_only,,,,,,21.25,17.26-25.41,23.02,25607,87807,21,15.99,12.84-19.17,18.28,17603,87807,21,,,,,,
+lower edge sweep,butterworth_hp2_50_lp2_150,50,final,0.3068,0.3616,0,255,226,24.92,20.66-28.81,26.62,30271,87807,21,19.86,16.47-23.07,22.07,22437,87807,21,,,,,,
+"lower edge sweep, other counting method",butterworth_hp2_50_lp2_150,50,alternative_8hz,,,,,,22.55,18.51-26.59,24.35,27373,87807,21,17.48,14.31-20.48,19.72,19584,87807,21,,,,,,
+"lower edge sweep, other counting method",butterworth_hp2_60_lp2_150,60,first_draft,0.551,0.6917,0,255,226,26.49,22.50-30.69,28.57,31548,87807,21,22.25,18.55-25.95,24.65,25109,87807,21,,,,,,
+"lower edge sweep, other counting method",butterworth_hp2_60_lp2_150,60,half_check_only,,,,,,20.13,16.19-24.23,21.97,23923,87807,21,16.19,12.96-19.41,18.43,17818,87807,21,,,,,,
+lower edge sweep,butterworth_hp2_60_lp2_150,60,final,0.3071,0.3646,0,255,226,23.82,19.74-27.63,25.51,28578,87807,21,20.18,16.78-23.35,22.34,22793,87807,21,,,,,,
+"lower edge sweep, other counting method",butterworth_hp2_60_lp2_150,60,alternative_8hz,,,,,,21.49,17.53-25.38,23.31,25698,87807,21,17.63,14.48-20.69,19.83,19797,87807,21,,,,,,
+"lower edge sweep, other counting method",butterworth_hp2_80_lp2_150,80,first_draft,0.5575,0.7014,0,255,226,25.51,21.67-29.67,27.63,30077,87807,21,22.84,19.18-26.51,25.22,25991,87807,21,,,,,,
+"lower edge sweep, other counting method",butterworth_hp2_80_lp2_150,80,half_check_only,,,,,,19.62,15.87-23.57,21.49,22986,87807,21,17.27,13.90-20.61,19.46,19188,87807,21,,,,,,
+lower edge sweep,butterworth_hp2_80_lp2_150,80,final,0.3045,0.3649,0,255,226,23.34,19.37-27.11,25.05,27654,87807,21,21.14,17.59-24.53,23.31,24019,87807,21,,,,,,
+"lower edge sweep, other counting method",butterworth_hp2_80_lp2_150,80,alternative_8hz,,,,,,20.99,17.18-24.70,22.8,24832,87807,21,18.64,15.33-21.92,20.81,21083,87807,21,,,,,,

@@ -1,0 +1,12 @@
+Public recordings (EPHNOGRAM), sound passed through a model of the device, rest level, filter 40-150 Hz, only windows where the ECG rate is clean. All 21 subjects with clean ECG; the improved method was chosen on 11 of them, the numbers of the other 10 alone are in results-public/improved_method.md. Stress tests = treadmill and bicycle stress tests; steady pedalling = stationary bicycle at constant effort.
+group | method | mean difference to ECG (BPM) | share within 5 BPM or 10 % | subjects | windows
+seated rest | counting method of the first part | 2.68 | 91.2 % | 9 | 3709
+lying | counting method of the first part | 11.65 | 79.3 % | 7 | 12771
+walking | counting method of the first part | 24.95 | 56.5 % | 13 | 21605
+stress tests | counting method of the first part | 38.67 | 46.6 % | 12 | 33621
+pedalling | counting method of the first part | 20.90 | 74.0 % | 7 | 16101
+seated rest | improved counting method | 3.74 | 90.4 % | 9 | 3709
+lying | improved counting method | 14.82 | 78.5 % | 7 | 12771
+walking | improved counting method | 13.96 | 73.5 % | 13 | 21605
+stress tests | improved counting method | 14.89 | 73.8 % | 12 | 33621
+pedalling | improved counting method | 4.65 | 93.3 % | 7 | 16101

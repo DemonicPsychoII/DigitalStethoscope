@@ -1,0 +1,476 @@
+{
+ "name": "ECGPCG0008",
+ "source": "EPHNOGRAM 1.0.0, PhysioNet, DOI 10.13026/tjtq-5911, ODC-By 1.0",
+ "sample_rate_hz": 8000.0,
+ "analysis_rate_hz": 1000,
+ "duration_s": 30.0,
+ "discarded_seconds": 0.0,
+ "beat_mark": "ECG R peak: Each detection is refined to the local maximum, within +-75 ms, of the 5-40 Hz zero-phase band-passed ECG at 1 kHz multiplied by the dominant QRS sign of its 60 s block (sign of the skewness of that signal, computed independently of both detectors and shared by them), with parabolic interpolation.",
+ "window_definition": "8 s windows ending at every whole second from 8 s (file start = 0 s); rate = 60 x (beats in window - 1) / (last - first beat time); reference_bpm = mean of the two detector rates",
+ "reliable_definition": "detectors agree within 2.0 BPM; every beat of both detectors in the window matched by the other within 50 ms; all intervals 0.27-2.0 s; no interval above 1.4 x or below 0.7 x the window median; no gap over 1.3 x median at the window edges; no run of 8 ECG samples at the 16-bit limits (within 1.5 LSB); no second whose 5-15 Hz ECG standard deviation is below 0.1 x the record median",
+ "info": {
+  "subject_id": "S008",
+  "scenario": "Rest: sitting on armchair",
+  "ecg_quality": "Good",
+  "pcg_quality": "Good"
+ },
+ "ecg_saturated_sample_count": 2,
+ "beat_times_s": [
+  0.6283,
+  1.466,
+  2.3359,
+  3.1871,
+  4.0698,
+  4.9615,
+  5.7904,
+  6.5536,
+  7.2491,
+  7.9416,
+  8.6979,
+  9.6178,
+  10.5153,
+  11.3738,
+  12.2337,
+  13.0853,
+  13.9112,
+  14.7503,
+  15.5605,
+  16.3564,
+  17.0709,
+  17.7783,
+  18.4962,
+  19.2696,
+  20.0808,
+  20.8778,
+  21.6579,
+  22.4087,
+  23.2305,
+  24.1,
+  24.9972,
+  25.8886,
+  26.7029,
+  27.5733,
+  28.4683,
+  29.3785
+ ],
+ "methods": {
+  "detector_1_pan_tompkins": {
+   "beat_times_s": [
+    0.6283,
+    1.466,
+    2.3359,
+    3.1871,
+    4.0698,
+    4.9615,
+    5.7904,
+    6.5536,
+    7.2491,
+    7.9416,
+    8.6979,
+    9.6178,
+    10.5153,
+    11.3738,
+    12.2337,
+    13.0853,
+    13.9112,
+    14.7503,
+    15.5605,
+    16.3564,
+    17.0709,
+    17.7783,
+    18.4962,
+    19.2696,
+    20.0808,
+    20.8778,
+    21.6579,
+    22.4087,
+    23.2305,
+    24.1,
+    24.9972,
+    25.8886,
+    26.7029,
+    27.5733,
+    28.4683,
+    29.3785
+   ],
+   "description": "Pan-Tompkins style, zero-phase: 10-25 Hz band-pass (above the classic 5-15 Hz because tall exercise T waves dominated that band), derivative, squaring, centred 150 ms moving integration. Peaks at least 0.25 s apart above noise + 0.25 x (beat level - noise), with beat level the 10 s running median of 2 s maxima and noise the 10 s running median. Search-back for gaps over 1.66 x the local median interval at half threshold; a peak less than 0.36 s after a beat with under half its maximum slope is dropped as a T wave."
+  },
+  "detector_2_wavelet_template": {
+   "beat_times_s": [
+    0.6283,
+    1.466,
+    2.3359,
+    3.1871,
+    4.0698,
+    4.9615,
+    5.7904,
+    6.5536,
+    7.2491,
+    7.9416,
+    8.6979,
+    9.6178,
+    10.5153,
+    11.3738,
+    12.2337,
+    13.0853,
+    13.9112,
+    14.7503,
+    15.5605,
+    16.3564,
+    17.0709,
+    17.7783,
+    18.4962,
+    19.2696,
+    20.0808,
+    20.8778,
+    21.6579,
+    22.4087,
+    23.2305,
+    24.1,
+    24.9972,
+    25.8886,
+    26.7029,
+    27.5733,
+    28.4683,
+    29.3785
+   ],
+   "description": "Wavelet and matched template: geometric mean of the Mexican-hat wavelet moduli at 6, 10 and 16 ms scales gives QRS candidates; the strongest candidates of each 60 s block form a median QRS template (+-60 ms, 5-40 Hz ECG). Beats are peaks of the normalised cross-correlation with that template above 0.6, at least 0.25 s apart, whose wavelet product within +-30 ms reaches 0.3 x the median of the template beats (rejects T waves, which match in shape but lack fine-scale energy), with search-back down to correlation 0.35 and wavelet ratio 0.2 for gaps over 1.6 x the local median interval."
+  }
+ },
+ "qrs_polarity_per_60_s_block": [
+  -1
+ ],
+ "agreement": {
+  "beats_detector_1": 36,
+  "beats_detector_2": 36,
+  "matched_beats": 36,
+  "unmatched_detector_1": 0,
+  "unmatched_detector_2": 0,
+  "median_timing_offset_ms": 0.0,
+  "timing_offset_95th_percentile_absolute_ms": 0.0
+ },
+ "windows": [
+  {
+   "end_time_s": 8,
+   "reference_bpm": 73.84,
+   "reference_bpm_per_method": {
+    "detector_1_pan_tompkins": 73.84,
+    "detector_2_wavelet_template": 73.84
+   },
+   "method_spread_bpm": 0.0,
+   "detector_difference_bpm": 0.0,
+   "beats_in_window": 10,
+   "rate_change_in_window_bpm": 19.36,
+   "reliable": true,
+   "unreliable_reason": null
+  },
+  {
+   "end_time_s": 9,
+   "reference_bpm": 74.67,
+   "reference_bpm_per_method": {
+    "detector_1_pan_tompkins": 74.67,
+    "detector_2_wavelet_template": 74.67
+   },
+   "method_spread_bpm": 0.0,
+   "detector_difference_bpm": 0.0,
+   "beats_in_window": 10,
+   "rate_change_in_window_bpm": 19.36,
+   "reliable": true,
+   "unreliable_reason": null
+  },
+  {
+   "end_time_s": 10,
+   "reference_bpm": 74.16,
+   "reference_bpm_per_method": {
+    "detector_1_pan_tompkins": 74.16,
+    "detector_2_wavelet_template": 74.16
+   },
+   "method_spread_bpm": 0.0,
+   "detector_difference_bpm": 0.0,
+   "beats_in_window": 10,
+   "rate_change_in_window_bpm": 21.42,
+   "reliable": true,
+   "unreliable_reason": null
+  },
+  {
+   "end_time_s": 11,
+   "reference_bpm": 73.69,
+   "reference_bpm_per_method": {
+    "detector_1_pan_tompkins": 73.69,
+    "detector_2_wavelet_template": 73.69
+   },
+   "method_spread_bpm": 0.0,
+   "detector_difference_bpm": 0.0,
+   "beats_in_window": 10,
+   "rate_change_in_window_bpm": 21.42,
+   "reliable": true,
+   "unreliable_reason": null
+  },
+  {
+   "end_time_s": 12,
+   "reference_bpm": 73.93,
+   "reference_bpm_per_method": {
+    "detector_1_pan_tompkins": 73.93,
+    "detector_2_wavelet_template": 73.93
+   },
+   "method_spread_bpm": 0.0,
+   "detector_difference_bpm": 0.0,
+   "beats_in_window": 10,
+   "rate_change_in_window_bpm": 21.42,
+   "reliable": true,
+   "unreliable_reason": null
+  },
+  {
+   "end_time_s": 13,
+   "reference_bpm": 74.5,
+   "reference_bpm_per_method": {
+    "detector_1_pan_tompkins": 74.5,
+    "detector_2_wavelet_template": 74.5
+   },
+   "method_spread_bpm": 0.0,
+   "detector_difference_bpm": 0.0,
+   "beats_in_window": 9,
+   "rate_change_in_window_bpm": 21.42,
+   "reliable": true,
+   "unreliable_reason": null
+  },
+  {
+   "end_time_s": 14,
+   "reference_bpm": 73.39,
+   "reference_bpm_per_method": {
+    "detector_1_pan_tompkins": 73.39,
+    "detector_2_wavelet_template": 73.39
+   },
+   "method_spread_bpm": 0.0,
+   "detector_difference_bpm": 0.0,
+   "beats_in_window": 10,
+   "rate_change_in_window_bpm": 21.42,
+   "reliable": true,
+   "unreliable_reason": null
+  },
+  {
+   "end_time_s": 15,
+   "reference_bpm": 71.99,
+   "reference_bpm_per_method": {
+    "detector_1_pan_tompkins": 71.99,
+    "detector_2_wavelet_template": 71.99
+   },
+   "method_spread_bpm": 0.0,
+   "detector_difference_bpm": 0.0,
+   "beats_in_window": 10,
+   "rate_change_in_window_bpm": 21.42,
+   "reliable": true,
+   "unreliable_reason": null
+  },
+  {
+   "end_time_s": 16,
+   "reference_bpm": 69.94,
+   "reference_bpm_per_method": {
+    "detector_1_pan_tompkins": 69.94,
+    "detector_2_wavelet_template": 69.94
+   },
+   "method_spread_bpm": 0.0,
+   "detector_difference_bpm": 0.0,
+   "beats_in_window": 9,
+   "rate_change_in_window_bpm": 8.83,
+   "reliable": true,
+   "unreliable_reason": null
+  },
+  {
+   "end_time_s": 17,
+   "reference_bpm": 71.23,
+   "reference_bpm_per_method": {
+    "detector_1_pan_tompkins": 71.23,
+    "detector_2_wavelet_template": 71.23
+   },
+   "method_spread_bpm": 0.0,
+   "detector_difference_bpm": 0.0,
+   "beats_in_window": 9,
+   "rate_change_in_window_bpm": 8.53,
+   "reliable": true,
+   "unreliable_reason": null
+  },
+  {
+   "end_time_s": 18,
+   "reference_bpm": 74.35,
+   "reference_bpm_per_method": {
+    "detector_1_pan_tompkins": 74.35,
+    "detector_2_wavelet_template": 74.35
+   },
+   "method_spread_bpm": 0.0,
+   "detector_difference_bpm": 0.0,
+   "beats_in_window": 10,
+   "rate_change_in_window_bpm": 15.04,
+   "reliable": true,
+   "unreliable_reason": null
+  },
+  {
+   "end_time_s": 19,
+   "reference_bpm": 75.82,
+   "reference_bpm_per_method": {
+    "detector_1_pan_tompkins": 75.82,
+    "detector_2_wavelet_template": 75.82
+   },
+   "method_spread_bpm": 0.0,
+   "detector_difference_bpm": 0.0,
+   "beats_in_window": 10,
+   "rate_change_in_window_bpm": 15.04,
+   "reliable": true,
+   "unreliable_reason": null
+  },
+  {
+   "end_time_s": 20,
+   "reference_bpm": 76.75,
+   "reference_bpm_per_method": {
+    "detector_1_pan_tompkins": 76.75,
+    "detector_2_wavelet_template": 76.75
+   },
+   "method_spread_bpm": 0.0,
+   "detector_difference_bpm": 0.0,
+   "beats_in_window": 10,
+   "rate_change_in_window_bpm": 14.36,
+   "reliable": true,
+   "unreliable_reason": null
+  },
+  {
+   "end_time_s": 21,
+   "reference_bpm": 77.0,
+   "reference_bpm_per_method": {
+    "detector_1_pan_tompkins": 77.0,
+    "detector_2_wavelet_template": 77.0
+   },
+   "method_spread_bpm": 0.0,
+   "detector_difference_bpm": 0.0,
+   "beats_in_window": 11,
+   "rate_change_in_window_bpm": 13.31,
+   "reliable": true,
+   "unreliable_reason": null
+  },
+  {
+   "end_time_s": 22,
+   "reference_bpm": 78.17,
+   "reference_bpm_per_method": {
+    "detector_1_pan_tompkins": 78.17,
+    "detector_2_wavelet_template": 78.17
+   },
+   "method_spread_bpm": 0.0,
+   "detector_difference_bpm": 0.0,
+   "beats_in_window": 10,
+   "rate_change_in_window_bpm": 10.85,
+   "reliable": true,
+   "unreliable_reason": null
+  },
+  {
+   "end_time_s": 23,
+   "reference_bpm": 78.85,
+   "reference_bpm_per_method": {
+    "detector_1_pan_tompkins": 78.85,
+    "detector_2_wavelet_template": 78.85
+   },
+   "method_spread_bpm": 0.0,
+   "detector_difference_bpm": 0.0,
+   "beats_in_window": 10,
+   "rate_change_in_window_bpm": 10.85,
+   "reliable": true,
+   "unreliable_reason": null
+  },
+  {
+   "end_time_s": 24,
+   "reference_bpm": 78.56,
+   "reference_bpm_per_method": {
+    "detector_1_pan_tompkins": 78.56,
+    "detector_2_wavelet_template": 78.56
+   },
+   "method_spread_bpm": 0.0,
+   "detector_difference_bpm": 0.0,
+   "beats_in_window": 10,
+   "rate_change_in_window_bpm": 11.81,
+   "reliable": true,
+   "unreliable_reason": null
+  },
+  {
+   "end_time_s": 25,
+   "reference_bpm": 75.7,
+   "reference_bpm_per_method": {
+    "detector_1_pan_tompkins": 75.7,
+    "detector_2_wavelet_template": 75.7
+   },
+   "method_spread_bpm": 0.0,
+   "detector_difference_bpm": 0.0,
+   "beats_in_window": 11,
+   "rate_change_in_window_bpm": 17.94,
+   "reliable": true,
+   "unreliable_reason": null
+  },
+  {
+   "end_time_s": 26,
+   "reference_bpm": 73.05,
+   "reference_bpm_per_method": {
+    "detector_1_pan_tompkins": 73.05,
+    "detector_2_wavelet_template": 73.05
+   },
+   "method_spread_bpm": 0.0,
+   "detector_difference_bpm": 0.0,
+   "beats_in_window": 10,
+   "rate_change_in_window_bpm": 13.04,
+   "reliable": true,
+   "unreliable_reason": null
+  },
+  {
+   "end_time_s": 27,
+   "reference_bpm": 72.65,
+   "reference_bpm_per_method": {
+    "detector_1_pan_tompkins": 72.65,
+    "detector_2_wavelet_template": 72.65
+   },
+   "method_spread_bpm": 0.0,
+   "detector_difference_bpm": 0.0,
+   "beats_in_window": 10,
+   "rate_change_in_window_bpm": 13.04,
+   "reliable": true,
+   "unreliable_reason": null
+  },
+  {
+   "end_time_s": 28,
+   "reference_bpm": 72.07,
+   "reference_bpm_per_method": {
+    "detector_1_pan_tompkins": 72.07,
+    "detector_2_wavelet_template": 72.07
+   },
+   "method_spread_bpm": 0.0,
+   "detector_difference_bpm": 0.0,
+   "beats_in_window": 10,
+   "rate_change_in_window_bpm": 13.04,
+   "reliable": true,
+   "unreliable_reason": null
+  },
+  {
+   "end_time_s": 29,
+   "reference_bpm": 70.48,
+   "reference_bpm_per_method": {
+    "detector_1_pan_tompkins": 70.48,
+    "detector_2_wavelet_template": 70.48
+   },
+   "method_spread_bpm": 0.0,
+   "detector_difference_bpm": 0.0,
+   "beats_in_window": 9,
+   "rate_change_in_window_bpm": 13.04,
+   "reliable": true,
+   "unreliable_reason": null
+  },
+  {
+   "end_time_s": 30,
+   "reference_bpm": 68.87,
+   "reference_bpm_per_method": {
+    "detector_1_pan_tompkins": 68.87,
+    "detector_2_wavelet_template": 68.87
+   },
+   "method_spread_bpm": 0.0,
+   "detector_difference_bpm": 0.0,
+   "beats_in_window": 9,
+   "rate_change_in_window_bpm": 7.76,
+   "reliable": true,
+   "unreliable_reason": null
+  }
+ ]
+}

@@ -1,0 +1,9 @@
+Filter,Safe fixed boost (dB),"Loudness vs Raw, hearing-curve estimate (dB)","Loudness vs Raw, A-weighted (dB)",Sound between beats vs heart sounds (dB),Ringing (ms),Multiplications per sample
+No filter (Raw),-0.1,0.0,0.0,-14.9,2.2,0
+"40–800 Hz, gentle (design candidate)",-0.3,-1.5,-1.7,-14.3,16.8,10
+"100–800 Hz, gentle",+5.9,+1.5,+1.1,-11.8,9.8,10
+"100–800 Hz, steep",+7.2,+2.5,+2.0,-11.1,17.1,20
+"150–800 Hz, steep",+9.7,+3.4,+2.8,-9.9,12.2,20
+"60–800 Hz, very steep (elliptic)",+3.8,+1.1,+0.8,-13.1,42.7,20
+Above 80 Hz only,+3.4,+0.5,+0.4,-12.7,9.0,5
+25–150 Hz (BPM position),-1.9,-3.9,-3.9,-17.8,37.3,10

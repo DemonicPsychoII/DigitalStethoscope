@@ -1,0 +1,174 @@
+two_pole_5hz   none     highest                      MAE  29.20 median  1.51 within 0.593 third  13277 half  11230 other  10843
+two_pole_5hz   none     half_check 0.8               MAE  21.56 median  0.79 within 0.700 third  13157 half   4895 other   7471
+two_pole_5hz   none     first_above 0.6              MAE   9.51 median  0.47 within 0.858 third    843 half   3118 other   6312
+two_pole_5hz   none     first_above 0.65             MAE   9.67 median  0.47 within 0.854 third   1139 half   3578 other   6193
+two_pole_5hz   none     first_above 0.7              MAE   9.95 median  0.47 within 0.847 third   1474 half   4101 other   6143
+two_pole_5hz   none     first_above 0.8              MAE  11.32 median  0.49 within 0.825 third   2490 half   5390 other   6191
+two_pole_5hz   none     first_above 0.85             MAE  12.71 median  0.51 within 0.804 third   3438 half   6177 other   6418
+two_pole_5hz   none     first_above 0.9              MAE  15.00 median  0.56 within 0.772 third   4933 half   7260 other   6872
+two_pole_5hz   none     first_above 0.95             MAE  19.79 median  0.72 within 0.710 third   7968 half   8898 other   7916
+two_pole_5hz   none     submultiple 0.5 up to 3      MAE  13.25 median  0.56 within 0.811 third   1083 half   6889 other   6619
+two_pole_5hz   none     submultiple 0.55 up to 3     MAE  13.31 median  0.55 within 0.809 third   1261 half   7064 other   6665
+two_pole_5hz   none     submultiple 0.6 up to 3      MAE  13.44 median  0.56 within 0.806 third   1502 half   7266 other   6738
+two_pole_5hz   none     submultiple 0.65 up to 3     MAE  13.76 median  0.56 within 0.801 third   1785 half   7490 other   6849
+two_pole_5hz   none     submultiple 0.7 up to 3      MAE  14.16 median  0.56 within 0.794 third   2110 half   7727 other   6993
+two_pole_5hz   none     submultiple 0.75 up to 3     MAE  14.70 median  0.57 within 0.786 third   2518 half   7994 other   7181
+two_pole_5hz   none     submultiple 0.8 up to 3      MAE  15.51 median  0.58 within 0.774 third   3095 half   8231 other   7507
+two_pole_5hz   none     submultiple 0.85 up to 3     MAE  16.74 median  0.61 within 0.758 third   3983 half   8408 other   8011
+two_pole_5hz   none     submultiple 0.9 up to 3      MAE  18.68 median  0.66 within 0.732 third   5404 half   8661 other   8724
+two_pole_5hz   none     submultiple 0.5 up to 4      MAE   9.48 median  0.47 within 0.862 third   1031 half   2297 other   6336
+two_pole_5hz   none     submultiple 0.55 up to 4     MAE   9.48 median  0.47 within 0.860 third   1212 half   2595 other   6296
+two_pole_5hz   none     submultiple 0.6 up to 4      MAE   9.59 median  0.47 within 0.857 third   1460 half   2928 other   6311
+two_pole_5hz   none     submultiple 0.65 up to 4     MAE   9.92 median  0.47 within 0.851 third   1749 half   3330 other   6341
+two_pole_5hz   none     submultiple 0.7 up to 4      MAE  10.34 median  0.48 within 0.844 third   2080 half   3768 other   6411
+two_pole_5hz   none     submultiple 0.75 up to 4     MAE  10.92 median  0.48 within 0.834 third   2487 half   4284 other   6502
+two_pole_5hz   none     submultiple 0.8 up to 4      MAE  11.85 median  0.49 within 0.820 third   3073 half   4875 other   6690
+two_pole_5hz   none     submultiple 0.85 up to 4     MAE  13.27 median  0.51 within 0.800 third   3966 half   5606 other   6971
+two_pole_5hz   none     submultiple 0.9 up to 4      MAE  15.54 median  0.56 within 0.768 third   5395 half   6642 other   7433
+two_pole_5hz   none     harmonic_sum                 MAE  28.79 median  1.30 within 0.595 third  12023 half  10918 other  12271
+two_pole_5hz   overlap  highest                      MAE  13.80 median  0.53 within 0.786 third   3820 half   7478 other   6510
+two_pole_5hz   overlap  half_check 0.8               MAE  11.82 median  0.49 within 0.822 third   3703 half   4184 other   6355
+two_pole_5hz   overlap  first_above 0.6              MAE   9.42 median  0.47 within 0.863 third    530 half   2583 other   6451
+two_pole_5hz   overlap  first_above 0.65             MAE   9.27 median  0.47 within 0.862 third    677 half   2947 other   6262
+two_pole_5hz   overlap  first_above 0.7              MAE   9.28 median  0.47 within 0.859 third    870 half   3343 other   6118
+two_pole_5hz   overlap  first_above 0.8              MAE   9.74 median  0.47 within 0.848 third   1429 half   4315 other   5968
+two_pole_5hz   overlap  first_above 0.85             MAE  10.20 median  0.48 within 0.840 third   1783 half   4814 other   5963
+two_pole_5hz   overlap  first_above 0.9              MAE  10.94 median  0.48 within 0.829 third   2255 half   5445 other   6067
+two_pole_5hz   overlap  first_above 0.95             MAE  12.03 median  0.50 within 0.812 third   2838 half   6269 other   6240
+two_pole_5hz   overlap  submultiple 0.5 up to 3      MAE   9.74 median  0.47 within 0.860 third    765 half   2805 other   6224
+two_pole_5hz   overlap  submultiple 0.55 up to 3     MAE   9.66 median  0.47 within 0.859 third    878 half   2986 other   6182
+two_pole_5hz   overlap  submultiple 0.6 up to 3      MAE   9.62 median  0.47 within 0.858 third   1013 half   3171 other   6201
+two_pole_5hz   overlap  submultiple 0.65 up to 3     MAE   9.67 median  0.47 within 0.856 third   1161 half   3376 other   6248
+two_pole_5hz   overlap  submultiple 0.7 up to 3      MAE   9.84 median  0.47 within 0.853 third   1333 half   3642 other   6295
+two_pole_5hz   overlap  submultiple 0.75 up to 3     MAE  10.10 median  0.47 within 0.848 third   1575 half   3936 other   6353
+two_pole_5hz   overlap  submultiple 0.8 up to 3      MAE  10.42 median  0.47 within 0.841 third   1816 half   4328 other   6393
+two_pole_5hz   overlap  submultiple 0.85 up to 3     MAE  10.86 median  0.48 within 0.834 third   2118 half   4740 other   6440
+two_pole_5hz   overlap  submultiple 0.9 up to 3      MAE  11.46 median  0.49 within 0.824 third   2495 half   5333 other   6482
+two_pole_5hz   overlap  submultiple 0.5 up to 4      MAE   9.02 median  0.47 within 0.868 third    718 half   2040 other   5995
+two_pole_5hz   overlap  submultiple 0.55 up to 4     MAE   8.92 median  0.47 within 0.868 third    836 half   2295 other   5918
+two_pole_5hz   overlap  submultiple 0.6 up to 4      MAE   8.84 median  0.47 within 0.867 third    970 half   2573 other   5887
+two_pole_5hz   overlap  submultiple 0.65 up to 4     MAE   8.88 median  0.47 within 0.865 third   1126 half   2873 other   5875
+two_pole_5hz   overlap  submultiple 0.7 up to 4      MAE   9.05 median  0.47 within 0.861 third   1301 half   3234 other   5887
+two_pole_5hz   overlap  submultiple 0.75 up to 4     MAE   9.34 median  0.47 within 0.855 third   1551 half   3642 other   5910
+two_pole_5hz   overlap  submultiple 0.8 up to 4      MAE   9.72 median  0.47 within 0.848 third   1798 half   4135 other   5944
+two_pole_5hz   overlap  submultiple 0.85 up to 4     MAE  10.24 median  0.48 within 0.840 third   2102 half   4626 other   6026
+two_pole_5hz   overlap  submultiple 0.9 up to 4      MAE  10.99 median  0.48 within 0.828 third   2485 half   5284 other   6148
+two_pole_5hz   overlap  harmonic_sum                 MAE  11.02 median  0.47 within 0.831 third   2493 half   4588 other   6593
+one_pole_12hz  none     highest                      MAE  22.69 median  0.98 within 0.686 third   9205 half   8333 other   9448
+one_pole_12hz  none     half_check 0.8               MAE  17.04 median  0.72 within 0.765 third   9045 half   3502 other   7063
+one_pole_12hz  none     first_above 0.6              MAE  12.28 median  0.54 within 0.847 third    311 half   1575 other   9115
+one_pole_12hz  none     first_above 0.65             MAE  11.36 median  0.54 within 0.853 third    488 half   1992 other   8260
+one_pole_12hz  none     first_above 0.7              MAE  10.86 median  0.54 within 0.854 third    714 half   2524 other   7685
+one_pole_12hz  none     first_above 0.8              MAE  11.01 median  0.54 within 0.843 third   1566 half   3718 other   6990
+one_pole_12hz  none     first_above 0.85             MAE  11.78 median  0.56 within 0.830 third   2295 half   4431 other   6913
+one_pole_12hz  none     first_above 0.9              MAE  13.19 median  0.59 within 0.808 third   3428 half   5329 other   6998
+one_pole_12hz  none     first_above 0.95             MAE  16.39 median  0.68 within 0.765 third   5563 half   6659 other   7569
+one_pole_12hz  none     submultiple 0.5 up to 3      MAE  13.55 median  0.60 within 0.826 third    566 half   4546 other   8118
+one_pole_12hz  none     submultiple 0.55 up to 3     MAE  13.03 median  0.60 within 0.829 third    703 half   4731 other   7737
+one_pole_12hz  none     submultiple 0.6 up to 3      MAE  12.71 median  0.60 within 0.830 third    898 half   4950 other   7430
+one_pole_12hz  none     submultiple 0.65 up to 3     MAE  12.57 median  0.60 within 0.829 third   1116 half   5168 other   7259
+one_pole_12hz  none     submultiple 0.7 up to 3      MAE  12.64 median  0.60 within 0.825 third   1385 half   5399 other   7203
+one_pole_12hz  none     submultiple 0.75 up to 3     MAE  12.89 median  0.60 within 0.820 third   1737 half   5601 other   7215
+one_pole_12hz  none     submultiple 0.8 up to 3      MAE  13.43 median  0.61 within 0.811 third   2252 half   5876 other   7323
+one_pole_12hz  none     submultiple 0.85 up to 3     MAE  14.25 median  0.63 within 0.799 third   2908 half   6173 other   7553
+one_pole_12hz  none     submultiple 0.9 up to 3      MAE  15.56 median  0.66 within 0.781 third   3916 half   6452 other   7985
+one_pole_12hz  none     submultiple 0.5 up to 4      MAE  10.96 median  0.54 within 0.861 third    508 half   1163 other   8098
+one_pole_12hz  none     submultiple 0.55 up to 4     MAE  10.37 median  0.53 within 0.864 third    646 half   1419 other   7638
+one_pole_12hz  none     submultiple 0.6 up to 4      MAE  10.01 median  0.53 within 0.865 third    841 half   1741 other   7273
+one_pole_12hz  none     submultiple 0.65 up to 4     MAE   9.82 median  0.53 within 0.864 third   1061 half   2080 other   7019
+one_pole_12hz  none     submultiple 0.7 up to 4      MAE   9.86 median  0.53 within 0.860 third   1340 half   2514 other   6833
+one_pole_12hz  none     submultiple 0.75 up to 4     MAE  10.13 median  0.54 within 0.854 third   1701 half   2931 other   6748
+one_pole_12hz  none     submultiple 0.8 up to 4      MAE  10.75 median  0.55 within 0.844 third   2218 half   3463 other   6761
+one_pole_12hz  none     submultiple 0.85 up to 4     MAE  11.73 median  0.56 within 0.829 third   2885 half   4097 other   6896
+one_pole_12hz  none     submultiple 0.9 up to 4      MAE  13.28 median  0.59 within 0.807 third   3904 half   4926 other   7149
+one_pole_12hz  none     harmonic_sum                 MAE  23.45 median  0.99 within 0.662 third   9312 half   9335 other  10459
+one_pole_12hz  overlap  highest                      MAE  12.20 median  0.58 within 0.819 third   2602 half   5480 other   6660
+one_pole_12hz  overlap  half_check 0.8               MAE  10.62 median  0.55 within 0.848 third   2469 half   2838 other   6520
+one_pole_12hz  overlap  first_above 0.6              MAE  13.40 median  0.55 within 0.840 third    142 half   1116 other  10106
+one_pole_12hz  overlap  first_above 0.65             MAE  12.18 median  0.54 within 0.850 third    226 half   1422 other   9094
+one_pole_12hz  overlap  first_above 0.7              MAE  11.26 median  0.54 within 0.856 third    329 half   1785 other   8285
+one_pole_12hz  overlap  first_above 0.8              MAE  10.32 median  0.53 within 0.858 third    690 half   2694 other   7247
+one_pole_12hz  overlap  first_above 0.85             MAE  10.24 median  0.54 within 0.856 third    956 half   3180 other   6930
+one_pole_12hz  overlap  first_above 0.9              MAE  10.47 median  0.54 within 0.849 third   1327 half   3756 other   6734
+one_pole_12hz  overlap  first_above 0.95             MAE  11.09 median  0.55 within 0.837 third   1858 half   4472 other   6673
+one_pole_12hz  overlap  submultiple 0.5 up to 3      MAE  12.12 median  0.54 within 0.852 third    339 half   1671 other   8545
+one_pole_12hz  overlap  submultiple 0.55 up to 3     MAE  11.42 median  0.54 within 0.857 third    409 half   1814 other   8084
+one_pole_12hz  overlap  submultiple 0.6 up to 3      MAE  10.88 median  0.53 within 0.860 third    496 half   2014 other   7695
+one_pole_12hz  overlap  submultiple 0.65 up to 3     MAE  10.47 median  0.53 within 0.862 third    603 half   2210 other   7371
+one_pole_12hz  overlap  submultiple 0.7 up to 3      MAE  10.19 median  0.53 within 0.862 third    714 half   2443 other   7134
+one_pole_12hz  overlap  submultiple 0.75 up to 3     MAE  10.10 median  0.53 within 0.861 third    872 half   2705 other   7011
+one_pole_12hz  overlap  submultiple 0.8 up to 3      MAE  10.15 median  0.53 within 0.858 third   1055 half   2980 other   6936
+one_pole_12hz  overlap  submultiple 0.85 up to 3     MAE  10.32 median  0.54 within 0.854 third   1281 half   3302 other   6866
+one_pole_12hz  overlap  submultiple 0.9 up to 3      MAE  10.66 median  0.54 within 0.846 third   1590 half   3789 other   6790
+one_pole_12hz  overlap  submultiple 0.5 up to 4      MAE  11.77 median  0.54 within 0.856 third    287 half    961 other   8556
+one_pole_12hz  overlap  submultiple 0.55 up to 4     MAE  11.00 median  0.53 within 0.862 third    355 half   1144 other   8052
+one_pole_12hz  overlap  submultiple 0.6 up to 4      MAE  10.42 median  0.53 within 0.865 third    444 half   1401 other   7625
+one_pole_12hz  overlap  submultiple 0.65 up to 4     MAE   9.96 median  0.53 within 0.868 third    553 half   1662 other   7237
+one_pole_12hz  overlap  submultiple 0.7 up to 4      MAE   9.67 median  0.53 within 0.868 third    670 half   1975 other   6970
+one_pole_12hz  overlap  submultiple 0.75 up to 4     MAE   9.53 median  0.53 within 0.866 third    834 half   2365 other   6750
+one_pole_12hz  overlap  submultiple 0.8 up to 4      MAE   9.59 median  0.53 within 0.863 third   1018 half   2767 other   6622
+one_pole_12hz  overlap  submultiple 0.85 up to 4     MAE   9.80 median  0.53 within 0.858 third   1257 half   3204 other   6525
+one_pole_12hz  overlap  submultiple 0.9 up to 4      MAE  10.24 median  0.54 within 0.850 third   1577 half   3739 other   6503
+one_pole_12hz  overlap  harmonic_sum                 MAE  10.86 median  0.53 within 0.836 third   2137 half   4287 other   6534
+best peak choice: envelope_lowpass=two_pole,envelope_lowpass_hz=5.0,peak_choice=submultiple,lag_weighting=overlap,submultiple_fraction=0.6
+quality 0.3 margin -2.0 agreement 0.0: valid 0.797 valid MAE 4.17 valid gross 0.0465
+quality 0.3 margin -2.0 agreement 0.1: valid 0.783 valid MAE 3.51 valid gross 0.0370
+quality 0.3 margin -2.0 agreement 0.15: valid 0.784 valid MAE 3.53 valid gross 0.0372
+quality 0.3 margin 0.0 agreement 0.0: valid 0.796 valid MAE 4.12 valid gross 0.0459
+quality 0.3 margin 0.0 agreement 0.1: valid 0.782 valid MAE 3.47 valid gross 0.0366
+quality 0.3 margin 0.0 agreement 0.15: valid 0.783 valid MAE 3.49 valid gross 0.0368
+quality 0.3 margin 0.05 agreement 0.0: valid 0.792 valid MAE 3.96 valid gross 0.0437
+quality 0.3 margin 0.05 agreement 0.1: valid 0.779 valid MAE 3.38 valid gross 0.0353
+quality 0.3 margin 0.05 agreement 0.15: valid 0.780 valid MAE 3.39 valid gross 0.0355
+quality 0.3 margin 0.1 agreement 0.0: valid 0.785 valid MAE 3.75 valid gross 0.0407
+quality 0.3 margin 0.1 agreement 0.1: valid 0.774 valid MAE 3.23 valid gross 0.0333
+quality 0.3 margin 0.1 agreement 0.15: valid 0.775 valid MAE 3.24 valid gross 0.0335
+quality 0.3 margin 0.15 agreement 0.0: valid 0.774 valid MAE 3.42 valid gross 0.0362
+quality 0.3 margin 0.15 agreement 0.1: valid 0.765 valid MAE 2.99 valid gross 0.0303
+quality 0.3 margin 0.15 agreement 0.15: valid 0.765 valid MAE 3.00 valid gross 0.0304
+quality 0.4 margin -2.0 agreement 0.0: valid 0.703 valid MAE 2.64 valid gross 0.0257
+quality 0.4 margin -2.0 agreement 0.1: valid 0.697 valid MAE 2.30 valid gross 0.0210
+quality 0.4 margin -2.0 agreement 0.15: valid 0.697 valid MAE 2.31 valid gross 0.0211
+quality 0.4 margin 0.0 agreement 0.0: valid 0.703 valid MAE 2.63 valid gross 0.0255
+quality 0.4 margin 0.0 agreement 0.1: valid 0.697 valid MAE 2.29 valid gross 0.0209
+quality 0.4 margin 0.0 agreement 0.15: valid 0.697 valid MAE 2.30 valid gross 0.0210
+quality 0.4 margin 0.05 agreement 0.0: valid 0.702 valid MAE 2.59 valid gross 0.0248
+quality 0.4 margin 0.05 agreement 0.1: valid 0.696 valid MAE 2.26 valid gross 0.0204
+quality 0.4 margin 0.05 agreement 0.15: valid 0.697 valid MAE 2.27 valid gross 0.0205
+quality 0.4 margin 0.1 agreement 0.0: valid 0.700 valid MAE 2.51 valid gross 0.0240
+quality 0.4 margin 0.1 agreement 0.1: valid 0.695 valid MAE 2.22 valid gross 0.0200
+quality 0.4 margin 0.1 agreement 0.15: valid 0.695 valid MAE 2.23 valid gross 0.0201
+quality 0.4 margin 0.15 agreement 0.0: valid 0.697 valid MAE 2.36 valid gross 0.0222
+quality 0.4 margin 0.15 agreement 0.1: valid 0.692 valid MAE 2.12 valid gross 0.0189
+quality 0.4 margin 0.15 agreement 0.15: valid 0.692 valid MAE 2.12 valid gross 0.0189
+quality 0.5 margin -2.0 agreement 0.0: valid 0.606 valid MAE 1.70 valid gross 0.0135
+quality 0.5 margin -2.0 agreement 0.1: valid 0.604 valid MAE 1.53 valid gross 0.0112
+quality 0.5 margin -2.0 agreement 0.15: valid 0.604 valid MAE 1.53 valid gross 0.0113
+quality 0.5 margin 0.0 agreement 0.0: valid 0.606 valid MAE 1.70 valid gross 0.0135
+quality 0.5 margin 0.0 agreement 0.1: valid 0.604 valid MAE 1.52 valid gross 0.0112
+quality 0.5 margin 0.0 agreement 0.15: valid 0.604 valid MAE 1.53 valid gross 0.0113
+quality 0.5 margin 0.05 agreement 0.0: valid 0.606 valid MAE 1.68 valid gross 0.0130
+quality 0.5 margin 0.05 agreement 0.1: valid 0.603 valid MAE 1.50 valid gross 0.0109
+quality 0.5 margin 0.05 agreement 0.15: valid 0.603 valid MAE 1.51 valid gross 0.0109
+quality 0.5 margin 0.1 agreement 0.0: valid 0.605 valid MAE 1.65 valid gross 0.0127
+quality 0.5 margin 0.1 agreement 0.1: valid 0.603 valid MAE 1.49 valid gross 0.0107
+quality 0.5 margin 0.1 agreement 0.15: valid 0.603 valid MAE 1.49 valid gross 0.0108
+quality 0.5 margin 0.15 agreement 0.0: valid 0.604 valid MAE 1.56 valid gross 0.0119
+quality 0.5 margin 0.15 agreement 0.1: valid 0.601 valid MAE 1.42 valid gross 0.0101
+quality 0.5 margin 0.15 agreement 0.15: valid 0.601 valid MAE 1.43 valid gross 0.0101
+quality 0.6 margin -2.0 agreement 0.0: valid 0.492 valid MAE 1.20 valid gross 0.0078
+quality 0.6 margin -2.0 agreement 0.1: valid 0.491 valid MAE 1.07 valid gross 0.0064
+quality 0.6 margin -2.0 agreement 0.15: valid 0.491 valid MAE 1.07 valid gross 0.0064
+quality 0.6 margin 0.0 agreement 0.0: valid 0.492 valid MAE 1.20 valid gross 0.0078
+quality 0.6 margin 0.0 agreement 0.1: valid 0.491 valid MAE 1.07 valid gross 0.0064
+quality 0.6 margin 0.0 agreement 0.15: valid 0.491 valid MAE 1.08 valid gross 0.0064
+quality 0.6 margin 0.05 agreement 0.0: valid 0.492 valid MAE 1.18 valid gross 0.0075
+quality 0.6 margin 0.05 agreement 0.1: valid 0.491 valid MAE 1.05 valid gross 0.0061
+quality 0.6 margin 0.05 agreement 0.15: valid 0.491 valid MAE 1.06 valid gross 0.0062
+quality 0.6 margin 0.1 agreement 0.0: valid 0.492 valid MAE 1.15 valid gross 0.0072
+quality 0.6 margin 0.1 agreement 0.1: valid 0.490 valid MAE 1.04 valid gross 0.0060
+quality 0.6 margin 0.1 agreement 0.15: valid 0.490 valid MAE 1.04 valid gross 0.0061
+quality 0.6 margin 0.15 agreement 0.0: valid 0.491 valid MAE 1.09 valid gross 0.0068
+quality 0.6 margin 0.15 agreement 0.1: valid 0.490 valid MAE 0.99 valid gross 0.0056
+quality 0.6 margin 0.15 agreement 0.15: valid 0.490 valid MAE 0.99 valid gross 0.0057
+chosen: envelope_lowpass=two_pole,envelope_lowpass_hz=5.0,peak_choice=submultiple,lag_weighting=overlap,submultiple_fraction=0.6,minimum_rival_margin=0.15,agreement_fraction=0.1

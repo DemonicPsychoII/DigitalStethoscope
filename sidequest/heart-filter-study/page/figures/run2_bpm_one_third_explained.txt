@@ -1,0 +1,7 @@
+Record ECGPCG0064, subject S006, bicycle stress test, 8 s window ending at 900 s, ECG 146.1 BPM, filter 40-150 Hz, rest level.
+beats apart | shift (s) | first-part similarity | improved similarity
+1 | 0.41 | 0.933 | 0.886
+2 | 0.82 | 0.918 | 0.824
+3 | 1.23 | 0.937 | 0.793
+4 | 1.64 | 0.921 | 0.732
+choice of the method of the first part: 1.23 s = 48.8 BPM

@@ -1,0 +1,554 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset=utf-8>
+
+    
+
+<title>Logistic Regression-HSMM-based Heart Sound Segmentation</title>
+<link rel="stylesheet" href="/pn/print.css" type="text/css" media="print">
+<link rel="stylesheet" href="/pn/css/physionet.css" media="all">
+
+<link rel="stylesheet" href="local.css" type="text/css" media="all">
+
+<style>
+#toc, #doi { margin-right: 1em; }
+
+  
+ 
+#toc, #doi { background: #fff9f6; border: solid 2px #8B3838 }
+.sf-menu > li > a { background:  #fdc; }
+
+h1, h2, h3 { color: #8B3838;
+             background: #fdc; }
+a[href^='http://archive.physionet.org']
+ { background: none; padding-right: 0; }
+</style>
+<script src="/pn/js/jquery.min.js"></script>
+<script src="/pn/js/hoverIntent.js"></script>
+<script src="/pn/js/superfish.min.js"></script>
+<script src="/pn/js/accessible-superfish.js"></script>
+<script src="/pn/js/physionet.js"></script>
+<script src="/pn/js/jquery.tableofcontents.min.js"></script>
+<script>
+  $(document).ready(function(){
+    $('ul.sf-menu').superfish({ autoArrows: false });
+
+    if ($('h2').length) {
+      $('#tocwrapper').append('<ul id="toc"></ul>');
+      $('#toc').tableOfContents(null, { startLevel: 2 });
+
+    }
+
+  });
+</script>
+
+<link rel="canonical" href="https://archive.physionet.org/physiotools/hss/">
+</head>
+
+<body>
+
+  <header class="banner">
+    <a class="hide" href="#content">Skip to content</a>
+    <div style="width: 100%; float: left; background-color: #8B3838; min-width: 700px; padding: 0;">
+      <div class="topmenu" style="float: left; padding: 0.5em 2em 0.5em 0.5em;">
+	<!--	  <ul class="sf-menu sf-shadow sf-arrows"  >-->
+	<ul class="sf-menu">
+<li class="sfHover"><a style="text-align:center" href="https://archive.physionet.org/" class="sf-with-ul"><span style="font-family: Georgia, Times, serif; font-variant: small-caps; padding-right: 4em; margin-right: 2em;"><b>PhysioNet</b></span><span class="arrow-down" role="presentation"></span></a>
+<!--<ul class="pntop">-->
+<ul>
+<li><a href="/news.shtml" class="sf-with-ul">What's New?<span class="arrow-right" role="presentation"></span></a>
+<ul>
+<li><a href="/news.shtml">News from PhysioNet</a></li>
+<li><a href="/in-the-news.shtml">PhysioNet in the News</a></li>
+<li><a href="/training.shtml">Training opportunities</a></li>
+</ul></li>
+<li><a href="/site-map.shtml" class="sf-with-ul">
+<span style="font-family: Georgia, Times, serif; font-variant: small-caps;"><b>PhysioNet Library</b><span class="arrow-right" role="presentation"></span></span></a>
+<ul>
+<li><a href="/about.shtml">About PhysioNet</a></li>
+<li><a href="/challenge/" class="sf-with-ul">Challenges<span class="arrow-right" role="presentation"></span></a>
+<ul>
+<li><a href="/challenge/2018/">2018</a></li>
+<li><a href="/challenge/2017/">2017</a></li>
+<li><a href="/challenge/2016/">2016</a></li>
+<li><a href="/challenge/2015/">2015</a></li>
+<li><a href="/challenge/2014/">2014</a></li>
+<li><a href="/challenge/">Previous challenges</a></li>
+</ul></li>
+<li><a href="/contributors/">Contributors</a></li>
+<li><a href="/pn-citations.shtml" class="sf-with-ul">Publications<span class="arrow-right" role="presentation"></span></a>
+<ul>
+<li><a href="/publications/resource-pubs.shtml">from the PhysioNet team</a></li>
+<li><a href="/pn-citations.shtml">citing PhysioNet</a></li>
+<li><a href="/publications/#papers-with-data-and-software">with data and software</a></li>
+<li><a href="/publications/#papers-with-data">with data</a></li>
+<li><a href="/publications/#papers-with-software">with software</a></li>
+</ul></li>
+<li><a href="/tutorials/" class="sf-with-ul">Tutorials<span class="arrow-right" role="presentation"></span></a>
+<ul>
+<li><a href="/tutorials/">Concise tutorials</a></li>
+<li><a href="/tutorials/#workshops">Workshops</a></li>
+<li><a href="/tutorials/#reference">Reference guides</a></li>
+<li><a href="/tutorials/#other">External Resources</a></li>
+</ul></li>
+<li><a href="/other-links.shtml">External Resources</a></li>
+</ul></li>
+<li class="pb"><a href="/physiobank/database/" class="sf-with-ul"> <span style="font-family: Georgia, Times, serif; font-variant: small-caps;"><b>PhysioBank</b><span class="arrow-right" role="presentation"></span></span></a>
+<ul>
+<li><a href="/physiobank/about.shtml">About PhysioBank</a></li>
+<li><a href="/physiobank/database/" class="sf-with-ul">Databases<span class="arrow-right" role="presentation"></span></a>
+<ul>
+<li><a href="/physiobank/database/#clinical">Clinical Databases</a></li>
+<li><a href="/physiobank/database/#waveform" class="sf-with-ul">Waveform Databases<span class="arrow-right" role="presentation"></span></a>
+  <ul>
+    <li><a href="/physiobank/database/#multi">Multi-parameter</a></li>
+    <li><a href="/physiobank/database/#ecg">ECG</a></li>
+    <li><a href="/physiobank/database/#rr">RR intervals</a></li>
+    <li><a href="/physiobank/database/#gait">Gait and balance</a></li>
+    <li><a href="/physiobank/database/#neuro">Neuro- and myoelectric</a></li>
+    <li><a href="/physiobank/database/#image">Images</a></li>
+    <li><a href="/physiobank/database/#synthetic">Synthetic</a></li>
+  </ul>
+</li>
+</ul></li>
+<li><a href="/lightwave/">LightWAVE</a></li>
+<li><a href="/cgi-bin/ATM">PhysioBank ATM</a></li>
+<li><a href="/cgi-bin/pbsearch">PhysioBank Search</a></li>
+<li><a href="/physiobank/other.shtml">External Resources</a></li>
+</ul></li>
+<li class="pt"><a href="/physiotools/" class="sf-with-ul"> <span style="font-family: Georgia, Times, serif; font-variant: small-caps;"><b>PhysioToolkit</b><span class="arrow-right" role="presentation"></span></span></a>
+<ul>
+<li><a href="/physiotools/about.shtml">About PhysioToolkit</a></li>
+<li><a href="/physiotools/software-index.shtml" class="sf-with-ul">Software Index<span class="arrow-right" role="presentation"></span></a>
+<ul>
+<li><a href="/physiotools/software-index.shtml#pbdv" class="sf-with-ul">Data visualization<span class="arrow-right" role="presentation"></span></a>
+<ul>
+<li><a href="/physiotools/software-index.shtml#pbdv">PhysioBank</a></li>
+<li><a href="/physiotools/software-index.shtml#gpdv">General</a></li>
+</ul></li>
+<li><a href="/physiotools/software-index.shtml#pbdm">Data mining</a>
+</li><li><a href="/physiotools/software-index.shtml#fc" class="sf-with-ul">Data import/export<span class="arrow-right" role="presentation"></span></a>
+<ul>
+<li><a href="/physiotools/software-index.shtml#fc">Format conversion</a></li>
+<li><a href="/physiotools/software-index.shtml#cpcr">Record creation</a></li>
+</ul></li>
+<li><a href="/physiotools/software-index.shtml#deid">Deidentification</a></li>
+<li><a href="/physiotools/software-index.shtml#psp" class="sf-with-ul">Signal processing<span class="arrow-right" role="presentation"></span></a>
+<ul>
+<li><a href="/physiotools/software-index.shtml#psp">Physiologic</a></li>
+<li><a href="/physiotools/software-index.shtml#gsp">General</a></li>
+</ul></li>
+<li><a href="/physiotools/software-index.shtml#fdats" class="sf-with-ul">Time series analysis<span class="arrow-right" role="presentation"></span></a>
+<ul>
+<li><a href="/physiotools/software-index.shtml#fdats">Frequency-domain</a></li>
+<li><a href="/physiotools/software-index.shtml#nats">Nonlinear</a></li>
+<li><a href="/physiotools/software-index.shtml#hrv">Heart rate variability</a></li>
+</ul></li>
+<li><a href="/physiotools/software-index.shtml#pms">Models and simulation</a></li>
+<li><a href="/physiotools/software-index.shtml#lib" class="sf-with-ul">Software development<span class="arrow-right" role="presentation"></span></a>
+<ul>
+<li><a href="/physiotools/software-index.shtml#lib">Libraries and tools</a></li>
+<li><a href="/physiotools/software-index.shtml#eea">Device Evaluation</a></li>
+</ul></li>
+<li><a href="/physiotools/software-index.shtml#misc">Miscellaneous</a></li>
+</ul></li>
+<li><a href="/physiotools/matlab/" class="sf-with-ul">MATLAB software<span class="arrow-right" role="presentation"></span></a>
+<ul>
+<li><a href="/physiotools/matlab/wfdb-app-matlab/">WFDB Toolbox for ML</a></li>
+<li><a href="/physiotools/matlab/">Other</a></li>
+</ul></li>
+<li><a href="/physiotools/wfdb.shtml" class="sf-with-ul">WFDB software<span class="arrow-right" role="presentation"></span></a>
+<ul>
+<li><a href="/physiotools/wfdb-freebsd-quick-start.shtml">FreeBSD</a></li>
+<li><a href="/physiotools/wfdb-linux-quick-start.shtml">GNU/Linux</a></li>
+<li><a href="/physiotools/wfdb-darwin-quick-start.shtml">Mac OS X</a></li>
+<li><a href="/physiotools/wfdb-windows-quick-start.shtml">MS-Windows</a></li>
+<li><a href="/physiotools/wfdb-solaris-quick-start.shtml">Solaris</a></li>
+</ul></li>
+<li><a href="/physiotools/manuals.shtml" class="sf-with-ul">Manuals<span class="arrow-right" role="presentation"></span></a>
+<ul>
+<li><a href="/physiotools/wpg/">WFDB Programming</a></li>
+<li><a href="/physiotools/wag/">WFDB Applications</a></li>
+<li><a href="/physiotools/wug/">WAVE</a></li>
+<li><a href="/physiotools/rcvsim/doc/manual/">RCVSIM</a></li>
+<li><a href="/physiotools/plt/plt/html/">plt</a></li>
+<li><a target="other" class="plain" href="http://www.lulu.com/spotlight/physionet/">Bookstore</a></li>
+</ul></li>
+<li><a href="/physiotools/other.shtml">External Resources</a></li>
+</ul></li>
+<li class="pw"><a href="/users/" class="sf-with-ul"> <span style="font-family: Georgia, Times, serif; font-variant: small-caps;"><b>PhysioNetWorks</b><span class="arrow-right" role="presentation"></span></span></a>
+<ul>
+<li><a href="/users/">About PhysioNetWorks</a></li>
+<li><a href="/users/home/"><em>User Home Page*</em></a></li>
+<li><a href="/users/login.shtml">Login / Create an Account</a></li>
+<li><a href="/works/"><em>Works in Progress*</em></a></li>
+<li><a href="/users/help/data-sharing/">Data Sharing</a></li>
+<li><a href="/users/help/pnw-howto.shtml">PhysioNetWorks Project Guide</a></li>
+<li><a href="/users/help/">PhysioNetWorks Help</a></li>
+<li class="menu-note">* login required&nbsp;</li>
+</ul></li>
+<li><a href="/faq.shtml" class="sf-with-ul">Help<span class="arrow-right" role="presentation"></span></a>
+<ul>
+<li><a href="/faq.shtml" class="sf-with-ul">FAQ<span class="arrow-right" role="presentation"></span></a>
+<ul>
+<li><a href="/faq.shtml#topquestions">Top questions</a></li>
+<li><a href="/faq.shtml#general">General</a></li>
+<li><a href="/faq.shtml#sign-in">Sign-in and passwords</a></li>
+<li><a href="/faq.shtml#where-is">Where is ...?</a></li>
+<li><a href="/faq.shtml#downloading">Downloading</a></li>
+<li><a href="/faq.shtml#physiobank">PhysioBank</a></li>
+<li><a href="/faq.shtml#signals">Signals</a></li>
+<li><a href="/faq.shtml#annotations">Annotations</a></li>
+<li><a href="/faq.shtml#software">Software</a></li>
+<li><a href="/faq.shtml#help">Help!</a></li>
+</ul></li>
+<li><a href="/site-map.shtml">Site map</a></li>
+<li><a href="/tutorials/" class="sf-with-ul">Tutorials<span class="arrow-right" role="presentation"></span></a>
+<ul>
+<li><a href="/tutorials/">Concise tutorials</a></li>
+<li><a href="/tutorials/#workshops">Workshops</a></li>
+<li><a href="/tutorials/#reference">Reference guides</a></li>
+<li><a href="/tutorials/#other">External Resources</a></li>
+</ul></li>
+<li><a href="/physiotools/manuals.shtml" class="sf-with-ul">Manuals<span class="arrow-right" role="presentation"></span></a>
+<ul>
+<li><a href="/physiotools/wpg/">WFDB Programming</a></li>
+<li><a href="/physiotools/wag/">WFDB Applications</a></li>
+<li><a href="/physiotools/wug/">WAVE</a></li>
+<li><a href="/physiotools/rcvsim/doc/manual/">RCVSIM</a></li>
+<li><a href="/physiotools/plt/plt/html/">plt</a></li>
+<li><a target="other" class="plain" href="http://www.lulu.com/spotlight/physionet/">Bookstore</a></li>
+</ul></li>
+<li><a href="/mirrors/" class="sf-with-ul">Mirrors<span class="arrow-right" role="presentation"></span></a>
+<ul>
+<li><a href="http://physionet.mit.edu/physiotools/hss/">Cambridge, MA</a></li>
+<li><a href="https://physionet.nlm.nih.gov/physiotools/hss/">Bethesda, MD</a></li>
+<li><a href="http://physionet.incor.usp.br/physiotools/hss/">Sao Paulo, Brazil</a></li>
+<li><a href="http://physionet.ph.biu.ac.il/physiotools/hss/">Ramat-Gan, Israel</a></li>
+<li><a href="http://physionet.cps.unizar.es/physiotools/hss/">Zaragoza, Spain</a></li>
+<li><a href="http://physionet.fri.uni-lj.si/physiotools/hss/">Ljubljana, Slovenia</a></li>
+<li><a href="http://physionet.comp.nus.edu.sg/physiotools/hss/">NUS, Singapore</a></li>
+<li><a href="/mirrors/mirror-howto.shtml">Setting up a mirror</a></li>
+</ul></li>
+<li><a href="/citations.shtml">How to Cite</a></li>
+<li><a href="/guidelines.shtml">Contributing</a></li>
+<li><a href="/copying.shtml">Copying</a></li>
+<li><a href="/privacy.shtml">Privacy</a></li>
+</ul></li>
+</ul>
+
+</li></ul>
+
+	<!--	  </ul>-->
+      </div>
+      
+      <script src="/pn/breadcrumbs.js"></script>
+      
+      <div style="float: right; padding: 0.6em; margin: 0;" id="searchForm">
+	<script>
+document.write("<form action=\"/search-results.shtml\"> " +
+	       "<input type=\"text\" name=\"q\" size=\"25\" /> " +
+	       "<input type=\"submit\" name=\"sa\" value=\"Search\" /> " +
+	       "</form>");
+</script>
+<noscript>
+<form action='https://www.google.com/search'><!-- id='searchForm'>-->
+  <div>
+    <input name='q' type='hidden' value='site:physionet.org' />
+    <input name='q' size='25' type='text' />
+    <input name='sa' type='submit' value='Search' />
+  </div>
+</form>
+</noscript>
+
+      </div>
+    </div>
+
+
+    <div class="pbanner"><!-- pbanner is set to display: none -->
+      from <b>PhysioNet</b>, the research resource for complex physiologic signals
+    </div>
+    <div  style="width: 100%; min-width: 700px; margin: 0; background-color: transparent; padding: 0;">
+      <!-- provides space above h1 header, so it isn't hidden by banner -->
+      <div id="top"><!-- need nested div to link to top lands in right place --></div>      
+    </div>
+
+  </header>
+
+    <main>
+    
+        <h1 style="margin-top: 1.75em; padding-top: .4em;">Logistic Regression-HSMM-based Heart Sound Segmentation</h1>
+    
+
+    
+        <nav id="tocwrapper" style="padding: 1.5em 0 0 0; float: right;"> <!-- id to position toc added by KP, 6 July 2015 -->
+        </nav>
+    
+
+    <!--include virtual="/cgi-bin/doicheck?uri=${REQUEST_URI}&title=$TITLE"-->
+    <a id="content" ></a>
+    <article id="page"><!-- added by KP, 12 June 2015 -->
+
+    <div style="margin: 4em 1em 0em"><strong>The new PhysioNet website is available at <a href="https://physionet.org">https://physionet.org</a>.</strong></div>
+
+
+
+
+<div class="notice">
+
+<p>This code is used in the sample submission of the <a href="/challenge/2016" target="_blank">2016 PhysioNet/CinC Challenge.</a>
+</p>
+
+<p> 1 July 2017: The journal Physiological Measurement has published a special issue on <a href = "http://iopscience.iop.org/journal/0967-3334/page/Recent-advances-in-heart-sound-analysis"> “Recent advances in heart sound analysis” </a> which includes extened articles and updates on many of the top scoring entries in the competition, and an extensive analysis of the Logistic Regression-HSMM-based Heart Sound Segmentation software package, available on this page.  </p>
+
+<p>A detailed description of this segmentation algorithm and its application can be found in:</p>
+<div class="reference">
+Springer DB, Tarassenko L, Clifford GD.
+<a href="http://ieeexplore.ieee.org/xpl/login.jsp?tp=&arnumber=7234876&url=http%3A%2F%2Fieeexplore.ieee.org%2Fxpls%2Fabs_all.jsp%3Farnumber%3D7234876" target="other"> Logistic Regression-HSMM-based Heart Sound Segmentation.</a>
+<i>IEEE Transactions on Biomedical Engineering</i>, 2016 Apr; 63(4):822-32. doi: 10.1109/TBME.2015.2475278. Epub 2015 Sep 1.
+</div>
+
+<p>
+<div class="reference">
+Liu C, Springer D, Clifford GD.  
+<a href = "http://iopscience.iop.org/article/10.1088/1361-6579/aa6e9f/meta">  Performance of an open-source heart sound segmentation algorithm on eight independent databases. </a> <i>Physiological Measurements</i>, 2017 August; 38(8):1730 –1745. <a href = "./Liu_HSMM_Heartsound_Algo_IOP_July_2017.pdf"> PDF </a>
+</div>
+
+
+<p>
+Please cite the above publications when referencing this material, and also include the standard citation for PhysioNet:</p>
+<div class="reference">
+Goldberger AL, Amaral LAN, Glass L, Hausdorff JM, Ivanov PCh, Mark RG,
+Mietus JE, Moody GB, Peng C-K, Stanley HE. "PhysioBank, PhysioToolkit,
+and PhysioNet: Components of a New Research Resource for Complex
+Physiologic Signals," Circulation 101(23):e215-e220 [Circulation
+Electronic Pages; <a href
+="http://circ.ahajournals.org/content/101/23/e215.full">http://circ.ahajournals.org/content/101/23/e215.full</a>];
+2000 (June 13).
+</div>
+</div>
+
+
+<h2>Background</h2>
+
+<p>Heart sound segmentation refers to the detection of the exact positions of the first (S<sub>1</sub>) and second (S<sub>2</sub>) heart sounds in a heart sound recording or phonocardiogram (PCG).
+These sounds originate at the beginning of mechanical systole and diastole respectively [1], with S<sub>1</sub> occuring immediately after the R-peak (ventricular depolarisation) of the electrocardiogram (ECG), while S<sub>2</sub> occurs at approximately at the end-T-wave of the ECG (the end of ventricular depolarisation) [2] (See Figure 1).
+</p>
+
+<p>Heart sound segmentation is an essential step in the automatic analysis of heart sound recordings, as it allows the analysis of the periods between these sounds for the presence of clicks and murmurs; sounds often indicative of pathology [3]. Segmentation becomes a difficult task when  PCG recordings are corrupted by in-band noise. Common noise sources include endogenous or ambient speech, motion artefacts and physiological sounds such as intestinal and breathing sounds. Other physiological sounds of interest, such as murmurs, clicks, splitting of the heart sounds and additional S<sub>3</sub>
+  and S<sub>4</sub> sounds, can also complicate the identification of the S<sub>1</sub> and S<sub>2</sub> sounds. For example, Figure 1 shows a PCG (alongside an ECG) with a loud mid-systolic click indicative of mitral valve prolapse, which could be confused for S<sub>1</sub> or S<sub>2</sub>.
+</p> 
+  
+<div style="width: 600px; margin: 0 auto;"><img src="Figure1.png" width="600" alt="[Example of an ECG-labelled PCG]">
+
+<p style="font-style: italic"><strong>Figure 1</strong>: Example of an ECG-labelled PCG, with the ECG, PCG and four states of the heart cycle (S<sub>1</sub>, systole, S<sub>2</sub> and diastole) shown. A mid-systolic click can be seen in each of the heart cycles, labelled as "m". The R-peak and end-T-wave are labelled as references for defining the approximate positions of S<sub>1</sub> and S<sub>2</sub> respectively.
+</p>
+</div>
+  
+<p>While threshold-based
+segmentation methods have shown modest success, probabilistic models,
+such as hidden Markov models (HMMs), have recently been shown to surpass
+the capabilities of previous methods. Segmentation performance is
+further improved when <i>a priori</i> information about the expected
+duration of the states is incorporated into the model, such as in
+a hidden semi-Markov model (HSMM) [4]. An excellent introduction to HMMs can be found in [5].</p>
+
+<p>The code on this page extends the work of [4] by implementing such a HSMM for segmentation, but extended with the use of logistic regression for emission probability estimation which was found to significantly improve segmentation accuracy. In addition, we implement a modified Viterbi algorithm for decoding the most-likely sequence of states. This modified Viterbi algorithm overcomes the limitation of the standard duration-dependant Viterbi algorithm where the start and end of detected states have to coincide with the start and end of the PCG recording. More details can be found in the paper referenced above.</p>
+
+
+
+
+<h2>Explanation of the code</h2>
+
+<p>
+The code at the bottom of this page can be used to both train and execute the HSMM-based segmentation of PCGs. The step-by-step operations of the code are explained below.</p>
+
+<h3>Training the HSMM</h3>
+<p>
+The HSMM training is performed within the <code>trainSpringerSegmentationAlgorithm.m</code> file. Within this file, the basic steps are:</p>
+<ol>
+    <li>Extract the features from the training set of recordings (<code>getSpringerPCGFeatures.m</code>). These include the:
+    <ul>
+        <li>Homomorphic envelope</li>
+        <li>Hilbert envelope</li>
+        <li>Power spectral density envelope</li>
+        <li>Discrete wavelet transform envelope</li>
+    </ul></li>
+    <li>Label the PCGs based on the supplied R-peak and end-T-wave locations (<code>labelPCGStates.m</code>).</li>
+    <li>Train the three parameter matrices for the HSMM (<code>trainBandPiMatricesSpringer.m</code>).</li>
+</ol>
+
+
+
+<h3>Running the trained HSMM</h3>
+<p>
+The three trained parameter matrices from above are used to segment a PCG in <code>runSpringerSegmentationAlgorithm.m</code>. The basic operations of the segmentation are:
+</p>
+
+<ol>
+    <li>Extract the features from a test set recording (<code>getSpringerPCGFeatures.m</code>).</li>
+    <li>Estimate the heart rate based on the autocorrelation (<code>getHeartRateSchmidt.m</code>).</li>
+    <li>Use the extended duration-dependant Viterbi algorithm to derive the most likely sequence of states from the PCG (<code>lviterbiDecodePCG_Springer.m</code>).
+<!--     <ul type "a"> -->
+    <ul>
+        <li>The duration distributions for the four states used in the Viterbi algorithm are computed in <code>get_duration_distributions.m</code>.
+        </li>
+    </ul>
+    </li>
+</ol>
+
+<p>
+An example of the output of <code>runSpringerSegmentationAlgorithm.m</code> is shown in blue at the top of Figure 2.
+</p>
+
+
+<p>
+Important options for the code are stored in <code>default_Springer_HSMM_options.m</code>. These include:
+</p>
+
+<ul>
+    <li>The original sampling frequency of the PCG signals.</li>
+    <li>The sampling frequency to which to downsample the segmentation features.</li>
+    <li>Whether <code>.mex</code> code should be used for the Viterbi algorithm.</li>
+    <li>Whether wavelet features should be used (as this toolbox may be missing from your Matlab installation).</li>
+</ul>
+
+<p><b>If you set <code>springer_options.use_mex = true;</code> in the options file, please be sure to create the MEX executable from the source file by running: <code>mex viterbi_Springer.c</code> before running the code.</b>
+</p>
+
+
+<div style="width: 600px; margin: 0 auto;"><img src="Figure2.png" width="600" alt="[Example of a segmented PCG]">
+<p style="font-style: italic"><strong>Figure 2</strong>: Example of a segmented PCG using the code on this page. The four HSMM-detected states of the heart cycle (S<sub>1</sub>, systole, S<sub>2</sub> and diastole) are shown at the top of the plot in blue - this is the output of the <code>runSpringerSegmentationAlgorithm.m</code> file. The red dotted line shows the labelled states, derived from the R-peak and end-T-wave positions in the <code>labelPCGStates.m</code> file. These labelled states are only used for training the algorithm. The ECG is shown in red at the bottom of the plot, with the positions of the R-peaks (*) and the end-T-waves (o) indicated. Only the PCG is used to derive the detected states in blue.</p>
+</div>
+
+
+<h2>Quick start guide and example usage</h2>
+<p>
+An example of how the model is first trained on a small example set of data, and then used to segment a test recording is given in <code>run_Example_Springer_Script.m</code>. This should run out-of-the-box (provided you have set the <code>default_Springer_HSMM_options.m</code> correctly). <b>If you set <code>springer_options.use_mex = true;</code> in the options file, please be sure to create the MEX executable from the source file by running: <code>mex viterbi_Springer.c</code> before running the code.</b></p>
+
+<p>
+This code loads a few records from the example data. Alongside each recording are the R-peak and end-T-wave annotations which are used to label the locations of the heart sounds in the training set.</p>
+
+<p>
+The HSMM is trained on five of the six example recordings, and applied to the sixth. Running this script should produce a plot similar to that shown in Figure 3.
+</p>
+
+<div style="width: 600px; margin: 0 auto;">
+<img src="Figure3.png" width="400"  alt="[Output of run_Example_Springer_Script.m]" style="margin-left: 8%;">
+<p style="font-style: italic"><strong>Figure 3</strong>: The output when running <code>run_Example_Springer_Script.m</code>. This shows the PCG signal in black, with the HSMM derived states shown in red.</p>
+</div>
+       
+
+<p>
+The code in <code>run_Example_Springer_Script.m</code> will give you a clear example of how to apply these method to new datasets. Tested April 4 2016. 
+</p>
+
+
+
+<h2>Example Data</h2>
+<p>
+The <code>example_data.mat</code> file contains the full dataset from the paper mentioned at the top of this page. Included in this .mat file is a struct with the audio files, annotations, binary diagnosis (1 = presence of pathology) and the "patient number" for each record.
+</p>
+
+<p>
+The <code>example_data.example_audio_data</code> is sampled at 1000 Hz, and contains recordings from various locations on the chest. While there are 135 patients, there are 792 recordings. This is due to multiple recordings per patient, as well as some recordings being split at positions of inconsistent annotations.
+</p>
+
+<p>
+The <code>example_data.example_annotations</code> are the positions of the R-peak (first column of the cell array) and the end-T-wave positions (second column of the cell array), sampled at 50 Hz. As explained in the associated publication, these annotations are computed based on the agreement between five different automatic R-peak and end-T-wave detectors. They are not human-derived annotations.
+</p>
+
+<p>
+The <code>example_data.binary_diagnosis</code> cell array shows which recordings were from subjects with no pathological heart damage as assessed by echocardiography (binary_diagnosis=0), and those with some sort of heart pathology (most commonly mitral valve prolapse - binary_diagnosis = 1).
+</p>
+
+<p>
+The <code>example_data.patient_number</code> cell array indicates which subject each recording was captured from. Again, there are multiple recordings per patient due to multiple auscultation positions and splitting of recordings due to inconsistent annotations.
+</p>
+
+<h2>References</h2>
+<div class="reference">
+<ol>
+<li>Douglas, G., Nicol, E.F., and Robertson, C., Macleod’s Clinical Examination. Elsevier Health Sciences, 2009.</li>
+<li>Tilkian, A.G. and Conover, M.B., Understanding heart sounds and murmurs: with an introduction to lung sounds. Elsevier Health Sciences, 2001.</li>
+<li>Leatham, A. Auscultation of the heart and phonocardiography. Churchill Livingstone: 1975.</li>
+<li>Schmidt, S.E.; Holst-Hansen, C.; Graff, C.; Toft, E.; Struijk, J.J. Segmentation of heart sound recordings by a duration-dependent hidden markov model. Physiol Meas 2010, 31, 513-529.</li>
+<li>Rabiner, L., "A tutorial on hidden Markov models and selected applications in speech recognition," Proceedings of the IEEE, vol. 77, no. 2, pp. 257–286, Feb. 1989.</li>
+</ol>
+</div> <!-- end reference -->
+<pre><img src="/icons/blank.gif" alt="Icon " width="20" height="22"> <a href="?C=N;O=D">Name</a>                                       <a href="?C=M;O=A">Last modified</a>      <a href="?C=S;O=A">Size</a>  <a href="?C=D;O=A">Description</a><hr><img src="/icons/back.gif" alt="[PARENTDIR]" width="20" height="22"> <a href="/physiotools/">Parent Directory</a>                                                -   
+<img src="/icons/text.gif" alt="[   ]" width="20" height="22"> <a href="COPYING">COPYING</a>                                    2016-04-06 18:39   34K  GNU General Public License
+<img src="/icons/image2.gif" alt="[IMG]" width="20" height="22"> <a href="Figure1.png">Figure1.png</a>                                2016-04-06 19:09   78K  
+<img src="/icons/image2.gif" alt="[IMG]" width="20" height="22"> <a href="Figure2.png">Figure2.png</a>                                2016-04-06 19:11   84K  
+<img src="/icons/image2.gif" alt="[IMG]" width="20" height="22"> <a href="Figure3.png">Figure3.png</a>                                2016-04-06 19:12   79K  
+<img src="/icons/text.gif" alt="[TXT]" width="20" height="22"> <a href="Hilbert_Envelope.m">Hilbert_Envelope.m</a>                         2016-04-04 15:50  1.9K  
+<img src="/icons/text.gif" alt="[TXT]" width="20" height="22"> <a href="Homomorphic_Envelope_with_Hilbert.m">Homomorphic_Envelope_with_Hilbert.m</a>        2016-04-04 15:50  3.4K  
+<img src="/icons/layout.gif" alt="[   ]" width="20" height="22"> <a href="Liu_HSMM_Heartsound_Algo_IOP_July_2017.pdf">Liu_HSMM_Heartsound_Algo_IOP_July_2017.pdf</a> 2017-09-06 12:43  1.1M  
+<img src="/icons/compressed.gif" alt="[   ]" width="20" height="22"> <a href="SpringerSegmentationCode.zip">SpringerSegmentationCode.zip</a>               2016-04-07 09:21   73M  
+<img src="/icons/text.gif" alt="[TXT]" width="20" height="22"> <a href="butterworth_high_pass_filter.m">butterworth_high_pass_filter.m</a>             2016-04-04 15:50  2.8K  
+<img src="/icons/text.gif" alt="[TXT]" width="20" height="22"> <a href="butterworth_low_pass_filter.m">butterworth_low_pass_filter.m</a>              2016-04-04 15:50  2.8K  
+<img src="/icons/text.gif" alt="[TXT]" width="20" height="22"> <a href="default_Springer_HSMM_options.m">default_Springer_HSMM_options.m</a>            2016-04-04 15:50  1.6K  
+<img src="/icons/unknown.gif" alt="[   ]" width="20" height="22"> <a href="example_data.mat">example_data.mat</a>                           2016-04-04 15:50   73M  
+<img src="/icons/text.gif" alt="[TXT]" width="20" height="22"> <a href="expand_qt.m">expand_qt.m</a>                                2016-04-04 15:50  2.2K  
+<img src="/icons/folder.gif" alt="[DIR]" width="20" height="22"> <a href="fullsizedfigures/">fullsizedfigures/</a>                          2016-04-06 19:07    -   
+<img src="/icons/text.gif" alt="[TXT]" width="20" height="22"> <a href="getDWT.m">getDWT.m</a>                                   2016-04-04 15:50  2.5K  
+<img src="/icons/text.gif" alt="[TXT]" width="20" height="22"> <a href="getHeartRateSchmidt.m">getHeartRateSchmidt.m</a>                      2016-04-04 15:50  3.7K  
+<img src="/icons/text.gif" alt="[TXT]" width="20" height="22"> <a href="getSpringerPCGFeatures.m">getSpringerPCGFeatures.m</a>                   2016-04-04 15:50  4.1K  
+<img src="/icons/text.gif" alt="[TXT]" width="20" height="22"> <a href="get_PSD_feature_Springer_HMM.m">get_PSD_feature_Springer_HMM.m</a>             2016-04-04 15:50  2.5K  
+<img src="/icons/text.gif" alt="[TXT]" width="20" height="22"> <a href="get_duration_distributions.m">get_duration_distributions.m</a>               2016-04-04 15:50  3.7K  
+<img src="/icons/text.gif" alt="[TXT]" width="20" height="22"> <a href="labelPCGStates.m">labelPCGStates.m</a>                           2016-04-04 15:50  6.9K  
+<img src="/icons/text.gif" alt="[TXT]" width="20" height="22"> <a href="normalise_signal.m">normalise_signal.m</a>                         2016-04-04 15:50  1.4K  
+<img src="/icons/text.gif" alt="[TXT]" width="20" height="22"> <a href="runSpringerSegmentationAlgorithm.m">runSpringerSegmentationAlgorithm.m</a>         2016-04-04 15:50  2.7K  
+<img src="/icons/text.gif" alt="[TXT]" width="20" height="22"> <a href="run_Example_Springer_Script.m">run_Example_Springer_Script.m</a>              2016-04-04 15:50  2.2K  
+<img src="/icons/text.gif" alt="[TXT]" width="20" height="22"> <a href="schmidt_spike_removal.m">schmidt_spike_removal.m</a>                    2016-04-04 15:50  4.3K  
+<img src="/icons/text.gif" alt="[TXT]" width="20" height="22"> <a href="trainBandPiMatricesSpringer.m">trainBandPiMatricesSpringer.m</a>              2016-04-04 15:50  5.9K  
+<img src="/icons/text.gif" alt="[TXT]" width="20" height="22"> <a href="trainSpringerSegmentationAlgorithm.m">trainSpringerSegmentationAlgorithm.m</a>       2016-04-04 15:50  3.7K  
+<img src="/icons/text.gif" alt="[TXT]" width="20" height="22"> <a href="viterbiDecodePCG_Springer.m">viterbiDecodePCG_Springer.m</a>                2016-04-04 15:50   15K  
+<img src="/icons/text.gif" alt="[TXT]" width="20" height="22"> <a href="viterbi_Springer.c">viterbi_Springer.c</a>                         2016-04-04 15:50   13K  
+<hr></pre>
+
+ 
+
+
+
+
+
+<div style="margin: 1.5em 0 0 ; clear: both;">
+<p style="text-align: center; vertical-align: middle; padding: 0; margin: .2em 0;
+	   background: #a44;">
+<a href="/contact-us.shtml" style="text-decoration:none; color: white;">
+<b>Questions and Comments</b></a>
+</p>
+</div>
+<table><tr><td style="padding: 0; vertical-align: top;">
+      <div style="float: left; padding: 1.5em 1em; font-size: 80%;  margin: 0.5em; margin: 0;">
+<p>If you would like help understanding, using, or downloading content, please see our <a href="/faq.shtml">Frequently Asked Questions</a>.
+</p>
+
+<p style="padding-top: .8em;">If you have any comments, feedback, or particular questions regarding this page, please send them to the <a href="/contact-us.shtml" target="_blank">webmaster</a>.</p>
+
+<p>Comments and issues can also be raised on PhysioNet's <a href="https://github.com/MIT-LCP/physionet" target="_blank">GitHub</a> page.
+</p>
+
+<p style="padding-top: .5em;">
+Updated 
+
+Friday, 28 October 2016 at 16:58 EDT</p>
+</div></td>
+<td style="float: right; padding: 0;">
+<div class="funding" style="border: 2px solid #a44; border-radius: .5em; font-weight: 500; font-size: .9em; font-style: italic; line-height: 1.6; padding: 1.5em 2em 2em; margin: 1em .5em;">
+PhysioNet is supported by the <a href="http://www.nigms.nih.gov/" target="_blank">National Institute of General Medical Sciences (NIGMS)</a> and the <a href="https://www.nibib.nih.gov/" target="_blank">National Institute of Biomedical Imaging and Bioengineering (NIBIB)</a> under NIH grant number 2R01GM104987-09.
+</div> <!-- end funding credits -->
+
+
+</td></tr>
+</table>
+
+</article><!-- close article and main, which were  opened in header file -->
+</main>
+
+</body>
+</html>

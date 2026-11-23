@@ -1,0 +1,6 @@
+Recording,State,Heart rate range (BPM),Samples at full scale,Energy below 20 Hz (%),Clean windows of 51
+Resting 1,resting,73–82,26,60.2,42
+Resting 2,resting,79–87,0,51.7,43
+After exercise 1,after exercise,86–129,16,48.6,39
+After exercise 2,"after exercise, overload on many beats",119–144,473,32.0,51
+After exercise 3,"after exercise, overload in the first half",116–149,457,38.2,51

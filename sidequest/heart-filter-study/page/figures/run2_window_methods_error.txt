@@ -1,0 +1,18 @@
+Plotted numbers (whole-window methods), mean absolute heart-rate error in BPM with 95 % bootstrap range.
+Own recordings: all 255 windows of 5 recordings; range from a moving-block bootstrap (8 windows) within each recording.
+Public: EPHNOGRAM through the modelled capture chain (level: rest), windows ending every 4th second from 12 s, 21956 windows with a reliable ECG rate, 21 people, 66 recordings; range from resampling people. Second public panel: the same windows at the overload level of the chain model.
+Filter while recording, 40–150 Hz (method of the first part) (causal_40_150): own 0.35 [0.27, 0.41]; public rest 26.88 [22.38, 31.07]; public overload 20.22 [16.62, 23.46]
+Filter while recording, 25–150 Hz (causal_25_150): own 0.69 [0.26, 1.05]; public rest 30.97 [25.93, 35.47]; public overload 22.02 [17.88, 25.65]
+No filter (causal_raw): own 4.22 [0.60, 7.58]; public rest 33.48 [28.05, 37.84]; public overload 25.88 [20.67, 30.35]
+Filter while recording, 40–150 Hz applied twice (steeper) (causal_40_150_twice): own 0.38 [0.29, 0.45]; public rest 23.35 [19.04, 27.19]; public overload 19.24 [15.87, 22.15]
+Method of the first part, soft edges on the stored loudness curve (stored_envelope_nosmooth_taper20): own 0.68 [0.38, 1.22]; public rest 25.97 [21.56, 30.24]; public overload 19.16 [15.58, 22.56]
+Method of the first part, stored loudness curve smoothed again (stored_envelope_smooth5hz_taper0): own 0.66 [0.25, 1.05]; public rest 31.00 [26.27, 35.04]; public overload 24.91 [20.86, 28.32]
+Whole window filtered forwards and backwards, 40–150 Hz (zero_phase_40_150_order2_reflect_zpenv): own 0.39 [0.30, 0.46]; public rest 23.28 [19.22, 26.94]; public overload 18.99 [15.62, 21.88]
+Same filter steepness, both passes forwards (delay kept) (forward_twice_40_150_order2_reflect_causalenv): own 0.39 [0.31, 0.46]; public rest 23.44 [19.21, 27.30]; public overload 19.16 [15.79, 22.02]
+Forward pass while recording, backward pass on the window (streamed_forward_backward_window_40_150_order2_reflect_zpenv): own 0.39 [0.30, 0.46]; public rest 23.28 [19.21, 26.93]; public overload 19.01 [15.67, 21.86]
+Forwards and backwards on 1,000 values per second (reduced_1k_zero_phase_40_150_order2_reflect_zpenv): own 0.39 [0.30, 0.46]; public rest 23.21 [19.15, 26.84]; public overload 19.01 [15.65, 21.85]
+Springer reference code as published (up to 120 BPM) (springer_heart_rate): own 19.19 [12.93, 25.33]; public rest 34.01 [29.13, 38.35]; public overload 24.63 [20.06, 29.03]
+Springer reference code, range widened to 200 BPM, without half-rate check (springer_heart_rate_range_30_200): own 0.44 [0.31, 0.52]; public rest 25.68 [21.69, 29.61]; public overload 14.89 [11.97, 18.24]
+Springer reference code, range widened to 200 BPM, with half-rate check (springer_heart_rate_half_check): own 0.44 [0.31, 0.52]; public rest 20.70 [16.56, 25.04]; public overload 10.52 [8.04, 13.28]
+Springer's three loudness curves combined (springer_envelopes_combined_50hz_half_check): own 0.69 [0.52, 0.82]; public rest 19.45 [15.42, 23.61]; public overload 11.42 [8.96, 14.00]
+1,000 values per second, both directions, Springer's logarithmic loudness curve (tried after first results) (reduced_1k_zero_phase_40_150_order2_reflect_homomorphic): own 0.48 [0.35, 0.54]; public rest 20.81 [17.27, 24.44]; public overload not computed

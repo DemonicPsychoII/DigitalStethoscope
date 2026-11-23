@@ -1,0 +1,10 @@
+Schematic side view of the three arrangements of the table measurement of 22 November 2026 (facts: chain-measurement-reviews.md,
+photos C:/Users/nicop/audio-chain-measurements/2026-11-22/photos/). Drawn, not to scale.
+A: a headphone ear cup (Beyerdynamic DT 770 PRO, playing a test sweep from 20 Hz to 8 kHz) lies cushion-down over the
+bare microphone (INMP441) at the edge of the board. Caption: "microphone alone under the ear cup".
+B: the ear cup lies over the chest-piece, membrane side up, on the table; the sound goes through the tube (about 45 cm,
+inferred from the tube resonances) to the microphone held at the tube's end on the board. Caption: "membrane side + tube
++ microphone".
+C: as B with the chest-piece turned to its bell side. Caption: "bell side + tube + microphone".
+Below all three: "membrane ÷ A and bell ÷ A were meant to give the chest-piece alone; bell ÷ membrane (C ÷ B) does not
+need A". The gap between cushion and chest-piece or tube was not sealed; there was no reference microphone.

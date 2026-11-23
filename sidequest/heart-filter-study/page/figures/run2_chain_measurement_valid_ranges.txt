@@ -1,0 +1,12 @@
+Band chart over pitch (20 Hz to 8 kHz, spaced by ratio) of where the results of the chain measurement of 22 November 2026
+are usable according to the two independent reviews (chain-measurement-reviews.md).
+membrane ÷ A (B/A): not usable below about 400 Hz (arrangement A had its own dip of about 13 dB at 220 Hz from the ear cushion
+resting on the board edge; dividing by A adds about 10-13 dB to the 250 Hz peak); usable 400 Hz to 5.5 kHz; not usable
+above about 5.5 kHz (sound reached the microphone through the air 0.5-1 ms before the tube signal).
+bell ÷ A (C/A): not usable below about 400 Hz (same reason); usable 400 Hz to about 6 kHz; above about 6 kHz weak signal
+(signal-to-noise about 27-68 dB only from 25 Hz to about 6 kHz at -12 dBFS).
+bell ÷ membrane (C/B, needs no A): usable with good signal from about 25 Hz to about 6 kHz; the band 5.5-6 kHz is marked
+doubtful because the membrane measurement above 5.5 kHz contains the air path (a reading of the reviews by the figure
+author, not stated by them for C/B); below 25 Hz and above 6 kHz weak signal.
+Blue band 20-150 Hz: where most heart-sound energy lies in the own recordings.
+Seat spread (bell and membrane seats 3 and 4 about 2 dB lower broadband, up to 6 dB below 315 Hz) is not shown.

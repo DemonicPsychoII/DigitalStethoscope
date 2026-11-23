@@ -1,0 +1,37 @@
+Run 1 (five own recordings of one healthy adult) next to the public data (CirCor, modelled, resting level), each shortlist candidate at its fixed boost from run 1. Spearman rank correlation of the candidate order:
+(a) A-weighted level vs no filter (dB): rank correlation +0.98
+  No filter (Raw): own +0.00, public +0.00
+  40–800 Hz gentle (design): own -1.74, public -2.56
+  100–800 Hz gentle: own +1.09, public +3.50
+  100–800 Hz steep: own +1.96, public +4.77
+  150–800 Hz steep: own +2.76, public +7.24
+  60–800 Hz elliptic: own +0.79, public +1.36
+  Above 80 Hz only: own +0.40, public +3.19
+  25–150 Hz (BPM position): own -3.93, public -17.03
+(b) Hearing-curve level vs no filter (dB): rank correlation +0.98
+  No filter (Raw): own +0.00, public +0.00
+  40–800 Hz gentle (design): own -1.53, public -2.04
+  100–800 Hz gentle: own +1.52, public +4.04
+  100–800 Hz steep: own +2.49, public +5.44
+  150–800 Hz steep: own +3.42, public +7.87
+  60–800 Hz elliptic: own +1.10, public +2.06
+  Above 80 Hz only: own +0.47, public +3.29
+  25–150 Hz (BPM position): own -3.89, public -16.46
+(c) Loudness (K-weighted) vs no filter (dB): rank correlation -0.93
+  No filter (Raw): own +0.00, public +0.00
+  40–800 Hz gentle (design): own -3.58, public -1.53
+  100–800 Hz gentle: own -6.54, public +2.75
+  100–800 Hz steep: own -9.17, public +3.75
+  150–800 Hz steep: own -11.99, public +4.77
+  60–800 Hz elliptic: own -4.97, public +1.63
+  Above 80 Hz only: own -6.33, public +2.02
+  25–150 Hz (BPM position): own -3.09, public -8.23
+(d) Sound between beats vs heart sounds (dB, lower = cleaner): rank correlation +0.38
+  No filter (Raw): own -14.94, public -3.53
+  40–800 Hz gentle (design): own -14.31, public -4.34
+  100–800 Hz gentle: own -11.77, public -4.17
+  100–800 Hz steep: own -11.12, public -4.31
+  150–800 Hz steep: own -9.89, public -4.07
+  60–800 Hz elliptic: own -13.06, public -4.34
+  Above 80 Hz only: own -12.75, public -3.45
+  25–150 Hz (BPM position): own -17.79, public -8.68

@@ -1,0 +1,3 @@
+Record ECGPCG0064, subject S006, Exercise: bicycle stress test; rest level, filter 40-150 Hz (same record as run2_bpm_estimate_vs_ecg.png). Subject S006 belongs to the half on which the improved method was chosen.
+device, counting method of the first part: mean difference 34.27 BPM over 1763 clean windows, 883 more than 20 % off; shown as valid 1085 windows, of which 470 more than 20 % off
+device, improved counting method: mean difference 13.06 BPM over 1763 clean windows, 415 more than 20 % off; shown as valid 989 windows, of which 25 more than 20 % off

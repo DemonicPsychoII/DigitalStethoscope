@@ -1,0 +1,209 @@
+{
+ "ECGPCG0064": {
+  "subject": "S006",
+  "scenario": "Exercise: bicycle stress test",
+  "chosen_end_time_s": 900,
+  "reference_bpm_at_chosen": 146.08,
+  "estimate_at_chosen": 48.74227523803711,
+  "one_third_windows": 477,
+  "correct_windows": 878,
+  "model_final:one_third_windows": {
+   "median_r_T": 0.6747235059738159,
+   "median_r_2T": 0.6679494976997375,
+   "median_r_3T": 0.7246053814888,
+   "share_r_3T_above_r_T": 1.0,
+   "plain_share_r_3T_above_r_T": 0.3165618448637317,
+   "median_power_third_over_heart": 0.0791062343174947,
+   "median_power_third_over_background": 6.803119510416989,
+   "median_power_heart_over_background": 87.0491071020825
+  },
+  "model_final:correct_windows": {
+   "median_r_T": 0.4513463079929352,
+   "median_r_2T": 0.38971181213855743,
+   "median_r_3T": 0.35519827902317047,
+   "share_r_3T_above_r_T": 0.08769931662870159,
+   "plain_share_r_3T_above_r_T": 0.009111617312072893,
+   "median_power_third_over_heart": 0.11270597704654142,
+   "median_power_third_over_background": 4.060794555524812,
+   "median_power_heart_over_background": 30.42222472393177
+  },
+  "resample_only_final:one_third_windows": {
+   "median_r_T": 0.8317234516143799,
+   "median_r_2T": 0.7954903244972229,
+   "median_r_3T": 0.8418449759483337,
+   "share_r_3T_above_r_T": 0.5576519916142557,
+   "plain_share_r_3T_above_r_T": 0.07337526205450734,
+   "median_power_third_over_heart": 0.03577746311107939,
+   "median_power_third_over_background": 8.034218266924873,
+   "median_power_heart_over_background": 235.01134645627516
+  },
+  "resample_only_final:correct_windows": {
+   "median_r_T": 0.8237609267234802,
+   "median_r_2T": 0.7412663400173187,
+   "median_r_3T": 0.7213174998760223,
+   "share_r_3T_above_r_T": 0.16400911161731208,
+   "plain_share_r_3T_above_r_T": 0.0,
+   "median_power_third_over_heart": 0.030215826558835757,
+   "median_power_third_over_background": 4.186197295550165,
+   "median_power_heart_over_background": 151.01701461375688
+  },
+  "model_one_pole_12hz:one_third_windows": {
+   "median_r_T": 0.6610293388366699,
+   "median_r_2T": 0.6217439770698547,
+   "median_r_3T": 0.6204381585121155,
+   "share_r_3T_above_r_T": 0.5786163522012578,
+   "plain_share_r_3T_above_r_T": 0.16981132075471697,
+   "median_power_third_over_heart": 0.06182173149424048,
+   "median_power_third_over_background": 2.6684848052228807,
+   "median_power_heart_over_background": 46.82424149305094
+  },
+  "model_one_pole_12hz:correct_windows": {
+   "median_r_T": 0.38515453040599823,
+   "median_r_2T": 0.3057534247636795,
+   "median_r_3T": 0.26900386810302734,
+   "share_r_3T_above_r_T": 0.10136674259681093,
+   "plain_share_r_3T_above_r_T": 0.02164009111617312,
+   "median_power_third_over_heart": 0.09259153753002991,
+   "median_power_third_over_background": 1.551277124164721,
+   "median_power_heart_over_background": 13.857159119922468
+  }
+ },
+ "ECGPCG0032": {
+  "subject": "S015",
+  "scenario": "Exercise: pedaling a stationary bicycle",
+  "chosen_end_time_s": 760,
+  "reference_bpm_at_chosen": 117.98,
+  "estimate_at_chosen": 39.414031982421875,
+  "one_third_windows": 630,
+  "correct_windows": 1113,
+  "model_final:one_third_windows": {
+   "median_r_T": 0.6675045490264893,
+   "median_r_2T": 0.6482629776000977,
+   "median_r_3T": 0.7257570326328278,
+   "share_r_3T_above_r_T": 1.0,
+   "plain_share_r_3T_above_r_T": 0.20952380952380953,
+   "median_power_third_over_heart": 0.059873633872810306,
+   "median_power_third_over_background": 4.898414295563109,
+   "median_power_heart_over_background": 79.04972853621285
+  },
+  "model_final:correct_windows": {
+   "median_r_T": 0.6963476538658142,
+   "median_r_2T": 0.6621829271316528,
+   "median_r_3T": 0.6433819532394409,
+   "share_r_3T_above_r_T": 0.11769991015274034,
+   "plain_share_r_3T_above_r_T": 0.0035938903863432167,
+   "median_power_third_over_heart": 0.04477371090213324,
+   "median_power_third_over_background": 3.432815474686483,
+   "median_power_heart_over_background": 78.43417121702825
+  },
+  "resample_only_final:one_third_windows": {
+   "median_r_T": 0.8156709969043732,
+   "median_r_2T": 0.7965266406536102,
+   "median_r_3T": 0.8950254321098328,
+   "share_r_3T_above_r_T": 0.8492063492063492,
+   "plain_share_r_3T_above_r_T": 0.21904761904761905,
+   "median_power_third_over_heart": 0.051045603995641634,
+   "median_power_third_over_background": 13.927361001948142,
+   "median_power_heart_over_background": 282.37826880293494
+  },
+  "resample_only_final:correct_windows": {
+   "median_r_T": 0.8504229784011841,
+   "median_r_2T": 0.8107424974441528,
+   "median_r_3T": 0.8508704900741577,
+   "share_r_3T_above_r_T": 0.44833782569631625,
+   "plain_share_r_3T_above_r_T": 0.042228212039532795,
+   "median_power_third_over_heart": 0.033326893358956985,
+   "median_power_third_over_background": 9.8479479667152,
+   "median_power_heart_over_background": 306.15196220724215
+  },
+  "model_one_pole_12hz:one_third_windows": {
+   "median_r_T": 0.610197126865387,
+   "median_r_2T": 0.5695627927780151,
+   "median_r_3T": 0.6176323890686035,
+   "share_r_3T_above_r_T": 0.6206349206349207,
+   "plain_share_r_3T_above_r_T": 0.173015873015873,
+   "median_power_third_over_heart": 0.04717296936749421,
+   "median_power_third_over_background": 1.8694253999725272,
+   "median_power_heart_over_background": 39.467176389891506
+  },
+  "model_one_pole_12hz:correct_windows": {
+   "median_r_T": 0.6171342134475708,
+   "median_r_2T": 0.5412606596946716,
+   "median_r_3T": 0.5020601749420166,
+   "share_r_3T_above_r_T": 0.11320754716981132,
+   "plain_share_r_3T_above_r_T": 0.0071877807726864335,
+   "median_power_third_over_heart": 0.038367107896527884,
+   "median_power_third_over_background": 1.39875288649895,
+   "median_power_heart_over_background": 38.74028168857501
+  }
+ },
+ "ECGPCG0052": {
+  "subject": "S017",
+  "scenario": "Exercise: Bruce protocol treadmill stress test",
+  "chosen_end_time_s": 760,
+  "reference_bpm_at_chosen": 143.75,
+  "estimate_at_chosen": 47.908023834228516,
+  "one_third_windows": 517,
+  "correct_windows": 433,
+  "model_final:one_third_windows": {
+   "median_r_T": 0.7380965948104858,
+   "median_r_2T": 0.7051662802696228,
+   "median_r_3T": 0.80721116065979,
+   "share_r_3T_above_r_T": 1.0,
+   "plain_share_r_3T_above_r_T": 0.37524177949709864,
+   "median_power_third_over_heart": 0.08491365118574298,
+   "median_power_third_over_background": 9.208032689393988,
+   "median_power_heart_over_background": 112.4454920120682
+  },
+  "model_final:correct_windows": {
+   "median_r_T": 0.4615076184272766,
+   "median_r_2T": 0.4272272288799286,
+   "median_r_3T": 0.39140844345092773,
+   "share_r_3T_above_r_T": 0.11316397228637413,
+   "plain_share_r_3T_above_r_T": 0.02771362586605081,
+   "median_power_third_over_heart": 0.1126955843860052,
+   "median_power_third_over_background": 4.694198651374526,
+   "median_power_heart_over_background": 36.283457679855445
+  },
+  "resample_only_final:one_third_windows": {
+   "median_r_T": 0.8558652997016907,
+   "median_r_2T": 0.8180025219917297,
+   "median_r_3T": 0.8804426193237305,
+   "share_r_3T_above_r_T": 0.5938104448742747,
+   "plain_share_r_3T_above_r_T": 0.029013539651837523,
+   "median_power_third_over_heart": 0.039989567597584916,
+   "median_power_third_over_background": 10.047630382863437,
+   "median_power_heart_over_background": 276.36373786007596
+  },
+  "resample_only_final:correct_windows": {
+   "median_r_T": 0.8366469144821167,
+   "median_r_2T": 0.7350379824638367,
+   "median_r_3T": 0.7069103717803955,
+   "share_r_3T_above_r_T": 0.08545034642032333,
+   "plain_share_r_3T_above_r_T": 0.004618937644341801,
+   "median_power_third_over_heart": 0.02629363903706344,
+   "median_power_third_over_background": 5.105609174054645,
+   "median_power_heart_over_background": 175.27844025992403
+  },
+  "model_one_pole_12hz:one_third_windows": {
+   "median_r_T": 0.6826361417770386,
+   "median_r_2T": 0.6460180282592773,
+   "median_r_3T": 0.6813226938247681,
+   "share_r_3T_above_r_T": 0.6847195357833655,
+   "plain_share_r_3T_above_r_T": 0.2572533849129594,
+   "median_power_third_over_heart": 0.06721121556186556,
+   "median_power_third_over_background": 3.44690866560965,
+   "median_power_heart_over_background": 55.99634258844557
+  },
+  "model_one_pole_12hz:correct_windows": {
+   "median_r_T": 0.3888806700706482,
+   "median_r_2T": 0.3237301707267761,
+   "median_r_3T": 0.29033997654914856,
+   "share_r_3T_above_r_T": 0.15935334872979215,
+   "plain_share_r_3T_above_r_T": 0.09930715935334873,
+   "median_power_third_over_heart": 0.09613723046074045,
+   "median_power_third_over_background": 1.7834431985934087,
+   "median_power_heart_over_background": 15.925174493508294
+  }
+ }
+}

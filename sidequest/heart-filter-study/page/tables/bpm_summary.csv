@@ -1,0 +1,8 @@
+Filter,"Mean error, clean windows (BPM)","Mean error, all windows (BPM)","Within tolerance, all windows (%)","Gross errors, all windows",Multiplications per sample
+No filter (Raw),0.42,4.22,93.7,16,0
+25–150 Hz gentle (design candidate BPM),0.30,0.69,99.6,1,10
+30–150 Hz gentle,0.30,0.35,100.0,0,10
+40–150 Hz gentle (recommended),0.30,0.35,100.0,0,10
+40–800 Hz gentle (design candidate Murmur),0.30,0.35,100.0,0,10
+100–800 Hz gentle (louder listening candidate),0.30,2.45,97.3,7,10
+"30–300 Hz elliptic, steep lower edge (best-ranked)",0.29,0.35,100.0,0,15

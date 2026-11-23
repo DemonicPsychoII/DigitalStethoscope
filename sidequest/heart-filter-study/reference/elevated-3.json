@@ -1,0 +1,1960 @@
+{
+ "name": "elevated-3",
+ "sample_rate_hz": 16000,
+ "discarded_seconds": 2.0,
+ "beat_mark": "S1 complex energy centroid: centre of mass of the squared 25-150 Hz Hilbert envelope (20 Hz low-pass) within +-50 ms, iterated from the consensus time; typically 20-40 ms after S1 onset",
+ "beat_times_s": [
+  2.09,
+  2.47,
+  2.8575,
+  3.2572,
+  3.6499,
+  4.0382,
+  4.4384,
+  4.8364,
+  5.2306,
+  5.6393,
+  6.0378,
+  6.4428,
+  6.8529,
+  7.2544,
+  7.6615,
+  8.0748,
+  8.4839,
+  8.8926,
+  9.3129,
+  9.727,
+  10.1437,
+  10.5637,
+  10.9854,
+  11.4037,
+  11.8255,
+  12.2459,
+  12.6717,
+  13.1033,
+  13.5166,
+  13.9481,
+  14.3771,
+  14.7923,
+  15.2151,
+  15.6422,
+  16.0465,
+  16.4556,
+  16.8827,
+  17.2987,
+  17.7175,
+  18.1343,
+  18.5657,
+  18.9716,
+  19.3903,
+  19.8116,
+  20.2418,
+  20.6647,
+  21.0945,
+  21.527,
+  21.9456,
+  22.3665,
+  22.7816,
+  23.2088,
+  23.6368,
+  24.0627,
+  24.4939,
+  24.929,
+  25.3614,
+  25.8098,
+  26.2543,
+  26.7023,
+  27.1504,
+  27.6183,
+  28.0553,
+  28.5106,
+  28.9583,
+  29.418,
+  29.8679,
+  30.3198,
+  30.7788,
+  31.2397,
+  31.6982,
+  32.1514,
+  32.6123,
+  33.0765,
+  33.5287,
+  33.9955,
+  34.4621,
+  34.9246,
+  35.4034,
+  35.8726,
+  36.3508,
+  36.825,
+  37.3142,
+  37.7981,
+  38.2909,
+  38.7994,
+  39.2686,
+  39.761,
+  40.2532,
+  40.7288,
+  41.2138,
+  41.7001,
+  42.1886,
+  42.6797,
+  43.1505,
+  43.6376,
+  44.1158,
+  44.6063,
+  45.0951,
+  45.5767,
+  46.1016,
+  46.6006,
+  47.1007,
+  47.6189,
+  48.1375,
+  48.6678,
+  49.1828,
+  49.7057,
+  50.2304,
+  50.7486,
+  51.2682,
+  51.7865,
+  52.3073,
+  52.8174,
+  53.3422,
+  53.8508,
+  54.3501,
+  54.8653,
+  55.3687,
+  55.8846,
+  56.4015,
+  56.8955,
+  57.4102,
+  57.9388,
+  58.5006,
+  59.0407,
+  59.5654
+ ],
+ "beat_confidence": [
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high",
+  "high"
+ ],
+ "methods": {
+  "A_envelope_peak_dynamic_programming": {
+   "beat_times_s": [
+    2.0763,
+    2.462,
+    2.8538,
+    3.2455,
+    3.6403,
+    4.0331,
+    4.4274,
+    4.8249,
+    5.225,
+    5.6285,
+    6.0336,
+    6.4382,
+    6.8409,
+    7.248,
+    7.6555,
+    8.0674,
+    8.478,
+    8.8891,
+    9.3013,
+    9.718,
+    10.1365,
+    10.5598,
+    10.9802,
+    11.3992,
+    11.818,
+    12.2394,
+    12.6623,
+    13.1181,
+    13.5118,
+    13.9312,
+    14.3573,
+    14.7798,
+    15.1973,
+    15.6456,
+    16.0344,
+    16.451,
+    16.8689,
+    17.2842,
+    17.7037,
+    18.1212,
+    18.5723,
+    18.9628,
+    19.3848,
+    19.807,
+    20.2258,
+    20.6523,
+    21.0767,
+    21.5418,
+    21.9294,
+    22.3531,
+    22.7748,
+    23.1984,
+    23.6189,
+    24.0482,
+    24.4796,
+    24.9162,
+    25.3563,
+    25.799,
+    26.2375,
+    26.6871,
+    27.1396,
+    27.6315,
+    28.0458,
+    28.4968,
+    28.943,
+    29.3997,
+    29.8572,
+    30.3193,
+    30.7731,
+    31.2259,
+    31.6779,
+    32.1393,
+    32.6013,
+    33.0624,
+    33.5249,
+    33.9869,
+    34.478,
+    34.912,
+    35.3887,
+    35.865,
+    36.3438,
+    36.8115,
+    37.3329,
+    37.7844,
+    38.2851,
+    38.8145,
+    39.2688,
+    39.7538,
+    40.2356,
+    40.7224,
+    41.2127,
+    41.7,
+    42.1806,
+    42.6589,
+    43.1442,
+    43.6321,
+    44.1151,
+    44.5923,
+    45.1154,
+    45.5716,
+    46.0846,
+    46.5891,
+    47.0931,
+    47.6034,
+    48.1306,
+    48.6588,
+    49.1804,
+    49.6936,
+    50.2127,
+    50.7449,
+    51.262,
+    51.7758,
+    52.3235,
+    52.804,
+    53.331,
+    53.844,
+    54.3483,
+    54.8471,
+    55.352,
+    55.8767,
+    56.3905,
+    56.8953,
+    57.4025,
+    57.9294,
+    58.4849,
+    59.0285,
+    59.5626
+   ],
+   "description": "Peaks of a log-compressed 25-150 Hz Hilbert envelope (zero-phase, 20 Hz low-pass) are candidates. A whole-recording dynamic programme over pairs of consecutive beats picks the sequence maximising peak prominence minus a penalty on beat-to-beat interval change; intervals limited to 0.3-1.5 s. No tempo prior."
+  },
+  "B_spectral_flux_tempo_tracking": {
+   "beat_times_s": [
+    2.06,
+    2.448,
+    2.84,
+    3.232,
+    3.628,
+    4.016,
+    4.412,
+    4.808,
+    5.212,
+    5.62,
+    6.016,
+    6.424,
+    6.828,
+    7.232,
+    7.644,
+    8.056,
+    8.464,
+    8.876,
+    9.288,
+    9.704,
+    10.124,
+    10.548,
+    10.968,
+    11.384,
+    11.804,
+    12.224,
+    12.652,
+    13.076,
+    13.5,
+    13.92,
+    14.344,
+    14.768,
+    15.188,
+    15.608,
+    16.024,
+    16.436,
+    16.848,
+    17.268,
+    17.688,
+    18.104,
+    18.532,
+    18.928,
+    19.372,
+    19.724,
+    20.212,
+    20.64,
+    21.068,
+    21.492,
+    21.916,
+    22.34,
+    22.76,
+    23.18,
+    23.604,
+    24.032,
+    24.468,
+    24.904,
+    25.344,
+    25.784,
+    26.224,
+    26.672,
+    27.124,
+    27.58,
+    27.976,
+    28.472,
+    28.928,
+    29.384,
+    29.84,
+    30.308,
+    30.72,
+    31.188,
+    31.66,
+    32.116,
+    32.588,
+    33.048,
+    33.508,
+    33.964,
+    34.428,
+    34.9,
+    35.376,
+    35.852,
+    36.328,
+    36.796,
+    37.272,
+    37.764,
+    38.268,
+    38.76,
+    39.252,
+    39.736,
+    40.22,
+    40.704,
+    41.2,
+    41.684,
+    42.164,
+    42.64,
+    43.132,
+    43.62,
+    44.1,
+    44.572,
+    45.056,
+    45.552,
+    46.068,
+    46.576,
+    47.068,
+    47.588,
+    48.112,
+    48.644,
+    49.164,
+    49.676,
+    50.192,
+    50.732,
+    51.252,
+    51.76,
+    52.268,
+    52.784,
+    53.316,
+    53.828,
+    54.332,
+    54.828,
+    55.34,
+    55.86,
+    56.3,
+    56.856,
+    57.388,
+    57.92,
+    58.464,
+    59.012,
+    59.548
+   ],
+   "description": "Spectral flux of a 20-400 Hz short-time Fourier transform (40 ms Hann, 4 ms hop). Biased short-time autocorrelation (5 s window) gives a tempogram over 0.3-1.5 s periods; a Viterbi path enforces period continuity over the whole recording. Beats are placed by tempo-guided dynamic programming on the flux (Ellis 2007) and refined to the local flux maximum. Raw marks; for the consensus they are shifted toward method A's cycle phase by -21 ms median (-24 to -14 ms)."
+  },
+  "C_cycle_template_matching": {
+   "beat_times_s": [
+    2.101,
+    2.4626,
+    2.8544,
+    3.2459,
+    3.6405,
+    4.0338,
+    4.4283,
+    4.8276,
+    5.2252,
+    5.6273,
+    6.0324,
+    6.4384,
+    6.8438,
+    7.2502,
+    7.655,
+    8.0664,
+    8.4766,
+    8.8897,
+    9.3026,
+    9.7193,
+    10.1365,
+    10.5579,
+    10.9786,
+    11.4003,
+    11.8195,
+    12.2411,
+    12.6629,
+    13.084,
+    13.5099,
+    13.9325,
+    14.3604,
+    14.7803,
+    15.1978,
+    15.6234,
+    16.033,
+    16.4499,
+    16.8699,
+    17.2841,
+    17.7045,
+    18.1231,
+    18.5436,
+    18.9588,
+    19.3826,
+    19.8028,
+    20.2271,
+    20.652,
+    21.0771,
+    21.5052,
+    21.9284,
+    22.3522,
+    22.7744,
+    23.1982,
+    23.6217,
+    24.0498,
+    24.4787,
+    24.9141,
+    25.3544,
+    25.7999,
+    26.2391,
+    26.6894,
+    27.1398,
+    27.5933,
+    28.0424,
+    28.4984,
+    28.9446,
+    29.4038,
+    29.8577,
+    30.3166,
+    30.7724,
+    31.2253,
+    31.6826,
+    32.1399,
+    32.5997,
+    33.0611,
+    33.5225,
+    33.9846,
+    34.4428,
+    34.9134,
+    35.3884,
+    35.8639,
+    36.3406,
+    36.8105,
+    37.2925,
+    37.7855,
+    38.2826,
+    38.7741,
+    39.2662,
+    39.7527,
+    40.238,
+    40.7207,
+    41.2085,
+    41.696,
+    42.1794,
+    42.6634,
+    43.1442,
+    43.6295,
+    44.1129,
+    44.5934,
+    45.0769,
+    45.571,
+    46.0847,
+    46.5899,
+    47.0936,
+    47.6072,
+    48.1294,
+    48.6579,
+    49.1798,
+    49.6964,
+    50.2172,
+    50.7449,
+    51.2604,
+    51.7787,
+    52.2876,
+    52.8062,
+    53.3304,
+    53.8427,
+    54.3497,
+    54.8531,
+    55.3579,
+    55.878,
+    56.3893,
+    56.8977,
+    57.4087,
+    57.9346,
+    58.4908,
+    59.0321,
+    59.5678
+   ],
+   "description": "Mean S1+S2 cycle template of the square-root-compressed 25-400 Hz envelope, built per 15 s block from beats where A and B agree. Normalised cross-correlation with the envelope (amplitude-invariant, so clipping-compressed beats still match); beats are correlation peaks above 0.45 at least 0.3 s apart. Raw marks; for the consensus they are shifted toward method A's cycle phase by -3 ms median (-5 to 2 ms)."
+  }
+ },
+ "rate_track": [
+  {
+   "time_s": 3,
+   "bpm": 153.99,
+   "bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 153.31,
+    "B_spectral_flux_tempo_tracking": 153.37,
+    "C_cycle_template_matching": 155.21
+   },
+   "spread_bpm": 1.9
+  },
+  {
+   "time_s": 4,
+   "bpm": 151.7,
+   "bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 151.82,
+    "B_spectral_flux_tempo_tracking": 151.77,
+    "C_cycle_template_matching": 151.85
+   },
+   "spread_bpm": 0.08
+  },
+  {
+   "time_s": 5,
+   "bpm": 150.76,
+   "bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 150.43,
+    "B_spectral_flux_tempo_tracking": 150.75,
+    "C_cycle_template_matching": 150.51
+   },
+   "spread_bpm": 0.32
+  },
+  {
+   "time_s": 6,
+   "bpm": 148.88,
+   "bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 148.56,
+    "B_spectral_flux_tempo_tracking": 148.51,
+    "C_cycle_template_matching": 148.6
+   },
+   "spread_bpm": 0.09
+  },
+  {
+   "time_s": 7,
+   "bpm": 147.81,
+   "bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 147.61,
+    "B_spectral_flux_tempo_tracking": 147.78,
+    "C_cycle_template_matching": 147.59
+   },
+   "spread_bpm": 0.19
+  },
+  {
+   "time_s": 8,
+   "bpm": 146.34,
+   "bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 146.31,
+    "B_spectral_flux_tempo_tracking": 146.34,
+    "C_cycle_template_matching": 146.41
+   },
+   "spread_bpm": 0.1
+  },
+  {
+   "time_s": 9,
+   "bpm": 145.04,
+   "bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 145.1,
+    "B_spectral_flux_tempo_tracking": 145.16,
+    "C_cycle_template_matching": 145.07
+   },
+   "spread_bpm": 0.09
+  },
+  {
+   "time_s": 10,
+   "bpm": 143.36,
+   "bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 143.42,
+    "B_spectral_flux_tempo_tracking": 143.54,
+    "C_cycle_template_matching": 143.39
+   },
+   "spread_bpm": 0.15
+  },
+  {
+   "time_s": 11,
+   "bpm": 142.92,
+   "bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 142.78,
+    "B_spectral_flux_tempo_tracking": 142.86,
+    "C_cycle_template_matching": 142.76
+   },
+   "spread_bpm": 0.1
+  },
+  {
+   "time_s": 12,
+   "bpm": 141.65,
+   "bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 140.33,
+    "B_spectral_flux_tempo_tracking": 142.31,
+    "C_cycle_template_matching": 142.49
+   },
+   "spread_bpm": 2.16
+  },
+  {
+   "time_s": 13,
+   "bpm": 141.09,
+   "bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 141.77,
+    "B_spectral_flux_tempo_tracking": 141.73,
+    "C_cycle_template_matching": 141.68
+   },
+   "spread_bpm": 0.09
+  },
+  {
+   "time_s": 14,
+   "bpm": 141.54,
+   "bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 142.01,
+    "B_spectral_flux_tempo_tracking": 141.96,
+    "C_cycle_template_matching": 142.02
+   },
+   "spread_bpm": 0.06
+  },
+  {
+   "time_s": 15,
+   "bpm": 142.97,
+   "bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 142.64,
+    "B_spectral_flux_tempo_tracking": 142.59,
+    "C_cycle_template_matching": 142.82
+   },
+   "spread_bpm": 0.23
+  },
+  {
+   "time_s": 16,
+   "bpm": 143.64,
+   "bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 143.75,
+    "B_spectral_flux_tempo_tracking": 144.0,
+    "C_cycle_template_matching": 143.78
+   },
+   "spread_bpm": 0.25
+  },
+  {
+   "time_s": 17,
+   "bpm": 144.46,
+   "bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 145.42,
+    "B_spectral_flux_tempo_tracking": 144.23,
+    "C_cycle_template_matching": 144.01
+   },
+   "spread_bpm": 1.41
+  },
+  {
+   "time_s": 18,
+   "bpm": 143.57,
+   "bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 143.09,
+    "B_spectral_flux_tempo_tracking": 142.63,
+    "C_cycle_template_matching": 143.27
+   },
+   "spread_bpm": 0.64
+  },
+  {
+   "time_s": 19,
+   "bpm": 142.61,
+   "bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 142.74,
+    "B_spectral_flux_tempo_tracking": 142.63,
+    "C_cycle_template_matching": 142.71
+   },
+   "spread_bpm": 0.11
+  },
+  {
+   "time_s": 20,
+   "bpm": 141.32,
+   "bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 141.92,
+    "B_spectral_flux_tempo_tracking": 140.19,
+    "C_cycle_template_matching": 141.62
+   },
+   "spread_bpm": 1.73
+  },
+  {
+   "time_s": 21,
+   "bpm": 140.9,
+   "bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 141.39,
+    "B_spectral_flux_tempo_tracking": 137.61,
+    "C_cycle_template_matching": 141.21
+   },
+   "spread_bpm": 3.78
+  },
+  {
+   "time_s": 22,
+   "bpm": 141.5,
+   "bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 141.39,
+    "B_spectral_flux_tempo_tracking": 141.73,
+    "C_cycle_template_matching": 141.39
+   },
+   "spread_bpm": 0.34
+  },
+  {
+   "time_s": 23,
+   "bpm": 141.7,
+   "bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 141.59,
+    "B_spectral_flux_tempo_tracking": 141.78,
+    "C_cycle_template_matching": 141.42
+   },
+   "spread_bpm": 0.36
+  },
+  {
+   "time_s": 24,
+   "bpm": 139.55,
+   "bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 139.45,
+    "B_spectral_flux_tempo_tracking": 139.32,
+    "C_cycle_template_matching": 139.53
+   },
+   "spread_bpm": 0.21
+  },
+  {
+   "time_s": 25,
+   "bpm": 137.54,
+   "bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 137.48,
+    "B_spectral_flux_tempo_tracking": 137.4,
+    "C_cycle_template_matching": 137.54
+   },
+   "spread_bpm": 0.14
+  },
+  {
+   "time_s": 26,
+   "bpm": 135.05,
+   "bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 134.93,
+    "B_spectral_flux_tempo_tracking": 135.14,
+    "C_cycle_template_matching": 134.78
+   },
+   "spread_bpm": 0.36
+  },
+  {
+   "time_s": 27,
+   "bpm": 133.61,
+   "bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 133.52,
+    "B_spectral_flux_tempo_tracking": 133.93,
+    "C_cycle_template_matching": 133.78
+   },
+   "spread_bpm": 0.41
+  },
+  {
+   "time_s": 28,
+   "bpm": 132.56,
+   "bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 132.71,
+    "B_spectral_flux_tempo_tracking": 132.74,
+    "C_cycle_template_matching": 132.63
+   },
+   "spread_bpm": 0.11
+  },
+  {
+   "time_s": 29,
+   "bpm": 133.26,
+   "bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 133.93,
+    "B_spectral_flux_tempo_tracking": 128.64,
+    "C_cycle_template_matching": 132.19
+   },
+   "spread_bpm": 5.29
+  },
+  {
+   "time_s": 30,
+   "bpm": 131.5,
+   "bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 131.41,
+    "B_spectral_flux_tempo_tracking": 132.74,
+    "C_cycle_template_matching": 131.54
+   },
+   "spread_bpm": 1.33
+  },
+  {
+   "time_s": 31,
+   "bpm": 131.38,
+   "bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 131.46,
+    "B_spectral_flux_tempo_tracking": 131.81,
+    "C_cycle_template_matching": 131.46
+   },
+   "spread_bpm": 0.35
+  },
+  {
+   "time_s": 32,
+   "bpm": 130.57,
+   "bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 131.04,
+    "B_spectral_flux_tempo_tracking": 128.87,
+    "C_cycle_template_matching": 131.08
+   },
+   "spread_bpm": 2.21
+  },
+  {
+   "time_s": 33,
+   "bpm": 130.25,
+   "bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 128.57,
+    "B_spectral_flux_tempo_tracking": 130.06,
+    "C_cycle_template_matching": 130.42
+   },
+   "spread_bpm": 1.85
+  },
+  {
+   "time_s": 34,
+   "bpm": 128.98,
+   "bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 129.15,
+    "B_spectral_flux_tempo_tracking": 129.12,
+    "C_cycle_template_matching": 129.1
+   },
+   "spread_bpm": 0.05
+  },
+  {
+   "time_s": 35,
+   "bpm": 127.38,
+   "bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 127.28,
+    "B_spectral_flux_tempo_tracking": 126.9,
+    "C_cycle_template_matching": 127.34
+   },
+   "spread_bpm": 0.44
+  },
+  {
+   "time_s": 36,
+   "bpm": 125.55,
+   "bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 123.92,
+    "B_spectral_flux_tempo_tracking": 126.48,
+    "C_cycle_template_matching": 126.09
+   },
+   "spread_bpm": 2.56
+  },
+  {
+   "time_s": 37,
+   "bpm": 124.05,
+   "bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 123.96,
+    "B_spectral_flux_tempo_tracking": 124.17,
+    "C_cycle_template_matching": 124.04
+   },
+   "spread_bpm": 0.21
+  },
+  {
+   "time_s": 38,
+   "bpm": 122.77,
+   "bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 122.09,
+    "B_spectral_flux_tempo_tracking": 122.15,
+    "C_cycle_template_matching": 122.17
+   },
+   "spread_bpm": 0.08
+  },
+  {
+   "time_s": 39,
+   "bpm": 122.2,
+   "bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 122.39,
+    "B_spectral_flux_tempo_tracking": 122.15,
+    "C_cycle_template_matching": 122.32
+   },
+   "spread_bpm": 0.24
+  },
+  {
+   "time_s": 40,
+   "bpm": 124.25,
+   "bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 125.09,
+    "B_spectral_flux_tempo_tracking": 122.95,
+    "C_cycle_template_matching": 123.23
+   },
+   "spread_bpm": 2.14
+  },
+  {
+   "time_s": 41,
+   "bpm": 123.58,
+   "bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 123.62,
+    "B_spectral_flux_tempo_tracking": 123.56,
+    "C_cycle_template_matching": 123.62
+   },
+   "spread_bpm": 0.06
+  },
+  {
+   "time_s": 42,
+   "bpm": 123.88,
+   "bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 123.88,
+    "B_spectral_flux_tempo_tracking": 123.56,
+    "C_cycle_template_matching": 123.79
+   },
+   "spread_bpm": 0.32
+  },
+  {
+   "time_s": 43,
+   "bpm": 124.19,
+   "bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 124.22,
+    "B_spectral_flux_tempo_tracking": 124.17,
+    "C_cycle_template_matching": 124.12
+   },
+   "spread_bpm": 0.1
+  },
+  {
+   "time_s": 44,
+   "bpm": 124.2,
+   "bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 122.12,
+    "B_spectral_flux_tempo_tracking": 124.17,
+    "C_cycle_template_matching": 124.3
+   },
+   "spread_bpm": 2.18
+  },
+  {
+   "time_s": 45,
+   "bpm": 121.75,
+   "bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 122.32,
+    "B_spectral_flux_tempo_tracking": 122.55,
+    "C_cycle_template_matching": 122.19
+   },
+   "spread_bpm": 0.36
+  },
+  {
+   "time_s": 46,
+   "bpm": 120.27,
+   "bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 119.96,
+    "B_spectral_flux_tempo_tracking": 120.19,
+    "C_cycle_template_matching": 119.99
+   },
+   "spread_bpm": 0.23
+  },
+  {
+   "time_s": 47,
+   "bpm": 117.15,
+   "bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 117.23,
+    "B_spectral_flux_tempo_tracking": 117.19,
+    "C_cycle_template_matching": 117.26
+   },
+   "spread_bpm": 0.07
+  },
+  {
+   "time_s": 48,
+   "bpm": 116.18,
+   "bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 115.77,
+    "B_spectral_flux_tempo_tracking": 115.92,
+    "C_cycle_template_matching": 115.84
+   },
+   "spread_bpm": 0.15
+  },
+  {
+   "time_s": 49,
+   "bpm": 114.88,
+   "bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 114.97,
+    "B_spectral_flux_tempo_tracking": 115.21,
+    "C_cycle_template_matching": 114.94
+   },
+   "spread_bpm": 0.27
+  },
+  {
+   "time_s": 50,
+   "bpm": 115.37,
+   "bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 115.24,
+    "B_spectral_flux_tempo_tracking": 115.03,
+    "C_cycle_template_matching": 115.27
+   },
+   "spread_bpm": 0.24
+  },
+  {
+   "time_s": 51,
+   "bpm": 115.31,
+   "bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 114.07,
+    "B_spectral_flux_tempo_tracking": 115.74,
+    "C_cycle_template_matching": 115.78
+   },
+   "spread_bpm": 1.71
+  },
+  {
+   "time_s": 52,
+   "bpm": 115.67,
+   "bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 116.0,
+    "B_spectral_flux_tempo_tracking": 116.1,
+    "C_cycle_template_matching": 116.03
+   },
+   "spread_bpm": 0.1
+  },
+  {
+   "time_s": 53,
+   "bpm": 117.02,
+   "bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 116.62,
+    "B_spectral_flux_tempo_tracking": 116.64,
+    "C_cycle_template_matching": 116.68
+   },
+   "spread_bpm": 0.06
+  },
+  {
+   "time_s": 54,
+   "bpm": 117.59,
+   "bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 117.74,
+    "B_spectral_flux_tempo_tracking": 117.37,
+    "C_cycle_template_matching": 117.57
+   },
+   "spread_bpm": 0.37
+  },
+  {
+   "time_s": 55,
+   "bpm": 117.61,
+   "bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 117.81,
+    "B_spectral_flux_tempo_tracking": 121.36,
+    "C_cycle_template_matching": 117.81
+   },
+   "spread_bpm": 3.55
+  },
+  {
+   "time_s": 56,
+   "bpm": 117.89,
+   "bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 117.4,
+    "B_spectral_flux_tempo_tracking": 117.19,
+    "C_cycle_template_matching": 117.39
+   },
+   "spread_bpm": 0.21
+  },
+  {
+   "time_s": 57,
+   "bpm": 114.68,
+   "bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 115.02,
+    "B_spectral_flux_tempo_tracking": 115.21,
+    "C_cycle_template_matching": 114.82
+   },
+   "spread_bpm": 0.39
+  },
+  {
+   "time_s": 58,
+   "bpm": 111.88,
+   "bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 112.51,
+    "B_spectral_flux_tempo_tracking": 111.32,
+    "C_cycle_template_matching": 112.44
+   },
+   "spread_bpm": 1.19
+  },
+  {
+   "time_s": 59,
+   "bpm": 110.66,
+   "bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 110.21,
+    "B_spectral_flux_tempo_tracking": 110.57,
+    "C_cycle_template_matching": 110.21
+   },
+   "spread_bpm": 0.36
+  },
+  {
+   "time_s": 60,
+   "bpm": 112.7,
+   "bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 111.35,
+    "B_spectral_flux_tempo_tracking": 110.7,
+    "C_cycle_template_matching": 111.42
+   },
+   "spread_bpm": 0.72
+  }
+ ],
+ "windows": [
+  {
+   "end_time_s": 10,
+   "reference_bpm": 149.27,
+   "reference_bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 149.18,
+    "B_spectral_flux_tempo_tracking": 149.14,
+    "C_cycle_template_matching": 149.64
+   },
+   "method_spread_bpm": 0.5,
+   "beats_in_window": 20,
+   "rate_change_in_window_bpm": 15.16,
+   "reliable": true,
+   "unreliable_reason": null
+  },
+  {
+   "end_time_s": 11,
+   "reference_bpm": 147.51,
+   "reference_bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 147.39,
+    "B_spectral_flux_tempo_tracking": 147.36,
+    "C_cycle_template_matching": 147.43
+   },
+   "method_spread_bpm": 0.07,
+   "beats_in_window": 20,
+   "rate_change_in_window_bpm": 12.24,
+   "reliable": true,
+   "unreliable_reason": null
+  },
+  {
+   "end_time_s": 12,
+   "reference_bpm": 146.39,
+   "reference_bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 146.44,
+    "B_spectral_flux_tempo_tracking": 146.38,
+    "C_cycle_template_matching": 146.42
+   },
+   "method_spread_bpm": 0.06,
+   "beats_in_window": 20,
+   "rate_change_in_window_bpm": 9.99,
+   "reliable": true,
+   "unreliable_reason": null
+  },
+  {
+   "end_time_s": 13,
+   "reference_bpm": 145.14,
+   "reference_bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 145.21,
+    "B_spectral_flux_tempo_tracking": 145.16,
+    "C_cycle_template_matching": 145.21
+   },
+   "method_spread_bpm": 0.05,
+   "beats_in_window": 19,
+   "rate_change_in_window_bpm": 9.64,
+   "reliable": true,
+   "unreliable_reason": null
+  },
+  {
+   "end_time_s": 14,
+   "reference_bpm": 144.12,
+   "reference_bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 144.35,
+    "B_spectral_flux_tempo_tracking": 144.23,
+    "C_cycle_template_matching": 144.3
+   },
+   "method_spread_bpm": 0.12,
+   "beats_in_window": 20,
+   "rate_change_in_window_bpm": 10.44,
+   "reliable": true,
+   "unreliable_reason": null
+  },
+  {
+   "end_time_s": 15,
+   "reference_bpm": 143.28,
+   "reference_bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 143.39,
+    "B_spectral_flux_tempo_tracking": 143.31,
+    "C_cycle_template_matching": 143.42
+   },
+   "method_spread_bpm": 0.11,
+   "beats_in_window": 19,
+   "rate_change_in_window_bpm": 8.36,
+   "reliable": true,
+   "unreliable_reason": null
+  },
+  {
+   "end_time_s": 16,
+   "reference_bpm": 142.72,
+   "reference_bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 142.51,
+    "B_spectral_flux_tempo_tracking": 143.01,
+    "C_cycle_template_matching": 142.91
+   },
+   "method_spread_bpm": 0.5,
+   "beats_in_window": 19,
+   "rate_change_in_window_bpm": 7.8,
+   "reliable": true,
+   "unreliable_reason": null
+  },
+  {
+   "end_time_s": 17,
+   "reference_bpm": 142.67,
+   "reference_bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 142.71,
+    "B_spectral_flux_tempo_tracking": 142.86,
+    "C_cycle_template_matching": 142.72
+   },
+   "method_spread_bpm": 0.15,
+   "beats_in_window": 19,
+   "rate_change_in_window_bpm": 9.39,
+   "reliable": true,
+   "unreliable_reason": null
+  },
+  {
+   "end_time_s": 18,
+   "reference_bpm": 142.6,
+   "reference_bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 142.72,
+    "B_spectral_flux_tempo_tracking": 142.78,
+    "C_cycle_template_matching": 142.71
+   },
+   "method_spread_bpm": 0.07,
+   "beats_in_window": 19,
+   "rate_change_in_window_bpm": 9.39,
+   "reliable": true,
+   "unreliable_reason": null
+  },
+  {
+   "end_time_s": 19,
+   "reference_bpm": 142.71,
+   "reference_bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 142.79,
+    "B_spectral_flux_tempo_tracking": 143.16,
+    "C_cycle_template_matching": 142.89
+   },
+   "method_spread_bpm": 0.37,
+   "beats_in_window": 19,
+   "rate_change_in_window_bpm": 9.39,
+   "reliable": true,
+   "unreliable_reason": null
+  },
+  {
+   "end_time_s": 20,
+   "reference_bpm": 142.75,
+   "reference_bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 142.71,
+    "B_spectral_flux_tempo_tracking": 144.0,
+    "C_cycle_template_matching": 142.82
+   },
+   "method_spread_bpm": 1.29,
+   "beats_in_window": 19,
+   "rate_change_in_window_bpm": 9.39,
+   "reliable": true,
+   "unreliable_reason": null
+  },
+  {
+   "end_time_s": 21,
+   "reference_bpm": 142.83,
+   "reference_bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 143.35,
+    "B_spectral_flux_tempo_tracking": 142.78,
+    "C_cycle_template_matching": 142.71
+   },
+   "method_spread_bpm": 0.64,
+   "beats_in_window": 19,
+   "rate_change_in_window_bpm": 9.38,
+   "reliable": true,
+   "unreliable_reason": null
+  },
+  {
+   "end_time_s": 22,
+   "reference_bpm": 142.7,
+   "reference_bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 142.63,
+    "B_spectral_flux_tempo_tracking": 142.63,
+    "C_cycle_template_matching": 142.71
+   },
+   "method_spread_bpm": 0.08,
+   "beats_in_window": 19,
+   "rate_change_in_window_bpm": 9.7,
+   "reliable": true,
+   "unreliable_reason": null
+  },
+  {
+   "end_time_s": 23,
+   "reference_bpm": 142.73,
+   "reference_bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 142.53,
+    "B_spectral_flux_tempo_tracking": 142.63,
+    "C_cycle_template_matching": 142.54
+   },
+   "method_spread_bpm": 0.1,
+   "beats_in_window": 19,
+   "rate_change_in_window_bpm": 9.7,
+   "reliable": true,
+   "unreliable_reason": null
+  },
+  {
+   "end_time_s": 24,
+   "reference_bpm": 142.29,
+   "reference_bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 142.39,
+    "B_spectral_flux_tempo_tracking": 142.48,
+    "C_cycle_template_matching": 142.32
+   },
+   "method_spread_bpm": 0.16,
+   "beats_in_window": 19,
+   "rate_change_in_window_bpm": 9.13,
+   "reliable": true,
+   "unreliable_reason": null
+  },
+  {
+   "end_time_s": 25,
+   "reference_bpm": 141.54,
+   "reference_bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 141.51,
+    "B_spectral_flux_tempo_tracking": 141.44,
+    "C_cycle_template_matching": 141.55
+   },
+   "method_spread_bpm": 0.11,
+   "beats_in_window": 19,
+   "rate_change_in_window_bpm": 9.94,
+   "reliable": true,
+   "unreliable_reason": null
+  },
+  {
+   "end_time_s": 26,
+   "reference_bpm": 140.71,
+   "reference_bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 140.67,
+    "B_spectral_flux_tempo_tracking": 140.62,
+    "C_cycle_template_matching": 140.68
+   },
+   "method_spread_bpm": 0.06,
+   "beats_in_window": 19,
+   "rate_change_in_window_bpm": 14.05,
+   "reliable": true,
+   "unreliable_reason": null
+  },
+  {
+   "end_time_s": 27,
+   "reference_bpm": 139.5,
+   "reference_bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 139.68,
+    "B_spectral_flux_tempo_tracking": 139.73,
+    "C_cycle_template_matching": 139.6
+   },
+   "method_spread_bpm": 0.13,
+   "beats_in_window": 18,
+   "rate_change_in_window_bpm": 10.76,
+   "reliable": true,
+   "unreliable_reason": null
+  },
+  {
+   "end_time_s": 28,
+   "reference_bpm": 138.28,
+   "reference_bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 137.73,
+    "B_spectral_flux_tempo_tracking": 139.1,
+    "C_cycle_template_matching": 138.47
+   },
+   "method_spread_bpm": 1.37,
+   "beats_in_window": 18,
+   "rate_change_in_window_bpm": 16.3,
+   "reliable": true,
+   "unreliable_reason": null
+  },
+  {
+   "end_time_s": 29,
+   "reference_bpm": 137.34,
+   "reference_bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 137.3,
+    "B_spectral_flux_tempo_tracking": 137.4,
+    "C_cycle_template_matching": 137.27
+   },
+   "method_spread_bpm": 0.13,
+   "beats_in_window": 19,
+   "rate_change_in_window_bpm": 16.3,
+   "reliable": true,
+   "unreliable_reason": null
+  },
+  {
+   "end_time_s": 30,
+   "reference_bpm": 135.98,
+   "reference_bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 135.93,
+    "B_spectral_flux_tempo_tracking": 136.0,
+    "C_cycle_template_matching": 135.9
+   },
+   "method_spread_bpm": 0.1,
+   "beats_in_window": 18,
+   "rate_change_in_window_bpm": 16.3,
+   "reliable": true,
+   "unreliable_reason": null
+  },
+  {
+   "end_time_s": 31,
+   "reference_bpm": 134.74,
+   "reference_bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 134.66,
+    "B_spectral_flux_tempo_tracking": 135.28,
+    "C_cycle_template_matching": 134.67
+   },
+   "method_spread_bpm": 0.62,
+   "beats_in_window": 18,
+   "rate_change_in_window_bpm": 12.61,
+   "reliable": true,
+   "unreliable_reason": null
+  },
+  {
+   "end_time_s": 32,
+   "reference_bpm": 133.59,
+   "reference_bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 133.69,
+    "B_spectral_flux_tempo_tracking": 133.72,
+    "C_cycle_template_matching": 133.63
+   },
+   "method_spread_bpm": 0.09,
+   "beats_in_window": 18,
+   "rate_change_in_window_bpm": 10.92,
+   "reliable": true,
+   "unreliable_reason": null
+  },
+  {
+   "end_time_s": 33,
+   "reference_bpm": 132.4,
+   "reference_bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 132.51,
+    "B_spectral_flux_tempo_tracking": 132.52,
+    "C_cycle_template_matching": 132.5
+   },
+   "method_spread_bpm": 0.02,
+   "beats_in_window": 17,
+   "rate_change_in_window_bpm": 9.06,
+   "reliable": true,
+   "unreliable_reason": null
+  },
+  {
+   "end_time_s": 34,
+   "reference_bpm": 131.76,
+   "reference_bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 131.62,
+    "B_spectral_flux_tempo_tracking": 131.78,
+    "C_cycle_template_matching": 131.69
+   },
+   "method_spread_bpm": 0.16,
+   "beats_in_window": 18,
+   "rate_change_in_window_bpm": 9.06,
+   "reliable": true,
+   "unreliable_reason": null
+  },
+  {
+   "end_time_s": 35,
+   "reference_bpm": 131.2,
+   "reference_bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 131.23,
+    "B_spectral_flux_tempo_tracking": 131.17,
+    "C_cycle_template_matching": 131.21
+   },
+   "method_spread_bpm": 0.06,
+   "beats_in_window": 18,
+   "rate_change_in_window_bpm": 9.06,
+   "reliable": true,
+   "unreliable_reason": null
+  },
+  {
+   "end_time_s": 36,
+   "reference_bpm": 130.48,
+   "reference_bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 130.45,
+    "B_spectral_flux_tempo_tracking": 130.08,
+    "C_cycle_template_matching": 130.41
+   },
+   "method_spread_bpm": 0.37,
+   "beats_in_window": 18,
+   "rate_change_in_window_bpm": 8.68,
+   "reliable": true,
+   "unreliable_reason": null
+  },
+  {
+   "end_time_s": 37,
+   "reference_bpm": 129.61,
+   "reference_bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 129.52,
+    "B_spectral_flux_tempo_tracking": 129.52,
+    "C_cycle_template_matching": 129.61
+   },
+   "method_spread_bpm": 0.09,
+   "beats_in_window": 17,
+   "rate_change_in_window_bpm": 8.05,
+   "reliable": true,
+   "unreliable_reason": null
+  },
+  {
+   "end_time_s": 38,
+   "reference_bpm": 128.37,
+   "reference_bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 128.6,
+    "B_spectral_flux_tempo_tracking": 128.76,
+    "C_cycle_template_matching": 128.53
+   },
+   "method_spread_bpm": 0.23,
+   "beats_in_window": 17,
+   "rate_change_in_window_bpm": 10.03,
+   "reliable": true,
+   "unreliable_reason": null
+  },
+  {
+   "end_time_s": 39,
+   "reference_bpm": 126.99,
+   "reference_bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 126.51,
+    "B_spectral_flux_tempo_tracking": 126.78,
+    "C_cycle_template_matching": 127.17
+   },
+   "method_spread_bpm": 0.66,
+   "beats_in_window": 17,
+   "rate_change_in_window_bpm": 14.7,
+   "reliable": true,
+   "unreliable_reason": null
+  },
+  {
+   "end_time_s": 40,
+   "reference_bpm": 126.16,
+   "reference_bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 126.08,
+    "B_spectral_flux_tempo_tracking": 125.98,
+    "C_cycle_template_matching": 126.1
+   },
+   "method_spread_bpm": 0.12,
+   "beats_in_window": 17,
+   "rate_change_in_window_bpm": 14.7,
+   "reliable": true,
+   "unreliable_reason": null
+  },
+  {
+   "end_time_s": 41,
+   "reference_bpm": 125.45,
+   "reference_bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 125.33,
+    "B_spectral_flux_tempo_tracking": 125.39,
+    "C_cycle_template_matching": 125.33
+   },
+   "method_spread_bpm": 0.06,
+   "beats_in_window": 17,
+   "rate_change_in_window_bpm": 14.7,
+   "reliable": true,
+   "unreliable_reason": null
+  },
+  {
+   "end_time_s": 42,
+   "reference_bpm": 124.34,
+   "reference_bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 124.62,
+    "B_spectral_flux_tempo_tracking": 124.04,
+    "C_cycle_template_matching": 124.08
+   },
+   "method_spread_bpm": 0.58,
+   "beats_in_window": 16,
+   "rate_change_in_window_bpm": 11.74,
+   "reliable": true,
+   "unreliable_reason": null
+  },
+  {
+   "end_time_s": 43,
+   "reference_bpm": 123.69,
+   "reference_bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 123.79,
+    "B_spectral_flux_tempo_tracking": 123.9,
+    "C_cycle_template_matching": 123.71
+   },
+   "method_spread_bpm": 0.19,
+   "beats_in_window": 16,
+   "rate_change_in_window_bpm": 9.9,
+   "reliable": true,
+   "unreliable_reason": null
+  },
+  {
+   "end_time_s": 44,
+   "reference_bpm": 123.51,
+   "reference_bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 123.49,
+    "B_spectral_flux_tempo_tracking": 123.42,
+    "C_cycle_template_matching": 123.47
+   },
+   "method_spread_bpm": 0.07,
+   "beats_in_window": 16,
+   "rate_change_in_window_bpm": 9.88,
+   "reliable": true,
+   "unreliable_reason": null
+  },
+  {
+   "end_time_s": 45,
+   "reference_bpm": 123.42,
+   "reference_bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 123.98,
+    "B_spectral_flux_tempo_tracking": 123.29,
+    "C_cycle_template_matching": 123.27
+   },
+   "method_spread_bpm": 0.71,
+   "beats_in_window": 16,
+   "rate_change_in_window_bpm": 9.88,
+   "reliable": true,
+   "unreliable_reason": null
+  },
+  {
+   "end_time_s": 46,
+   "reference_bpm": 123.53,
+   "reference_bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 123.52,
+    "B_spectral_flux_tempo_tracking": 123.56,
+    "C_cycle_template_matching": 123.48
+   },
+   "method_spread_bpm": 0.08,
+   "beats_in_window": 16,
+   "rate_change_in_window_bpm": 9.88,
+   "reliable": true,
+   "unreliable_reason": null
+  },
+  {
+   "end_time_s": 47,
+   "reference_bpm": 122.75,
+   "reference_bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 122.95,
+    "B_spectral_flux_tempo_tracking": 122.88,
+    "C_cycle_template_matching": 122.89
+   },
+   "method_spread_bpm": 0.07,
+   "beats_in_window": 16,
+   "rate_change_in_window_bpm": 13.15,
+   "reliable": true,
+   "unreliable_reason": null
+  },
+  {
+   "end_time_s": 48,
+   "reference_bpm": 122.19,
+   "reference_bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 122.15,
+    "B_spectral_flux_tempo_tracking": 122.15,
+    "C_cycle_template_matching": 122.13
+   },
+   "method_spread_bpm": 0.02,
+   "beats_in_window": 16,
+   "rate_change_in_window_bpm": 13.15,
+   "reliable": true,
+   "unreliable_reason": null
+  },
+  {
+   "end_time_s": 49,
+   "reference_bpm": 120.74,
+   "reference_bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 120.87,
+    "B_spectral_flux_tempo_tracking": 120.9,
+    "C_cycle_template_matching": 120.82
+   },
+   "method_spread_bpm": 0.08,
+   "beats_in_window": 16,
+   "rate_change_in_window_bpm": 14.32,
+   "reliable": true,
+   "unreliable_reason": null
+  },
+  {
+   "end_time_s": 50,
+   "reference_bpm": 119.73,
+   "reference_bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 119.79,
+    "B_spectral_flux_tempo_tracking": 119.81,
+    "C_cycle_template_matching": 119.73
+   },
+   "method_spread_bpm": 0.08,
+   "beats_in_window": 16,
+   "rate_change_in_window_bpm": 14.32,
+   "reliable": true,
+   "unreliable_reason": null
+  },
+  {
+   "end_time_s": 51,
+   "reference_bpm": 118.45,
+   "reference_bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 118.41,
+    "B_spectral_flux_tempo_tracking": 118.42,
+    "C_cycle_template_matching": 118.41
+   },
+   "method_spread_bpm": 0.01,
+   "beats_in_window": 16,
+   "rate_change_in_window_bpm": 12.33,
+   "reliable": true,
+   "unreliable_reason": null
+  },
+  {
+   "end_time_s": 52,
+   "reference_bpm": 117.33,
+   "reference_bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 117.48,
+    "B_spectral_flux_tempo_tracking": 117.49,
+    "C_cycle_template_matching": 117.4
+   },
+   "method_spread_bpm": 0.09,
+   "beats_in_window": 16,
+   "rate_change_in_window_bpm": 11.45,
+   "reliable": true,
+   "unreliable_reason": null
+  },
+  {
+   "end_time_s": 53,
+   "reference_bpm": 116.55,
+   "reference_bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 117.06,
+    "B_spectral_flux_tempo_tracking": 116.46,
+    "C_cycle_template_matching": 116.44
+   },
+   "method_spread_bpm": 0.62,
+   "beats_in_window": 16,
+   "rate_change_in_window_bpm": 11.45,
+   "reliable": true,
+   "unreliable_reason": null
+  },
+  {
+   "end_time_s": 54,
+   "reference_bpm": 116.14,
+   "reference_bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 115.99,
+    "B_spectral_flux_tempo_tracking": 115.98,
+    "C_cycle_template_matching": 116.01
+   },
+   "method_spread_bpm": 0.03,
+   "beats_in_window": 16,
+   "rate_change_in_window_bpm": 7.09,
+   "reliable": true,
+   "unreliable_reason": null
+  },
+  {
+   "end_time_s": 55,
+   "reference_bpm": 115.91,
+   "reference_bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 116.07,
+    "B_spectral_flux_tempo_tracking": 115.98,
+    "C_cycle_template_matching": 115.99
+   },
+   "method_spread_bpm": 0.09,
+   "beats_in_window": 16,
+   "rate_change_in_window_bpm": 7.04,
+   "reliable": true,
+   "unreliable_reason": null
+  },
+  {
+   "end_time_s": 56,
+   "reference_bpm": 116.17,
+   "reference_bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 116.19,
+    "B_spectral_flux_tempo_tracking": 116.16,
+    "C_cycle_template_matching": 116.15
+   },
+   "method_spread_bpm": 0.04,
+   "beats_in_window": 16,
+   "rate_change_in_window_bpm": 7.04,
+   "reliable": true,
+   "unreliable_reason": null
+  },
+  {
+   "end_time_s": 57,
+   "reference_bpm": 116.69,
+   "reference_bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 116.66,
+    "B_spectral_flux_tempo_tracking": 117.0,
+    "C_cycle_template_matching": 116.61
+   },
+   "method_spread_bpm": 0.39,
+   "beats_in_window": 16,
+   "rate_change_in_window_bpm": 7.14,
+   "reliable": true,
+   "unreliable_reason": null
+  },
+  {
+   "end_time_s": 58,
+   "reference_bpm": 116.75,
+   "reference_bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 116.63,
+    "B_spectral_flux_tempo_tracking": 116.46,
+    "C_cycle_template_matching": 116.62
+   },
+   "method_spread_bpm": 0.17,
+   "beats_in_window": 16,
+   "rate_change_in_window_bpm": 7.98,
+   "reliable": true,
+   "unreliable_reason": null
+  },
+  {
+   "end_time_s": 59,
+   "reference_bpm": 116.14,
+   "reference_bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 116.3,
+    "B_spectral_flux_tempo_tracking": 116.47,
+    "C_cycle_template_matching": 116.18
+   },
+   "method_spread_bpm": 0.29,
+   "beats_in_window": 15,
+   "rate_change_in_window_bpm": 14.66,
+   "reliable": true,
+   "unreliable_reason": null
+  },
+  {
+   "end_time_s": 60,
+   "reference_bpm": 115.73,
+   "reference_bpm_per_method": {
+    "A_envelope_peak_dynamic_programming": 116.04,
+    "B_spectral_flux_tempo_tracking": 115.38,
+    "C_cycle_template_matching": 115.38
+   },
+   "method_spread_bpm": 0.66,
+   "beats_in_window": 15,
+   "rate_change_in_window_bpm": 14.66,
+   "reliable": true,
+   "unreliable_reason": null
+  }
+ ]
+}

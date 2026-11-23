@@ -1,0 +1,65 @@
+/*
+ * Pin map as in ../../carrier-bringup: J3 INMP441 SCK/WS/SD GPIO4/5/6 (L/R to GND, left slot),
+ * J4 PCM5102A BCK/LCK/DIN GPIO40/41/42, J6 button GPIO16 (R11 pull-up) and LED GPIO17 (R12).
+ */
+
+#include <zephyr/dt-bindings/gpio/gpio.h>
+
+/ {
+	aliases {
+		i2s-mic = &i2s0;
+		i2s-dac = &i2s1;
+	};
+
+	zephyr,user {
+		led-gpios = <&gpio0 17 GPIO_ACTIVE_HIGH>;
+		button-gpios = <&gpio0 16 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+	};
+};
+
+/* 115200 baud cannot carry 16 kHz × 24-bit audio live. */
+&uart0 {
+	current-speed = <921600>;
+};
+
+&pinctrl {
+	i2s0_default: i2s0_default {
+		group1 {
+			pinmux = <I2S0_I_BCK_GPIO4>,
+				 <I2S0_I_WS_GPIO5>;
+			output-enable;
+		};
+		group2 {
+			pinmux = <I2S0_I_SD_GPIO6>;
+			input-enable;
+		};
+	};
+
+	i2s1_default: i2s1_default {
+		group1 {
+			pinmux = <I2S1_O_BCK_GPIO40>,
+				 <I2S1_O_WS_GPIO41>,
+				 <I2S1_O_SD_GPIO42>;
+			output-enable;
+		};
+	};
+};
+
+&dma {
+	status = "okay";
+};
+
+&i2s0 {
+	status = "okay";
+	pinctrl-0 = <&i2s0_default>;
+	pinctrl-names = "default";
+};
+
+&i2s1 {
+	status = "okay";
+	pinctrl-0 = <&i2s1_default>;
+	pinctrl-names = "default";
+};
+
+&flash0 { reg = <0x0 DT_SIZE_M(16)>; ranges = <0x0 0x0 DT_SIZE_M(16)>; };
+&psram0 { status = "okay"; size = <DT_SIZE_M(8)>; };

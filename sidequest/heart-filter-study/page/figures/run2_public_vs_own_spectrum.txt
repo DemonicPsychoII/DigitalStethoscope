@@ -1,0 +1,22 @@
+Run 2: long-term third-octave band levels, 10 Hz to 4 kHz, each curve relative to its own strongest band (0 dB).
+Own recordings: the five recordings (rest-1, rest-2, elevated-1, elevated-2, elevated-3), first 2 s discarded; each normalised
+to its strongest band, median over the five, then shifted so the median's strongest band is 0 dB; the band is the
+lowest to highest of the five, shifted by the same amount.
+Public data: capture-chain model (src/hfs/chain_model.py, calibration/chain_model_<dataset>.json), rest level,
+seed = index as in src/chain_model_calibrate.py; same normalisation, median over recordings.
+Sample: the first 10 EPHNOGRAM records (60 s excerpts) and the first 60
+CirCor recordings of calibration/selection.json (the calibration itself used 20 and 200).
+Band power: Welch, Hann, 16384 samples, half overlap (chain_model.band_power_spectrum).
+Shaded: 20-150 Hz (own recordings: 48 % of energy at rest per
+calibration/how_close.csv; 52 % lies below 20 Hz).
+EPHNOGRAM is sampled at 8 kHz, so it carries nothing above 4 kHz; CirCor at 4 kHz carries nothing above 2 kHz,
+where the model adds only the own recordings' floor noise.
+
+Band centres (Hz): 10, 12.59, 15.85, 19.95, 25.12, 31.62, 39.81, 50.12, 63.1, 79.43, 100, 125.9, 158.5, 199.5, 251.2, 316.2, 398.1, 501.2, 631, 794.3, 1000, 1259, 1585, 1995, 2512, 3162, 3981
+Own median (dB): -3.8, -1.8, -3.1, -2.8, -0.6, 0.0, -3.1, -5.8, -10.7, -15.8, -21.7, -25.0, -25.1, -31.2, -32.3, -36.8, -39.4, -42.0, -46.1, -47.8, -49.9, -51.0, -52.2, -52.8, -53.7, -55.1, -55.9
+Own lowest of five (dB): -10.3, -7.5, -3.9, -3.5, -3.5, -3.4, -8.6, -7.1, -12.1, -17.0, -25.3, -27.4, -30.3, -33.2, -34.7, -40.7, -44.4, -46.6, -50.6, -54.3, -61.3, -66.9, -67.2, -66.5, -66.2, -65.5, -65.1
+Own highest of five (dB): -1.8, -1.3, -1.6, -0.4, 0.0, 0.0, 0.0, -5.3, -8.1, -9.1, -15.0, -22.2, -24.8, -27.5, -30.1, -34.6, -37.2, -39.2, -40.2, -42.7, -41.2, -41.5, -36.3, -41.4, -46.1, -47.1, -51.8
+EPHNOGRAM modelled (dB): -11.4, -8.5, -6.3, -2.6, -1.0, 0.0, -3.4, -3.6, -4.9, -8.5, -8.1, -10.6, -13.8, -16.8, -17.8, -18.8, -21.0, -25.7, -29.4, -32.2, -34.8, -39.8, -41.6, -41.8, -38.1, -38.5, -43.1
+EPHNOGRAM after matching (dB): -12.4, -8.6, -6.2, -2.0, -0.2, 0.0, -4.5, -7.5, -11.4, -17.8, -19.5, -21.7, -25.7, -28.0, -30.1, -32.0, -33.8, -38.3, -42.9, -44.9, -47.4, -49.3, -46.8, -42.4, -39.0, -38.7, -43.1
+CirCor modelled (dB): -30.5, -26.7, -10.8, -1.8, -0.4, 0.0, -2.5, -4.1, -4.3, -3.4, -1.9, -1.3, -1.9, -1.6, -1.0, -0.6, -0.9, -1.3, -1.1, -2.2, -5.1, -6.5, -10.5, -19.5, -24.5, -27.2, -31.0
+CirCor after matching (dB): -33.5, -25.8, -15.1, -7.7, -4.4, -0.9, 0.0, -2.0, -6.7, -11.9, -15.2, -16.6, -16.5, -15.3, -15.3, -14.3, -14.7, -15.0, -13.9, -13.9, -14.9, -15.1, -16.4, -29.9, -46.9, -48.8, -50.6

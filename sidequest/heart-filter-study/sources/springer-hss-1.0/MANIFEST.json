@@ -1,0 +1,124 @@
+{
+  "project": "Logistic Regression-HSMM-based Heart Sound Segmentation, version 1.0 (PhysioNet), D. B. Springer",
+  "project_page": "https://physionet.org/content/hss/1.0/ (returned HTTP 502 on 2026-11-23, not read)",
+  "access_date": "2026-11-23",
+  "handling": "Downloaded with curl as text, stored with a .txt suffix, read only; never executed.",
+  "licence": {
+    "text_found": "Every downloaded .m file carries this header (for example getSpringerPCGFeatures.m lines 23-37): 'Copyright (C) 2016  David Springer ... This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.'",
+    "licence_file": "LICENSE.txt (listed in SHA256SUMS.txt with sha256 2e8578f16b6ea265412166e8b4b1da045fcc11f28db03d664908410124a2f01e) could not be retrieved: HTTP 502 from physionet.org/files/hss/1.0/LICENSE.txt and 404 from the archive mirror. Its text and the licence shown on the PhysioNet project page are NOT verified."
+  },
+  "failed_downloads": [
+    "https://physionet.org/files/hss/1.0/Homomorphic_Envelope_with_Hilbert.m (502; taken from the archive mirror instead, checksum matches the published SHA256SUMS.txt)",
+    "https://physionet.org/files/hss/1.0/LICENSE.txt (502)",
+    "https://archive.physionet.org/physiotools/hss/LICENSE.txt (404)",
+    "https://physionet.org/content/hss/1.0/ (502)"
+  ],
+  "files": {
+    "butterworth_high_pass_filter.m.txt": {
+      "original_name": "butterworth_high_pass_filter.m",
+      "url": "https://physionet.org/files/hss/1.0/butterworth_high_pass_filter.m",
+      "sha256": "b1e20da03e8ccbbbecc905f00a473ad528a3224d990a18ec33b7356ac4e254f9",
+      "published_sha256": "b1e20da03e8ccbbbecc905f00a473ad528a3224d990a18ec33b7356ac4e254f9",
+      "matches_published_checksum": true,
+      "size_bytes": 2906
+    },
+    "butterworth_low_pass_filter.m.txt": {
+      "original_name": "butterworth_low_pass_filter.m",
+      "url": "https://physionet.org/files/hss/1.0/butterworth_low_pass_filter.m",
+      "sha256": "272acc755cb971b096b0e20c8929d892ebcffa705f06f908f78af38c248b65e1",
+      "published_sha256": "272acc755cb971b096b0e20c8929d892ebcffa705f06f908f78af38c248b65e1",
+      "matches_published_checksum": true,
+      "size_bytes": 2910
+    },
+    "default_Springer_HSMM_options.m.txt": {
+      "original_name": "default_Springer_HSMM_options.m",
+      "url": "https://physionet.org/files/hss/1.0/default_Springer_HSMM_options.m",
+      "sha256": "89d307f1b7f94e0b83d1970ced7305a7a44320e1807796ed5241787e26bb0344",
+      "published_sha256": "89d307f1b7f94e0b83d1970ced7305a7a44320e1807796ed5241787e26bb0344",
+      "matches_published_checksum": true,
+      "size_bytes": 1639
+    },
+    "get_PSD_feature_Springer_HMM.m.txt": {
+      "original_name": "get_PSD_feature_Springer_HMM.m",
+      "url": "https://physionet.org/files/hss/1.0/get_PSD_feature_Springer_HMM.m",
+      "sha256": "84fb6704794da894aa795b688a2369db4ee55019109559669461a31e7da8a3ba",
+      "published_sha256": "84fb6704794da894aa795b688a2369db4ee55019109559669461a31e7da8a3ba",
+      "matches_published_checksum": true,
+      "size_bytes": 2514
+    },
+    "getDWT.m.txt": {
+      "original_name": "getDWT.m",
+      "url": "https://physionet.org/files/hss/1.0/getDWT.m",
+      "sha256": "4c67a64ec96d9fd20d087e700e4c2a5353c79631c9eb1d78de43b214cba7c9e0",
+      "published_sha256": "4c67a64ec96d9fd20d087e700e4c2a5353c79631c9eb1d78de43b214cba7c9e0",
+      "matches_published_checksum": true,
+      "size_bytes": 2523
+    },
+    "getHeartRateSchmidt.m.txt": {
+      "original_name": "getHeartRateSchmidt.m",
+      "url": "https://physionet.org/files/hss/1.0/getHeartRateSchmidt.m",
+      "sha256": "db3de5f4ca391aac48eba64818306f2132914d10251b1ea33e14e78776558a18",
+      "published_sha256": "db3de5f4ca391aac48eba64818306f2132914d10251b1ea33e14e78776558a18",
+      "matches_published_checksum": true,
+      "size_bytes": 3744
+    },
+    "getSpringerPCGFeatures.m.txt": {
+      "original_name": "getSpringerPCGFeatures.m",
+      "url": "https://physionet.org/files/hss/1.0/getSpringerPCGFeatures.m",
+      "sha256": "e25a94d41e6b152870f3beadc757d3cacea68c92764d0d8433f870333bdae357",
+      "published_sha256": "e25a94d41e6b152870f3beadc757d3cacea68c92764d0d8433f870333bdae357",
+      "matches_published_checksum": true,
+      "size_bytes": 4180
+    },
+    "Hilbert_Envelope.m.txt": {
+      "original_name": "Hilbert_Envelope.m",
+      "url": "https://physionet.org/files/hss/1.0/Hilbert_Envelope.m",
+      "sha256": "add93a9092c131f59f92cbd928d5a8a3e86c1ea36c6b7fd069e78ac98dd04666",
+      "published_sha256": "add93a9092c131f59f92cbd928d5a8a3e86c1ea36c6b7fd069e78ac98dd04666",
+      "matches_published_checksum": true,
+      "size_bytes": 1915
+    },
+    "Homomorphic_Envelope_with_Hilbert.m.txt": {
+      "original_name": "Homomorphic_Envelope_with_Hilbert.m",
+      "url": "https://archive.physionet.org/physiotools/hss/Homomorphic_Envelope_with_Hilbert.m",
+      "sha256": "a94ea3542408cbabd71dd7ea09d68708a90141ee58120b2912fdc577765bdefd",
+      "published_sha256": "a94ea3542408cbabd71dd7ea09d68708a90141ee58120b2912fdc577765bdefd",
+      "matches_published_checksum": true,
+      "size_bytes": 3501
+    },
+    "normalise_signal.m.txt": {
+      "original_name": "normalise_signal.m",
+      "url": "https://physionet.org/files/hss/1.0/normalise_signal.m",
+      "sha256": "9c10938d187c8fe1188e978508745b13801253d10785a76ca326247369eabe3c",
+      "published_sha256": "9c10938d187c8fe1188e978508745b13801253d10785a76ca326247369eabe3c",
+      "matches_published_checksum": true,
+      "size_bytes": 1457
+    },
+    "runSpringerSegmentationAlgorithm.m.txt": {
+      "original_name": "runSpringerSegmentationAlgorithm.m",
+      "url": "https://physionet.org/files/hss/1.0/runSpringerSegmentationAlgorithm.m",
+      "sha256": "dcbd0ed1ccff985017c32ea5cff0f0bd31981d0f352f4c459752876518d09be1",
+      "published_sha256": "dcbd0ed1ccff985017c32ea5cff0f0bd31981d0f352f4c459752876518d09be1",
+      "matches_published_checksum": true,
+      "size_bytes": 2742
+    },
+    "schmidt_spike_removal.m.txt": {
+      "original_name": "schmidt_spike_removal.m",
+      "url": "https://physionet.org/files/hss/1.0/schmidt_spike_removal.m",
+      "sha256": "57ae20f6ca8b7b297ff762f4c5d54d2676a214df1da2e1fd46a4b0026a96d221",
+      "published_sha256": "57ae20f6ca8b7b297ff762f4c5d54d2676a214df1da2e1fd46a4b0026a96d221",
+      "matches_published_checksum": true,
+      "size_bytes": 4383
+    },
+    "SHA256SUMS.txt.txt": {
+      "original_name": "SHA256SUMS.txt",
+      "url": "https://physionet.org/files/hss/1.0/SHA256SUMS.txt",
+      "sha256": "c3e79a6272413c76436b53fad876127a417df6c25d11619afb52d1a4d1321945"
+    },
+    "archive-index.html.txt": {
+      "original_name": "index page",
+      "url": "https://archive.physionet.org/physiotools/hss/",
+      "sha256": "fea1f1a8f59912a3bf21bf877a262944fa9275e1f55f7199d53678918c109965"
+    }
+  }
+}

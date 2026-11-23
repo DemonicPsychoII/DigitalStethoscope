@@ -1,0 +1,16 @@
+{
+  "test": "static weight",
+  "configuration": "v10-sealed",
+  "take": 2,
+  "weight_grams": null,
+  "notes": "Extra gum jar on Littmann Classic II membrane side, old v10 adapter and old seal without vent hole",
+  "cues": "blue 0-1 s stay still, green 1-6 s place, red 6-16 s hands off, yellow 16-21 s lift, off 21-24 s",
+  "started_at": "2026-11-23T13:53:07.156619+01:00",
+  "repository_revision": "b1c7fbb8e1a23014314adfb9ee2b8e671d55a22a",
+  "capture": {
+    "source": "device",
+    "serial_port": "COM4",
+    "sample_rate_hz": 16000,
+    "samples": 384000
+  }
+}

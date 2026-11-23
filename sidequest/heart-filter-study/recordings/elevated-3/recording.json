@@ -1,0 +1,12 @@
+{
+  "name": "elevated-3",
+  "started_at": "2026-11-23T01:24:19+01:00",
+  "seconds": 60,
+  "sample_rate_hz": 16000,
+  "firmware": "chain-measurement capture-firmware, raw INMP441 left slot, 921600 baud",
+  "reference_bpm_start": null,
+  "reference_bpm_end": null,
+  "note": "membrane side, lower spot, lighter pressure, right after about 1.5-2 min of exercise; repeat of elevated-2, which overloaded; no reference heart rate given",
+  "peak_after_2_s_fs": 1.0,
+  "rms_after_2_s_dbfs": -14.729459147433062
+}

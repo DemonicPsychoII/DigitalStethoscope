@@ -1,0 +1,107 @@
+{
+  "excerpts": [
+    {
+      "recording": "rest-2",
+      "start_s": 20.0,
+      "duration_s": 10.0,
+      "label": "resting"
+    },
+    {
+      "recording": "elevated-1",
+      "start_s": 12.0,
+      "duration_s": 10.0,
+      "label": "elevated-clean"
+    },
+    {
+      "recording": "elevated-2",
+      "start_s": 20.0,
+      "duration_s": 10.0,
+      "label": "elevated-overload"
+    },
+    {
+      "recording": "rest-1",
+      "start_s": 36.0,
+      "duration_s": 10.0,
+      "label": "movement-artefact"
+    }
+  ],
+  "candidates": [
+    {
+      "identifier": "raw",
+      "label": "No filter (Raw)",
+      "family": "raw"
+    },
+    {
+      "identifier": "butterworth_hp2_40_lp2_800",
+      "label": "40–800 Hz, gentle (design candidate)",
+      "family": "butterworth",
+      "highpass_hz": 40,
+      "lowpass_hz": 800,
+      "highpass_order": 2,
+      "lowpass_order": 2
+    },
+    {
+      "identifier": "butterworth_hp2_100_lp2_800",
+      "label": "100–800 Hz, gentle",
+      "family": "butterworth",
+      "highpass_hz": 100,
+      "lowpass_hz": 800,
+      "highpass_order": 2,
+      "lowpass_order": 2
+    },
+    {
+      "identifier": "butterworth_hp4_100_lp4_800",
+      "label": "100–800 Hz, steep",
+      "family": "butterworth",
+      "highpass_hz": 100,
+      "lowpass_hz": 800,
+      "highpass_order": 4,
+      "lowpass_order": 4
+    },
+    {
+      "identifier": "butterworth_hp4_150_lp4_800",
+      "label": "150–800 Hz, steep",
+      "family": "butterworth",
+      "highpass_hz": 150,
+      "lowpass_hz": 800,
+      "highpass_order": 4,
+      "lowpass_order": 4
+    },
+    {
+      "identifier": "elliptic_hp4_60_lp4_800",
+      "label": "60–800 Hz, very steep (elliptic)",
+      "family": "elliptic",
+      "highpass_hz": 60,
+      "lowpass_hz": 800,
+      "highpass_order": 4,
+      "lowpass_order": 4
+    },
+    {
+      "identifier": "butterworth_hp2_80_lp0_none",
+      "label": "Above 80 Hz only",
+      "family": "butterworth",
+      "highpass_hz": 80,
+      "lowpass_hz": null,
+      "highpass_order": 2,
+      "lowpass_order": 2
+    },
+    {
+      "identifier": "butterworth_hp2_25_lp2_150",
+      "label": "25–150 Hz (BPM filter as first planned)",
+      "family": "butterworth",
+      "highpass_hz": 25,
+      "lowpass_hz": 150,
+      "highpass_order": 2,
+      "lowpass_order": 2
+    },
+    {
+      "identifier": "butterworth_hp2_40_lp2_150",
+      "label": "40–150 Hz (recommended BPM filter)",
+      "family": "butterworth",
+      "highpass_hz": 40,
+      "lowpass_hz": 150,
+      "highpass_order": 2,
+      "lowpass_order": 2
+    }
+  ]
+}

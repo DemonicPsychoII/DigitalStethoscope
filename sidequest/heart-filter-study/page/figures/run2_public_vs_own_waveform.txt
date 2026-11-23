@@ -1,0 +1,8 @@
+Run 2: 3 s of capture-chain output at the resting level, same time and value scale, value as share of 24-bit full
+scale (dashed red: the limits).
+Own: rest-2, 12-15 s from file start (raw INMP441, 16 kHz), as in calibration/figures/time_domain.png.
+Public data with ECG: EPHNOGRAM ECGPCG0013 (Rest: laying on bed), 60 s excerpt from
+870 s, model output 5-8 s, microphone only, rest level, seed 5.
+Public murmur data: CirCor 24160_AV (murmur Absent AV), model output 5-8 s,
+microphone only, rest level, seed 0.
+Largest absolute value in the shown 3 s (share of full scale): own 0.571, EPHNOGRAM 0.448, CirCor 0.522.

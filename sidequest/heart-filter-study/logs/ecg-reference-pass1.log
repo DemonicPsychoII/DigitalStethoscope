@@ -1,0 +1,31 @@
+29 available records, 29 to process
+ECGPCG0003: 45 / 45 beats, 15/23 reliable windows
+ECGPCG0004: 36 / 36 beats, 15/23 reliable windows
+ECGPCG0005: 41 / 41 beats, 23/23 reliable windows
+ECGPCG0006: 35 / 35 beats, 23/23 reliable windows
+ECGPCG0007: 36 / 37 beats, 22/23 reliable windows
+ECGPCG0008: 36 / 70 beats, 0/23 reliable windows
+ECGPCG0009: 30 / 31 beats, 22/23 reliable windows
+ECGPCG0001: 3576 / 3578 beats, 1781/1793 reliable windows
+ECGPCG0002: 2820 / 2840 beats, 117/1793 reliable windows
+ECGPCG0010: 1891 / 1891 beats, 1613/1793 reliable windows
+ECGPCG0011: 2133 / 2133 beats, 1733/1793 reliable windows
+ECGPCG0013: 1799 / 1795 beats, 1732/1793 reliable windows
+ECGPCG0015: 2034 / 2034 beats, 1775/1793 reliable windows
+ECGPCG0016: 2350 / 2350 beats, 1783/1793 reliable windows
+ECGPCG0017: 3311 / 3247 beats, 273/1793 reliable windows
+ECGPCG0023: 2097 / 2098 beats, 1744/1793 reliable windows
+ECGPCG0028: 2607 / 3472 beats, 0/1793 reliable windows
+ECGPCG0029: 3746 / 3811 beats, 1533/1793 reliable windows
+ECGPCG0031: 3576 / 3578 beats, 1781/1793 reliable windows
+ECGPCG0040: 45 / 46 beats, 22/23 reliable windows
+ECGPCG0033: 2999 / 2978 beats, 0/1793 reliable windows
+ECGPCG0034: 3716 / 3719 beats, 1735/1793 reliable windows
+ECGPCG0036: 4161 / 4163 beats, 1783/1793 reliable windows
+ECGPCG0042: 3031 / 3032 beats, 1769/1793 reliable windows
+ECGPCG0050: 2921 / 2960 beats, 1392/1793 reliable windows
+ECGPCG0057: 2497 / 3154 beats, 85/1793 reliable windows
+ECGPCG0060: 3463 / 3517 beats, 1536/1793 reliable windows
+ECGPCG0061: 3225 / 3286 beats, 1546/1793 reliable windows
+ECGPCG0066: 3531 / 3549 beats, 1658/1793 reliable windows
+summary written to C:\Users\nicop\Desktop\heart-filter-study\reference-public\ephnogram\SUMMARY.md

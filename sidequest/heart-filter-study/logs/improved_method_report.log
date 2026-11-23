@@ -1,0 +1,69 @@
+C:\Users\nicop\Desktop\heart-filter-study\src\bpm_improved_method_common.py:264: RuntimeWarning: invalid value encountered in divide
+  STATISTICS = {"mae_bpm": lambda totals: totals[:, 1] / totals[:, 0],
+C:\Users\nicop\Desktop\heart-filter-study\src\bpm_improved_method_common.py:265: RuntimeWarning: invalid value encountered in divide
+  "within_tolerance_share": lambda totals: totals[:, 2] / totals[:, 0],
+C:\Users\nicop\Desktop\heart-filter-study\src\bpm_improved_method_common.py:266: RuntimeWarning: invalid value encountered in divide
+  "gross_share": lambda totals: totals[:, 3] / totals[:, 0],
+C:\Users\nicop\Desktop\heart-filter-study\src\bpm_improved_method_common.py:267: RuntimeWarning: invalid value encountered in divide
+  "valid_share": lambda totals: totals[:, 4] / totals[:, 0],
+C:\Users\nicop\Desktop\heart-filter-study\src\bpm_improved_method_common.py:264: RuntimeWarning: invalid value encountered in divide
+  STATISTICS = {"mae_bpm": lambda totals: totals[:, 1] / totals[:, 0],
+C:\Users\nicop\Desktop\heart-filter-study\src\bpm_improved_method_common.py:265: RuntimeWarning: invalid value encountered in divide
+  "within_tolerance_share": lambda totals: totals[:, 2] / totals[:, 0],
+C:\Users\nicop\Desktop\heart-filter-study\src\bpm_improved_method_common.py:266: RuntimeWarning: invalid value encountered in divide
+  "gross_share": lambda totals: totals[:, 3] / totals[:, 0],
+C:\Users\nicop\Desktop\heart-filter-study\src\bpm_improved_method_common.py:267: RuntimeWarning: invalid value encountered in divide
+  "valid_share": lambda totals: totals[:, 4] / totals[:, 0],
+C:\Users\nicop\Desktop\heart-filter-study\src\bpm_improved_method_common.py:264: RuntimeWarning: invalid value encountered in divide
+  STATISTICS = {"mae_bpm": lambda totals: totals[:, 1] / totals[:, 0],
+C:\Users\nicop\Desktop\heart-filter-study\src\bpm_improved_method_common.py:265: RuntimeWarning: invalid value encountered in divide
+  "within_tolerance_share": lambda totals: totals[:, 2] / totals[:, 0],
+C:\Users\nicop\Desktop\heart-filter-study\src\bpm_improved_method_common.py:266: RuntimeWarning: invalid value encountered in divide
+  "gross_share": lambda totals: totals[:, 3] / totals[:, 0],
+C:\Users\nicop\Desktop\heart-filter-study\src\bpm_improved_method_common.py:267: RuntimeWarning: invalid value encountered in divide
+  "valid_share": lambda totals: totals[:, 4] / totals[:, 0],
+C:\Users\nicop\Desktop\heart-filter-study\src\bpm_improved_method_common.py:264: RuntimeWarning: invalid value encountered in divide
+  STATISTICS = {"mae_bpm": lambda totals: totals[:, 1] / totals[:, 0],
+C:\Users\nicop\Desktop\heart-filter-study\src\bpm_improved_method_common.py:265: RuntimeWarning: invalid value encountered in divide
+  "within_tolerance_share": lambda totals: totals[:, 2] / totals[:, 0],
+C:\Users\nicop\Desktop\heart-filter-study\src\bpm_improved_method_common.py:266: RuntimeWarning: invalid value encountered in divide
+  "gross_share": lambda totals: totals[:, 3] / totals[:, 0],
+C:\Users\nicop\Desktop\heart-filter-study\src\bpm_improved_method_common.py:267: RuntimeWarning: invalid value encountered in divide
+  "valid_share": lambda totals: totals[:, 4] / totals[:, 0],
+C:\Users\nicop\Desktop\heart-filter-study\src\bpm_improved_method_common.py:264: RuntimeWarning: invalid value encountered in divide
+  STATISTICS = {"mae_bpm": lambda totals: totals[:, 1] / totals[:, 0],
+C:\Users\nicop\Desktop\heart-filter-study\src\bpm_improved_method_common.py:265: RuntimeWarning: invalid value encountered in divide
+  "within_tolerance_share": lambda totals: totals[:, 2] / totals[:, 0],
+C:\Users\nicop\Desktop\heart-filter-study\src\bpm_improved_method_common.py:266: RuntimeWarning: invalid value encountered in divide
+  "gross_share": lambda totals: totals[:, 3] / totals[:, 0],
+C:\Users\nicop\Desktop\heart-filter-study\src\bpm_improved_method_common.py:267: RuntimeWarning: invalid value encountered in divide
+  "valid_share": lambda totals: totals[:, 4] / totals[:, 0],
+C:\Users\nicop\Desktop\heart-filter-study\src\bpm_improved_method_common.py:264: RuntimeWarning: invalid value encountered in divide
+  STATISTICS = {"mae_bpm": lambda totals: totals[:, 1] / totals[:, 0],
+C:\Users\nicop\Desktop\heart-filter-study\src\bpm_improved_method_common.py:265: RuntimeWarning: invalid value encountered in divide
+  "within_tolerance_share": lambda totals: totals[:, 2] / totals[:, 0],
+C:\Users\nicop\Desktop\heart-filter-study\src\bpm_improved_method_common.py:266: RuntimeWarning: invalid value encountered in divide
+  "gross_share": lambda totals: totals[:, 3] / totals[:, 0],
+C:\Users\nicop\Desktop\heart-filter-study\src\bpm_improved_method_common.py:267: RuntimeWarning: invalid value encountered in divide
+  "valid_share": lambda totals: totals[:, 4] / totals[:, 0],
+C:\Users\nicop\Desktop\heart-filter-study\src\bpm_improved_method_report.py:95: RuntimeWarning: invalid value encountered in divide
+  difference = totals[:, 1] / totals[:, 0] - anchor_totals[:, 1] / anchor_totals[:, 0]
+C:\Users\nicop\Desktop\heart-filter-study\src\bpm_improved_method_report.py:95: RuntimeWarning: invalid value encountered in divide
+  difference = totals[:, 1] / totals[:, 0] - anchor_totals[:, 1] / anchor_totals[:, 0]
+C:\Users\nicop\Desktop\heart-filter-study\src\bpm_improved_method_report.py:95: RuntimeWarning: invalid value encountered in divide
+  difference = totals[:, 1] / totals[:, 0] - anchor_totals[:, 1] / anchor_totals[:, 0]
+C:\Users\nicop\Desktop\heart-filter-study\src\bpm_improved_method_report.py:95: RuntimeWarning: invalid value encountered in divide
+  difference = totals[:, 1] / totals[:, 0] - anchor_totals[:, 1] / anchor_totals[:, 0]
+C:\Users\nicop\Desktop\heart-filter-study\src\bpm_improved_method_report.py:95: RuntimeWarning: invalid value encountered in divide
+  difference = totals[:, 1] / totals[:, 0] - anchor_totals[:, 1] / anchor_totals[:, 0]
+C:\Users\nicop\Desktop\heart-filter-study\src\bpm_improved_method_report.py:95: RuntimeWarning: invalid value encountered in divide
+  difference = totals[:, 1] / totals[:, 0] - anchor_totals[:, 1] / anchor_totals[:, 0]
+done butterworth_hp2_50_lp2_150
+done butterworth_hp2_40_lp2_150
+done butterworth_hp2_30_lp2_150
+done butterworth_hp2_60_lp2_150
+done butterworth_hp2_25_lp2_150
+done raw
+done butterworth_hp4_60_lp4_150
+done butterworth_hp2_40_lp2_400
+done butterworth_hp2_80_lp2_150

@@ -1,0 +1,215 @@
+{
+  "excerpts": [
+    {
+      "label": "murmur-loud",
+      "patient": "84949",
+      "file_stem": "84949_TV",
+      "location": "TV",
+      "start_s": 1.231,
+      "end_s": 9.231,
+      "murmur": "Present",
+      "murmur_locations": "AV+MV+PV+TV",
+      "most_audible_location": "TV",
+      "age_category": "Child",
+      "sex": "Female",
+      "height_cm": 112.0,
+      "systolic": {
+        "timing": "Holosystolic",
+        "shape": "Plateau",
+        "grade": "III/VI",
+        "pitch": "High",
+        "quality": "Harsh"
+      },
+      "diastolic": {
+        "timing": null,
+        "shape": null,
+        "grade": null,
+        "pitch": null,
+        "quality": null
+      },
+      "systole_to_diastole_50_800_hz_db": 22.38,
+      "file": "recordings-public/murmur-loud/capture.wav",
+      "peak_dbfs": -1.06
+    },
+    {
+      "label": "murmur-soft",
+      "patient": "50099",
+      "file_stem": "50099_PV",
+      "location": "PV",
+      "start_s": 0.56,
+      "end_s": 8.56,
+      "murmur": "Present",
+      "murmur_locations": "MV+PV+TV",
+      "most_audible_location": "PV",
+      "age_category": "Child",
+      "sex": "Male",
+      "height_cm": 114.0,
+      "systolic": {
+        "timing": "Holosystolic",
+        "shape": "Diamond",
+        "grade": "I/VI",
+        "pitch": "High",
+        "quality": "Harsh"
+      },
+      "diastolic": {
+        "timing": null,
+        "shape": null,
+        "grade": null,
+        "pitch": null,
+        "quality": null
+      },
+      "systole_to_diastole_50_800_hz_db": 15.19,
+      "file": "recordings-public/murmur-soft/capture.wav",
+      "peak_dbfs": -2.65
+    },
+    {
+      "label": "no-murmur-child",
+      "patient": "50788",
+      "file_stem": "50788_TV",
+      "location": "TV",
+      "start_s": 15.64,
+      "end_s": 23.64,
+      "murmur": "Absent",
+      "murmur_locations": "",
+      "most_audible_location": null,
+      "age_category": "Child",
+      "sex": "Female",
+      "height_cm": 111.0,
+      "systolic": {
+        "timing": null,
+        "shape": null,
+        "grade": null,
+        "pitch": null,
+        "quality": null
+      },
+      "diastolic": {
+        "timing": null,
+        "shape": null,
+        "grade": null,
+        "pitch": null,
+        "quality": null
+      },
+      "systole_to_diastole_50_800_hz_db": 0.44,
+      "file": "recordings-public/no-murmur-child/capture.wav",
+      "peak_dbfs": -7.62
+    }
+  ],
+  "diastolic_options": [
+    {
+      "label": "optional diastolic",
+      "patient": "50277",
+      "file_stem": "50277_PV",
+      "location": "PV",
+      "start_s": 0.98,
+      "end_s": 8.98,
+      "murmur": "Present",
+      "murmur_locations": "AV+MV+PV+TV",
+      "most_audible_location": "PV",
+      "age_category": "Adolescent",
+      "sex": "Male",
+      "height_cm": 148.0,
+      "systolic": {
+        "timing": "Holosystolic",
+        "shape": "Diamond",
+        "grade": "III/VI",
+        "pitch": "Medium",
+        "quality": "Harsh"
+      },
+      "diastolic": {
+        "timing": "Early-diastolic",
+        "shape": "Decrescendo",
+        "grade": "III/IV",
+        "pitch": "Medium",
+        "quality": "Blowing"
+      },
+      "systole_to_diastole_50_800_hz_db": 13.88
+    },
+    {
+      "label": "optional diastolic",
+      "patient": "50277",
+      "file_stem": "50277_TV",
+      "location": "TV",
+      "start_s": 1.22,
+      "end_s": 9.22,
+      "murmur": "Present",
+      "murmur_locations": "AV+MV+PV+TV",
+      "most_audible_location": "PV",
+      "age_category": "Adolescent",
+      "sex": "Male",
+      "height_cm": 148.0,
+      "systolic": {
+        "timing": "Holosystolic",
+        "shape": "Diamond",
+        "grade": "III/VI",
+        "pitch": "Medium",
+        "quality": "Harsh"
+      },
+      "diastolic": {
+        "timing": "Early-diastolic",
+        "shape": "Decrescendo",
+        "grade": "III/IV",
+        "pitch": "Medium",
+        "quality": "Blowing"
+      },
+      "systole_to_diastole_50_800_hz_db": 9.09
+    },
+    {
+      "label": "optional diastolic",
+      "patient": "50277",
+      "file_stem": "50277_MV",
+      "location": "MV",
+      "start_s": 0.58,
+      "end_s": 8.58,
+      "murmur": "Present",
+      "murmur_locations": "AV+MV+PV+TV",
+      "most_audible_location": "PV",
+      "age_category": "Adolescent",
+      "sex": "Male",
+      "height_cm": 148.0,
+      "systolic": {
+        "timing": "Holosystolic",
+        "shape": "Diamond",
+        "grade": "III/VI",
+        "pitch": "Medium",
+        "quality": "Harsh"
+      },
+      "diastolic": {
+        "timing": "Early-diastolic",
+        "shape": "Decrescendo",
+        "grade": "III/IV",
+        "pitch": "Medium",
+        "quality": "Blowing"
+      },
+      "systole_to_diastole_50_800_hz_db": 6.24
+    },
+    {
+      "label": "optional diastolic",
+      "patient": "85119",
+      "file_stem": "85119_AV",
+      "location": "AV",
+      "start_s": 2.7,
+      "end_s": 10.7,
+      "murmur": "Present",
+      "murmur_locations": "AV+PV",
+      "most_audible_location": "PV",
+      "age_category": "Child",
+      "sex": "Male",
+      "height_cm": 161.0,
+      "systolic": {
+        "timing": null,
+        "shape": null,
+        "grade": null,
+        "pitch": null,
+        "quality": null
+      },
+      "diastolic": {
+        "timing": "Early-diastolic",
+        "shape": "Decrescendo",
+        "grade": "I/IV",
+        "pitch": "Low",
+        "quality": "Blowing"
+      },
+      "systole_to_diastole_50_800_hz_db": 3.54
+    }
+  ]
+}

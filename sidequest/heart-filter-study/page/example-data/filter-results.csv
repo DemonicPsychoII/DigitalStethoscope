@@ -1,0 +1,7 @@
+identifier,label,mean_absolute_error_bpm,detection_rate,latency_ms
+raw,Raw (no filter),9.84,0.712,0
+butterworth_hp2_25_lp2_150,Band-pass 25–150 Hz (Butterworth),1.912,0.981,4
+bell_lp2_100,"Bell mode, low-pass 100 Hz",3.455,0.934,3
+butterworth_hp4_20_lp4_200,"Band-pass 20–200 Hz, 4th order",2.207,0.966,7
+bessel_hp2_30_lp2_120,Band-pass 30–120 Hz (Bessel),2.631,0.952,2
+chebyshev_hp2_25_lp2_180,Band-pass 25–180 Hz (Chebyshev),12.3456,0.901,5

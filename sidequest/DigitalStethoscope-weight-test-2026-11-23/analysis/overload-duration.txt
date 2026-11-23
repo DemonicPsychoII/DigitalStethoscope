@@ -1,0 +1,6 @@
+v10-sealed/take-1            place: above 0.5 from  2.76 to  3.70 s ( 938 ms), below 0.05 after   20 ms | lift: above 0.5 from 16.68 to 16.91 s ( 232 ms), below 0.05 after  317 ms
+v10-sealed/take-2            place: above 0.5 from  2.44 to  4.43 s (1987 ms), below 0.05 after   20 ms | lift: above 0.5 from 17.46 to 17.65 s ( 192 ms), below 0.05 after  337 ms
+v10-sealed/take-3            place: above 0.5 from  3.10 to  3.95 s ( 851 ms), below 0.05 after   10 ms | lift: above 0.5 from 16.76 to 17.53 s ( 764 ms), below 0.05 after  446 ms
+v14-vent-open/take-1         place: above 0.5 from  3.13 to  4.46 s (1335 ms), below 0.05 after   12 ms | lift: above 0.5 from 16.69 to 16.85 s ( 169 ms), below 0.05 after   90 ms
+v14-vent-open/take-2         place: above 0.5 from  2.35 to  3.00 s ( 656 ms), below 0.05 after   10 ms | lift: above 0.5 from 16.65 to 16.75 s ( 105 ms), below 0.05 after   97 ms
+v14-vent-open/take-3         place: above 0.5 from  5.05 to  5.80 s ( 754 ms), below 0.05 after   10 ms | lift: above 0.5 from 17.08 to 17.19 s ( 108 ms), below 0.05 after  102 ms

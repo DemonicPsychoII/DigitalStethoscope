@@ -1,0 +1,19 @@
+Change of the murmur's share relative to the heart sounds (energy in systole over energy in S1 plus S2 of the same beat), each filter compared with no filter, 178 patients with a systolic murmur, resting level. Right = the murmur stands out more against the heart sounds. A fixed boost does not change this ratio; dot = Hodges-Lehmann estimate, bar = 95 % bootstrap interval.
+
+murmur energy over heart-sound energy:
+  40–800 Hz gentle (design): -1.64 (-1.88 to -1.38)
+  100–800 Hz gentle: -1.65 (-2.13 to -1.18)
+  100–800 Hz steep: -1.55 (-2.09 to -1.02)
+  150–800 Hz steep: -0.62 (-1.19 to -0.05)
+  60–800 Hz elliptic: -2.56 (-3.06 to -2.08)
+  Above 80 Hz only: -1.66 (-2.07 to -1.24)
+  25–150 Hz (BPM position): -1.22 (-1.36 to -1.09)
+  40–150 Hz (BPM recommendation): -2.49 (-2.69 to -2.30)
+  40–400 Hz gentle: -1.98 (-2.21 to -1.74)
+  40–1000 Hz gentle: -1.57 (-1.81 to -1.31)
+  60–800 Hz gentle: -2.09 (-2.47 to -1.68)
+  80–800 Hz gentle: -1.97 (-2.40 to -1.53)
+  100–600 Hz gentle: -1.88 (-2.38 to -1.38)
+  100–1000 Hz gentle: -1.52 (-1.99 to -1.07)
+  100–2000 Hz gentle: -1.33 (-1.77 to -0.89)
+  Above 100 Hz only: -1.30 (-1.74 to -0.86)
