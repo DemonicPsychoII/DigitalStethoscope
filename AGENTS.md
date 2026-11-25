@@ -44,6 +44,9 @@ files has no project history and must not need any.
   table under `Development/system/planning/`, which are not transferred to GitLab. A measured
   value becomes a design parameter with its technical reason; the dated measurement record
   belongs under `Development/system/testing/`.
+- Do not link from a product document into a folder that is not transferred: `thesis-material/`,
+  `preThesis/` or `Development/system/planning/`. A citation carries its own metadata instead of
+  a link to the thesis source register.
 - Architecture and design describe the target system. Track what the code does not implement yet,
   and every other open point, as a GitHub issue. Product documents carry no open points.
 - Each level stands on its own, in the order requirements, system architecture, module
