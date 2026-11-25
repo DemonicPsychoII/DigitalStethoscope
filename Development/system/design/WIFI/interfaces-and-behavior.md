@@ -18,7 +18,7 @@ The [SNTP time-synchronization design](../COMMUNICATION/time-synchronization.md)
 | `wifi_startHotspot()`, `wifi_stopHotspot()`, `wifi_startDHCPServer()`, `wifi_stopDHCPServer()` | Start and stop requests from `L2_COMMUNICATION` | Individual service outcomes; HTTP page serving remains in `L1_PORTAL`. |
 | `wifi_getAddress()`, `wifi_isConnected()` | Address buffer or link query | Current station address or connection state. |
 
-A new radio request or cancellation rejects late results of the prior request. Each wait returns its result to `L2_COMMUNICATION`; callbacks do not change controller state. The [system design](../system/interfaces-and-behavior.md) defines mode ownership and feedback; [Wi-Fi parameters](parameters.md) define operation limits; [L2_COMMUNICATION](../COMMUNICATION/interfaces-and-behavior.md) defines sequencing and retries.
+A new radio request or cancellation rejects late results of the prior request. Each wait returns its result to `L2_COMMUNICATION`; callbacks do not change controller state. The [firmware structure](../../architecture/system/firmware-structure.md) defines mode ownership, and the [feedback design](../FEEDBACK/README.md) the indication; [Wi-Fi parameters](parameters.md) define operation limits; [L2_COMMUNICATION](../COMMUNICATION/interfaces-and-behavior.md) defines sequencing and retries.
 
 ## Secure server operations
 

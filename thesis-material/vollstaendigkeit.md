@@ -8,7 +8,7 @@
 - Alle lokalen Markdown-Linkziele vorhanden.
 - `_stage1/` während des Generatorlaufs unverändert (SHA-256-Vergleich).
 - Fehlende IDs: keine. Unbekannte IDs: keine.
-- 33 Abgleichshinweise gegen integration; alle 38 verlinkten integration-Dokumente/Anker vorhanden.
+- 33 Abgleichshinweise gegen integration; alle 39 verlinkten integration-Dokumente/Anker vorhanden.
 - Verschobene Herkunftsdateien mit historischem Git-Link: 13; nicht auflösbare Herkunftsdateien: 0.
 
 Audit-Zählung: 230 zitierbedürftige Einheiten; 207 mit mindestens drei Quellen; 49 unvollständige Quellensets; 323/670 explizit ungeprüfte Seiten. Defekte Quellen: 15 → 11; betroffene Audit-Einheiten: 72 → 27.

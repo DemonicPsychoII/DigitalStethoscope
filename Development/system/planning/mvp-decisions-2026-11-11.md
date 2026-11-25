@@ -32,5 +32,5 @@ faults. These are project decisions, not measurements. They build on the
 ## Applied in
 
 - [AUDIO design](../design/AUDIO/interfaces-and-behavior.md)
-- Parameters P02 and P11 in the [system parameters](../design/system/parameters.md) and the
-  `AudioBlock` contract in the [system design](../design/system/interfaces-and-behavior.md)
+- Parameters P02 and P11 in the [system parameters](../design/README.md#parameters) and the
+  `AudioBlock` contract in the [system design](../design/cross-module.md#data-contracts)

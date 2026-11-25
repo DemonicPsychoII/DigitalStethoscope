@@ -3,7 +3,7 @@
 This is the Zephyr application firmware for the ESP32-S3.
 
 The table maps the application folders. L1 holds thin hardware adapters
-over Zephyr drivers and pure C libraries; L2 orchestrates them. [Detailed design](../../design/system/interfaces-and-behavior.md#static-dependency-and-module-map)
+over Zephyr drivers and pure C libraries; L2 orchestrates them. The [firmware structure](../../architecture/system/firmware-structure.md#static-dependency-and-module-map)
 maps its logical components to these folders.
 
 `L1_WIFI` and `L2_COMMUNICATION` implement the [Wi-Fi contract](../../design/WIFI/interfaces-and-behavior.md).
@@ -38,7 +38,7 @@ logging.
 ### Physical inputs
 
 `L1_PHYSICALINTERFACE` reports debounced, timestamped input events to `L2_CONTROL` on the
-system work queue ([input contract](../../design/system/interfaces-and-behavior.md#design-constraints)):
+system work queue ([input contract](../../design/cross-module.md#design-constraints)):
 
 | Input | Pins | Acquisition | Event |
 |---|---|---|---|
@@ -244,8 +244,8 @@ its own filter instance, so listening and BPM analysis filters stay independent.
 Only `L2_CONTROL` writes mode state, and `L2_SHELL` commands go through it.
 `L2_COMMUNICATION` is the only path to an `L1_WIFI` send.
 
-[Detailed design](../../design/system/interfaces-and-behavior.md) defines contracts and
-ownership.
+The [firmware structure](../../architecture/system/firmware-structure.md) defines ownership, and the
+[cross-module design](../../design/cross-module.md) defines the contracts between modules.
 
 ## Wi-Fi teardown before listening
 

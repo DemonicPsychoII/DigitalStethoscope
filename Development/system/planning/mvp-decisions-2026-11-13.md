@@ -33,9 +33,9 @@ five blocks.
 
 - [AUDIO architecture](../architecture/AUDIO/README.md) and
   [AUDIO design](../design/AUDIO/interfaces-and-behavior.md)
-- Parameters P01, P02 and P11 in the [system parameters](../design/system/parameters.md); the
+- Parameters P01, P02 and P11 in the [system parameters](../design/README.md#parameters); the
   `AudioBlock` frame count and the memory accounting in the
-  [system design](../design/system/interfaces-and-behavior.md#ownership-memory-and-queues)
+  [system design](../design/cross-module.md#queues-and-memory)
 - D10 in the [decision register](implementation-readiness.md#decision-register) and the
   integration notes of the [thesis material](../../../thesis-material/README.md)
 - Decision 2 in the [MVP session state view](../architecture/system/puml/mvp-session-state.puml):

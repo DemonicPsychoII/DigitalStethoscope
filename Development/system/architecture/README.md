@@ -4,7 +4,7 @@ PlantUML sources define each diagram; committed SVG previews are generated from 
 
 | Area | Responsibilities and views |
 | --- | --- |
-| [System](system/README.md) | Boundaries, hardware, layers, runtime ownership, audio, measurement and feedback ground rules. |
+| [System](system/README.md) | Boundaries, hardware, [layers, module ownership, threads and hand-off rules](system/firmware-structure.md), audio, measurement and feedback ground rules. |
 | [AUDIO](AUDIO/README.md) | Microphone-to-DAC transport, block ownership, clocking and stream faults. |
 | [WIFI](WIFI/README.md) | General station/provisioning model and radio operation boundary. |
 | [COMMUNICATION](COMMUNICATION/README.md) | Wi-Fi setup workflow, composition, recovery and listening-priority boundary; [time synchronization](COMMUNICATION/time-ownership.md) and [secure transport](COMMUNICATION/secure-transport.md) to the server. |

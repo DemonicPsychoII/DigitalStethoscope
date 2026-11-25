@@ -193,7 +193,7 @@ def test_json_string_overflow_inside_escape(harness, record_property):
 
 
 OBSERVATION = DESIGN + "observation-construction-and-delivery"
-DELIVERY = "Development/system/design/system/interfaces-and-behavior.md#delivery-clock-and-configuration"
+DELIVERY = "Development/system/design/COMMUNICATION/interfaces-and-behavior.md#delivery-clock-and-configuration"
 HEART_RATE = 0
 POOR_SIGNAL = 1
 SERVER_ID = "device-42"
@@ -483,7 +483,7 @@ def test_observation_null_arguments(harness, record_property, operation, option)
 
 RESPONSE = DESIGN + "registration-flow-and-recovery"
 BINDING = DESIGN + "physical-identity-and-server-binding"
-P13 = "Development/system/design/system/parameters.md (P13 outcome policy)"
+P13 = "Development/system/design/COMMUNICATION/parameters.md (P13 outcome policy)"
 BASE = "https://nglegion:8443/fhir"
 LOCATION = BASE + "/Device/1/_history/1"
 OUR_IDENTIFIER = {"system": "urn:stethoscope:device", "value": IDENTIFIER}

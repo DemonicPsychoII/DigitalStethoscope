@@ -746,7 +746,7 @@ def test_read_after_complete_is_rejected(reader, record_property):
 
 REQUEST = DESIGN + "registration-flow-and-recovery"
 OBSERVATION_REQUEST = (
-    "Development/system/design/system/interfaces-and-behavior.md"
+    "Development/system/design/COMMUNICATION/interfaces-and-behavior.md"
     "#delivery-clock-and-configuration"
 )
 DEVICE_CONDITION = "identifier=urn%3Astethoscope%3Adevice|stetho-A1B2C3D4E5F6"

@@ -54,7 +54,7 @@
         ],
         [
           "Design: MVP-Sitzungsbasis",
-          "Development/system/design/system/interfaces-and-behavior.md",
+          "Development/system/design/cross-module.md",
           "session-handling"
         ]
       ]
@@ -161,7 +161,7 @@
         ],
         [
           "Design: Firmware-Schichten",
-          "Development/system/design/system/interfaces-and-behavior.md",
+          "Development/system/architecture/system/firmware-structure.md",
           "firmware-layer-structure"
         ]
       ]
@@ -178,7 +178,7 @@
         ],
         [
           "Design: Firmware-Schichten",
-          "Development/system/design/system/interfaces-and-behavior.md",
+          "Development/system/architecture/system/firmware-structure.md",
           "firmware-layer-structure"
         ]
       ]
@@ -241,8 +241,8 @@
         ],
         [
           "Designparameter P03",
-          "Development/system/design/system/parameters.md",
-          "design-parameters"
+          "Development/system/design/AUDIO/parameters.md",
+          "audio-parameters"
         ]
       ]
     },
@@ -326,8 +326,8 @@
         ],
         [
           "Designparameter P03/P10",
-          "Development/system/design/system/parameters.md",
-          "design-parameters"
+          "Development/system/design/README.md",
+          "parameters"
         ]
       ]
     },
@@ -365,8 +365,8 @@
         ],
         [
           "Designparameter P06",
-          "Development/system/design/system/parameters.md",
-          "design-parameters"
+          "Development/system/design/AUDIO/parameters.md",
+          "audio-parameters"
         ]
       ]
     },
@@ -416,8 +416,8 @@
         ],
         [
           "Designparameter P06/P17",
-          "Development/system/design/system/parameters.md",
-          "design-parameters"
+          "Development/system/design/AUDIO/parameters.md",
+          "audio-parameters"
         ]
       ]
     },
@@ -482,7 +482,7 @@
         ],
         [
           "Design: Delivery",
-          "Development/system/design/system/interfaces-and-behavior.md",
+          "Development/system/design/COMMUNICATION/interfaces-and-behavior.md",
           "delivery-clock-and-configuration"
         ]
       ]
@@ -671,8 +671,8 @@
         ],
         [
           "Designparameter",
-          "Development/system/design/system/parameters.md",
-          "design-parameters"
+          "Development/system/design/README.md",
+          "parameters"
         ]
       ]
     },
@@ -771,8 +771,8 @@
         ],
         [
           "Designparameter P06/P17",
-          "Development/system/design/system/parameters.md",
-          "design-parameters"
+          "Development/system/design/AUDIO/parameters.md",
+          "audio-parameters"
         ]
       ]
     },
@@ -794,7 +794,7 @@
         ],
         [
           "Design: LED-Anzeige",
-          "Development/system/design/system/interfaces-and-behavior.md",
+          "Development/system/design/FEEDBACK/README.md",
           "led-indication-and-error-handling"
         ],
         [
