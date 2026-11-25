@@ -1,6 +1,10 @@
 @startuml uc_03_set_up_wifi
+!theme cyborg
 skinparam shadowing false
 skinparam defaultFontName SansSerif
+skinparam backgroundColor #0b1018
+skinparam defaultFontColor #e6edf7
+skinparam ArrowColor #a9b8ca
 title F3 Set up Wi-Fi (REQ-11, REQ-12)
 start
 if (Boot with saved network?) then (yes)
@@ -32,7 +36,7 @@ stop
 floating note
  Cancel/timeout: notice then cleanup; retain an established station.
  Start takes priority: stop setup safely before audio.
- Wi-Fi-only errors preserve audio. Detailed retries/recovery: wifi-flow.
- Time, secure transport and Device registration are later FHIR acceptance.
+ Wi-Fi-only errors preserve audio.
+ Not shown: time, secure transport and Device registration; they belong to FHIR acceptance.
 end note
 @enduml

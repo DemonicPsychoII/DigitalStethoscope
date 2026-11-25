@@ -1,6 +1,6 @@
 # Wi-Fi and portal host verification
 
-VT-14; REQ-11/REQ-12 with supporting REQ-13/REQ-14. Basis:
+VT-14; [REQ-11](../../../../requirements/system-requirements.md#req-11)/[REQ-12](../../../../requirements/system-requirements.md#req-12) with supporting [REQ-13](../../../../requirements/system-requirements.md#req-13)/[REQ-14](../../../../requirements/system-requirements.md#req-14). Basis:
 `07267b4ebef4cde952c296200bc428bc29d519c2` (`replay/11-project-records`).
 
 ## Run

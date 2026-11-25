@@ -191,7 +191,8 @@ def facts(paths: list[str], root: Path = ROOT) -> list[str]:
         else ""
     )
     last_requirement = max(
-        re.findall(r"^\| REQ-(\d+)", requirements, re.MULTILINE), default=None
+        re.findall(r'^\| (?:<a id="[^"]+"></a>)?REQ-(\d+)', requirements, re.MULTILINE),
+        default=None,
     )
     docs = [
         p

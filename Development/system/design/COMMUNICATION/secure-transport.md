@@ -2,7 +2,7 @@
 
 ## Basis
 
-This design refines the [TLS architecture](../../architecture/COMMUNICATION/secure-transport.md) and the [system design](../system/interfaces-and-behavior.md#delivery-clock-and-configuration). It depends on the [SNTP design](time-synchronization.md). Covered requirements are REQ-02, REQ-09, REQ-10, REQ-11, REQ-13 and REQ-14.
+This design refines the [TLS architecture](../../architecture/COMMUNICATION/secure-transport.md) and the [system design](../system/interfaces-and-behavior.md#delivery-clock-and-configuration). It depends on the [SNTP design](time-synchronization.md). Covered requirements are [REQ-02](../../requirements/system-requirements.md#req-02), [REQ-09](../../requirements/system-requirements.md#req-09), [REQ-10](../../requirements/system-requirements.md#req-10), [REQ-11](../../requirements/system-requirements.md#req-11), [REQ-13](../../requirements/system-requirements.md#req-13) and [REQ-14](../../requirements/system-requirements.md#req-14).
 
 ## TLS 1.3 handshake (generic protocol)
 

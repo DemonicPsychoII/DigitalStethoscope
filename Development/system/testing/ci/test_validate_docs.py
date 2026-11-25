@@ -12,6 +12,7 @@ from validate_docs import (
     WORKFLOW,
     facts,
     line_anchor,
+    links,
     listed,
     renders,
     supplemental_sources,
@@ -111,7 +112,7 @@ class FactTests(unittest.TestCase):
         write(
             root,
             SYSTEM + "requirements/system-requirements.md",
-            "| REQ-01 |\n| REQ-02 |\n",
+            '| REQ-01 |\n| <a id="req-02"></a>REQ-02 |\n',
         )
         gates = write(
             root,
@@ -164,6 +165,29 @@ class LineAnchorTests(unittest.TestCase):
             self.assertTrue(line_anchor("L1-L2", target))
             self.assertFalse(line_anchor("L4", target))
             self.assertFalse(line_anchor("heading", target))
+
+
+class ExplicitAnchorTests(unittest.TestCase):
+    def test_link_to_explicit_anchor_passes_and_missing_one_fails(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write(
+                root,
+                "requirements.md",
+                "# Requirements\n\n| ID | Requirement |\n|---|---|\n"
+                '| <a id="req-09"></a>REQ-09 | Delivered. |\n',
+            )
+            source = root / write(
+                root,
+                "design/page.md",
+                "[REQ-09](../requirements.md#req-09) [REQ-10](../requirements.md#req-10)\n",
+            )
+            self.assertEqual(
+                links(source, root),
+                [
+                    f"{source.relative_to(root)}: missing anchor ../requirements.md#req-10"
+                ],
+            )
 
 
 class SupplementalSourceTests(unittest.TestCase):

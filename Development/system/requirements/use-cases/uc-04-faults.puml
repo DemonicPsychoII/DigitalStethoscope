@@ -1,6 +1,10 @@
 @startuml uc_04_faults
+!theme cyborg
 skinparam shadowing false
 skinparam defaultFontName SansSerif
+skinparam backgroundColor #0b1018
+skinparam defaultFontColor #e6edf7
+skinparam ArrowColor #a9b8ca
 title F4 Handle faults (REQ-13, REQ-14)
 start
 :Detect fault; log cause;

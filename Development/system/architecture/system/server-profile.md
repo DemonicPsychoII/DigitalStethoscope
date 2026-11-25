@@ -2,7 +2,7 @@
 
 ## Basis and scope
 
-Server profile provisioning defines how a device receives its single server endpoint, keep-alive and trusted certificate in a flash image separate from the firmware. It refines the [TLS trust boundary](../COMMUNICATION/secure-transport.md) under REQ-09, REQ-11, REQ-12 and REQ-13.
+Server profile provisioning defines how a device receives its single server endpoint, keep-alive and trusted certificate in a flash image separate from the firmware. It refines the [TLS trust boundary](../COMMUNICATION/secure-transport.md) under [REQ-09](../../requirements/system-requirements.md#req-09), [REQ-11](../../requirements/system-requirements.md#req-11), [REQ-12](../../requirements/system-requirements.md#req-12) and [REQ-13](../../requirements/system-requirements.md#req-13).
 
 One deployment file per server holds the endpoint, keep-alive and public certificate. Deployment files are versioned separately from firmware builds, and a single host flash command validates the file, builds the server profile image and writes it to its dedicated flash partition.
 
@@ -40,11 +40,11 @@ The server profile has a fixed location in flash that is independent of the sett
 
 | Scenario | Trace | Expected outcome |
 | --- | --- | --- |
-| Valid deployment file flashed | REQ-09/REQ-11; VT-08 | Boot reports the configured server; secure preparation uses that endpoint and certificate. |
-| Invalid deployment file | REQ-11; VT-08 | The tool rejects it before writing; the device keeps its previous image. |
-| Certificate without matching Subject Alternative Name | REQ-11; VT-08 | Rejected by the tool; a device that boots with such an image reports a configuration cause and no secure transport. |
-| Missing or corrupted image | REQ-11/REQ-13; VT-08/VT-09 | Secure transport unavailable with a configuration cause; Wi-Fi setup and offline listening unaffected. |
-| Firmware update or settings-partition erase | REQ-11/REQ-12; VT-08 | The image remains and is accepted at the next boot. |
+| Valid deployment file flashed | [REQ-09](../../requirements/system-requirements.md#req-09)/[REQ-11](../../requirements/system-requirements.md#req-11); VT-08 | Boot reports the configured server; secure preparation uses that endpoint and certificate. |
+| Invalid deployment file | [REQ-11](../../requirements/system-requirements.md#req-11); VT-08 | The tool rejects it before writing; the device keeps its previous image. |
+| Certificate without matching Subject Alternative Name | [REQ-11](../../requirements/system-requirements.md#req-11); VT-08 | Rejected by the tool; a device that boots with such an image reports a configuration cause and no secure transport. |
+| Missing or corrupted image | [REQ-11](../../requirements/system-requirements.md#req-11)/[REQ-13](../../requirements/system-requirements.md#req-13); VT-08/VT-09 | Secure transport unavailable with a configuration cause; Wi-Fi setup and offline listening unaffected. |
+| Firmware update or settings-partition erase | [REQ-11](../../requirements/system-requirements.md#req-11)/[REQ-12](../../requirements/system-requirements.md#req-12); VT-08 | The image remains and is accepted at the next boot. |
 | Deployment file content | VT-11 | Inspection finds no private key, keystore, password or patient context. |
 
 ## Sources

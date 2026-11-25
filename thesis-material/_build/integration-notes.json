@@ -19,9 +19,9 @@
           "confirmed-scope-and-behavior"
         ],
         [
-          "Systemanforderungen: entfernte Anforderungen",
-          "Development/system/requirements/system-requirements.md",
-          "retired-requirements"
+          "Entscheidungsnachweis: entfernte Anforderungen",
+          "Development/system/planning/decision-trace.md",
+          ""
         ]
       ]
     },
@@ -33,7 +33,7 @@
         [
           "Systemanforderungen",
           "Development/system/requirements/system-requirements.md",
-          "system-requirements-mvp"
+          "system-requirements"
         ],
         [
           "MVP-Entscheidungen 14.10. (Anforderungen)",
@@ -259,7 +259,7 @@
         [
           "Systemanforderungen",
           "Development/system/requirements/system-requirements.md",
-          "system-requirements-mvp"
+          "system-requirements"
         ]
       ]
     },
@@ -322,7 +322,7 @@
         [
           "Systemanforderungen",
           "Development/system/requirements/system-requirements.md",
-          "system-requirements-mvp"
+          "system-requirements"
         ],
         [
           "Designparameter P03/P10",
@@ -361,7 +361,7 @@
         [
           "Systemanforderungen",
           "Development/system/requirements/system-requirements.md",
-          "system-requirements-mvp"
+          "system-requirements"
         ],
         [
           "Designparameter P06",
@@ -383,7 +383,7 @@
         [
           "Systemanforderungen",
           "Development/system/requirements/system-requirements.md",
-          "system-requirements-mvp"
+          "system-requirements"
         ]
       ]
     },
@@ -400,7 +400,7 @@
         [
           "Systemanforderungen",
           "Development/system/requirements/system-requirements.md",
-          "system-requirements-mvp"
+          "system-requirements"
         ]
       ]
     },
@@ -466,7 +466,7 @@
         [
           "Systemanforderungen",
           "Development/system/requirements/system-requirements.md",
-          "system-requirements-mvp"
+          "system-requirements"
         ]
       ]
     },
@@ -833,7 +833,7 @@
         [
           "Systemanforderungen",
           "Development/system/requirements/system-requirements.md",
-          "system-requirements-mvp"
+          "system-requirements"
         ]
       ]
     }
