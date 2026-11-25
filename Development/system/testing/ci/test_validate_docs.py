@@ -78,6 +78,17 @@ class IndexTests(unittest.TestCase):
             errors = listed([*paths, ci + "new.py", arch + "new.puml"], root)
             self.assertEqual(len(errors), 2)
 
+    def test_unlisted_view_in_the_puml_folder_fails(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            arch = SYSTEM + "architecture/"
+            write(root, arch + "README.md", "[v](puml/view.puml)")
+            write(root, arch + "system/VIEW-NOTES.md", "")
+            paths = [arch + "puml/view.puml"]
+            self.assertEqual(listed(paths, root), [])
+            errors = listed([*paths, arch + "puml/new.puml"], root)
+            self.assertEqual(len(errors), 1)
+
 
 class FactTests(unittest.TestCase):
     def tree(self, root: Path, local: str) -> list[str]:

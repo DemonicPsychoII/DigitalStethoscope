@@ -148,9 +148,17 @@ def listed(paths: list[str], root: Path = ROOT) -> list[str]:
         for readme in architecture.glob("*/README.md")
         for folder in (readme.parent,)
     )
+
+    def indexed_folder(path: str) -> str:
+        """A diagram source in a puml directory belongs to the folder above it."""
+        parent = Path(path).parent
+        if path.endswith(".puml") and parent.name == "puml":
+            parent = parent.parent
+        return parent.as_posix() + "/"
+
     for directory, suffix, docs in indexes:
         if not any(
-            Path(path).parent.as_posix() + "/" == directory and path.endswith(suffix)
+            indexed_folder(path) == directory and path.endswith(suffix)
             for path in paths
         ):
             continue
@@ -158,7 +166,7 @@ def listed(paths: list[str], root: Path = ROOT) -> list[str]:
         for path in paths:
             name = Path(path).name
             if (
-                Path(path).parent.as_posix() + "/" == directory
+                indexed_folder(path) == directory
                 and name.endswith(suffix)
                 and not name.startswith("test_")
                 and name not in text
