@@ -34,7 +34,7 @@ The DevKit was not yet soldered to the carrier, so carrier inputs such as J8 wer
 ## Applied in
 
 - [Feedback catalogue](../design/FEEDBACK/catalogue.md) and the
-  [electrical interface baseline](../spec/product-scope.md#electrical-interface-baseline)
+  [pin assignment](../design/system/interfaces-and-behavior.md#pin-assignment)
 - [Architecture view notes](../architecture/system/VIEW-NOTES.md) and the application board overlay
   in [`coding/app/boards/`](../coding/app/README.md)
 

@@ -26,7 +26,7 @@ It does not apply to the product documents and code below.
 
 ## Product documents
 
-Applies to what the company receives: `Development/system/requirements/`, `architecture/`,
+Applies to what the company receives: `Development/system/spec/`, `requirements/`, `architecture/`,
 `design/` and `coding/`, including diagrams, README files and source comments. A reader of these
 files has no project history and must not need any.
 

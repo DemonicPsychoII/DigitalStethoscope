@@ -97,9 +97,9 @@
           "scope"
         ],
         [
-          "Produktumfang",
+          "Produktspezifikation",
           "Development/system/spec/product-scope.md",
-          "goal-and-boundary"
+          "functions-outside-the-product"
         ]
       ]
     },
@@ -114,9 +114,9 @@
           "recommendation-for-the-next-discussion"
         ],
         [
-          "Quellenregister S04/S06",
-          "Development/system/spec/product-scope.md",
-          "source-register-and-precedence"
+          "Entscheidungsnachweis, Quellenregister S04/S06",
+          "Development/system/planning/decision-trace.md",
+          "decision-trace"
         ]
       ]
     },
@@ -143,9 +143,9 @@
           "recommendation-for-the-next-discussion"
         ],
         [
-          "Quellenregister S06",
-          "Development/system/spec/product-scope.md",
-          "source-register-and-precedence"
+          "Entscheidungsnachweis, Quellenregister S06",
+          "Development/system/planning/decision-trace.md",
+          "decision-trace"
         ]
       ]
     },
@@ -206,9 +206,9 @@
           "scope"
         ],
         [
-          "Produktumfang",
+          "Produktspezifikation",
           "Development/system/spec/product-scope.md",
-          "goal-and-boundary"
+          "product-boundary-and-external-interfaces"
         ]
       ]
     },
@@ -581,9 +581,9 @@
           "scope"
         ],
         [
-          "Produktumfang",
-          "Development/system/spec/product-scope.md",
-          "goal-and-boundary"
+          "Entscheidungsnachweis",
+          "Development/system/planning/decision-trace.md",
+          "decision-trace"
         ]
       ]
     },
@@ -598,9 +598,9 @@
           "decision-register"
         ],
         [
-          "Produktumfang",
-          "Development/system/spec/product-scope.md",
-          "goal-and-boundary"
+          "Entscheidungsnachweis",
+          "Development/system/planning/decision-trace.md",
+          "decision-trace"
         ]
       ]
     }
@@ -734,9 +734,9 @@
           "requirements"
         ],
         [
-          "Produktumfang",
+          "Produktspezifikation",
           "Development/system/spec/product-scope.md",
-          "goal-and-boundary"
+          "functions-outside-the-product"
         ]
       ]
     },
