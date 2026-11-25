@@ -147,14 +147,16 @@ LOG_MODULE_REGISTER(i2s, LOG_LEVEL_INF);
 
 enum i2s_result i2s_initialize(void)
 {
+    const bool isMicrophoneReady = device_is_ready(i2s_MicrophoneDevice);
+    const bool isDACReady = device_is_ready(i2s_DACDevice);
     enum i2s_result result = I2S_RESULT_OK;
 
-    if(!device_is_ready(i2s_MicrophoneDevice))
+    if(!isMicrophoneReady)
     {
         LOG_ERR("Microphone I2S device %s is not ready", i2s_MicrophoneDevice->name);
         result = I2S_RESULT_MICROPHONE_FAILURE;
     }
-    else if(!device_is_ready(i2s_DACDevice))
+    else if(!isDACReady)
     {
         LOG_ERR("DAC I2S device %s is not ready", i2s_DACDevice->name);
         result = I2S_RESULT_OUTPUT_FAILURE;

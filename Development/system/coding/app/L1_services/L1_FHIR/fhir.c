@@ -414,8 +414,10 @@ int fhir_buildDeviceRegistration(const char *physicalIdentifier, char *body, siz
 {
     struct fhir_writer writer;
     int result = -EINVAL;
+    const bool outputIsPrepared = fhir_prepareOutput(body, capacity, length);
+    const bool identifierIsValid = fhir_isValidPhysicalIdentifier(physicalIdentifier);
 
-    if(fhir_prepareOutput(body, capacity, length) && fhir_isValidPhysicalIdentifier(physicalIdentifier))
+    if(outputIsPrepared && identifierIsValid)
     {
         fhir_beginWriter(&writer, body, capacity);
         fhir_appendText(&writer, "{\"resourceType\":\"Device\",\"identifier\":[{\"system\":");
@@ -434,8 +436,10 @@ int fhir_buildDeviceRegistrationCondition(const char *physicalIdentifier, char *
 {
     struct fhir_writer writer;
     int result = -EINVAL;
+    const bool outputIsPrepared = fhir_prepareOutput(condition, capacity, length);
+    const bool identifierIsValid = fhir_isValidPhysicalIdentifier(physicalIdentifier);
 
-    if(fhir_prepareOutput(condition, capacity, length) && fhir_isValidPhysicalIdentifier(physicalIdentifier))
+    if(outputIsPrepared && identifierIsValid)
     {
         fhir_beginWriter(&writer, condition, capacity);
         fhir_appendText(&writer, FHIR_DEVICE_REGISTRATION_CONDITION_PREFIX);
@@ -451,8 +455,10 @@ int fhir_buildObservation(const struct fhir_observation *observation, char *body
 {
     struct fhir_writer writer;
     int result = -EINVAL;
+    const bool outputIsPrepared = fhir_prepareOutput(body, capacity, length);
+    const bool observationIsValid = fhir_isValidObservation(observation);
 
-    if(fhir_prepareOutput(body, capacity, length) && fhir_isValidObservation(observation))
+    if(outputIsPrepared && observationIsValid)
     {
         fhir_beginWriter(&writer, body, capacity);
         fhir_appendText(&writer, "{\"resourceType\":\"Observation\",\"identifier\":[{\"system\":");
@@ -500,8 +506,10 @@ int fhir_buildObservationCondition(const struct fhir_observation *observation, c
     struct fhir_writer identifierWriter;
     struct fhir_writer writer;
     int result = -EINVAL;
+    const bool outputIsPrepared = fhir_prepareOutput(condition, capacity, length);
+    const bool measurementIdentityIsValid = fhir_hasValidMeasurementIdentity(observation);
 
-    if(fhir_prepareOutput(condition, capacity, length) && fhir_hasValidMeasurementIdentity(observation))
+    if(outputIsPrepared && measurementIdentityIsValid)
     {
         fhir_beginWriter(&identifierWriter, identifier, sizeof(identifier));
         fhir_appendMeasurementIdentifier(&identifierWriter, observation);
@@ -533,7 +541,9 @@ int fhir_parseDeviceRegistration(const struct fhir_response *response, const cha
         serverDeviceId[0] = '\0';
     }
 
-    if((response != NULL) && (baseUrl != NULL) && (baseUrl[0] != '\0') && (serverDeviceId != NULL) && (capacity >= FHIR_SERVER_DEVICE_ID_SIZE) && (cause != NULL) && fhir_isValidPhysicalIdentifier(physicalIdentifier))
+    const bool identifierIsValid = fhir_isValidPhysicalIdentifier(physicalIdentifier);
+
+    if((response != NULL) && (baseUrl != NULL) && (baseUrl[0] != '\0') && (serverDeviceId != NULL) && (capacity >= FHIR_SERVER_DEVICE_ID_SIZE) && (cause != NULL) && identifierIsValid)
     {
         outcome = fhir_classifyStatus(response->status);
 
@@ -591,7 +601,10 @@ int fhir_encodeRegistrationRecord(const char *baseUrl, const char *physicalIdent
         baseUrlLength = strlen(baseUrl);
     }
 
-    if((record != NULL) && (capacity >= FHIR_REGISTRATION_RECORD_SIZE) && (baseUrlLength > 0U) && (baseUrlLength <= FHIR_BASE_URL_MAX_LENGTH) && fhir_isValidPhysicalIdentifier(physicalIdentifier) && fhir_isValidServerDeviceId(serverDeviceId))
+    const bool identifierIsValid = fhir_isValidPhysicalIdentifier(physicalIdentifier);
+    const bool serverDeviceIdIsValid = fhir_isValidServerDeviceId(serverDeviceId);
+
+    if((record != NULL) && (capacity >= FHIR_REGISTRATION_RECORD_SIZE) && (baseUrlLength > 0U) && (baseUrlLength <= FHIR_BASE_URL_MAX_LENGTH) && identifierIsValid && serverDeviceIdIsValid)
     {
         /* The zero fill above supplies every terminator and the padding behind it. */
         record[FHIR_RECORD_VERSION_OFFSET] = FHIR_REGISTRATION_RECORD_VERSION;
@@ -617,7 +630,9 @@ int fhir_decodeRegistrationRecord(const uint8_t *record, size_t size, const char
         serverDeviceId[0] = '\0';
     }
 
-    if((record == NULL) || (serverDeviceId == NULL) || (capacity < FHIR_SERVER_DEVICE_ID_SIZE) || (baseUrl == NULL) || (baseUrl[0] == '\0') || !fhir_isValidPhysicalIdentifier(physicalIdentifier))
+    const bool identifierIsValid = fhir_isValidPhysicalIdentifier(physicalIdentifier);
+
+    if((record == NULL) || (serverDeviceId == NULL) || (capacity < FHIR_SERVER_DEVICE_ID_SIZE) || (baseUrl == NULL) || (baseUrl[0] == '\0') || !identifierIsValid)
     {
         result = -EINVAL;
     }
@@ -625,29 +640,41 @@ int fhir_decodeRegistrationRecord(const uint8_t *record, size_t size, const char
     {
         result = -EBADMSG;
     }
-    else if(!fhir_isValidRecordField(&record[FHIR_RECORD_BASE_URL_OFFSET], FHIR_BASE_URL_SIZE) || !fhir_isValidRecordField(&record[FHIR_RECORD_PHYSICAL_IDENTIFIER_OFFSET], FHIR_PHYSICAL_IDENTIFIER_SIZE) || !fhir_isValidRecordField(&record[FHIR_RECORD_SERVER_DEVICE_ID_OFFSET], FHIR_SERVER_DEVICE_ID_SIZE))
-    {
-        result = -EBADMSG;
-    }
     else
     {
-        /* Each field holds its terminator, so the texts are read in place without copies. */
-        storedBaseUrl = (const char *)&record[FHIR_RECORD_BASE_URL_OFFSET];
-        storedPhysicalIdentifier = (const char *)&record[FHIR_RECORD_PHYSICAL_IDENTIFIER_OFFSET];
-        storedServerDeviceId = (const char *)&record[FHIR_RECORD_SERVER_DEVICE_ID_OFFSET];
+        const bool baseUrlFieldIsValid = fhir_isValidRecordField(&record[FHIR_RECORD_BASE_URL_OFFSET], FHIR_BASE_URL_SIZE);
+        const bool physicalIdentifierFieldIsValid = fhir_isValidRecordField(&record[FHIR_RECORD_PHYSICAL_IDENTIFIER_OFFSET], FHIR_PHYSICAL_IDENTIFIER_SIZE);
+        const bool serverDeviceIdFieldIsValid = fhir_isValidRecordField(&record[FHIR_RECORD_SERVER_DEVICE_ID_OFFSET], FHIR_SERVER_DEVICE_ID_SIZE);
 
-        if((storedBaseUrl[0] == '\0') || !fhir_isValidPhysicalIdentifier(storedPhysicalIdentifier) || !fhir_isValidServerDeviceId(storedServerDeviceId))
+        if(!baseUrlFieldIsValid || !physicalIdentifierFieldIsValid || !serverDeviceIdFieldIsValid)
         {
             result = -EBADMSG;
         }
-        /* Exact comparison: both sides are our own canonical data, unlike a server's Location header. */
-        else if((strcmp(storedBaseUrl, baseUrl) != 0) || (strcmp(storedPhysicalIdentifier, physicalIdentifier) != 0))
-        {
-            result = -ESTALE;
-        }
         else
         {
-            (void)memcpy(serverDeviceId, storedServerDeviceId, strlen(storedServerDeviceId) + 1U);
+            /* Each field holds its terminator, so the texts are read in place without copies. */
+            storedBaseUrl = (const char *)&record[FHIR_RECORD_BASE_URL_OFFSET];
+            storedPhysicalIdentifier = (const char *)&record[FHIR_RECORD_PHYSICAL_IDENTIFIER_OFFSET];
+            storedServerDeviceId = (const char *)&record[FHIR_RECORD_SERVER_DEVICE_ID_OFFSET];
+
+            const bool storedPhysicalIdentifierIsValid = fhir_isValidPhysicalIdentifier(storedPhysicalIdentifier);
+            const bool storedServerDeviceIdIsValid = fhir_isValidServerDeviceId(storedServerDeviceId);
+            const bool baseUrlMatches = (strcmp(storedBaseUrl, baseUrl) == 0);
+            const bool physicalIdentifierMatches = (strcmp(storedPhysicalIdentifier, physicalIdentifier) == 0);
+
+            if((storedBaseUrl[0] == '\0') || !storedPhysicalIdentifierIsValid || !storedServerDeviceIdIsValid)
+            {
+                result = -EBADMSG;
+            }
+            /* Exact comparison: both sides are our own canonical data, unlike a server's Location header. */
+            else if(!baseUrlMatches || !physicalIdentifierMatches)
+            {
+                result = -ESTALE;
+            }
+            else
+            {
+                (void)memcpy(serverDeviceId, storedServerDeviceId, strlen(storedServerDeviceId) + 1U);
+            }
         }
     }
 
@@ -706,10 +733,11 @@ static void fhir_appendText(struct fhir_writer *writer, const char *text)
     if(!writer->hasOverflowed)
     {
         size_t textLength = strlen(text);
+        const size_t remainingCapacity = (writer->capacity - writer->length);
 
         /* Without an overflow length < capacity holds, so the subtraction cannot wrap
          * and the strict comparison keeps one byte for the terminator. */
-        if(textLength < (writer->capacity - writer->length))
+        if(textLength < remainingCapacity)
         {
             (void)memcpy(&writer->buffer[writer->length], text, textLength);
 
@@ -862,6 +890,7 @@ static void fhir_appendUnsigned(struct fhir_writer *writer, uint32_t value, uint
     char digits[FHIR_UNSIGNED_DECIMAL_DIGITS + 1U];
     size_t start = FHIR_UNSIGNED_DECIMAL_DIGITS;
     uint32_t remaining = value;
+    size_t writtenDigits = 0U;
 
     digits[start] = '\0';
 
@@ -870,7 +899,8 @@ static void fhir_appendUnsigned(struct fhir_writer *writer, uint32_t value, uint
         start--;
         digits[start] = (char)('0' + (remaining % 10U));
         remaining /= 10U;
-    } while((start > 0U) && ((remaining > 0U) || ((FHIR_UNSIGNED_DECIMAL_DIGITS - start) < minimumDigits)));
+        writtenDigits = (FHIR_UNSIGNED_DECIMAL_DIGITS - start);
+    } while((start > 0U) && ((remaining > 0U) || (writtenDigits < minimumDigits)));
 
     fhir_appendText(writer, &digits[start]);
 }
@@ -1085,7 +1115,9 @@ static bool fhir_parseDeviceRepresentation(const char *body, size_t bodyLength, 
 
     serverDeviceId[0] = '\0';
 
-    if(fhir_consumeJsonCharacter(&scanner, '{'))
+    const bool objectIsOpened = fhir_consumeJsonCharacter(&scanner, '{');
+
+    if(objectIsOpened)
     {
         isClosed = fhir_consumeJsonCharacter(&scanner, '}');
     }
@@ -1098,22 +1130,25 @@ static bool fhir_parseDeviceRepresentation(const char *body, size_t bodyLength, 
     while((result == 0) && !isClosed)
     {
         const int nameResult = fhir_readJsonMemberName(&scanner, name, sizeof(name));
+        const bool memberIsResourceType = ((nameResult == 0) && (strcmp(name, "resourceType") == 0));
+        const bool memberIsId = ((nameResult == 0) && (strcmp(name, "id") == 0));
+        const bool memberIsIdentifier = ((nameResult == 0) && (strcmp(name, "identifier") == 0));
 
         if(nameResult == -EBADMSG)
         {
             result = -EBADMSG;
         }
-        else if((nameResult == 0) && (strcmp(name, "resourceType") == 0))
+        else if(memberIsResourceType)
         {
             result = (hasResourceType ? -EBADMSG : fhir_readJsonString(&scanner, resourceType, sizeof(resourceType)));
             hasResourceType = true;
         }
-        else if((nameResult == 0) && (strcmp(name, "id") == 0))
+        else if(memberIsId)
         {
             result = (hasId ? -EBADMSG : fhir_readJsonString(&scanner, serverDeviceId, FHIR_SERVER_DEVICE_ID_SIZE));
             hasId = true;
         }
-        else if((nameResult == 0) && (strcmp(name, "identifier") == 0))
+        else if(memberIsIdentifier)
         {
             result = (hasIdentifiers ? -EBADMSG : fhir_parseJsonIdentifiers(&scanner, physicalIdentifier, &containsPhysicalIdentifier));
             hasIdentifiers = true;
@@ -1151,7 +1186,9 @@ static int fhir_parseJsonIdentifiers(struct fhir_json_scanner *scanner, const ch
 
     *containsPhysicalIdentifier = false;
 
-    if(fhir_consumeJsonCharacter(scanner, '['))
+    const bool arrayIsOpened = fhir_consumeJsonCharacter(scanner, '[');
+
+    if(arrayIsOpened)
     {
         isClosed = fhir_consumeJsonCharacter(scanner, ']');
     }
@@ -1185,8 +1222,9 @@ static int fhir_parseJsonIdentifier(struct fhir_json_scanner *scanner, const cha
     bool isValueMatched = false;
     bool isClosed = false;
     int result = 0;
+    const bool objectIsOpened = fhir_consumeJsonCharacter(scanner, '{');
 
-    if(fhir_consumeJsonCharacter(scanner, '{'))
+    if(objectIsOpened)
     {
         isClosed = fhir_consumeJsonCharacter(scanner, '}');
     }
@@ -1198,17 +1236,19 @@ static int fhir_parseJsonIdentifier(struct fhir_json_scanner *scanner, const cha
     while((result == 0) && !isClosed)
     {
         const int nameResult = fhir_readJsonMemberName(scanner, name, sizeof(name));
+        const bool memberIsSystem = ((nameResult == 0) && (strcmp(name, "system") == 0));
+        const bool memberIsValue = ((nameResult == 0) && (strcmp(name, "value") == 0));
 
         if(nameResult == -EBADMSG)
         {
             result = -EBADMSG;
         }
-        else if((nameResult == 0) && (strcmp(name, "system") == 0))
+        else if(memberIsSystem)
         {
             result = fhir_readJsonString(scanner, system, sizeof(system));
             isSystemMatched = ((result == 0) && (strcmp(system, FHIR_DEVICE_IDENTIFIER_SYSTEM) == 0));
         }
-        else if((nameResult == 0) && (strcmp(name, "value") == 0))
+        else if(memberIsValue)
         {
             result = fhir_readJsonString(scanner, value, sizeof(value));
             isValueMatched = ((result == 0) && (strcmp(value, physicalIdentifier) == 0));
@@ -1241,8 +1281,9 @@ static int fhir_readJsonString(struct fhir_json_scanner *scanner, char *destinat
     bool isClosed = false;
     bool hasOverflowed = false;
     int result = 0;
+    const bool stringIsOpened = fhir_consumeJsonCharacter(scanner, '"');
 
-    if(!fhir_consumeJsonCharacter(scanner, '"'))
+    if(!stringIsOpened)
     {
         result = -EBADMSG;
     }
@@ -1252,6 +1293,7 @@ static int fhir_readJsonString(struct fhir_json_scanner *scanner, char *destinat
         if(scanner->position < scanner->length)
         {
             const unsigned char byte = (unsigned char)scanner->text[scanner->position];
+            const size_t lengthWithTerminator = (copiedLength + 1U);
 
             scanner->position++;
 
@@ -1271,7 +1313,7 @@ static int fhir_readJsonString(struct fhir_json_scanner *scanner, char *destinat
             {
                 /* Skipped content is not kept. */
             }
-            else if((copiedLength + 1U) < capacity)
+            else if(lengthWithTerminator < capacity)
             {
                 destination[copiedLength] = (char)byte;
                 copiedLength++;
@@ -1311,7 +1353,9 @@ static int fhir_skipJsonEscape(struct fhir_json_scanner *scanner)
         scanner->position++;
 
         /* strchr also finds the terminator, so a NUL byte must not reach it. */
-        if((character != '\0') && (strchr("\"\\/bfnrt", character) != NULL))
+        const bool isSimpleEscape = ((character != '\0') && (strchr("\"\\/bfnrt", character) != NULL));
+
+        if(isSimpleEscape)
         {
             result = 0;
         }
@@ -1347,9 +1391,14 @@ static int fhir_readJsonMemberName(struct fhir_json_scanner *scanner, char *name
 {
     int result = fhir_readJsonString(scanner, name, capacity);
 
-    if((result != -EBADMSG) && !fhir_consumeJsonCharacter(scanner, ':'))
+    if(result != -EBADMSG)
     {
-        result = -EBADMSG;
+        const bool colonIsConsumed = fhir_consumeJsonCharacter(scanner, ':');
+
+        if(!colonIsConsumed)
+        {
+            result = -EBADMSG;
+        }
     }
 
     return result;
@@ -1361,9 +1410,14 @@ static int fhir_readJsonSeparator(struct fhir_json_scanner *scanner, char closin
 
     *isClosed = fhir_consumeJsonCharacter(scanner, closing);
 
-    if(!*isClosed && !fhir_consumeJsonCharacter(scanner, ','))
+    if(!*isClosed)
     {
-        result = -EBADMSG;
+        const bool commaIsConsumed = fhir_consumeJsonCharacter(scanner, ',');
+
+        if(!commaIsConsumed)
+        {
+            result = -EBADMSG;
+        }
     }
 
     return result;
@@ -1395,12 +1449,15 @@ static int fhir_skipJsonValue(struct fhir_json_scanner *scanner)
                     depth++;
                     scanner->position++;
 
-                    if(fhir_consumeJsonCharacter(scanner, closings[depth - 1U]))
+                    const char expectedClosing = closings[depth - 1U];
+                    const bool containerIsEmpty = fhir_consumeJsonCharacter(scanner, expectedClosing);
+
+                    if(containerIsEmpty)
                     {
                         depth--;
                         expectsValue = false;
                     }
-                    else if(closings[depth - 1U] == '}')
+                    else if(expectedClosing == '}')
                     {
                         result = fhir_readJsonMemberName(scanner, NULL, 0U);
                     }
@@ -1426,9 +1483,10 @@ static int fhir_skipJsonValue(struct fhir_json_scanner *scanner)
         }
         else
         {
+            const char expectedClosing = closings[depth - 1U];
             bool isClosed = false;
 
-            result = fhir_readJsonSeparator(scanner, closings[depth - 1U], &isClosed);
+            result = fhir_readJsonSeparator(scanner, expectedClosing, &isClosed);
 
             if(isClosed)
             {
@@ -1438,7 +1496,7 @@ static int fhir_skipJsonValue(struct fhir_json_scanner *scanner)
             {
                 expectsValue = true;
 
-                if(closings[depth - 1U] == '}')
+                if(expectedClosing == '}')
                 {
                     result = fhir_readJsonMemberName(scanner, NULL, 0U);
                 }
@@ -1456,6 +1514,7 @@ static int fhir_skipJsonValue(struct fhir_json_scanner *scanner)
 static int fhir_skipJsonScalar(struct fhir_json_scanner *scanner)
 {
     static const char *const literals[] = {"true", "false", "null"};
+    const size_t literalCount = (sizeof(literals) / sizeof(literals[0]));
     const size_t remaining = (scanner->length - scanner->position);
     const size_t start = scanner->position;
     bool isLiteral = false;
@@ -1467,20 +1526,30 @@ static int fhir_skipJsonScalar(struct fhir_json_scanner *scanner)
     }
     else
     {
-        for(size_t index = 0U; !isLiteral && (index < (sizeof(literals) / sizeof(literals[0]))); index++)
+        bool isNumberCharacter = true;
+
+        for(size_t index = 0U; !isLiteral && (index < literalCount); index++)
         {
             const size_t literalLength = strlen(literals[index]);
+            const bool literalMatches = ((remaining >= literalLength) && (memcmp(&scanner->text[start], literals[index], literalLength) == 0));
 
-            if((remaining >= literalLength) && (memcmp(&scanner->text[start], literals[index], literalLength) == 0))
+            if(literalMatches)
             {
                 scanner->position += literalLength;
                 isLiteral = true;
             }
         }
 
-        while(!isLiteral && (scanner->position < scanner->length) && (scanner->text[scanner->position] != '\0') && (strchr("0123456789-+.eE", scanner->text[scanner->position]) != NULL))
+        while(!isLiteral && isNumberCharacter && (scanner->position < scanner->length))
         {
-            scanner->position++;
+            const char character = scanner->text[scanner->position];
+
+            isNumberCharacter = ((character != '\0') && (strchr("0123456789-+.eE", character) != NULL));
+
+            if(isNumberCharacter)
+            {
+                scanner->position++;
+            }
         }
 
         if(!isLiteral && (scanner->position == start))

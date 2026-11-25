@@ -86,9 +86,10 @@ void physicalinterface_resetSwitchDebounce(struct physicalinterface_switch_debou
 
 bool physicalinterface_debounceSwitch(struct physicalinterface_switch_debounce *debounce, struct physicalinterface_switch_sample sample, int64_t nowMilliseconds)
 {
+    const bool isSampleTheCandidate = physicalinterface_isSameSwitchSample(sample, debounce->candidate);
     bool isTransition = false;
 
-    if(!debounce->hasCandidate || !physicalinterface_isSameSwitchSample(sample, debounce->candidate))
+    if(!debounce->hasCandidate || !isSampleTheCandidate)
     {
         debounce->candidate = sample;
         debounce->candidateSinceMilliseconds = nowMilliseconds;

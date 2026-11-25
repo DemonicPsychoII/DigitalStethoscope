@@ -277,7 +277,9 @@ static bool portal_waitForServerState(enum portal_wait_target target, k_timeout_
 {
     k_timepoint_t deadline = sys_timepoint_calc(timeout);
     bool isWaiting = true;
-    while(isWaiting && !sys_timepoint_expired(deadline))
+    bool isDeadlineExpired = sys_timepoint_expired(deadline);
+
+    while(isWaiting && !isDeadlineExpired)
     {
         bool hasListener = *(volatile int *)portal_service.fd >= 0;
         if(target == PORTAL_WAIT_SERVER_READY)
@@ -296,6 +298,8 @@ static bool portal_waitForServerState(enum portal_wait_target target, k_timeout_
         if(isWaiting)
         {
             k_sleep(K_MSEC(10));
+
+            isDeadlineExpired = sys_timepoint_expired(deadline);
         }
     }
     bool isReady = *(volatile int *)portal_service.fd >= 0;
@@ -380,7 +384,10 @@ int portal_stop(void)
     {
         return result;
     }
-    if(!portal_waitForServerState(PORTAL_WAIT_SERVER_STOPPED, K_MSEC(PORTAL_SERVER_STOP_TIMEOUT_MILLISECONDS)))
+
+    const bool isServerStopped = portal_waitForServerState(PORTAL_WAIT_SERVER_STOPPED, K_MSEC(PORTAL_SERVER_STOP_TIMEOUT_MILLISECONDS));
+
+    if(!isServerStopped)
     {
         return -ETIMEDOUT; /**< Operation exceeded its wait deadline. */
     }
@@ -431,7 +438,9 @@ int portal_waitForRequest(struct portal_request *request, k_timeout_t timeout)
         return -EINVAL; /**< Invalid argument or unsupported input. */
     }
     int result = -EAGAIN; /**< Operation is still pending; try again. */
-    if(k_sem_take(&portal_RequestAvailable, timeout) == 0)
+    const int semaphoreResult = k_sem_take(&portal_RequestAvailable, timeout);
+
+    if(semaphoreResult == 0)
     {
         (void)k_mutex_lock(&portal_Lock, K_FOREVER);
         if(portal_RequestCount != 0U)
@@ -555,7 +564,10 @@ static int portal_receiveConnect(struct http_client_ctx *client, enum http_trans
         return 0;
     }
     portal_FormClient = client;
-    if(requestContext->data_len <= (PORTAL_FORM_SIZE - portal_FormLength))
+
+    const size_t remainingFormCapacity = (PORTAL_FORM_SIZE - portal_FormLength);
+
+    if(requestContext->data_len <= remainingFormCapacity)
     {
         (void)memcpy(&portal_Form[portal_FormLength], requestContext->data, requestContext->data_len);
         portal_FormLength += requestContext->data_len;
@@ -585,7 +597,9 @@ static int portal_receiveConnect(struct http_client_ctx *client, enum http_trans
         bool isListed = false;
         for(size_t index = 0U; isValid && (index < portal_NetworkCount); index++)
         {
-            if(strcmp(request.network.name, portal_Networks[index].name) == 0)
+            const bool isNameListed = (strcmp(request.network.name, portal_Networks[index].name) == 0);
+
+            if(isNameListed)
             {
                 isListed = portal_Networks[index].needsPassword == (request.network.password[0] != '\0');
                 break;
@@ -743,9 +757,10 @@ static const char *portal_describeError(int error)
 static void portal_appendText(size_t *length, const char *text)
 {
     size_t textLength = strlen(text);
+    const size_t appendedLength = (*length + textLength);
 
     /* If the buffer is full, the rest is dropped and the page shows fewer networks. */
-    if((*length + textLength) < sizeof(portal_Response))
+    if(appendedLength < sizeof(portal_Response))
     {
         (void)memcpy(&portal_Response[*length], text, textLength + 1U);
 
@@ -758,6 +773,7 @@ static void portal_appendName(size_t *length, const char *name)
     for(const char *character = name; *character != '\0'; character++)
     {
         char escaped[3] = {'\\', *character, '\0'};
+        const unsigned char byte = (unsigned char)*character;
 
         if((*character == '"') || (*character == '\\'))
         {
@@ -766,7 +782,7 @@ static void portal_appendName(size_t *length, const char *name)
         else
         {
             /* JSON does not allow raw control characters. */
-            if(((unsigned char)*character < 0x20U))
+            if(byte < 0x20U)
             {
                 escaped[0] = '?';
             }
@@ -791,7 +807,9 @@ static bool portal_readFormValue(const char *form, const char *key, char *value,
     /* Fields are "key=value" pairs separated by '&'. */
     while((field != NULL) && !isFound)
     {
-        if((strncmp(field, key, keyLength) == 0) && (field[keyLength] == '='))
+        const bool isFieldOfKey = ((strncmp(field, key, keyLength) == 0) && (field[keyLength] == '='));
+
+        if(isFieldOfKey)
         {
             isFound = true;
         }

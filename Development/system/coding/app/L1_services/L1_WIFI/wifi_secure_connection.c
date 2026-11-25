@@ -246,7 +246,9 @@ int wifi_configureSecureServer(const char *baseUrl, const char *certificate, siz
     }
 
     /* PSA must be ready before parsing keys; repeated initialization is harmless. */
-    if(psa_crypto_init() != PSA_SUCCESS)
+    const psa_status_t cryptoStatus = psa_crypto_init();
+
+    if(cryptoStatus != PSA_SUCCESS)
     {
         return -EIO; /**< Crypto subsystem unavailable. */
     }
@@ -350,8 +352,9 @@ int wifi_waitForSecureConnection(enum wifi_secure_connection_cause *cause, k_tim
 int wifi_cancelSecureConnection(void)
 {
     const k_timepoint_t deadline = sys_timepoint_calc(K_MSEC(WIFI_SECURE_CANCEL_TIMEOUT_MS));
+    const int requestLockResult = k_mutex_lock(&wifi_SecureLock, sys_timepoint_timeout(deadline));
 
-    if(k_mutex_lock(&wifi_SecureLock, sys_timepoint_timeout(deadline)) != 0)
+    if(requestLockResult != 0)
     {
         return -ETIMEDOUT; /**< Release could not be confirmed within the stop bound. */
     }
@@ -377,7 +380,9 @@ int wifi_cancelSecureConnection(void)
         (void)k_event_wait(&wifi_SecureEvents, WIFI_SECURE_EVENT_COMPLETED, false, sys_timepoint_timeout(deadline));
     }
 
-    if(k_mutex_lock(&wifi_SecureLock, sys_timepoint_timeout(deadline)) != 0)
+    const int confirmationLockResult = k_mutex_lock(&wifi_SecureLock, sys_timepoint_timeout(deadline));
+
+    if(confirmationLockResult != 0)
     {
         return -ETIMEDOUT; /**< Release could not be confirmed within the stop bound. */
     }
@@ -441,28 +446,33 @@ int wifi_startSecureExchange(const struct wifi_http_request *request, struct wif
         {
             result = -ENOTCONN;
         }
-        /* No operation is pending, so the worker does not read the head while it is built. */
-        else if(wifi_buildHttpRequestHead(request, wifi_SecureHost, wifi_SecurePort, wifi_SecureBasePath, wifi_SecureRequestHead, sizeof(wifi_SecureRequestHead), &wifi_SecureRequestHeadLength) != 0)
-        {
-            result = -EINVAL;
-        }
         else
         {
-            /* Submitting first leaves the previous record intact if the queue rejects the work. */
-            result = k_work_submit_to_queue(&wifi_SecureQueue, &wifi_SecureWork);
+            /* No operation is pending, so the worker does not read the head while it is built. */
+            const int headBuildResult = wifi_buildHttpRequestHead(request, wifi_SecureHost, wifi_SecurePort, wifi_SecureBasePath, wifi_SecureRequestHead, sizeof(wifi_SecureRequestHead), &wifi_SecureRequestHeadLength);
 
-            if(result >= 0)
+            if(headBuildResult != 0)
             {
-                wifi_SecureGeneration++;
-                wifi_SecureIsClaimed = false;
-                wifi_SecureDeadline = deadline;
-                wifi_SecureOperation = WIFI_SECURE_OPERATION_EXCHANGE;
-                wifi_SecureRequest = request;
-                wifi_SecureResponse = response;
-                wifi_SecureState = WIFI_SECURE_PENDING;
-                (void)k_event_clear(&wifi_SecureEvents, WIFI_SECURE_EVENT_COMPLETED);
+                result = -EINVAL;
+            }
+            else
+            {
+                /* Submitting first leaves the previous record intact if the queue rejects the work. */
+                result = k_work_submit_to_queue(&wifi_SecureQueue, &wifi_SecureWork);
 
-                result = 0;
+                if(result >= 0)
+                {
+                    wifi_SecureGeneration++;
+                    wifi_SecureIsClaimed = false;
+                    wifi_SecureDeadline = deadline;
+                    wifi_SecureOperation = WIFI_SECURE_OPERATION_EXCHANGE;
+                    wifi_SecureRequest = request;
+                    wifi_SecureResponse = response;
+                    wifi_SecureState = WIFI_SECURE_PENDING;
+                    (void)k_event_clear(&wifi_SecureEvents, WIFI_SECURE_EVENT_COMPLETED);
+
+                    result = 0;
+                }
             }
         }
 
@@ -644,11 +654,16 @@ static int wifi_writeSecureBytes(uint32_t generation, k_timepoint_t deadline, co
     while((result == 0) && (written < length))
     {
         /* A delayed worker or an immediately writable socket must not send after Cancel or the deadline. */
-        if(!wifi_isSecureConnectionAdmitted(generation))
+        const bool operationIsAdmitted = wifi_isSecureConnectionAdmitted(generation);
+
+        if(!operationIsAdmitted)
         {
             return -ECANCELED; /**< Cancellation ended the operation. */
         }
-        if(sys_timepoint_expired(deadline))
+
+        const bool deadlineHasExpired = sys_timepoint_expired(deadline);
+
+        if(deadlineHasExpired)
         {
             return -ETIMEDOUT; /**< Write-and-receipt budget used up. */
         }
@@ -722,11 +737,24 @@ static int wifi_readSecureResponse(uint32_t generation, k_timepoint_t deadline, 
         }
 
         /* Data that keeps arriving never waits, so the budget and cancellation are checked here too. */
-        if((result == -EAGAIN) && !wifi_isSecureConnectionAdmitted(generation))
+        bool operationIsAdmitted = false;
+        bool deadlineHasExpired = false;
+
+        if(result == -EAGAIN)
+        {
+            operationIsAdmitted = wifi_isSecureConnectionAdmitted(generation);
+        }
+
+        if((result == -EAGAIN) && operationIsAdmitted)
+        {
+            deadlineHasExpired = sys_timepoint_expired(deadline);
+        }
+
+        if((result == -EAGAIN) && !operationIsAdmitted)
         {
             result = -ECANCELED;
         }
-        else if((result == -EAGAIN) && sys_timepoint_expired(deadline))
+        else if((result == -EAGAIN) && deadlineHasExpired)
         {
             result = -ETIMEDOUT;
         }
@@ -752,8 +780,9 @@ static int wifi_waitForSecureOperation(enum wifi_secure_operation operation, enu
     uint32_t awaitedGeneration = 0U;
     bool isAwaited = false;
     int result = -EAGAIN; /**< Still pending, or the state was busy for this call's interval. */
+    const int snapshotLockResult = k_mutex_lock(&wifi_SecureLock, sys_timepoint_timeout(deadline));
 
-    if(k_mutex_lock(&wifi_SecureLock, sys_timepoint_timeout(deadline)) == 0)
+    if(snapshotLockResult == 0)
     {
         stateBeforeWait = wifi_SecureState;
         awaitedGeneration = wifi_SecureGeneration;
@@ -773,23 +802,28 @@ static int wifi_waitForSecureOperation(enum wifi_secure_operation operation, enu
         (void)k_event_wait(&wifi_SecureEvents, WIFI_SECURE_EVENT_COMPLETED, false, sys_timepoint_timeout(deadline));
     }
 
-    if(isAwaited && (k_mutex_lock(&wifi_SecureLock, sys_timepoint_timeout(deadline)) == 0))
+    if(isAwaited)
     {
-        if(wifi_SecureGeneration != awaitedGeneration)
-        {
-            result = -ECANCELED; /**< A newer Start replaced the awaited operation. */
-        }
-        else if(wifi_SecureState == WIFI_SECURE_COMPLETED)
-        {
-            result = wifi_SecureResult;
-            *cause = wifi_SecureCause;
-        }
-        else
-        {
-            /* Still pending after this call's interval. */
-        }
+        const int resultLockResult = k_mutex_lock(&wifi_SecureLock, sys_timepoint_timeout(deadline));
 
-        (void)k_mutex_unlock(&wifi_SecureLock);
+        if(resultLockResult == 0)
+        {
+            if(wifi_SecureGeneration != awaitedGeneration)
+            {
+                result = -ECANCELED; /**< A newer Start replaced the awaited operation. */
+            }
+            else if(wifi_SecureState == WIFI_SECURE_COMPLETED)
+            {
+                result = wifi_SecureResult;
+                *cause = wifi_SecureCause;
+            }
+            else
+            {
+                /* Still pending after this call's interval. */
+            }
+
+            (void)k_mutex_unlock(&wifi_SecureLock);
+        }
     }
 
     return result;
@@ -843,12 +877,21 @@ static int wifi_connectSecureSocket(uint32_t generation, k_timepoint_t deadline,
     }
 
     const int flags = zsock_fcntl(wifi_SecureSocket, ZVFS_F_GETFL, 0);
-    if((flags < 0) || (zsock_fcntl(wifi_SecureSocket, ZVFS_F_SETFL, flags | ZVFS_O_NONBLOCK) < 0))
+    int nonBlockingResult = -1;
+
+    if(flags >= 0)
+    {
+        nonBlockingResult = zsock_fcntl(wifi_SecureSocket, ZVFS_F_SETFL, flags | ZVFS_O_NONBLOCK);
+    }
+
+    if((flags < 0) || (nonBlockingResult < 0))
     {
         return -errno;
     }
 
-    if(zsock_connect(wifi_SecureSocket, (const struct net_sockaddr *)&serverAddress, sizeof(serverAddress)) == 0)
+    const int connectResult = zsock_connect(wifi_SecureSocket, (const struct net_sockaddr *)&serverAddress, sizeof(serverAddress));
+
+    if(connectResult == 0)
     {
         return 0;
     }
@@ -862,7 +905,9 @@ static int wifi_connectSecureSocket(uint32_t generation, k_timepoint_t deadline,
     {
         int socketError = 0;
         net_socklen_t length = sizeof(socketError);
-        if(zsock_getsockopt(wifi_SecureSocket, ZSOCK_SOL_SOCKET, ZSOCK_SO_ERROR, &socketError, &length) < 0)
+        const int socketErrorReadResult = zsock_getsockopt(wifi_SecureSocket, ZSOCK_SOL_SOCKET, ZSOCK_SO_ERROR, &socketError, &length);
+
+        if(socketErrorReadResult < 0)
         {
             result = -errno;
         }
@@ -919,16 +964,23 @@ static int wifi_runHandshake(uint32_t generation, k_timepoint_t deadline, enum w
             const int waitResult = wifi_waitForSocket(generation, deadline, events);
             if(waitResult != 0)
             {
-                *cause = (waitResult == -ETIMEDOUT)   ? WIFI_SECURE_CONNECTION_CAUSE_TIMEOUT
-                         : (waitResult == -ECANCELED) ? WIFI_SECURE_CONNECTION_CAUSE_CANCELLED
-                                                      : WIFI_SECURE_CONNECTION_CAUSE_TCP;
+                const bool waitHasTimedOut = (waitResult == -ETIMEDOUT);
+                const bool waitWasCancelled = (waitResult == -ECANCELED);
+                const enum wifi_secure_connection_cause interruptionCause = waitWasCancelled ? WIFI_SECURE_CONNECTION_CAUSE_CANCELLED : WIFI_SECURE_CONNECTION_CAUSE_TCP;
+
+                *cause = waitHasTimedOut ? WIFI_SECURE_CONNECTION_CAUSE_TIMEOUT : interruptionCause;
                 return waitResult;
             }
         }
-        else if(!wifi_isSecureConnectionAdmitted(generation))
+        else
         {
-            *cause = WIFI_SECURE_CONNECTION_CAUSE_CANCELLED;
-            return -ECANCELED; /**< Cancellation ended the handshake. */
+            const bool operationIsAdmitted = wifi_isSecureConnectionAdmitted(generation);
+
+            if(!operationIsAdmitted)
+            {
+                *cause = WIFI_SECURE_CONNECTION_CAUSE_CANCELLED;
+                return -ECANCELED; /**< Cancellation ended the handshake. */
+            }
         }
 
         result = mbedtls_ssl_handshake(&wifi_SecureSession);
@@ -940,7 +992,9 @@ static int wifi_runHandshake(uint32_t generation, k_timepoint_t deadline, enum w
     }
 
     const uint32_t verification = mbedtls_ssl_get_verify_result(&wifi_SecureSession);
-    if((result == MBEDTLS_ERR_X509_CERT_VERIFY_FAILED) || ((verification != 0U) && (verification != (uint32_t)-1)))
+    const bool verificationFlagsAreSet = ((verification != 0U) && (verification != (uint32_t)-1));
+
+    if((result == MBEDTLS_ERR_X509_CERT_VERIFY_FAILED) || verificationFlagsAreSet)
     {
         LOG_WRN("Server verification failed (flags 0x%x)", verification);
         *cause = WIFI_SECURE_CONNECTION_CAUSE_TRUST;
@@ -956,11 +1010,16 @@ static int wifi_waitForSocket(uint32_t generation, k_timepoint_t deadline, short
 {
     while(true)
     {
-        if(!wifi_isSecureConnectionAdmitted(generation))
+        const bool operationIsAdmitted = wifi_isSecureConnectionAdmitted(generation);
+
+        if(!operationIsAdmitted)
         {
             return -ECANCELED; /**< Cancellation ended the operation. */
         }
-        if(sys_timepoint_expired(deadline))
+
+        const bool deadlineHasExpired = sys_timepoint_expired(deadline);
+
+        if(deadlineHasExpired)
         {
             return -ETIMEDOUT; /**< Not finished within the setup budget. */
         }
@@ -973,7 +1032,9 @@ static int wifi_waitForSocket(uint32_t generation, k_timepoint_t deadline, short
         }
         if(ready > 0)
         {
-            if((descriptor.revents & (ZSOCK_POLLERR | ZSOCK_POLLNVAL)) != 0)
+            const bool socketHasFailed = ((descriptor.revents & (ZSOCK_POLLERR | ZSOCK_POLLNVAL)) != 0);
+
+            if(socketHasFailed)
             {
                 return -ECONNRESET; /**< Socket failed while waiting. */
             }
@@ -1051,7 +1112,9 @@ static int wifi_receiveSecureData(void *context, unsigned char *data, size_t len
 static int wifi_parseBaseUrl(const char *baseUrl)
 {
     static const char scheme[] = "https://";
-    if(strncmp(baseUrl, scheme, sizeof(scheme) - 1U) != 0)
+    const bool schemeIsHttps = (strncmp(baseUrl, scheme, sizeof(scheme) - 1U) == 0);
+
+    if(!schemeIsHttps)
     {
         return -EINVAL; /**< Only HTTPS; no plain-HTTP fallback. */
     }
@@ -1084,7 +1147,10 @@ static int wifi_parseBaseUrl(const char *baseUrl)
             port = (port * 10U) + (uint32_t)(*digit - '0');
             digit++;
         }
-        if((digit == hostEnd + 1) || (port == 0U) || (port > 65535U) || ((*digit != '\0') && (*digit != '/')))
+
+        const bool portHasDigits = (digit != (hostEnd + 1));
+
+        if(!portHasDigits || (port == 0U) || (port > 65535U) || ((*digit != '\0') && (*digit != '/')))
         {
             return -EINVAL; /**< Invalid port. */
         }
@@ -1093,7 +1159,14 @@ static int wifi_parseBaseUrl(const char *baseUrl)
 
     /* The request line appends "/<resource>", so a trailing '/' of the base path is dropped. */
     size_t pathLength = strlen(path);
-    if((pathLength > 0U) && (path[pathLength - 1U] == '/'))
+    bool pathEndsWithSlash = false;
+
+    if(pathLength > 0U)
+    {
+        pathEndsWithSlash = (path[pathLength - 1U] == '/');
+    }
+
+    if((pathLength > 0U) && pathEndsWithSlash)
     {
         pathLength--;
     }
@@ -1121,7 +1194,9 @@ static int wifi_parseBaseUrl(const char *baseUrl)
 static int wifi_checkSubjectAlternativeName(const mbedtls_x509_crt *certificate)
 {
     /* Without a SAN extension mbedTLS falls back to the Common Name, which RFC 9525 and the design exclude. */
-    if(mbedtls_x509_crt_has_ext_type(certificate, MBEDTLS_X509_EXT_SUBJECT_ALT_NAME) == 0)
+    const bool certificateHasAlternativeName = (mbedtls_x509_crt_has_ext_type(certificate, MBEDTLS_X509_EXT_SUBJECT_ALT_NAME) != 0);
+
+    if(!certificateHasAlternativeName)
     {
         return -EBADMSG; /**< No Subject Alternative Name. */
     }
@@ -1132,7 +1207,9 @@ static int wifi_checkSubjectAlternativeName(const mbedtls_x509_crt *certificate)
     for(const mbedtls_x509_sequence *entry = &certificate->subject_alt_names; (entry != NULL) && !isMatched; entry = entry->next)
     {
         mbedtls_x509_subject_alternative_name name;
-        if(mbedtls_x509_parse_subject_alt_name(&entry->buf, &name) != 0)
+        const bool nameIsParsed = (mbedtls_x509_parse_subject_alt_name(&entry->buf, &name) == 0);
+
+        if(!nameIsParsed)
         {
             continue;
         }

@@ -299,4 +299,6 @@ Rule 14.5); `wifi_secure_connection.c` has one `continue`. The rule for function
 and `L2_CONTROL` follow it throughout. Functions with early returns exist in `wifi.c`,
 `wifi_dns.c`, `wifi_secure_connection.c`, `portal.c`, `physicalinterface.c` and
 `communication.c`. Every `if … else if` chain ends with `else` (Rule 15.7), and unused return
-values are cast to `void` (Rule 17.7). Doxygen comments use one short `@return` line.
+values are cast to `void` (Rule 17.7). A condition contains only named values, constants
+and comparisons. A call, conversion or calculation is assigned to a named `const` variable
+before the condition. Doxygen comments use one short `@return` line.

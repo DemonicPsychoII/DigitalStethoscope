@@ -818,6 +818,7 @@ static void communication_thread(void *arg1, void *arg2, void *arg3)
 static void communication_loadServerProfile(void)
 {
     const int result = storage_readServerProfile(&communication_ServerProfile);
+    const uint32_t keepAliveMarginSeconds = (uint32_t)COMMUNICATION_DEVICE_KEEP_ALIVE_MARGIN_S;
 
     if(result == -ENOENT)
     {
@@ -829,7 +830,7 @@ static void communication_loadServerProfile(void)
         communication_ServerProfileState = COMMUNICATION_SERVER_PROFILE_INVALID_IMAGE;
         LOG_ERR("Secure transport unavailable: invalid server profile image (%d)", result);
     }
-    else if(communication_ServerProfile.serverKeepAliveSeconds <= (uint32_t)COMMUNICATION_DEVICE_KEEP_ALIVE_MARGIN_S)
+    else if(communication_ServerProfile.serverKeepAliveSeconds <= keepAliveMarginSeconds)
     {
         /* The device keep-alive is the server value minus the margin, so it must stay positive. */
         communication_ServerProfileState = COMMUNICATION_SERVER_PROFILE_INVALID_CONFIGURATION;
@@ -861,8 +862,14 @@ static void communication_loadServerProfile(void)
 static void communication_connectAtBoot(void)
 {
     int result = storage_read(COMMUNICATION_NETWORK_RECORD, &communication_StoredNetwork, sizeof(communication_StoredNetwork));
+    bool isReadNetworkValid = false;
 
-    if((result == 0) && !wifi_isValidNetwork(&communication_StoredNetwork))
+    if(result == 0)
+    {
+        isReadNetworkValid = wifi_isValidNetwork(&communication_StoredNetwork);
+    }
+
+    if((result == 0) && !isReadNetworkValid)
     {
         /* A damaged record must not reach the connect request. */
         (void)memset(&communication_StoredNetwork, 0, sizeof(communication_StoredNetwork));
@@ -921,6 +928,7 @@ static void communication_runIdleCycle(void)
     (void)communication_waitForCondition(COMMUNICATION_WAIT_CONTROL_EVENT, K_NO_WAIT);
 
     bool isStopped = communication_stopWiFiWork();
+    const bool isSetupRequested = communication_isSetupRequested();
 
     if(communication_ListeningIsActive)
     {
@@ -962,7 +970,7 @@ static void communication_runIdleCycle(void)
         /* A job submitted after the fault still needs its terminal outcome. */
         communication_runDelivery();
     }
-    else if(communication_isSetupRequested())
+    else if(isSetupRequested)
     {
         communication_runSetup();
     }
@@ -993,8 +1001,10 @@ static void communication_recoverConnection(void)
         return;
     }
 
+    const bool isSetupRequested = communication_isSetupRequested();
+
     /* Resume interrupted boot attempts only while Idle and without a setup request. */
-    if(communication_BootJoinIsPending && !communication_ListeningIsActive && !communication_isSetupRequested())
+    if(communication_BootJoinIsPending && !communication_ListeningIsActive && !isSetupRequested)
     {
         (void)communication_waitForCondition(COMMUNICATION_WAIT_DELAY, K_SECONDS(COMMUNICATION_RETRY_DELAY_S));
         int remainingAttempts = COMMUNICATION_STORED_CONNECT_ATTEMPTS - communication_BootAttemptsUsed;
@@ -1024,8 +1034,11 @@ static void communication_recoverConnection(void)
         return;
     }
 
+    const bool isSetupStillRequested = communication_isSetupRequested();
+    const bool isConnected = wifi_isConnected();
+
     /* Reconnect only an eligible stored station whose link has been lost. */
-    if(!communication_isSetupRequested() && communication_RecoveryIsAllowed && communication_StoredNetworkIsValid && !wifi_isConnected())
+    if(!isSetupStillRequested && communication_RecoveryIsAllowed && communication_StoredNetworkIsValid && !isConnected)
     {
         LOG_WRN("Wi-Fi link lost; reconnecting");
         communication_reportFeedback(FEEDBACK_WIFI_CONNECTING);
@@ -1065,7 +1078,10 @@ static int communication_prepareSecureConnection(k_timepoint_t deadline)
     {
         return -ECANCELED; /**< CONTROL holds the lease for listening; no attempt issued. */
     }
-    if(!wifi_isConnected())
+
+    const bool isConnected = wifi_isConnected();
+
+    if(!isConnected)
     {
         return -ENOTCONN; /**< Station has no IPv4 address; no attempt issued. */
     }
@@ -1073,7 +1089,10 @@ static int communication_prepareSecureConnection(k_timepoint_t deadline)
     {
         return -ENOENT; /**< No valid server profile image; no attempt issued. */
     }
-    if(sys_timepoint_expired(deadline))
+
+    const bool isDeadlineExpired = sys_timepoint_expired(deadline);
+
+    if(isDeadlineExpired)
     {
         return -ETIMEDOUT; /**< The containing setup has no budget left; no attempt issued. */
     }
@@ -1176,7 +1195,9 @@ static int communication_connectSecurely(k_timepoint_t deadline, enum wifi_secur
     {
         /* Short waits only let Start be seen; they never extend the containing setup's deadline. */
         k_timeout_t waitInterval = sys_timepoint_timeout(deadline);
-        if(waitInterval.ticks > K_MSEC(COMMUNICATION_EVENT_CHECK_INTERVAL_MS).ticks)
+        const k_timeout_t eventCheckInterval = K_MSEC(COMMUNICATION_EVENT_CHECK_INTERVAL_MS);
+
+        if(waitInterval.ticks > eventCheckInterval.ticks)
         {
             waitInterval = K_MSEC(COMMUNICATION_EVENT_CHECK_INTERVAL_MS);
         }
@@ -1185,13 +1206,15 @@ static int communication_connectSecurely(k_timepoint_t deadline, enum wifi_secur
 
         communication_updateListeningState();
 
+        const bool isDeadlineExpired = sys_timepoint_expired(deadline);
+
         if(result != -EAGAIN)
         {
             /* Terminal completion: L1 has already released the operation's resources. */
             communication_PendingWork &= ~COMMUNICATION_WORK_SECURE_CONNECTION;
             isPending = false;
         }
-        else if(communication_ListeningIsActive || sys_timepoint_expired(deadline))
+        else if(communication_ListeningIsActive || isDeadlineExpired)
         {
             const bool isInterrupted = communication_ListeningIsActive; /**< Start, not the deadline, ended the attempt. */
             int cancelResult = wifi_cancelSecureConnection();
@@ -1272,8 +1295,9 @@ static void communication_prepareTransportInIdle(void)
 
 static void communication_closeIdleSecureConnection(void)
 {
-    if(!communication_SecureConnectionIsRetained || communication_ListeningIsActive ||
-       !sys_timepoint_expired(communication_SecureConnectionIdleDeadline))
+    const bool isIdleDeadlineExpired = sys_timepoint_expired(communication_SecureConnectionIdleDeadline);
+
+    if(!communication_SecureConnectionIsRetained || communication_ListeningIsActive || !isIdleDeadlineExpired)
     {
         return;
     }
@@ -1427,8 +1451,9 @@ static int communication_postDeviceRegistration(k_timepoint_t deadline)
     size_t conditionLength = 0U;
     enum fhir_response_cause cause = FHIR_RESPONSE_CAUSE_NONE;
     int result = 0;
+    const bool isConnectionReusable = communication_isRetainedConnectionReusable();
 
-    if(!communication_isRetainedConnectionReusable())
+    if(!isConnectionReusable)
     {
         result = communication_prepareSecureConnection(deadline);
     }
@@ -1468,8 +1493,9 @@ static int communication_postDeviceRegistration(k_timepoint_t deadline)
             .body = (communication_Response.bodyHasOverflowed ? NULL : communication_Response.body),
             .bodyLength = (communication_Response.bodyHasOverflowed ? 0U : communication_Response.bodyLength),
         };
+        const int parseResult = fhir_parseDeviceRegistration(&response, communication_ServerProfile.baseUrl, communication_PhysicalIdentifier, communication_ServerDeviceId, sizeof(communication_ServerDeviceId), &cause);
 
-        if(fhir_parseDeviceRegistration(&response, communication_ServerProfile.baseUrl, communication_PhysicalIdentifier, communication_ServerDeviceId, sizeof(communication_ServerDeviceId), &cause) != 0)
+        if(parseResult != 0)
         {
             LOG_WRN("Device registration: response %u not accepted (cause %d)", (unsigned int)communication_Response.status, (int)cause);
             result = -EBADMSG;
@@ -1522,8 +1548,9 @@ static int communication_exchange(const struct wifi_http_request *request, k_tim
     {
         /* Short waits only let Start be seen; they never extend the attempt's deadline. */
         k_timeout_t waitInterval = sys_timepoint_timeout(deadline);
+        const k_timeout_t eventCheckInterval = K_MSEC(COMMUNICATION_EVENT_CHECK_INTERVAL_MS);
 
-        if(waitInterval.ticks > K_MSEC(COMMUNICATION_EVENT_CHECK_INTERVAL_MS).ticks)
+        if(waitInterval.ticks > eventCheckInterval.ticks)
         {
             waitInterval = K_MSEC(COMMUNICATION_EVENT_CHECK_INTERVAL_MS);
         }
@@ -1532,6 +1559,8 @@ static int communication_exchange(const struct wifi_http_request *request, k_tim
 
         communication_updateListeningState();
 
+        const bool isDeadlineExpired = sys_timepoint_expired(deadline);
+
         if(result != -EAGAIN)
         {
             /* Terminal completion: L1_WIFI kept the connection or has already released it. */
@@ -1539,7 +1568,7 @@ static int communication_exchange(const struct wifi_http_request *request, k_tim
             communication_SecureConnectionIsRetained = ((result == 0) && communication_Response.keepsConnection);
             isPending = false;
         }
-        else if(communication_ListeningIsActive || sys_timepoint_expired(deadline))
+        else if(communication_ListeningIsActive || isDeadlineExpired)
         {
             const bool isInterrupted = communication_ListeningIsActive; /**< Start, not the deadline, ended the exchange. */
             int cancelResult = wifi_cancelSecureConnection();
@@ -1625,7 +1654,9 @@ static void communication_runDelivery(void)
         while(isRunning)
         {
             /* The thread may have been busy elsewhere, for example in setup: never send after the budget. */
-            if(sys_timepoint_expired(end))
+            const bool isBudgetUsedUp = sys_timepoint_expired(end);
+
+            if(isBudgetUsedUp)
             {
                 result = -ETIMEDOUT;
                 isRunning = false;
@@ -1694,8 +1725,9 @@ static int communication_attemptDelivery(k_timepoint_t deadline)
     const bool isTerminal = (communication_CleanupFaultIsLatched || (communication_ServerProfileState != COMMUNICATION_SERVER_PROFILE_CONFIGURED));
     int setupResult = 0;
     int result = 0;
+    const bool isConnectionReusable = communication_isRetainedConnectionReusable();
 
-    if(!isTerminal && !communication_isRetainedConnectionReusable())
+    if(!isTerminal && !isConnectionReusable)
     {
         setupResult = communication_prepareSecureConnection(communication_limitDeadline(deadline, K_MSEC(COMMUNICATION_DELIVERY_SETUP_TIMEOUT_MS)));
     }
@@ -1827,6 +1859,7 @@ static k_timeout_t communication_timeUntilTransportDuty(k_timeout_t limit)
 
     /* A submitted job starts at once. */
     k_timeout_t timeout = (isDeliveryPending ? K_NO_WAIT : limit);
+    const bool isConnected = wifi_isConnected();
 
     if(communication_SecureConnectionIsRetained)
     {
@@ -1838,7 +1871,7 @@ static k_timeout_t communication_timeUntilTransportDuty(k_timeout_t limit)
     }
 
     /* Only while preparation could run; otherwise an expired retry time would wake the thread at once, again and again. */
-    if((communication_ServerProfileState == COMMUNICATION_SERVER_PROFILE_CONFIGURED) && !communication_TransportIsVerified && wifi_isConnected())
+    if((communication_ServerProfileState == COMMUNICATION_SERVER_PROFILE_CONFIGURED) && !communication_TransportIsVerified && isConnected)
     {
         const k_timeout_t untilPreparation = sys_timepoint_timeout(communication_NextPreparationTime);
         if(untilPreparation.ticks < timeout.ticks)
@@ -1848,7 +1881,7 @@ static k_timeout_t communication_timeUntilTransportDuty(k_timeout_t limit)
     }
 
     /* Only while registration could run, for the same reason. */
-    if((communication_ServerProfileState == COMMUNICATION_SERVER_PROFILE_CONFIGURED) && communication_RegistrationIsAvailable && !communication_RegistrationIsReady && communication_TransportIsVerified && wifi_isConnected())
+    if((communication_ServerProfileState == COMMUNICATION_SERVER_PROFILE_CONFIGURED) && communication_RegistrationIsAvailable && !communication_RegistrationIsReady && communication_TransportIsVerified && isConnected)
     {
         const k_timeout_t untilRegistration = sys_timepoint_timeout(communication_NextRegistrationTime);
 
@@ -1882,7 +1915,9 @@ static void communication_latchCleanupFault(void)
 
 static int communication_synchronizeTime(k_timepoint_t deadline)
 {
-    if(sys_timepoint_expired(deadline))
+    const bool isExpiredBeforeStart = sys_timepoint_expired(deadline);
+
+    if(isExpiredBeforeStart)
     {
         return -ETIMEDOUT; /**< The containing setup has no budget left; no attempt issued. */
     }
@@ -1894,6 +1929,8 @@ static int communication_synchronizeTime(k_timepoint_t deadline)
 
     communication_updateListeningState();
 
+    const bool isConnected = wifi_isConnected();
+
     if(communication_CleanupFaultIsLatched)
     {
         result = -ENETDOWN; /**< Network work is disabled until restart; no attempt issued. */
@@ -1902,7 +1939,7 @@ static int communication_synchronizeTime(k_timepoint_t deadline)
     {
         result = -ECANCELED; /**< CONTROL holds the lease for listening; no attempt issued. */
     }
-    else if(!wifi_isConnected())
+    else if(!isConnected)
     {
         result = -ENOTCONN; /**< Station has no IPv4 address; no attempt issued. */
     }
@@ -1919,7 +1956,9 @@ static int communication_synchronizeTime(k_timepoint_t deadline)
         {
             /* Short waits only let Start be seen; they never extend the containing setup's deadline. */
             k_timeout_t waitInterval = sys_timepoint_timeout(deadline);
-            if(waitInterval.ticks > K_MSEC(COMMUNICATION_EVENT_CHECK_INTERVAL_MS).ticks)
+            const k_timeout_t eventCheckInterval = K_MSEC(COMMUNICATION_EVENT_CHECK_INTERVAL_MS);
+
+            if(waitInterval.ticks > eventCheckInterval.ticks)
             {
                 waitInterval = K_MSEC(COMMUNICATION_EVENT_CHECK_INTERVAL_MS);
             }
@@ -1928,13 +1967,15 @@ static int communication_synchronizeTime(k_timepoint_t deadline)
 
             communication_updateListeningState();
 
+            const bool isDeadlineExpired = sys_timepoint_expired(deadline);
+
             if(result != -EAGAIN)
             {
                 /* Terminal completion: L1 has already released the operation's resources. */
                 communication_PendingWork &= ~COMMUNICATION_WORK_TIME_SYNCHRONIZATION;
                 isPending = false;
             }
-            else if(communication_ListeningIsActive || sys_timepoint_expired(deadline))
+            else if(communication_ListeningIsActive || isDeadlineExpired)
             {
                 bool isInterrupted = communication_ListeningIsActive; /**< Start, not the deadline, ended the attempt. */
                 int cancelResult = wifi_cancelTimeSynchronization();
@@ -1968,12 +2009,14 @@ static int communication_synchronizeTime(k_timepoint_t deadline)
 
         if(result == 0)
         {
+            const bool isDeadlineExpired = sys_timepoint_expired(deadline);
+
             /* The lease is withdrawn only after this thread acknowledges Stopped, so applying now is still under it. */
             if(communication_ListeningIsActive)
             {
                 result = -ECANCELED; /**< Start arrived with the sample; discard it. */
             }
-            else if(sys_timepoint_expired(deadline))
+            else if(isDeadlineExpired)
             {
                 result = -ETIMEDOUT; /**< Clock application shares the attempt budget. */
             }
@@ -2052,7 +2095,9 @@ static int communication_mapMeasurementEndTime(uint64_t measurementEndMonotonicM
         seconds -= subtractedSeconds;
     }
 
-    if(seconds > (uint64_t)SYS_TIME_T_MAX)
+    const uint64_t largestTimeSeconds = (uint64_t)SYS_TIME_T_MAX;
+
+    if(seconds > largestTimeSeconds)
     {
         return -ERANGE; /**< UTC is not representable as time_t. */
     }
@@ -2113,11 +2158,15 @@ static int communication_checkWaitTarget(enum communication_wait_target target, 
             result = 0;
             break;
         case COMMUNICATION_WAIT_DELAY:
-            if(sys_timepoint_expired(deadline))
+        {
+            const bool isDelayOver = sys_timepoint_expired(deadline);
+
+            if(isDelayOver)
             {
                 result = 0;
             }
             break;
+        }
         case COMMUNICATION_WAIT_CONNECTION:
             result = wifi_waitForConnection(K_MSEC(COMMUNICATION_EVENT_CHECK_INTERVAL_MS));
             break;
@@ -2162,7 +2211,10 @@ static void communication_pauseBeforeNextCheck(enum communication_wait_target ta
     }
     else if(target == COMMUNICATION_WAIT_WIFI_STOP)
     {
-        if(K_TIMEOUT_EQ(remaining, K_FOREVER) || (remaining.ticks > K_MSEC(COMMUNICATION_EVENT_CHECK_INTERVAL_MS).ticks))
+        const bool isUnlimited = K_TIMEOUT_EQ(remaining, K_FOREVER);
+        const k_timeout_t eventCheckInterval = K_MSEC(COMMUNICATION_EVENT_CHECK_INTERVAL_MS);
+
+        if(isUnlimited || (remaining.ticks > eventCheckInterval.ticks))
         {
             remaining = K_MSEC(COMMUNICATION_EVENT_CHECK_INTERVAL_MS);
         }
@@ -2213,10 +2265,14 @@ static bool communication_stopWiFiWork(void)
         return true;
     }
 
-    for(size_t index = 0U; index < ARRAY_SIZE(communication_WorkList); index++)
+    const size_t workCount = ARRAY_SIZE(communication_WorkList);
+
+    for(size_t index = 0U; index < workCount; index++)
     {
         const struct communication_work *work = &communication_WorkList[index];
-        if((communication_PendingWork & work->bit) != 0U)
+        const bool isWorkPending = ((communication_PendingWork & work->bit) != 0U);
+
+        if(isWorkPending)
         {
             int result = work->stop();
             if(result == 0)
@@ -2353,7 +2409,9 @@ static int communication_connectToNetwork(const struct wifi_network *network, in
 
         communication_RecoveryIsAllowed = true;
 
-        if(wifi_getAddress(address, sizeof(address)) == 0)
+        const bool isAddressKnown = (wifi_getAddress(address, sizeof(address)) == 0);
+
+        if(isAddressKnown)
         {
             LOG_INF("Wi-Fi address %s", address);
         }
@@ -2481,26 +2539,33 @@ static enum communication_setup_result communication_servePage(int *error)
     {
         (void)communication_waitForCondition(COMMUNICATION_WAIT_CONTROL_EVENT, K_NO_WAIT);
 
+        const bool isIdleDeadlineExpired = sys_timepoint_expired(idleDeadline);
+
         if(communication_ListeningIsActive)
         {
             outcome = COMMUNICATION_SETUP_INTERRUPTED;
         }
-        else if(sys_timepoint_expired(idleDeadline))
+        else if(isIdleDeadlineExpired)
         {
             LOG_INF("Wi-Fi setup: no activity for 5 min");
 
             outcome = COMMUNICATION_SETUP_CANCELLED;
         }
-        else if(portal_waitForRequest(&communication_PageRequest, K_MSEC(COMMUNICATION_EVENT_CHECK_INTERVAL_MS)) == 0)
-        {
-            outcome = communication_handlePageRequest(error);
-
-            /* Restart the timer after the request is done, so it does not run during a join or scan. */
-            idleDeadline = sys_timepoint_calc(K_SECONDS(COMMUNICATION_SETUP_INACTIVITY_TIMEOUT_S));
-        }
         else
         {
-            /* No request in this interval. */
+            const bool isRequestReceived = (portal_waitForRequest(&communication_PageRequest, K_MSEC(COMMUNICATION_EVENT_CHECK_INTERVAL_MS)) == 0);
+
+            if(isRequestReceived)
+            {
+                outcome = communication_handlePageRequest(error);
+
+                /* Restart the timer after the request is done, so it does not run during a join or scan. */
+                idleDeadline = sys_timepoint_calc(K_SECONDS(COMMUNICATION_SETUP_INACTIVITY_TIMEOUT_S));
+            }
+            else
+            {
+                /* No request in this interval. */
+            }
         }
     }
 
@@ -2572,8 +2637,9 @@ static enum communication_setup_result communication_handlePageRequest(int *erro
 static int communication_handleConnectRequest(void)
 {
     struct wifi_network *network = &communication_PageRequest.network;
+    const bool isNetworkValid = wifi_isValidNetwork(network);
 
-    if(!wifi_isValidNetwork(network))
+    if(!isNetworkValid)
     {
         portal_setStatus(PORTAL_STATUS_CONNECT_FAILED, -EINVAL); /**< Invalid argument or unsupported input. */
         (void)memset(network->password, 0, sizeof(network->password));
@@ -2659,11 +2725,15 @@ static void communication_saveNetwork(const struct wifi_network *network)
 
 static void communication_discardPageRequests(void)
 {
-    while(portal_waitForRequest(&communication_PageRequest, K_NO_WAIT) == 0)
+    bool isRequestReceived = (portal_waitForRequest(&communication_PageRequest, K_NO_WAIT) == 0);
+
+    while(isRequestReceived)
     {
         (void)memset(communication_PageRequest.network.password,
                      0,
                      sizeof(communication_PageRequest.network.password));
+
+        isRequestReceived = (portal_waitForRequest(&communication_PageRequest, K_NO_WAIT) == 0);
     }
 }
 

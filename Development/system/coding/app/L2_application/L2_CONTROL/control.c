@@ -323,8 +323,9 @@ void control_init(void)
         .listeningFilter = control_handleListeningFilter,
         .volume = control_handleVolume,
     };
+    const int initializationResult = physicalinterface_init(&inputHandlers);
 
-    if(physicalinterface_init(&inputHandlers) != 0)
+    if(initializationResult != 0)
     {
         LOG_WRN("Continuing with incomplete physical interface");
     }
@@ -358,9 +359,13 @@ void control_completeStartup(void)
 
     (void)k_sleep(sys_timepoint_timeout(control_lampTestEnd));
 
-    while(!control_postInputEvent(&event))
+    bool isPosted = control_postInputEvent(&event);
+
+    while(!isPosted)
     {
         (void)k_sleep(K_MSEC(CONTROL_STARTUP_RETRY_MILLISECONDS));
+
+        isPosted = control_postInputEvent(&event);
     }
 }
 
@@ -376,8 +381,9 @@ static void control_handleButton(enum physicalinterface_button_event event, int6
         .type = ((event == PHYSICALINTERFACE_BUTTON_LONG_PRESS) ? CONTROL_EVENT_BUTTON_LONG_PRESS : CONTROL_EVENT_BUTTON_SHORT_PRESS),
         .code = FEEDBACK_NONE,
     };
+    const bool isPosted = control_postInputEvent(&controlEvent);
 
-    if(!control_postInputEvent(&controlEvent))
+    if(!isPosted)
     {
         LOG_WRN("Button event rejected: control queue full");
         physicalinterface_showFeedback(FEEDBACK_INPUT_REJECTED);
@@ -459,8 +465,9 @@ static void control_handleWiFiFeedback(enum feedback_code code)
         .type = CONTROL_EVENT_WIFI_FEEDBACK,
         .code = code,
     };
+    const bool isPosted = control_postInputEvent(&controlEvent);
 
-    if(!control_postInputEvent(&controlEvent))
+    if(!isPosted)
     {
         LOG_ERR("Wi-Fi feedback %d lost: control queue full", code);
     }
@@ -472,7 +479,9 @@ static bool control_postInputEvent(const struct control_event *event)
 
     (void)k_mutex_lock(&control_inputEventLock, K_FOREVER);
 
-    if(k_msgq_num_free_get(&control_events) > CONTROL_AUDIO_EVENT_RESERVE)
+    const uint32_t freeSlotCount = k_msgq_num_free_get(&control_events);
+
+    if(freeSlotCount > CONTROL_AUDIO_EVENT_RESERVE)
     {
         isPosted = (k_msgq_put(&control_events, event, K_NO_WAIT) == 0);
     }
@@ -484,7 +493,9 @@ static bool control_postInputEvent(const struct control_event *event)
 
 static void control_postEvent(const struct control_event *event)
 {
-    if(k_msgq_put(&control_events, event, K_NO_WAIT) != 0)
+    const bool isQueued = (k_msgq_put(&control_events, event, K_NO_WAIT) == 0);
+
+    if(!isQueued)
     {
         LOG_ERR("Control event %d lost: queue full", event->type);
     }
@@ -499,8 +510,9 @@ static void control_thread(void *first, void *second, void *third)
     for(;;)
     {
         struct control_event event;
+        const bool isEventReceived = (k_msgq_get(&control_events, &event, K_MSEC(CONTROL_INPUT_CHECK_MILLISECONDS)) == 0);
 
-        if(k_msgq_get(&control_events, &event, K_MSEC(CONTROL_INPUT_CHECK_MILLISECONDS)) == 0)
+        if(isEventReceived)
         {
             control_dispatch(&event);
         }
@@ -561,11 +573,15 @@ static void control_dispatch(const struct control_event *event)
 static void control_handleShortPress(void)
 {
     enum feedback_code shownError = control_getShownError(&control_errorLatch);
+    const enum control_press_action pressAction = control_decideShortPress(&control_errorLatch, control_isIndicationDeferred());
+    bool isAcknowledgementFlashEnded = false;
 
-    switch(control_decideShortPress(&control_errorLatch, control_isIndicationDeferred()))
+    switch(pressAction)
     {
     case CONTROL_PRESS_ACKNOWLEDGE:
-        if(sys_timepoint_expired(control_acknowledgementFlashEnd))
+        isAcknowledgementFlashEnded = sys_timepoint_expired(control_acknowledgementFlashEnd);
+
+        if(isAcknowledgementFlashEnded)
         {
             (void)control_acknowledgeShownError(&control_errorLatch);
             LOG_INF("Error %d acknowledged", shownError);
@@ -600,6 +616,8 @@ static void control_handleShortPress(void)
 
 static void control_handleWorkflowShortPress(void)
 {
+    bool isStopAccepted = false;
+
     switch(control_currentState)
     {
     case CONTROL_STATE_IDLE:
@@ -607,7 +625,9 @@ static void control_handleWorkflowShortPress(void)
         break;
 
     case CONTROL_STATE_LISTENING:
-        if(audio_postCommand(AUDIO_COMMAND_STOP) == 0)
+        isStopAccepted = (audio_postCommand(AUDIO_COMMAND_STOP) == 0);
+
+        if(isStopAccepted)
         {
             control_currentState = CONTROL_STATE_STOPPING;
         }
@@ -627,7 +647,9 @@ static void control_handleWorkflowShortPress(void)
 
 static void control_handleLongPress(void)
 {
-    if(control_decideLongPress(&control_errorLatch, control_isIndicationDeferred()) == CONTROL_PRESS_IGNORE)
+    const enum control_press_action pressAction = control_decideLongPress(&control_errorLatch, control_isIndicationDeferred());
+
+    if(pressAction == CONTROL_PRESS_IGNORE)
     {
         LOG_DBG("Button hold dropped: halted until restart");
     }
@@ -640,7 +662,9 @@ static void control_handleLongPress(void)
     {
         LOG_INF("Button hold in Idle: requesting Wi-Fi setup");
 
-        if(communication_postEvent(COMMUNICATION_EVENT_SETUP_REQUESTED) != 0)
+        const bool isSetupRequestAccepted = (communication_postEvent(COMMUNICATION_EVENT_SETUP_REQUESTED) == 0);
+
+        if(!isSetupRequestAccepted)
         {
             LOG_WRN("Wi-Fi setup request was not accepted");
         }
@@ -665,13 +689,21 @@ static void control_startListening(void)
         control_isQuickFlashActive = false;
         (void)communication_postEvent(COMMUNICATION_EVENT_LISTENING_STARTED);
 
-        if(communication_waitForWiFiStop(K_MSEC(CONTROL_WIFI_STOP_WAIT_MILLISECONDS)) != 0)
+        const bool isWiFiStopped = (communication_waitForWiFiStop(K_MSEC(CONTROL_WIFI_STOP_WAIT_MILLISECONDS)) == 0);
+        bool isStartAccepted = false;
+
+        if(isWiFiStopped)
+        {
+            isStartAccepted = (audio_postCommand(AUDIO_COMMAND_START) == 0);
+        }
+
+        if(!isWiFiStopped)
         {
             LOG_WRN("Wi-Fi work did not stop in time; audio stays stopped");
             control_returnToIdle();
             physicalinterface_showFeedback(FEEDBACK_INPUT_REJECTED);
         }
-        else if(audio_postCommand(AUDIO_COMMAND_START) != 0)
+        else if(!isStartAccepted)
         {
             LOG_ERR("AUDIO did not accept Start");
             control_returnToIdle();
@@ -692,7 +724,9 @@ static void control_returnToIdle(void)
 
 static void control_enterIdle(void)
 {
-    if(control_isHalted(&control_errorLatch))
+    const bool isHalted = control_isHalted(&control_errorLatch);
+
+    if(isHalted)
     {
         if(control_currentState != CONTROL_STATE_HALTED)
         {
@@ -721,11 +755,15 @@ static void control_finishStartup(void)
 
 static void control_raiseError(enum feedback_code code, const char *cause)
 {
-    if(control_latchError(&control_errorLatch, code))
+    const bool isNewlyLatched = control_latchError(&control_errorLatch, code);
+
+    if(isNewlyLatched)
     {
         LOG_ERR("%s: error %d latched", cause, code);
 
-        if(control_isIndicationDeferred())
+        const bool isIndicationDeferred = control_isIndicationDeferred();
+
+        if(isIndicationDeferred)
         {
             LOG_INF("Unless it is an audio error, it is shown after the startup or after audio has stopped");
         }
@@ -738,8 +776,10 @@ static void control_raiseError(enum feedback_code code, const char *cause)
 static void control_applyErrorEffects(void)
 {
     bool isAudioStarted = ((control_currentState == CONTROL_STATE_STARTING) || (control_currentState == CONTROL_STATE_LISTENING) || (control_currentState == CONTROL_STATE_STOPPING));
+    const bool isHaltedAtOnce = control_hasAdmission(&control_errorLatch, CONTROL_ADMISSION_HALTED_AT_ONCE);
+    const bool isIndicationDeferred = control_isIndicationDeferred();
 
-    if(control_hasAdmission(&control_errorLatch, CONTROL_ADMISSION_HALTED_AT_ONCE) && (control_currentState != CONTROL_STATE_HALTED))
+    if(isHaltedAtOnce && (control_currentState != CONTROL_STATE_HALTED))
     {
         if(isAudioStarted)
         {
@@ -750,7 +790,7 @@ static void control_applyErrorEffects(void)
         LOG_ERR("Halted: every input is blocked until restart");
         control_currentState = CONTROL_STATE_HALTED;
     }
-    else if(!control_isIndicationDeferred())
+    else if(!isIndicationDeferred)
     {
         control_enterIdle();
     }
@@ -774,7 +814,9 @@ static void control_logLatchedErrors(void)
 
 static void control_applyWiFiFeedback(enum feedback_code code)
 {
-    if(control_isError(code))
+    const bool isError = control_isError(code);
+
+    if(isError)
     {
         if(code == FEEDBACK_WIFI_CLEANUP_FAILURE)
         {
@@ -823,7 +865,9 @@ static void control_checkInputs(void)
 
 static void control_checkQuickFlashes(void)
 {
-    if(control_isQuickFlashActive && sys_timepoint_expired(control_quickFlashesEnd))
+    const bool isQuickFlashTimeOver = sys_timepoint_expired(control_quickFlashesEnd);
+
+    if(control_isQuickFlashActive && isQuickFlashTimeOver)
     {
         control_isQuickFlashActive = false;
         control_updateIndication();

@@ -75,8 +75,11 @@ const struct control_error_row *control_getErrorRow(enum feedback_code code)
 bool control_isError(enum feedback_code code)
 {
     bool isError = false;
+    const int codeNumber = (int)code;
+    const int lowestCodeNumber = (int)FEEDBACK_NONE;
+    const int codeCount = (int)FEEDBACK_CODE_COUNT;
 
-    if(((int)code >= (int)FEEDBACK_NONE) && ((int)code < (int)FEEDBACK_CODE_COUNT))
+    if((codeNumber >= lowestCodeNumber) && (codeNumber < codeCount))
     {
         isError = (control_errorRows[code].priority != CONTROL_PRIORITY_INFORMATION);
     }
@@ -133,7 +136,9 @@ bool control_acknowledgeShownError(struct control_error_latch *latch)
 
         if(isAcknowledged)
         {
-            for(uint32_t index = shownIndex; (index + 1U) < latch->errorCount; index++)
+            const uint32_t lastErrorIndex = latch->errorCount - 1U;
+
+            for(uint32_t index = shownIndex; index < lastErrorIndex; index++)
             {
                 latch->errors[index] = latch->errors[index + 1U];
             }
@@ -166,8 +171,9 @@ enum feedback_code control_selectFeedback(const struct control_error_latch *latc
 {
     enum feedback_code shownError = control_getShownError(latch);
     enum feedback_code feedback = status;
+    const bool isHaltedAtOnce = control_hasAdmission(latch, CONTROL_ADMISSION_HALTED_AT_ONCE);
 
-    if(control_hasAdmission(latch, CONTROL_ADMISSION_HALTED_AT_ONCE))
+    if(isHaltedAtOnce)
     {
         feedback = shownError;
     }
@@ -187,8 +193,11 @@ enum control_press_action control_decideShortPress(const struct control_error_la
 {
     enum control_press_action action = CONTROL_PRESS_WORKFLOW;
     enum feedback_code shownError = control_getShownError(latch);
+    const bool isHaltedAtOnce = control_hasAdmission(latch, CONTROL_ADMISSION_HALTED_AT_ONCE);
+    const bool isHalted = control_isHalted(latch);
+    const bool isStartBlocked = control_hasAdmission(latch, CONTROL_ADMISSION_START_BLOCKED);
 
-    if(control_hasAdmission(latch, CONTROL_ADMISSION_HALTED_AT_ONCE))
+    if(isHaltedAtOnce)
     {
         action = CONTROL_PRESS_IGNORE;
     }
@@ -196,7 +205,7 @@ enum control_press_action control_decideShortPress(const struct control_error_la
     {
         action = CONTROL_PRESS_WORKFLOW;
     }
-    else if(control_isHalted(latch))
+    else if(isHalted)
     {
         action = CONTROL_PRESS_IGNORE;
     }
@@ -204,7 +213,7 @@ enum control_press_action control_decideShortPress(const struct control_error_la
     {
         action = CONTROL_PRESS_ACKNOWLEDGE;
     }
-    else if(control_hasAdmission(latch, CONTROL_ADMISSION_START_BLOCKED))
+    else if(isStartBlocked)
     {
         action = CONTROL_PRESS_REJECT;
     }
@@ -219,12 +228,14 @@ enum control_press_action control_decideShortPress(const struct control_error_la
 enum control_press_action control_decideLongPress(const struct control_error_latch *latch, bool isIndicationDeferred)
 {
     enum control_press_action action = CONTROL_PRESS_WORKFLOW;
+    const bool isHaltedAtOnce = control_hasAdmission(latch, CONTROL_ADMISSION_HALTED_AT_ONCE);
+    const bool isHalted = control_isHalted(latch);
 
-    if(control_hasAdmission(latch, CONTROL_ADMISSION_HALTED_AT_ONCE))
+    if(isHaltedAtOnce)
     {
         action = CONTROL_PRESS_IGNORE;
     }
-    else if(!isIndicationDeferred && control_isHalted(latch))
+    else if(!isIndicationDeferred && isHalted)
     {
         action = CONTROL_PRESS_IGNORE;
     }

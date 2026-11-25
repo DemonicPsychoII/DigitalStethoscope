@@ -330,10 +330,16 @@ static bool audio_isStopRequested(void)
 {
     bool isStopRequested = false;
     enum audio_command command = AUDIO_COMMAND_START;
+    bool isCommandReceived = (k_msgq_get(&audio_Commands, &command, K_NO_WAIT) == 0);
 
-    while(!isStopRequested && (k_msgq_get(&audio_Commands, &command, K_NO_WAIT) == 0))
+    while(!isStopRequested && isCommandReceived)
     {
         isStopRequested = (command == AUDIO_COMMAND_STOP);
+
+        if(!isStopRequested)
+        {
+            isCommandReceived = (k_msgq_get(&audio_Commands, &command, K_NO_WAIT) == 0);
+        }
     }
 
     return isStopRequested;

@@ -193,8 +193,20 @@ int wifi_buildHttpRequestHead(const struct wifi_http_request *request, const cha
         *length = 0U;
     }
 
+    bool resourcePathIsValid = false;
+    bool conditionIsVisible = false;
+
+    if(request != NULL)
+    {
+        resourcePathIsValid = wifi_isHttpResourcePath(request->resourcePath);
+        conditionIsVisible = wifi_isVisibleHttpText(request->condition);
+    }
+
+    const bool hostIsVisible = wifi_isVisibleHttpText(host);
+    const bool basePathIsValid = wifi_isHttpBasePath(basePath);
+
     /* Visible ASCII only keeps CR and LF out of the head, so no header can be injected. */
-    if((request != NULL) && (head != NULL) && (length != NULL) && (port > 0U) && (request->body != NULL) && (request->bodyLength > 0U) && wifi_isHttpResourcePath(request->resourcePath) && wifi_isVisibleHttpText(request->condition) && wifi_isVisibleHttpText(host) && wifi_isHttpBasePath(basePath))
+    if((request != NULL) && (head != NULL) && (length != NULL) && (port > 0U) && (request->body != NULL) && (request->bodyLength > 0U) && resourcePathIsValid && conditionIsVisible && hostIsVisible && basePathIsValid)
     {
         wifi_appendHttpText(&writer, "POST ");
         wifi_appendHttpText(&writer, basePath);
@@ -255,6 +267,8 @@ int wifi_readHttpResponse(struct wifi_http_reader *reader, const uint8_t *data, 
     {
         *consumed = http_parser_execute(&reader->parser, &wifi_HttpSettings, (const char *)data, length);
 
+        const bool parserHasFailed = (HTTP_PARSER_ERRNO(&reader->parser) != HPE_OK);
+
         if(reader->failure != 0)
         {
             result = reader->failure;
@@ -269,7 +283,7 @@ int wifi_readHttpResponse(struct wifi_http_reader *reader, const uint8_t *data, 
 
             result = 0;
         }
-        else if(HTTP_PARSER_ERRNO(&reader->parser) != HPE_OK)
+        else if(parserHasFailed)
         {
             reader->failure = -EBADMSG;
             result = -EBADMSG;
@@ -381,8 +395,10 @@ static int wifi_onHttpHeaderValue(struct http_parser *parser, const char *at, si
 
     if((result == 0) && reader->isReadingLocation)
     {
+        const size_t remainingLocationCapacity = sizeof(response->location) - reader->locationLength;
+
         /* The value must fit with its terminator; a longer one is rejected, never truncated. */
-        if(length < (sizeof(response->location) - reader->locationLength))
+        if(length < remainingLocationCapacity)
         {
             (void)memcpy(&response->location[reader->locationLength], at, length);
 
@@ -402,8 +418,9 @@ static int wifi_onHttpBody(struct http_parser *parser, const char *at, size_t le
 {
     struct wifi_http_reader *reader = parser->data;
     struct wifi_http_response *response = reader->response;
+    const size_t remainingBodyCapacity = sizeof(response->body) - response->bodyLength;
 
-    if(!response->bodyHasOverflowed && (length <= (sizeof(response->body) - response->bodyLength)))
+    if(!response->bodyHasOverflowed && (length <= remainingBodyCapacity))
     {
         (void)memcpy(&response->body[response->bodyLength], at, length);
 
@@ -436,8 +453,9 @@ static int wifi_onHttpMessageComplete(struct http_parser *parser)
 static int wifi_countHttpHeaderBytes(struct wifi_http_reader *reader, size_t length)
 {
     int result = 0;
+    const size_t remainingHeaderCapacity = WIFI_HTTP_HEADER_CAPACITY - reader->headerBytes;
 
-    if(length > (WIFI_HTTP_HEADER_CAPACITY - reader->headerBytes))
+    if(length > remainingHeaderCapacity)
     {
         result = wifi_rejectHttpResponse(reader, -EMSGSIZE);
     }
@@ -464,9 +482,10 @@ static void wifi_appendHttpText(struct wifi_http_writer *writer, const char *tex
     if(!writer->hasOverflowed)
     {
         const size_t textLength = strlen(text);
-
         /* length < capacity holds while nothing overflowed, so the subtraction cannot wrap. */
-        if(textLength < (writer->capacity - writer->length))
+        const size_t remainingCapacity = writer->capacity - writer->length;
+
+        if(textLength < remainingCapacity)
         {
             (void)memcpy(&writer->buffer[writer->length], text, textLength + 1U);
 

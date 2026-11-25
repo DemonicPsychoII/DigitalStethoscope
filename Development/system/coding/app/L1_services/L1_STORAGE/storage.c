@@ -239,8 +239,9 @@ static int storage_loadRecord(const char *key, size_t length, settings_read_cb r
         else
         {
             ssize_t readLength = read(readArgument, context->data, context->size);
+            const ssize_t expectedLength = (ssize_t)context->size;
 
-            if(readLength == (ssize_t)context->size)
+            if(readLength == expectedLength)
             {
                 context->result = 0;
             }
@@ -274,11 +275,13 @@ static int storage_parseServerProfile(struct storage_image_reader *reader, struc
             isErased = isErased && (magic[index] == STORAGE_ERASED_FLASH_BYTE);
         }
 
+        const bool isServerProfileMagic = (memcmp(magic, STORAGE_SERVER_PROFILE_MAGIC, sizeof(magic)) == 0);
+
         if(isErased)
         {
             result = -ENOENT; /**< No image was flashed. */
         }
-        else if(memcmp(magic, STORAGE_SERVER_PROFILE_MAGIC, sizeof(magic)) != 0)
+        else if(!isServerProfileMagic)
         {
             result = -EBADMSG; /**< Not a server profile image. */
         }
@@ -318,16 +321,25 @@ static int storage_parseServerProfile(struct storage_image_reader *reader, struc
         const uint32_t calculatedChecksum = reader->checksum;
 
         result = storage_readImage(reader, checksumBytes, sizeof(checksumBytes));
-        if((result == 0) && (sys_get_le32(checksumBytes) != calculatedChecksum))
+
+        const uint32_t readChecksum = sys_get_le32(checksumBytes);
+
+        if((result == 0) && (readChecksum != calculatedChecksum))
         {
             result = -EBADMSG; /**< Corrupted image. */
         }
     }
 
     /* The text fields are used as C strings, so an embedded NUL would shorten them silently. */
-    if((result == 0) && ((strlen(serverProfile->baseUrl) != baseUrlLength) || (strlen(serverProfile->certificate) != certificateLength)))
+    if(result == 0)
     {
-        result = -EBADMSG; /**< Length field does not match the text. */
+        const size_t baseUrlTextLength = strlen(serverProfile->baseUrl);
+        const size_t certificateTextLength = strlen(serverProfile->certificate);
+
+        if((baseUrlTextLength != baseUrlLength) || (certificateTextLength != certificateLength))
+        {
+            result = -EBADMSG; /**< Length field does not match the text. */
+        }
     }
     if(result == 0)
     {

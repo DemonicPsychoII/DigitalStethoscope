@@ -67,7 +67,10 @@ int wifi_resolveIpv4(struct wifi_dns_lookup *lookup,
     {
         return -ECANCELED; /**< Cancellation withdrew the operation before DNS. */
     }
-    if(sys_timepoint_expired(deadline))
+
+    const bool budgetIsUsedUp = sys_timepoint_expired(deadline);
+
+    if(budgetIsUsedUp)
     {
         return -ETIMEDOUT; /**< No budget left for DNS. */
     }
@@ -89,7 +92,10 @@ int wifi_resolveIpv4(struct wifi_dns_lookup *lookup,
         (void)k_event_wait(lookup->events, lookup->resolvedEvent, false, K_MSEC(pollIntervalMs));
 
         (void)k_mutex_lock(lookup->lock, K_FOREVER);
-        if(!lookup->isCurrent(generation))
+        const bool operationIsCurrent = lookup->isCurrent(generation);
+        const bool deadlineHasExpired = sys_timepoint_expired(deadline);
+
+        if(!operationIsCurrent)
         {
             result = -ECANCELED; /**< Cancellation ended the operation during DNS. */
         }
@@ -101,7 +107,7 @@ int wifi_resolveIpv4(struct wifi_dns_lookup *lookup,
                 *address = lookup->address;
             }
         }
-        else if(sys_timepoint_expired(deadline))
+        else if(deadlineHasExpired)
         {
             result = -ETIMEDOUT; /**< DNS did not finish within the operation's time. */
         }
@@ -148,8 +154,10 @@ static void wifi_handleResolution(enum dns_resolve_status status, struct dns_add
     bool hasFailed = false;
     (void)k_mutex_lock(lookup->lock, K_FOREVER);
 
+    const bool operationIsCurrent = lookup->isCurrent(lookup->generation);
+
     /* The generation check rejects callbacks of an older operation; isComplete keeps the first terminal status. */
-    if(lookup->isCurrent(lookup->generation) && !lookup->isComplete)
+    if(operationIsCurrent && !lookup->isComplete)
     {
         if(status == DNS_EAI_INPROGRESS)
         {
