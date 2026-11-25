@@ -2,7 +2,7 @@
 
 ## Basis and scope
 
-Secure transport builds on the [software allocation](../system/software-components.puml). REQ-09, REQ-10 and REQ-11 establish delivery, bounded failure handling and certificate verification.
+Secure transport builds on the [software allocation](../system/puml/software-components.puml). REQ-09, REQ-10 and REQ-11 establish delivery, bounded failure handling and certificate verification.
 
 L1_WIFI owns Wi-Fi, TLS and time operations, and L2_COMMUNICATION owns workflow policy. Station, provisioning and TLS operations use separate interfaces within L1_WIFI.
 

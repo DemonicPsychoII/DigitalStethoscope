@@ -78,7 +78,7 @@ Every rejection names the key and the violated rule, fails with a non-zero exit 
 
 ![Server profile validation: stages, owners, timing and failure outcomes](rendered/server_profile_validation.svg)
 
-*Which check runs on the PC, at boot or during connection setup, who owns it, and what does its failure do?* Editable source: [server-profile-validation.puml](server-profile-validation.puml).
+*Which check runs on the PC, at boot or during connection setup, who owns it, and what does its failure do?* Editable source: [puml/server-profile-validation.puml](puml/server-profile-validation.puml).
 
 For rule 2, the device trusts only this certificate as its sole trust anchor ([TLS trust inputs](../COMMUNICATION/secure-transport.md#trust-and-server-profile-inputs)).
 

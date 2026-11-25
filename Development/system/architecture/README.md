@@ -18,5 +18,5 @@ The device ends at the DAC line output; the headphone amplifier is external.
 From a diagram folder, render offline using PlantUML 1.2026.9 (no remote includes or Graphviz). Component views use Smetana.
 
 ```sh
-java -jar /path/to/plantuml.jar -charset UTF-8 -failfast2 -tsvg -o rendered "*.puml"
+java -jar /path/to/plantuml.jar -charset UTF-8 -failfast2 -tsvg -o ../rendered "puml/*.puml"
 ```

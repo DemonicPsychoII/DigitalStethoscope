@@ -4,11 +4,11 @@ L2_COMMUNICATION owns the setup workflow and recovery policy under the L2_CONTRO
 
 | View | Editable source | Preview |
 | --- | --- | --- |
-| Setup state machine | [setup-state.puml](setup-state.puml) | [SVG](rendered/setup_state.svg) |
-| Provisioning flow | [setup-flow.puml](setup-flow.puml) | [SVG](rendered/setup_flow.svg) |
-| Setup ownership sequence | [setup-sequence.puml](setup-sequence.puml) | [SVG](rendered/setup_sequence.svg) |
-| Link recovery | [link-recovery.puml](link-recovery.puml) | [SVG](rendered/link_recovery.svg) |
-| Communication lifecycle: Wi-Fi join, Idle preparation, registration, listening, delivery | [communication-lifecycle.puml](communication-lifecycle.puml) | [SVG](rendered/communication_lifecycle.svg) |
+| Setup state machine | [puml/setup-state.puml](puml/setup-state.puml) | [SVG](rendered/setup_state.svg) |
+| Provisioning flow | [puml/setup-flow.puml](puml/setup-flow.puml) | [SVG](rendered/setup_flow.svg) |
+| Setup ownership sequence | [puml/setup-sequence.puml](puml/setup-sequence.puml) | [SVG](rendered/setup_sequence.svg) |
+| Link recovery | [puml/link-recovery.puml](puml/link-recovery.puml) | [SVG](rendered/link_recovery.svg) |
+| Communication lifecycle: Wi-Fi join, Idle preparation, registration, listening, delivery | [puml/communication-lifecycle.puml](puml/communication-lifecycle.puml) | [SVG](rendered/communication_lifecycle.svg) |
 
 The [diagram viewer](setup-workflows.html) presents these architecture views. The general station and provisioning model is documented under [L1_WIFI](../WIFI/README.md), and the browser boundary under [L1_PORTAL](../PORTAL/README.md).
 

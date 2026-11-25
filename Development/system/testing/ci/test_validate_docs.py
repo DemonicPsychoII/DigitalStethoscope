@@ -50,6 +50,19 @@ class RenderTests(unittest.TestCase):
             self.assertIn("stale render", renders([puml, current], root)[0])
             self.assertIn("missing render", renders([puml, other, current], root)[-1])
 
+    def test_source_in_the_puml_folder_belongs_to_the_render_beside_it(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            puml = write(
+                root, "a/puml/view-one.puml", "@startuml view_one\nA -> B\n@enduml\n"
+            )
+            other = write(
+                root, "a/puml/view-two.puml", "@startuml view_two\nA -> C\n@enduml\n"
+            )
+            current = write(root, "a/rendered/view_one.svg", svg("A -> B"))
+            self.assertEqual(renders([puml, current], root), [])
+            self.assertIn("missing render", renders([puml, other, current], root)[-1])
+
 
 class IndexTests(unittest.TestCase):
     def test_unlisted_script_and_view_fail(self):
@@ -64,6 +77,17 @@ class IndexTests(unittest.TestCase):
             self.assertEqual(listed(paths, root), [])
             errors = listed([*paths, ci + "new.py", arch + "new.puml"], root)
             self.assertEqual(len(errors), 2)
+
+    def test_unlisted_view_in_the_puml_folder_fails(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            arch = SYSTEM + "architecture/"
+            write(root, arch + "README.md", "[v](puml/view.puml)")
+            write(root, arch + "system/VIEW-NOTES.md", "")
+            paths = [arch + "puml/view.puml"]
+            self.assertEqual(listed(paths, root), [])
+            errors = listed([*paths, arch + "puml/new.puml"], root)
+            self.assertEqual(len(errors), 1)
 
 
 class FactTests(unittest.TestCase):

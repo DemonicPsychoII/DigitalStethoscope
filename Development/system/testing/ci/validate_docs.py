@@ -100,9 +100,12 @@ def renders(paths: list[str], root: Path = ROOT) -> list[str]:
     rendered_dirs = {str(Path(p).parent.parent.as_posix()) for p in svgs}
     for svg in svgs:
         stem = Path(svg).stem.replace("_", "-")
-        puml = f"{Path(svg).parent.parent.as_posix()}/{stem}.puml"
-        if puml not in pumls:
-            errors.append(f"{svg}: no PlantUML source {puml}")
+        folder = Path(svg).parent.parent.as_posix()
+        # A diagram source lies next to the pages or in the folder's puml directory.
+        candidates = [f"{folder}/puml/{stem}.puml", f"{folder}/{stem}.puml"]
+        puml = next((candidate for candidate in candidates if candidate in pumls), None)
+        if puml is None:
+            errors.append(f"{svg}: no PlantUML source {candidates[0]}")
             continue
         source = svg_source(root / svg)
         if source is None:
@@ -113,6 +116,8 @@ def renders(paths: list[str], root: Path = ROOT) -> list[str]:
             errors.append(f"{svg}: stale render of {puml}; rerender it")
     for puml in pumls:
         directory = Path(puml).parent.as_posix()
+        if Path(puml).parent.name == "puml":
+            directory = Path(puml).parent.parent.as_posix()
         svg = f"{directory}/rendered/{Path(puml).stem.replace('-', '_')}.svg"
         if directory in rendered_dirs and svg not in svgs:
             errors.append(f"{puml}: missing render {svg}")
@@ -143,9 +148,17 @@ def listed(paths: list[str], root: Path = ROOT) -> list[str]:
         for readme in architecture.glob("*/README.md")
         for folder in (readme.parent,)
     )
+
+    def indexed_folder(path: str) -> str:
+        """A diagram source in a puml directory belongs to the folder above it."""
+        parent = Path(path).parent
+        if path.endswith(".puml") and parent.name == "puml":
+            parent = parent.parent
+        return parent.as_posix() + "/"
+
     for directory, suffix, docs in indexes:
         if not any(
-            Path(path).parent.as_posix() + "/" == directory and path.endswith(suffix)
+            indexed_folder(path) == directory and path.endswith(suffix)
             for path in paths
         ):
             continue
@@ -153,7 +166,7 @@ def listed(paths: list[str], root: Path = ROOT) -> list[str]:
         for path in paths:
             name = Path(path).name
             if (
-                Path(path).parent.as_posix() + "/" == directory
+                indexed_folder(path) == directory
                 and name.endswith(suffix)
                 and not name.startswith("test_")
                 and name not in text

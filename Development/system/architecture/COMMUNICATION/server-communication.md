@@ -2,7 +2,7 @@
 
 ## Basis and scope
 
-Server communication refines the [system software allocation](../system/software-components.puml) for Device registration, examination context, FHIR serialization and result delivery under REQ-02, REQ-07, REQ-08, REQ-09, REQ-10, REQ-11, REQ-13 and REQ-15.
+Server communication refines the [system software allocation](../system/puml/software-components.puml) for Device registration, examination context, FHIR serialization and result delivery under REQ-02, REQ-07, REQ-08, REQ-09, REQ-10, REQ-11, REQ-13 and REQ-15.
 
 The device reuses a patient reference only when supplied with a server-requested examination, and omits it otherwise. Only the device starts measurements; the server cannot start an examination.
 

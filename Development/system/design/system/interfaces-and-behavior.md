@@ -51,7 +51,7 @@ Physical input acquisition and normalization belong to `L1_PHYSICALINTERFACE`. `
 
 ![Data provenance from mutable inputs to the retried Observation bytes](rendered/shared_delivery_provenance.svg)
 
-*Where is each Observation input frozen?* Source: [shared-delivery-provenance.puml](shared-delivery-provenance.puml).
+*Where is each Observation input frozen?* Source: [puml/shared-delivery-provenance.puml](puml/shared-delivery-provenance.puml).
 
 ## Ownership, memory and queues
 
@@ -66,7 +66,7 @@ Each bounded handoff has its own overload rule:
 
 ![Threads and bounded handoffs with their overload rules](rendered/shared_runtime_handoffs.svg)
 
-*What happens at each bounded handoff when the receiver falls behind?* Source: [shared-runtime-handoffs.puml](shared-runtime-handoffs.puml); the [thread view](../../architecture/system/runtime-ownership.puml) shows the workers without capacities.
+*What happens at each bounded handoff when the receiver falls behind?* Source: [puml/shared-runtime-handoffs.puml](puml/shared-runtime-handoffs.puml); the [thread view](../../architecture/system/puml/runtime-ownership.puml) shows the workers without capacities.
 
 For the delivery slot, a terminal failure retains only redacted outcome metadata with no retry queue. The completed measurement is discarded and server recovery does not resend it (REQ-10).
 
@@ -100,7 +100,7 @@ A completed result does not wait for delivery prerequisites. When Wi-Fi is confi
 
 ![Signal flow from the original-rate branch point to the analysis and listening paths](rendered/shared_filter_signal_flow.svg)
 
-*Which filter does each path apply, and where do volume and saturation sit?* Source: [shared-filter-signal-flow.puml](shared-filter-signal-flow.puml).
+*Which filter does each path apply, and where do volume and saturation sit?* Source: [puml/shared-filter-signal-flow.puml](puml/shared-filter-signal-flow.puml).
 
 `L2_AUDIO` preserves filter state across continuously evaluated listening paths and clears filter histories on source reset. Signed microphone samples are normalized once and saturated only at output conversion, with clipping counters.
 
@@ -108,7 +108,7 @@ BPM analysis estimates heart rate from whole-cycle periodicity after the BPM fil
 
 ![Coverage as the clipped union of accepted analysis windows](rendered/shared_analysis_coverage.svg)
 
-*Which part of the session counts as coverage?* Source: [shared-analysis-coverage.puml](shared-analysis-coverage.puml).
+*Which part of the session counts as coverage?* Source: [puml/shared-analysis-coverage.puml](puml/shared-analysis-coverage.puml).
 
 ## Delivery, clock and configuration
 

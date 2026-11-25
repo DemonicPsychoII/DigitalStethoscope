@@ -2,7 +2,7 @@
 
 ## Basis and scope
 
-Time synchronization refines the [system allocation](../system/software-components.puml) under REQ-02, REQ-09, REQ-10, REQ-11 and REQ-13.
+Time synchronization refines the [system allocation](../system/puml/software-components.puml) under REQ-02, REQ-09, REQ-10, REQ-11 and REQ-13.
 
 L1_WIFI performs the time operations and L2_COMMUNICATION orchestrates them.
 
