@@ -1,10 +1,10 @@
 # Wi-Fi interfaces and behavior
 
-L2_COMMUNICATION owns setup, retries and sequencing. `L1_WIFI` owns individual radio and address operations defined in the [service boundary](#service-boundary) below. The page, HTTP server and typed request/status contract belong to [PORTAL](../PORTAL/interfaces-and-behavior.md).
+`L2_COMMUNICATION` owns setup, retries and sequencing. `L1_WIFI` owns individual radio and address operations defined in the [service boundary](#service-boundary) below. The page, HTTP server and typed request and status contract belong to [`L1_PORTAL`](../PORTAL/interfaces-and-behavior.md).
 
 ## Service boundary
 
-The proposed [SNTP service extension](../COMMUNICATION/time-synchronization.md#ownership-and-proposed-interfaces) defines a cancellable DNS lookup and SNTP (Simple Network Time Protocol) exchange, normalization of its result and application of the time to the device clock. The existing station and provisioning operations below remain the firmware baseline until the separate pull requests that implement the time service.
+The [SNTP time-synchronization design](../COMMUNICATION/time-synchronization.md) defines a cancellable DNS lookup and SNTP (Simple Network Time Protocol) exchange, normalization of its result and application of the time to the device clock.
 
 | Interface | Inputs | Outputs and ownership |
 | --- | --- | --- |
@@ -13,34 +13,33 @@ The proposed [SNTP service extension](../COMMUNICATION/time-synchronization.md#o
 | `wifi_waitForConnection(timeout)` | Maximum wait interval | 0 only after the selected network has IPv4; `-EAGAIN` while pending; negative failure otherwise. An unsolicited disconnect before IPv4 ends the join immediately with `-ENOTCONN`; intentional cancellation and later established-link loss are separate. |
 | `wifi_startScan()` | One scan request | 0 accepts the scan; negative error rejects it. No list is returned by this call. |
 | `wifi_waitForScanResult(list, capacity, timeout)` | Caller-owned list, entry capacity and maximum wait interval | Nonnegative entry count only after scan-finished; `-EAGAIN` while pending; negative failure/cancellation otherwise. No partial list publication. |
-| `wifi_cancelScan()`, `wifi_disconnect()` | Cancel active scan or connection | Bounded completion; no new connect until DISCONNECT_RESULT or confirmed already-disconnected state establishes completion within the 1 s disconnect-confirmation deadline; `wifi_isConnected()` alone does not confirm cancellation of an in-progress join; no new scan until the scan-finished result (`wifi_waitForScanResult()`, including cancellation); timeout is failure. |
+| `wifi_cancelScan()`, `wifi_disconnect()` | Cancel active scan or connection | Bounded completion; no new connect starts until a disconnect completion event or confirmed already-disconnected state is established within the 1 s disconnect-confirmation deadline. `wifi_isConnected()` alone does not confirm cancellation of an in-progress join. No new scan starts until the scan-finished result (`wifi_waitForScanResult()`, including cancellation) arrives. Timeout is failure. |
 | `wifi_isValidNetwork()` | Nullable stored or submitted network | Reject NULL, unterminated/empty name and invalid passphrase length (8–63 bytes, or exactly 64 hexadecimal key digits; empty for an open network); no mutation. |
-| Hotspot and DHCP functions | Start/stop requests from COMMUNICATION | Individual service outcomes; HTTP page serving remains in PORTAL. |
+| `wifi_startHotspot()`, `wifi_stopHotspot()`, `wifi_startDHCPServer()`, `wifi_stopDHCPServer()` | Start and stop requests from `L2_COMMUNICATION` | Individual service outcomes; HTTP page serving remains in `L1_PORTAL`. |
 | `wifi_getAddress()`, `wifi_isConnected()` | Address buffer or link query | Current station address or connection state. |
 
-A new radio request or cancellation rejects late results of the prior request. Each wait returns its result to COMMUNICATION; callbacks do not change controller state. [Shared system contracts](../system/interfaces-and-behavior.md) define mode ownership and feedback; [Wi-Fi parameters](parameters.md) define operation limits; [COMMUNICATION](../COMMUNICATION/interfaces-and-behavior.md) defines sequencing and retries.
-
+A new radio request or cancellation rejects late results of the prior request. Each wait returns its result to `L2_COMMUNICATION`; callbacks do not change controller state. The [system design](../system/interfaces-and-behavior.md) defines mode ownership and feedback; [Wi-Fi parameters](parameters.md) define operation limits; [L2_COMMUNICATION](../COMMUNICATION/interfaces-and-behavior.md) defines sequencing and retries.
 
 ## Secure server operations
 
-Secure server operations follow the proposed [TLS service contracts](../COMMUNICATION/secure-transport.md#ownership-and-proposed-service-contracts): WIFI owns DNS/TCP/TLS resources and mandatory verification; COMMUNICATION owns deadlines and retry scheduling. These operations require CONTROL's network lease and quiescent cancellation before audio. They are later work on the interface, L2_COMMUNICATION and L1_WIFI; they are not yet implemented radio-service behavior.
+Secure server operations follow the [TLS service contracts](../COMMUNICATION/secure-transport.md). `L1_WIFI` owns DNS, TCP and TLS resources and mandatory verification. `L2_COMMUNICATION` owns deadlines and retry scheduling. These operations require `L2_CONTROL`'s network lease and quiescent cancellation before audio.
 
 ## Physical device identity
 
-The proposed `wifi_getDeviceIdentifier` returns the full-MAC-derived physical identifier defined by [server communication](../COMMUNICATION/server-communication.md#physical-identity-and-server-binding), or a cause. Use the stable factory station identity, not only the hotspot suffix or a runtime-overridden address. This local operation neither connects to a network nor registers a Device. It remains unverified that the identifier on the target really comes from the factory station MAC address.
+`wifi_getDeviceIdentifier()` returns the full-MAC-derived physical identifier defined by [server communication](../COMMUNICATION/server-communication.md#physical-identity-and-server-binding), or an error cause. It reads the stable factory station MAC address rather than a short suffix or a runtime-overridden address. This local operation neither connects to a network nor registers a Device.
 
 ## Network record
 
-Project representation: `wifi_network` is the name/password record shared with STORAGE and COMMUNICATION. It contains `char name[33]` followed by `char password[65]`, for a complete persisted record of 98 bytes. There is no security-type field, version prefix or additional serialized metadata. These widths match the existing application interface; this documents its current record rather than introducing a new format.
+`wifi_network` is the network name and password record shared with `L1_STORAGE` and `L2_COMMUNICATION`. It contains `char name[33]` followed by `char password[65]`, giving a complete persisted record of 98 bytes with no security-type field, version prefix or additional serialized metadata.
 
 `name` holds 1–32 non-NUL SSID bytes followed by a NUL terminator. `password` holds an empty string for an open network, 8–63 passphrase bytes, or 64 ASCII hexadecimal key digits, followed by a NUL terminator. Each string must terminate within its array. Byte sequences are preserved without text normalization; lengths are byte counts, not Unicode character counts. Bytes after each terminator remain part of the fixed-size record but are not string content. `wifi_isValidNetwork()` checks this representation without mutation. Security-type eligibility is established by the supported-network scan/join path; this record alone cannot distinguish WPA2 from an unsupported secured network.
 
 ## Supported networks
 
-List and accept open networks and WPA2-PSK. Filter other security types instead of mapping them onto a supported type. Bound each operation and return its cause to the caller. Persistence belongs to L1_STORAGE; retries and listening interruption belong to L2_COMMUNICATION.
+`L1_WIFI` lists and accepts open networks and WPA2-PSK networks. It filters other security types instead of mapping them onto a supported type. Each operation is bounded and returns its cause to the caller. Persistence belongs to `L1_STORAGE`; retries and listening interruption belong to `L2_COMMUNICATION`.
 
 ## Failure boundaries and bounded results
 
-AP enable or vendor configuration failure immediately attempts DHCP shutdown and AP disable before returning the original cause. DHCP startup failure rolls back the same partial setup. Failed rollback attempts remain subject to COMMUNICATION's bounded cleanup policy; returning an error does not assert physical shutdown.
+On hotspot enable or configuration failure, `L1_WIFI` immediately attempts DHCP shutdown and hotspot disable before returning the original cause. DHCP startup failure rolls back the same partial setup. Failed rollback attempts remain subject to `L2_COMMUNICATION`'s bounded cleanup policy.
 
-The scan cache retains the strongest 16 distinct supported SSIDs; a stronger duplicate updates its entry. Additional weaker networks are omitted. The completed cache has no signal-strength ordering. A smaller caller buffer receives the leading subset up to its capacity; the count reports copied entries, without an overflow flag. COMMUNICATION supplies the full 16-entry capacity. These are project operation contracts; target driver and shutdown verification remain pending.
+The scan cache retains the strongest 16 distinct supported SSIDs; a stronger duplicate updates its entry. Additional weaker networks are omitted. The completed cache has no signal-strength ordering. A smaller caller buffer receives the leading subset up to its capacity, and the returned count reports copied entries without an overflow flag. `L2_COMMUNICATION` supplies the full 16-entry capacity.

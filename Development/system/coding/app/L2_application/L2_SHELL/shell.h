@@ -6,7 +6,7 @@
 /** @defgroup L2_SHELL SHELL
  * @{
  * @file
- * L2 shell commands and read-back through CONTROL.
+ * L2 shell commands and read-back through L2_CONTROL.
  */
 
 #ifndef L2_SHELL_H

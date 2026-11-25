@@ -6,7 +6,7 @@
 /** @addtogroup L1_BPM
  * @{
  * @file
- * Implementation of the BPM module.
+ * Implementation of the L1_BPM module.
  */
 
 /***********************************************************************/

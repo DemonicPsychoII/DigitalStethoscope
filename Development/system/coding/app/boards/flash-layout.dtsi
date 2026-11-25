@@ -1,9 +1,10 @@
 /*
- * Project flash layout of the 16 MB module (Nico, flash layout decision, 4 November 2026):
+ * Flash partition layout for the 16 MB module:
  * settings and the server profile image each have a fixed start and their own size, with
  * unassigned growth room behind each. The application gets everything before the settings.
- * storage.c checks that settings end before the server profile start, that the server profile
- * keeps its fixed start and ends within the flash, and that the largest server profile image fits.
+ * The settings partition must end before the server profile start. The server profile
+ * partition must keep its fixed start address, end within the 16 MB flash and hold the
+ * largest server profile image.
  *
  * Unit addresses cannot be computed; dtc's unit_address_vs_reg check rejects a node name
  * that no longer matches its reg.
@@ -45,7 +46,7 @@
             reg = <FLASH_LAYOUT_SETTINGS_OFFSET FLASH_LAYOUT_SETTINGS_SIZE>;
         };
 
-        /* Written only by tools/flash-server-profile.ps1. */
+        /* Flashed separately from the application firmware and read-only at runtime. */
         server_profile_partition: partition@f00000
         {
             compatible = "zephyr,mapped-partition";

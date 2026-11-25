@@ -38,7 +38,7 @@ repeat
   endif
   :take the left slot (even index) of each of the 64 frames\ninto the 64-entry mono working buffer (low 8 bits cleared);
   :**i2s_releaseReceivedBlock**\nRX block back to the RX pool;
-  :process the mono buffer\nthis step: copy; later listening filter and volume;
+  :process the mono buffer\napply the selected listening filter and the volume;
 note right
   Processing budget (P02): from the received block
   to the queued TX block at most 3 ms of the 4 ms period;

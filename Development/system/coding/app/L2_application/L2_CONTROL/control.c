@@ -6,7 +6,7 @@
 /** @addtogroup L2_CONTROL
  * @{
  * @file
- * Implementation of the CONTROL module.
+ * Implementation of the L2_CONTROL module.
  */
 
 /***********************************************************************/
@@ -39,14 +39,14 @@
 /** The control thread checks the input readings at least this often; within the P10 status budget of 500 ms. */
 #define CONTROL_INPUT_CHECK_MILLISECONDS 100
 
-/** Nico, 16 November 2026: no valid switch position for this long while listening is CONTROL_INPUT_FAILURE. */
+/** No valid switch position for this long while listening is CONTROL_INPUT_FAILURE. */
 #define CONTROL_SWITCH_FAILURE_MILLISECONDS 1000
 
 /** Wait before the startup completion is posted again, if the queue had no free slot. */
 #define CONTROL_STARTUP_RETRY_MILLISECONDS 10
 
-#define CONTROL_THREAD_STACK_SIZE  (2048) /**< Proposed; measure under VT-02. */
-#define CONTROL_THREAD_PRIORITY    (5)    /**< Below the audio thread, above COMMUNICATION. */
+#define CONTROL_THREAD_STACK_SIZE  (2048) /**< Stack size of the control thread. */
+#define CONTROL_THREAD_PRIORITY    (5)    /**< Preemptive priority of the control thread. */
 #define CONTROL_EVENT_QUEUE_LENGTH (16)   /**< P11: 16 control events. */
 
 /** Queue slots that input events leave free: one stream reports started and then stopped or a fault, and a lost report would leave the state wrong. */
@@ -61,9 +61,9 @@ enum control_state
 {
     CONTROL_STATE_STARTUP,   /**< Until the lamp test has ended. */
     CONTROL_STATE_IDLE,      /**< Audio stopped; Wi-Fi work allowed. */
-    CONTROL_STATE_STARTING,  /**< Start sent to AUDIO; waiting for its report. */
+    CONTROL_STATE_STARTING,  /**< Start sent to L2_AUDIO; waiting for its report. */
     CONTROL_STATE_LISTENING, /**< Microphone to DAC. */
-    CONTROL_STATE_STOPPING,  /**< Stop sent to AUDIO; waiting for its report. */
+    CONTROL_STATE_STOPPING,  /**< Stop sent to L2_AUDIO; waiting for its report. */
     CONTROL_STATE_HALTED,    /**< Restart-required error in effect; every input is dropped. */
 };
 
@@ -112,7 +112,7 @@ static enum feedback_code control_wifiIndication = FEEDBACK_NONE; /**< Wi-Fi sta
 static bool control_isQuickFlashActive;                           /**< WIFI_CONNECTED is shown in Idle until control_quickFlashesEnd. */
 static k_timepoint_t control_quickFlashesEnd;
 static k_timepoint_t control_acknowledgementFlashEnd;            /**< Until then the next error is not shown yet, so a press must not acknowledge it. */
-static enum feedback_code control_shownFeedback = FEEDBACK_NONE; /**< Last row passed to PHYSICALINTERFACE, overlays excluded. */
+static enum feedback_code control_shownFeedback = FEEDBACK_NONE; /**< Last row passed to L1_PHYSICALINTERFACE, overlays excluded. */
 
 static struct k_spinlock control_inputLock; /**< Protects the readings that the input handlers store on the system work queue. */
 static struct physicalinterface_listening_filter_reading control_switchReading = {
@@ -136,31 +136,31 @@ static struct k_thread control_threadData;
 /**
  * @brief Queue a debounced Start/Stop button event for the control thread.
  *
- * @param[in] event Button event from PHYSICALINTERFACE.
- * @param[in] timestampMilliseconds Uptime at which PHYSICALINTERFACE recognized the event.
+ * @param[in] event Button event from L1_PHYSICALINTERFACE.
+ * @param[in] timestampMilliseconds Uptime at which L1_PHYSICALINTERFACE recognized the event.
  */
 static void control_handleButton(enum physicalinterface_button_event event, int64_t timestampMilliseconds);
 
 /**
  * @brief Keep the last stable Raw/Murmur/BPM switch reading for the control thread.
  *
- * All three positions pass audio through unchanged; filters are not selected yet.
+ * All three positions pass audio through unfiltered; the position selects no filter.
  *
- * @param[in] reading Switch reading from PHYSICALINTERFACE.
+ * @param[in] reading Switch reading from L1_PHYSICALINTERFACE.
  */
 static void control_handleListeningFilter(const struct physicalinterface_listening_filter_reading *reading);
 
 /**
- * @brief Pass the volume to AUDIO and keep a potentiometer failure for the control thread.
+ * @brief Pass the volume to L2_AUDIO and keep a potentiometer failure for the control thread.
  *
- * @param[in] reading Volume reading from PHYSICALINTERFACE.
+ * @param[in] reading Volume reading from L1_PHYSICALINTERFACE.
  */
 static void control_handleVolume(const struct physicalinterface_volume_reading *reading);
 
 /**
  * @brief Queue a report of the audio thread for the control thread.
  *
- * @param[in] event Report from AUDIO.
+ * @param[in] event Report from L2_AUDIO.
  * @param[in] fault Catalogue code of the failed link for AUDIO_EVENT_FAULT.
  */
 static void control_handleAudioEvent(enum audio_event event, enum feedback_code fault);
@@ -168,7 +168,7 @@ static void control_handleAudioEvent(enum audio_event event, enum feedback_code 
 /**
  * @brief Queue Wi-Fi workflow feedback of the communication thread for the control thread.
  *
- * @param[in] code Catalogue code from COMMUNICATION.
+ * @param[in] code Catalogue code from L2_COMMUNICATION.
  */
 static void control_handleWiFiFeedback(enum feedback_code code);
 
@@ -182,7 +182,7 @@ static void control_handleWiFiFeedback(enum feedback_code code);
 static bool control_postInputEvent(const struct control_event *event);
 
 /**
- * @brief Queue a report of AUDIO without waiting; it may use the reserved slots.
+ * @brief Queue a report of L2_AUDIO without waiting; it may use the reserved slots.
  *
  * @param[in] event Event to queue.
  */
@@ -220,7 +220,7 @@ static void control_handleWorkflowShortPress(void);
 static void control_handleLongPress(void);
 
 /**
- * @brief Check the switch, stop the Wi-Fi work, then send Start to AUDIO.
+ * @brief Check the switch, stop the Wi-Fi work, then send Start to L2_AUDIO.
  *
  * Without a valid switch position CONTROL_INPUT_FAILURE is latched and audio stays stopped.
  * Blocks the control thread until Wi-Fi work has stopped, at most the P23 cleanup cap.
@@ -263,7 +263,7 @@ static void control_logLatchedErrors(void);
 /**
  * @brief Act on Wi-Fi workflow feedback: latch an error or keep the Wi-Fi status for Idle.
  *
- * @param[in] code Catalogue code from COMMUNICATION.
+ * @param[in] code Catalogue code from L2_COMMUNICATION.
  */
 static void control_applyWiFiFeedback(enum feedback_code code);
 
@@ -743,7 +743,7 @@ static void control_applyErrorEffects(void)
     {
         if(isAudioStarted)
         {
-            /* AUDIO stops itself on its own faults; this also mutes it for an audio error that another component detected. */
+            /* L2_AUDIO stops itself on its own faults; this also mutes it for an audio error that another component detected. */
             (void)audio_postCommand(AUDIO_COMMAND_STOP);
         }
 

@@ -22,7 +22,7 @@ skinparam note {
  BorderColor #61738a
  FontColor #e6edf7
 }
-title Start, Stop and fault shutdown across the audio components (designed mechanism, from driver source reading)
+title Start, Stop and fault shutdown across the audio components
 participant "L2_CONTROL" as control
 participant "L2_AUDIO\naudio thread" as audio
 participant "L1_I2S" as transport

@@ -6,7 +6,7 @@
 /** @addtogroup L2_AUDIO
  * @{
  * @file
- * Implementation of the block processing of the AUDIO module.
+ * Implementation of the block processing of the L2_AUDIO module.
  */
 
 /***********************************************************************/

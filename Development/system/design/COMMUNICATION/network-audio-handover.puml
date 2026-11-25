@@ -5,23 +5,33 @@ skinparam defaultFontName SansSerif
 skinparam backgroundColor #0b1018
 skinparam defaultFontColor #e6edf7
 skinparam ArrowColor #a9b8ca
+skinparam sequence {
+ ParticipantBackgroundColor #273241
+ ParticipantBorderColor #61738a
+ ParticipantFontColor #e6edf7
+ LifeLineBorderColor #61738a
+ GroupBorderColor #61738a
+ GroupHeaderFontColor #e6edf7
+ GroupBackgroundColor #1b2533
+}
+skinparam sequenceGroupBodyBackGroundColor #121a26
 skinparam sequenceMessageAlign left
 title When may audio start after Start? Network-to-audio handover
-participant CONTROL
-participant COMMUNICATION
-participant WIFI
-participant PORTAL
-database STORAGE
-participant AUDIO
+participant "L2_CONTROL" as CONTROL
+participant "L2_COMMUNICATION" as COMMUNICATION
+participant "L1_WIFI" as WIFI
+participant "L1_PORTAL" as PORTAL
+database "L1_STORAGE" as STORAGE
+participant "L2_AUDIO" as AUDIO
 note over CONTROL
  Start during Analysing: Busy, nothing cancelled.
  Start during Sending: cancels the delivery job.
 end note
 CONTROL -> COMMUNICATION : Start: communication_postEvent(LISTENING_STARTED)\nwithdraws the network lease
-CONTROL -> COMMUNICATION : communication_waitForWiFiStop(timeout)\nCONTROL sends no other event during the wait
+CONTROL -> COMMUNICATION : communication_waitForWiFiStop(timeout)\nL2_CONTROL sends no other event during the wait
 note right of COMMUNICATION
- Seen at the next event check; 200 ms is a candidate
- check interval, not a bound on teardown or flash writes.
+ Seen at the next event check: at most 200 ms later
+ during a wait; a storage write in progress completes first.
 end note
 group Cancel the operation in progress, once (in-line)
  COMMUNICATION -> WIFI : cancel scan, disconnect join, cancel SNTP\nor cancel TLS setup/exchange (1 s stop bound)
@@ -34,8 +44,7 @@ end
 opt Settings commit pending
  COMMUNICATION -> STORAGE : finish wifi/network write (up to 2 tries)\nor Device registration record save
  note right of STORAGE
-  Not interrupted by Start. Atomicity and power-loss
-  behavior remain target evidence.
+  Not interrupted by Start.
  end note
 end
 group Cleanup pass: one stop try per service still pending (1 s each)
@@ -51,14 +60,14 @@ alt All stops confirmed
  CONTROL -> AUDIO : admit audio: prime and start
 else A stop failed: latch WIFI_CLEANUP_FAILURE (REQ-13 Wi-Fi-only exception)
  COMMUNICATION -> COMMUNICATION : network work disabled until restart;\nfailed services stay recorded
- COMMUNICATION --> CONTROL : release acknowledged without proof of quiescence\nno claim that the radio is off
+ COMMUNICATION --> CONTROL : release acknowledged without proof of quiescence
  CONTROL -> AUDIO : admit audio: prime and start
-else Release not provable: no acknowledgement within CONTROL's wait
+else Release not provable: no acknowledgement within L2_CONTROL's wait
  CONTROL -> CONTROL : audio stays stopped; show the reason
 end
 note over CONTROL, COMMUNICATION
- Coalescing: COMMUNICATION acts on the latest requested state only.
+ Coalescing: L2_COMMUNICATION acts on the latest requested state only.
  A Stop before the acknowledgement leaves listening unrequested; a new
- Start needs a new acknowledgement. CONTROL serializes Start/Stop with the wait.
+ Start needs a new acknowledgement. L2_CONTROL serializes Start/Stop with the wait.
 end note
 @enduml

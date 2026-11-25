@@ -7,8 +7,6 @@ skinparam backgroundColor #0b1018
 skinparam defaultFontColor #e6edf7
 skinparam ArrowColor #a9b8ca
 skinparam componentStyle rectangle
-skinparam rectangle {
-}
 skinparam package {
  BackgroundColor #111826
  BorderColor #a9b8ca
@@ -18,13 +16,13 @@ title Input ownership: contact handling, policy and commanded effects
 left to right direction
 
 package "Physical contact" {
- rectangle "Start/Stop button\nGPIO16" as Button
- rectangle "Raw/Murmur/BPM switch\nGPIO18/21/38" as Switch
- rectangle "Volume potentiometer\nGPIO1, ADC1 channel 0" as Potentiometer
+ rectangle "Start/Stop button" as Button
+ rectangle "Raw/Murmur/BPM switch" as Switch
+ rectangle "Volume potentiometer" as Potentiometer
 }
 
 package "L1_PHYSICALINTERFACE: contact handling" {
- rectangle "Debounce: level stable for 30 ms (P10 candidate)\nLong press: held 2 s, reported once\nRelease after a long press is not a short press" as ButtonAdapter
+ rectangle "Debounce contact levels\nDetect long press once while held\nRelease after a long press is not a short press" as ButtonAdapter
  rectangle "Stable-state reconciliation:\nreport the settled switch position and volume;\non input-queue overflow: reconcile stable values,\nreject and report transient actions" as StableAdapter
 }
 
@@ -35,20 +33,20 @@ package "L2_CONTROL: policy" {
 }
 
 package "Commanded effects" {
- rectangle "COMMUNICATION\nWi-Fi setup workflow" as SetupEffect
- rectangle "RGB status light\nINPUT_REJECTED dim" as RejectEffect
- rectangle "AUDIO\nlisten, measure, filter, volume" as AudioEffect
- rectangle "COMMUNICATION\nnetwork lease release" as LeaseEffect
+ rectangle "L2_COMMUNICATION\nWi-Fi setup workflow" as SetupEffect
+ rectangle "RGB status light\ndims briefly on a rejected input" as RejectEffect
+ rectangle "L2_AUDIO\nlisten, measure, filter, volume" as AudioEffect
+ rectangle "L2_COMMUNICATION\nnetwork lease release" as LeaseEffect
  rectangle "Red button LED\nerror code, acknowledgement flash" as RedEffect
 }
 
 Button --> ButtonAdapter : GPIO edge
 Switch --> StableAdapter : GPIO levels
 Potentiometer --> StableAdapter : ADC samples
-ButtonAdapter --> LongPressPolicy : LONG_PRESS
-ButtonAdapter --> ShortPressPolicy : SHORT_PRESS
+ButtonAdapter --> LongPressPolicy : long press
+ButtonAdapter --> ShortPressPolicy : short press
 StableAdapter --> SettingPolicy : settled value
-LongPressPolicy --> SetupEffect : SETUP_REQUESTED
+LongPressPolicy --> SetupEffect : setup request
 LongPressPolicy --> RejectEffect : rejected
 ShortPressPolicy --> AudioEffect
 ShortPressPolicy --> LeaseEffect
@@ -56,7 +54,7 @@ ShortPressPolicy --> RedEffect
 SettingPolicy --> AudioEffect
 
 legend bottom left
- The adapter decides what a contact means physically (stable level, press duration);
- CONTROL alone decides whether it is admitted; effects never read contacts directly.
+ L1_PHYSICALINTERFACE decides what a contact means physically (stable level, press duration);
+ L2_CONTROL alone decides whether it is admitted; effects never read contacts directly.
 endlegend
 @enduml

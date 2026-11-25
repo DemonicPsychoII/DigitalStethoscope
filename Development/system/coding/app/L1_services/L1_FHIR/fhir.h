@@ -27,7 +27,7 @@
 #define FHIR_DEVICE_IDENTIFIER_SYSTEM   "urn:stethoscope:device"                                 /**< P27-IDENTITY: Device.identifier.system. */
 #define FHIR_PHYSICAL_IDENTIFIER_PREFIX "stetho-"                                                /**< P27-IDENTITY: prefix before the 12 uppercase MAC hex digits. */
 #define FHIR_PHYSICAL_IDENTIFIER_SIZE   (sizeof(FHIR_PHYSICAL_IDENTIFIER_PREFIX "AABBCCDDEEFF")) /**< P27-RECORD: 20 bytes including the terminator. */
-#define FHIR_OUTGOING_BODY_CAPACITY     (2048)                                                   /**< P27-BUFFERS: proposed outgoing JSON capacity. */
+#define FHIR_OUTGOING_BODY_CAPACITY     (2048)                                                   /**< P27-BUFFERS: outgoing JSON capacity. */
 
 /** If-None-Exist search parameter: FHIR_DEVICE_IDENTIFIER_SYSTEM percent-encoded, then the token separator. */
 #define FHIR_DEVICE_REGISTRATION_CONDITION_PREFIX "identifier=urn%3Astethoscope%3Adevice|"
@@ -36,7 +36,7 @@
 #define FHIR_DEVICE_REGISTRATION_CONDITION_SIZE \
     (sizeof(FHIR_DEVICE_REGISTRATION_CONDITION_PREFIX FHIR_PHYSICAL_IDENTIFIER_PREFIX "AABBCCDDEEFF"))
 
-#define FHIR_MEASUREMENT_IDENTIFIER_SYSTEM "urn:stethoscope:measurement"          /**< Observation.identifier.system (system design, delivery). */
+#define FHIR_MEASUREMENT_IDENTIFIER_SYSTEM "urn:stethoscope:measurement"          /**< Observation.identifier.system. */
 #define FHIR_SERVER_DEVICE_ID_MAX_LENGTH   (64)                                   /**< P27-RECORD: FHIR R4 id, 1 to 64 characters. */
 #define FHIR_SERVER_DEVICE_ID_SIZE         (FHIR_SERVER_DEVICE_ID_MAX_LENGTH + 1) /**< P27-RECORD: 65-byte id field including the terminator. */
 #define FHIR_HEART_RATE_DECIMAL_PLACES_MAX (9)                                    /**< Largest declared precision; 10^9 still fits uint32_t. */

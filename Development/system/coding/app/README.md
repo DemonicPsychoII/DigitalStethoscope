@@ -1,6 +1,6 @@
-# Thesis firmware — layer structure
+# Application firmware: layer structure
 
-This is the Zephyr/ESP32-S3 thesis application. The [archived bring-up firmware](../../../../preThesis/06-bringup-zephyr/README.md) remains separate pre-thesis material.
+This is the Zephyr application firmware for the ESP32-S3.
 
 The table maps the application folders. L1 holds thin hardware adapters
 over Zephyr drivers and pure C libraries; L2 orchestrates them. [Detailed design](../../design/system/interfaces-and-behavior.md#static-dependency-and-module-map)
@@ -8,65 +8,62 @@ maps its logical components to these folders.
 
 `L1_WIFI` and `L2_COMMUNICATION` implement the [Wi-Fi contract](../../design/WIFI/interfaces-and-behavior.md).
 `L1_PORTAL` implements the [portal contract](../../design/PORTAL/interfaces-and-behavior.md);
-COMMUNICATION consumes its requests and publishes its state.
+`L2_COMMUNICATION` consumes its requests and publishes its state.
 
 | Folder | Contents | May depend on |
 |---|---|---|
 | `L2_application/L2_CONTROL/` | Single writer of mode state; grants the network lease | L1, `common` |
-| `L2_application/L2_AUDIO/` | Audio path and BPM worker, driven by control commands | L1, `common` |
-| `L2_application/L2_COMMUNICATION/` | Builds via FHIR, sends via WIFI under the lease; Device registration; hotspot Wi-Fi setup page | L1, `common` |
-| `L2_application/L2_SHELL/` | Shell commands and read-back through CONTROL | L2_CONTROL, `common` |
+| `L2_application/L2_AUDIO/` | Audio path, driven by control commands | L1, `common` |
+| `L2_application/L2_COMMUNICATION/` | Builds via `L1_FHIR`, sends via `L1_WIFI` under the lease; Device registration; hotspot Wi-Fi setup page | L1, `common` |
+| `L2_application/L2_SHELL/` | Shell commands and read-back through `L2_CONTROL` | `L2_CONTROL`, `common` |
 | `L1_services/` adapters | `L1_I2S` (mic RX, DAC TX), `L1_WIFI`, `L1_PORTAL` (Wi-Fi setup page), `L1_STORAGE` (settings records in flash), `L1_PHYSICALINTERFACE` (button, switch, potentiometer, status light, button light) | Zephyr, `common` |
 | `L1_services/` libraries | `L1_FILTER`, `L1_BPM` (envelope, autocorrelation, aggregation), `L1_FHIR` (serialization); pure C | `common` |
 | `L0_platform/` | Empty: Zephyr drivers and the board overlay | — |
-| `MONITOR/` | Runtime supervision | All layers, read-only |
+| `MONITOR/` | Runtime supervision; contains no checks | All layers, read-only |
 | `common/` | Shared audio/event/result types | Nothing |
-
-Display/UI, touch, SD storage and replay (WSOLA) are optional and not part of the skeleton yet (TICKET-206, TICKET-202).
 
 ## Building the application
 
-This directory is a standalone Zephyr application. `common/main.c` returns to the idle
-thread; most component `.c` / `.h` files reserve places for implementation.
-`L1_WIFI` and `L1_PORTAL` wrap the Zephyr Wi-Fi driver and HTTP server, and
-`L2_COMMUNICATION` implements the Wi-Fi workflow on top of them. `common/types.h` reserves the shared data types.
-The board overlay and `prj.conf` set the fitted N16R8 module (16 MB flash,
-8 MB octal PSRAM; GPIO33–37 stay reserved). The serial shell and deferred logging
-are enabled; Wi-Fi and the setup page are implemented but not yet tested on the board (TICKET-182).
-Audio processing applies only the volume; no listening filter, SD storage, UI or monitoring is active.
+This directory is a standalone Zephyr application. `common/main.c` initializes
+`L2_CONTROL` and `L2_COMMUNICATION`, completes startup and returns. `L1_I2S` and
+`L2_AUDIO` stream microphone audio to the DAC and apply the volume. `L1_PHYSICALINTERFACE`
+handles the button, filter switch, volume potentiometer, status light and button light.
+`L1_STORAGE` persists settings and reads the server profile. `L1_WIFI`, `L1_PORTAL`,
+`L1_FHIR` and `L2_COMMUNICATION` handle Wi-Fi, the setup portal, Device registration and
+FHIR delivery. `L1_FILTER`, `L1_BPM`, `L2_SHELL`, `MONITOR` and `common/types.h` contain
+no active logic. The board overlay and `prj.conf` configure the N16R8 module
+(16 MB flash, 8 MB octal PSRAM; GPIO33–37 reserved), the serial shell and deferred
+logging.
 
 ### Physical inputs
 
-`L1_PHYSICALINTERFACE` reports debounced, timestamped input events to CONTROL on the
+`L1_PHYSICALINTERFACE` reports debounced, timestamped input events to `L2_CONTROL` on the
 system work queue ([input contract](../../design/system/interfaces-and-behavior.md#design-constraints)):
 
 | Input | Pins | Acquisition | Event |
 |---|---|---|---|
 | Start/Stop button J6 | GPIO16 | Edge interrupt starts a 30 ms debounce (P10) | Short press; long press after 2 s |
-| Raw/Murmur/BPM switch J8 | GPIO18/21/38 | Polled every 10 ms, 30 ms debounce | First stable position, then one per stable transition |
+| Raw/Murmur/BPM switch J8 | GPIO18/21/38 | Polled every 10 ms, 30 ms debounce (P10) | First stable position, then one per stable transition |
 | Volume potentiometer J7 | GPIO1, ADC1 channel 0 | Polled every 50 ms | First reading, then each change of status, of at least 2 %, or to 0 % or 100 % |
 
-The switch is polled because Murmur and BPM leave all three pins high at rest: the
-fitted J8 has its common on the GPIO18 pad, so the adapter drives GPIO18 low to tell them
-apart ([J8 as fitted](../../testing/hardware/carrier-bringup/README.md#j8-as-fitted)).
-The volume is clamped to 0–100 %, with 100 % at the 3083 mV that the carrier sweep reached.
+The switch is polled because Murmur and BPM leave all three pins high at rest. On the
+fitted J8 switch, the common contact connects to the GPIO18 pad, so `L1_PHYSICALINTERFACE`
+drives GPIO18 low to distinguish Murmur and BPM.
+The volume is clamped to 0–100 %, with 100 % mapped to 3083 mV (P10).
 
 A reading that cannot be used carries a status and a safe value. FAILED marks an ADC
 or GPIO failure or a switch position that stays invalid for the debounce time; ABSENT
 marks a potentiometer that is not fitted. The safe values are Raw and 0 %, so an unusable
-input mutes the audio (Nico, 13 November 2026). The 30 ms debounce also applies to slow switch
-slides: a pause of 30 ms or more between positions is reported FAILED, which Nico accepted on
-13 November 2026 because what matters is a valid position when one is needed. J7 is fitted, so
+input mutes the audio. The 30 ms debounce also applies to slow switch
+slides: a pause of 30 ms or more between positions is reported FAILED, because what matters is a
+valid position when one is needed. J7 is fitted, so
 `CONFIG_PHYSICALINTERFACE_VOLUME_POTENTIOMETER_FITTED` is on by default and the ADC is read; with
-the option off, the ADC is not read and the volume is reported ABSENT once. The fixed 100 % of the
-[10 November decision](../../planning/mvp-decisions-2026-11-10.md) no longer applies (Nico,
-13 November 2026); a failed or absent reading keeps the safe value 0 %.
+the option off, the ADC is not read and the volume is reported ABSENT once.
 
-CONTROL passes the volume to AUDIO, which applies it as a linear gain of 0–100 % with
-saturation to every block (Nico, 16 November 2026); a failed or absent reading gives 0 %.
-The switch has only its physical interface so far (Nico, 16 November 2026): no filter is
-selected, and all three positions pass audio through unfiltered. CONTROL keeps the last
-stable switch reading and latches CONTROL_INPUT_FAILURE when there is no valid position at
+`L2_CONTROL` passes the volume to `L2_AUDIO`, which applies it as a linear gain of 0–100 % with
+saturation to every block; a failed or absent reading gives 0 %.
+The switch position selects no filter, and all three positions pass audio through unfiltered.
+`L2_CONTROL` keeps the last stable switch reading and latches CONTROL_INPUT_FAILURE when there is no valid position at
 Start, or none for at least 1 s while listening; a failed reading outside these cases
 latches nothing, because slow slides report FAILED for a moment. A failed potentiometer
 reading also latches CONTROL_INPUT_FAILURE.
@@ -77,24 +74,21 @@ reading also latches CONTROL_INPUT_FAILURE.
 one table row: the RGB status light on GPIO48 and the red button light on GPIO17 (J6,
 active high through R12). The red light is steady during the lamp test, repeats an error's
 blink code (P22: 250 ms on and off, 2 s pause) and gives one 1 s flash for
-ERROR_ACKNOWLEDGED. CONTROL decides which code is shown. It latches every catalogue error
+ERROR_ACKNOWLEDGED. `L2_CONTROL` decides which code is shown. It latches every catalogue error
 in `control_error_policy.c`, shows the highest priority, then the first latched, and lists every
 latched error on the serial log. With an error shown that clears by short press, the first
 short press acknowledges it; restart errors ignore the press. Errors other than audio
 errors that occur during startup or while listening are latched silently and shown after
-the startup or after the manual Stop ([13 November](../../planning/mvp-decisions-2026-11-13.md)).
-Wi-Fi errors from COMMUNICATION pass through the control queue and permit Start.
+the startup or after the manual Stop.
+Wi-Fi errors from `L2_COMMUNICATION` pass through the control queue and permit Start.
 
 While the button is down the red light is steady on instead of its code, and the code
-resumes at the release. When CONTROL accepts a 2 s hold in Idle, the red light blinks at
-4 Hz until the release (`FEEDBACK_BUTTON_HOLD_ACKNOWLEDGED`); a hold outside Idle stays
-steady. This is a project decision (Nico, 16 November 2026) that the feedback catalogue
-does not contain yet.
+resumes at the release. When `L2_CONTROL` accepts a 2 s hold in Idle, the red light blinks at
+4 Hz until the release (`FEEDBACK_BUTTON_HOLD_ACKNOWLEDGED`), so the hold does not read as a
+2 Hz error code; a hold outside Idle stays steady.
 
-The decoding and debounce logic in `physicalinterface_input.c` has host tests (VT-04,
-`tests/host/l1_physicalinterface/`). The indication table and patterns in
-`physicalinterface_indication.c`, the error policy in `control_error_policy.c` and the volume in
-`audio_processing.c` have none yet; REQ-03 and REQ-04 still need target evidence.
+The decoding and debounce logic in `physicalinterface_input.c` has host tests in
+`tests/host/l1_physicalinterface/`.
 
 ### Shell and configuration
 
@@ -112,14 +106,14 @@ which calls exist in the firmware. The runtime filter then starts at
 output is hidden by default, even in a module registered at DBG. Run
 `log enable dbg <module>` to show it; messages logged before that command are lost.
 The debug profile starts the runtime filter at DBG.
-Application commands in `L2_SHELL` are not implemented yet. Logs use the shell
-backend with deferred processing. Command history is disabled because future
-provisioning commands can contain credentials; raw memory access is disabled.
+`L2_SHELL` has no application commands. Logs use the shell
+backend with deferred processing. Command history is disabled so credentials entered
+on the shell are not retained. Raw memory access is disabled.
 
 `prj.conf` selects values for options already defined by Zephyr and its modules.
 The application `Kconfig` includes `Kconfig.zephyr` as its configuration entry point.
 The application `Kconfig` defines one option,
-`CONFIG_PHYSICALINTERFACE_VOLUME_POTENTIOMETER_FITTED` (default on), which tells L1 whether J7 is fitted.
+`CONFIG_PHYSICALINTERFACE_VOLUME_POTENTIOMETER_FITTED` (default on), which tells `L1_PHYSICALINTERFACE` whether J7 is fitted.
 
 ### Manual build
 
@@ -130,7 +124,6 @@ Provision the pinned toolchain once with
 Development/system/coding/tools/build-firmware.ps1             # this app -> build-app/
 Development/system/coding/tools/build-firmware.ps1 -Profile debug   # debug build -> build-app-debug/
 Development/system/coding/tools/build-firmware.ps1 -Pristine   # clean rebuild
-Development/system/coding/tools/build-firmware.ps1 -Target bringup   # evaluation firmware -> build-eval/
 ```
 
 The `release` profile (default) builds `prj.conf` alone, the same configuration as CI.
@@ -177,7 +170,6 @@ Close any serial monitor, then flash the existing build from PowerShell:
 Development/system/coding/tools/flash-firmware.ps1 5   # app firmware -> COM5
 Development/system/coding/tools/flash-firmware.ps1 5 -Profile debug   # build-app-debug -> COM5
 Development/system/coding/tools/flash-firmware.ps1 5 -WhatIf   # show the action only
-Development/system/coding/tools/flash-firmware.ps1 5 -Target bringup
 ```
 
 The positional number selects the COM port. The script uses the pinned toolchain
@@ -186,10 +178,6 @@ relative paths resolve from the caller's current directory. Flashing replaces th
 firmware on the selected device. If connection fails, hold BOOT, press and release
 RESET, release BOOT, check the port again and retry.
 
-For local PowerShell shortcuts, add aliases to your profile using absolute paths
-to `build-firmware.ps1`, `flash-firmware.ps1` and `build-sbom.ps1`, for example
-`stetho-build`, `stetho-flash` and `stetho-sbom`. Arguments pass through:
-`stetho-build -Target app -Pristine` and `stetho-flash 5`.
 
 To erase only selected partitions instead of the whole chip, select any
 combination of them:
@@ -250,38 +238,31 @@ ESP32-S3 (`xthal_window_spill` is missing), so deeper frames need GDB.
 
 ## Layer rules
 
-Calls go downward; upward notifications use events/message queues. Zephyr owns
+Calls go downward. Upward notifications use events and message queues. Zephyr owns
 drivers, DMA and interrupts. L1 libraries include no Zephyr headers; each caller owns
 its own filter instance, so listening and BPM analysis filters stay independent.
-Only L2_CONTROL writes mode state; SHELL commands go through it. L2_COMMUNICATION is
-the only path to a WIFI send (no pre-send assignment check since 15 October), while
-MON observes it. Start on one core and measure before adding another.
+Only `L2_CONTROL` writes mode state, and `L2_SHELL` commands go through it.
+`L2_COMMUNICATION` is the only path to an `L1_WIFI` send.
 
 [Detailed design](../../design/system/interfaces-and-behavior.md) defines contracts and
-ownership. [Product scope](../../spec/product-scope.md) and the
-risk/readiness register qualify
-class B/SOUP intentions and monitoring controls; classification and hazards require
-substantiation.
+ownership.
 
-## Wi-Fi workflow verification
+## Wi-Fi teardown before listening
 
-CONTROL is expected to post `COMMUNICATION_EVENT_LISTENING_STARTED` and waits for
-`communication_waitForWiFiStop()` before it starts audio. On wait timeout, CONTROL keeps audio stopped. These interfaces are implemented by COMMUNICATION; CONTROL integration is still pending. The design requires the acknowledgement to follow L1 confirmation
-of scan and connect cancellation and of portal, DHCP and AP shutdown, and a new Start
-invalidates the previous acknowledgement. The communication thread stops scans, connect
-requests and the setup services, but preserves an established station association.
+`L2_CONTROL` posts `COMMUNICATION_EVENT_LISTENING_STARTED` and waits on
+`communication_waitForWiFiStop()` before starting audio. On wait timeout, `L2_CONTROL`
+keeps audio stopped. `L2_COMMUNICATION` acknowledges teardown after `L1_WIFI` and
+`L1_PORTAL` confirm cancellation of scans and connect requests and shutdown of the
+portal, DHCP server and hotspot. Each new Start invalidates the previous
+acknowledgement. An established station association is preserved.
 
-Cleanup tries each pending stop once. If all stops succeed, audio is released normally.
-If any stop fails, the thread latches WIFI_CLEANUP_FAILURE, disables further Wi-Fi work
-until restart and releases audio under the REQ-13 Wi-Fi-only exception. It does not
-claim confirmed radio shutdown.
+Cleanup tries each pending stop once. If all stops succeed, audio starts normally.
+If any stop fails, the communication thread latches `WIFI_CLEANUP_FAILURE`, disables
+further Wi-Fi work until restart and still permits audio to start.
 
-The thread uses a candidate 200 ms check interval for Start events. That interval is not
-a bound on teardown latency: the time until audio can start also includes the atomic
-settings write and the driver shutdown, which are not yet measured.
-CONTROL does not call this interface yet.
-
-Verification is described in the repository's testing documentation.
+While it waits, the communication thread checks for Start events every 200 ms. A settings
+write in progress returns before the check, so the teardown latency also includes that write
+and the driver shutdown.
 
 ## Coding conventions
 
@@ -307,10 +288,15 @@ Keep related declarations, assignments or calls together in their own groups.
 | Macro, enum constant | `MODULE_UPPER_CASE` | `COMMUNICATION_STORED_CONNECT_ATTEMPTS` |
 | Type | `module_snake_case` | `struct wifi_network` |
 
-Names are written out, without abbreviations; units use their symbols as suffix
-(`_MS`, `_S`, for example `COMMUNICATION_RETRY_DELAY_S`); protocol names such as DHCP or SSID
-stay and keep their capitals inside camelCase, for example `wifi_startDHCPServer()`
-and `communication_waitForWiFiStop()`. Every function has one `return` at its end and loops end through their
-condition (MISRA C:2012 Rules 15.4 and 15.5; no `continue`, MISRA C:2004 Rule 14.5).
-Every `if … else if` chain ends with `else` (Rule 15.7), and unused return values are
-cast to `void` (Rule 17.7). Doxygen comments use one short `@return` line.
+Names are written out without abbreviations. Unit suffixes use either full unit names
+(`_MILLISECONDS`, `_MICROSECONDS`) or unit symbols (`_MS`, `_S`, for example
+`COMMUNICATION_RETRY_DELAY_S`). Protocol names such as DHCP or SSID keep their
+capitals inside camelCase, for example `wifi_startDHCPServer()` and
+`communication_waitForWiFiStop()`. The rule for loops is to terminate
+through their condition without `continue` (MISRA C:2012 Rule 15.4; MISRA C:2004
+Rule 14.5); `wifi_secure_connection.c` has one `continue`. The rule for functions is one
+`return` at the end (MISRA C:2012 Rule 15.5). `L1_FHIR`, `L1_I2S`, `L1_STORAGE`, `L2_AUDIO`
+and `L2_CONTROL` follow it throughout. Functions with early returns exist in `wifi.c`,
+`wifi_dns.c`, `wifi_secure_connection.c`, `portal.c`, `physicalinterface.c` and
+`communication.c`. Every `if … else if` chain ends with `else` (Rule 15.7), and unused return
+values are cast to `void` (Rule 17.7). Doxygen comments use one short `@return` line.

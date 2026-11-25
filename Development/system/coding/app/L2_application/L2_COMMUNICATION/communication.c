@@ -6,7 +6,7 @@
 /** @addtogroup L2_COMMUNICATION
  * @{
  * @file
- * Implementation of the COMMUNICATION module: the Wi-Fi workflow thread.
+ * Implementation of the L2_COMMUNICATION module: the Wi-Fi workflow thread.
  *
  * Workflow (architecture/COMMUNICATION/setup-state.puml, setup-flow.puml and
  * link-recovery.puml):
@@ -97,8 +97,8 @@
 #define COMMUNICATION_REGISTRATION_ATTEMPTS      (4)  /**< P27-REGISTRATION: failed attempts until registration is unavailable until restart. */
 
 #define COMMUNICATION_DELIVERY_ATTEMPTS           (4)    /**< P13: attempts at most, within the global deadline. */
-#define COMMUNICATION_DELIVERY_SETUP_TIMEOUT_MS   (3000) /**< P13: connection setup (SNTP, DNS, TCP, TLS) of an attempt without a reusable connection; provisional. */
-#define COMMUNICATION_DELIVERY_RECEIPT_TIMEOUT_MS (1000) /**< P13: write and receipt of an attempt; provisional. */
+#define COMMUNICATION_DELIVERY_SETUP_TIMEOUT_MS   (3000) /**< P13: connection setup (SNTP, DNS, TCP, TLS) of an attempt without a reusable connection. */
+#define COMMUNICATION_DELIVERY_RECEIPT_TIMEOUT_MS (1000) /**< P13: write and receipt of an attempt. */
 #define COMMUNICATION_DELIVERY_RETRY_GAP_MS       (2000) /**< P13: gap after a failed attempt. */
 #define COMMUNICATION_DELIVERY_CLEANUP_RESERVE_MS (1000) /**< P13: one P23 stop bound kept before the global deadline for cancellation and release. */
 
@@ -106,7 +106,7 @@
 /* TYPES                                                               */
 /***********************************************************************/
 
-/** State of the communication thread, as seen by CONTROL. */
+/** State of the communication thread, as seen by L2_CONTROL. */
 enum communication_state
 {
     COMMUNICATION_STATE_RUNNING, /**< Boot, Idle or recovery. */
@@ -186,9 +186,9 @@ K_SEM_DEFINE(communication_ControlChanged, 0, 1);                            /**
 
 static struct k_thread communication_ThreadData; /**< Communication thread. */
 
-/* Shared with CONTROL; protected by communication_ControlLock. */
+/* Shared with L2_CONTROL; protected by communication_ControlLock. */
 static struct k_spinlock communication_ControlLock;                            /**< Protects the variables below. */
-static bool communication_ListeningIsRequested;                                /**< CONTROL listens or is about to. */
+static bool communication_ListeningIsRequested;                                /**< L2_CONTROL listens or is about to. */
 static bool communication_SetupIsRequested;                                    /**< 2 s hold not yet handled. */
 static enum communication_state communication_State;                           /**< State of the thread. */
 static bool communication_WiFiIsConfigured;                                    /**< A stored network exists; published by the thread. */
@@ -221,9 +221,9 @@ static size_t communication_ScanCount;                                     /**< 
 
 static struct storage_server_profile communication_ServerProfile EXT_RAM_BSS_ATTR; /**< Boot copy of the server profile image, in PSRAM. */
 static enum communication_server_profile_state communication_ServerProfileState;   /**< Boot result; secure transport requires CONFIGURED. */
-static struct wifi_secure_server communication_SecureServer;                       /**< Validity of the server profile's certificate, from WIFI at boot. */
+static struct wifi_secure_server communication_SecureServer;                       /**< Validity of the server profile's certificate, from L1_WIFI at boot. */
 static bool communication_TransportIsVerified;                                     /**< The last handshake verified the server with the clock of its own setup. */
-static bool communication_SecureConnectionIsRetained;                              /**< A verified connection stays open as a reuse candidate. */
+static bool communication_SecureConnectionIsRetained;                              /**< A verified connection stays open for reuse. */
 static k_timepoint_t communication_SecureConnectionIdleDeadline;                   /**< The retained connection is closed at this time. */
 static k_timepoint_t communication_NextPreparationTime;                            /**< No Idle preparation before this time after a failed or interrupted attempt. */
 static bool communication_ServerConnectionFailureIsLatched;                        /**< SERVER_CONNECTION_FAILURE latched in the current unavailable episode. */
@@ -281,7 +281,7 @@ static void communication_runIdleCycle(void);
 static void communication_recoverConnection(void);
 
 /**
- * @brief Run one time-synchronization attempt under CONTROL's network lease.
+ * @brief Run one time-synchronization attempt under L2_CONTROL's network lease.
  *
  * @param[in] deadline The time by which the attempt must complete.
  *
@@ -290,7 +290,7 @@ static void communication_recoverConnection(void);
 static int communication_synchronizeTime(k_timepoint_t deadline);
 
 /**
- * @brief Prepare a verified secure connection under CONTROL's network lease.
+ * @brief Prepare a verified secure connection under L2_CONTROL's network lease.
  * @param[in] deadline Enclosing Idle or delivery setup deadline, shared with SNTP.
  * @return 0 only with a verified connection, or a negative error code.
  */
@@ -299,7 +299,7 @@ static int communication_prepareSecureConnection(k_timepoint_t deadline);
 /**
  * @brief Run one secure connection inside the enclosing setup and wait for it.
  * @param[in]  deadline Enclosing setup deadline.
- * @param[out] cause    Failure cause from WIFI.
+ * @param[out] cause    Failure cause from L1_WIFI.
  * @return 0 with a verified connection, -ECANCELED if listening started, or a negative error code.
  */
 static int communication_connectSecurely(k_timepoint_t deadline, enum wifi_secure_connection_cause *cause);
@@ -320,7 +320,7 @@ static bool communication_isRetainedConnectionReusable(void);
  */
 static k_timeout_t communication_timeUntilTransportDuty(k_timeout_t limit);
 
-/** @brief Latch WIFI_CLEANUP_FAILURE and report it to CONTROL once: network work stays disabled until restart; audio may still start. */
+/** @brief Latch WIFI_CLEANUP_FAILURE and report it to L2_CONTROL once: network work stays disabled until restart; audio may still start. */
 static void communication_latchCleanupFault(void);
 
 /** @brief Monotonic time since the retained clock anchor was applied, in microseconds. */
@@ -369,7 +369,7 @@ static int communication_checkWaitTarget(enum communication_wait_target target, 
  */
 static void communication_pauseBeforeNextCheck(enum communication_wait_target target, k_timepoint_t deadline);
 
-/** @brief Take over the listening request that CONTROL posted last. */
+/** @brief Take over the listening request that L2_CONTROL posted last. */
 static void communication_updateListeningState(void);
 
 /**
@@ -398,9 +398,8 @@ static void communication_setState(enum communication_state state);
  *
  * Each pending stop is tried once; a failed stop latches a restart-required fault.
  *
- * @return True when audio may be released. This is also true after a latched
- *         cleanup fault (REQ-13 Wi-Fi-only exception), while services may still be
- *         pending; it does not assert radio shutdown.
+ * @return True when audio may start, including after a latched cleanup fault
+ *         (further Wi-Fi work stays disabled until restart even if services remain pending).
  */
 static bool communication_stopWiFiWork(void);
 
@@ -576,18 +575,18 @@ static int communication_saveRegistration(void);
  * @brief Send one request over the retained verified connection and wait for its response.
  *
  * Fills communication_Response. Afterwards communication_SecureConnectionIsRetained
- * reflects whether WIFI kept the connection.
+ * reflects whether L1_WIFI kept the connection.
  *
  * @param[in] request  Request; borrowed until this call returns.
  * @param[in] deadline End of write and receipt.
  *
  * @return 0 with a complete response of any status, -ECANCELED if listening started,
- *         -ETIMEDOUT at the deadline, -ENOTCONN for a stale connection, or another WIFI result.
+ *         -ETIMEDOUT at the deadline, -ENOTCONN for a stale connection, or another L1_WIFI result.
  */
 static int communication_exchange(const struct wifi_http_request *request, k_timepoint_t deadline);
 
 /**
- * @brief Publish to CONTROL whether Wi-Fi is configured and delivery prerequisites hold.
+ * @brief Publish to L2_CONTROL whether Wi-Fi is configured and delivery prerequisites hold.
  *
  * Call after every change of communication_StoredNetworkIsValid or communication_RegistrationIsReady.
  */
@@ -1104,7 +1103,7 @@ static int communication_prepareSecureConnection(k_timepoint_t deadline)
         }
         return result;
     }
-    /* Days to a civil date by H. Hinnant's civil_from_days, because not every host build declares gmtime_r. */
+    /* Convert days since 1970-01-01 to a Gregorian calendar date with integer arithmetic, because not every host build declares gmtime_r. */
     const uint64_t secondsOfDay = communication_AppliedTimeAnchor.utc_seconds % 86400U;
     const uint64_t shiftedDays = (communication_AppliedTimeAnchor.utc_seconds / 86400U) + 719468U;
     const uint64_t era = shiftedDays / 146097U;
@@ -1204,7 +1203,7 @@ static int communication_connectSecurely(k_timepoint_t deadline, enum wifi_secur
 
             if(cancelResult != 0)
             {
-                /* The work stays pending; WIFI keeps Start blocked until release is proven. */
+                /* The work stays pending; L1_WIFI keeps Start blocked until release is proven. */
                 communication_latchCleanupFault();
                 LOG_ERR("WIFI_CLEANUP_FAILURE; secure connection cancel failed (%d), network disabled until restart", cancelResult);
                 result = cancelResult;
@@ -1511,7 +1510,7 @@ static int communication_exchange(const struct wifi_http_request *request, k_tim
     }
     else if(result == -ENOTCONN)
     {
-        /* WIFI holds no connection anymore, for example after a release behind a complete response. */
+        /* L1_WIFI holds no connection anymore, for example after a release behind a complete response. */
         communication_SecureConnectionIsRetained = false;
     }
     else
@@ -1535,7 +1534,7 @@ static int communication_exchange(const struct wifi_http_request *request, k_tim
 
         if(result != -EAGAIN)
         {
-            /* Terminal completion: WIFI kept the connection or has already released it. */
+            /* Terminal completion: L1_WIFI kept the connection or has already released it. */
             communication_PendingWork &= ~COMMUNICATION_WORK_SECURE_CONNECTION;
             communication_SecureConnectionIsRetained = ((result == 0) && communication_Response.keepsConnection);
             isPending = false;
@@ -1553,7 +1552,7 @@ static int communication_exchange(const struct wifi_http_request *request, k_tim
 
             if(cancelResult != 0)
             {
-                /* The work stays pending; WIFI keeps Start blocked until release is proven. */
+                /* The work stays pending; L1_WIFI keeps Start blocked until release is proven. */
                 communication_latchCleanupFault();
                 LOG_ERR("WIFI_CLEANUP_FAILURE; secure exchange cancel failed (%d), network disabled until restart", cancelResult);
                 result = cancelResult;
@@ -1781,7 +1780,7 @@ static int communication_freezeObservation(void)
 
         if(result == 0)
         {
-            /* No subject: the request adapter for the patient reference is still open in the design. */
+            /* No patient reference is supplied, so Observation.subject is omitted. */
             const struct fhir_observation observation = {
                 .serverDeviceId = communication_DeliveryServerDeviceId,
                 .measurementEndUtcSeconds = (uint64_t)communication_DeliveryUtcEnd.tv_sec,
@@ -1987,7 +1986,7 @@ static int communication_synchronizeTime(k_timepoint_t deadline)
                 result = wifi_applyTimeSynchronization(&sample, &candidateAnchor);
                 if(result == 0)
                 {
-                    /* CONTROL maps a measurement end with this anchor when it admits a delivery. */
+                    /* Delivery admission maps a measurement end with this anchor. */
                     k_spinlock_key_t key = k_spin_lock(&communication_ControlLock);
                     communication_AppliedTimeAnchor = candidateAnchor;
                     communication_AppliedTimeAnchorIsValid = true;
@@ -2231,7 +2230,7 @@ static bool communication_stopWiFiWork(void)
         communication_latchCleanupFault();
         LOG_ERR("WIFI_CLEANUP_FAILURE; pending services 0x%x, network disabled until restart", communication_PendingWork);
     }
-    /* REQ-13 permits audio after a latched Wi-Fi-only fault, without claiming radio shutdown. */
+    /* REQ-13: audio may start after a latched Wi-Fi-only fault. */
     return true;
 }
 

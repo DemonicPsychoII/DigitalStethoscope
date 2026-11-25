@@ -6,7 +6,7 @@
 /** @addtogroup L2_CONTROL
  * @{
  * @file
- * Implementation of the error policy of the CONTROL module.
+ * Implementation of the error policy of the L2_CONTROL module.
  */
 
 /***********************************************************************/
@@ -23,7 +23,7 @@
 /* LOCAL CONSTANTS                                                     */
 /***********************************************************************/
 
-/** CONTROL columns of the status and error catalogue, indexed by code; rows not listed are statuses. */
+/** L2_CONTROL columns of the status and error catalogue, indexed by code; rows not listed are statuses. */
 /* clang-format off */
 static const struct control_error_row control_errorRows[FEEDBACK_CODE_COUNT] = {
     [FEEDBACK_DELIVERY_FAILURE]            = {CONTROL_PRIORITY_LOW,    CONTROL_CLEAR_RULE_SHORT_PRESS, CONTROL_ADMISSION_START_BLOCKED},

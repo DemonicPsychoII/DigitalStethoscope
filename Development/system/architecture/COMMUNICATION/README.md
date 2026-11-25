@@ -1,6 +1,6 @@
 # COMMUNICATION architecture
 
-L2_COMMUNICATION owns the setup workflow and recovery policy under CONTROL's network lease. It composes WIFI radio/address operations, STORAGE persistence and PORTAL typed requests/status publication. CONTROL owns mode admission; listening requests trigger safe setup teardown before lease release. Lower services never change controller state. These are project allocations derived from REQ-11/REQ-12/REQ-13.
+L2_COMMUNICATION owns the setup workflow and recovery policy under the L2_CONTROL network lease. It composes L1_WIFI radio and address operations, L1_STORAGE persistence and L1_PORTAL typed requests and status publication. L2_CONTROL owns mode admission. Listening requests trigger safe setup teardown before lease release. Lower services never change controller state.
 
 | View | Editable source | Preview |
 | --- | --- | --- |
@@ -10,6 +10,6 @@ L2_COMMUNICATION owns the setup workflow and recovery policy under CONTROL's net
 | Link recovery | [link-recovery.puml](link-recovery.puml) | [SVG](rendered/link_recovery.svg) |
 | Communication lifecycle: Wi-Fi join, Idle preparation, registration, listening, delivery | [communication-lifecycle.puml](communication-lifecycle.puml) | [SVG](rendered/communication_lifecycle.svg) |
 
-The [diagram viewer](setup-workflows.html) presents these architecture views. The general station/provisioning model lives under [WIFI](../WIFI/README.md); the browser boundary under [PORTAL](../PORTAL/README.md). Retry counts, timing, status/error patterns and request fields belong to detailed design.
+The [diagram viewer](setup-workflows.html) presents these architecture views. The general station and provisioning model is documented under [L1_WIFI](../WIFI/README.md), and the browser boundary under [L1_PORTAL](../PORTAL/README.md).
 
-[Time synchronization](time-ownership.md) proposes who owns the SNTP (Simple Network Time Protocol) exchange and how later server communication depends on the device clock: L1_WIFI performs the exchange and L2_COMMUNICATION coordinates it. For the minimum viable product (MVP), time from SNTP without authentication of the time server is an accepted trust assumption. [Secure transport](secure-transport.md) and [FHIR and server communication](server-communication.md) build on it.
+[Time synchronization](time-ownership.md) defines ownership of the SNTP (Simple Network Time Protocol) exchange and how server communication depends on the device clock: L1_WIFI performs the exchange and L2_COMMUNICATION coordinates it. Time from SNTP is used without authentication of the time server. [Secure transport](secure-transport.md) and [FHIR and server communication](server-communication.md) build on this clock boundary.

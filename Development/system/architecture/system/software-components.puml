@@ -2,6 +2,9 @@
 !theme cyborg
 !pragma layout smetana
 skinparam shadowing false
+skinparam backgroundColor #0b1018
+skinparam defaultFontColor #e6edf7
+skinparam ArrowColor #a9b8ca
 skinparam component {
  BackgroundColor<<optional>> #273241
  BorderColor<<optional>> #61738a
@@ -22,7 +25,7 @@ package "L2 Application (orchestration)" as app {
  component "L2_CONTROL\nsingle writer of mode state" as ctl
  component "L2_AUDIO\naudio path / BPM worker" as aud
  component "L2_COMMUNICATION\nsend path / portal" as com
- component "UI dashboard" as ui <<optional>>
+ component "Display dashboard" as ui <<optional>>
  shell -[hidden]right-> ctl
  ctl -[hidden]right-> ui
 }
@@ -66,7 +69,7 @@ adapters -down-> zephyr : driver calls
 mon -down-> ctl : health events
 mon ..> services : monitoring
 legend bottom
-  Grey / optional = beyond MVP; not in the skeleton.
+  Grey elements are optional.
   Libraries include no Zephyr headers.
 endlegend
 @enduml

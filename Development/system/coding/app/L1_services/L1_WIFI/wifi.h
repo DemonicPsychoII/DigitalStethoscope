@@ -329,7 +329,7 @@ int wifi_cancelTimeSynchronization(void);
 /**
  * @brief Apply the synchronized time to the system.
  *
- * Requires CONTROL's network lease.
+ * Requires L2_CONTROL's network lease.
  *
  * @param[in] time Normalized sample with receive-time monotonic timestamp.
  * @param[out] anchor Applied UTC/monotonic pair and uncertainty; success only.
@@ -359,7 +359,7 @@ int wifi_configureSecureServer(const char *baseUrl, const char *certificate, siz
 /**
  * @brief Submit one secure connection to the configured server without waiting.
  *
- * Requires CONTROL's network lease and an applied clock. Resolves IPv4, connects
+ * Requires L2_CONTROL's network lease and an applied clock. Resolves IPv4, connects
  * TCP and runs a TLS 1.3 handshake with mandatory server verification. No retry.
  * A retained connection must be closed first.
  *
@@ -397,7 +397,7 @@ int wifi_cancelSecureConnection(void);
 /**
  * @brief Close the retained connection within the P23 one-second stop bound.
  *
- * Requires CONTROL's network lease. No reconnect.
+ * Requires L2_CONTROL's network lease. No reconnect.
  *
  * @return 0 when closed, including if none is retained; -EBUSY while an exchange
  *         still uses the retained connection, which wifi_cancelSecureConnection() ends first.
@@ -407,7 +407,7 @@ int wifi_closeSecureConnection(void);
 /**
  * @brief Submit one conditional POST over the retained verified connection without waiting.
  *
- * Requires CONTROL's network lease and a retained connection. The worker writes
+ * Requires L2_CONTROL's network lease and a retained connection. The worker writes
  * the request head and the body, then reads one response into @p response.
  * No reconnect and no retry; the caller owns P13. wifi_cancelSecureConnection()
  * also cancels a pending exchange.

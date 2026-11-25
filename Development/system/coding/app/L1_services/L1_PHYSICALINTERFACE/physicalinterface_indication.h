@@ -27,7 +27,7 @@
 /***********************************************************************/
 
 #define PHYSICALINTERFACE_FULL_BRIGHTNESS_PERCENT     100
-#define PHYSICALINTERFACE_IDLE_DIM_BRIGHTNESS_PERCENT 20 /**< P22 Idle dim candidate. */
+#define PHYSICALINTERFACE_IDLE_DIM_BRIGHTNESS_PERCENT 20 /**< P22: Idle dim brightness. */
 #define PHYSICALINTERFACE_REJECTION_DIM_PERCENT       50 /**< Catalogue: input rejected dims by at least 50 %. */
 
 #define PHYSICALINTERFACE_SLOW_BLINK_HALF_PERIOD_MILLISECONDS  1000 /**< P22 slow blink: 0.5 Hz, 1 s on/off. */
@@ -41,7 +41,7 @@
 #define PHYSICALINTERFACE_CODE_MAXIMUM_BLINKS                 6    /**< P22: at most 6 blinks per context. */
 #define PHYSICALINTERFACE_LONG_FLASH_MILLISECONDS             1000 /**< P22 long flash: 1 s. */
 
-/** Nico, 16 November 2026: an accepted hold blinks at 4 Hz, so it does not read as a 2 Hz error code. */
+/** An accepted hold blinks at 4 Hz, so it does not read as a 2 Hz error code. */
 #define PHYSICALINTERFACE_HOLD_BLINK_HALF_PERIOD_MILLISECONDS 125
 
 /***********************************************************************/

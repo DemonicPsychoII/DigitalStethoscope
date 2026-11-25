@@ -56,7 +56,7 @@ enum control_admission
     CONTROL_ADMISSION_HALTED_AT_ONCE,  /**< Audio errors: every input is blocked at once, also while audio runs. */
 };
 
-/** CONTROL columns of one catalogue row. */
+/** L2_CONTROL columns of one catalogue row. */
 struct control_error_row
 {
     enum control_priority priority;
@@ -85,7 +85,7 @@ enum control_press_action
 /***********************************************************************/
 
 /**
- * @brief CONTROL columns of one catalogue row.
+ * @brief L2_CONTROL columns of one catalogue row.
  *
  * @param[in] code Catalogue code below FEEDBACK_CODE_COUNT.
  *

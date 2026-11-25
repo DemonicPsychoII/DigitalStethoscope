@@ -52,8 +52,8 @@ generate_inc_file_for_target(app
 
 # The setup page resources live in an iterable section named after its HTTP service.
 # Follows Zephyr's samples/net/sockets/http_server/CMakeLists.txt and sections-rom.ld.
-# Zephyr computes snippet paths relative to its include directory. Resolve the
-# runner's checkout symlink so preprocessing uses the same physical directory.
+# Zephyr computes snippet paths relative to its include directory. Resolve any
+# symlink in ZEPHYR_BASE so preprocessing uses the physical directory path.
 function(register_portal_linker_section)
     file(REAL_PATH "${ZEPHYR_BASE}" ZEPHYR_BASE)
     zephyr_linker_sources(SECTIONS ${CMAKE_CURRENT_SOURCE_DIR}/L1_services/L1_PORTAL/portal-sections.ld)

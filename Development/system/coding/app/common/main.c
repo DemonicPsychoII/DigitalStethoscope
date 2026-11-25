@@ -6,8 +6,8 @@
 /** @addtogroup COMMON_MAIN
  * @{
  * @file
- * Main file that will run first and boot the device. It will initialize
- * the system and start the main application loop.
+ * Application entry point. Initializes L2_CONTROL and L2_COMMUNICATION,
+ * completes startup and returns to the Zephyr idle thread.
  */
 
 /***********************************************************************/

@@ -6,7 +6,7 @@
 /** @defgroup L2_AUDIO AUDIO
  * @{
  * @file
- * L2 audio path and BPM worker, driven by control commands.
+ * L2 audio path, driven by control commands.
  * Implements Development/system/design/AUDIO/interfaces-and-behavior.md.
  */
 
@@ -29,14 +29,14 @@
 /* TYPES                                                               */
 /***********************************************************************/
 
-/** Command from CONTROL to the audio thread. */
+/** Command from L2_CONTROL to the audio thread. */
 enum audio_command
 {
     AUDIO_COMMAND_START, /**< Start both links and the block loop; ignored while running and after a fault. */
     AUDIO_COMMAND_STOP,  /**< Leave the block loop and stop both links; ignored while stopped. */
 };
 
-/** Report from the audio thread to CONTROL. */
+/** Report from the audio thread to L2_CONTROL. */
 enum audio_event
 {
     AUDIO_EVENT_STARTED, /**< Both links run and the block loop has started. */
@@ -80,7 +80,7 @@ enum feedback_code audio_init(audio_event_handler eventHandler);
 /**
  * @brief Send a command to the audio thread without waiting.
  *
- * Only CONTROL sends commands.
+ * Only L2_CONTROL sends commands.
  *
  * @param[in] command Command to send.
  *

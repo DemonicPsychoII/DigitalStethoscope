@@ -6,10 +6,10 @@
 /** @addtogroup L1_WIFI
  * @{
  * @file
- * Implementation of the WIFI module.
+ * Implementation of the L1_WIFI module.
  *
  * Each function does one step; L2_COMMUNICATION decides the order, the
- * attempts and the delays (see architecture/WIFI/wifi-flow.puml). The driver
+ * attempts and the delays. The driver
  * reports its results as net_mgmt events. The event handler only records
  * them, and the wait functions hand them to the caller.
  *
@@ -60,11 +60,11 @@
 #define WIFI_EVENT_DHCP_SERVER_STOPPED  BIT(6) /**< Wake the DHCP server stop waiter; the stop request holds the driver result. */
 #define WIFI_EVENT_HOTSPOT_STOPPED      BIT(7) /**< Wake the hotspot stop waiter; the stop request holds the driver result. */
 
-#define WIFI_TIME_SYNCHRONIZATION_STACK_SIZE (2048) /**< Stack of the time synchronization work queue; proposed value pending target measurement. */
-#define WIFI_TIME_SYNCHRONIZATION_PRIORITY   (10)   /**< Same preemptive priority as the communication thread that waits for it. */
+#define WIFI_TIME_SYNCHRONIZATION_STACK_SIZE (2048) /**< Stack size of the time synchronization work queue. */
+#define WIFI_TIME_SYNCHRONIZATION_PRIORITY   (10)   /**< Preemptive priority of the time synchronization work queue. */
 
 #define WIFI_TIME_SYNCHRONIZATION_CANCEL_TIMEOUT_MS    (1000)  /**< P23 per-service stop bound. */
-#define WIFI_TIME_SYNCHRONIZATION_OPERATION_TIMEOUT_MS (10000) /**< Ends an operation nobody cancels; the caller's setup deadline (P26: 10 s at most) normally ends it first. */
+#define WIFI_TIME_SYNCHRONIZATION_OPERATION_TIMEOUT_MS (10000) /**< Maximum duration of a single time synchronization attempt if not cancelled earlier. */
 #define WIFI_TIME_SYNCHRONIZATION_POLL_INTERVAL_MS     (100)   /**< Longest worker wait between cancellation checks, well inside the stop bound. */
 #define WIFI_SNTP_PORT                                 (123)   /**< P25-SERVER: SNTP over UDP/123. */
 
@@ -77,8 +77,8 @@
 #define WIFI_SCAN_CANCEL_TIMEOUT_MS (1000) /**< Longest wait for a running scan to end. */
 
 #define WIFI_SERVICE_STOP_TIMEOUT_MS (1000) /**< P23 per-service stop bound. */
-#define WIFI_SERVICE_STOP_STACK_SIZE (4096) /**< Same as the communication thread stack that ran these driver calls before; proposed value pending target measurement. */
-#define WIFI_SERVICE_STOP_PRIORITY   (10)   /**< Same preemptive priority as the communication thread that waits for it. */
+#define WIFI_SERVICE_STOP_STACK_SIZE (4096) /**< Stack size for blocking Wi-Fi driver stop calls. */
+#define WIFI_SERVICE_STOP_PRIORITY   (10)   /**< Preemptive priority of the service stop work queue. */
 
 /* Zephyr link-layer and network-layer events use separate callback masks. */
 #define WIFI_LINK_LAYER_EVENTS    (NET_EVENT_WIFI_CONNECT_RESULT | NET_EVENT_WIFI_DISCONNECT_RESULT | NET_EVENT_WIFI_SCAN_RESULT | NET_EVENT_WIFI_SCAN_DONE)

@@ -38,7 +38,7 @@
 /***********************************************************************/
 
 /**
- * @brief Initialize the controller, show STARTUP_RUNNING, initialize AUDIO
+ * @brief Initialize the controller, show STARTUP_RUNNING, initialize L2_AUDIO
  * and start the control thread.
  *
  * Call first at boot, so the startup indication covers the

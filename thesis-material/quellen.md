@@ -1675,7 +1675,7 @@ Eric Rescorla. *The Transport Layer Security (TLS) Protocol Version 1.3*. IETF R
 <a id="stetho_hapi_tls_probe_20261029"></a>
 ### stetho_hapi_tls_probe_20261029
 
-GPT-6.1-Sol on behalf of Nico. *Local HAPI TLS investigation*. Own desktop observations, 29 October 2026. [Evidence and limitations](../Development/system/design/COMMUNICATION/secure-transport.md#investigation-basis-and-limitations). Python desktop probe, no device firmware revision; public certificate fingerprint and image content ID recorded; registry manifest digest not captured. Read-only metadata success is not write authorization evidence.
+GPT-6.1-Sol on behalf of Nico. *Local HAPI TLS investigation*. Own desktop observations, 29 October 2026. [Evidence and limitations](../Development/system/design/COMMUNICATION/secure-transport.md#design-inputs). Python desktop probe, no device firmware revision; public certificate fingerprint and image content ID recorded; registry manifest digest not captured. Read-only metadata success is not write authorization evidence.
 
 **Cited by:** [TLS design](../Development/system/design/COMMUNICATION/secure-transport.md).
 

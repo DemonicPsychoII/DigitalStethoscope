@@ -2,9 +2,9 @@
 
 ## Basis and scope
 
-This Architecture-stage proposal allocates how a device receives its one server: endpoint, keep-alive and trusted certificate. It refines the [TLS trust boundary](https://github.com/DemonicPsychoII/DigitalStethoscope/pull/80) and the separate server profile image from the [design review of 2 November 2026](https://github.com/DemonicPsychoII/DigitalStethoscope/pull/104) and the flash layout decision of 4 November 2026 [4]. Its requirements basis is REQ-09, REQ-11 and REQ-13. It defines components, responsibilities, boundaries and dependencies; the file format, image format, validation rules and commands belong to detailed design.
+Server profile provisioning defines how a device receives its single server endpoint, keep-alive and trusted certificate in a flash image separate from the firmware. It refines the [TLS trust boundary](../COMMUNICATION/secure-transport.md) under REQ-09, REQ-11, REQ-12 and REQ-13.
 
-Nico decided on 4 November 2026 that one file per server deployment holds everything the image needs, that this file is TOML with the certificate embedded as PEM text, that deployment files are versioned in the repository, and that one flash command validates, builds and writes the image [1]. These are project decisions, not measurements. The design review had already placed endpoint and certificate in an image separate from the firmware [2].
+One deployment file per server holds the endpoint, keep-alive and public certificate. Deployment files are versioned separately from firmware builds, and a single host flash command validates the file, builds the server profile image and writes it to its dedicated flash partition.
 
 ## Responsibilities and dependencies
 
@@ -26,21 +26,17 @@ Dependency direction: the deployment file feeds the server profile tool on the d
 
 ## Trust boundary
 
-Whoever can flash the device can change its server; physical access is the trust assumption of the design review [2]. The image checksum detects corruption, not tampering, and the image of the minimum viable product (MVP) carries no signature. Without secure boot the same physical access can replace the firmware itself, so an image signature alone would add no protection; signing is deferred together with secure boot (project decision, 4 November 2026 [1]).
+Whoever can flash the device can change its server; physical access is the trust assumption. The image checksum detects corruption, not tampering, and the image carries no signature. Without secure boot the same physical access can replace the firmware itself, so an image signature alone would add no protection. The device uses neither secure boot nor image signing.
 
-The deployment file contains only public information, so it can be versioned and reviewed like source code. The repository is public, so it holds test deployments only; a real deployment keeps its file with that deployment. A server change is visible in review as a changed endpoint or certificate. The server's private key and keystore stay with the server deployment.
+The deployment file contains only public information, so it can be versioned and reviewed like source code. The source repository holds test deployments only; a real deployment keeps its file with that deployment. A server change is visible in review as a changed endpoint or certificate. The server's private key and keystore stay with the server deployment.
 
-The device trusts the server profile's certificate directly and verifies the server identity against its Subject Alternative Names, without Common Name fallback [3]. The tool applies the same identity rule before flashing, so a certificate that cannot match the endpoint is rejected on the developer PC rather than at the next boot.
+The device trusts the server profile's certificate directly and verifies the server identity against its Subject Alternative Names, without Common Name fallback [1]. The tool applies the same identity rule before flashing, so a certificate that cannot match the endpoint is rejected on the developer PC rather than at the next boot.
 
-## Open and deferred decisions
+## Partition independence
 
-- The server profile location is fixed at `0xF00000` and independent of the settings: a settings size change never moves it, and it never changes between firmware versions, so an updated firmware still finds an image flashed earlier. Settings get their own fixed start in front of it. [TICKET-214](https://nfrie.atlassian.net/browse/TICKET-214), the server profile (provisioning) image for endpoint and certificate, moves them out of the board's default partition. This is a project decision of 4 November 2026 [4]; the [STORAGE flash layout](https://github.com/DemonicPsychoII/DigitalStethoscope/pull/104) defines addresses and sizes.
-- Signed images, several servers per device, network or portal enrollment and a project certificate authority remain outside this version, as in the design review [2].
-- Detailed design defines the file format, its validation, the image format and the command interface.
+The server profile has a fixed location in flash that is independent of the settings: a settings size change never moves it, and it never changes between firmware versions, so an updated firmware still finds an image flashed earlier. The settings have their own fixed start in front of it. The firmware's own partition table defines both partitions.
 
 ## Verification allocation
-
-These scenarios allocate future verification; they do not add a generated test batch or claim execution.
 
 | Scenario | Trace | Expected outcome |
 | --- | --- | --- |
@@ -53,10 +49,4 @@ These scenarios allocate future verification; they do not add a generated test b
 
 ## Sources
 
-[1] Nico, *Provisioning deployment-file decisions*, personal communication, T3 Code, 4 November 2026, [conversation](t3-thread://v2/d5e44f69-2ecc-4a3e-917b-31a7b084c12b/b0a0170f-70da-43f5-89a6-38c67da80e40), accessed 4 November 2026. Recorded in the [source register](../../../../thesis-material/quellen.md#nico_provisioning_decisions_20261104). Project decisions, not measurements.
-
-[2] Andreas Summerer and Nico, *Design review of time, TLS and FHIR*, review meeting, 2 November 2026, 10:30–11:30, notes by Nico with resolutions in the [T3 conversation](t3-thread://v1/d5e44f69-2ecc-4a3e-917b-31a7b084c12b), accessed 2 November 2026; resolutions applied in [PR #104](https://github.com/DemonicPsychoII/DigitalStethoscope/pull/104). Recorded in the [source register](../../../../thesis-material/quellen.md#summerer_design_review_20261102). Project decisions, not measurements.
-
-[3] Peter Saint-Andre and Rich Salz, *Service Identity in TLS*, IETF RFC 9525, November 2023, sections 4 and 6, DOI [10.17487/RFC9525](https://doi.org/10.17487/RFC9525), <https://www.rfc-editor.org/rfc/rfc9525>, accessed 4 November 2026. Recorded in the [source register](../../../../thesis-material/quellen.md#ietf_service_identity_9525_2023).
-
-[4] Nico, *Flash layout decision*, personal communication, T3 Code, 4 November 2026. Recorded in the [source register](../../../../thesis-material/quellen.md#nico_flash_layout_decision_20261104). Project decision, not a measurement.
+[1] Peter Saint-Andre and Rich Salz, *Service Identity in TLS*, IETF RFC 9525, November 2023, sections 4 and 6, DOI [10.17487/RFC9525](https://doi.org/10.17487/RFC9525), <https://www.rfc-editor.org/rfc/rfc9525>, accessed 4 November 2026.

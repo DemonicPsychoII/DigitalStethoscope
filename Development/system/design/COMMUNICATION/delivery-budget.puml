@@ -5,7 +5,7 @@ skinparam defaultFontName SansSerif
 skinparam backgroundColor #0b1018
 skinparam defaultFontColor #e6edf7
 skinparam ArrowColor #a9b8ca
-title How many delivery attempts fit into 10 s after Stop? (P13, provisional until TICKET-213)
+title How many delivery attempts fit into 10 s after Stop? (P13)
 concise "Four full nominal attempts\n(needs 22 s)" as Full
 concise "Example A: each step\nuses its full limit" as Timeouts
 concise "Example B: every attempt\nfails after 0.5 s" as Fast

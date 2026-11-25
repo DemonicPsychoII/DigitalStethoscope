@@ -1,5 +1,4 @@
-# MON — runtime self-monitoring
+# MONITOR — runtime self-monitoring
 
-Cross-cutting supervision used as software risk control (ISO 14971, IEC 62304
-§5.3/§7). Each check traces to a risk-analysis entry. MON observes the other
-layers and reports; it does not change audio or mode state itself.
+Place of the cross-cutting runtime supervision. The module contains no code: no check
+runs, and it reports no fault events.

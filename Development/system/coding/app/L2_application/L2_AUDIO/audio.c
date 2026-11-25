@@ -6,7 +6,7 @@
 /** @addtogroup L2_AUDIO
  * @{
  * @file
- * Implementation of the AUDIO module.
+ * Implementation of the L2_AUDIO module.
  */
 
 /***********************************************************************/
@@ -28,15 +28,15 @@
 /* DEFINES                                                             */
 /***********************************************************************/
 
-#define AUDIO_THREAD_STACK_SIZE (2048) /**< Proposed; measure under VT-02. */
-#define AUDIO_THREAD_PRIORITY   (1)    /**< Highest application thread priority; the numeric value is measured under VT-02. */
+#define AUDIO_THREAD_STACK_SIZE (2048) /**< Stack size of the audio thread. */
+#define AUDIO_THREAD_PRIORITY   (1)    /**< Highest application thread priority. */
 
 #define AUDIO_COMMAND_QUEUE_LENGTH (4)
 
 /** One debug report per second: 250 blocks of 4 ms. */
 #define AUDIO_PROCESSING_REPORT_BLOCKS (250U)
 
-/** Volume until CONTROL passes the first reading: silent output. */
+/** Volume until L2_CONTROL passes the first reading: silent output. */
 #define AUDIO_SAFE_VOLUME_PERCENT (0)
 
 /***********************************************************************/
@@ -79,7 +79,7 @@ K_MSGQ_DEFINE(audio_Commands, sizeof(enum audio_command), AUDIO_COMMAND_QUEUE_LE
 
 static struct k_thread audio_ThreadData;
 
-/** Written by CONTROL, read by the audio thread once per block; atomic, so neither side waits. */
+/** Written by L2_CONTROL, read by the audio thread once per block; atomic, so neither side waits. */
 static atomic_t audio_VolumePercent = ATOMIC_INIT(AUDIO_SAFE_VOLUME_PERCENT);
 
 /** Mono working buffer of the audio thread: left-aligned 24-bit samples with the low 8 bits cleared. */

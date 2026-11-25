@@ -1,7 +1,7 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-Build the thesis application or the bring-up firmware manually with the pinned toolchain.
+Build the selected firmware target, the application by default, with the pinned toolchain.
 .DESCRIPTION
 Uses the shared toolchain workspace provisioned by setup-toolchain.ps1 and the board
 pinned in toolchain.json. Only builds; it never flashes or publishes firmware.

@@ -72,12 +72,9 @@ coverage is {-}
 
 highlight 15 to 17 #3a2a2a : missing blocks
 legend bottom
- Illustrative subset: P05 proposes 8 s windows updated every 1 s; windows are thinned for readability.
  Coverage = union of accepted window intervals clipped to the session bounds (Start at 4 s, Stop at 28 s):
  [4 s, 14 s] + [18 s, 28 s] = 20 s of 24 s = 83 %. Overlaps count once.
- Not window count x window length: 5 accepted x 8 s = 40 s would exceed the session.
  No window includes missing blocks, so Window D is rejected and the gap stays uncovered.
- Window A starts before Start; whether such warm-up windows are accepted is open (TICKET-192).
- Validity thresholds (>= 3 valid windows, >= 80 % coverage) are P07 proposals, not accepted values.
+ Window A starts before Start; only its part inside the session counts.
 endlegend
 @enduml

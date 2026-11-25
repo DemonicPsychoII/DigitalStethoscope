@@ -27,12 +27,12 @@
 /* DEFINES                                                             */
 /***********************************************************************/
 
-#define PHYSICALINTERFACE_DEBOUNCE_MILLISECONDS 30 /**< P10 candidate debounce; covers the 10 to 21 ms J8 gaps measured on 10 November 2026. */
+#define PHYSICALINTERFACE_DEBOUNCE_MILLISECONDS 30 /**< P10: switch and button debounce; longer than the J8 switch contact gaps of up to 21 ms. */
 
-/** Highest wiper reading at the 3V3 end of J7 on the Eval carrier, 10 November 2026; the gap to 3300 mV is not explained. */
+/** P10: wiper voltage at the 3V3 end of the potentiometer input (J7); corresponds to 100 % volume. */
 #define PHYSICALINTERFACE_POTENTIOMETER_FULL_SCALE_MILLIVOLTS 3083
 
-/** Candidate step a reading must move before it is reported; ADC noise of a fitted J7 is not yet measured. */
+/** Step a reading must move before it is reported, so that ADC noise does not produce volume events. */
 #define PHYSICALINTERFACE_VOLUME_HYSTERESIS_PERCENT 2
 
 /***********************************************************************/
