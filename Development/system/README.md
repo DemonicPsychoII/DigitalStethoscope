@@ -15,4 +15,4 @@
 - [Verification operations](testing/ci/OPERATIONS.md): test levels, execution, setup and evidence.
 - Verification cases: application checks and recorded results.
 
-Implementation readiness retains the design decisions and open choices. Documents distinguish agreed behavior, proposed parameters and executed evidence.
+Implementation readiness retains the design decisions and open choices. Requirements, architecture and design state the agreed behavior of the target system; open choices are GitHub issues, and executed evidence is recorded under `testing/`.

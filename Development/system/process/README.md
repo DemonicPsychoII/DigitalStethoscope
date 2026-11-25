@@ -40,7 +40,7 @@ A necessary interface change gets its own interface-and-documentation PR. Depend
 
 Implementation PRs may merge before the new test batch when existing required checks and reviews pass. Existing tests continue to run. The component's automated batch must pass before its implementation enters GitLab human review. Hardware cases still awaiting execution remain explicit.
 
-Documents link requirements and design decisions to their implementation PRs and test evidence. Gaps are recorded in the affected document and addressed through the corresponding design, implementation or test PR.
+The decision log and its trace table under `planning/` link requirements and design decisions to their implementation PRs and test evidence; requirements, architecture, design and code carry no such links. Gaps are recorded as GitHub issues and addressed through the corresponding design, implementation or test PR.
 
 ## How tests are generated
 

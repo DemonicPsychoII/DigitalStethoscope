@@ -3,7 +3,8 @@
 ## Current baseline
 
 This table is the single place that names the decision in force for each topic.
-Other documents link here instead of naming the latest decision date.
+Thesis and planning documents link here instead of naming the latest decision date. Requirements,
+architecture, design and code do not link here: this folder is not transferred to GitLab.
 
 | Topic | Current decision | Applied in |
 |---|---|---|
