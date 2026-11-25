@@ -191,6 +191,18 @@ The individual commands below use a Python with `requirements-ci.txt` installed.
 
 The [archived bring-up](../../../../preThesis/06-bringup-zephyr/README.md) retains its local build guide and optional QC (quality control) evaluator. Its checks depend on named bring-up modules, optional display/touch wiring, `qc.conf` and historical bring-up evidence. They do not define application quality gates.
 
+## Transfer to GitLab
+
+The company GitLab repository receives the product only: `spec/`, `requirements/`, `architecture/`, `design/`, `coding/` without the host tests, `references/` and the verification allocation. `gitlab_transfer.py` holds that list. Its commands read one commit (`--revision`, default `HEAD`), never the working tree.
+
+| Purpose | Command |
+| --- | --- |
+| List the transferred files | `python Development/system/testing/ci/gitlab_transfer.py list` |
+| Check them | `python Development/system/testing/ci/gitlab_transfer.py check` |
+| Write them into a new directory | `python Development/system/testing/ci/gitlab_transfer.py export <new-directory>` |
+
+`check` fails when a transferred file names a project member, carries a written date outside a source entry, a decision record, a ticket id, a chat or agent trace or a private network detail, links to a file that is not transferred, or is not UTF-8 text. `export` runs the check first and writes nothing while it fails. It needs a directory that does not exist yet and lies outside this repository, writes `Development/system/process/gitlab-readme.md` there as root `README.md` with its links rewritten for the root, and deletes or overwrites nothing. Copying the exported directory into a GitLab checkout is a separate step.
+
 ## Tool reference
 
 | Tool | Responsibility |

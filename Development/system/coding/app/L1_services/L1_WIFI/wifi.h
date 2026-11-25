@@ -190,7 +190,7 @@ int wifi_disconnect(void);
 bool wifi_isConnected(void);
 
 /**
- * @brief Write the IPv4 address of the station as text, for example "10.0.0.17".
+ * @brief Write the IPv4 address of the station as text, for example "192.0.2.17".
  *
  * @param[out] text Address text; "" on error.
  * @param[in]  size Size of @p text, at least WIFI_ADDRESS_SIZE.
