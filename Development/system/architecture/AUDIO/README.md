@@ -73,5 +73,4 @@ accessed 10 November 2026.
 document DS-INMP441-00, revision 1.0, 6 February 2014, section "I²S Data Interface" (24-bit words,
 64 SCK per stereo frame, L/R pin selects the channel, data pin tri-stated after the LSB, p. 11) and
 Figure 9 (mono output, left channel, p. 12),
-[datasheet](https://www.farnell.com/datasheets/1824785.pdf), accessed 11 November 2026; page numbers
-checked 13 November 2026.
+[datasheet](https://www.farnell.com/datasheets/1824785.pdf), accessed 11 November 2026.
