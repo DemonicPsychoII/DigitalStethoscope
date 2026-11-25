@@ -12,7 +12,7 @@ L1_WIFI owns scan, station association and address readiness, disconnect, and se
 
 | View | Editable source | Preview |
 | --- | --- | --- |
-| General station connection | [station-connection.puml](station-connection.puml) | [SVG](rendered/station_connection.svg) |
+| General station connection | [puml/station-connection.puml](puml/station-connection.puml) | [SVG](rendered/station_connection.svg) |
 
 The [L2_COMMUNICATION setup workflow](../COMMUNICATION/README.md) maps the general model onto this device. [L1_PORTAL](../PORTAL/README.md) defines the page boundary.
 

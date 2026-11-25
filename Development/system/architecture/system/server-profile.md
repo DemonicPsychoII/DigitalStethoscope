@@ -10,7 +10,7 @@ One deployment file per server holds the endpoint, keep-alive and public certifi
 
 ![Server profile components and data flow](rendered/server_profile.svg)
 
-Editable source: [server-profile.puml](server-profile.puml).
+Editable source: [puml/server-profile.puml](puml/server-profile.puml).
 
 | Owner | Responsibility | Boundary |
 | --- | --- | --- |

@@ -50,6 +50,19 @@ class RenderTests(unittest.TestCase):
             self.assertIn("stale render", renders([puml, current], root)[0])
             self.assertIn("missing render", renders([puml, other, current], root)[-1])
 
+    def test_source_in_the_puml_folder_belongs_to_the_render_beside_it(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            puml = write(
+                root, "a/puml/view-one.puml", "@startuml view_one\nA -> B\n@enduml\n"
+            )
+            other = write(
+                root, "a/puml/view-two.puml", "@startuml view_two\nA -> C\n@enduml\n"
+            )
+            current = write(root, "a/rendered/view_one.svg", svg("A -> B"))
+            self.assertEqual(renders([puml, current], root), [])
+            self.assertIn("missing render", renders([puml, other, current], root)[-1])
+
 
 class IndexTests(unittest.TestCase):
     def test_unlisted_script_and_view_fail(self):

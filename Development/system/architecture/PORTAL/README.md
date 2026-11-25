@@ -4,6 +4,6 @@ L1_PORTAL owns the HTTP server and setup page. It validates and queues typed Con
 
 | View | Editable source | Preview |
 | --- | --- | --- |
-| Page/controller boundary sequence | [portal-boundary.puml](portal-boundary.puml) | [SVG](rendered/portal_boundary.svg) |
+| Page/controller boundary sequence | [puml/portal-boundary.puml](puml/portal-boundary.puml) | [SVG](rendered/portal_boundary.svg) |
 
 [L2_COMMUNICATION](../COMMUNICATION/README.md) defines the setup workflow.

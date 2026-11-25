@@ -35,7 +35,7 @@ At boot, L2_COMMUNICATION reads and validates the record once. A matching record
 
 ![Registration persistence sequence](rendered/registration_persistence.svg)
 
-*When is Device registration ready?* Source: [registration-persistence.puml](registration-persistence.puml). An HTTP 200 or 201 alone never makes registration ready; only the committed record does.
+*When is Device registration ready?* Source: [puml/registration-persistence.puml](puml/registration-persistence.puml). An HTTP 200 or 201 alone never makes registration ready; only the committed record does.
 
 1. While Idle, require station address and verified TLS, including its SNTP exchange, under the separate designs. These are prerequisites, not registration substeps repeated for every message.
 2. With no eligible saved registration, acquire L2_CONTROL's network lease and start one monotonic ten-second attempt. Reuse verified TLS where possible. Any required transport recovery, conditional POST, response parsing and flash commit share the remaining attempt budget. Do not invoke an independent ten-second TLS preparation inside it.
@@ -61,7 +61,7 @@ If an authoritative read or server diagnostic specifically establishes that the 
 
 ![Examination-request lifecycle and session binding](rendered/examination_request_lifecycle.svg)
 
-*Which examination context does an Observation carry?* Source: [examination-request-lifecycle.puml](examination-request-lifecycle.puml). The pending slot and the session context are separate: only an accepted local Start moves a request from one to the other.
+*Which examination context does an Observation carry?* Source: [puml/examination-request-lifecycle.puml](puml/examination-request-lifecycle.puml). The pending slot and the session context are separate: only an accepted local Start moves a request from one to the other.
 
 The adapter contract prevents consumed-request redelivery from creating a new request, including after reconnect or restart. Each new explicit examination carries its own logical identity. Local pending and session context is not persisted in the registration record.
 
@@ -87,7 +87,7 @@ Stopping before 15 seconds sends nothing (REQ-07). Poor-signal reporting satisfi
 
 ![Conditional-create retry sequence](rendered/conditional_create_retry.svg)
 
-*Why is a retry after a lost receipt safe?* Source: [conditional-create-retry.puml](conditional-create-retry.puml). `If-None-Exist` carries the frozen measurement identifier, so the server answers a repeated request with the existing resource; duplicate prevention follows the FHIR R4 conditional-create rules [3].
+*Why is a retry after a lost receipt safe?* Source: [puml/conditional-create-retry.puml](puml/conditional-create-retry.puml). `If-None-Exist` carries the frozen measurement identifier, so the server answers a repeated request with the existing resource; duplicate prevention follows the FHIR R4 conditional-create rules [3].
 
 Attempts, budgets and gaps are those of the delivery timeout and retry parameter [P13](../system/parameters.md), as refined by the [delivery budget boundary](secure-transport.md#delivery-budget-boundary). Delivery never creates a Device first: missing registration after finalization is immediately `DELIVERY_NOT_POSSIBLE` when Wi-Fi is configured.
 

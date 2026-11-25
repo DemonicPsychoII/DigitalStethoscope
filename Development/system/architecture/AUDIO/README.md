@@ -4,7 +4,7 @@ The audio path carries microphone audio to the DAC line output over two I2S link
 
 | View | Editable source | Preview |
 | --- | --- | --- |
-| Audio path | [audio-path.puml](audio-path.puml) | [SVG](rendered/audio_path.svg) |
+| Audio path | [puml/audio-path.puml](puml/audio-path.puml) | [SVG](rendered/audio_path.svg) |
 
 ## Responsibilities
 

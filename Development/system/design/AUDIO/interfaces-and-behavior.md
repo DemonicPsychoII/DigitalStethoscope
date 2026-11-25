@@ -7,14 +7,14 @@ step applies the selected listening filter and the volume.
 
 | View | Editable source | Answers |
 | --- | --- | --- |
-| Block loop | [block-loop.puml](block-loop.puml) | In which order does one block pass, where does the thread wait, where is Stop checked? |
-| States | [audio-state.puml](audio-state.puml) | Which states does `L2_AUDIO` have, and which system states do they correspond to? |
-| Start and Stop | [start-stop-sequence.puml](start-stop-sequence.puml) | In which order are the links primed, started and shut down? |
-| Sample format | [sample-format.puml](sample-format.puml) | Where is the sample in the 32-bit slot, and how does it reach both DAC channels? |
-| Buffer circulation | [buffer-circulation.puml](buffer-circulation.puml) | Who holds each block, and how does it return to its pool? |
-| Priming and playback | [priming-timing.puml](priming-timing.puml) | Where do the 16 ms of transport delay come from? |
-| Sample rate | [sample-rate-range.puml](sample-rate-range.puml) | Which sample rates do all three parts accept? |
-| Block size | [block-size-delay.puml](block-size-delay.puml) | What does the block size cost in delay? |
+| Block loop | [puml/block-loop.puml](puml/block-loop.puml) | In which order does one block pass, where does the thread wait, where is Stop checked? |
+| States | [puml/audio-state.puml](puml/audio-state.puml) | Which states does `L2_AUDIO` have, and which system states do they correspond to? |
+| Start and Stop | [puml/start-stop-sequence.puml](puml/start-stop-sequence.puml) | In which order are the links primed, started and shut down? |
+| Sample format | [puml/sample-format.puml](puml/sample-format.puml) | Where is the sample in the 32-bit slot, and how does it reach both DAC channels? |
+| Buffer circulation | [puml/buffer-circulation.puml](puml/buffer-circulation.puml) | Who holds each block, and how does it return to its pool? |
+| Priming and playback | [puml/priming-timing.puml](puml/priming-timing.puml) | Where do the 16 ms of transport delay come from? |
+| Sample rate | [puml/sample-rate-range.puml](puml/sample-rate-range.puml) | Which sample rates do all three parts accept? |
+| Block size | [puml/block-size-delay.puml](puml/block-size-delay.puml) | What does the block size cost in delay? |
 
 ## Stream configuration
 

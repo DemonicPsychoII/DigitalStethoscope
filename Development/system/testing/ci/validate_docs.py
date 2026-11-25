@@ -100,9 +100,12 @@ def renders(paths: list[str], root: Path = ROOT) -> list[str]:
     rendered_dirs = {str(Path(p).parent.parent.as_posix()) for p in svgs}
     for svg in svgs:
         stem = Path(svg).stem.replace("_", "-")
-        puml = f"{Path(svg).parent.parent.as_posix()}/{stem}.puml"
-        if puml not in pumls:
-            errors.append(f"{svg}: no PlantUML source {puml}")
+        folder = Path(svg).parent.parent.as_posix()
+        # A diagram source lies next to the pages or in the folder's puml directory.
+        candidates = [f"{folder}/puml/{stem}.puml", f"{folder}/{stem}.puml"]
+        puml = next((candidate for candidate in candidates if candidate in pumls), None)
+        if puml is None:
+            errors.append(f"{svg}: no PlantUML source {candidates[0]}")
             continue
         source = svg_source(root / svg)
         if source is None:
@@ -113,6 +116,8 @@ def renders(paths: list[str], root: Path = ROOT) -> list[str]:
             errors.append(f"{svg}: stale render of {puml}; rerender it")
     for puml in pumls:
         directory = Path(puml).parent.as_posix()
+        if Path(puml).parent.name == "puml":
+            directory = Path(puml).parent.parent.as_posix()
         svg = f"{directory}/rendered/{Path(puml).stem.replace('-', '_')}.svg"
         if directory in rendered_dirs and svg not in svgs:
             errors.append(f"{puml}: missing render {svg}")

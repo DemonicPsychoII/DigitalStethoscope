@@ -8,7 +8,7 @@ This design refines the [SNTP architecture](../../architecture/COMMUNICATION/tim
 
 ![Generic SNTP request and response](rendered/sntp_exchange.svg)
 
-*Which clock supplies each SNTP timestamp?* Source: [sntp-exchange.puml](sntp-exchange.puml). The diagram shows the protocol as the standards define it [1, section 5; 2, section 8]. RFC 5905 obsoletes RFC 4330 and keeps SNTP as an interoperable subset of NTPv4 [2, section 14]. The device uses Zephyr's uncertainty estimate instead of its own offset calculation.
+*Which clock supplies each SNTP timestamp?* Source: [puml/sntp-exchange.puml](puml/sntp-exchange.puml). The diagram shows the protocol as the standards define it [1, section 5; 2, section 8]. RFC 5905 obsoletes RFC 4330 and keeps SNTP as an interoperable subset of NTPv4 [2, section 14]. The device uses Zephyr's uncertainty estimate instead of its own offset calculation.
 
 ## Ownership and interfaces
 
@@ -31,7 +31,7 @@ Each accepted operation produces one terminal result. Cancellation invalidates i
 
 ![SNTP exchange inside one connection setup](rendered/connection_setup.svg)
 
-*What runs inside one connection setup, and under which deadline?* Source: [connection-setup.puml](connection-setup.puml). The numbered steps below add the boot, failure and cancellation rules.
+*What runs inside one connection setup, and under which deadline?* Source: [puml/connection-setup.puml](puml/connection-setup.puml). The numbered steps below add the boot, failure and cancellation rules.
 
 1. Boot starts without a valid anchor. A persisted timestamp does not establish freshness; offline listening remains available.
 2. Every TLS connection setup under the [TLS design](secure-transport.md) begins with one SNTP exchange, so that only the server DNS lookup and TCP connection lie between the applied clock and the ClientHello, the first message of the TLS handshake. This applies to the Idle preparation and every delivery reconnect. Reusing an open verified connection sends no ClientHello and runs no SNTP. There is no separate SNTP schedule, refresh timer or internet/HTTP probe.
@@ -50,7 +50,7 @@ L1_WIFI sets Zephyr's real-time software clock; no battery-backed RTC is assumed
 
 ![Clock mapping timeline](rendered/clock_mapping.svg)
 
-*Which clock setting labels the measurement end, and when is it frozen?* Source: [clock-mapping.puml](clock-mapping.puml).
+*Which clock setting labels the measurement end, and when is it frozen?* Source: [puml/clock-mapping.puml](puml/clock-mapping.puml).
 
 - **Limit derivation.** 12.5 hours is (1 s − 100 ms) / 20 ppm, combining a 1 second maximum deviation, a 100 ms SNTP uncertainty budget and a 20 ppm drift budget (crystal datasheet tolerance ±10 ppm × safety factor 2). An exchange reporting more than 100 ms uncertainty exceeds the budget and fails like any other exchange.
 - **Deviation basis.** The 1 second maximum deviation follows the Consistent Time profile of IHE (Integrating the Healthcare Enterprise), which requires a median error of less than one second and names SNTP sufficient for it [4]; FHIR, the HAPI FHIR server and TLS set no tighter limit.

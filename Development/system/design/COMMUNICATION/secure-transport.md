@@ -8,7 +8,7 @@ This design refines the [TLS architecture](../../architecture/COMMUNICATION/secu
 
 ![Generic TLS 1.3 handshake](rendered/tls13_handshake.svg)
 
-*What does a TLS 1.3 handshake exchange before application data flows?* Source: [tls13-handshake.puml](tls13-handshake.puml). The diagram shows the protocol as RFC 8446 defines it [1].
+*What does a TLS 1.3 handshake exchange before application data flows?* Source: [puml/tls13-handshake.puml](puml/tls13-handshake.puml). The diagram shows the protocol as RFC 8446 defines it [1].
 
 ## Trust and server profile inputs
 
@@ -55,7 +55,7 @@ Before every new application request, check the retained peer's validity interva
 
 ![Delivery budget timeline](rendered/delivery_budget.svg)
 
-*How many delivery attempts fit into 10 s after Stop?* Source: [delivery-budget.puml](delivery-budget.puml). The examples assume submission at Stop.
+*How many delivery attempts fit into 10 s after Stop?* Source: [puml/delivery-budget.puml](puml/delivery-budget.puml). The examples assume submission at Stop.
 
 Reconnection is the expected delivery path; reuse is an optimisation. P13 keeps one ten-second deadline from Stop, at most four attempts and two-second gaps after transient failure. Within an attempt, connection setup (SNTP, DNS, TCP, TLS and verification) has a three-second limit and write plus receipt have a one-second limit, both capped by the remaining global time. A failed connection setup counts as a failed attempt. Delivery connection setup starts when L2_CONTROL submits the finalized job rather than at Stop. The deadline still runs from Stop, so finalization time comes out of the same budget. No setup starts when no job is granted (Stop before 15 s, Wi-Fi unconfigured or failed delivery prerequisites), and an eligible retained verified connection is reused without new setup. Delivery never uses the ten-second Idle preparation allowance. A Start during Sending cancels the delivery job: any connection setup or exchange in flight is cancelled, any retry gap ends at once and no further attempt starts. The cancelled job ends with `DELIVERY_FAILURE`, or with `SERVER_CONNECTION_FAILURE` when no qualifying clock anchor froze its UTC end, and the result is lost. A failed cancellation follows `WIFI_CLEANUP_FAILURE` under P23.
 

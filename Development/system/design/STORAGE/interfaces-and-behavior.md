@@ -18,7 +18,7 @@ The flash layout spans all 16 MB. Settings and the server profile each have a fi
 
 ![Whole 16 MB flash map with the enlarged settings and server profile end](rendered/flash_layout.svg)
 
-*Where do the application, settings and server profile sit, and how far can each grow without moving the other?* Editable source: [flash-layout.puml](flash-layout.puml). The application partition holds the Simple Boot image (header, loaded segments and flash-mapped code and data); both unassigned areas are growth room, not reserved.
+*Where do the application, settings and server profile sit, and how far can each grow without moving the other?* Editable source: [puml/flash-layout.puml](puml/flash-layout.puml). The application partition holds the Simple Boot image (header, loaded segments and flash-mapped code and data); both unassigned areas are growth room, not reserved.
 
 Neither start depends on the other partition's size. Settings can grow to 512 KiB without moving the server profile, and the server profile can grow to 1 MB without moving settings. The server profile start must never change between firmware versions, because an updated firmware must still find an image that was flashed earlier. Both starts are aligned to the 4 KiB erase sector and to 64 KiB.
 

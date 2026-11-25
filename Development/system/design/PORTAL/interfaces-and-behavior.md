@@ -41,7 +41,7 @@ The page maintains four local views: network list, selected-network form, busy p
 
 ![Setup page: browser-local view and controller status as two regions](rendered/page_state.svg)
 
-*Which local view does the page show for each controller status?* Editable source: [page-state.puml](page-state.puml). The table states what each view shows.
+*Which local view does the page show for each controller status?* Editable source: [puml/page-state.puml](puml/page-state.puml). The table states what each view shows.
 
 | Trigger | Required page behavior |
 | --- | --- |

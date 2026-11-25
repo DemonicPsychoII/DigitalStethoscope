@@ -8,8 +8,8 @@
  * @file
  * Implementation of the L2_COMMUNICATION module: the Wi-Fi workflow thread.
  *
- * Workflow (architecture/COMMUNICATION/setup-state.puml, setup-flow.puml and
- * link-recovery.puml):
+ * Workflow (setup-state.puml, setup-flow.puml and link-recovery.puml in
+ * architecture/COMMUNICATION/puml/):
  * - Boot: read the server profile image once (design/STORAGE/server-profile.md).
  *   Without a valid image, secure transport stays unavailable with a
  *   configuration cause; Wi-Fi setup and offline listening are unaffected.

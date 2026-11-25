@@ -111,7 +111,7 @@ are separate.
 
 ![Fault handling: recovery episode, indication latch and workflow admission as separate regions](rendered/fault_handling_state.svg)
 
-*Which fault events change the indication, which change Start admission, and which only drive recovery?* Editable source: [fault-handling-state.puml](fault-handling-state.puml).
+*Which fault events change the indication, which change Start admission, and which only drive recovery?* Editable source: [puml/fault-handling-state.puml](puml/fault-handling-state.puml).
 
 - **Retry.** A separate 2 s hold in Idle starts Wi-Fi setup again, even with a Wi-Fi error latched. Automatic reconnect and portal recovery stay automatic; acknowledgement is not their gate.
 - **Server connection.** [TLS failure handling](../COMMUNICATION/secure-transport.md#failure-indication) latches `SERVER_CONNECTION_FAILURE` after a failed preparation, including a failed [SNTP exchange](../COMMUNICATION/time-synchronization.md#failure-indication-and-acknowledgement) at its start, and for a result without valid time when delivery ends. There is no separate time-synchronization error; the serial log names the time cause. No time work or time indication happens during listening.

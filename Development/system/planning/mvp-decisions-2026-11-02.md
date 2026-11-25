@@ -119,7 +119,7 @@ another clock source. Reference measurements remain with
 - [STORAGE flash layout](../design/STORAGE/interfaces-and-behavior.md#flash-layout), [feedback catalogue](../design/FEEDBACK/catalogue.md),
   [shared design](../design/system/interfaces-and-behavior.md) and [parameters](../design/system/parameters.md)
 - Hotspot name in [`wifi.c`](../coding/app/L1_services/L1_WIFI/wifi.c)
-- Delivery prerequisites in the [measurement workflow](../architecture/system/measurement-workflow.puml), [session state](../architecture/system/mvp-session-state.puml) and [architecture viewer](../architecture/system/review.html); architecture PRs [#78](https://github.com/DemonicPsychoII/DigitalStethoscope/pull/78), [#80](https://github.com/DemonicPsychoII/DigitalStethoscope/pull/80) and [#81](https://github.com/DemonicPsychoII/DigitalStethoscope/pull/81)
+- Delivery prerequisites in the [measurement workflow](../architecture/system/puml/measurement-workflow.puml), [session state](../architecture/system/puml/mvp-session-state.puml) and [architecture viewer](../architecture/system/review.html); architecture PRs [#78](https://github.com/DemonicPsychoII/DigitalStethoscope/pull/78), [#80](https://github.com/DemonicPsychoII/DigitalStethoscope/pull/80) and [#81](https://github.com/DemonicPsychoII/DigitalStethoscope/pull/81)
 
 ## Follow-ups
 
