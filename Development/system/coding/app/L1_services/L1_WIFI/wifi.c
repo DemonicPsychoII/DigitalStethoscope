@@ -411,8 +411,9 @@ bool wifi_isValidNetwork(const struct wifi_network *network)
 int wifi_connect(const struct wifi_network *network)
 {
     int result = -EINVAL; /**< Invalid argument or unsupported input. */
+    const bool networkIsValid = wifi_isValidNetwork(network);
 
-    if(wifi_isValidNetwork(network))
+    if(networkIsValid)
     {
         size_t passwordLength = strlen(network->password);
         struct wifi_connect_req_params parameters = {
@@ -460,12 +461,14 @@ int wifi_waitForConnection(k_timeout_t timeout)
 {
     int result = -EAGAIN; /**< Operation is still pending; try again. */
     uint32_t events = wifi_waitForEvents((WIFI_EVENT_CONNECTED | WIFI_EVENT_FAILED), timeout);
+    const bool connectionIsReady = ((events & WIFI_EVENT_CONNECTED) != 0U);
+    const bool connectionHasFailed = ((events & WIFI_EVENT_FAILED) != 0U);
 
-    if((events & WIFI_EVENT_CONNECTED) != 0U)
+    if(connectionIsReady)
     {
         result = 0;
     }
-    else if((events & WIFI_EVENT_FAILED) != 0U)
+    else if(connectionHasFailed)
     {
         result = (int)atomic_get(&wifi_FailureCause);
     }
@@ -482,14 +485,18 @@ int wifi_disconnect(void)
     atomic_set(&wifi_ConnectionIsRequested, 0);
     (void)k_event_clear(&wifi_Events, (WIFI_EVENT_CONNECTED | WIFI_EVENT_FAILED));
     int result = 0;
-    if(atomic_get(&wifi_StationIsActive) != 0)
+    const bool stationIsActive = (atomic_get(&wifi_StationIsActive) != 0);
+
+    if(stationIsActive)
     {
         (void)k_event_clear(&wifi_Events, WIFI_EVENT_DISCONNECTED);
         atomic_set(&wifi_DisconnectIsPending, 1);
         result = net_mgmt(NET_REQUEST_WIFI_DISCONNECT, wifi_StationInterface, NULL, 0);
         if(result == 0)
         {
-            if(wifi_waitForEvents(WIFI_EVENT_DISCONNECTED, K_MSEC(1000)) == 0U)
+            const bool disconnectIsConfirmed = (wifi_waitForEvents(WIFI_EVENT_DISCONNECTED, K_MSEC(1000)) != 0U);
+
+            if(!disconnectIsConfirmed)
             {
                 result = -ETIMEDOUT; /**< Operation exceeded its wait deadline. */
             }
@@ -509,7 +516,9 @@ int wifi_disconnect(void)
         while((address != NULL) && (result == 0))
         {
             struct net_in_addr previousAddress = *address;
-            if(!net_if_ipv4_addr_rm(wifi_StationInterface, &previousAddress))
+            const bool addressIsRemoved = net_if_ipv4_addr_rm(wifi_StationInterface, &previousAddress);
+
+            if(!addressIsRemoved)
             {
                 result = -EIO; /**< Input/output operation failed. */
             }
@@ -534,7 +543,9 @@ int wifi_getAddress(char *text, size_t size)
 
     int result = -ENOTCONN; /**< Station has no usable connection. */
     const struct net_in_addr *address;
-    if(wifi_isConnected())
+    const bool stationIsConnected = wifi_isConnected();
+
+    if(stationIsConnected)
     {
         address = net_if_ipv4_get_global_addr(wifi_StationInterface, NET_ADDR_PREFERRED);
     }
@@ -547,7 +558,9 @@ int wifi_getAddress(char *text, size_t size)
 
     if(address != NULL)
     {
-        if(net_addr_ntop(NET_AF_INET, address, text, size) != NULL)
+        const bool addressIsWritten = (net_addr_ntop(NET_AF_INET, address, text, size) != NULL);
+
+        if(addressIsWritten)
         {
             result = 0;
         }
@@ -575,18 +588,25 @@ int wifi_getDeviceIdentifier(char *identifier, size_t size)
     {
         result = -EINVAL;
     }
-    else if(esp_efuse_mac_get_default(mac) != ESP_OK)
-    {
-        result = -EIO;
-    }
-    /* The ESP32-S3 stores no MAC CRC, so a damaged eFuse value is only caught by plausibility. */
-    else if(((mac[0] & WIFI_MAC_MULTICAST_BIT) != 0U) || ((mac[0] | mac[1] | mac[2] | mac[3] | mac[4] | mac[5]) == 0U))
-    {
-        result = -ENODATA;
-    }
     else
     {
-        (void)snprintk(identifier, size, WIFI_DEVICE_IDENTIFIER_PREFIX "%02X%02X%02X%02X%02X%02X", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+        const bool macIsRead = (esp_efuse_mac_get_default(mac) == ESP_OK);
+        const bool macIsMulticast = ((mac[0] & WIFI_MAC_MULTICAST_BIT) != 0U);
+        const bool macIsZero = ((mac[0] | mac[1] | mac[2] | mac[3] | mac[4] | mac[5]) == 0U);
+
+        if(!macIsRead)
+        {
+            result = -EIO;
+        }
+        /* The ESP32-S3 stores no MAC CRC, so a damaged eFuse value is only caught by plausibility. */
+        else if(macIsMulticast || macIsZero)
+        {
+            result = -ENODATA;
+        }
+        else
+        {
+            (void)snprintk(identifier, size, WIFI_DEVICE_IDENTIFIER_PREFIX "%02X%02X%02X%02X%02X%02X", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+        }
     }
 
     return result;
@@ -636,11 +656,16 @@ int wifi_cancelScan(void)
     k_spin_unlock(&wifi_ScanLock, key);
 
     /* The ESP32 driver cannot abort a scan, so wait for its end. */
-    if(isRunning && (wifi_waitForEvents(WIFI_EVENT_SCAN_DONE, K_MSEC(WIFI_SCAN_CANCEL_TIMEOUT_MS)) == 0U))
+    if(isRunning)
     {
-        LOG_ERR("Scan did not stop within %d ms", WIFI_SCAN_CANCEL_TIMEOUT_MS);
+        const bool scanHasEnded = (wifi_waitForEvents(WIFI_EVENT_SCAN_DONE, K_MSEC(WIFI_SCAN_CANCEL_TIMEOUT_MS)) != 0U);
 
-        result = -ETIMEDOUT; /**< Operation exceeded its wait deadline. */
+        if(!scanHasEnded)
+        {
+            LOG_ERR("Scan did not stop within %d ms", WIFI_SCAN_CANCEL_TIMEOUT_MS);
+
+            result = -ETIMEDOUT; /**< Operation exceeded its wait deadline. */
+        }
     }
 
     return result;
@@ -649,8 +674,9 @@ int wifi_cancelScan(void)
 int wifi_waitForScanResult(struct wifi_scan_entry *list, size_t listSize, k_timeout_t timeout)
 {
     int result = -EAGAIN; /**< Operation is still pending; try again. */
+    const bool scanIsDone = (wifi_waitForEvents(WIFI_EVENT_SCAN_DONE, timeout) != 0U);
 
-    if(wifi_waitForEvents(WIFI_EVENT_SCAN_DONE, timeout) != 0U)
+    if(scanIsDone)
     {
         k_spinlock_key_t key = k_spin_lock(&wifi_ScanLock);
         size_t count = MIN(wifi_ScanCount, listSize);
@@ -683,6 +709,8 @@ int wifi_startHotspot(void)
     int result = wifi_getDeviceIdentifier(identifier, sizeof(identifier));
     struct net_in_addr address;
     struct net_in_addr netmask;
+    const bool addressIsParsed = (net_addr_pton(NET_AF_INET, WIFI_HOTSPOT_ADDRESS, &address) == 0);
+    const bool netmaskIsParsed = (net_addr_pton(NET_AF_INET, WIFI_HOTSPOT_NETMASK, &netmask) == 0);
 
     if(result != 0)
     {
@@ -693,16 +721,20 @@ int wifi_startHotspot(void)
         result = -ENODEV; /**< Required device interface is unavailable. */
     }
     /* Both hotspot address and netmask must parse before configuring the interface. */
-    else if((net_addr_pton(NET_AF_INET, WIFI_HOTSPOT_ADDRESS, &address) != 0) || (net_addr_pton(NET_AF_INET, WIFI_HOTSPOT_NETMASK, &netmask) != 0))
+    else if(!addressIsParsed || !netmaskIsParsed)
     {
         result = -EINVAL; /**< Invalid argument or unsupported input. */
     }
     else
     {
         /* A second setup in the same boot finds the address already present. */
-        if(net_if_ipv4_addr_lookup(&address, NULL) == NULL)
+        const bool addressIsPresent = (net_if_ipv4_addr_lookup(&address, NULL) != NULL);
+
+        if(!addressIsPresent)
         {
-            if(net_if_ipv4_addr_add(wifi_HotspotInterface, &address, NET_ADDR_MANUAL, 0) == NULL)
+            const bool addressIsAdded = (net_if_ipv4_addr_add(wifi_HotspotInterface, &address, NET_ADDR_MANUAL, 0) != NULL);
+
+            if(!addressIsAdded)
             {
                 result = -ENOMEM; /**< Required memory or network address slot is unavailable. */
             }
@@ -735,14 +767,19 @@ int wifi_startHotspot(void)
         {
             /* The pinned ESP32 driver hardcodes five clients and lacks AP_CONFIG_PARAM. */
             wifi_config_t hotspotConfiguration;
-            if(esp_wifi_get_config(WIFI_IF_AP, &hotspotConfiguration) != ESP_OK)
+            const bool configurationIsRead = (esp_wifi_get_config(WIFI_IF_AP, &hotspotConfiguration) == ESP_OK);
+
+            if(!configurationIsRead)
             {
                 result = -EIO; /**< Input/output operation failed. */
             }
             else
             {
                 hotspotConfiguration.ap.max_connection = 1;
-                if(esp_wifi_set_config(WIFI_IF_AP, &hotspotConfiguration) != ESP_OK)
+
+                const bool configurationIsApplied = (esp_wifi_set_config(WIFI_IF_AP, &hotspotConfiguration) == ESP_OK);
+
+                if(!configurationIsApplied)
                 {
                     result = -EIO; /**< Input/output operation failed. */
                 }
@@ -778,9 +815,10 @@ int wifi_startDHCPServer(void)
 {
     int result = -ENODEV; /**< Required device interface is unavailable. */
     struct net_in_addr poolStart;
+    const bool poolStartIsParsed = (net_addr_pton(NET_AF_INET, WIFI_HOTSPOT_ADDRESS, &poolStart) == 0);
 
     /* Start DHCP only with an available hotspot and a valid pool address. */
-    if((wifi_HotspotInterface != NULL) && (net_addr_pton(NET_AF_INET, WIFI_HOTSPOT_ADDRESS, &poolStart) == 0))
+    if((wifi_HotspotInterface != NULL) && poolStartIsParsed)
     {
         poolStart.s4_addr[3] = WIFI_HOTSPOT_POOL_START;
 
@@ -861,8 +899,9 @@ int wifi_waitForTimeSynchronization(struct normalised_time *time, k_timeout_t ti
     }
 
     const k_timepoint_t deadline = sys_timepoint_calc(timeout);
+    const int snapshotLockResult = k_mutex_lock(&wifi_TimeSynchronizationLock, sys_timepoint_timeout(deadline));
 
-    if(k_mutex_lock(&wifi_TimeSynchronizationLock, sys_timepoint_timeout(deadline)) != 0)
+    if(snapshotLockResult != 0)
     {
         return -EAGAIN; /**< State was busy for this call's whole interval. */
     }
@@ -881,7 +920,9 @@ int wifi_waitForTimeSynchronization(struct normalised_time *time, k_timeout_t ti
         (void)wifi_waitForEvents(WIFI_EVENT_TIME_SYNCHRONIZED, sys_timepoint_timeout(deadline));
     }
 
-    if(k_mutex_lock(&wifi_TimeSynchronizationLock, sys_timepoint_timeout(deadline)) != 0)
+    const int resultLockResult = k_mutex_lock(&wifi_TimeSynchronizationLock, sys_timepoint_timeout(deadline));
+
+    if(resultLockResult != 0)
     {
         return -EAGAIN; /**< State was busy for the rest of this call's interval. */
     }
@@ -907,8 +948,9 @@ int wifi_waitForTimeSynchronization(struct normalised_time *time, k_timeout_t ti
 int wifi_cancelTimeSynchronization(void)
 {
     const k_timepoint_t deadline = sys_timepoint_calc(K_MSEC(WIFI_TIME_SYNCHRONIZATION_CANCEL_TIMEOUT_MS));
+    const int requestLockResult = k_mutex_lock(&wifi_TimeSynchronizationLock, sys_timepoint_timeout(deadline));
 
-    if(k_mutex_lock(&wifi_TimeSynchronizationLock, sys_timepoint_timeout(deadline)) != 0)
+    if(requestLockResult != 0)
     {
         return -ETIMEDOUT; /**< Release could not be confirmed within the stop bound. */
     }
@@ -937,7 +979,9 @@ int wifi_cancelTimeSynchronization(void)
         (void)wifi_waitForEvents(WIFI_EVENT_TIME_SYNCHRONIZED, sys_timepoint_timeout(deadline));
     }
 
-    if(k_mutex_lock(&wifi_TimeSynchronizationLock, sys_timepoint_timeout(deadline)) != 0)
+    const int confirmationLockResult = k_mutex_lock(&wifi_TimeSynchronizationLock, sys_timepoint_timeout(deadline));
+
+    if(confirmationLockResult != 0)
     {
         return -ETIMEDOUT; /**< Release could not be confirmed within the stop bound. */
     }
@@ -982,7 +1026,9 @@ int wifi_applyTimeSynchronization(const struct normalised_time *time, struct app
         elapsedSeconds++;
     }
 
-    if(elapsedSeconds > (maximumUTCSeconds - time->utc_seconds))
+    const uint64_t remainingUTCSeconds = maximumUTCSeconds - time->utc_seconds;
+
+    if(elapsedSeconds > remainingUTCSeconds)
     {
         return -ERANGE; /**< Advanced UTC is not representable as Zephyr real time. */
     }
@@ -1087,7 +1133,9 @@ static int wifi_exchangeTimeSample(uint32_t generation, k_timepoint_t deadline, 
     struct net_sockaddr_in serverAddress = *address;
     serverAddress.sin_port = net_htons(WIFI_SNTP_PORT);
 
-    if(!wifi_isTimeSynchronizationAdmitted(generation))
+    const bool operationIsAdmitted = wifi_isTimeSynchronizationAdmitted(generation);
+
+    if(!operationIsAdmitted)
     {
         return -ECANCELED; /**< Cancellation ended the operation before the socket was opened. */
     }
@@ -1104,7 +1152,9 @@ static int wifi_exchangeTimeSample(uint32_t generation, k_timepoint_t deadline, 
         .tv_sec = 0,
         .tv_usec = (WIFI_TIME_SYNCHRONIZATION_POLL_INTERVAL_MS * USEC_PER_MSEC),
     };
-    if(zsock_setsockopt(wifi_TimeSynchronizationContext.sock.fd, ZSOCK_SOL_SOCKET, ZSOCK_SO_SNDTIMEO, &sendTimeout, sizeof(sendTimeout)) != 0)
+    const int sendTimeoutResult = zsock_setsockopt(wifi_TimeSynchronizationContext.sock.fd, ZSOCK_SOL_SOCKET, ZSOCK_SO_SNDTIMEO, &sendTimeout, sizeof(sendTimeout));
+
+    if(sendTimeoutResult != 0)
     {
         return -errno;
     }
@@ -1117,9 +1167,25 @@ static int wifi_exchangeTimeSample(uint32_t generation, k_timepoint_t deadline, 
     {
         result = -EPROTO; /**< A response that arrived before the server state check was parsed unchecked. */
     }
-    while((result == -ETIMEDOUT) && !sys_timepoint_expired(deadline) && wifi_isTimeSynchronizationAdmitted(generation))
+
+    bool responseIsAwaited = (result == -ETIMEDOUT);
+
+    while(responseIsAwaited)
     {
-        result = wifi_receiveTimeResponse(&nativeTime);
+        const bool deadlineHasExpired = sys_timepoint_expired(deadline);
+        bool receiveIsAdmitted = false;
+
+        if(!deadlineHasExpired)
+        {
+            receiveIsAdmitted = wifi_isTimeSynchronizationAdmitted(generation);
+        }
+
+        if(receiveIsAdmitted)
+        {
+            result = wifi_receiveTimeResponse(&nativeTime);
+        }
+
+        responseIsAwaited = receiveIsAdmitted && (result == -ETIMEDOUT);
     }
 
     if(result == 0)
@@ -1153,7 +1219,10 @@ static int wifi_receiveTimeResponse(struct sntp_time *nativeTime)
     {
         return -errno;
     }
-    if(received == (ssize_t)sizeof(header))
+
+    const bool headerIsComplete = (received == (ssize_t)sizeof(header));
+
+    if(headerIsComplete)
     {
         const uint8_t leapIndicator = (header[0] >> WIFI_SNTP_LEAP_INDICATOR_SHIFT);
         const uint8_t stratum = header[1];
@@ -1266,9 +1335,10 @@ static void wifi_rollbackHotspot(void)
 static int wifi_runServiceStop(struct wifi_service_stop *serviceStop)
 {
     int result = 0;
+    const bool stopIsIdle = (k_work_busy_get(&serviceStop->work) == 0);
 
     /* A stop that outlived an earlier caller's bound is waited for; queueing it again would repeat the driver call. */
-    if(k_work_busy_get(&serviceStop->work) == 0)
+    if(stopIsIdle)
     {
         (void)k_event_clear(&wifi_Events, serviceStop->completedEvent);
         result = k_work_submit_to_queue(&wifi_ServiceStopQueue, &serviceStop->work);
@@ -1276,7 +1346,9 @@ static int wifi_runServiceStop(struct wifi_service_stop *serviceStop)
 
     if(result >= 0)
     {
-        if(wifi_waitForEvents(serviceStop->completedEvent, K_MSEC(WIFI_SERVICE_STOP_TIMEOUT_MS)) == 0U)
+        const bool stopHasCompleted = (wifi_waitForEvents(serviceStop->completedEvent, K_MSEC(WIFI_SERVICE_STOP_TIMEOUT_MS)) != 0U);
+
+        if(!stopHasCompleted)
         {
             LOG_ERR("Driver stop did not return within %d ms", WIFI_SERVICE_STOP_TIMEOUT_MS);
 
@@ -1336,20 +1408,37 @@ static void wifi_handleEvent(struct net_mgmt_event_callback *callback, uint64_t 
         case NET_EVENT_WIFI_CONNECT_RESULT:
         {
             const struct wifi_status *status = callback->info;
+            bool disconnectIsPending = false;
+            bool connectionIsRequested = false;
+            bool stationHasAddress = false;
 
-            if((status->status != 0) && (atomic_get(&wifi_DisconnectIsPending) != 0))
+            if(status->status != 0)
+            {
+                disconnectIsPending = (atomic_get(&wifi_DisconnectIsPending) != 0);
+            }
+
+            if(!disconnectIsPending)
+            {
+                connectionIsRequested = (atomic_get(&wifi_ConnectionIsRequested) != 0);
+            }
+
+            if((status->status == 0) && connectionIsRequested)
+            {
+                stationHasAddress = (net_if_ipv4_get_global_addr(wifi_StationInterface, NET_ADDR_PREFERRED) != NULL);
+            }
+
+            if((status->status != 0) && disconnectIsPending)
             {
                 /* ESP32 reports cancellation before association as a failed connect. */
                 atomic_set(&wifi_StationIsActive, 0);
                 (void)k_event_post(&wifi_Events, WIFI_EVENT_DISCONNECTED);
             }
             /* A successful requested join becomes online only after an IPv4 address exists. */
-            else if((status->status == 0) && (atomic_get(&wifi_ConnectionIsRequested) != 0) &&
-                    (net_if_ipv4_get_global_addr(wifi_StationInterface, NET_ADDR_PREFERRED) != NULL))
+            else if((status->status == 0) && connectionIsRequested && stationHasAddress)
             {
                 (void)k_event_post(&wifi_Events, WIFI_EVENT_CONNECTED);
             }
-            else if((status->status != 0) && (atomic_get(&wifi_ConnectionIsRequested) != 0))
+            else if((status->status != 0) && connectionIsRequested)
             {
                 LOG_WRN("Connect rejected (%d)", status->status);
                 atomic_set(&wifi_StationIsActive, 0);
@@ -1399,14 +1488,18 @@ static void wifi_handleEvent(struct net_mgmt_event_callback *callback, uint64_t 
         }
 
         case NET_EVENT_IPV4_ADDR_ADD:
+        {
             /* Online only with an address. After wifi_disconnect() the address
              * belongs to a cancelled request. */
-            if(atomic_get(&wifi_ConnectionIsRequested) != 0)
+            const bool connectionIsRequested = (atomic_get(&wifi_ConnectionIsRequested) != 0);
+
+            if(connectionIsRequested)
             {
                 (void)k_event_post(&wifi_Events, WIFI_EVENT_CONNECTED);
             }
 
             break;
+        }
 
         default:
             break;
@@ -1441,9 +1534,11 @@ static int wifi_mapFailure(int status)
 
 static void wifi_addScanResult(const struct wifi_scan_result *result)
 {
+    const bool securityIsSupported = wifi_isSupportedSecurity(result->security);
+
     /* Hidden networks have no name to show; enterprise and WEP need more than a password. */
     /* Keep only named networks with supported lengths and security. */
-    if((result->ssid_length != 0U) && (result->ssid_length <= WIFI_SSID_MAX_LEN) && wifi_isSupportedSecurity(result->security))
+    if((result->ssid_length != 0U) && (result->ssid_length <= WIFI_SSID_MAX_LEN) && securityIsSupported)
     {
         struct wifi_scan_entry entry = {.needsPassword = (result->security != WIFI_SECURITY_TYPE_NONE)};
         bool isListed = false;

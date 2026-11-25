@@ -284,7 +284,9 @@ int physicalinterface_init(const struct physicalinterface_input_handlers *handle
 
 void physicalinterface_showFeedback(enum feedback_code code)
 {
-    if(!physicalinterface_isFeedbackCode(code))
+    const bool isKnownCode = physicalinterface_isFeedbackCode(code);
+
+    if(!isKnownCode)
     {
         LOG_WRN("Unknown feedback code %d", code);
     }
@@ -309,9 +311,10 @@ void physicalinterface_showFeedback(enum feedback_code code)
 
 static int physicalinterface_initStatusLight(void)
 {
+    const bool isDriverReady = device_is_ready(physicalinterface_statusLightDevice);
     int result = 0;
 
-    if(!device_is_ready(physicalinterface_statusLightDevice))
+    if(!isDriverReady)
     {
         LOG_ERR("Status light driver %s is not ready", physicalinterface_statusLightDevice->name);
         result = -ENODEV;
@@ -324,9 +327,10 @@ static int physicalinterface_initStatusLight(void)
 
 static int physicalinterface_initButtonLight(void)
 {
+    const bool isPortReady = gpio_is_ready_dt(&physicalinterface_buttonLight);
     int result = 0;
 
-    if(!gpio_is_ready_dt(&physicalinterface_buttonLight))
+    if(!isPortReady)
     {
         LOG_ERR("Button light GPIO port %s is not ready", physicalinterface_buttonLight.port->name);
         result = -ENODEV;
@@ -351,7 +355,9 @@ static int physicalinterface_initButton(void)
     k_work_init_delayable(&physicalinterface_buttonDebounceWork, physicalinterface_debounceButton);
     k_work_init_delayable(&physicalinterface_buttonLongPressWork, physicalinterface_reportLongPress);
 
-    if(!gpio_is_ready_dt(&physicalinterface_button))
+    const bool isPortReady = gpio_is_ready_dt(&physicalinterface_button);
+
+    if(!isPortReady)
     {
         LOG_ERR("Button GPIO port %s is not ready", physicalinterface_button.port->name);
         return -ENODEV;
@@ -453,14 +459,17 @@ static void physicalinterface_reportLongPress(struct k_work *work)
 static int physicalinterface_initSwitch(void)
 {
     const struct gpio_dt_spec *contacts[] = {&physicalinterface_rawContact, &physicalinterface_murmurContact, &physicalinterface_bpmContact};
+    const size_t contactCount = ARRAY_SIZE(contacts);
     int result = 0;
 
     physicalinterface_resetSwitchDebounce(&physicalinterface_switchDebounce);
     k_work_init_delayable(&physicalinterface_switchPollWork, physicalinterface_pollSwitch);
 
-    for(size_t index = 0; (index < ARRAY_SIZE(contacts)) && (result == 0); index++)
+    for(size_t index = 0; (index < contactCount) && (result == 0); index++)
     {
-        if(!gpio_is_ready_dt(contacts[index]))
+        const bool isPortReady = gpio_is_ready_dt(contacts[index]);
+
+        if(!isPortReady)
         {
             LOG_ERR("Switch GPIO port %s is not ready", contacts[index]->port->name);
             result = -ENODEV;
@@ -488,8 +497,9 @@ static void physicalinterface_pollSwitch(struct k_work *work)
 
     struct physicalinterface_switch_sample sample = physicalinterface_readSwitch();
     int64_t nowMilliseconds = k_uptime_get();
+    const bool isStablePositionNew = physicalinterface_debounceSwitch(&physicalinterface_switchDebounce, sample, nowMilliseconds);
 
-    if(physicalinterface_debounceSwitch(&physicalinterface_switchDebounce, sample, nowMilliseconds))
+    if(isStablePositionNew)
     {
         struct physicalinterface_listening_filter_reading reading = {
             .filter = physicalinterface_switchDebounce.stable.filter,
@@ -547,18 +557,23 @@ static int physicalinterface_initPotentiometer(void)
     {
         LOG_INF("Volume potentiometer not fitted; reporting it absent");
     }
-    else if(!adc_is_ready_dt(&physicalinterface_potentiometer))
-    {
-        LOG_ERR("Potentiometer ADC %s is not ready", physicalinterface_potentiometer.dev->name);
-        result = -ENODEV;
-    }
     else
     {
-        result = adc_channel_setup_dt(&physicalinterface_potentiometer);
+        const bool isADCReady = adc_is_ready_dt(&physicalinterface_potentiometer);
 
-        if(result != 0)
+        if(!isADCReady)
         {
-            LOG_ERR("Potentiometer ADC channel setup failed: %d", result);
+            LOG_ERR("Potentiometer ADC %s is not ready", physicalinterface_potentiometer.dev->name);
+            result = -ENODEV;
+        }
+        else
+        {
+            result = adc_channel_setup_dt(&physicalinterface_potentiometer);
+
+            if(result != 0)
+            {
+                LOG_ERR("Potentiometer ADC channel setup failed: %d", result);
+            }
         }
     }
 
@@ -583,7 +598,9 @@ static void physicalinterface_pollVolume(struct k_work *work)
         status = ((result == 0) ? PHYSICALINTERFACE_INPUT_VALID : PHYSICALINTERFACE_INPUT_FAILED);
     }
 
-    if(physicalinterface_trackVolume(&physicalinterface_volumeTracker, status, millivolts))
+    const bool isVolumeReportNeeded = physicalinterface_trackVolume(&physicalinterface_volumeTracker, status, millivolts);
+
+    if(isVolumeReportNeeded)
     {
         if(status == PHYSICALINTERFACE_INPUT_FAILED)
         {
