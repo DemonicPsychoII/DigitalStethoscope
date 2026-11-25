@@ -181,6 +181,19 @@ class SnapshotTests(unittest.TestCase):
         files[GITLAB_README_SOURCE] = b"[gone](../design/README.md)\n"
         self.assertEqual(len(check(files)), 1)
 
+    def test_root_page_link_that_is_not_rewritten_is_found(self):
+        for text in (
+            b'[spec](../spec/product-scope.md "title")\n',
+            b"[spec]: ../spec/product-scope.md\n",
+            b'<a href="../spec/product-scope.md">spec</a>\n',
+        ):
+            with self.subTest(text=text):
+                files = self.files()
+                files[GITLAB_README_SOURCE] = text
+                findings = check(files)
+                self.assertEqual(len(findings), 1, findings)
+                self.assertIn("README.md", findings[0])
+
     def test_root_page_links_are_rewritten_for_the_root(self):
         self.assertEqual(
             gitlab_readme(self.README.decode("utf-8")),

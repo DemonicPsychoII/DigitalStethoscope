@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import argparse
 import io
+import os
 import posixpath
 import re
 import subprocess
@@ -268,7 +269,13 @@ def check(files: dict[str, bytes]) -> list[str]:
             findings.append(f"{path}: not UTF-8 text and not listed as a binary file")
             continue
         findings.extend(content_findings(path, text))
-        findings.extend(link_findings(path, text, selected))
+        if path == GITLAB_README_SOURCE:
+            # The root page is checked as it is exported: rewritten, at the repository root.
+            findings.extend(
+                link_findings(GITLAB_README_TARGET, gitlab_readme(text), selected)
+            )
+        else:
+            findings.extend(link_findings(path, text, selected))
     return findings
 
 
@@ -323,8 +330,10 @@ def main() -> int:
     if arguments.command == "check":
         print(f"Transfer set of {arguments.revision} is clean: {len(files)} file(s).")
         return 0
+    # A dangling link at the destination does not exist any more once it is resolved.
+    exists_as_given = os.path.lexists(arguments.destination)
     destination = arguments.destination.resolve()
-    if destination.exists():
+    if exists_as_given or destination.exists():
         print(
             f"{destination} exists already; export needs a new directory.",
             file=sys.stderr,
