@@ -8,15 +8,15 @@ heart rate and sends the result to a FHIR server in the local network.
 
 | Folder | Content |
 |---|---|
-| [Product specification](Development/system/spec/product-scope.md) | Purpose, product boundary, functions and terminology |
-| [Requirements](Development/system/requirements/README.md) | Use-case flows and the system requirements with their tests |
-| [Architecture](Development/system/architecture/README.md) | System architecture and the architecture of each module |
-| [Design](Development/system/design/README.md) | Detailed design of each module and the cross-module design |
-| [Code](Development/system/coding/app/README.md) | Firmware application, build and flash instructions |
-| [Reference code](Development/system/references/newtec-pulsoxy/README.md) | PulsOxy code of NewTec GmbH that the design refers to |
+| [Product specification](../spec/product-scope.md) | Purpose, product boundary, functions and terminology |
+| [Requirements](../requirements/README.md) | Use-case flows and the system requirements with their tests |
+| [Architecture](../architecture/README.md) | System architecture and the architecture of each module |
+| [Design](../design/README.md) | Detailed design of each module and the cross-module design |
+| [Code](../coding/app/README.md) | Firmware application, build and flash instructions |
+| [Reference code](../references/newtec-pulsoxy/README.md) | PulsOxy code of NewTec GmbH that the design refers to |
 
 ## Build
 
 The firmware builds with the Zephyr toolchain that the scripts under
-`Development/system/coding/tools/` set up. The [firmware README](Development/system/coding/app/README.md)
+`Development/system/coding/tools/` set up. The [firmware README](../coding/app/README.md)
 gives the commands for building, flashing and debugging.
