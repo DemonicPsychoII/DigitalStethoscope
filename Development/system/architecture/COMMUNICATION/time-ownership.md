@@ -2,7 +2,7 @@
 
 ## Basis and scope
 
-Time synchronization refines the [system allocation](../system/puml/software-components.puml) under REQ-02, REQ-09, REQ-10, REQ-11 and REQ-13.
+Time synchronization refines the [system allocation](../system/puml/software-components.puml) under [REQ-02](../../requirements/system-requirements.md#req-02), [REQ-09](../../requirements/system-requirements.md#req-09), [REQ-10](../../requirements/system-requirements.md#req-10), [REQ-11](../../requirements/system-requirements.md#req-11) and [REQ-13](../../requirements/system-requirements.md#req-13).
 
 L1_WIFI performs the time operations and L2_COMMUNICATION orchestrates them.
 
@@ -36,10 +36,10 @@ Time synchronization and clock-correction handling neither extend the delivery b
 
 | Scenario | Trace | Expected outcome |
 | --- | --- | --- |
-| No clock, failed exchange or no qualifying clock anchor | REQ-09/REQ-11; VT-07/VT-08 | Delivery is blocked until a qualifying clock anchor exists; no invented measurement timestamp or bypassed certificate checks; readiness failure is reported. |
-| Synchronization requested while listening | REQ-02/REQ-13; VT-08/VT-09 | No active time exchange; working offline audio remains available. |
-| Clock correction around a completed measurement | REQ-09/REQ-10; VT-07 | Measurement interval and frozen delivery identity remain unchanged. |
-| Reference comparison on target | REQ-09; VT-07 | Measured clock skew against the reference stays within the specified timestamp accuracy limit. |
+| No clock, failed exchange or no qualifying clock anchor | [REQ-09](../../requirements/system-requirements.md#req-09)/[REQ-11](../../requirements/system-requirements.md#req-11); VT-07/VT-08 | Delivery is blocked until a qualifying clock anchor exists; no invented measurement timestamp or bypassed certificate checks; readiness failure is reported. |
+| Synchronization requested while listening | [REQ-02](../../requirements/system-requirements.md#req-02)/[REQ-13](../../requirements/system-requirements.md#req-13); VT-08/VT-09 | No active time exchange; working offline audio remains available. |
+| Clock correction around a completed measurement | [REQ-09](../../requirements/system-requirements.md#req-09)/[REQ-10](../../requirements/system-requirements.md#req-10); VT-07 | Measurement interval and frozen delivery identity remain unchanged. |
+| Reference comparison on target | [REQ-09](../../requirements/system-requirements.md#req-09); VT-07 | Measured clock skew against the reference stays within the specified timestamp accuracy limit. |
 
 ## Sources
 

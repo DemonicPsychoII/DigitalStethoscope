@@ -6,7 +6,7 @@ L2_COMMUNICATION workflow parameters are defined below. Radio operation limits a
 | --- | --- | --- | --- |
 | P19 | Network exclusion | No active setup, reconnect, time-sync, TLS or HTTP jobs during listening or measurement; existing station association is retained; Start cancels setup before audio | L2_COMMUNICATION, L2_CONTROL |
 | P21-COMMUNICATION | Setup entry and inactivity | Boot without usable credentials or 2 s hold in Idle; 5 min inactivity; actions pause it, selection/input/Rescan reset it, status polling does not | L2_COMMUNICATION, L2_CONTROL |
-| P23 | Wi-Fi retry / exit | Boot/reconnect/scan 4 attempts total, 5 s between failures; portal join 1; save 2; hotspot start manual; success/save warning 10 s, Cancel/timeout notice then teardown; connect budget 15 s, scan 10 s, link check 2 min, close notice 2 s, scan list 16, event-check interval 200 ms; cleanup: one stop try per pending service of the seven in [cleanup limits](#cleanup-limits-p23), each bounded to 1 s; at most five are pending together, so a cleanup pass takes at most 5 s; a delivery attempt reserves 1 s; on a failed stop, L2_COMMUNICATION latches WIFI_CLEANUP_FAILURE, disables network work until restart and releases audio under REQ-13; scan-cancel and disconnect-confirmation waits 1 s each; HTTP server-start readiness and stop confirmation 1 s each | L2_COMMUNICATION, L2_CONTROL |
+| P23 | Wi-Fi retry / exit | Boot/reconnect/scan 4 attempts total, 5 s between failures; portal join 1; save 2; hotspot start manual; success/save warning 10 s, Cancel/timeout notice then teardown; connect budget 15 s, scan 10 s, link check 2 min, close notice 2 s, scan list 16, event-check interval 200 ms; cleanup: one stop try per pending service of the seven in [cleanup limits](#cleanup-limits-p23), each bounded to 1 s; at most five are pending together, so a cleanup pass takes at most 5 s; a delivery attempt reserves 1 s; on a failed stop, L2_COMMUNICATION latches WIFI_CLEANUP_FAILURE, disables network work until restart and releases audio under [REQ-13](../../requirements/system-requirements.md#req-13); scan-cancel and disconnect-confirmation waits 1 s each; HTTP server-start readiness and stop confirmation 1 s each | L2_COMMUNICATION, L2_CONTROL |
 
 P23 owns the retry, result-display, close-notice and cleanup limits. Its radio wait and cache limits are allocated to P23-WIFI, and its HTTP readiness and stop limits are allocated to P24.
 
@@ -31,7 +31,7 @@ Which services can be pending together follows from the single worker thread:
 - **Cleanup pass: at most 5 s** = 5 services × 1 s.
 - **Delivery cleanup reserve: 1 s.** A delivery attempt has at most one service pending, so the P13 reserve of one stop bound per pending service is 1 s.
 
-A failed stop latches WIFI_CLEANUP_FAILURE, disables network work until restart and releases audio under REQ-13.
+A failed stop latches WIFI_CLEANUP_FAILURE, disables network work until restart and releases audio under [REQ-13](../../requirements/system-requirements.md#req-13).
 
 ## Retry conventions
 

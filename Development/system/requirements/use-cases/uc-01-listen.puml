@@ -1,6 +1,10 @@
 @startuml uc_01_listen
+!theme cyborg
 skinparam shadowing false
 skinparam defaultFontName SansSerif
+skinparam backgroundColor #0b1018
+skinparam defaultFontColor #e6edf7
+skinparam ArrowColor #a9b8ca
 title F1 Power up and listen (REQ-01..REQ-05)
 start
 :Operator powers on the device;

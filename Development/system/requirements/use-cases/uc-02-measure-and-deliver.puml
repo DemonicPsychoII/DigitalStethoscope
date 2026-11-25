@@ -1,6 +1,10 @@
 @startuml uc_02_measure_and_deliver
+!theme cyborg
 skinparam shadowing false
 skinparam defaultFontName SansSerif
+skinparam backgroundColor #0b1018
+skinparam defaultFontColor #e6edf7
+skinparam ArrowColor #a9b8ca
 title F2 Measure heart rate and deliver it (REQ-06..REQ-10)
 start
 :Operator presses Start and listens;

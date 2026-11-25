@@ -37,7 +37,7 @@ Für das geplante digitale Stethoskop wird als Literatur-basiertes Entwicklungsz
 
 R09 fordert, „Echtzeit“ für die Live-Auskultation über eine messbare End-to-End-Latenz zu operationalisieren.
 
-> **Neuerer Stand (Stand integration, 2026-10-22):** Eine Messung der End-to-End-Latenz ist im Projekt nicht vorgesehen. Aktuell: Kein Zweikanal-Aufnahmeaufbau verfügbar; Prüfung nach Gehör (REQ-05: Klopfen am Bruststück ist zusammen mit der Berührung zu hören). <30 ms bleibt ungemessenes Designziel (P03). – siehe [MVP-Entscheidungen 14.10. (Umfang)](../../Development/system/planning/mvp-decisions-2026-10-14.md#scope), [Systemanforderungen](../../Development/system/requirements/system-requirements.md#system-requirements-mvp).
+> **Neuerer Stand (Stand integration, 2026-10-22):** Eine Messung der End-to-End-Latenz ist im Projekt nicht vorgesehen. Aktuell: Kein Zweikanal-Aufnahmeaufbau verfügbar; Prüfung nach Gehör (REQ-05: Klopfen am Bruststück ist zusammen mit der Berührung zu hören). <30 ms bleibt ungemessenes Designziel (P03). – siehe [MVP-Entscheidungen 14.10. (Umfang)](../../Development/system/planning/mvp-decisions-2026-10-14.md#scope), [Systemanforderungen](../../Development/system/requirements/system-requirements.md#system-requirements).
 
 **Ursprung:** [preThesis/03-recherche/R09-latenz.md:10-17](../../preThesis/03-recherche/R09-latenz.md#L10)
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.

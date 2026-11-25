@@ -228,7 +228,7 @@ For a normal Stop, `i2s_stop` [1]:
 | Internal RAM | 2,560 + 2,560 + 256 bytes | 5,376 bytes, plus thread stack and driver descriptors |
 
 The transport delay and the reserves follow from the driver behavior [1] and the converter
-datasheets [2] [3]. P03 is judged by ear under REQ-05. The
+datasheets [2] [3]. P03 is judged by ear under [REQ-05](../../requirements/system-requirements.md#req-05). The
 [block-size comparison](#sample-rate-and-block-size-rationale) applies the same derivation to 32-
 and 128-frame blocks.
 
@@ -251,16 +251,16 @@ and the TX driver queue 4 in normal operation [1].
 
 | Scenario | Basis | Expected result |
 | --- | --- | --- |
-| Boot with both links ready | VT-01, REQ-01 | Stopped; no TX stream and no sound before Start |
+| Boot with both links ready | VT-01, [REQ-01](../../requirements/system-requirements.md#req-01) | Stopped; no TX stream and no sound before Start |
 | Boot with an I2S controller not ready or its configuration rejected, injected on the host at the driver boundary | VT-01 | Failure for that link; `L2_CONTROL` shows `MICROPHONE_FAILURE` or `AUDIO_OUTPUT_FAILURE` |
 | Stop while a link is in the driver's ERROR state, injected on the host at the driver boundary | VT-01 | No `stopped` event; both links dropped; restart-required fault reported |
-| Start, then Stop, 10 times in a row | REQ-01, REQ-02, VT-04 | `started` after priming and RX before TX; `stopped`, output silent; after every Stop all 5 blocks of each pool are free |
-| Heart sounds after Start | REQ-02 | Audible on both channels within 2 s |
+| Start, then Stop, 10 times in a row | [REQ-01](../../requirements/system-requirements.md#req-01), [REQ-02](../../requirements/system-requirements.md#req-02), VT-04 | `started` after priming and RX before TX; `stopped`, output silent; after every Stop all 5 blocks of each pool are free |
+| Heart sounds after Start | [REQ-02](../../requirements/system-requirements.md#req-02) | Audible on both channels within 2 s |
 | Processing step with a known RX block, Raw position and 100 % volume | VT-03 | Both TX slots of every frame equal the left RX slot with its low 8 bits cleared; the right RX slot is ignored |
 | Receive wait expires | VT-01 | Microphone failure; stream stopped; catalogue error |
 | Thread more than 12 ms behind, processing included | VT-02 | Driver stops the stream; fault reported; no hang and no repeated stale audio |
 | 10 min of listening under load | VT-02 | No fault; longest iteration time ≤ 3 ms; RX pool use below 5; constant TX level (no drift) |
-| Tap on the chestpiece | REQ-05 | No noticeable delay |
+| Tap on the chestpiece | [REQ-05](../../requirements/system-requirements.md#req-05) | No noticeable delay |
 
 ## Sources
 

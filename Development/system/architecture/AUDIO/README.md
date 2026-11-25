@@ -52,9 +52,9 @@ the transport boundary unchanged.
 
 | Scenario | Basis | Expected result |
 | --- | --- | --- |
-| Power-on, then wait without Start | REQ-01, VT-01 | No sound on either DAC channel; no TX stream before Start |
-| Start with the chestpiece on the chest | REQ-02 | Heart sounds audible on both channels within 2 s of Start |
-| Tap the chestpiece during listening | REQ-05, VT-02 | Tap heard together with the touch, no echo or lag |
+| Power-on, then wait without Start | [REQ-01](../../requirements/system-requirements.md#req-01), VT-01 | No sound on either DAC channel; no TX stream before Start |
+| Start with the chestpiece on the chest | [REQ-02](../../requirements/system-requirements.md#req-02) | Heart sounds audible on both channels within 2 s of Start |
+| Tap the chestpiece during listening | [REQ-05](../../requirements/system-requirements.md#req-05), VT-02 | Tap heard together with the touch, no echo or lag |
 | Microphone or DAC link fails to start | VT-01 | Silent output and the error indication for the failed link |
 | Audio thread delayed beyond the pool reserve | VT-02 | Stream stops, fault reported, output silent; no silent hang |
 | Listening for at least 10 minutes | VT-02 | No stream fault; TX queue level stays constant, so the two links do not drift |

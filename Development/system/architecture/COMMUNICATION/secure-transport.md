@@ -2,7 +2,7 @@
 
 ## Basis and scope
 
-Secure transport builds on the [software allocation](../system/puml/software-components.puml). REQ-09, REQ-10 and REQ-11 establish delivery, bounded failure handling and certificate verification.
+Secure transport builds on the [software allocation](../system/puml/software-components.puml). [REQ-09](../../requirements/system-requirements.md#req-09), [REQ-10](../../requirements/system-requirements.md#req-10) and [REQ-11](../../requirements/system-requirements.md#req-11) establish delivery, bounded failure handling and certificate verification.
 
 L1_WIFI owns Wi-Fi, TLS and time operations, and L2_COMMUNICATION owns workflow policy. Station, provisioning and TLS operations use separate interfaces within L1_WIFI.
 
@@ -36,7 +36,7 @@ L1_WIFI verifies the server certificate against the server profile trust materia
 
 The local provisioning HTTP server is L1_PORTAL's separate responsibility. Successful Wi-Fi setup does not imply TLS readiness. Device registration, examination-context ingress and result delivery use the secure-server boundary.
 
-Active connection work follows the exclusive network lease. L1_WIFI owns connection resources through cleanup, and L2_COMMUNICATION reports lease release only after active operations end. Network-only failure preserves working offline listening under REQ-13.
+Active connection work follows the exclusive network lease. L1_WIFI owns connection resources through cleanup, and L2_COMMUNICATION reports lease release only after active operations end. Network-only failure preserves working offline listening under [REQ-13](../../requirements/system-requirements.md#req-13).
 
 The device uses SNTP time without authenticating the time server. Transport verification authenticates the server; it does not authorize an examination request.
 
@@ -44,9 +44,9 @@ The device uses SNTP time without authenticating the time server. Transport veri
 
 | Scenario | Trace | Expected outcome |
 | --- | --- | --- |
-| Untrusted issuer, wrong name, expired certificate or unavailable clock basis | REQ-11; VT-08 | Verification failure prevents sending; no insecure fallback. |
-| Handshake failure or incomplete response | REQ-09/REQ-10; VT-07/VT-08 | L2_COMMUNICATION applies bounded outcome/retry policy; transport releases resources. |
-| Active transport requested during listening | REQ-02/REQ-13; VT-08/VT-09 | No active transport work; offline listening remains available. |
-| Retained connection closes during listening | REQ-02/REQ-10/REQ-13; VT-08/VT-09 | No proactive reconnect or application heartbeat; reconnect after listening within the delivery budget. |
-| Reuse and retained-stack load | REQ-02/REQ-09/REQ-11; VT-02/VT-08 | Verified TLS 1.3 connection is reused when available without degrading audio output. |
-| Logs and repeated failure cleanup | REQ-10/REQ-13; VT-08/VT-11 | No secrets or patient data in logs; bounded cleanup/release are observable. |
+| Untrusted issuer, wrong name, expired certificate or unavailable clock basis | [REQ-11](../../requirements/system-requirements.md#req-11); VT-08 | Verification failure prevents sending; no insecure fallback. |
+| Handshake failure or incomplete response | [REQ-09](../../requirements/system-requirements.md#req-09)/[REQ-10](../../requirements/system-requirements.md#req-10); VT-07/VT-08 | L2_COMMUNICATION applies bounded outcome/retry policy; transport releases resources. |
+| Active transport requested during listening | [REQ-02](../../requirements/system-requirements.md#req-02)/[REQ-13](../../requirements/system-requirements.md#req-13); VT-08/VT-09 | No active transport work; offline listening remains available. |
+| Retained connection closes during listening | [REQ-02](../../requirements/system-requirements.md#req-02)/[REQ-10](../../requirements/system-requirements.md#req-10)/[REQ-13](../../requirements/system-requirements.md#req-13); VT-08/VT-09 | No proactive reconnect or application heartbeat; reconnect after listening within the delivery budget. |
+| Reuse and retained-stack load | [REQ-02](../../requirements/system-requirements.md#req-02)/[REQ-09](../../requirements/system-requirements.md#req-09)/[REQ-11](../../requirements/system-requirements.md#req-11); VT-02/VT-08 | Verified TLS 1.3 connection is reused when available without degrading audio output. |
+| Logs and repeated failure cleanup | [REQ-10](../../requirements/system-requirements.md#req-10)/[REQ-13](../../requirements/system-requirements.md#req-13); VT-08/VT-11 | No secrets or patient data in logs; bounded cleanup/release are observable. |
