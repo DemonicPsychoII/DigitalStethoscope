@@ -231,11 +231,11 @@ int wifi_configureSecureServer(const char *baseUrl, const char *certificate, siz
 {
     if((baseUrl == NULL) || (certificate == NULL) || (certificateLength == 0U) || (server == NULL))
     {
-        return -EINVAL; /**< Invalid argument or unsupported input. */
+        return -EINVAL;
     }
     if(wifi_SecureServerIsConfigured)
     {
-        return -EALREADY; /**< The image is validated once at boot. */
+        return -EALREADY;
     }
 
     int result = wifi_parseBaseUrl(baseUrl);
@@ -250,7 +250,7 @@ int wifi_configureSecureServer(const char *baseUrl, const char *certificate, siz
 
     if(cryptoStatus != PSA_SUCCESS)
     {
-        return -EIO; /**< Crypto subsystem unavailable. */
+        return -EIO;
     }
 
     mbedtls_x509_crt_init(&wifi_TrustedCertificate);
@@ -260,7 +260,7 @@ int wifi_configureSecureServer(const char *baseUrl, const char *certificate, siz
     {
         LOG_WRN("Server certificate unusable (-0x%04x)", (unsigned int)-result);
         mbedtls_x509_crt_free(&wifi_TrustedCertificate);
-        return -EBADMSG; /**< Not exactly one parsable certificate. */
+        return -EBADMSG;
     }
 
     result = wifi_checkSubjectAlternativeName(&wifi_TrustedCertificate);
@@ -277,7 +277,7 @@ int wifi_configureSecureServer(const char *baseUrl, const char *certificate, siz
     {
         mbedtls_x509_crt_free(&wifi_TrustedCertificate);
         mbedtls_ssl_config_free(&wifi_SecureConfiguration);
-        return -ENOMEM; /**< mbedTLS could not set up its configuration. */
+        return -ENOMEM;
     }
     /* P26-VERSION: TLS 1.3 only, mandatory server verification, no client certificate. */
     mbedtls_ssl_conf_min_tls_version(&wifi_SecureConfiguration, MBEDTLS_SSL_VERSION_TLS1_3);
@@ -303,7 +303,7 @@ int wifi_startSecureConnection(k_timepoint_t deadline)
 {
     if(!wifi_SecureServerIsConfigured)
     {
-        return -ENOENT; /**< No configured server. */
+        return -ENOENT;
     }
 
     int result = 0;
@@ -312,7 +312,7 @@ int wifi_startSecureConnection(k_timepoint_t deadline)
     /* COMPLETED is only reached after release, so CANCELLING keeps Start blocked; a retained connection must be closed first. */
     if((wifi_SecureState == WIFI_SECURE_PENDING) || (wifi_SecureState == WIFI_SECURE_CANCELLING) || wifi_SecureConnectionIsRetained)
     {
-        result = -EBUSY; /**< Service is busy with another operation or connection. */
+        result = -EBUSY;
     }
     else
     {
@@ -356,7 +356,7 @@ int wifi_cancelSecureConnection(void)
 
     if(requestLockResult != 0)
     {
-        return -ETIMEDOUT; /**< Release could not be confirmed within the stop bound. */
+        return -ETIMEDOUT;
     }
 
     const uint32_t generation = wifi_SecureGeneration;
@@ -384,7 +384,7 @@ int wifi_cancelSecureConnection(void)
 
     if(confirmationLockResult != 0)
     {
-        return -ETIMEDOUT; /**< Release could not be confirmed within the stop bound. */
+        return -ETIMEDOUT;
     }
     const int result = (wifi_SecureState == WIFI_SECURE_CANCELLING) ? -ETIMEDOUT : 0;
     (void)k_mutex_unlock(&wifi_SecureLock);
@@ -428,7 +428,7 @@ int wifi_startSecureExchange(const struct wifi_http_request *request, struct wif
 
     if(!wifi_SecureServerIsConfigured)
     {
-        result = -ENOENT; /**< No configured server. */
+        result = -ENOENT;
     }
     else if((request == NULL) || (response == NULL))
     {
@@ -440,7 +440,7 @@ int wifi_startSecureExchange(const struct wifi_http_request *request, struct wif
 
         if((wifi_SecureState == WIFI_SECURE_PENDING) || (wifi_SecureState == WIFI_SECURE_CANCELLING))
         {
-            result = -EBUSY; /**< Service is busy with another operation. */
+            result = -EBUSY;
         }
         else if(!wifi_SecureConnectionIsRetained)
         {
@@ -570,7 +570,7 @@ static void wifi_runSecureConnection(struct k_work *work)
         {
             return;
         }
-        result = -ECANCELED; /**< Cancellation won over a completed handshake. */
+        result = -ECANCELED;
     }
 
     const int releaseResult = wifi_releaseSecureResources();
@@ -624,7 +624,7 @@ static void wifi_runSecureExchange(uint32_t generation, k_timepoint_t deadline)
 
         if((result == 0) && !isCurrent)
         {
-            result = -ECANCELED; /**< Cancellation won over a complete response. */
+            result = -ECANCELED;
         }
     }
 
@@ -658,14 +658,14 @@ static int wifi_writeSecureBytes(uint32_t generation, k_timepoint_t deadline, co
 
         if(!operationIsAdmitted)
         {
-            return -ECANCELED; /**< Cancellation ended the operation. */
+            return -ECANCELED;
         }
 
         const bool deadlineHasExpired = sys_timepoint_expired(deadline);
 
         if(deadlineHasExpired)
         {
-            return -ETIMEDOUT; /**< Write-and-receipt budget used up. */
+            return -ETIMEDOUT;
         }
 
         /* mbedTLS may accept fewer bytes than offered, for example one record at a time. */
@@ -685,7 +685,7 @@ static int wifi_writeSecureBytes(uint32_t generation, k_timepoint_t deadline, co
         }
         else
         {
-            result = -ECONNRESET; /**< Transport or TLS failure. */
+            result = -ECONNRESET;
         }
     }
 
@@ -733,7 +733,7 @@ static int wifi_readSecureResponse(uint32_t generation, k_timepoint_t deadline, 
         }
         else
         {
-            result = -ECONNRESET; /**< Transport or TLS failure. */
+            result = -ECONNRESET;
         }
 
         /* Data that keeps arriving never waits, so the budget and cancellation are checked here too. */
@@ -779,7 +779,7 @@ static int wifi_waitForSecureOperation(enum wifi_secure_operation operation, enu
     enum wifi_secure_state stateBeforeWait = WIFI_SECURE_IDLE;
     uint32_t awaitedGeneration = 0U;
     bool isAwaited = false;
-    int result = -EAGAIN; /**< Still pending, or the state was busy for this call's interval. */
+    int result = -EAGAIN;
     const int snapshotLockResult = k_mutex_lock(&wifi_SecureLock, sys_timepoint_timeout(deadline));
 
     if(snapshotLockResult == 0)
@@ -792,7 +792,7 @@ static int wifi_waitForSecureOperation(enum wifi_secure_operation operation, enu
 
         if(!isAwaited)
         {
-            result = -EINVAL; /**< Nothing of this kind to wait for. */
+            result = -EINVAL;
         }
     }
 
@@ -810,7 +810,7 @@ static int wifi_waitForSecureOperation(enum wifi_secure_operation operation, enu
         {
             if(wifi_SecureGeneration != awaitedGeneration)
             {
-                result = -ECANCELED; /**< A newer Start replaced the awaited operation. */
+                result = -ECANCELED;
             }
             else if(wifi_SecureState == WIFI_SECURE_COMPLETED)
             {
@@ -853,7 +853,7 @@ static int wifi_resolveSecureServer(uint32_t generation, k_timepoint_t deadline,
     const k_timeout_t remaining = sys_timepoint_timeout(deadline);
     if(remaining.ticks <= 0)
     {
-        return -ETIMEDOUT; /**< No budget left for DNS. */
+        return -ETIMEDOUT;
     }
 
     return wifi_resolveIpv4(&wifi_SecureServerLookup,
@@ -934,7 +934,7 @@ static int wifi_runHandshake(uint32_t generation, k_timepoint_t deadline, enum w
     if(result != 0)
     {
         *cause = WIFI_SECURE_CONNECTION_CAUSE_CONFIGURATION;
-        return -ENOMEM; /**< mbedTLS could not set up the session. */
+        return -ENOMEM;
     }
     mbedtls_ssl_set_bio(&wifi_SecureSession, &wifi_SecureSocket, wifi_sendSecureData, wifi_receiveSecureData, NULL);
 
@@ -979,7 +979,7 @@ static int wifi_runHandshake(uint32_t generation, k_timepoint_t deadline, enum w
             if(!operationIsAdmitted)
             {
                 *cause = WIFI_SECURE_CONNECTION_CAUSE_CANCELLED;
-                return -ECANCELED; /**< Cancellation ended the handshake. */
+                return -ECANCELED;
             }
         }
 
@@ -998,12 +998,12 @@ static int wifi_runHandshake(uint32_t generation, k_timepoint_t deadline, enum w
     {
         LOG_WRN("Server verification failed (flags 0x%x)", verification);
         *cause = WIFI_SECURE_CONNECTION_CAUSE_TRUST;
-        return -EACCES; /**< Certificate, name or validity rejected. */
+        return -EACCES;
     }
 
     LOG_WRN("TLS handshake failed (-0x%04x)", (unsigned int)-result);
     *cause = WIFI_SECURE_CONNECTION_CAUSE_TLS;
-    return -EPROTO; /**< Handshake failed, for example no TLS 1.3 or a required client certificate. */
+    return -EPROTO;
 }
 
 static int wifi_waitForSocket(uint32_t generation, k_timepoint_t deadline, short events)
@@ -1014,14 +1014,14 @@ static int wifi_waitForSocket(uint32_t generation, k_timepoint_t deadline, short
 
         if(!operationIsAdmitted)
         {
-            return -ECANCELED; /**< Cancellation ended the operation. */
+            return -ECANCELED;
         }
 
         const bool deadlineHasExpired = sys_timepoint_expired(deadline);
 
         if(deadlineHasExpired)
         {
-            return -ETIMEDOUT; /**< Not finished within the setup budget. */
+            return -ETIMEDOUT;
         }
 
         struct zsock_pollfd descriptor = {.fd = wifi_SecureSocket, .events = events};
@@ -1036,7 +1036,7 @@ static int wifi_waitForSocket(uint32_t generation, k_timepoint_t deadline, short
 
             if(socketHasFailed)
             {
-                return -ECONNRESET; /**< Socket failed while waiting. */
+                return -ECONNRESET;
             }
             /* POLLHUP alone still lets mbedTLS read the remaining data and report the close. */
             return 0;
@@ -1116,13 +1116,13 @@ static int wifi_parseBaseUrl(const char *baseUrl)
 
     if(!schemeIsHttps)
     {
-        return -EINVAL; /**< Only HTTPS; no plain-HTTP fallback. */
+        return -EINVAL;
     }
 
     const char *host = baseUrl + (sizeof(scheme) - 1U);
     if(*host == '[')
     {
-        return -EINVAL; /**< IPv6 literals are outside this version; the station resolves IPv4. */
+        return -EINVAL;
     }
 
     const char *hostEnd = host;
@@ -1133,7 +1133,7 @@ static int wifi_parseBaseUrl(const char *baseUrl)
     const size_t hostLength = (size_t)(hostEnd - host);
     if((hostLength == 0U) || (hostLength > WIFI_SECURE_HOST_MAX_LENGTH))
     {
-        return -EINVAL; /**< Missing or overlong host. */
+        return -EINVAL;
     }
 
     uint32_t port = WIFI_SECURE_DEFAULT_PORT;
@@ -1152,7 +1152,7 @@ static int wifi_parseBaseUrl(const char *baseUrl)
 
         if(!portHasDigits || (port == 0U) || (port > 65535U) || ((*digit != '\0') && (*digit != '/')))
         {
-            return -EINVAL; /**< Invalid port. */
+            return -EINVAL;
         }
         path = digit;
     }
@@ -1172,7 +1172,7 @@ static int wifi_parseBaseUrl(const char *baseUrl)
     }
     if(pathLength > WIFI_SECURE_BASE_PATH_MAX_LENGTH)
     {
-        return -EINVAL; /**< Overlong base path. */
+        return -EINVAL;
     }
 
     (void)memcpy(wifi_SecureHost, host, hostLength);
@@ -1198,7 +1198,7 @@ static int wifi_checkSubjectAlternativeName(const mbedtls_x509_crt *certificate)
 
     if(!certificateHasAlternativeName)
     {
-        return -EBADMSG; /**< No Subject Alternative Name. */
+        return -EBADMSG;
     }
 
     const size_t hostLength = strlen(wifi_SecureHost);
@@ -1227,7 +1227,7 @@ static int wifi_checkSubjectAlternativeName(const mbedtls_x509_crt *certificate)
         mbedtls_x509_free_subject_alt_name(&name);
     }
 
-    return isMatched ? 0 : -EBADMSG; /**< No SAN matches the configured host. */
+    return isMatched ? 0 : -EBADMSG;
 }
 
 static int64_t wifi_convertCertificateTime(const mbedtls_x509_time *time)

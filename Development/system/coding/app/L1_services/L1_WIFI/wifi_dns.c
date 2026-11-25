@@ -65,14 +65,14 @@ int wifi_resolveIpv4(struct wifi_dns_lookup *lookup,
 
     if(!isAdmitted)
     {
-        return -ECANCELED; /**< Cancellation withdrew the operation before DNS. */
+        return -ECANCELED;
     }
 
     const bool budgetIsUsedUp = sys_timepoint_expired(deadline);
 
     if(budgetIsUsedUp)
     {
-        return -ETIMEDOUT; /**< No budget left for DNS. */
+        return -ETIMEDOUT;
     }
 
     /* Submitted without the owner's lock: the resolver holds its own lock while calling back, and the callback takes the owner's. */
@@ -86,7 +86,7 @@ int wifi_resolveIpv4(struct wifi_dns_lookup *lookup,
     lookup->identifier = identifier;
     lookup->isSubmitted = true;
 
-    result = -EAGAIN; /**< DNS is still running. */
+    result = -EAGAIN;
     while(result == -EAGAIN)
     {
         (void)k_event_wait(lookup->events, lookup->resolvedEvent, false, K_MSEC(pollIntervalMs));
@@ -102,7 +102,7 @@ int wifi_resolveIpv4(struct wifi_dns_lookup *lookup,
 
         if(!operationIsCurrent)
         {
-            result = -ECANCELED; /**< Cancellation ended the operation during DNS. */
+            result = -ECANCELED;
         }
         else if(lookup->isComplete)
         {
@@ -114,7 +114,7 @@ int wifi_resolveIpv4(struct wifi_dns_lookup *lookup,
         }
         else if(deadlineHasExpired)
         {
-            result = -ETIMEDOUT; /**< DNS did not finish within the operation's time. */
+            result = -ETIMEDOUT;
         }
         (void)k_mutex_unlock(lookup->lock);
     }
@@ -176,7 +176,7 @@ static void wifi_handleResolution(enum dns_resolve_status status, struct dns_add
         {
             if(status == DNS_EAI_ALLDONE)
             {
-                lookup->result = lookup->addressIsValid ? 0 : -ENOENT; /**< No IPv4 record. */
+                lookup->result = lookup->addressIsValid ? 0 : -ENOENT;
             }
             else if(status == DNS_EAI_CANCELED)
             {
@@ -185,7 +185,7 @@ static void wifi_handleResolution(enum dns_resolve_status status, struct dns_add
             }
             else
             {
-                lookup->result = -EHOSTUNREACH; /**< The resolver could not resolve the name. */
+                lookup->result = -EHOSTUNREACH;
             }
             lookup->isComplete = true;
             hasFailed = (lookup->result != 0);

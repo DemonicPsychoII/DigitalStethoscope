@@ -315,7 +315,7 @@ int portal_start(void)
 {
     if(!portal_ServerStopIsConfirmed)
     {
-        return -EBUSY; /**< Service is busy with another operation. */
+        return -EBUSY;
     }
     (void)k_mutex_lock(&portal_Lock, K_FOREVER);
     (void)portal_clearSecret(portal_RequestQueue, sizeof(portal_RequestQueue));
@@ -347,7 +347,7 @@ int portal_start(void)
         }
         else
         {
-            result = -ETIMEDOUT; /**< Operation exceeded its wait deadline. */
+            result = -ETIMEDOUT;
         }
     }
     if(result != 0)
@@ -380,7 +380,7 @@ int portal_stop(void)
         return 0;
     }
     int result = http_server_stop();
-    if((result != 0) && (result != -EALREADY)) /**< Requested state is already active. */
+    if((result != 0) && (result != -EALREADY))
     {
         return result;
     }
@@ -389,7 +389,7 @@ int portal_stop(void)
 
     if(!isServerStopped)
     {
-        return -ETIMEDOUT; /**< Operation exceeded its wait deadline. */
+        return -ETIMEDOUT;
     }
     (void)k_mutex_lock(&portal_Lock, K_FOREVER);
     (void)portal_clearSecret(portal_Form, sizeof(portal_Form));
@@ -435,9 +435,9 @@ int portal_waitForRequest(struct portal_request *request, k_timeout_t timeout)
 {
     if(request == NULL)
     {
-        return -EINVAL; /**< Invalid argument or unsupported input. */
+        return -EINVAL;
     }
-    int result = -EAGAIN; /**< Operation is still pending; try again. */
+    int result = -EAGAIN;
     const int semaphoreResult = k_sem_take(&portal_RequestAvailable, timeout);
 
     if(semaphoreResult == 0)
@@ -727,23 +727,23 @@ static const char *portal_describeError(int error)
         text = "";
         break;
 
-    case -EINVAL: /**< Invalid argument or unsupported input. */
+    case -EINVAL:
         text = "Invalid network or password.";
         break;
 
-    case -EACCES: /**< Credentials or access were rejected. */
+    case -EACCES:
         text = "Wrong password.";
         break;
 
-    case -ENOENT: /**< Requested record or network was not found. */
+    case -ENOENT:
         text = "Network not found.";
         break;
 
-    case -ETIMEDOUT: /**< Operation exceeded its wait deadline. */
+    case -ETIMEDOUT:
         text = "No answer from the network.";
         break;
 
-    case -ECONNREFUSED: /**< Connection was refused. */
+    case -ECONNREFUSED:
         text = "The network refused the connection.";
         break;
 

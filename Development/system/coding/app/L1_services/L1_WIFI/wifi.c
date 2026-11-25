@@ -349,7 +349,7 @@ int wifi_init(void)
     {
         LOG_ERR("No Wi-Fi station interface");
 
-        result = -ENODEV; /**< Required device interface is unavailable. */
+        result = -ENODEV;
     }
     else
     {
@@ -410,7 +410,7 @@ bool wifi_isValidNetwork(const struct wifi_network *network)
 
 int wifi_connect(const struct wifi_network *network)
 {
-    int result = -EINVAL; /**< Invalid argument or unsupported input. */
+    int result = -EINVAL;
     const bool networkIsValid = wifi_isValidNetwork(network);
 
     if(networkIsValid)
@@ -459,7 +459,7 @@ int wifi_connect(const struct wifi_network *network)
 
 int wifi_waitForConnection(k_timeout_t timeout)
 {
-    int result = -EAGAIN; /**< Operation is still pending; try again. */
+    int result = -EAGAIN;
     uint32_t events = wifi_waitForEvents((WIFI_EVENT_CONNECTED | WIFI_EVENT_FAILED), timeout);
     const bool connectionIsReady = ((events & WIFI_EVENT_CONNECTED) != 0U);
     const bool connectionHasFailed = ((events & WIFI_EVENT_FAILED) != 0U);
@@ -498,10 +498,10 @@ int wifi_disconnect(void)
 
             if(!disconnectIsConfirmed)
             {
-                result = -ETIMEDOUT; /**< Operation exceeded its wait deadline. */
+                result = -ETIMEDOUT;
             }
         }
-        else if(result == -EALREADY) /**< Requested state is already active. */
+        else if(result == -EALREADY)
         {
             atomic_set(&wifi_StationIsActive, 0);
             result = 0;
@@ -520,7 +520,7 @@ int wifi_disconnect(void)
 
             if(!addressIsRemoved)
             {
-                result = -EIO; /**< Input/output operation failed. */
+                result = -EIO;
             }
             address = net_if_ipv4_get_global_addr(wifi_StationInterface, NET_ADDR_PREFERRED);
         }
@@ -538,10 +538,10 @@ int wifi_getAddress(char *text, size_t size)
 {
     if((text == NULL) || (size == 0U))
     {
-        return -EINVAL; /**< Invalid argument or unsupported input. */
+        return -EINVAL;
     }
 
-    int result = -ENOTCONN; /**< Station has no usable connection. */
+    int result = -ENOTCONN;
     const struct net_in_addr *address;
     const bool stationIsConnected = wifi_isConnected();
 
@@ -567,7 +567,7 @@ int wifi_getAddress(char *text, size_t size)
         else
         {
             text[0] = '\0';
-            result = -ENOSPC; /**< Destination has insufficient space. */
+            result = -ENOSPC;
         }
     }
 
@@ -619,7 +619,7 @@ int wifi_startScan(void)
     if(wifi_ScanIsRunning)
     {
         k_spin_unlock(&wifi_ScanLock, key);
-        return -EBUSY; /**< Service is busy with another operation. */
+        return -EBUSY;
     }
 
     (void)k_event_clear(&wifi_Events, WIFI_EVENT_SCAN_DONE);
@@ -664,7 +664,7 @@ int wifi_cancelScan(void)
         {
             LOG_ERR("Scan did not stop within %d ms", WIFI_SCAN_CANCEL_TIMEOUT_MS);
 
-            result = -ETIMEDOUT; /**< Operation exceeded its wait deadline. */
+            result = -ETIMEDOUT;
         }
     }
 
@@ -673,7 +673,7 @@ int wifi_cancelScan(void)
 
 int wifi_waitForScanResult(struct wifi_scan_entry *list, size_t listSize, k_timeout_t timeout)
 {
-    int result = -EAGAIN; /**< Operation is still pending; try again. */
+    int result = -EAGAIN;
     const bool scanIsDone = (wifi_waitForEvents(WIFI_EVENT_SCAN_DONE, timeout) != 0U);
 
     if(scanIsDone)
@@ -695,7 +695,7 @@ int wifi_waitForScanResult(struct wifi_scan_entry *list, size_t listSize, k_time
         else
         {
             /* Cancelled scan: the list is incomplete. */
-            result = -ECANCELED; /**< Operation was cancelled. */
+            result = -ECANCELED;
         }
     }
 
@@ -718,12 +718,12 @@ int wifi_startHotspot(void)
     }
     else if(wifi_HotspotInterface == NULL)
     {
-        result = -ENODEV; /**< Required device interface is unavailable. */
+        result = -ENODEV;
     }
     /* Both hotspot address and netmask must parse before configuring the interface. */
     else if(!addressIsParsed || !netmaskIsParsed)
     {
-        result = -EINVAL; /**< Invalid argument or unsupported input. */
+        result = -EINVAL;
     }
     else
     {
@@ -736,7 +736,7 @@ int wifi_startHotspot(void)
 
             if(!addressIsAdded)
             {
-                result = -ENOMEM; /**< Required memory or network address slot is unavailable. */
+                result = -ENOMEM;
             }
             else
             {
@@ -771,7 +771,7 @@ int wifi_startHotspot(void)
 
             if(!configurationIsRead)
             {
-                result = -EIO; /**< Input/output operation failed. */
+                result = -EIO;
             }
             else
             {
@@ -781,7 +781,7 @@ int wifi_startHotspot(void)
 
                 if(!configurationIsApplied)
                 {
-                    result = -EIO; /**< Input/output operation failed. */
+                    result = -EIO;
                 }
             }
             (void)memset(&hotspotConfiguration, 0, sizeof(hotspotConfiguration));
@@ -813,7 +813,7 @@ int wifi_stopHotspot(void)
 
 int wifi_startDHCPServer(void)
 {
-    int result = -ENODEV; /**< Required device interface is unavailable. */
+    int result = -ENODEV;
     struct net_in_addr poolStart;
     const bool poolStartIsParsed = (net_addr_pton(NET_AF_INET, WIFI_HOTSPOT_ADDRESS, &poolStart) == 0);
 
@@ -824,7 +824,7 @@ int wifi_startDHCPServer(void)
 
         result = net_dhcpv4_server_start(wifi_HotspotInterface, &poolStart);
 
-        if(result == -EALREADY) /**< Requested state is already active. */
+        if(result == -EALREADY)
         {
             result = 0;
         }
@@ -855,7 +855,7 @@ int wifi_startTimeSynchronization(const char *ntpServer)
 
     if((ntpServer == NULL) || (ntpServer[0] == '\0'))
     {
-        return -EINVAL; /**< Invalid argument or unsupported input. */
+        return -EINVAL;
     }
 
     (void)k_mutex_lock(&wifi_TimeSynchronizationLock, K_FOREVER);
@@ -864,7 +864,7 @@ int wifi_startTimeSynchronization(const char *ntpServer)
     if((wifi_TimeSynchronizationState == WIFI_TIME_SYNCHRONIZATION_PENDING) ||
        (wifi_TimeSynchronizationState == WIFI_TIME_SYNCHRONIZATION_CANCELLING))
     {
-        result = -EBUSY; /**< Service is busy with another operation. */
+        result = -EBUSY;
     }
     else
     {
@@ -895,7 +895,7 @@ int wifi_waitForTimeSynchronization(struct normalised_time *time, k_timeout_t ti
 {
     if(time == NULL)
     {
-        return -EINVAL; /**< Invalid argument or unsupported input. */
+        return -EINVAL;
     }
 
     const k_timepoint_t deadline = sys_timepoint_calc(timeout);
@@ -903,7 +903,7 @@ int wifi_waitForTimeSynchronization(struct normalised_time *time, k_timeout_t ti
 
     if(snapshotLockResult != 0)
     {
-        return -EAGAIN; /**< State was busy for this call's whole interval. */
+        return -EAGAIN;
     }
     const enum wifi_time_synchronization_state stateBeforeWait = wifi_TimeSynchronizationState;
     const uint32_t awaitedGeneration = wifi_TimeSynchronizationGeneration;
@@ -911,7 +911,7 @@ int wifi_waitForTimeSynchronization(struct normalised_time *time, k_timeout_t ti
 
     if(stateBeforeWait == WIFI_TIME_SYNCHRONIZATION_IDLE)
     {
-        return -EINVAL; /**< No operation to wait for. */
+        return -EINVAL;
     }
 
     if(stateBeforeWait != WIFI_TIME_SYNCHRONIZATION_COMPLETED)
@@ -924,13 +924,13 @@ int wifi_waitForTimeSynchronization(struct normalised_time *time, k_timeout_t ti
 
     if(resultLockResult != 0)
     {
-        return -EAGAIN; /**< State was busy for the rest of this call's interval. */
+        return -EAGAIN;
     }
 
-    int result = -EAGAIN; /**< Still pending after this call's interval. */
+    int result = -EAGAIN;
     if(wifi_TimeSynchronizationGeneration != awaitedGeneration)
     {
-        result = -ECANCELED; /**< A newer Start replaced the awaited operation and its result. */
+        result = -ECANCELED;
     }
     else if(wifi_TimeSynchronizationState == WIFI_TIME_SYNCHRONIZATION_COMPLETED)
     {
@@ -952,7 +952,7 @@ int wifi_cancelTimeSynchronization(void)
 
     if(requestLockResult != 0)
     {
-        return -ETIMEDOUT; /**< Release could not be confirmed within the stop bound. */
+        return -ETIMEDOUT;
     }
 
     const uint32_t generation = wifi_TimeSynchronizationGeneration;
@@ -983,14 +983,14 @@ int wifi_cancelTimeSynchronization(void)
 
     if(confirmationLockResult != 0)
     {
-        return -ETIMEDOUT; /**< Release could not be confirmed within the stop bound. */
+        return -ETIMEDOUT;
     }
 
     int result = 0;
     if(wifi_TimeSynchronizationState == WIFI_TIME_SYNCHRONIZATION_CANCELLING)
     {
         /* Not released yet: Start stays blocked and the hostname stays borrowed; a later Cancel may confirm release. */
-        result = -ETIMEDOUT; /**< Release could not be confirmed within the stop bound. */
+        result = -ETIMEDOUT;
     }
     (void)k_mutex_unlock(&wifi_TimeSynchronizationLock);
 
@@ -1001,19 +1001,19 @@ int wifi_applyTimeSynchronization(const struct normalised_time *time, struct app
 {
     if((time == NULL) || (anchor == NULL) || (time->utc_fraction_nanoseconds >= NSEC_PER_SEC))
     {
-        return -EINVAL; /**< Invalid argument or unsupported input. */
+        return -EINVAL;
     }
 
     const uint64_t maximumUTCSeconds = (uint64_t)SYS_TIME_T_MAX;
     if(time->utc_seconds > maximumUTCSeconds)
     {
-        return -ERANGE; /**< UTC is not representable as Zephyr real time. */
+        return -ERANGE;
     }
 
     const uint64_t appliedMonotonicMicroseconds = k_ticks_to_us_floor64((uint64_t)k_uptime_ticks());
     if(time->receive_monotonic_microseconds > appliedMonotonicMicroseconds)
     {
-        return -EINVAL; /**< Receive timestamp lies in the future. */
+        return -EINVAL;
     }
 
     const uint64_t elapsedMicroseconds = appliedMonotonicMicroseconds - time->receive_monotonic_microseconds;
@@ -1030,7 +1030,7 @@ int wifi_applyTimeSynchronization(const struct normalised_time *time, struct app
 
     if(elapsedSeconds > remainingUTCSeconds)
     {
-        return -ERANGE; /**< Advanced UTC is not representable as Zephyr real time. */
+        return -ERANGE;
     }
 
     const struct applied_time_anchor appliedAnchor = {
@@ -1137,7 +1137,7 @@ static int wifi_exchangeTimeSample(uint32_t generation, k_timepoint_t deadline, 
 
     if(!operationIsAdmitted)
     {
-        return -ECANCELED; /**< Cancellation ended the operation before the socket was opened. */
+        return -ECANCELED;
     }
 
     int result = sntp_init(&wifi_TimeSynchronizationContext, (const struct net_sockaddr *)&serverAddress, sizeof(serverAddress));
@@ -1165,7 +1165,7 @@ static int wifi_exchangeTimeSample(uint32_t generation, k_timepoint_t deadline, 
     result = sntp_query(&wifi_TimeSynchronizationContext, 0, &nativeTime);
     if(result == 0)
     {
-        result = -EPROTO; /**< A response that arrived before the server state check was parsed unchecked. */
+        result = -EPROTO;
     }
 
     bool responseIsAwaited = (result == -ETIMEDOUT);
@@ -1209,7 +1209,7 @@ static int wifi_receiveTimeResponse(struct sntp_time *nativeTime)
     }
     if(ready == 0)
     {
-        return -ETIMEDOUT; /**< No response within this poll interval. */
+        return -ETIMEDOUT;
     }
 
     /* The pinned Zephyr parser rejects only stratum 0 and returns neither field, so the queued datagram is inspected first. */
@@ -1230,7 +1230,7 @@ static int wifi_receiveTimeResponse(struct sntp_time *nativeTime)
         if((leapIndicator == WIFI_SNTP_LEAP_INDICATOR_ALARM) || (stratum < WIFI_SNTP_STRATUM_MINIMUM) || (stratum > WIFI_SNTP_STRATUM_MAXIMUM))
         {
             /* The exchange ends here; closing the socket discards the datagram. */
-            return -EPROTO; /**< Server clock is not synchronized. */
+            return -EPROTO;
         }
     }
 
@@ -1292,7 +1292,7 @@ static int wifi_normalizeTimeSample(const struct sntp_time *nativeTime, struct n
 
     if((nativeTime == NULL) || (sample == NULL))
     {
-        result = -EINVAL; /**< Invalid argument or unsupported input. */
+        result = -EINVAL;
     }
     else
     {
@@ -1300,7 +1300,7 @@ static int wifi_normalizeTimeSample(const struct sntp_time *nativeTime, struct n
 
         if(nativeTime->fraction >= USEC_PER_SEC)
         {
-            result = -EINVAL; /**< Invalid argument or unsupported input. */
+            result = -EINVAL;
         }
         else
         {
@@ -1352,7 +1352,7 @@ static int wifi_runServiceStop(struct wifi_service_stop *serviceStop)
         {
             LOG_ERR("Driver stop did not return within %d ms", WIFI_SERVICE_STOP_TIMEOUT_MS);
 
-            result = -ETIMEDOUT; /**< The driver call still runs; the service can still be active. */
+            result = -ETIMEDOUT;
         }
         else
         {
@@ -1375,7 +1375,7 @@ static void wifi_stopDHCPServerInDriver(struct k_work *work)
 
     int result = net_dhcpv4_server_stop(wifi_HotspotInterface);
 
-    if(result == -ENOENT) /**< Requested record or network was not found. */
+    if(result == -ENOENT)
     {
         /* Not running. */
         result = 0;
@@ -1390,7 +1390,7 @@ static void wifi_stopHotspotInDriver(struct k_work *work)
 
     int result = net_mgmt(NET_REQUEST_WIFI_AP_DISABLE, wifi_HotspotInterface, NULL, 0);
 
-    if(result == -EALREADY) /**< Requested state is already active. */
+    if(result == -EALREADY)
     {
         result = 0;
     }
@@ -1462,7 +1462,7 @@ static void wifi_handleEvent(struct net_mgmt_event_callback *callback, uint64_t 
             (void)k_event_clear(&wifi_Events, WIFI_EVENT_CONNECTED);
             if(joinHasFailed)
             {
-                atomic_set(&wifi_FailureCause, -ENOTCONN); /**< Station disconnected before the requested join obtained IPv4. */
+                atomic_set(&wifi_FailureCause, -ENOTCONN);
                 (void)k_event_post(&wifi_Events, WIFI_EVENT_FAILED);
             }
             break;
@@ -1509,20 +1509,20 @@ static void wifi_handleEvent(struct net_mgmt_event_callback *callback, uint64_t 
 
 static int wifi_mapFailure(int status)
 {
-    int cause = -ECONNREFUSED; /**< Connection was refused. */
+    int cause = -ECONNREFUSED;
 
     switch(status)
     {
     case WIFI_STATUS_CONN_WRONG_PASSWORD:
-        cause = -EACCES; /**< Credentials or access were rejected. */
+        cause = -EACCES;
         break;
 
     case WIFI_STATUS_CONN_AP_NOT_FOUND:
-        cause = -ENOENT; /**< Requested record or network was not found. */
+        cause = -ENOENT;
         break;
 
     case WIFI_STATUS_CONN_TIMEOUT:
-        cause = -ETIMEDOUT; /**< Operation exceeded its wait deadline. */
+        cause = -ETIMEDOUT;
         break;
 
     default:

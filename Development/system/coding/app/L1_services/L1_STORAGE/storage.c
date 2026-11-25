@@ -163,7 +163,7 @@ int storage_init(void)
 
 int storage_read(const char *name, void *data, size_t size)
 {
-    struct storage_read_context context = {.data = data, .size = size, .result = -ENOENT}; /**< Requested record or network was not found. */
+    struct storage_read_context context = {.data = data, .size = size, .result = -ENOENT};
 
     int result = settings_load_subtree_direct(name, storage_loadRecord, &context);
 
@@ -177,7 +177,7 @@ int storage_read(const char *name, void *data, size_t size)
 
 int storage_write(const char *name, const void *data, size_t size)
 {
-    int result = -EINVAL; /**< Invalid argument or unsupported input. */
+    int result = -EINVAL;
 
     /* A zero-length save makes the settings backend delete the record and
      * report success, so reject it before the backend call. */
@@ -191,7 +191,7 @@ int storage_write(const char *name, const void *data, size_t size)
 
 int storage_readServerProfile(struct storage_server_profile *serverProfile)
 {
-    int result = -EINVAL; /**< Invalid argument or unsupported input. */
+    int result = -EINVAL;
 
     if(serverProfile != NULL)
     {
@@ -229,12 +229,12 @@ static int storage_loadRecord(const char *key, size_t length, settings_read_cb r
     {
         if(length == 0U)
         {
-            context->result = -ENOENT; /**< Requested record or network was not found. */
+            context->result = -ENOENT;
         }
         else if(length != context->size)
         {
             /* Stored by another firmware version with a different layout. */
-            context->result = -EINVAL; /**< Invalid argument or unsupported input. */
+            context->result = -EINVAL;
         }
         else
         {
@@ -247,7 +247,7 @@ static int storage_loadRecord(const char *key, size_t length, settings_read_cb r
             }
             else
             {
-                context->result = -EIO; /**< Input/output operation failed. */
+                context->result = -EIO;
             }
         }
     }
@@ -279,18 +279,18 @@ static int storage_parseServerProfile(struct storage_image_reader *reader, struc
 
         if(isErased)
         {
-            result = -ENOENT; /**< No image was flashed. */
+            result = -ENOENT;
         }
         else if(!isServerProfileMagic)
         {
-            result = -EBADMSG; /**< Not a server profile image. */
+            result = -EBADMSG;
         }
         else
         {
             result = storage_readImage(reader, &version, sizeof(version));
             if((result == 0) && (version != STORAGE_SERVER_PROFILE_VERSION))
             {
-                result = -EBADMSG; /**< Image format this firmware cannot read. */
+                result = -EBADMSG;
             }
         }
     }
@@ -326,7 +326,7 @@ static int storage_parseServerProfile(struct storage_image_reader *reader, struc
 
         if((result == 0) && (readChecksum != calculatedChecksum))
         {
-            result = -EBADMSG; /**< Corrupted image. */
+            result = -EBADMSG;
         }
     }
 
@@ -338,7 +338,7 @@ static int storage_parseServerProfile(struct storage_image_reader *reader, struc
 
         if((baseUrlTextLength != baseUrlLength) || (certificateTextLength != certificateLength))
         {
-            result = -EBADMSG; /**< Length field does not match the text. */
+            result = -EBADMSG;
         }
     }
     if(result == 0)
@@ -360,7 +360,7 @@ static int storage_readLength(struct storage_image_reader *reader, uint16_t maxi
         *length = sys_get_le16(lengthBytes);
         if((*length == 0U) || (*length > maximumLength))
         {
-            result = -EBADMSG; /**< Length out of range. */
+            result = -EBADMSG;
         }
     }
 
