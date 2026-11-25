@@ -67,23 +67,23 @@ The adapter contract prevents consumed-request redelivery from creating a new re
 
 ## Observation construction and delivery
 
-L1_FHIR serializes resources in C using a bounded JSON writer with proper string escaping, finite-number checks, locale-independent numeric formatting and checked buffer lengths. L2_COMMUNICATION serializes each Observation once after finalization and admission and retains the identical byte sequence for all retries. Device registration and Observation serialization are separate operations.
+L1_FHIR serializes resources in C using a bounded JSON writer with proper string escaping, finite-number checks, locale-independent numeric formatting and checked buffer lengths. The Observation takes these fields from the PulsOxy project of NewTec GmbH: the vital-signs category, the LOINC code, the UCUM value quantity, the effective time and the Device reference [4]. Identifiers, profiles, the subject, the meaning of the timestamp, the poor-signal encoding and the Device registration differ from that project. L2_COMMUNICATION serializes each Observation once after finalization and admission and retains the identical byte sequence for all retries. Device registration and Observation serialization are separate operations.
 
 | Field | Valid heart-rate result |
 | --- | --- |
 | `resourceType`, `status` | `Observation`, `final` |
 | `identifier` | Existing `urn:stethoscope:measurement` plus frozen `<server-device-id>:<measurement-end-UTC>`; retain the shared uniqueness rule |
 | `category` | Coding system `http://terminology.hl7.org/CodeSystem/observation-category`, code `vital-signs` |
-| `code` | Coding system `http://loinc.org`, code `8867-4` (heart rate), per the existing baseline [4] |
+| `code` | Coding system `http://loinc.org`, code `8867-4` (heart rate), per the existing baseline [5] |
 | `effectiveDateTime` | Frozen measurement-end UTC, formatted `YYYY-MM-DDTHH:mm:ss.SSSZ`; never sampled during serialization/retry |
 | `device.reference` | `Device/<frozen-server-device-id>` |
 | `subject.reference` | Exact validated patient reference supplied by the attached examination; omit the entire subject when absent. No Patient lookup, creation or replacement. |
 | `valueQuantity` | Frozen valid BPM numeric value using the result's declared precision; `unit` and `code` are `/min`, `system` is `http://unitsofmeasure.org`. Never invent a rounding/precision policy here. |
 | `meta.profile` | Omitted. |
 
-FHIR R4 Observation fields are defined in [5]. The immutable local result retains interval, analysis configuration, request identity and measurement point. Observation payloads omit extension URLs, body-site codes and `Observation.basedOn`.
+FHIR R4 Observation fields are defined in [6]. The immutable local result retains interval, analysis configuration, request identity and measurement point. Observation payloads omit extension URLs, body-site codes and `Observation.basedOn`.
 
-Stopping before 15 seconds sends nothing ([REQ-07](../../requirements/system-requirements.md#req-07)). Poor-signal reporting satisfies [REQ-08](../../requirements/system-requirements.md#req-08) without a numeric value. A poor-signal Observation uses the same identity, code, time, device and optional subject, omits `valueQuantity`, and adds `dataAbsentReason.coding = [{"system":"http://terminology.hl7.org/CodeSystem/data-absent-reason","code":"error"}]` [6]. It never encodes NaN, zero BPM or the string "error" as a numeric value. Poor-signal Observations follow the same conditional delivery and receipt rules as valid heart-rate Observations.
+Stopping before 15 seconds sends nothing ([REQ-07](../../requirements/system-requirements.md#req-07)). Poor-signal reporting satisfies [REQ-08](../../requirements/system-requirements.md#req-08) without a numeric value. A poor-signal Observation uses the same identity, code, time, device and optional subject, omits `valueQuantity`, and adds `dataAbsentReason.coding = [{"system":"http://terminology.hl7.org/CodeSystem/data-absent-reason","code":"error"}]` [7]. It never encodes NaN, zero BPM or the string "error" as a numeric value. Poor-signal Observations follow the same conditional delivery and receipt rules as valid heart-rate Observations.
 
 ![Conditional-create retry sequence](rendered/conditional_create_retry.svg)
 
@@ -114,8 +114,10 @@ The deployment prerequisites for TLS and the server certificate are in the [TLS 
 
 [3] Health Level Seven International, *FHIR R4 RESTful API*, version 4.0.1, 2019, Conditional create, <https://hl7.org/fhir/R4/http.html#ccreate>, accessed 29 October 2026.
 
-[4] Health Level Seven International, *FHIR R4 Vital Signs*, version 4.0.1, 2019, <https://hl7.org/fhir/R4/vitalsigns.html>, accessed 29 October 2026.
+[4] NewTec GmbH, *PulsOxy InitState, MeasuringState and FhirResourceFactory*, PulsOxy project, revision `e38b98fc8b881af01e23a8f4935567e73d00de28`, 2026, [InitState.cpp](../../references/newtec-pulsoxy/lib/App_PulsOxy/src/InitState.cpp), [MeasuringState.cpp](../../references/newtec-pulsoxy/lib/App_PulsOxy/src/MeasuringState.cpp), [FhirResourceFactory.cpp](../../references/newtec-pulsoxy/lib/FhirService/src/FhirResourceFactory.cpp), reproduced in this repository under [references/newtec-pulsoxy](../../references/newtec-pulsoxy/README.md), accessed 25 November 2026.
 
-[5] Health Level Seven International, *FHIR R4 Observation*, version 4.0.1, 2019, <https://hl7.org/fhir/R4/observation.html>, accessed 29 October 2026.
+[5] Health Level Seven International, *FHIR R4 Vital Signs*, version 4.0.1, 2019, <https://hl7.org/fhir/R4/vitalsigns.html>, accessed 29 October 2026.
 
-[6] Health Level Seven International, *FHIR R4 DataAbsentReason code system*, version 4.0.1, 2019, <https://hl7.org/fhir/R4/codesystem-data-absent-reason.html>, accessed 29 October 2026.
+[6] Health Level Seven International, *FHIR R4 Observation*, version 4.0.1, 2019, <https://hl7.org/fhir/R4/observation.html>, accessed 29 October 2026.
+
+[7] Health Level Seven International, *FHIR R4 DataAbsentReason code system*, version 4.0.1, 2019, <https://hl7.org/fhir/R4/codesystem-data-absent-reason.html>, accessed 29 October 2026.
