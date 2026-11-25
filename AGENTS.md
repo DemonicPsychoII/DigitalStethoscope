@@ -9,8 +9,9 @@ Linux `mkdir -p .claude && ln -sfT ../.agents/skills .claude/skills`.
 
 ## Thesis sources
 
-Applies to bachelor-thesis work: `thesis-material/`, `preThesis/`, requirements/design/planning
-rationale under `Development/system/`, and weekly slides or reports that feed the thesis.
+Applies to bachelor-thesis work: `thesis-material/`, `preThesis/`, the decision log and planning
+rationale under `Development/system/planning/`, and weekly slides or reports that feed the thesis.
+It does not apply to the product documents and code below.
 
 - Back every factual or technical claim with a verifiable source and a full citation: authors,
   title, venue/publisher or standard number, year/version, DOI/URL where available, and access
@@ -22,6 +23,35 @@ rationale under `Development/system/`, and weekly slides or reports that feed th
 - If no adequate source exists, say so explicitly and mark the claim as unsupported or as a
   project decision; never present it as established.
 - Never invent or approximate citations, metadata or page numbers; mark unverified fields as such.
+
+## Product documents
+
+Applies to what the company receives: `Development/system/requirements/`, `architecture/`,
+`design/` and `coding/`, including diagrams, README files and source comments. A reader of these
+files has no project history and must not need any.
+
+- State what is, in the present tense. Do not name people, dates, meetings, reviews or project
+  steps, and do not say that or when something was decided, accepted or confirmed.
+- Do not describe the document or defend a statement: no "this proposal", no "project decision,
+  not a measurement". Do not put status words such as "proposed", "candidate", "provisional",
+  "later" or "MVP" on content.
+- Cite public and vendor sources only (standards, RFCs, datasheets, vendor and Zephyr
+  documentation, papers), with full metadata, and keep the ones that are there. Own decisions,
+  measurements, reviews and code are not sources.
+- Record the decision, measurement or review behind a statement in the decision log and its trace
+  table under `Development/system/planning/`, which are not transferred to GitLab. A measured
+  value becomes a design parameter with its technical reason; the dated measurement record
+  belongs under `Development/system/testing/`.
+- Architecture and design describe the target system. Track what the code does not implement yet,
+  and every other open point, as a GitHub issue. Product documents carry no open points.
+- Each level stands on its own, in the order requirements, system architecture, module
+  architecture, design, code. Architecture does not defer or link down to design and carries no
+  design values. Design prescribes; it does not report the code, the build or a measurement.
+- Use the full module names with their layer prefix, such as `L2_CONTROL`.
+- A diagram legend or note explains the diagram only. A diagram sets its own background and font
+  colours so that it reads on a light and on a dark page.
+- A source comment explains the code on its line. It carries no decision, measurement session,
+  status, history or statement about what another file does.
 
 ## Merge policy
 
