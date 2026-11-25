@@ -187,6 +187,18 @@ The individual commands below use a Python with `requirements-ci.txt` installed.
 | Tooling regression tests | `python -m unittest discover -s Development/system/testing/ci -p 'test_*.py'` |
 | Merge-gate regression tests | `python -m unittest discover -s .github/agent-gate` |
 
+## Transfer to GitLab
+
+The company GitLab repository receives the product only: `spec/`, `requirements/`, `architecture/`, `design/`, `coding/` without the host tests, `references/` and the verification allocation. `gitlab_transfer.py` holds that list.
+
+| Purpose | Command |
+| --- | --- |
+| List the transferred files | `python Development/system/testing/ci/gitlab_transfer.py list` |
+| Check them | `python Development/system/testing/ci/gitlab_transfer.py check` |
+| Copy them into a GitLab checkout | `python Development/system/testing/ci/gitlab_transfer.py export <checkout>` |
+
+`check` fails when a transferred file names a project member, carries a written date outside a source entry, a decision record, a ticket id, a chat or agent trace or a private network detail, or links to a file that is not transferred. `export` runs the check first and copies nothing while it fails. It writes `Development/system/process/gitlab-readme.md` as the root `README.md` of the GitLab repository and removes transferred files that no longer exist here.
+
 `run_ci.py all` executes static checks and the application build. `build` and `build --application` are equivalent: both compile the application with its release configuration to `build-ci-app`, retain build evidence, stage the single application image and identity manifest, and can publish locally when `cloud-publish` is installed. The manual `coding/tools/build-firmware.ps1` release build uses the same configuration. Available host scenarios, tooling and merge-gate tests have separate entry points. Install application host dependencies with `python -m pip install --require-hashes -r Development/system/testing/ci/requirements-host.txt` before running an available suite.
 
 The [archived bring-up](../../../../preThesis/06-bringup-zephyr/README.md) retains its local build guide and optional QC (quality control) evaluator. Its checks depend on named bring-up modules, optional display/touch wiring, `qc.conf` and historical bring-up evidence. They do not define application quality gates.
