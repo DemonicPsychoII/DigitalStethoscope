@@ -2,7 +2,7 @@
 
 ## Basis
 
-This design refines the [SNTP architecture](../../architecture/COMMUNICATION/time-ownership.md) and the [system design](../system/interfaces-and-behavior.md#delivery-clock-and-configuration). Covered requirements are [REQ-02](../../requirements/system-requirements.md#req-02), [REQ-09](../../requirements/system-requirements.md#req-09), [REQ-10](../../requirements/system-requirements.md#req-10), [REQ-11](../../requirements/system-requirements.md#req-11), [REQ-13](../../requirements/system-requirements.md#req-13) and [REQ-14](../../requirements/system-requirements.md#req-14).
+This design refines the [SNTP architecture](../../architecture/COMMUNICATION/time-ownership.md) and the [delivery design](interfaces-and-behavior.md#delivery-clock-and-configuration). Covered requirements are [REQ-02](../../requirements/system-requirements.md#req-02), [REQ-09](../../requirements/system-requirements.md#req-09), [REQ-10](../../requirements/system-requirements.md#req-10), [REQ-11](../../requirements/system-requirements.md#req-11), [REQ-13](../../requirements/system-requirements.md#req-13) and [REQ-14](../../requirements/system-requirements.md#req-14).
 
 ## SNTP exchange (generic protocol)
 
@@ -35,7 +35,7 @@ Each accepted operation produces one terminal result. Cancellation invalidates i
 
 1. Boot starts without a valid anchor. A persisted timestamp does not establish freshness; offline listening remains available.
 2. Every TLS connection setup under the [TLS design](secure-transport.md) begins with one SNTP exchange, so that only the server DNS lookup and TCP connection lie between the applied clock and the ClientHello, the first message of the TLS handshake. This applies to the Idle preparation and every delivery reconnect. Reusing an open verified connection sends no ClientHello and runs no SNTP. There is no separate SNTP schedule, refresh timer or internet/HTTP probe.
-3. The exchange shares the deadline of the connection setup that contains it: the ten-second Idle preparation of the [P26 TLS parameters](secure-transport.md#parameters), or the three-second connection-setup budget of a delivery attempt under the delivery timeout and retry parameter [P13](../system/parameters.md). DNS, request, response, normalization and clock application share the remaining budget; short waits never reset it. Cancellation cleanup has the separate P23 stop bound.
+3. The exchange shares the deadline of the connection setup that contains it: the ten-second Idle preparation of the [P26 TLS parameters](secure-transport.md#parameters), or the three-second connection-setup budget of a delivery attempt under the delivery timeout and retry parameter [P13](parameters.md). DNS, request, response, normalization and clock application share the remaining budget; short waits never reset it. Cancellation cleanup has the separate P23 stop bound.
 4. Accept only a current-generation result while holding the lease; apply the clock, then continue with the TCP connection and ClientHello. Clock-set failure, DNS failure, timeout or a rejected response fails that connection setup. Recovery follows the setup's owner: 60-second Idle recovery under P26, or P13 retries during delivery. No SNTP-specific retry, gap or attempt cap applies.
 
 Start cancels DNS or exchange work before audio begins. L2_COMMUNICATION ignores a completion racing with Start unless it was accepted and applied before L2_CONTROL withdrew the lease. Cancellation is not a failure.

@@ -42,8 +42,8 @@ audio decisions of the same day have their own record.
 
 ## Applied in
 
-- [System design](../design/system/interfaces-and-behavior.md) and parameters P08 and P13 in the
-  [system parameters](../design/system/parameters.md)
+- [System design](../design/cross-module.md) and parameters P08 and P13 in the
+  [system parameters](../design/README.md#parameters)
 - [COMMUNICATION parameters](../design/COMMUNICATION/parameters.md#cleanup-limits-p23),
   [TLS design](../design/COMMUNICATION/secure-transport.md#delivery-budget-boundary) and
   [SNTP design](../design/COMMUNICATION/time-synchronization.md#clock-mapping-and-native-behavior)

@@ -19,6 +19,8 @@ document their scope, hardware naming and runtime assumptions.
 
 Lung mode is optional; its paths are marked optional in the listening and session views.
 
+[Firmware structure and runtime ownership](firmware-structure.md) defines the layers and call directions, the ownership of each module, the threads, the hand-offs between them and the listening and network lease.
+
 [Feedback ground rules](feedback-principles.md) define indication ownership and fault containment.
 
 [Server profile](server-profile.md) defines how a device receives its server endpoint, keep-alive and trusted certificate.

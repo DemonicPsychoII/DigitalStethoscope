@@ -1,6 +1,6 @@
-# COMMUNICATION setup workflow and recovery
+# COMMUNICATION setup workflow, recovery and delivery
 
-L2_COMMUNICATION owns setup sequencing and retry policy under L2_CONTROL's network lease. It uses [L1_WIFI operations](../WIFI/interfaces-and-behavior.md), the [L1_STORAGE record interface](../STORAGE/interfaces-and-behavior.md) and the [L1_PORTAL request/status boundary](../PORTAL/interfaces-and-behavior.md).
+L2_COMMUNICATION owns setup sequencing, retry policy and result delivery under L2_CONTROL's network lease. It uses [L1_WIFI operations](../WIFI/interfaces-and-behavior.md), the [L1_STORAGE record interface](../STORAGE/interfaces-and-behavior.md) and the [L1_PORTAL request/status boundary](../PORTAL/interfaces-and-behavior.md).
 
 ## Wi-Fi setup and recovery
 
@@ -41,3 +41,44 @@ If the network list cannot be refreshed while the setup page is open, the device
 Start interrupts a boot join by cancelling its active attempt. On return to Idle, L2_COMMUNICATION resumes the remaining boot attempts after the normal retry gap. The interrupted issued attempt counts toward the four-attempt boot budget; cancellation before issuing an attempt consumes none. Boot exhaustion remains JOIN_FAILURE with manual setup; it never becomes link-loss recovery or automatic setup.
 
 An interrupted or timed-out scan or join is cancelled once when it ends. Cleanup then tries each stop that is still pending once, in the order of the [P23 cleanup limits](parameters.md#cleanup-limits-p23): time synchronization, secure connection, scan, connect request, setup page (HTTP), DHCP and hotspot. If all stops succeed, audio is released normally. If any stop fails, L2_COMMUNICATION latches `WIFI_CLEANUP_FAILURE` (cleared only by restart; indication follows the feedback catalogue), disables further Wi-Fi work until restart and releases audio under [REQ-13](../../requirements/system-requirements.md#req-13)'s Wi-Fi-only exception. L2_COMMUNICATION records the failed stop operations and reports the cleanup fault to L2_CONTROL through the feedback event boundary.
+
+## Delivery, clock and configuration
+
+The identifier system of a completed measurement is `urn:stethoscope:measurement`. Its value is `<device-id>:<measurement-end-UTC>`:
+the persisted server Device id, a colon, and the immutable interval end formatted as
+`YYYY-MM-DDTHH:mm:ss.SSSZ`. Freeze both at the points of [result provenance](../cross-module.md#result-provenance) (see the [SNTP mapping](time-synchronization.md#clock-mapping-and-native-behavior)); do not regenerate
+the end time or identity on retry. One device must not finalize two measurements with
+the same end timestamp. Send `POST /Observation`, `Content-Type: application/fhir+json`,
+with `identifier: [{"system":"urn:stethoscope:measurement","value":"<value>"}]` in the body
+and, for the example value below, `If-None-Exist: identifier=urn%3Astethoscope%3Ameasurement|device-42%3A2026-10-23T12%3A00%3A00.000Z`.
+Percent-encode each search value using UTF-8 URI query encoding before constructing
+the header; the separator `|` separates system and value. For example the logical value
+`device-42:2026-10-23T12:00:00.000Z` is encoded as
+`device-42%3A2026-10-23T12%3A00%3A00.000Z` (the system is
+`urn%3Astethoscope%3Ameasurement`). Never update an Observation.
+The server assigns the resource ID. `201` (created) or `200` (one existing match)
+confirms success. Uncertain transport responses, including a lost receipt after a
+committed write, must retry with the identical body and conditional-create identity
+under [P13](parameters.md) while an attempt and time budget remain. P13 classifies retryable and
+terminal outcomes. A visible delivery failure releases the job only on a terminal
+outcome or exhausted attempt/deadline budget; there is no unconditional-create fallback.
+FHIR conditional-create semantics: Health Level Seven International, FHIR R4
+v4.0.1, HTTP, Conditional create, 2019,
+<https://hl7.org/fhir/R4/http.html#ccreate> (accessed 2026-10-23).
+
+The device never selects or adds a patient ID. It serializes `Observation.subject` only from the patient reference supplied with a server-requested examination, and otherwise omits `subject`. [Examination request context](server-communication.md#examination-request-boundary) is consumed and frozen on accepted local measurement Start and is never automatically reused after cancellation or failure. A `Device.patient` lookup is not used as a substitute. One delivery job is granted after finalization when Wi-Fi is configured and delivery prerequisites hold; when Wi-Fi is configured and prerequisites fail, `L2_CONTROL` latches `DELIVERY_NOT_POSSIBLE` at once. P13 bounds delivery attempts.
+
+`L2_COMMUNICATION` maps the monotonic measurement interval to UTC from a clock anchor at most 12.5 hours from the measurement end ([SNTP mapping](time-synchronization.md#clock-mapping-and-native-behavior)). Delivery uses measurement time rather than send time, and a result without a qualifying anchor is not sent or rewritten. FHIR `effectiveDateTime` carries the end of the aggregate interval, `meta.profile` is omitted, and `valueQuantity` uses the result's declared decimal precision. The immutable local result retains the Device id, point, value, interval and analysis settings.
+
+`L2_COMMUNICATION` and `L1_WIFI` verify the server profile's public server certificate, endpoint identity and validity against the clock set by the SNTP exchange that opens each connection setup under the [TLS design](secure-transport.md), and enforce bounded status and body parsing. A missing retained connection permits reconnect within P13, whereas a missing or invalid server profile image fails prerequisites. `201 Created` or `200` (existing conditional create) is the receipt and marks the result Sent without readback.
+An uncertain response is retried within the same bounded job. A single matching identifier returns the existing resource, and multiple matches fail with 412. Configuration, authentication and server failures remain visible after the last attempt.
+The [SNTP contract](time-synchronization.md) specifies unauthenticated `pool.ntp.org` time, Zephyr uncertainty estimation, one exchange directly before every ClientHello and the 12.5-hour mapping limit. David L. Mills, *Simple Network Time Protocol (SNTP) Version 4 for IPv4, IPv6 and OSI*, IETF RFC 4330, January 2006, §11, DOI: 10.17487/RFC4330, <https://www.rfc-editor.org/rfc/rfc4330#section-11> (accessed 2026-10-24), describes unauthenticated SNTP security limitations. Credentials are private deployment configuration.
+
+Active network work and live listening use an exclusive `L2_CONTROL` lease. An established station association stays active during listening, while setup, reconnect and delivery jobs do not run. Start during Wi-Fi setup requests safe teardown before audio, and `L2_CONTROL` stops audio before granting the network lease. Start during analysis is rejected Busy without cancellation or queuing. Start during sending cancels the delivery job ([state rules](../cross-module.md#state-entryprocessexit)). A fresh Start after release primes and starts audio.
+If release cannot be confirmed, audio remains stopped and the device indicates the cause. As an exception under [REQ-13](../../requirements/system-requirements.md#req-13), a failed network-service stop or SNTP cancellation follows [P23](parameters.md): `L2_COMMUNICATION` latches `WIFI_CLEANUP_FAILURE`, disables network work until restart and releases audio.
+
+[Wi-Fi setup and recovery](#wi-fi-setup-and-recovery), [SNTP synchronization](time-synchronization.md) and [portal behavior](../PORTAL/interfaces-and-behavior.md) define the communication-specific contracts. Start cancels pending synchronization before audio, and time or server-connection failures preserve offline listening.
+
+## Server communication and FHIR delivery
+
+Time synchronization, secure server transport and Device registration run independently of Wi-Fi setup completion. The device does not select patients; it reuses a patient reference only when supplied with a server-requested examination and otherwise omits `subject`. [Server communication](server-communication.md) defines server-bound conditional registration, physical and logical device identities and FHIR message formatting.

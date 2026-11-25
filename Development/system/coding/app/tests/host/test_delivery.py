@@ -12,9 +12,9 @@ import pytest
 from host_build import error_code
 from test_communication import create_simulation_runner, plan
 
-DESIGN = "Development/system/design/system/"
-P13 = DESIGN + "parameters.md (P13)"
-DELIVERY = DESIGN + "interfaces-and-behavior.md (delivery decision and Sending)"
+DESIGN = "Development/system/design/"
+P13 = DESIGN + "COMMUNICATION/parameters.md (P13)"
+DELIVERY = DESIGN + "cross-module.md (delivery decision and Sending)"
 TRANSPORT = "Development/system/design/COMMUNICATION/secure-transport.md#"
 TIME = "Development/system/design/COMMUNICATION/time-synchronization.md#"
 SERVER = "Development/system/design/COMMUNICATION/server-communication.md#"
@@ -633,7 +633,7 @@ def test_device_id_is_frozen_at_admission(simulate_white_box, record_property):
     evidence(
         record_property,
         "registration publishes another Device id right after admission",
-        DESIGN + "interfaces-and-behavior.md (NetworkJob)",
+        DESIGN + "cross-module.md (NetworkJob)",
         "the Observation carries the Device id valid at admission, never the live one",
     )
     trace = simulate_white_box(

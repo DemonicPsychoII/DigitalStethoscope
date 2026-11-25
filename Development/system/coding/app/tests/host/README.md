@@ -52,8 +52,9 @@ remain pending; host results do not establish device behavior.
 Expectations come from [Wi-Fi behavior](../../../../design/WIFI/interfaces-and-behavior.md),
 [portal behavior](../../../../design/PORTAL/interfaces-and-behavior.md),
 [P19/P21/P23/P24](../../../../design/WIFI/parameters.md),
-[system behavior](../../../../design/system/interfaces-and-behavior.md),
-[system parameters](../../../../design/system/parameters.md) and the public
+[cross-module behavior](../../../../design/cross-module.md),
+[delivery behavior](../../../../design/COMMUNICATION/interfaces-and-behavior.md#delivery-clock-and-configuration),
+the [design parameters](../../../../design/README.md#parameters) and the public
 WIFI, PORTAL, COMMUNICATION and STORAGE interfaces. The delivery, registration,
 time-synchronization and secure-transport cases follow
 [server communication](../../../../design/COMMUNICATION/server-communication.md),

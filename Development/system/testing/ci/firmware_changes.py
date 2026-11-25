@@ -62,7 +62,11 @@ def component_host_affected(paths: list[str], suite: str) -> bool:
         if path.startswith(
             (
                 "Development/system/requirements/",
-                "Development/system/design/system/",
+                "Development/system/design/cross-module.md",
+                "Development/system/design/puml/",
+                "Development/system/design/rendered/",
+                "Development/system/design/AUDIO/puml/shared-",
+                "Development/system/design/AUDIO/rendered/shared_",
                 "Development/system/architecture/system/",
             )
         ):

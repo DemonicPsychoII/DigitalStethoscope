@@ -15,6 +15,8 @@ step applies the selected listening filter and the volume.
 | Priming and playback | [puml/priming-timing.puml](puml/priming-timing.puml) | Where do the 16 ms of transport delay come from? |
 | Sample rate | [puml/sample-rate-range.puml](puml/sample-rate-range.puml) | Which sample rates do all three parts accept? |
 | Block size | [puml/block-size-delay.puml](puml/block-size-delay.puml) | What does the block size cost in delay? |
+| Filter signal flow | [puml/shared-filter-signal-flow.puml](puml/shared-filter-signal-flow.puml) | Which filter does each path apply, and where do volume and saturation sit? |
+| Analysis coverage | [puml/shared-analysis-coverage.puml](puml/shared-analysis-coverage.puml) | Which part of the session counts as coverage? |
 
 ## Stream configuration
 
@@ -106,7 +108,7 @@ and does not retry.
 - Processing budget (P02): from the received block to the queued TX block at most 3 ms; the wait
   for the next block is not part of it. No lock is held across a block wait.
 - The processing step applies the selected listening filter and the volume. The Raw position
-  applies no band filter ([P08](../system/parameters.md)).
+  applies no band filter ([P08](parameters.md)).
 - The volume from `L2_CONTROL` is a linear gain of 0–100 % with saturation that keeps the
   [sample format](#sample-format). The volume starts at 0 % and is 0 % for a failed or absent
   potentiometer reading. It passes as an atomic value, so the audio thread never waits for it.
@@ -123,16 +125,16 @@ and does not retry.
 
 The left column lists the `L2_AUDIO` states. The system state names come from the
 [session state view](../../architecture/system/README.md) and the state table of the
-[system design](../system/interfaces-and-behavior.md#state-entryprocessexit).
+[cross-module design](../cross-module.md#state-entryprocessexit).
 
 | `L2_AUDIO` state | System state | Basis |
 | --- | --- | --- |
-| Initializing | Boot (session view); Playback Boot (system design) | `i2s_initialize` at boot; no stream |
+| Initializing | Boot (session view); Playback Boot (cross-module design) | `i2s_initialize` at boot; no stream |
 | Stopped | Idle, Portal, Analysing, Sending, ReportingError | Idle is muted with no transport; sending holds the network lease with audio stopped |
 | Starting | Idle until the `started` event | The system stays in Idle on the Start command and enters Listening on the `started` event |
-| Running | Listening, Measuring (session view); Live (system design) | The block loop runs; Wi-Fi-only faults preserve it (P12) |
+| Running | Listening, Measuring (session view); Live (cross-module design) | The block loop runs; Wi-Fi-only faults preserve it ([P12](../FEEDBACK/parameters.md)) |
 | Stopping | Listening → Idle; Measuring → Idle or Analysing | Every system Stop mutes audio |
-| Fault | Muted (session view); Error, audio affected (system design) | `MICROPHONE_FAILURE`, `AUDIO_WORKER_STALL` and `AUDIO_OUTPUT_FAILURE` require a restart ([catalogue](../FEEDBACK/catalogue.md)). The device is halted and blocks every input, including Start, until restart |
+| Fault | Muted (session view); Error, audio affected (cross-module design) | `MICROPHONE_FAILURE`, `AUDIO_WORKER_STALL` and `AUDIO_OUTPUT_FAILURE` require a restart ([catalogue](../FEEDBACK/catalogue.md)). The device is halted and blocks every input, including Start, until restart |
 
 State mapping rules:
 
@@ -224,13 +226,31 @@ For a normal Stop, `i2s_stop` [1]:
 | Transport delay | 4 primed TX blocks × 4 ms. The first RX block fills and is processed while the primed blocks play, so neither adds delay; processing time uses up reserve instead | 16 ms, constant |
 | Converter delay | Digital filters at 16 kHz: INMP441 17.2 ÷ fS [2]; PCM5102A normal-latency filter 20 ÷ fS, selected because FLT is tied to ground on the carrier [3] | 1.08 ms + 1.25 ms; about 18 ms from sound to line output, below the P03 target of 30 ms |
 | Processing budget | Three quarters of the block period (P02) | At most 3 ms per block |
-| Block waits | 5 block periods (P11) | 20 ms; a normal block arrives within 4 ms |
+| Block waits | 5 block periods ([P11](../cross-module.md#parameters)) | 20 ms; a normal block arrives within 4 ms |
 | Internal RAM | 2,560 + 2,560 + 256 bytes | 5,376 bytes, plus thread stack and driver descriptors |
 
 The transport delay and the reserves follow from the driver behavior [1] and the converter
 datasheets [2] [3]. P03 is judged by ear under [REQ-05](../../requirements/system-requirements.md#req-05). The
 [block-size comparison](#sample-rate-and-block-size-rationale) applies the same derivation to 32-
 and 128-frame blocks.
+
+The internal RAM figure counts the transport blocks and the mono working buffer before DMA
+descriptors, alignment and driver overhead. A mono int32 analysis block is 256 bytes plus handles
+and metadata.
+
+## DSP and measurement design
+
+![Signal flow from the original-rate branch point to the analysis and listening paths](rendered/shared_filter_signal_flow.svg)
+
+*Which filter does each path apply, and where do volume and saturation sit?*
+
+`L2_AUDIO` preserves filter state across continuously evaluated listening paths and clears filter histories on source reset. Signed microphone samples are normalized once and saturated only at output conversion, with clipping counters.
+
+BPM analysis estimates heart rate from whole-cycle periodicity after the BPM filter and excludes missing blocks from every window. Invalid windows are rejected with a reason rather than producing a numeric estimate. Session coverage is the union of accepted window intervals clipped to the session bounds.
+
+![Coverage as the clipped union of accepted analysis windows](rendered/shared_analysis_coverage.svg)
+
+*Which part of the session counts as coverage?*
 
 ## Monitoring
 

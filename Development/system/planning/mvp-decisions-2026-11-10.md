@@ -34,7 +34,7 @@ The DevKit was not yet soldered to the carrier, so carrier inputs such as J8 wer
 ## Applied in
 
 - [Feedback catalogue](../design/FEEDBACK/catalogue.md) and the
-  [pin assignment](../design/system/interfaces-and-behavior.md#pin-assignment)
+  [pin assignment](../design/cross-module.md#pin-assignment)
 - [Architecture view notes](../architecture/system/VIEW-NOTES.md) and the application board overlay
   in [`coding/app/boards/`](../coding/app/README.md)
 
@@ -73,5 +73,5 @@ P01, P02 and P11.
 
 Applied in the [AUDIO architecture](../architecture/AUDIO/README.md), the
 [AUDIO design](../design/AUDIO/interfaces-and-behavior.md), P01, P02 and P11 of the
-[system parameters](../design/system/parameters.md) and the block sizes of the
-[system design](../design/system/interfaces-and-behavior.md#ownership-memory-and-queues).
+[system parameters](../design/README.md#parameters) and the block sizes of the
+[system design](../design/AUDIO/interfaces-and-behavior.md#timing-and-sizing).
