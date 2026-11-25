@@ -67,7 +67,7 @@ README distinguishes wiring confirmation dated 2026-09-16 from later speed-switc
 
 W1 ist noch offen; dokumentierte Optionen sind Q1/AP 2.2 qualitativ umformulieren, Q1 streichen/Arbeitszeit umverteilen oder R08-Minimalmessung ausführen; Abstimmung mit Betreuer steht aus.
 
-> **Neuerer Stand (Stand integration, 2026-10-22):** Von den drei W1-Optionen gilt die Herausnahme der Kettenmessung (S05); D09 ist seit 14.10. geschlossen. Aktuell: keine Kettenmessung; Q1/AP 2.2 qualitativ behandeln. Ob die Abstimmung mit dem Betreuer erfolgt ist, nennt D09 nicht, siehe offene Punkte. – siehe [Entscheidungsregister D09](../Development/system/planning/implementation-readiness.md#decision-register), [Produktumfang](../Development/system/spec/product-scope.md#goal-and-boundary).
+> **Neuerer Stand (Stand integration, 2026-10-22):** Von den drei W1-Optionen gilt die Herausnahme der Kettenmessung (S05); D09 ist seit 14.10. geschlossen. Aktuell: keine Kettenmessung; Q1/AP 2.2 qualitativ behandeln. Ob die Abstimmung mit dem Betreuer erfolgt ist, nennt D09 nicht, siehe offene Punkte. – siehe [Entscheidungsregister D09](../Development/system/planning/implementation-readiness.md#decision-register), [Entscheidungsnachweis](../Development/system/planning/decision-trace.md#decision-trace).
 
 **Ursprung:** [preThesis/02-entscheidungen/widersprueche.md:23-32](../preThesis/02-entscheidungen/widersprueche.md#L23)
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.
@@ -77,7 +77,7 @@ W1 ist noch offen; dokumentierte Optionen sind Q1/AP 2.2 qualitativ umformuliere
 
 W1: Aufgabenbeschreibungen führen Q1, Kettencharakterisierung und AP 2.2 auf, die interne Entscheidung verwirft gleichzeitig die formale Messung; die vorgesehenen Playback-Signale durchlaufen die reale Bruststückkopplung nicht.
 
-> **Neuerer Stand (Stand integration, 2026-10-22):** Der Entwurf folgt der Abgabefassung (S05): Komponenteneignung über Datenblätter/Literatur und funktionaler Audiotest, keine gemessene Aussage zur Übertragungskette. D09 ist seit 14.10. geschlossen. Aktuell: keine Messung der akustischen Übertragungskette; laut 11.10. ist keine Messausrüstung/kein zweites Mikrofon verfügbar, laut 14.10. auch kein Zweikanal-Aufnahmeaufbau. – siehe [Entscheidungsregister D09](../Development/system/planning/implementation-readiness.md#decision-register), [MVP-Entscheidungen 14.10. (Umfang)](../Development/system/planning/mvp-decisions-2026-10-14.md#scope), [Produktumfang](../Development/system/spec/product-scope.md#goal-and-boundary).
+> **Neuerer Stand (Stand integration, 2026-10-22):** Der Entwurf folgt der Abgabefassung (S05): Komponenteneignung über Datenblätter/Literatur und funktionaler Audiotest, keine gemessene Aussage zur Übertragungskette. D09 ist seit 14.10. geschlossen. Aktuell: keine Messung der akustischen Übertragungskette; laut 11.10. ist keine Messausrüstung/kein zweites Mikrofon verfügbar, laut 14.10. auch kein Zweikanal-Aufnahmeaufbau. – siehe [Entscheidungsregister D09](../Development/system/planning/implementation-readiness.md#decision-register), [MVP-Entscheidungen 14.10. (Umfang)](../Development/system/planning/mvp-decisions-2026-10-14.md#scope), [Entscheidungsnachweis](../Development/system/planning/decision-trace.md#decision-trace).
 
 **Ursprung:** [preThesis/02-entscheidungen/widersprueche.md:5-21](../preThesis/02-entscheidungen/widersprueche.md#L5)
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.

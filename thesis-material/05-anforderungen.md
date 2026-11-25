@@ -57,7 +57,7 @@ Komponenteneignung wird anhand von Datenblättern und Fachliteratur beurteilt; m
 
 Lungenmodus: Interface/Symbole und Live-Wiedergabe; keine BPM, Filter, Time-Stretch- oder FHIR-Funktion.
 
-> **Überholt (Stand integration, 2026-10-22):** Der Lungenmodus gehört nicht zum MVP. Seit 14.10. sind optionale Anforderungen vorerst entfernt, darunter Lung. Aktuell: Nur Herz. Lung ist optional und braucht das Display. – siehe [MVP-Entscheidungen 14.10. (Umfang)](../Development/system/planning/mvp-decisions-2026-10-14.md#scope), [Produktumfang](../Development/system/spec/product-scope.md#goal-and-boundary).
+> **Überholt (Stand integration, 2026-10-22):** Der Lungenmodus gehört nicht zum MVP. Seit 14.10. sind optionale Anforderungen vorerst entfernt, darunter Lung. Aktuell: Nur Herz. Lung ist optional und braucht das Display. – siehe [MVP-Entscheidungen 14.10. (Umfang)](../Development/system/planning/mvp-decisions-2026-10-14.md#scope), [Produktspezifikation](../Development/system/spec/product-scope.md#functions-outside-the-product).
 
 **Ursprung:** [preThesis/01-aufgabenbeschreibung/Aufgabenbeschreibung-Intern.md:52](../preThesis/01-aufgabenbeschreibung/Aufgabenbeschreibung-Intern.md#L52)
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.

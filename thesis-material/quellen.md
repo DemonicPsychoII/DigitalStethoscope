@@ -1581,7 +1581,7 @@ DemonicPsychoII (repository owner; individual file authorship unverified), *Digi
 
 **Verification:** Historical pre-thesis evaluation material. Snapshot inspected locally with git on 2026-10-23; no new physical verification or application implementation is claimed.
 
-**Cited by:** [Product specification, S07 and electrical baseline](../Development/system/spec/product-scope.md#source-register-and-precedence).
+**Cited by:** [Decision trace, source S07 and origin of the pin assignment](../Development/system/planning/decision-trace.md).
 
 <a id="stethoscope_architecture_board_s04_2026"></a>
 ### `stethoscope_architecture_board_s04_2026`

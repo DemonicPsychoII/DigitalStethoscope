@@ -69,7 +69,7 @@ R12 berichtet einen kontextabhängigen Unterschied der Bearbeitungszeit (vier Mo
 
 Zu beschaffen/klären: Kopfhörer bzw. Verstärkerstufe hinter PCM5102A sowie Verkabelung/Adapterplatine und Steckbrett- oder Lötaufbau.
 
-> **Überholt (Stand integration, 2026-10-22):** Eine Verstärkerstufe hinter dem PCM5102A gehört nicht mehr zum Projekt. Aktuell: Das Gerät endet am DAC-Line-Ausgang; der Verstärker liegt außerhalb des Umfangs des digitalen Stethoskops (14.10.). – siehe [MVP-Entscheidungen 14.10. (Umfang)](../Development/system/planning/mvp-decisions-2026-10-14.md#scope), [Produktumfang](../Development/system/spec/product-scope.md#goal-and-boundary).
+> **Überholt (Stand integration, 2026-10-22):** Eine Verstärkerstufe hinter dem PCM5102A gehört nicht mehr zum Projekt. Aktuell: Das Gerät endet am DAC-Line-Ausgang; der Verstärker liegt außerhalb des Umfangs des digitalen Stethoskops (14.10.). – siehe [MVP-Entscheidungen 14.10. (Umfang)](../Development/system/planning/mvp-decisions-2026-10-14.md#scope), [Produktspezifikation](../Development/system/spec/product-scope.md#product-boundary-and-external-interfaces).
 
 **Ursprung:** [preThesis/05-hardware/hardware.md:28-30](../preThesis/05-hardware/hardware.md#L28)
 **Belege:** Keine externen Belege im Inventar; Projektursprung verwenden.

@@ -1,94 +1,171 @@
-# Product scope and specification basis
+# Product specification
 
-Current owner decisions: 14 October, 12 October and 11 October; newer records supersede older ones. Older source snapshots and evaluation behavior remain historical evidence.
+## Purpose and intended use
 
-## Goal and boundary
+The digital stethoscope is a research prototype of an electronic stethoscope on an ESP32-S3. An
+operator places the chestpiece on a patient and listens to the heart sounds through headphones.
+The device measures the heart rate during the examination and sends the result to a FHIR server
+in the local network.
 
-Develop an ESP32-S3 digital stethoscope research prototype: acquire the reused chestpiece's
-INMP441 signal, provide selectable listening filters and headphone output, determine heart
-rate from original-rate audio, and send a completed
-heart-rate result to a local FHIR server over validated TLS. Compare filter variants on identical
-licensed recordings against a defined reference. Filter superiority is a research question,
-not an assumed product property. Listening and measurement are independent workflows.
+The operator is present during use. The device does not continuously monitor or treat a patient.
 
-The MVP device boundary includes chestpiece coupling, microphone, MCU, physical controls
-and the DAC line output; the headphone amplifier is outside the project scope (14 October). Display, touch, SD-card fixture storage and bounded
-capture / slower replay are optional extensions beyond the MVP, per the 2026-10-07 feedback.
-Existing requirements and evaluation code for these features describe extension behavior;
-their presence does not make them MVP acceptance criteria. The listener, signal source,
-evaluation computer, network/time services and FHIR server are external actors/services.
+The product does not include:
 
-The MVP is Heart only. Lung mode is optional and needs the display (14 October).
-The prototype excludes diagnosis, ML classification, durable patient audio storage, enclosure
-development and proof of clinical benefit or regulatory conformity. The latest submitted thesis
-description excludes measurement of the acoustic transfer chain; older boards propose it.
-SD files are licensed test inputs, not a new patient-recording persistence feature.
+- diagnosis,
+- classification of sounds by machine learning,
+- durable storage of patient audio,
+- the development of an enclosure,
+- proof of clinical benefit,
+- proof of regulatory conformity,
+- a claim that one listening filter is superior to another.
 
-## Source register and precedence
+## Users and external systems
 
-| ID | Source | Use and limitation |
+| Actor or system | Role |
+|---|---|
+| Operator | Operates the controls, listens through the headphones and reads the status lights. |
+| Patient | Sound source at the chestpiece. |
+| Phone browser | The operator uses it to select the Wi-Fi network and to enter its password. |
+| FHIR server | Server in the local network. It registers the device and stores the heart-rate results. |
+| Network and time services | Give the device its Wi-Fi connectivity and the time. |
+
+## Product boundary and external interfaces
+
+The device consists of:
+
+- the reused chestpiece with the microphone coupling,
+- the INMP441 microphone,
+- the ESP32-S3 microcontroller,
+- the Start/Stop button with its red light,
+- the 3-position filter switch,
+- the volume potentiometer,
+- the RGB status light,
+- the PCM5102A DAC (digital-to-analog converter) with its line output.
+
+The device ends at the DAC line output. The headphone amplifier and the headphones are external.
+The phone, the FHIR server, the network and time services and the test equipment, including the
+evaluation computer, are external.
+
+| Interface | Counterpart | Kind |
 |---|---|---|
-| S01 | System Architecture Digital Stethoscope; snapshot in `architecture/system/sources/` | Context, chosen parts, electrical interfaces; retains historical alternatives and open storage/audio-stream ideas. |
-| S02 | Software-Architecture and Requirements; same snapshot folder | Original listening and BPM workflows; 3 s window and 15/30/? s aggregation are unresolved sketches. |
-| S03 | Software Architecture — Parallel Audio and Complete Flows; same folder | Detailed working proposal, ownership, fault paths, timing and interface candidates. |
-| S04 | Software Architecture — Options and Decision; same folder | Latest explicit architecture decisions; controller ownership, Zephyr, k_msgq, MON, single-core first, network outside live listening. |
-| S05 | [Latest submission description](../../../preThesis/01-aufgabenbeschreibung/Aufgabenbeschreibung-Abgabe.md) | Current thesis scope and 320 h overall estimate. |
-| S06 | [Internal description](../../../preThesis/01-aufgabenbeschreibung/Aufgabenbeschreibung-Intern.md) and [decision notes](../../../preThesis/02-entscheidungen/open-questions.md) | Prior parameter candidates and rationale; older ESP-IDF preference is superseded by S04. |
-| S07 | DemonicPsychoII (repository owner; individual file authorship unverified), DigitalStethoscope evaluation README and devicetree overlay, GitHub repository revision `1448340d265326e11b7a416960f35e0d2390cd6d`, 2026: [README](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/1448340d265326e11b7a416960f35e0d2390cd6d/Development/system/coding/bringup-zephyr/README.md), [overlay](https://github.com/DemonicPsychoII/DigitalStethoscope/blob/1448340d265326e11b7a416960f35e0d2390cd6d/Development/system/coding/bringup-zephyr/boards/esp32s3_devkitc_procpu.overlay) (accessed 2026-10-23) | Historical pre-thesis evaluation material. Source for the proposed pin assignments below; not the application wiring definition or acceptance of thesis behavior. |
-| S08 | SW-Basis teaching material: ZumoRobot and SWBasisDoc | Process example only: use-case derivation, agreement, interfaces, review and requirement-linked evidence. |
+| Sound input | Patient | Sound through the chestpiece to the microphone |
+| Audio output | External headphone amplifier | Analog line output of the DAC |
+| Start/Stop | Operator | Push button |
+| Filter selection | Operator | 3-position switch: Raw, Murmur, BPM |
+| Volume | Operator | Potentiometer |
+| Status indication | Operator | RGB status light |
+| Error indication | Operator | Red light in the button |
+| Wi-Fi setup | Phone browser | Open Wi-Fi hotspot of the device with a setup page |
+| Result delivery | FHIR server | Wi-Fi and HTTPS; the device checks the server certificate |
+| Time | Network time service | Time synchronization over Wi-Fi |
+| Serial log | Connected computer | Text log with the cause of each error |
 
-This draft uses S04 for resolved software decisions, the electrical baseline below for application pin assignments, and S05
-for current thesis scope. It preserves conflicts in the decision register
-rather than treating every older board statement as a requirement. The saved decisions are the
-drafting basis; remaining choices are open. Neither source
-provenance nor a readable presentation constitutes approval of requirement thresholds or
-release of an implementation baseline.
+Inside the device the parts connect to the microcontroller through these interface kinds:
 
-## Electrical interface baseline
-
-These are project assignments for the application, derived from the pre-thesis
-evaluation material S07. They define planned wiring; they do not claim that the
-application drivers or physical acceptance are complete.
-
-| Interface | Direction at ESP32-S3 | Planned assignment |
+| Part | Direction at the ESP32-S3 | Interface kind |
 |---|---|---|
-| INMP441 audio | Clock/word-select output; sample input | I2S (Inter-IC Sound) controller `i2s0`: clock GPIO4, word select GPIO5, data GPIO6 |
-| PCM5102A audio | Clock, word-select and sample output | Controller `i2s1`: clock GPIO40, word select GPIO41, data GPIO42; device boundary at DAC (digital-to-analog converter) line output |
-| Start/Stop | GPIO (general-purpose input/output) input | GPIO16, active low with pull-up; button closes to ground |
-| Raw/Murmur/BPM selection | GPIO inputs | GPIO18/21/38 respectively, active low with pull-ups; switch common to ground |
-| Volume | ADC (analog-to-digital converter) input | GPIO1, ADC1 channel 0, potentiometer wiper |
-| Button LED (light-emitting diode) | GPIO output | GPIO17, active high; retain current limiting |
-| RGB status light | WS2812 data output | GPIO48 through the SPI3 data line, the DevKitC-1 v1.0 position, on either revision |
+| INMP441 microphone | Clock and word select out, samples in | I2S (Inter-IC Sound) |
+| PCM5102A DAC | Clock, word select and samples out | I2S |
+| Start/Stop button | Input | GPIO (general-purpose input/output) |
+| Filter switch | Inputs | GPIO |
+| Volume potentiometer | Input | ADC (analog-to-digital converter) |
+| Red button light | Output | GPIO |
+| RGB status light | Output | WS2812 data line |
 
-Confirm the fitted carrier and DevKit revision before enabling peripherals. GPIO38 is
-not driven for the RGB LED, so it stays the BPM switch input; a v1.1 DevKit leaves the
-status light dark ([10 November](../planning/mvp-decisions-2026-11-10.md)). Display, touch, SD storage, backlight and the speed switch are outside
-this application baseline. The headphone amplifier remains external. The application
-overlay is an implementation, not a wiring source.
+## Functions
+
+### Listening
+
+The device is silent after power-on and starts listening when the operator presses Start
+([REQ-01](../requirements/system-requirements.md#req-01)). While listening, the operator hears the
+heart sounds from the chestpiece ([REQ-02](../requirements/system-requirements.md#req-02)) without
+noticeable delay ([REQ-05](../requirements/system-requirements.md#req-05)). The switch selects one
+of the listening filters Raw, Murmur and BPM
+([REQ-03](../requirements/system-requirements.md#req-03)). The potentiometer sets the volume
+([REQ-04](../requirements/system-requirements.md#req-04)).
+
+### Heart-rate measurement
+
+The device determines the heart rate from the microphone audio at its original sample rate. The
+measurement always uses its own analysis filter. The selected listening filter and the volume do
+not change it.
+
+A session of at least 15 s whose signal meets the validity criteria gives one heart-rate result
+([REQ-06](../requirements/system-requirements.md#req-06)). A session that the operator stops
+before 15 s gives no result ([REQ-07](../requirements/system-requirements.md#req-07)). A poor
+signal gives an error and no heart-rate value
+([REQ-08](../requirements/system-requirements.md#req-08)).
+
+### Result delivery
+
+The device registers itself at the FHIR server and keeps this registration across restarts
+([REQ-15](../requirements/system-requirements.md#req-15)). With the configured server available,
+it sends each valid result to the server over TLS (Transport Layer Security) and checks the
+server certificate ([REQ-09](../requirements/system-requirements.md#req-09),
+[REQ-11](../requirements/system-requirements.md#req-11)). The result references the registered
+device. The device does not select a patient. A
+result carries a patient reference only when the server supplies one with a requested examination
+([REQ-09](../requirements/system-requirements.md#req-09)). The device repeats a failed delivery a
+limited number of times, then shows an error and discards the result
+([REQ-10](../requirements/system-requirements.md#req-10)).
+
+Network work waits until listening stops. A Start during a delivery cancels the delivery, and
+the result is discarded.
+
+### Wi-Fi setup
+
+Without stored credentials, or after the operator holds the button for 2 s in Idle, the device
+opens a Wi-Fi hotspot without a password and serves a setup page. The operator joins
+the hotspot with a phone, selects the Wi-Fi network in the browser and enters the password of a
+protected network. The device keeps the credentials across restarts
+([REQ-12](../requirements/system-requirements.md#req-12),
+[REQ-11](../requirements/system-requirements.md#req-11)).
+
+### Fault indication
+
+The RGB status light shows the operating context by its colour. The red button light shows an
+error as a counted blink code. The serial log holds the cause
+([REQ-14](../requirements/system-requirements.md#req-14)). A fault that concerns only Wi-Fi leaves
+working audio untouched. An audio fault mutes the output at once and blocks every input until a
+restart ([REQ-13](../requirements/system-requirements.md#req-13)).
+
+## Functions outside the product
+
+The product has one listening mode, Heart. It does not include:
+
+- a display with its backlight,
+- touch input,
+- SD-card storage of test recordings,
+- capture of an audio clip with slower replay, and the speed switch for it,
+- Lung mode.
+
+## Standards and regulatory position
+
+The specification covers the functions and the technical behaviour of the device. It contains no
+conformity assessment and no clinical evaluation.
+
+Errors are treated as technical alarm conditions with a priority under IEC 60601-1-8 [1]. The
+error indication deviates from Table 2 of that standard in colour and flash rate: every error
+uses the red button light with a counted blink code at 2 Hz, whatever its priority.
+
+[1] International Electrotechnical Commission, *Medical electrical equipment — Part 1-8: General
+requirements for basic safety and essential performance — Collateral standard: General
+requirements, tests and guidance for alarm systems in medical electrical equipment and medical
+electrical systems*, IEC 60601-1-8:2006+AMD1:2012+AMD2:2020 CSV, edition 2.2, IEC, 2020.
+Publication record: <https://webstore.iec.ch/en/publication/67388> (accessed 2026-10-24).
 
 ## Terminology
 
 | Term | Meaning |
 |---|---|
-| Raw | No listening band filter; sample normalization, gain and output saturation still apply. |
-| Listening filter | Operator-selected switch position applied to the audible output: Raw (no band filter), Murmur (filter estimated to be better for murmur detection) or BPM (the filter of the BPM analysis, so the listener hears what the analysis gets). |
-| Analysis filter | The BPM filter, always applied by BPM analysis to its own pre-volume input; independent of the listening switch. |
-| Recording / clip | Bounded volatile raw audio for replay; not a completed BPM result. |
-| Measurement session | Bounded original-rate interval aggregated into one frozen result with a unique identifier. |
-| Ready | Essential audio capability initialized; physical operation still needs target evidence. |
-| Idle / stopped | No live microphone listening or replay; output muted; eligible for network work. |
-| Live | Microphone blocks routed to listening output at 1×. |
-| Valid BPM | Estimator and coverage criteria met; neither clinical confidence nor diagnosis. |
-| Source | Microphone, synthetic tone/heartbeat or licensed fixture; provenance follows all derived data. |
-| Listening point | Operator-entered anatomical label; device does not infer location. |
-| MON | Cross-cutting software monitoring and risk controls, not an additional architecture layer. |
-
-IEC 62304 class B and Zephyr as SOUP are recorded architecture intentions from S04. Classification,
-hazard analysis and the applicability of standards require separate substantiation; this package
-is not a compliance certificate. Candidate risks and controls are listed in the readiness plan.
-
-Working assumption (19 October): the device is designed as if it were ME (medical electrical) equipment
-under IEC 60601-1, with the chestpiece as applied part, as comparable electronic stethoscopes are. Errors
-are treated as technical alarm conditions with priorities under IEC 60601-1-8. This is a project
-decision that guides the later design stage. Applicability, sources and deviations need a separate
-assessment; this assumption is not a conformity claim.
+| Operator | Person who operates the device and listens. |
+| Raw | Listening without a band filter. Sample normalization, gain and output saturation still apply. |
+| Listening filter | Switch position that the operator selects for the audible output: Raw (no band filter), Murmur (filter estimated to be better for murmur detection) or BPM (the filter of the BPM analysis, so the operator hears what the analysis gets). |
+| Analysis filter | The BPM filter. BPM analysis always applies it to its own input, which is taken before the volume control. It is independent of the listening switch. |
+| Measurement session | Bounded interval of original-rate audio that is aggregated into one frozen result with a unique identifier. |
+| Idle | The device does not listen. The output is muted. Network work is permitted. |
+| Live | Microphone blocks are routed to the listening output. |
+| Valid BPM | Heart-rate value that meets the estimator and coverage criteria. It carries no clinical confidence and no diagnosis. |
+| Source | Origin of an audio signal: the microphone, a synthetic tone or heartbeat, or a licensed recording. Derived data keep the identity of their source. |
+| Portal | Setup page that the device serves over its hotspot. |
+| MONITOR | Software module for cross-cutting runtime supervision and risk controls. It observes across the layers and is no layer of its own. |
