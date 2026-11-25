@@ -30,14 +30,16 @@ Applies to what the company receives: `Development/system/requirements/`, `archi
 `design/` and `coding/`, including diagrams, README files and source comments. A reader of these
 files has no project history and must not need any.
 
-- State what is, in the present tense. Do not name people, dates, meetings, reviews or project
-  steps, and do not say that or when something was decided, accepted or confirmed.
+- State what is, in the present tense. Do not tell the project's history: no project members,
+  no dates of decisions, meetings, reviews or measurements, no project steps, and no statement
+  that or when something was decided, accepted or confirmed.
 - Do not describe the document or defend a statement: no "this proposal", no "project decision,
   not a measurement". Do not put status words such as "proposed", "candidate", "provisional",
   "later" or "MVP" on content.
 - Cite public and vendor sources only (standards, RFCs, datasheets, vendor and Zephyr
-  documentation, papers), with full metadata, and keep the ones that are there. Own decisions,
-  measurements, reviews and code are not sources.
+  documentation, papers), with their full metadata: authors, publication date and access date
+  belong to a citation. Keep the public and vendor citations a document already has. Own
+  decisions, measurements, reviews and code are not sources; remove such entries.
 - Record the decision, measurement or review behind a statement in the decision log and its trace
   table under `Development/system/planning/`, which are not transferred to GitLab. A measured
   value becomes a design parameter with its technical reason; the dated measurement record
