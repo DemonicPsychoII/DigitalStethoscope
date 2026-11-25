@@ -67,7 +67,7 @@ The adapter contract prevents consumed-request redelivery from creating a new re
 
 ## Observation construction and delivery
 
-L1_FHIR serializes resources in C using a bounded JSON writer with proper string escaping, finite-number checks, locale-independent numeric formatting and checked buffer lengths. L2_COMMUNICATION serializes each Observation once after finalization and admission and retains the identical byte sequence for all retries. Device registration and Observation serialization are separate operations.
+L1_FHIR serializes resources in C using a bounded JSON writer with proper string escaping, finite-number checks, locale-independent numeric formatting and checked buffer lengths. The resource structure follows the PulsOxy project of NewTec GmbH [7]. L2_COMMUNICATION serializes each Observation once after finalization and admission and retains the identical byte sequence for all retries. Device registration and Observation serialization are separate operations.
 
 | Field | Valid heart-rate result |
 | --- | --- |
@@ -119,3 +119,5 @@ The deployment prerequisites for TLS and the server certificate are in the [TLS 
 [5] Health Level Seven International, *FHIR R4 Observation*, version 4.0.1, 2019, <https://hl7.org/fhir/R4/observation.html>, accessed 29 October 2026.
 
 [6] Health Level Seven International, *FHIR R4 DataAbsentReason code system*, version 4.0.1, 2019, <https://hl7.org/fhir/R4/codesystem-data-absent-reason.html>, accessed 29 October 2026.
+
+[7] NewTec GmbH, *PulsOxy InitState, MeasuringState and FhirResourceFactory*, PulsOxy project, revision `e38b98fc8b881af01e23a8f4935567e73d00de28`, 2026, [InitState.cpp](../../references/newtec-pulsoxy/lib/App_PulsOxy/src/InitState.cpp), [MeasuringState.cpp](../../references/newtec-pulsoxy/lib/App_PulsOxy/src/MeasuringState.cpp), [FhirResourceFactory.cpp](../../references/newtec-pulsoxy/lib/FhirService/src/FhirResourceFactory.cpp), reproduced in this repository under [references/newtec-pulsoxy](../../references/newtec-pulsoxy/README.md).
