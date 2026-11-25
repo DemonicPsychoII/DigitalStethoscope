@@ -164,7 +164,14 @@ def content_findings(path: str, text: str) -> list[str]:
                 findings.append(
                     f"{path}:{number}: {name}: {', '.join(sorted(set(values)))}"
                 )
-        dates = DATE.findall(line)
+        # A date inside a URL is part of the address, and "accessed <date>" is the access
+        # date of a citation in running text.
+        prose = re.sub(r"https?://\S+", " ", line)
+        dates = [
+            match.group(0)
+            for match in DATE.finditer(prose)
+            if not re.search(r"\baccessed(?: on)?\s+$", prose[: match.start()])
+        ]
         if dates and (not in_source_entry or NARRATION.search(line)):
             findings.append(f"{path}:{number}: {DATE_RULE}: {', '.join(dates)}")
     return findings
