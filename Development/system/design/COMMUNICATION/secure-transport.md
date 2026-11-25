@@ -81,7 +81,7 @@ Failed TLS preparation latches `SERVER_CONNECTION_FAILURE`, preserving standalon
 
 - A deployment needs a server certificate whose Subject Alternative Name covers the device-facing endpoint.
 - Public SNTP is not authenticated; certificate time checks do not turn that clock into an authenticated time source.
-- The trust configuration follows the FHIR service of the PulsOxy project of NewTec GmbH: one configured server certificate is trusted, and the device presents no client certificate [4].
+- The trust configuration follows the FHIR service of the PulsOxy project of NewTec GmbH: the configured certificate material is the trust basis of the connection, and the device presents no client certificate [4].
 
 ## Sources
 
@@ -91,4 +91,4 @@ Failed TLS preparation latches `SERVER_CONNECTION_FAILURE`, preserving standalon
 
 [3] Peter Saint-Andre and Rich Salz, *Service Identity in TLS*, IETF RFC 9525, November 2023, sections 4 and 6, DOI [10.17487/RFC9525](https://doi.org/10.17487/RFC9525), accessed 29 October 2026.
 
-[4] NewTec GmbH, *PulsOxy FhirService implementation*, PulsOxy project, revision `e38b98fc8b881af01e23a8f4935567e73d00de28`, 2026, [FhirService.cpp](../../references/newtec-pulsoxy/lib/FhirService/src/FhirService.cpp), reproduced in this repository under [references/newtec-pulsoxy](../../references/newtec-pulsoxy/README.md).
+[4] NewTec GmbH, *PulsOxy FhirService implementation*, PulsOxy project, revision `e38b98fc8b881af01e23a8f4935567e73d00de28`, 2026, [FhirService.cpp](../../references/newtec-pulsoxy/lib/FhirService/src/FhirService.cpp), reproduced in this repository under [references/newtec-pulsoxy](../../references/newtec-pulsoxy/README.md), accessed 25 November 2026.
