@@ -18,7 +18,7 @@ it does not change firmware or synchronize the older repository documents.
   The original thread was not independently retrieved. Later answers below take precedence.
 - Project records: [15 October](mvp-decisions-2026-10-15.md),
   [16 October](mvp-decisions-2026-10-16.md), and
-  [detailed design](../design/system/interfaces-and-behavior.md).
+  [detailed design](../design/README.md).
 - Visual snapshot: [Pages revision 11](https://homelab-server.tail15fafc.ts.net:8092/p/stethoscope-wifi-workflows/v/11/),
   accessed 18 October 2026. The page shows current behaviour without a decision history.
 

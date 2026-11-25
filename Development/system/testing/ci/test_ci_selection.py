@@ -27,11 +27,23 @@ class SelectionTests(unittest.TestCase):
 
     def test_component_pages_select_only_the_available_communication_suite(self):
         for area in ("architecture", "design"):
-            for component in ("WIFI", "PORTAL", "COMMUNICATION", "STORAGE", "system"):
+            for component in ("WIFI", "PORTAL", "COMMUNICATION", "STORAGE"):
                 self.assertTrue(
                     suites([f"Development/system/{area}/{component}/README.md"])[
                         "application_host"
                     ]
+                )
+            shared = {
+                "architecture": ("system/README.md",),
+                "design": (
+                    "cross-module.md",
+                    "puml/shared-runtime-handoffs.puml",
+                    "rendered/shared_runtime_handoffs.svg",
+                ),
+            }[area]
+            for page in shared:
+                self.assertTrue(
+                    suites([f"Development/system/{area}/{page}"])["application_host"]
                 )
             self.assertFalse(
                 suites([f"Development/system/{area}/AUDIO/README.md"])[

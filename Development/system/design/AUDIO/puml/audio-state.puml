@@ -29,9 +29,9 @@ hide empty description
 state "Initializing" as Initializing : i2s_initialize\nsystem: Boot
 state "Stopped" as Stopped : no stream; output silent; waits for commands\nsystem: Idle, Portal, Analysing, Sending, ReportingError
 state "Starting" as Starting : i2s_start: configure both links,\nprime 4 silent TX blocks, start RX, then TX\nsystem: still Idle (Listening starts at the started event)
-state "Running" as Running <<running>> : block loop, one iteration per 4 ms, ≤ 3 ms (P02)\nsystem: Listening, Measuring (system design: Live)
+state "Running" as Running <<running>> : block loop, one iteration per 4 ms, ≤ 3 ms (P02)\nsystem: Listening, Measuring (cross-module design: Live)
 state "Stopping" as Stopping : i2s_stop (Stop sequence)\nsystem: Listening → Idle,\nMeasuring → Idle or Analysing
-state "Fault" as Fault <<fault>> : both links dropped; waits for restart\nsystem: Muted (system design: Error, audio affected)
+state "Fault" as Fault <<fault>> : both links dropped; waits for restart\nsystem: Muted (cross-module design: Error, audio affected)
 [*] --> Initializing : boot
 Initializing --> Stopped : both I2S controllers ready, links configured
 Initializing --> Fault : I2S controller not ready or configuration failed\n/ failure reported to L2_CONTROL

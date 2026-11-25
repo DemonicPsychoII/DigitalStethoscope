@@ -2,7 +2,7 @@
 
 ## Basis
 
-This design refines the [TLS architecture](../../architecture/COMMUNICATION/secure-transport.md) and the [system design](../system/interfaces-and-behavior.md#delivery-clock-and-configuration). It depends on the [SNTP design](time-synchronization.md). Covered requirements are [REQ-02](../../requirements/system-requirements.md#req-02), [REQ-09](../../requirements/system-requirements.md#req-09), [REQ-10](../../requirements/system-requirements.md#req-10), [REQ-11](../../requirements/system-requirements.md#req-11), [REQ-13](../../requirements/system-requirements.md#req-13) and [REQ-14](../../requirements/system-requirements.md#req-14).
+This design refines the [TLS architecture](../../architecture/COMMUNICATION/secure-transport.md) and the [delivery design](interfaces-and-behavior.md#delivery-clock-and-configuration). It depends on the [SNTP design](time-synchronization.md). Covered requirements are [REQ-02](../../requirements/system-requirements.md#req-02), [REQ-09](../../requirements/system-requirements.md#req-09), [REQ-10](../../requirements/system-requirements.md#req-10), [REQ-11](../../requirements/system-requirements.md#req-11), [REQ-13](../../requirements/system-requirements.md#req-13) and [REQ-14](../../requirements/system-requirements.md#req-14).
 
 ## TLS 1.3 handshake (generic protocol)
 
@@ -47,7 +47,7 @@ L2_COMMUNICATION tracks station-address readiness, transport verification and De
 5. During listening, L1_WIFI holds an already verified, dormant connection if possible. L2_COMMUNICATION issues no application requests, heartbeats, proactive reconnects or active liveness probes. Optional TCP keepalive probes are disabled. If background TLS handling requires application work, it is deferred until the lease returns or the connection is invalidated.
 6. After listening, reuse the retained context only if endpoint/trust configuration and peer-validity checks still hold, for a delivery the clock anchor of its handshake still qualifies for the measurement end under the [mapping limit](time-synchronization.md#clock-mapping-and-native-behavior) and it has been idle for less than the device keep-alive timeout. Before the first request, poll the socket without blocking; a pending close (FIN, RST or `close_notify`) invalidates it without consuming an attempt. Closure/reset discovered on use still invalidates it.
 7. L2_COMMUNICATION closes a retained context whose idle time reaches the device keep-alive timeout under the lease while Idle, or marks it logically invalid during listening. L1_WIFI holds the context; L2_COMMUNICATION decides on reuse and closure. The device keep-alive timeout equals the server keep-alive timeout from the server profile image minus 5 seconds.
-8. Idle recovery uses the preparation policy; active delivery uses [P13](../system/parameters.md) below.
+8. Idle recovery uses the preparation policy; active delivery uses [P13](parameters.md) below.
 
 Before every new application request, check the retained peer's validity interval against the current clock. Configuration change, certificate expiry or a clock correction that makes validity fail immediately removes transport eligibility. During listening this is logical invalidation only; close under the lease afterward. A new setup, starting with its SNTP exchange, must verify the server before further requests. A clock correction that remains within the peer-validity interval does not itself require reconnection.
 

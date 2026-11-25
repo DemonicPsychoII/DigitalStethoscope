@@ -13,9 +13,9 @@ import host_build
 
 HERE = Path(__file__).resolve().parent
 APPLICATION = HERE.parents[2]
-INPUT = "Development/system/design/system/interfaces-and-behavior.md (Input design constraint)"
+INPUT = "Development/system/design/cross-module.md (Input design constraint)"
 DEBOUNCE = (
-    "Development/system/design/system/parameters.md (P10 candidate debounce 30 ms)"
+    "Development/system/design/cross-module.md (P10 candidate debounce 30 ms)"
 )
 SWITCH = "Development/system/testing/hardware/carrier-bringup/README.md (J8 as fitted)"
 VOLUME = "Development/system/coding/app/Kconfig (PHYSICALINTERFACE_VOLUME_POTENTIOMETER_FITTED off: potentiometer absent)"
