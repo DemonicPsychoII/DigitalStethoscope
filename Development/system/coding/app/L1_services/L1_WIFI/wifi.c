@@ -1408,9 +1408,19 @@ static void wifi_handleEvent(struct net_mgmt_event_callback *callback, uint64_t 
         case NET_EVENT_WIFI_CONNECT_RESULT:
         {
             const struct wifi_status *status = callback->info;
-            const bool disconnectIsPending = (atomic_get(&wifi_DisconnectIsPending) != 0);
-            const bool connectionIsRequested = (atomic_get(&wifi_ConnectionIsRequested) != 0);
+            bool disconnectIsPending = false;
+            bool connectionIsRequested = false;
             bool stationHasAddress = false;
+
+            if(status->status != 0)
+            {
+                disconnectIsPending = (atomic_get(&wifi_DisconnectIsPending) != 0);
+            }
+
+            if(!disconnectIsPending)
+            {
+                connectionIsRequested = (atomic_get(&wifi_ConnectionIsRequested) != 0);
+            }
 
             if((status->status == 0) && connectionIsRequested)
             {

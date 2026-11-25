@@ -93,7 +93,12 @@ int wifi_resolveIpv4(struct wifi_dns_lookup *lookup,
 
         (void)k_mutex_lock(lookup->lock, K_FOREVER);
         const bool operationIsCurrent = lookup->isCurrent(generation);
-        const bool deadlineHasExpired = sys_timepoint_expired(deadline);
+        bool deadlineHasExpired = false;
+
+        if(operationIsCurrent && !lookup->isComplete)
+        {
+            deadlineHasExpired = sys_timepoint_expired(deadline);
+        }
 
         if(!operationIsCurrent)
         {

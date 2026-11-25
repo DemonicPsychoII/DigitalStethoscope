@@ -865,7 +865,12 @@ static void control_checkInputs(void)
 
 static void control_checkQuickFlashes(void)
 {
-    const bool isQuickFlashTimeOver = sys_timepoint_expired(control_quickFlashesEnd);
+    bool isQuickFlashTimeOver = false;
+
+    if(control_isQuickFlashActive)
+    {
+        isQuickFlashTimeOver = sys_timepoint_expired(control_quickFlashesEnd);
+    }
 
     if(control_isQuickFlashActive && isQuickFlashTimeOver)
     {
