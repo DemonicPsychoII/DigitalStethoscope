@@ -30,7 +30,8 @@ end note
 CONTROL -> COMMUNICATION : Start: communication_postEvent(LISTENING_STARTED)\nwithdraws the network lease
 CONTROL -> COMMUNICATION : communication_waitForWiFiStop(timeout)\nL2_CONTROL sends no other event during the wait
 note right of COMMUNICATION
- Seen at the next event check, at most 200 ms later.
+ Seen at the next event check: at most 200 ms later
+ during a wait; a storage write in progress completes first.
 end note
 group Cancel the operation in progress, once (in-line)
  COMMUNICATION -> WIFI : cancel scan, disconnect join, cancel SNTP\nor cancel TLS setup/exchange (1 s stop bound)

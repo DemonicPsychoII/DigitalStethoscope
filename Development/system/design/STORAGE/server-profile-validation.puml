@@ -69,7 +69,8 @@ endif
 certificate validity against the prepared UTC time;
 if (valid at that time?) then (no)
  :No ClientHello sent.
- Idle preparation: SERVER_CONNECTION_FAILURE, retry after 60 s.
+ Idle preparation: SERVER_CONNECTION_FAILURE; next attempt no earlier
+ than 60 s later, while Idle with the lease and the prerequisites.
  Delivery: terminal DELIVERY_FAILURE; <<#3b2a1a>>
  detach
 endif
@@ -79,7 +80,8 @@ certificate trusted; Key Usage and Extended
 Key Usage (rule 5); peer dates again;
 if (handshake verified?) then (no)
  :Connection fails.
- Idle preparation: SERVER_CONNECTION_FAILURE, retry after 60 s.
+ Idle preparation: SERVER_CONNECTION_FAILURE; next attempt no earlier
+ than 60 s later, while Idle with the lease and the prerequisites.
  Delivery: terminal DELIVERY_FAILURE; <<#3b2a1a>>
  detach
 endif

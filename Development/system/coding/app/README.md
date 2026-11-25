@@ -19,7 +19,7 @@ maps its logical components to these folders.
 | `L1_services/` adapters | `L1_I2S` (mic RX, DAC TX), `L1_WIFI`, `L1_PORTAL` (Wi-Fi setup page), `L1_STORAGE` (settings records in flash), `L1_PHYSICALINTERFACE` (button, switch, potentiometer, status light, button light) | Zephyr, `common` |
 | `L1_services/` libraries | `L1_FILTER`, `L1_BPM` (envelope, autocorrelation, aggregation), `L1_FHIR` (serialization); pure C | `common` |
 | `L0_platform/` | Empty: Zephyr drivers and the board overlay | — |
-| `MONITOR/` | Runtime supervision | All layers, read-only |
+| `MONITOR/` | Runtime supervision; contains no checks | All layers, read-only |
 | `common/` | Shared audio/event/result types | Nothing |
 
 ## Building the application
@@ -242,8 +242,7 @@ Calls go downward. Upward notifications use events and message queues. Zephyr ow
 drivers, DMA and interrupts. L1 libraries include no Zephyr headers; each caller owns
 its own filter instance, so listening and BPM analysis filters stay independent.
 Only `L2_CONTROL` writes mode state, and `L2_SHELL` commands go through it.
-`L2_COMMUNICATION` is the only path to an `L1_WIFI` send, while `MONITOR` observes it
-read-only.
+`L2_COMMUNICATION` is the only path to an `L1_WIFI` send.
 
 [Detailed design](../../design/system/interfaces-and-behavior.md) defines contracts and
 ownership.
@@ -261,8 +260,9 @@ Cleanup tries each pending stop once. If all stops succeed, audio starts normall
 If any stop fails, the communication thread latches `WIFI_CLEANUP_FAILURE`, disables
 further Wi-Fi work until restart and still permits audio to start.
 
-The communication thread checks for Start events every 200 ms. Total teardown latency
-also includes a settings write in progress and the driver shutdown.
+While it waits, the communication thread checks for Start events every 200 ms. A settings
+write in progress returns before the check, so the teardown latency also includes that write
+and the driver shutdown.
 
 ## Coding conventions
 
