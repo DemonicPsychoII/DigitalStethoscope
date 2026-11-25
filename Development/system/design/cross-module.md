@@ -80,6 +80,7 @@ The following design constraints apply across modules, with numeric values in th
 
 | Area | Constraint |
 |---|---|
+| Copies and locks | Settings and snapshots are copied under a short lock or passed by message hand-off. A delivery job occupies the one job slot of `L2_COMMUNICATION`; while it is occupied a new job gets Busy, without overwrite and without a retry queue. DMA allocations stay in internal DMA-capable SRAM. |
 | Hardware | ESP32-S3 N16R8, INMP441 on I2S0, PCM5102A on I2S1, potentiometer on ADC1, with the pins of the [pin assignment](#pin-assignment). The device ends at the DAC line output. |
 | Audio | Convert INMP441 signed 24-bit left-channel data into normalized mono blocks with sequence numbers. DMA buffers in internal RAM, TX primed with silence, mono duplicated to both DAC channels. Listening continues when analysis cannot accept a block; the gap invalidates the affected BPM window. On microphone/DAC failure: silence, cancel the session, Error with audio muted; restore the cause and restart as required by the catalogue. |
 | Input | Debounced, timestamped events, one per stable transition. Interrupt handlers only signal deferred work. Volume clamped to 0–100 %. On potentiometer ADC failure or an invalid switch position: safe value, then CONTROL_INPUT_FAILURE (restart). A long press (≥2 s) is a distinct event and suppresses the ordinary press. |

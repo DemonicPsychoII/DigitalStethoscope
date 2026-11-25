@@ -53,7 +53,7 @@ Every hand-off between workers is bounded and has its own rule for a receiver th
 | Results, completion and faults | `L2_AUDIO` audio thread and BPM worker | `L2_CONTROL` | values | posted without waiting |
 | State snapshot | `L2_CONTROL` | `L2_SHELL` | value copy | the latest snapshot wins |
 | Listening and setup request | `L2_CONTROL` | `L2_COMMUNICATION` | values | the latest Start or Stop wins; the release is confirmed through a synchronized stopped state |
-| Delivery job | `L2_CONTROL` | `L2_COMMUNICATION` | value copy | one job at a time; while it is occupied the answer is Busy, without overwrite and without a retry queue |
+| Delivery job | `L2_CONTROL` | `L2_COMMUNICATION` | value copy | a job is admitted only while no other job is pending; a refused job is not queued |
 | Wi-Fi feedback and delivery outcome | `L2_COMMUNICATION` | `L2_CONTROL` | values | – |
 | Setup page requests | `L1_PORTAL` | `L2_COMMUNICATION` | values | a full queue refuses the request |
 
@@ -61,10 +61,9 @@ For the delivery job, a terminal failure retains only redacted outcome metadata 
 
 ## Buffer ownership and blocking rules
 
-DMA allocations stay in internal DMA-capable SRAM. `L2_AUDIO` over `L1_I2S` owns RX and TX transport buffers, and pool handles do not escape without a defined lifetime. Listening consumes the current transport block synchronously. BPM analysis receives copied blocks decoupled from the RX DMA pool so a stalled analysis worker cannot pin RX buffers. The [AUDIO architecture](../AUDIO/README.md) defines the block ownership of the audio path.
+`L2_AUDIO` over `L1_I2S` owns RX and TX transport buffers, and pool handles do not escape without a defined lifetime. Listening consumes the current transport block synchronously. BPM analysis receives copied blocks decoupled from the RX DMA pool so a stalled analysis worker cannot pin RX buffers. The [AUDIO architecture](../AUDIO/README.md) defines the block ownership of the audio path.
 
-DSP state is worker-local. Settings and snapshots are bounded copies made under a short lock or
-message hand-off; no lock spans an I2S wait, SPI transfer, file access, TLS operation or rendering.
+DSP state is worker-local. Settings and snapshots are bounded copies; no lock spans an I2S wait, SPI transfer, file access, TLS operation or rendering.
 Queues carry bounded values or handles rather than unbounded audio payloads. The audio path never
 waits when it enqueues.
 
