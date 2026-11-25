@@ -14,7 +14,7 @@ The product does not include:
 - diagnosis,
 - classification of sounds by machine learning,
 - durable storage of patient audio,
-- an enclosure,
+- the development of an enclosure,
 - proof of clinical benefit,
 - proof of regulatory conformity,
 - a claim that one listening filter is superior to another.
@@ -90,28 +90,32 @@ The device determines the heart rate from the microphone audio at its original s
 measurement always uses its own analysis filter. The selected listening filter and the volume do
 not change it.
 
-A session that lasts long enough gives one heart-rate result
-([REQ-06](../requirements/system-requirements.md#req-06)). A shorter session gives no result
-([REQ-07](../requirements/system-requirements.md#req-07)). A poor signal gives an error and no
-heart-rate value ([REQ-08](../requirements/system-requirements.md#req-08)).
+A session of at least 15 s whose signal meets the validity criteria gives one heart-rate result
+([REQ-06](../requirements/system-requirements.md#req-06)). A session that the operator stops
+before 15 s gives no result ([REQ-07](../requirements/system-requirements.md#req-07)). A poor
+signal gives an error and no heart-rate value
+([REQ-08](../requirements/system-requirements.md#req-08)).
 
 ### Result delivery
 
 The device registers itself at the FHIR server and keeps this registration across restarts
-([REQ-15](../requirements/system-requirements.md#req-15)). It sends each completed result to the
-server over TLS (Transport Layer Security) and checks the server certificate
-([REQ-09](../requirements/system-requirements.md#req-09),
-[REQ-11](../requirements/system-requirements.md#req-11)). The device does not select a patient. A
+([REQ-15](../requirements/system-requirements.md#req-15)). With the configured server available,
+it sends each valid result to the server over TLS (Transport Layer Security) and checks the
+server certificate ([REQ-09](../requirements/system-requirements.md#req-09),
+[REQ-11](../requirements/system-requirements.md#req-11)). The result references the registered
+device. The device does not select a patient. A
 result carries a patient reference only when the server supplies one with a requested examination
 ([REQ-09](../requirements/system-requirements.md#req-09)). The device repeats a failed delivery a
 limited number of times, then shows an error and discards the result
 ([REQ-10](../requirements/system-requirements.md#req-10)).
 
-Network work waits until listening stops.
+Network work waits until listening stops. A Start during a delivery cancels the delivery, and
+the result is discarded.
 
 ### Wi-Fi setup
 
-The device opens a Wi-Fi hotspot without a password and serves a setup page. The operator joins
+Without stored credentials, or after the operator holds the button for 2 s in Idle, the device
+opens a Wi-Fi hotspot without a password and serves a setup page. The operator joins
 the hotspot with a phone, selects the Wi-Fi network in the browser and enters the password of a
 protected network. The device keeps the credentials across restarts
 ([REQ-12](../requirements/system-requirements.md#req-12),
@@ -140,11 +144,9 @@ The product has one listening mode, Heart. It does not include:
 The specification covers the functions and the technical behaviour of the device. It contains no
 conformity assessment and no clinical evaluation.
 
-The indication treats the device as ME (medical electrical) equipment under IEC 60601-1, with the
-chestpiece as the applied part. The colours of the status and error lights follow IEC 60601-1,
-subclause 7.8.1. The flash rates follow IEC 60073. Errors are technical alarm conditions with a
-priority under IEC 60601-1-8 [1]. The error indication deviates from Table 2 of IEC 60601-1-8 in
-its colours: every error uses the red button light.
+Errors are treated as technical alarm conditions with a priority under IEC 60601-1-8 [1]. The
+error indication deviates from Table 2 of that standard in colour and flash rate: every error
+uses the red button light with a counted blink code at 2 Hz, whatever its priority.
 
 [1] International Electrotechnical Commission, *Medical electrical equipment — Part 1-8: General
 requirements for basic safety and essential performance — Collateral standard: General
@@ -165,6 +167,5 @@ Publication record: <https://webstore.iec.ch/en/publication/67388> (accessed 202
 | Live | Microphone blocks are routed to the listening output. |
 | Valid BPM | Heart-rate value that meets the estimator and coverage criteria. It carries no clinical confidence and no diagnosis. |
 | Source | Origin of an audio signal: the microphone, a synthetic tone or heartbeat, or a licensed recording. Derived data keep the identity of their source. |
-| Listening point | Anatomical label that the operator enters. The device does not infer the location. |
 | Portal | Setup page that the device serves over its hotspot. |
 | MONITOR | Software module for cross-cutting runtime supervision and risk controls. It observes across the layers and is no layer of its own. |

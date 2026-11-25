@@ -170,7 +170,7 @@ Time synchronization, secure server transport and Device registration run indepe
 | INMP441 microphone, `i2s0` RX | J3 | bit clock GPIO4, word select GPIO5, data input GPIO6 |
 | PCM5102A DAC, `i2s1` TX | J4 | bit clock GPIO40, word select GPIO41, data output GPIO42 |
 | Start/Stop button | J6 | GPIO16; closes to ground, pull-up |
-| Red button LED | J6 | GPIO17; active high |
+| Red button LED | J6 | GPIO17; active high; the LED keeps its current limiting |
 | Volume potentiometer | J7 | wiper on GPIO1, ADC1 channel 0 |
 | Raw/Murmur/BPM switch | J8 | GPIO18, GPIO21 and GPIO38 with pull-ups. Raw connects GPIO18 to ground; Murmur connects GPIO18 to GPIO21; BPM connects GPIO18 to GPIO38 |
 | RGB status LED | on the DevKit | GPIO48, driven through the SPI3 data line |
