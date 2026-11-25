@@ -2,6 +2,9 @@
 !theme cyborg
 !pragma layout smetana
 skinparam shadowing false
+skinparam backgroundColor #0b1018
+skinparam defaultFontColor #e6edf7
+skinparam ArrowColor #a9b8ca
 skinparam component {
  BackgroundColor<<optional>> #273241
  BorderColor<<optional>> #61738a
@@ -20,15 +23,15 @@ component "Chestpiece" as chest
 component "INMP441\nMicrophone" as mic
 node "ESP32-S3" as cpu
 component "PCM5102A\nDAC" as dac
-component "Headphone amplifier\n(outside project scope)" as amp <<external>>
+component "Headphone amplifier\n(outside the device boundary)" as amp <<external>>
 component "Headphones" as hp
 component "ILI9341 / XPT2046\nDisplay / touch" as ui <<optional>>
 component "Buttons / switches\nPotentiometer / LED" as controls
 artifact "SD card" as sd <<optional>>
 database "FHIR server" as server
 chest --> mic : sound
-mic --> cpu : I²S
-cpu --> dac : I²S
+mic --> cpu : microphone I²S link
+cpu --> dac : DAC I²S link
 dac --> amp : analog audio
 amp --> hp : analog audio
 controls --> cpu : controls
@@ -39,7 +42,6 @@ sd --> cpu : SPI
 cpu --> server : Wi-Fi / HTTPS
 server --> cpu : status (receipt)
 legend bottom
-  Grey / optional = beyond MVP.
-  Display, touch, SD and capture / slower replay are optional.
+  Grey = optional hardware component (display, touch and SD card).
 endlegend
 @enduml

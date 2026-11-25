@@ -6,7 +6,7 @@
 /** @addtogroup L1_PHYSICALINTERFACE
  * @{
  * @file
- * Implementation of the indication of the PHYSICALINTERFACE module.
+ * Implementation of the indication of the L1_PHYSICALINTERFACE module.
  */
 
 /***********************************************************************/

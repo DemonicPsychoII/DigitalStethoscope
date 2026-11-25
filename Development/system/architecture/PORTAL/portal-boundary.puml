@@ -5,7 +5,17 @@ skinparam defaultFontName SansSerif
 skinparam backgroundColor #0b1018
 skinparam defaultFontColor #e6edf7
 skinparam ArrowColor #a9b8ca
-title PORTAL page and controller boundary
+skinparam sequence {
+ ParticipantBackgroundColor #273241
+ ParticipantBorderColor #61738a
+ ParticipantFontColor #e6edf7
+ LifeLineBorderColor #61738a
+ GroupBorderColor #61738a
+ GroupHeaderFontColor #e6edf7
+ GroupBackgroundColor #1b2533
+}
+skinparam sequenceGroupBodyBackGroundColor #121a26
+title L1_PORTAL page and controller boundary
 actor "Operator / browser" as Browser
 participant "L1_PORTAL\nHTTP + page" as Portal
 participant "L2_COMMUNICATION\nSetup workflow" as Communication
@@ -29,7 +39,7 @@ Browser -> Portal : request current status
 Portal --> Browser : updated snapshot
 Communication -> Portal : publish closing; stop server
 note over Portal, Communication
- PORTAL never associates, retries or saves credentials.
- COMMUNICATION owns workflow; CONTROL owns listening priority.
+ L1_PORTAL never associates, retries or saves credentials.
+ L2_COMMUNICATION owns workflow; L2_CONTROL owns listening priority.
 end note
 @enduml

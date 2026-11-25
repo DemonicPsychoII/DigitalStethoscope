@@ -34,7 +34,7 @@ state "Indication latch (red button LED)" as Indication {
  RestartLatched --> RestartLatched : short press\n/ no effect
 }
 
-state "Workflow admission (CONTROL)" as Admission {
+state "Workflow admission (L2_CONTROL)" as Admission {
  state "Start permitted" as Permitted
  state "Start blocked, audio muted" as Blocked
  state "Blocked until restart" as BlockedRestart

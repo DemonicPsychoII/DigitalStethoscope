@@ -6,7 +6,7 @@
 /** @addtogroup L1_PHYSICALINTERFACE
  * @{
  * @file
- * Implementation of the PHYSICALINTERFACE module.
+ * Implementation of the L1_PHYSICALINTERFACE module.
  */
 
 /***********************************************************************/
@@ -43,8 +43,8 @@
 
 /** Murmur and BPM give no edge, because their pins rest high; so the switch is polled. With the 30 ms debounce, a change is reported after about 40 ms (P10: ≤100 ms). */
 #define PHYSICALINTERFACE_SWITCH_POLL_MILLISECONDS   10
-#define PHYSICALINTERFACE_SWITCH_SETTLE_MICROSECONDS 20 /**< After driving GPIO18 low; a margin, not measured. */
-#define PHYSICALINTERFACE_VOLUME_POLL_MILLISECONDS   50 /**< Candidate within P10 (≤100 ms). */
+#define PHYSICALINTERFACE_SWITCH_SETTLE_MICROSECONDS 20 /**< Settling time after driving GPIO18 low, before the Murmur and BPM contacts are read. */
+#define PHYSICALINTERFACE_VOLUME_POLL_MILLISECONDS   50 /**< Polling period within P10 (≤100 ms). */
 
 /***********************************************************************/
 /* TYPES                                                               */

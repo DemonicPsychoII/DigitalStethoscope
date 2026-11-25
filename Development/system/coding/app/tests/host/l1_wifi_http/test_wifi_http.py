@@ -14,7 +14,7 @@ HERE = Path(__file__).resolve().parent
 REPOSITORY = HERE.parents[6]
 DESIGN = "Development/system/design/COMMUNICATION/server-communication.md#"
 RECEIPT = DESIGN + "observation-construction-and-delivery"
-BUFFERS = DESIGN + "parameters-and-outstanding-evidence"
+BUFFERS = DESIGN + "parameters"
 HEADER_COUNT = (
     "; Development/system/coding/app/L1_services/L1_WIFI/wifi_http.h"
     " (WIFI_HTTP_HEADER_CAPACITY)"

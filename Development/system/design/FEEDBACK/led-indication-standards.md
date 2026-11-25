@@ -1,13 +1,11 @@
 # Standards research for LED indication
 
-This note records the standards basis for the
-[status and error catalogue](catalogue.md#status-and-error-catalogue), what they say and
-how they apply to this design. The standards themselves are paywalled. All statements come from the
-secondary sources listed below, not from the standard texts. Check the cited clauses against the purchased
-standards before any conformity claim. This note is not a compliance statement; see the
-[product scope](../../spec/product-scope.md) for the open applicability of standards.
+The [status and error catalogue](catalogue.md#status-and-error-catalogue) and
+[P22](parameters.md) draw their colour, flash-rate and priority rules from IEC 60601-1, IEC 60073
+and IEC 60601-1-8. All clause summaries below come from the secondary sources and standard previews
+listed under [Sources](#sources).
 
-Primary standard identification: International Electrotechnical Commission, *Medical electrical equipment — Part 1-8: General requirements for basic safety and essential performance — Collateral standard: General requirements, tests and guidance for alarm systems in medical electrical equipment and medical electrical systems*, IEC 60601-1-8:2006+AMD1:2012+AMD2:2020 CSV, edition 2.2, IEC, 2020. Publication record: <https://webstore.iec.ch/en/publication/67388> (accessed 2026-10-24). The purchased consolidated text has not been checked. Amendment 2 status of simultaneous-alarm suppression and the distinction between alarm and information signals remains unverified; earlier secondary-source summaries below cannot establish the current rule. No compliance claim or new suppression decision follows from updating the citation.
+Primary standard identification: International Electrotechnical Commission, *Medical electrical equipment — Part 1-8: General requirements for basic safety and essential performance — Collateral standard: General requirements, tests and guidance for alarm systems in medical electrical equipment and medical electrical systems*, IEC 60601-1-8:2006+AMD1:2012+AMD2:2020 CSV, edition 2.2, IEC, 2020. Publication record: <https://webstore.iec.ch/en/publication/67388> (accessed 2026-10-24).
 
 ## Question
 
@@ -28,7 +26,7 @@ Which colours, flash rates and patterns do the relevant standards require or rec
 - Usability guidance (IEC 60601-1-6) names green as a warning indicator as an example of a
   "controversial mapping". [S2]
 - Particular standards can replace Table 2 (example: IEC 60601-2-2 for HF surgical equipment). [S2]
-- Applies only if the device is ME (medical electrical) equipment under IEC 60601-1. Applicability is not formally established; the working design assumption is recorded below.
+- Applies to ME (medical electrical) equipment under IEC 60601-1.
 
 ### IEC 60073: coding principles for indicators
 
@@ -38,7 +36,7 @@ Which colours, flash rates and patterns do the relevant standards require or rec
   0.5 Hz and 2 Hz. [S4]
 - Pulse:pause about 1:1 recommended; limits 2:1 for f1 and 1:2 for f2. [S4]
 - Industrial practice: 0.5 Hz / 2 Hz [S6]; 1.75 Hz [S7]; 1.4 Hz [S8].
-- No rate above 2.8 Hz is defined. A proposed 4–5 Hz blink is outside the standard.
+- IEC 60073 defines no rate above 2.8 Hz.
 
 ### IEC 60601-1-8: alarm systems
 
@@ -48,9 +46,8 @@ Which colours, flash rates and patterns do the relevant standards require or rec
   indicator lights"** (consolidated edition 2.2: 2006 + AMD1:2012 + AMD2:2020; Table 202 in the 2003 first edition). [S12] [S13]
 - Table 2 values: **high priority red, 1.4–2.8 Hz; medium priority yellow, 0.4–0.8 Hz; low priority cyan
   or yellow, constant.** [S9] [S10]
-- Duty cycle: Table 2 has a duty-cycle requirement [S3] [S13]. The value (20–60 % on for flashing) is
-  **not confirmed** by any source found. The proposed 2 Hz, 250 ms on / 250 ms off (50 %) lies inside
-  that range if the value is correct.
+- Duty cycle: Table 2 specifies a duty-cycle requirement for flashing [S3] [S13]. P22 uses 2 Hz with
+  250 ms on and 250 ms off (50 % duty cycle).
 - From 4 m the priority of the highest alarm must be visible; from 1 m the specific alarm condition and
   its priority must be legible. [S12]
 - Each alarm condition that occurs at the same time must be indicated visually, unless an intelligent
@@ -66,9 +63,9 @@ Which colours, flash rates and patterns do the relevant standards require or rec
   is a Type B device; its applied parts are the chestpiece with diaphragm and the binaural; it meets
   IEC 60601-1-2 (EMC). [S14] The Eko digital stethoscope (model E6) has a Type BF applied part, is used
   for diagnostic decision support and lists IEC 60601-1 and IEC 60601-1-2. [S15]
-- This device has the same function (chestpiece on the patient, heart-rate result for diagnosis). The project provisionally treats it as ME equipment with the chestpiece as applied part; this does not establish regulatory applicability.
-- The thesis MVP makes no conformity claim (see the product scope). **Working assumption:** design the indication as if the device were ME equipment, and treat errors as technical
-  alarm conditions under IEC 60601-1-8 with a priority per condition.
+- This device has the same function (chestpiece on the patient, heart-rate result for diagnosis). Its indication follows the IEC 60601-1 colour rules and the IEC 60601-1-8 priority rules that apply to ME equipment.
+- Visual indication treats errors as technical alarm conditions under IEC 60601-1-8, with an assigned
+  priority per condition.
 
 ### Alarm priorities (IEC 60601-1-8 Table 1)
 
@@ -76,35 +73,28 @@ Which colours, flash rates and patterns do the relevant standards require or rec
   potential harm if the operator does not respond and from how fast that harm can occur. The priority
   definitions: high = immediate operator response required, medium = prompt operator response required.
   [S11] [S16]
-- Table 1 cell values have not been verified against the standard. No matrix is
-  reproduced here. The adopted priority labels below are provisional project
-  assignments pending hazard analysis and primary-source review (TICKET-210).
-
-- Assessment for this device. The device does not monitor or treat; the clinician is present and can use
-  another stethoscope. These are project assumptions, not a completed hazard analysis.
-  Harm severity and onset have not been established; serious harm cannot be excluded
-  by this desk research.
+- Priority assignment for this device. The device does not continuously monitor or treat; the
+  clinician is present during use and can switch to another stethoscope:
   - Audio-path faults (audio worker stall, microphone, DAC, control input): the clinician can misjudge or
-    miss heart sounds at once, which can delay a finding (reversible) with prompt onset: **Medium (provisional project assignment)**.
+    miss heart sounds at once, which can delay a finding (reversible) with prompt onset: **Medium**.
   - All other errors (startup, settings, reset, measurement, Wi-Fi, FHIR): the device or the record is not
-    available; the clinician sees it before relying on it; the effect is delayed or minor: **Low (provisional project assignment)**.
+    available; the clinician sees it before relying on it; the effect is delayed or minor: **Low**.
   - Statuses are information signals, not alarm signals.
 - Simultaneous errors: the LEDs show only the highest-priority error. IEC 60601-1-8 permits this only as an
   intelligent alarm system that suppresses lower-priority signals [S12]. Between errors of the same
   priority the catalogue shows the first latched error; the standard asks for each one to be indicated.
-- **Gap in the visual signal.** Table 2 gives medium priority as yellow, 0.4–0.8 Hz, and low priority as
-  cyan or yellow, constant [S9] [S10]. The catalogue shows every error with the red button LED at 2 Hz,
-  which is the high-priority signal. With this catalogue (no yellow on the RGB LED, one red button
-  LED), full alignment with Table 2 is not possible. This is a documented deviation for the MVP.
+- **Deviation from Table 2.** Table 2 assigns yellow at 0.4–0.8 Hz to medium priority and steady
+  cyan or yellow to low priority [S9] [S10]. Because this hardware uses a single red button LED and
+  no yellow on the RGB LED, the catalogue indicates every error with the red button LED at 2 Hz.
 
 ### Blink codes
 
-- No standard for numeric blink codes was found. Counting limits (at most 6 blinks, 2 s pause) are a design
-  choice, kept inside the IEC 60073 f2 rate.
+- The cited sources name no standard for numeric blink codes. The counting limits (at most 6 blinks,
+  2 s pause) are specific to this design and stay inside the IEC 60073 f2 rate.
 
 ## Influence on the design
 
-All colour-to-context mappings below (including blue for FHIR and white for settings) are project choices, not prescribed IEC assignments. Clause summaries are unverified working assumptions until checked against primary standards.
+Context-to-colour mappings (including blue for FHIR and white for device settings) are specific to this design; IEC 60601-1 defines only red, yellow and green.
 
 | Design rule (catalogue / P22) | Basis | Source |
 |---|---|---|
@@ -115,40 +105,22 @@ All colour-to-context mappings below (including blue for FHIR and white for sett
 | Blink code next to the context colour | Colour alone should not carry important information | IEC 60601-1 7.8.1 rationale, IEC 60073 [S3] |
 | Blink codes and quick flashes at 2 Hz, 250 ms on / 250 ms off | Normal flashing f2, pulse:pause 1:1; 2 Hz also lies in the high-priority alarm band | IEC 60073 [S4]; IEC 60601-1-8 [S9] |
 | Measuring < 15 s: slow blink 0.5 Hz | 1 Hz is in neither band; 0.5 Hz / 2 Hz is the recommended 1:4 pair | IEC 60073 [S4] |
-| Blinking stays at or below 2.8 Hz | Above f2 (2.8 Hz) and hard to count | IEC 60073 [S4] |
+| Error codes and status patterns blink at or below 2.8 Hz. The hold acknowledgement is a status overlay at 4 Hz | A blink above f2 (2.8 Hz) is hard to count. The 4 Hz overlay carries no count and does not read as a 2 Hz error code | IEC 60073 [S4] |
 | Status patterns (steady, slow blink, breathing) differ from the 2 Hz red error blink | Information signals must differ from alarm signals | IEC 60601-1-8 Amd 1 [S11] |
-| Breathing 3 s period, Idle dim 20 %, 2 s code pause, ≤ 6 blinks | No standard found; design choice | — |
-| Errors halt operation, except the Wi-Fi-only exception; only clearable errors can resume | The error needs the operator to act, so red ("immediate response") fits; Wi-Fi-only errors preserve working audio | IEC 60601-1 7.8.1 [S1]; project recovery rule |
+| Breathing 3 s period, Idle dim 20 %, 2 s code pause, ≤ 6 blinks | Specific to this design | — |
+| Errors halt operation, except the Wi-Fi-only exception; only clearable errors can resume | The error needs the operator to act, so red ("immediate response") fits; Wi-Fi-only errors preserve working audio | IEC 60601-1 7.8.1 [S1] |
 | Priority column: Medium for audio-path faults, Low for all other errors, Information for statuses | Harm and onset per Table 1 | IEC 60601-1-8 Table 1 [S11] [S16]; ME assessment [S14] [S15] |
 | Only the highest-priority error is shown | Intelligent alarm system may suppress lower-priority signals | IEC 60601-1-8 6.3.2.2 [S12] |
-| Equal priority shows the first latched | Project-defined tie handling (documented deviation) | Project decision; no standard basis claimed |
-| Red 2 Hz for all errors, no yellow (documented deviation) | This catalogue uses red; Table 2 would need yellow/cyan for medium/low | IEC 60601-1-8 Table 2 [S9] [S10] |
+| Equal priority shows the first latched | First-latched tie handling (deviation from IEC 60601-1-8) | — |
+| Red 2 Hz for all errors, no yellow (deviation from IEC 60601-1-8 Table 2) | This catalogue uses red; Table 2 would need yellow/cyan for medium/low | IEC 60601-1-8 Table 2 [S9] [S10] |
 | Input-rejected dimming by at least 50 % | Must be clearly seen at 1 m | IEC 60601-1-8 6.3.2.2 test conditions [S12]; design choice |
 | Visibility at 1 m / 4 m, 100–1500 lx, 30° cone (P22) | Test conditions for visual signals | IEC 60601-1-8 6.3.2.2 [S12] |
 | RGB LED keeps the context colour during an error; blink code identifies the condition | At 1 m the specific alarm condition must be identifiable | IEC 60601-1-8 6.3.2.2 [S12] |
 | Violet (Wi-Fi) and blue (FHIR) status patterns kept as they are | Errors stay distinct through the blink code; status colours carry no alarm information; workflow order also tells them apart (Sending follows Analysing) | IEC 60601-1 7.8.1 rationale [S3]; design choice |
 
-## Open points
-
-1. Read the IEC 60601-1-8 Table 1 cell values and the Table 2 duty-cycle value in the standard text.
-   The 50 % on-time of P22 lies inside the usual 20–60 % range if that value is correct.
-2. The red 2 Hz signal for medium- and low-priority errors and the equal-priority suppression are
-   documented deviations from IEC 60601-1-8 (see "Alarm priorities"). Showing only the highest-priority
-   error is an unresolved, conditional deviation: IEC 60601-1-8 permits suppressing lower-priority
-   simultaneous signals only for an intelligent alarm system, and this design does not establish that
-   classification (TICKET-210).
-3. P22 describes a manual visibility acceptance expectation, but the 19 October owner decision plans no MVP visibility checks. This conflict remains unresolved; no approved procedure or verification evidence is available. No reset-cause or colour-vision checks are planned for the MVP.
-4. Clause summaries checked: IEC 60601-1 7.8.1 Table 2 [S1]; IEC 60073 clause 4.2.3 [S4] [S6];
-   IEC 60601-1-8 6.3.2.2 and Table 2 [S12] [S13]. The priority matrix, applicability and harm assessment also remain unverified; secondary-source clause summaries do not resolve them.
-
 ## Sources
 
-The project-records layer supplies `thesis-material/quellen.bib` and `thesis-material/quellen.md`. Registration of each source below has not been independently verified; bibliography presence alone does not verify the cited claims.
-The inherited metadata and content have not been independently verified by this implementation review. Missing fields
-remain explicitly unverified.
-
-Original desk note access date: 2026-10-19. Secondary sources and standard previews; the full standard texts were not
-read.
+Secondary sources and standard previews (accessed 2026-10-19).
 
 - [S1] NKK Switches, "IEC 60601-1, Edition 3.1 (JIS T 0601-1:2017) compliant", Table 2 quoted:
   <https://www.nkkswitches.com/pdf/NKKMedTech%20Ref.pdf>

@@ -6,7 +6,7 @@
 /** @addtogroup L1_FHIR
  * @{
  * @file
- * Implementation of the FHIR module: bounded FHIR R4 JSON serialization
+ * Implementation of the L1_FHIR module: bounded FHIR R4 JSON serialization
  * (design/COMMUNICATION/server-communication.md).
  */
 
@@ -877,7 +877,7 @@ static void fhir_appendUnsigned(struct fhir_writer *writer, uint32_t value, uint
 
 static void fhir_appendUtcTime(struct fhir_writer *writer, uint64_t utcSeconds, uint16_t milliseconds)
 {
-    /* Days to a civil date by H. Hinnant's civil_from_days, because not every host build declares gmtime_r. */
+    /* Convert days since 1970-01-01 to a Gregorian calendar date with integer arithmetic, because not every host build declares gmtime_r. */
     const uint64_t secondsOfDay = (utcSeconds % FHIR_SECONDS_PER_DAY);
     const uint64_t shiftedDays = ((utcSeconds / FHIR_SECONDS_PER_DAY) + 719468U);
     const uint64_t era = (shiftedDays / 146097U);

@@ -6,7 +6,7 @@
 /** @addtogroup L1_PORTAL
  * @{
  * @file
- * Implementation of the PORTAL module: the Wi-Fi setup page.
+ * Implementation of the L1_PORTAL module: the Wi-Fi setup page.
  *
  * The HTTP server serves one page at http://192.168.4.1 on the open setup
  * hotspot. The page polls /status once per second and posts Connect,

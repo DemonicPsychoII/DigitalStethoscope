@@ -8,7 +8,7 @@ skinparam ArrowColor #a9b8ca
 !pragma layout smetana
 title Which examination context does an Observation carry?
 hide empty description
-state "OPEN: external request adapter\nprotocol, acknowledgement, durability,\ncancellation/expiry\n—\nwrong target, malformed or oversized offers\nare rejected; the pending slot stays unchanged" as Adapter
+state "Examination-request adapter\nwrong target, malformed or oversized offers\nare rejected; the pending slot stays unchanged" as Adapter
 state "Pending slot (one request)" as Slot {
  state "No pending request" as Empty
  state "Pending request\nvalidated for this device and server binding\nrequest identity, optional patient reference" as Pending

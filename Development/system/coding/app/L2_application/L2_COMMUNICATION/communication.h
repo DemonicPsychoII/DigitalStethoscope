@@ -6,8 +6,8 @@
 /** @defgroup L2_COMMUNICATION COMMUNICATION
  * @{
  * @file
- * L2 communication: Wi-Fi connection and setup. Later also builds the
- * messages via FHIR and sends them via WIFI.
+ * L2 communication: Wi-Fi connection, setup portal, Device registration
+ * and FHIR Observation delivery over L1_WIFI.
  * Implements Development/system/design/WIFI/interfaces-and-behavior.md and
  * Development/system/design/PORTAL/interfaces-and-behavior.md.
  */
@@ -95,21 +95,21 @@ enum communication_event
  * Call before communication_init(), so the boot join is reported too.
  * Without a handler, no feedback is reported.
  *
- * @param[in] handler Feedback receiver; only CONTROL registers one.
+ * @param[in] handler Feedback receiver; only L2_CONTROL registers one.
  */
 void communication_setFeedbackHandler(communication_feedback_handler handler);
 
 /**
  * @brief Initialize the communication module.
  *
- * This includes the on-board WIFI module.
+ * This includes L1_WIFI.
  */
 void communication_init(void);
 
 /**
  * @brief Send an event from control to the communication thread.
  *
- * Does not block, so it can also be called from an interrupt. Only CONTROL
+ * Does not block, so it can also be called from an interrupt. Only L2_CONTROL
  * sends events. A setup request during listening or setup is ignored.
  *
  * @param[in] event Event to send.
@@ -121,11 +121,11 @@ int communication_postEvent(enum communication_event event);
 /**
  * @brief Wait until the Wi-Fi work has stopped after COMMUNICATION_EVENT_LISTENING_STARTED.
  *
- * CONTROL calls this after LISTENING_STARTED and before audio starts, and
+ * L2_CONTROL calls this after LISTENING_STARTED and before audio starts, and
  * sends no other event during the wait. A connected station stays connected.
- * On timeout, CONTROL keeps audio stopped. After a latched Wi-Fi cleanup fault this
- * returns 0 while services may still be pending: audio is released under REQ-13,
- * and radio shutdown is not asserted.
+ * On timeout, L2_CONTROL keeps audio stopped. After a latched Wi-Fi cleanup fault this
+ * returns 0 even if services remain pending, so audio can start while further
+ * Wi-Fi work stays disabled until restart.
  *
  * @param[in] timeout Maximum time to wait.
  *
@@ -136,9 +136,8 @@ int communication_waitForWiFiStop(k_timeout_t timeout);
 /**
  * @brief Admit one finalized result for delivery under P13, without waiting.
  *
- * CONTROL calls this once after finalization, after LISTENING_STOPPED, and treats
- * the job as running until communication_getDeliveryOutcome() reports a final
- * outcome. Prerequisites are checked once, at this call, without waiting.
+ * Call once per finalized result, after LISTENING_STOPPED. The job is running
+ * until communication_getDeliveryOutcome() reports a final outcome. Prerequisites are checked once, at this call, without waiting.
  *
  * Admission freezes the job's provenance: the result, the server Device id of the
  * Device registration valid now, and, when the current clock anchor qualifies (at most

@@ -6,7 +6,7 @@
 /** @addtogroup L1_STORAGE
  * @{
  * @file
- * Implementation of the STORAGE module.
+ * Implementation of the L1_STORAGE module.
  *
  * Each record is one settings entry on ZMS. A read loads the full record
  * name as the subtree, so ZMS finds the entry by its hash and does not

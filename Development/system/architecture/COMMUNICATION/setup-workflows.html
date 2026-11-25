@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>COMMUNICATION architecture</title>
+  <title>L2_COMMUNICATION architecture</title>
   <!-- Shared dark presentation for the workflow views. -->
   <style>
     body { margin: 0; background: #0b1018; color: #e6edf7; font: 16px/1.6 system-ui, sans-serif; }
@@ -17,9 +17,9 @@
 <body>
   <main>
     <!-- Scope and ownership of the diagrams on this page. -->
-    <h1>L2_COMMUNICATION setup architecture</h1>
-    <p>Workflow ownership and service boundaries. Retry counts, timing, page contracts and indication values belong to detailed design.</p>
-    <!-- Setup states and transitions owned by COMMUNICATION. -->
+    <h1>L2_COMMUNICATION architecture</h1>
+    <p>Workflow ownership and service boundaries for Wi-Fi setup, recovery and server communication.</p>
+    <!-- Setup states and transitions owned by L2_COMMUNICATION. -->
     <section>
       <h2>Setup State</h2>
       <p><a href="setup-state.puml">Editable source</a> · <a href="rendered/setup_state.svg">SVG</a></p>
@@ -37,7 +37,7 @@
       <p><a href="link-recovery.puml">Editable source</a> · <a href="rendered/link_recovery.svg">SVG</a></p>
       <img alt="link-recovery" src="rendered/link_recovery.svg">
     </section>
-    <!-- Messages between COMMUNICATION and its services during setup. -->
+    <!-- Messages between L2_COMMUNICATION and its services during setup. -->
     <section>
       <h2>Setup Sequence</h2>
       <p><a href="setup-sequence.puml">Editable source</a> · <a href="rendered/setup_sequence.svg">SVG</a></p>

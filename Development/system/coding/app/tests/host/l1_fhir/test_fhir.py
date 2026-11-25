@@ -13,7 +13,7 @@ HERE = Path(__file__).resolve().parent
 DESIGN = "Development/system/design/COMMUNICATION/server-communication.md#"
 REGISTRATION = DESIGN + "registration-flow-and-recovery"
 IDENTITY = DESIGN + "physical-identity-and-server-binding"
-BUFFERS = DESIGN + "parameters-and-outstanding-evidence"
+BUFFERS = DESIGN + "parameters"
 JSON_ESCAPING = "https://www.rfc-editor.org/rfc/rfc8259#section-7"
 
 IDENTIFIER = "stetho-A1B2C3D4E5F6"

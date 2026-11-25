@@ -1,7 +1,7 @@
 # System architecture
 
-Shared views remain at system level. The [viewer](review.html) presents the product views;
-[view notes](VIEW-NOTES.md) retain their scope, hardware naming and runtime assumptions.
+The [viewer](review.html) presents the system architecture views, and [view notes](VIEW-NOTES.md)
+document their scope, hardware naming and runtime assumptions.
 
 | Diagram | Editable source | Preview |
 |---|---|---|
@@ -13,14 +13,12 @@ Shared views remain at system level. The [viewer](review.html) presents the prod
 | Input ownership | [input-ownership.puml](input-ownership.puml) | [SVG](rendered/input_ownership.svg) |
 | Threads | [runtime-ownership.puml](runtime-ownership.puml) | [SVG](rendered/runtime_ownership.svg) |
 | Listening | [listening-workflow.puml](listening-workflow.puml) | [SVG](rendered/listening_workflow.svg) |
-| MVP session / alarms | [mvp-session-state.puml](mvp-session-state.puml) | [SVG](rendered/mvp_session_state.svg) |
+| Session and error transitions | [mvp-session-state.puml](mvp-session-state.puml) | [SVG](rendered/mvp_session_state.svg) |
 | BPM measurement | [measurement-workflow.puml](measurement-workflow.puml) | [SVG](rendered/measurement_workflow.svg) |
 | Server profile | [server-profile.puml](server-profile.puml) | [SVG](rendered/server_profile.svg) |
 
-Lung mode is optional beyond the MVP (TICKET-203); its paths are marked optional in the listening and MVP session views.
+Lung mode is optional; its paths are marked optional in the listening and session views.
 
-[Feedback ground rules](feedback-principles.md) define indication ownership and fault containment. The session view's error latch is refined in the [FEEDBACK fault-handling view](../../design/FEEDBACK/catalogue.md#fault-handling).
+[Feedback ground rules](feedback-principles.md) define indication ownership and fault containment.
 
-[Server profile](server-profile.md) allocates how a device receives its one server, endpoint and trusted certificate.
-
-Original board snapshots remain immutable source material.
+[Server profile](server-profile.md) defines how a device receives its server endpoint, keep-alive and trusted certificate.

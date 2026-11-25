@@ -4,6 +4,9 @@
 skinparam shadowing false
 skinparam componentStyle rectangle
 skinparam defaultFontName SansSerif
+skinparam backgroundColor #0b1018
+skinparam defaultFontColor #e6edf7
+skinparam ArrowColor #a9b8ca
 skinparam component {
  BackgroundColor<<thread>> #DCEBFA
  BorderColor<<thread>> #345E87
@@ -16,15 +19,15 @@ skinparam artifact {
  BorderColor<<pool>> #61738a
  FontColor<<pool>> #e6edf7
 }
-title First audio path: microphone to DAC
+title Audio path: microphone to DAC
 top to bottom direction
 component "INMP441 microphone\nL/R to ground: left slot" as microphone <<hardware>>
-component "L0 Zephyr I2S driver\ni2s0 RX + DMA" as receiveDriver
+component "L0 Zephyr I2S driver\nRX link + DMA" as receiveDriver
 artifact "RX pool\ninternal RAM" as receivePool <<pool>>
 component "L1_I2S\nconfigure, prime, start, stop\nborrow and return blocks" as transport
-component "L2_AUDIO audio thread\nleft slot to mono\ncopy step\nmono to both slots" as audio <<thread>>
+component "L2_AUDIO audio thread\nleft slot to mono\nprocessing step: filter, volume\nmono to both slots" as audio <<thread>>
 artifact "TX pool\ninternal RAM" as transmitPool <<pool>>
-component "L0 Zephyr I2S driver\ni2s1 TX + DMA" as transmitDriver
+component "L0 Zephyr I2S driver\nTX link + DMA" as transmitDriver
 component "PCM5102A DAC\nline output" as dac <<hardware>>
 component "L2_CONTROL" as control <<thread>>
 microphone --> receiveDriver : I2S frames
@@ -35,11 +38,10 @@ audio --> transport : filled TX block\nreceived block returned
 transport --> transmitPool : queued block
 transmitPool --> transmitDriver : DMA plays a block
 transmitDriver --> dac : I2S frames, left = right
-control --> audio : Start / Stop · k_msgq
-audio --> control : started, stopped, fault · k_msgq
+control --> audio : Start / Stop
+audio --> control : started, stopped, fault
 legend bottom
   Both controllers: same clock source, sample rate and word size.
-  Rate, block and pool sizes: decision record of 10 November 2026.
-  Later steps: listening filter, volume, BPM fan-out. No PSRAM in this step.
+  Sample rate, block size and pool sizes are fixed at build time.
 endlegend
 @enduml

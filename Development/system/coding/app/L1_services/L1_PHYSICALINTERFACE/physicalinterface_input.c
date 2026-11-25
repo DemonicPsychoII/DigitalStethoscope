@@ -6,7 +6,7 @@
 /** @addtogroup L1_PHYSICALINTERFACE
  * @{
  * @file
- * Implementation of the input decoding of the PHYSICALINTERFACE module.
+ * Implementation of the input decoding of the L1_PHYSICALINTERFACE module.
  */
 
 /***********************************************************************/

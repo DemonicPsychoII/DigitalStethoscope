@@ -22,7 +22,7 @@ CERTIFICATE_RULES = PROFILE + "certificate-checks"
 IMAGE_RULES = PROFILE + "image-built-from-the-file"
 COMMANDS = PROFILE + "commands"
 LIMITS = PROFILE + "parameters"
-ALLOCATION = PROFILE + "verification-allocation"
+ALLOCATION = "Development/system/testing/verification-allocation.md#server-profile"
 LAYOUT = "Development/system/design/STORAGE/interfaces-and-behavior.md#flash-layout"
 VT_ID = "VT-08"
 # The verification allocation traces secret material in the deployment file to evidence and privacy.

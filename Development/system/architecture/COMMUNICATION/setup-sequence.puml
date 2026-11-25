@@ -5,13 +5,23 @@ skinparam defaultFontName SansSerif
 skinparam backgroundColor #0b1018
 skinparam defaultFontColor #e6edf7
 skinparam ArrowColor #a9b8ca
+skinparam sequence {
+ ParticipantBackgroundColor #273241
+ ParticipantBorderColor #61738a
+ ParticipantFontColor #e6edf7
+ LifeLineBorderColor #61738a
+ GroupBorderColor #61738a
+ GroupHeaderFontColor #e6edf7
+ GroupBackgroundColor #1b2533
+}
+skinparam sequenceGroupBodyBackGroundColor #121a26
 title L2_COMMUNICATION setup ownership
-actor "Operator / phone" as Operator
-participant CONTROL
-participant COMMUNICATION
-participant WIFI
-participant PORTAL
-database STORAGE
+actor "Operator / browser" as Operator
+participant "L2_CONTROL" as CONTROL
+participant "L2_COMMUNICATION" as COMMUNICATION
+participant "L1_WIFI" as WIFI
+participant "L1_PORTAL" as PORTAL
+database "L1_STORAGE" as STORAGE
 CONTROL -> COMMUNICATION : setup permitted under network lease
 COMMUNICATION -> STORAGE : read saved network
 alt usable record

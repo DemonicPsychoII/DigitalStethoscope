@@ -29,9 +29,9 @@ hide empty description
 state "Initializing" as Initializing : i2s_initialize\nsystem: Boot
 state "Stopped" as Stopped : no stream; output silent; waits for commands\nsystem: Idle, Portal, Analysing, Sending, ReportingError
 state "Starting" as Starting : i2s_start: configure both links,\nprime 4 silent TX blocks, start RX, then TX\nsystem: still Idle (Listening starts at the started event)
-state "Running" as Running <<running>> : block loop, one iteration per 4 ms, ≤ 3 ms (P02)\nsystem: Listening, Measuring (shared design: Live)
+state "Running" as Running <<running>> : block loop, one iteration per 4 ms, ≤ 3 ms (P02)\nsystem: Listening, Measuring (system design: Live)
 state "Stopping" as Stopping : i2s_stop (Stop sequence)\nsystem: Listening → Idle,\nMeasuring → Idle or Analysing
-state "Fault" as Fault <<fault>> : both links dropped; waits for restart\nsystem: Muted (shared design: Error, audio affected)
+state "Fault" as Fault <<fault>> : both links dropped; waits for restart\nsystem: Muted (system design: Error, audio affected)
 [*] --> Initializing : boot
 Initializing --> Stopped : both I2S controllers ready, links configured
 Initializing --> Fault : I2S controller not ready or configuration failed\n/ failure reported to L2_CONTROL
@@ -45,19 +45,19 @@ Running --> Fault : receive or TX-block wait over 20 ms (P11),\ndriver error, fo
 Running --> Running : Wi-Fi-only fault\n/ audio preserved (P12)\nnon-audio halting fault\n/ latched, shown after manual Stop
 Fault --> [*] : device restart (catalogue: restart required)
 note bottom of Fault
-  No automatic stream restart (decision of 11 November).
+  No automatic stream restart.
   The device is halted: every input, including Start,
-  is blocked until restart (decision of 13 November).
+  is blocked until restart.
 end note
 note left of Running
   Non-audio restart-required error during listening
   (SESSION_CONTEXT_CHANGE, CONTROL_INPUT_FAILURE,
-  HEART_RATE_WORKER_STALL, SETTINGS_SAVE_FAILURE): AUDIO keeps
-  running; the error is latched silently and shown
-  after the manual Stop (decision of 13 November).
+  HEART_RATE_WORKER_STALL, SETTINGS_SAVE_FAILURE): L2_AUDIO keeps
+  running. The error is latched silently and shown
+  after the manual Stop.
 end note
 note right of Starting
-  The system enters Listening at the started
-  event, not at the Start command (13 November).
+  The system stays in Idle after the Start command
+  and enters Listening at the started event.
 end note
 @enduml

@@ -5,16 +5,26 @@ skinparam defaultFontName SansSerif
 skinparam backgroundColor #0b1018
 skinparam defaultFontColor #e6edf7
 skinparam ArrowColor #a9b8ca
+skinparam sequence {
+ ParticipantBackgroundColor #273241
+ ParticipantBorderColor #61738a
+ ParticipantFontColor #e6edf7
+ LifeLineBorderColor #61738a
+ GroupBorderColor #61738a
+ GroupHeaderFontColor #e6edf7
+ GroupBackgroundColor #1b2533
+}
+skinparam sequenceGroupBodyBackGroundColor #121a26
 skinparam sequenceMessageAlign left
 title When is Device registration ready? Only after the record is saved
-participant COMMUNICATION
-database STORAGE
-participant "WIFI\n(verified TLS 1.3)" as WIFI
+participant "L2_COMMUNICATION" as COMMUNICATION
+database "L1_STORAGE" as STORAGE
+participant "L1_WIFI\n(verified TLS 1.3)" as WIFI
 participant "FHIR server" as Server
 COMMUNICATION -> STORAGE : boot: read fhir/device-registration once
 alt Valid record for this server and physical identity
  STORAGE --> COMMUNICATION : record
- COMMUNICATION -> COMMUNICATION : registration ready from cache\n(no POST, no readback; not proof the server still holds it)
+ COMMUNICATION -> COMMUNICATION : registration ready from cache\n(no POST, no readback)
 else Missing, malformed or other binding
  COMMUNICATION -> COMMUNICATION : registration needed (Idle, verified transport, gap over)
  COMMUNICATION -> WIFI : POST /Device, If-None-Exist: identifier=urn%3Astethoscope%3Adevice|stetho-AABBCCDDEEFF\nsame physical identifier every time; 10 s attempt budget
@@ -43,6 +53,5 @@ note over COMMUNICATION, Server
  configuration or trust failure latch DEVICE_REGISTRATION_FAILURE; never an unconditional POST, never a new identity.
  Recovery: 60 s after the first failure, doubling (120, 240 s); the 4th failure leaves registration
  unavailable until restart. After a restart with no saved record the conditional POST is repeated.
- Atomicity and power-loss behavior of the save remain target evidence.
 end note
 @enduml

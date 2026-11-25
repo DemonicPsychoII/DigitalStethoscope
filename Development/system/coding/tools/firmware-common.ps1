@@ -21,7 +21,8 @@ function Assert-FwToolchain {
     }
 }
 
-# Release keeps the CI build directories, so CI parity and old commands stay valid.
+# Default build directory per target: build-app for app and build-eval for bringup,
+# with the suffix -debug for the debug profile.
 function Resolve-FwBuildDir {
     param([string]$Target, [string]$BuildProfile, [string]$BuildDir)
     if ($BuildProfile -eq 'debug' -and $Target -ne 'app') {
@@ -43,7 +44,7 @@ function Assert-FwBuild {
     }
 }
 
-# Same environment as build_support.build_env. Scripts share the caller's session,
+# Configure the pinned Zephyr environment for the call. Scripts share the caller's session,
 # so the previous values are restored to keep the caller's shell unchanged.
 function Invoke-FwWest {
     param([string[]]$Arguments)

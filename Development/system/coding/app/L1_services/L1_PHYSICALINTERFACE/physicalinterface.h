@@ -25,10 +25,10 @@
 /* DEFINES                                                             */
 /***********************************************************************/
 
-/** Filter reported with a failed switch reading: Raw applies no band filter, so it hides no sound. The design names no value. */
+/** Filter reported with a failed switch reading: Raw applies no band filter, so no sound is hidden. */
 #define PHYSICALINTERFACE_SAFE_LISTENING_FILTER PHYSICALINTERFACE_LISTENING_FILTER_RAW
 
-/** Volume reported with a failed or absent potentiometer reading: silent output. The design names no value. */
+/** Volume reported with a failed or absent potentiometer reading: silent output. */
 #define PHYSICALINTERFACE_SAFE_VOLUME_PERCENT 0
 
 /***********************************************************************/

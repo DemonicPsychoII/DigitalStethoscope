@@ -2,9 +2,9 @@
 
 ## Basis and scope
 
-This Architecture-stage proposal refines the [software allocation](../system/software-components.puml) and [server transport boundary](../../design/system/interfaces-and-behavior.md#delivery-clock-and-configuration). REQ-09, REQ-10 and REQ-11 establish delivery, bounded failure handling and certificate verification. The [current decisions](../../planning/README.md#current-baseline) identify the accepted basis; this refinement is proposed, not an accepted implementation contract.
+Secure transport builds on the [software allocation](../system/software-components.puml). REQ-09, REQ-10 and REQ-11 establish delivery, bounded failure handling and certificate verification.
 
-Retain the system allocation of Wi-Fi, TLS and time operations to L1_WIFI and workflow policy to L2_COMMUNICATION. Existing WIFI production interfaces cover station/provisioning operations; TLS operations still require a separate Design-stage contract before implementation.
+L1_WIFI owns Wi-Fi, TLS and time operations, and L2_COMMUNICATION owns workflow policy. Station, provisioning and TLS operations use separate interfaces within L1_WIFI.
 
 ## Responsibilities and dependencies
 
@@ -13,48 +13,40 @@ Retain the system allocation of Wi-Fi, TLS and time operations to L1_WIFI and wo
 | L2_CONTROL | Admit active network work outside listening and receive completion/release outcomes. | L1_WIFI, L1_FHIR and L1_STORAGE never mutate controller mode. |
 | L2_COMMUNICATION | Coordinate preparation and delivery; own overall attempt policy and classify outcomes. | No hidden retries in L1_WIFI, L1_FHIR or L1_STORAGE. |
 | L1_WIFI | Own DNS/socket/TLS operations through Zephyr, certificate verification, connection resources and cleanup. | Report outcomes; never serialize FHIR or select a patient. |
-| Zephyr networking and TLS stack | Provide platform transport beneath L1_WIFI. | Integration and target behavior remain unverified. |
-| Clock preparation | Supply acceptable time for certificate-validity checking. | Accepted unauthenticated SNTP time is not authenticated time. |
-| Deployment configuration and L1_STORAGE | Supply endpoint/trust material through the eventual configuration contract; STORAGE persists named records. | No new settings record, credential interface or portal field is defined here. |
+| Zephyr networking and TLS stack | Provide platform transport beneath L1_WIFI. | Secure transport reaches it only through L1_WIFI. |
+| Clock preparation | Supply time for certificate-validity checking. | Time comes from unauthenticated SNTP. |
+| Server profile and L1_STORAGE | Supply the configured endpoint and trust certificate; L1_STORAGE persists named records. | Endpoint and trust material are read-only at runtime and separate from portal settings. |
 | L1_FHIR | Serialize application messages independently of networking. | No Zephyr headers, socket ownership or certificate policy. |
 
-Dependency direction: CONTROL leases network activity to COMMUNICATION; COMMUNICATION composes the serializer and WIFI operations; WIFI depends on Zephyr transport and deployment trust material. The remote HTTPS server remains outside the device boundary. This is a project allocation derived from the existing system design.
+L2_CONTROL leases network activity to L2_COMMUNICATION. L2_COMMUNICATION composes L1_FHIR serialization and L1_WIFI transport operations. L1_WIFI depends on Zephyr transport and the server profile trust material. The remote HTTPS server sits outside the device boundary.
 
-## Agreed connection lifecycle
+## Connection policy
 
-Nico agreed the following direction during architecture grilling on 28 October 2026, recorded in [PR #80](https://github.com/DemonicPsychoII/DigitalStethoscope/pull/80). Prefer TLS 1.3, subject to verification of support in the pinned device stack and server. TLS detailed design on 29 October 2026 narrowed this to TLS 1.3 only, without fallback to older versions ([TLS Design PR #100](https://github.com/DemonicPsychoII/DigitalStethoscope/pull/100)). Retain and reuse a verified connection when available to reduce repeated connection setup. Connection reuse is an optimization, not a delivery prerequisite: connection loss is an expected recovery path within the existing delivery budget.
+Transport uses TLS 1.3 only, without fallback to older versions. L1_WIFI retains a verified connection for reuse to avoid repeated handshakes. Connection loss recovers by reconnecting within the delivery budget.
 
-Prepare secure transport automatically while Idle, starting each setup with one time synchronization directly before the TLS handshake ([review decisions, 2 November 2026](https://github.com/DemonicPsychoII/DigitalStethoscope/pull/104)), then proceed to registration readiness. COMMUNICATION tracks network access, verified transport and Device registration separately; an open connection does not establish all prerequisites. Verified transport means the most recent handshake verified the server under the current configuration and the clock applied by its own setup; an open socket is only a reuse candidate.
+L2_COMMUNICATION prepares secure transport automatically while Idle. Each setup starts with one time synchronization directly before the TLS handshake and then proceeds to Device registration. L2_COMMUNICATION tracks network access, verified transport and Device registration separately. Verified transport holds only when the most recent handshake verified the server against the active server profile and the clock applied during that setup.
 
-During listening, retain an existing connection without application requests, heartbeat messages or proactive reconnects. If it closes, defer reconnection until listening stops. WIFI retains ownership of the dormant connection; lease release means active network operations have ended, not that every retained socket must close. Connection reuse never authorizes active work without the lease. Target verification must establish the audio/resource impact of retained connections and underlying stack activity; application inactivity alone proves no isolation.
+During listening, a verified connection stays dormant, without application requests, heartbeat messages or proactive reconnects. If it closes, reconnection waits until listening stops. L1_WIFI keeps ownership of the dormant connection. Lease release means that active network operations have ended; a retained connection may stay open. Connection reuse never authorizes active work without the lease.
 
-Design must define retained-connection lifecycle, closure detection, cleanup and reconnect behavior. No indefinite connection lifetime or keepalive guarantee is assumed. Servers close idle connections (the local deployment of the HAPI FHIR server after about 60 s by default), so reconnection at delivery is the expected path and reuse depends on a keep-alive period on both ends: the deployment configures a long server keep-alive and the device applies its own, shorter keep-alive timeout. Retention during listening is the initial approach; if target measurement under [TICKET-213](https://nfrie.atlassian.net/browse/TICKET-213), measuring TLS reconnect timing and connection survival on the target, shows that the connection does not survive, close it at Start instead. TLS 1.3 compatibility and resource costs remain unverified.
+Servers close idle connections, so delivery reconnects when a retained connection is no longer open. Connection reuse relies on a configured server keep-alive period paired with a shorter device keep-alive timeout.
 
 ## Security and lifecycle boundaries
 
-Verify the server certificate against the trust material of the server profile, together with endpoint identity and validity; these checks are mandatory. TLS detailed design replaced the earlier lab-CA assumption with direct trust of the server's public certificate. Endpoint and certificate come from a server profile image written separately from the firmware; no client certificate is configured. Failed verification prevents sending the application request; neither plain-HTTP fallback nor a verification bypass is a recovery path. COMMUNICATION receives a terminal verification failure under the existing delivery policy. A station address alone does not establish server readiness.
+L1_WIFI verifies the server certificate against the server profile trust material, including endpoint identity and validity. The device trusts the server's public certificate directly. Endpoint and certificate come from a server profile image written separately from the firmware, with no client certificate configured. Failed verification blocks sending without plain-HTTP fallback or verification bypass, and reports a terminal verification failure to L2_COMMUNICATION. A station address alone does not establish server readiness.
 
-The local provisioning HTTP server remains L1_PORTAL's separate responsibility. Successful setup does not imply TLS readiness. Registration, examination-context ingress and delivery use the secure-server boundary when their transport contracts are defined.
+The local provisioning HTTP server is L1_PORTAL's separate responsibility. Successful Wi-Fi setup does not imply TLS readiness. Device registration, examination-context ingress and result delivery use the secure-server boundary.
 
-Active connection work follows the exclusive network lease. WIFI owns connection resources through cleanup; COMMUNICATION reports release only after active operations have ended. Network-only failure preserves working offline listening under REQ-13. Precise cancellation/close behavior belongs to Design.
+Active connection work follows the exclusive network lease. L1_WIFI owns connection resources through cleanup, and L2_COMMUNICATION reports lease release only after active operations end. Network-only failure preserves working offline listening under REQ-13.
 
-## Detailed-design inputs and gaps
-
-Define operation interfaces, endpoint and trust inputs, credential handling, connection lifetime, resource budgets and failure mapping in Design. Retain existing delivery bounds; cipher selection, rotation and timeout values remain Design inputs. Unauthenticated SNTP time is accepted for the minimum viable product (MVP) ([SNTP Design PR #99](https://github.com/DemonicPsychoII/DigitalStethoscope/pull/99)); timestamp accuracy evidence remains open under TICKET-209, choosing the clock reference and timestamp accuracy. Server authentication/authorization and certificate deployment must be made concrete before service implementation. Transport verification does not settle examination-request authorization.
+The device uses SNTP time without authenticating the time server. Transport verification authenticates the server; it does not authorize an examination request.
 
 ## Verification allocation
 
 | Scenario | Trace | Expected outcome |
 | --- | --- | --- |
 | Untrusted issuer, wrong name, expired certificate or unavailable clock basis | REQ-11; VT-08 | Verification failure prevents sending; no insecure fallback. |
-| Handshake failure or incomplete response | REQ-09/REQ-10; VT-07/VT-08 | COMMUNICATION applies bounded outcome/retry policy; transport releases resources. |
+| Handshake failure or incomplete response | REQ-09/REQ-10; VT-07/VT-08 | L2_COMMUNICATION applies bounded outcome/retry policy; transport releases resources. |
 | Active transport requested during listening | REQ-02/REQ-13; VT-08/VT-09 | No active transport work; offline listening remains available. |
 | Retained connection closes during listening | REQ-02/REQ-10/REQ-13; VT-08/VT-09 | No proactive reconnect or application heartbeat; reconnect after listening within the delivery budget. |
-| Reuse and retained-stack load | REQ-02/REQ-09/REQ-11; VT-02/VT-08 | Reuse the verified connection when available; verify TLS 1.3 support and measure target audio/resource impact. |
+| Reuse and retained-stack load | REQ-02/REQ-09/REQ-11; VT-02/VT-08 | Verified TLS 1.3 connection is reused when available without degrading audio output. |
 | Logs and repeated failure cleanup | REQ-10/REQ-13; VT-08/VT-11 | No secrets or patient data in logs; bounded cleanup/release are observable. |
-
-These allocate future verification, not test execution. [VT-08 coverage](../../testing/specification-verification.md) and target resource/interference evidence remain pending.
-
-## Project basis
-
-The rules above restate project policy rather than claim TLS implementation conformance: Nico, *MVP decisions — Wi-Fi setup, registration and delivery*, DigitalStethoscope project record, 15 October 2026, [record](../../planning/mvp-decisions-2026-10-15.md), as superseded by the [current baseline](../../planning/README.md#current-baseline); *System requirements (MVP)* and *System interfaces and behavior*, repository revision `81c7b1a45f5b0ef45c939098e5a693773c8abb90`, 2026, [requirements](../../requirements/system-requirements.md), [design](../../design/system/interfaces-and-behavior.md#delivery-clock-and-configuration). No target acceptance is claimed.

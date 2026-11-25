@@ -5,10 +5,20 @@ skinparam defaultFontName SansSerif
 skinparam backgroundColor #0b1018
 skinparam defaultFontColor #e6edf7
 skinparam ArrowColor #a9b8ca
+skinparam sequence {
+ ParticipantBackgroundColor #273241
+ ParticipantBorderColor #61738a
+ ParticipantFontColor #e6edf7
+ LifeLineBorderColor #61738a
+ GroupBorderColor #61738a
+ GroupHeaderFontColor #e6edf7
+ GroupBackgroundColor #1b2533
+}
+skinparam sequenceGroupBodyBackGroundColor #121a26
 skinparam sequenceMessageAlign left
 title Why is a retry after a lost receipt safe? Conditional create of one Observation
-participant COMMUNICATION
-participant "WIFI\n(verified TLS 1.3)" as WIFI
+participant "L2_COMMUNICATION" as COMMUNICATION
+participant "L1_WIFI\n(verified TLS 1.3)" as WIFI
 participant "FHIR server" as Server
 note over COMMUNICATION
  Frozen once before the first request: body bytes and
@@ -37,7 +47,6 @@ end
 note over COMMUNICATION, Server
  No delayed queue: a lost result is never resent, also not after the server recovers.
  A result that never gets a qualifying clock anchor sends no request: SERVER_CONNECTION_FAILURE at the deadline.
- Duplicate prevention follows the FHIR R4 conditional-create rules; whether the deployed
- HAPI FHIR server returns 200 for the existing match is unverified (integration evidence pending).
+ Duplicate prevention follows the FHIR R4 conditional-create rules.
 end note
 @enduml

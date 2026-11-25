@@ -2,7 +2,10 @@
 !theme cyborg
 skinparam shadowing false
 skinparam defaultFontName SansSerif
-title MVP BPM session
+skinparam backgroundColor #0b1018
+skinparam defaultFontColor #e6edf7
+skinparam ArrowColor #a9b8ca
+title BPM measurement
 start
 :Start Heart session;
 if (Heart + microphone + audio ready?) then (yes)
@@ -10,39 +13,39 @@ if (Heart + microphone + audio ready?) then (yes)
  repeat
   :Stream independent BPM analysis while listening;
   :Reject identity changes;
-  :If SESSION_CONTEXT_CHANGE: latch silently, keep listening;\nhalt after the manual Stop, discard the result, restart required;
-  if (Essential audio fault?) then (yes)
+  :If the session context changes: latch silently, keep listening;\nhalt after the manual Stop, discard the result, restart required;
+  if (Audio fault?) then (yes)
    :Mute and latch Error;
-   :Follow catalogue clear rule; restart for microphone/DAC faults;
+   :Block every input until restart;
    stop
   endif
  repeat while (Stop pressed?) is (no) not (yes)
  :Mute listening;
- if (Duration less than 15 seconds?) then (yes)
+ if (Duration below minimum session length?) then (yes)
   :Cancel measurement, no send;
   stop
  endif
  :Indicate Busy during analysis; reject Start without queuing.\nStart during sending cancels the delivery; the result is lost;
  :Aggregate retained valid estimates and interval;
  if (Invalid BPM?) then (yes)
-  :Latch normal BPM fault; no numeric value;
+  :Latch BPM fault; no numeric value;
  endif
  if (Wi-Fi configured?) then (yes)
   if (Device id / server profile image ready?) then (yes)
    if (Valid BPM?) then (yes)
     :One HTTPS/FHIR numeric result attempt;
    else (no)
-    :One error report using validated server contract;
+    :One HTTPS/FHIR error report attempt;
     :Never transmit numeric BPM;
    endif
-   if (Receipt 201 / 200?) then (yes)
+   if (Server receipt?) then (yes)
     :Delivery received;
    else (no)
-    :Retry up to 3 times within 10 s;
-    :If still failing: latch DELIVERY_FAILURE;
+    :Retry up to 3 times within the delivery deadline;
+    :If still failing: latch delivery fault;
    endif
   else (no)
-   :Latch DELIVERY_NOT_POSSIBLE;
+   :Latch delivery-not-possible fault;
   endif
  else (no)
   :No send attempt or Wi-Fi error;
@@ -56,7 +59,6 @@ stop
 legend bottom
   Wi-Fi-only failures preserve functioning audio.
   Streaming BPM requires no saved raw-session audio.
-  Duration/windows/filter/quality targets remain proposals.
-  Lung (optional) = listening only; no measurement/FHIR/error report.
+  Lung mode (optional) is listening only, without measurement, delivery or error report.
 endlegend
 @enduml

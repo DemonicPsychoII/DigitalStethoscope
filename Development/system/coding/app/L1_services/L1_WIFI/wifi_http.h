@@ -13,7 +13,7 @@
  * status, the Location header and the body within fixed bounds and stops
  * at the end of the message, so bytes behind it are never taken as the next
  * response. Neither does I/O or keeps global state. The request and response
- * types are part of the WIFI interface in wifi.h.
+ * types are part of the L1_WIFI interface in wifi.h.
  */
 
 #ifndef L1_WIFI_HTTP_H

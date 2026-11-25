@@ -49,8 +49,8 @@
 #define WIFI_SECURE_EVENT_COMPLETED BIT(0) /**< Wake secure connection waiters; the protected state holds the result. */
 #define WIFI_SECURE_EVENT_RESOLVED  BIT(1) /**< Wake the worker; only DNS has ended. */
 
-#define WIFI_SECURE_STACK_SIZE           (8192) /**< mbedTLS handshake with ECDHE and signature checks; proposed pending target measurement. */
-#define WIFI_SECURE_PRIORITY             (10)   /**< Same preemptive priority as the communication thread that waits for it. */
+#define WIFI_SECURE_STACK_SIZE           (8192) /**< Stack size for the mbedTLS handshake with ECDHE and signature checks. */
+#define WIFI_SECURE_PRIORITY             (10)   /**< Preemptive priority of the secure connection work queue. */
 #define WIFI_SECURE_POLL_INTERVAL_MS     (100)  /**< Longest worker wait between cancellation checks, well inside the stop bound. */
 #define WIFI_SECURE_CANCEL_TIMEOUT_MS    (1000) /**< P23 per-service stop bound. */
 #define WIFI_SECURE_HOST_MAX_LENGTH      (253)  /**< Longest DNS name. */
@@ -608,7 +608,7 @@ static void wifi_runSecureExchange(uint32_t generation, k_timepoint_t deadline)
     }
     else
     {
-        /* The caller reads keepsConnection as "WIFI still holds the connection", also after buffered bytes. */
+        /* The caller reads keepsConnection as "L1_WIFI still holds the connection", also after buffered bytes. */
         wifi_SecureConnectionIsRetained = false;
         wifi_SecureResponse->keepsConnection = false;
 

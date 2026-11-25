@@ -2,8 +2,10 @@
 <#
 .SYNOPSIS
 Flash an existing firmware build to a numbered Windows COM port.
+.PARAMETER Target
+app (default) flashes the application build; bringup flashes the evaluation firmware from build-eval.
 .PARAMETER Profile
-release (default) flashes build-app; debug flashes build-app-debug.
+release (default) flashes build-app; debug flashes build-app-debug and exists only for the app target.
 .PARAMETER Erase
 Erase the whole flash first, including saved settings such as the Wi-Fi
 network. Without it, flashing keeps the settings partition.
@@ -12,7 +14,7 @@ network. Without it, flashing keeps the settings partition.
 .EXAMPLE
     .\flash-firmware.ps1 5 -Profile debug
 .EXAMPLE
-    .\flash-firmware.ps1 5 -Target bringup
+    .\flash-firmware.ps1 5 -WhatIf
 .EXAMPLE
     .\flash-firmware.ps1 5 -Erase
 #>

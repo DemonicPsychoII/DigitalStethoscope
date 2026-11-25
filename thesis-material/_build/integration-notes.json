@@ -55,7 +55,7 @@
         [
           "Design: MVP-Sitzungsbasis",
           "Development/system/design/system/interfaces-and-behavior.md",
-          "mvp-session-baseline"
+          "session-handling"
         ]
       ]
     },
@@ -242,7 +242,7 @@
         [
           "Designparameter P03",
           "Development/system/design/system/parameters.md",
-          "design-parameters-internal"
+          "design-parameters"
         ]
       ]
     },
@@ -327,7 +327,7 @@
         [
           "Designparameter P03/P10",
           "Development/system/design/system/parameters.md",
-          "design-parameters-internal"
+          "design-parameters"
         ]
       ]
     },
@@ -366,7 +366,7 @@
         [
           "Designparameter P06",
           "Development/system/design/system/parameters.md",
-          "design-parameters-internal"
+          "design-parameters"
         ]
       ]
     },
@@ -417,7 +417,7 @@
         [
           "Designparameter P06/P17",
           "Development/system/design/system/parameters.md",
-          "design-parameters-internal"
+          "design-parameters"
         ]
       ]
     },
@@ -672,7 +672,7 @@
         [
           "Designparameter",
           "Development/system/design/system/parameters.md",
-          "design-parameters-internal"
+          "design-parameters"
         ]
       ]
     },
@@ -772,7 +772,7 @@
         [
           "Designparameter P06/P17",
           "Development/system/design/system/parameters.md",
-          "design-parameters-internal"
+          "design-parameters"
         ]
       ]
     },

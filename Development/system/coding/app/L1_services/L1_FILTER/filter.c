@@ -6,7 +6,7 @@
 /** @addtogroup L1_FILTER
  * @{
  * @file
- * Implementation of the FILTER module.
+ * Implementation of the L1_FILTER module.
  */
 
 /***********************************************************************/

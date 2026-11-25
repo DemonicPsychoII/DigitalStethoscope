@@ -6,7 +6,7 @@
 /** @addtogroup L1_I2S
  * @{
  * @file
- * Implementation of the I2S module.
+ * Implementation of the L1_I2S module.
  */
 
 /***********************************************************************/
@@ -81,10 +81,9 @@ K_MEM_SLAB_DEFINE_STATIC(i2s_TransmitPool, I2S_BLOCK_SIZE_BYTES, I2S_POOL_BLOCKS
 /*
  * Both links use the same word size, slot count and rate, so both controllers derive the same clock dividers.
  *
- * With I2S_FMT_DATA_FORMAT_I2S the controller delivered every INMP441 sample one bit too far left: the sign bit
- * was lost and loud samples wrapped. This is a measurement on the carrier; its cause in the driver or the timing
- * is not known. Left-justified with the inverted frame clock keeps the left slot on WS low and samples one bit
- * clock earlier, which aligns the sample.
+ * I2S_FMT_DATA_FORMAT_I2S shifts each 24-bit INMP441 sample one bit too far left on this link,
+ * discarding the sign bit and wrapping loud samples. Left-justified with the inverted frame clock
+ * keeps the left slot on WS low and samples one bit clock earlier, which aligns the sample.
  */
 static const struct i2s_config i2s_ReceiveConfiguration = {
     .word_size = I2S_WORD_SIZE_BITS,

@@ -6,7 +6,7 @@ skinparam backgroundColor #0b1018
 skinparam defaultFontColor #e6edf7
 skinparam ArrowColor #a9b8ca
 skinparam ArrowFontColor #e6edf7
-title Where the 16 ms come from: priming and playback after Start (axis in ms; project calculation, not measured)
+title Where the 16 ms come from: priming and playback after Start (axis in ms)
 concise "i2s0 DMA: microphone fills" as receive
 concise "audio thread: processes" as thread
 concise "i2s1 DMA: DAC plays" as transmit
@@ -49,7 +49,7 @@ highlight 7 to 16 #3a3320 : T1 waits in the TX queue
 transmit@0 <-> @16 : 16 ms: the sound captured in R1 plays as T1
 thread@4 <-> @7 : at most 3 ms (P02)
 legend bottom
-  Start primes 4 silent TX blocks, then starts RX, then TX (both at t = 0 here; the gap between the two triggers is not measured).
+  Start primes 4 silent TX blocks, then starts RX, then TX (both at t = 0 here).
   The thread may start T1 up to 9 ms late and still queue it before 16 ms: 12 ms reserve minus the 3 ms budget.
   Transport delay = 4 primed blocks × 4 ms = 16 ms, constant. Converter filters add 1.08 ms (INMP441) + 1.25 ms (PCM5102A): about 18 ms.
 endlegend

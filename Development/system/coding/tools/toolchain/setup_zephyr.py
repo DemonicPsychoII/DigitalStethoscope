@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Provision the same local Zephyr workspace on Windows, Linux and macOS."""
+"""Provision the local Zephyr workspace on Windows and Linux."""
 
 from __future__ import annotations
 

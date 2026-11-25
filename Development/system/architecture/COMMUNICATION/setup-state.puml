@@ -34,10 +34,9 @@ Close --> Connected : station retained
 Close --> [*] : no station / offline
 Connected --> Join : Idle link-loss recovery
 Connected --> Scan : manual setup request in Idle
-Connected --> [*] : return to CONTROL
+Connected --> [*] : return to L2_CONTROL
 note bottom
- CONTROL owns mode admission and listening priority.
- COMMUNICATION safely cancels setup before releasing the network lease.
- Retry counts, deadlines and result display belong to detailed design.
+ L2_CONTROL owns mode admission and listening priority.
+ L2_COMMUNICATION safely cancels setup before releasing the network lease.
 end note
 @enduml

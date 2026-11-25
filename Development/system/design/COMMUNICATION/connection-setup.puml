@@ -7,8 +7,8 @@ skinparam defaultFontColor #e6edf7
 skinparam ArrowColor #a9b8ca
 skinparam sequenceMessageAlign left
 title What runs inside one connection setup, and under which deadline?
-participant COMMUNICATION
-participant WIFI
+participant "L2_COMMUNICATION" as COMMUNICATION
+participant "L1_WIFI" as WIFI
 participant "DNS resolver" as DNS
 participant "pool.ntp.org" as NTP
 participant "HTTPS server" as Server

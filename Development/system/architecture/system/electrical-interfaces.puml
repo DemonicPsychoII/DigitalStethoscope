@@ -2,6 +2,9 @@
 !theme cyborg
 !pragma layout smetana
 skinparam shadowing false
+skinparam backgroundColor #0b1018
+skinparam defaultFontColor #e6edf7
+skinparam ArrowColor #a9b8ca
 skinparam component {
  BackgroundColor<<optional>> #273241
  BorderColor<<optional>> #61738a
@@ -14,7 +17,6 @@ skinparam artifact {
 }
 skinparam componentStyle rectangle
 skinparam defaultFontName SansSerif
-' Presentation I2S1 = devicetree i2s0 (mic); I2S2 = i2s1 (DAC).
 title Electrical interfaces
 left to right direction
 component "INMP441\nMic" as mic
@@ -28,8 +30,8 @@ component "Button / switches" as controls
 component "Potentiometer" as pot
 component "LED" as led
 component "Backlight" as backlight <<optional>>
-mic --> cpu : I²S1
-cpu --> dac : I²S2
+mic --> cpu : microphone I²S link
+cpu --> dac : DAC I²S link
 cpu -- spi : SPI
 spi -- display
 spi -- touch
@@ -39,7 +41,6 @@ pot --> cpu : ADC
 cpu --> led : GPIO
 cpu --> backlight : PWM
 legend bottom
-  Grey / optional = beyond MVP.
-  Display, touch, SD and capture / slower replay are optional.
+  Grey elements are optional.
 endlegend
 @enduml

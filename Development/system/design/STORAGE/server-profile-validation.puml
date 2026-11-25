@@ -28,7 +28,7 @@ if (file and certificate valid?) then (no)
 endif
 :2. Image construction (build)
 fields, CRC-32, size within the partition
-taken from the build devicetree;
+taken from the firmware devicetree;
 if (image fits the partition?) then (no)
  :Rejected before writing; <<#3b2a1a>>
  detach
@@ -69,7 +69,7 @@ endif
 certificate validity against the prepared UTC time;
 if (valid at that time?) then (no)
  :No ClientHello sent.
- Idle preparation: SERVER_CONNECTION_FAILURE, later retry.
+ Idle preparation: SERVER_CONNECTION_FAILURE, retry after 60 s.
  Delivery: terminal DELIVERY_FAILURE; <<#3b2a1a>>
  detach
 endif
@@ -79,7 +79,7 @@ certificate trusted; Key Usage and Extended
 Key Usage (rule 5); peer dates again;
 if (handshake verified?) then (no)
  :Connection fails.
- Idle preparation: SERVER_CONNECTION_FAILURE, later retry.
+ Idle preparation: SERVER_CONNECTION_FAILURE, retry after 60 s.
  Delivery: terminal DELIVERY_FAILURE; <<#3b2a1a>>
  detach
 endif
@@ -88,9 +88,7 @@ server keep-alive minus 5 s or the clock-anchor limit;
 stop
 
 legend bottom left
- COMMUNICATION checks the keep-alive before it hands URL and certificate to L1_WIFI.
- Device-side rule 2 (self-issued, self-signature): whether the verifier checks it for a directly trusted
- certificate is still to be demonstrated by L1_WIFI work.
+ L2_COMMUNICATION checks the keep-alive before it hands URL and certificate to L1_WIFI.
  The CRC-32 detects corruption, not tampering; the image has no signature.
 endlegend
 @enduml

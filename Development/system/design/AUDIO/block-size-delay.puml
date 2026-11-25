@@ -6,7 +6,7 @@ skinparam backgroundColor #0b1018
 skinparam defaultFontColor #e6edf7
 skinparam ArrowColor #a9b8ca
 skinparam ArrowFontColor #e6edf7
-title Transport delay per block size at 16 kHz with the same 9 ms lateness (axis in ms; project calculation)
+title Transport delay per block size at 16 kHz with the same 9 ms lateness (axis in ms)
 concise "32 frames, 2 ms blocks\n1.5 ms processing budget" as small
 concise "64 frames, 4 ms blocks (chosen)\n3 ms processing budget" as chosen
 concise "128 frames, 8 ms blocks\n6 ms processing budget" as large
