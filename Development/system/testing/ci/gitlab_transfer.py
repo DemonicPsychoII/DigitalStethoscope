@@ -204,10 +204,6 @@ REFERENCE_LINK = re.compile(r"\[([^\]]*)\]\[([^\]]*)\]", re.S)
 SHORTCUT_LINK = re.compile(r"\[([^\]]+)\](?![\[(:])", re.S)
 REFERENCE_DEFINITION = re.compile(r"^\s{0,3}\[([^\]]+)\]:\s*\S", re.M)
 HTML_LINK = re.compile(r"<a\b[^>]*\bhref\s*=[^>]*>.*?</a>", re.I | re.S)
-# The title of a cited work is the author's wording. It counts as cited when the number of its source
-# entry follows it in the same sentence and table cell.
-CITED_TITLE = re.compile(r"\*[^*\n]+\*|\"[^\"\n]+\"|\u201c[^\u201d\n]+\u201d")
-CITATION_MARKER = re.compile(r"\[S?\d+(?:[,\u2013-]\s*S?\d+)*(?:,[^\]]*)?\]")
 C_COMMENT_OR_LITERAL = re.compile(
     r"/\*.*?\*/|//[^\n]*|\"(?:\\.|[^\"\\\n])*\"|'(?:\\.|[^'\\\n])*'", re.S
 )
@@ -381,14 +377,6 @@ def requirement_findings(path: str, text: str) -> list[str]:
     return findings
 
 
-def without_cited_title(match: re.Match[str]) -> str:
-    """Blank an emphasized or quoted span that its source number follows in the same sentence and cell."""
-    rest = match.string[match.end() :].split("|")[0]
-    marker = CITATION_MARKER.search(rest)
-    is_cited = marker is not None and ". " not in rest[: marker.start()]
-    return " " if is_cited else match.group(0)
-
-
 def review_findings(path: str, text: str) -> list[str]:
     """Return the review findings of one file of the project's own text and code."""
     if path.startswith(OWN_TEXT_EXCLUDED):
@@ -421,9 +409,10 @@ def review_findings(path: str, text: str) -> list[str]:
             in_source_entry = True
         if in_source_entry:
             continue
-        own_wording = CITED_TITLE.sub(without_cited_title, line) if is_page else line
         for name, offending in rules:
-            values = offending(own_wording)
+            # A title quoted in running text is listed in ACCEPTED with its reason.
+            accepted = ACCEPTED.get((path, name), frozenset())
+            values = [value for value in offending(line) if value not in accepted]
             if values:
                 findings.append(
                     f"{path}:{number}: {name}: {', '.join(sorted(set(values)))}"

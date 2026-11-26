@@ -2,7 +2,10 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from unittest.mock import patch
+
 from gitlab_transfer import (
+    ACCEPTED,
     GITLAB_README_SOURCE,
     SYSTEM,
     check,
@@ -131,30 +134,28 @@ class ContentTests(unittest.TestCase):
         self.assert_review(DESIGN, "See the [code](../../coding/).", "into the code")
         self.assert_review(DESIGN, "See the [code](../../coding).", "into the code")
 
-    def test_cited_titles_keep_their_wording(self):
-        page = (
-            'The rule follows *A Proposed Standard for the Phone* [3] and "TODO lists considered harmful" [4, section 2].\n'
+    def test_source_entries_keep_their_wording_and_prose_does_not(self):
+        entry = (
+            "The limit follows the standard [1].\n"
             "\n"
-            "[1] A. Author, Proposed changes to the phone: a TODO, 2020, accessed 1 November 2026.\n"
+            "[1] A. Author, Proposed changes to the phone: a TODO, 2020,\n"
+            "    accessed 1 November 2026.\n"
         )
-        self.assertEqual(review_findings(DESIGN, page), [])
+        self.assertEqual(review_findings(DESIGN, entry), [])
         self.assert_review(DESIGN, "The proposed limit is 5 s.", "status word")
-        self.assert_review(DESIGN, "The *proposed* limit is 5 s.", "status word")
-        self.assert_review(
-            DESIGN, "See *this page* for the limit.", "page describes itself"
-        )
-        # A citation in another cell or sentence of the line does not cover the span.
+        self.assert_review(DESIGN, "The *proposed* limit is 5 s [1].", "status word")
         self.assert_review(
             DESIGN, "| The *proposed* limit | Basis [S1] [S2] |", "status word"
         )
         self.assert_review(
-            DESIGN, "The *proposed* limit holds. The rule follows [3].", "status word"
+            DESIGN, "See *this page* for the limit [2].", "page describes itself"
         )
-        self.assert_review(
-            DESIGN, "The rule follows [3]. The *proposed* limit holds.", "status word"
-        )
-        cited_cell = "| 5 s | From *A Proposed Standard*, clause 4 [S1] |"
-        self.assertEqual(review_findings(DESIGN, cited_cell), [])
+        # A title in running text is the project's line until it is accepted with a reason.
+        title = "The rule follows *A Proposed Standard* [3]."
+        self.assert_review(DESIGN, title, "status word")
+        with patch.dict(ACCEPTED, {(DESIGN, "status word"): frozenset({"Proposed"})}):
+            self.assertEqual(review_findings(DESIGN, title), [])
+            self.assert_review(DESIGN, "The MVP sends one result.", "status word")
 
     def test_table_rows_are_counted_as_markdown_counts_them(self):
         expected = "table row has"
