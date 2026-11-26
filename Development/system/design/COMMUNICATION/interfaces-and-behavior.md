@@ -70,7 +70,7 @@ The device never selects or adds a patient ID. It serializes `Observation.subjec
 
 `L2_COMMUNICATION` and `L1_WIFI` verify the server profile's public server certificate, endpoint identity and validity against the clock set by the SNTP exchange that opens each connection setup under the [TLS design](secure-transport.md), and enforce bounded status and body parsing. A missing retained connection permits reconnect within P13, whereas a missing or invalid server profile image fails prerequisites. `201 Created` or `200` (existing conditional create) is the receipt and marks the result Sent without readback.
 An uncertain response is retried within the same bounded job. A single matching identifier returns the existing resource, and multiple matches fail with 412. Configuration, authentication and server failures remain visible after the last attempt.
-The [SNTP contract](time-synchronization.md) specifies unauthenticated `pool.ntp.org` time, Zephyr uncertainty estimation, one exchange directly before every ClientHello and the 12.5-hour mapping limit. RFC 4330 describes the security limitations of unauthenticated SNTP [2, section 11].
+The [SNTP contract](time-synchronization.md) specifies unauthenticated `pool.ntp.org` time, Zephyr uncertainty estimation, one exchange directly before every ClientHello and the 12.5-hour mapping limit. RFC 4330 describes the security limitations of unauthenticated SNTP [2, section 11]. Credentials are private deployment configuration.
 
 Active network work and live listening use an exclusive `L2_CONTROL` lease. An established station association stays active during listening, while setup, reconnect and delivery jobs do not run. Start during Wi-Fi setup requests safe teardown before audio, and `L2_CONTROL` stops audio before granting the network lease. Start during analysis is rejected Busy without cancellation or queuing. Start during sending cancels the delivery job ([state rules](../cross-module.md#state-entryprocessexit)). A fresh Start after release primes and starts audio.
 If release cannot be confirmed, audio remains stopped and the device indicates the cause. As an exception under [REQ-13](../../requirements/system-requirements.md#req-13), a failed network-service stop or SNTP cancellation follows [P23](parameters.md): `L2_COMMUNICATION` latches `WIFI_CLEANUP_FAILURE`, disables network work until restart and releases audio.
@@ -79,7 +79,7 @@ If release cannot be confirmed, audio remains stopped and the device indicates t
 
 ## Server communication and FHIR delivery
 
-Time synchronization, secure server transport and Device registration run independently of Wi-Fi setup completion. [Server communication](server-communication.md) defines server-bound conditional registration, physical and logical device identities and FHIR message formatting.
+Time synchronization, secure server transport and Device registration run independently of Wi-Fi setup completion. The device does not select patients; it reuses a patient reference only when supplied with a server-requested examination and otherwise omits `subject`. [Server communication](server-communication.md) defines server-bound conditional registration, physical and logical device identities and FHIR message formatting.
 
 ## Sources
 

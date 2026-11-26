@@ -24,11 +24,11 @@ Active time exchanges occur only outside live listening under L2_CONTROL's exclu
 
 After joining the configured network, L2_COMMUNICATION starts every secure transport setup with one time synchronization directly before the TLS handshake. A failed exchange fails that setup and blocks server readiness without affecting Wi-Fi setup completion or offline listening. Once transport is verified, Device registration proceeds while Idle so measurement Stop does not trigger full preparation from scratch.
 
-Verified transport includes the time applied by its setup; the [readiness flow](server-communication.md#preparation-and-readiness-flow) defines the readiness states. A measurement uses a clock anchor only when that anchor qualifies for the measurement end.
+L2_COMMUNICATION tracks network access, verified transport (including the time applied by its setup) and Device registration separately. A connected station or retained TLS connection alone does not establish delivery readiness. A measurement uses a clock anchor only when that anchor qualifies for the measurement end; synchronization success alone does not authenticate the time source.
 
 ## Trust boundary
 
-The time source is an external SNTP server reached through the station's network. The SNTP exchange does not authenticate the time server [1], and synchronization success is never represented as authenticated time.
+The time source is an external SNTP server reached through the station's network. Time is obtained over unauthenticated SNTP, which does not authenticate the time server [1]. Synchronization success is never represented as authenticated time.
 
 Time synchronization and clock-correction handling neither extend the delivery budget nor run during listening.
 

@@ -53,7 +53,7 @@
     "Development/system/design/AUDIO/parameters.md#audio-parameters",
     "Development/system/design/COMMUNICATION/interfaces-and-behavior.md#delivery-clock-and-configuration",
     "Development/system/design/COMMUNICATION/interfaces-and-behavior.md#wi-fi-setup-and-recovery",
-    "Development/system/design/FEEDBACK/README.md#feedback-detailed-design",
+    "Development/system/design/FEEDBACK/README.md#led-indication-and-error-handling",
     "Development/system/design/README.md#parameters",
     "Development/system/design/cross-module.md#session-handling",
     "Development/system/planning/decision-trace.md",

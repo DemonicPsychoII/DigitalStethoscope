@@ -42,6 +42,7 @@ transmitDriver --> dac : I2S frames, left = right
 control --> audio : Start / Stop
 audio --> control : started, stopped, fault
 legend bottom
+  Sample rate, block size and pool sizes are fixed at build time.
   Light blue = thread. Beige = hardware. Blue = driver or adapter. Dark grey = block pool.
 endlegend
 @enduml

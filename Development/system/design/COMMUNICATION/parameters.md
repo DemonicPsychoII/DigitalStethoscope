@@ -33,16 +33,16 @@ Which services can be pending together follows from the single worker thread:
 - **Cleanup pass: at most 5 s** = 5 services × 1 s.
 - **Delivery cleanup reserve: 1 s.** A delivery attempt has at most one service pending, so the P13 reserve of one stop bound per pending service is 1 s.
 
+A failed stop latches WIFI_CLEANUP_FAILURE, disables network work until restart and releases audio under [REQ-13](../../requirements/system-requirements.md#req-13).
+
 ## Retry conventions
 
 L2_COMMUNICATION owns workflow retry scheduling. Attempt 1 is the first issued request. The gap before a retry starts when the failed attempt completes and is measured in monotonic time. Each retry policy defines its attempt deadline, its gap, its total attempt cap or ongoing-recovery behavior, and its terminal outcomes. Wi-Fi operations use the retry and limit values of P23 above, and delivery uses the timeout and retry values of P13 above. L1_WIFI, L1_PORTAL, L1_STORAGE and L1_FHIR add no workflow retries.
 
 Attempt caps are fixed counts. P13 allows at most four delivery attempts in total; fewer attempts run when the global deadline expires first.
 
-The [P25 SNTP parameters](time-synchronization.md#parameters) (Simple Network Time Protocol) define the placement of the time exchange before every ClientHello, the first message of a TLS handshake, its uncertainty budget and the limit between a clock anchor and a measurement end.
+The [P25 SNTP parameters](time-synchronization.md#parameters) (Simple Network Time Protocol) place one time exchange directly before every ClientHello, the first message of a TLS handshake. The exchange runs inside the deadline of the connection setup that contains it. A measurement end is converted to UTC only from a clock anchor (the point at which the clock was last set) that lies at most 12.5 hours away. That limit is the 1 s maximum deviation minus a 100 ms uncertainty budget, divided by a 20 ppm drift budget derived from the crystal datasheet tolerance.
 
-The [P26 TLS parameters](secure-transport.md#parameters) define the TLS version, the trust inputs from the server profile image, the Idle preparation deadline and retry gap, and connection reuse.
+The [P26 TLS parameters](secure-transport.md#parameters) select TLS 1.3 only. They take one server endpoint and its public server certificate from the server profile image, which is flashed separately from the firmware. In Idle, one connection setup, including its SNTP exchange, has a ten-second deadline. After a failure, preparation retries 60 seconds later without a total attempt cap. Delivery reconnects use the P13 limits: three seconds for connection setup and one second for writing the request and receiving the receipt, within ten seconds from Stop in total. Delivery connection setup starts when L2_CONTROL submits the finalized job rather than at Stop. A retained connection is reused only while its idle time is below the device keep-alive timeout, which is set below the server's keep-alive timeout. The retry conventions above apply. A missing prerequisite, such as a missing station address, consumes no attempt.
 
-The [P27 server parameters](server-communication.md#parameters) define the physical device identifier, the Device registration record, the registration attempt deadline and its recovery gap.
-
-The P26 and P27 preparation budgets are separate from the P13 delivery deadlines. The retry conventions above apply to both.
+The [P27 server parameters](server-communication.md#parameters) define the stable physical device identifier derived from the factory MAC address, the Device registration record bound to one server, and ten-second registration attempts. In Idle, a failed registration retries after 60 seconds. The retry gap doubles with each further failure, and after 4 failed attempts registration remains unavailable until restart. These preparation budgets are separate from the P13 delivery deadlines. The retry conventions above apply.

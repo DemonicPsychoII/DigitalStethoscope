@@ -160,9 +160,9 @@ applies its clear rule after the operator stops the examination manually.
 
 ### Stream faults
 
-A stream fault includes a deadline miss. If the audio thread falls more than three blocks (12 ms,
-processing included) behind, the Zephyr I2S driver stops the stream [1], and the stream remains
-stopped until configured and started again.
+- A stream fault includes a deadline miss. If the audio thread falls more than three blocks (12 ms,
+  processing included) behind, the Zephyr I2S driver stops the stream [1], and the stream remains
+  stopped until configured and started again.
 
 ### Stop sequence
 

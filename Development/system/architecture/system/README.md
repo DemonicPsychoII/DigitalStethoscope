@@ -1,6 +1,6 @@
 # System architecture
 
-The [viewer](review.html) presents these views except Input ownership and Server profile, and [view notes](VIEW-NOTES.md)
+The [viewer](review.html) presents the system architecture views except Input ownership and Server profile, and [view notes](VIEW-NOTES.md)
 document their scope, hardware naming and runtime assumptions.
 
 | Diagram | Editable source | Preview |
