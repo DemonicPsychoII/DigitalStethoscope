@@ -160,8 +160,9 @@ static bool wifi_isSecureConnectionAdmitted(uint32_t generation);
  * @param[in]  deadline   End of the connection setup.
  * @param[out] address    IPv4 address of the server; written only on success.
  *
- * @return 0 on success, -ETIMEDOUT when the setup has no time left, or the negative
- *         error of wifi_resolveIpv4().
+ * @return 0 on success; a configured IPv4 literal succeeds without DNS and without a
+ *         deadline check. For a server name: -ETIMEDOUT when the setup has no time left
+ *         for DNS, or the negative error of wifi_resolveIpv4().
  */
 static int wifi_resolveSecureServer(uint32_t generation, k_timepoint_t deadline, struct net_sockaddr_in *address);
 

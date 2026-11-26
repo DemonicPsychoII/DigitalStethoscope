@@ -6,6 +6,7 @@ skinparam backgroundColor #0b1018
 skinparam defaultFontColor #e6edf7
 skinparam ArrowColor #a9b8ca
 skinparam sequenceMessageAlign left
+skinparam ParticipantFontColor #0b1018
 title Generic SNTP exchange: which clock supplies each timestamp (RFC 4330 sec. 4-5, RFC 5905 sec. 8)
 participant "Client\n(client clock)" as Client
 participant "Server\n(server clock)" as Server

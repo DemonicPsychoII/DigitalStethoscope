@@ -6,6 +6,7 @@ skinparam backgroundColor #0b1018
 skinparam defaultFontColor #e6edf7
 skinparam ArrowColor #a9b8ca
 skinparam sequenceMessageAlign left
+skinparam ParticipantFontColor #0b1018
 title What runs inside one connection setup, and under which deadline?
 participant "L2_COMMUNICATION" as COMMUNICATION
 participant "L1_WIFI" as WIFI

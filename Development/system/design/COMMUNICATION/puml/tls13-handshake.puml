@@ -6,6 +6,7 @@ skinparam backgroundColor #0b1018
 skinparam defaultFontColor #e6edf7
 skinparam ArrowColor #a9b8ca
 skinparam sequenceMessageAlign left
+skinparam ParticipantFontColor #0b1018
 title Generic TLS 1.3 full handshake with server-only authentication (RFC 8446 sec. 2, Figure 1)
 participant Client
 participant Server
