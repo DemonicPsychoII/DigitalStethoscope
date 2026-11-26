@@ -15,7 +15,7 @@ start
 if (Heart + microphone + audio ready?) then (yes)
  :Freeze the session context and the analysis settings;
  repeat
-  :Stream independent BPM analysis while listening;
+  :Stream independent BPM analysis while listening;\nno session audio is saved;
   :Reject identity changes;
   :If the session context changes: latch silently, keep listening;\nhalt after the manual Stop, discard the result, restart required;
   if (Audio fault?) then (yes)

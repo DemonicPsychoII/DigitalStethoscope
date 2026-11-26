@@ -64,7 +64,7 @@ For the delivery job, a terminal failure retains only redacted outcome metadata 
 
 `L1_I2S` owns the RX and TX block pools, `L2_AUDIO` borrows their blocks, and pool handles do not escape without a defined lifetime. Listening consumes the current transport block synchronously. BPM analysis receives copied blocks decoupled from the RX DMA pool so a stalled analysis worker cannot pin RX buffers. The [AUDIO architecture](../AUDIO/README.md) defines the block ownership of the audio path.
 
-DSP state is worker-local. Settings and snapshots are bounded copies; no lock spans an I2S wait or a TLS operation.
+DSP state is worker-local. Settings and snapshots are bounded copies; no lock spans an I2S wait, an SPI transfer, a flash write or a TLS operation.
 Queues carry bounded values or handles rather than unbounded audio payloads. The audio path never
 waits when it enqueues.
 

@@ -81,6 +81,7 @@ Failed TLS preparation latches `SERVER_CONNECTION_FAILURE`, preserving standalon
 
 - A deployment needs a server certificate whose Subject Alternative Name covers the device-facing endpoint.
 - The trust configuration follows the FHIR service of the PulsOxy project of NewTec GmbH: the configured certificate material is the trust basis of the connection, and the device presents no client certificate [3].
+- The SNTP time is not authenticated ([SNTP design](time-synchronization.md#flow-and-scheduling)); the certificate validity check against it does not make it an authenticated time source.
 
 ## Sources
 

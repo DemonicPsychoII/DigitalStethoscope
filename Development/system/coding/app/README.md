@@ -71,8 +71,7 @@ reading also latches CONTROL_INPUT_FAILURE.
 ### Indication and errors
 
 `physicalinterface_showFeedback()` takes one catalogue code and drives both lights from
-one table row: the RGB status light on GPIO48 and the red button light on GPIO17 (J6,
-active high). The red light is steady during the lamp test, repeats an error's
+one table row: the RGB status light on GPIO48 and the red button light on GPIO17 (J6, active high through the 330 Ω series resistor R12). The red light is steady during the lamp test, repeats an error's
 blink code ([P22](../../design/FEEDBACK/parameters.md): 250 ms on and off, 2 s pause) and gives one 1 s flash for
 ERROR_ACKNOWLEDGED. `L2_CONTROL` decides which code is shown. It latches every catalogue error
 in `control_error_policy.c`, shows the highest priority, then the first latched, and lists every
@@ -156,8 +155,7 @@ The script enables the CMake file-based API, builds the release app and runs
 for the module dependencies and `sdk.spdx` for the Zephyr SDK.
 
 `west spdx` leaves out the Espressif Wi-Fi and PHY binary libraries; their versions are
-listed in `hal_espressif`'s `zephyr/module.yml`. On Windows the SBOM contains no
-application or SDK file entries. The Zephyr and
+listed in `hal_espressif`'s `zephyr/module.yml`. On Windows the SBOM contains no application or SDK file entries, because the path check of `west spdx` mixes `/` and `\`. The Zephyr and
 module packages carry their commit or release version; the application and SDK
 packages carry none, so record the repository commit and SDK version (`toolchain.json`)
 alongside the SBOM.

@@ -83,7 +83,7 @@ Primary standard identification: International Electrotechnical Commission, *Med
 
 ### Blink codes
 
-- The counting limits of the blink codes (at most 6 blinks, 2 s pause) stay inside the IEC 60073 f2
+- No standard among the sources defines numeric blink codes. The counting limits of the blink codes (at most 6 blinks, 2 s pause) stay inside the IEC 60073 f2
   rate.
 
 ## Design rules and their basis
