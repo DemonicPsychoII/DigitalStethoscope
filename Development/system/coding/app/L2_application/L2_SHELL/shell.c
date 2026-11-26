@@ -6,7 +6,7 @@
 /** @addtogroup L2_SHELL
  * @{
  * @file
- * Implementation of the L2_SHELL module.
+ * Implementation of the L2_SHELL module: section layout without definitions.
  */
 
 /***********************************************************************/

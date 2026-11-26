@@ -6,10 +6,12 @@
 /** @defgroup L1_I2S I2S
  * @{
  * @file
- * L1 adapter over the Zephyr I2S drivers for microphone RX and DAC TX.
+ * Adapter over the Zephyr I2S drivers for microphone RX and DAC TX.
  *
  * Owns both links and their block pools. Only the audio thread calls the
  * stream functions; i2s_initialize() runs once at boot before that thread starts.
+ *
+ * P01 is defined in design/AUDIO/parameters.md, P11 in design/cross-module.md.
  */
 
 #ifndef L1_I2S_H

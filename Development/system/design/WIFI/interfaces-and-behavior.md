@@ -1,24 +1,22 @@
 # L1_WIFI interfaces and behavior
 
-`L2_COMMUNICATION` owns setup, retries and sequencing. `L1_WIFI` owns individual radio and address operations defined in the [service boundary](#service-boundary) below. The page, HTTP server and typed request and status contract belong to [`L1_PORTAL`](../PORTAL/interfaces-and-behavior.md).
+`L2_COMMUNICATION` owns setup, retries and sequencing. `L1_WIFI` owns individual radio and address operations defined in the [service boundary](#service-boundary). The page, HTTP server and typed request and status contract belong to [`L1_PORTAL`](../PORTAL/interfaces-and-behavior.md).
 
 ## Service boundary
-
-The [SNTP time-synchronization design](../COMMUNICATION/time-synchronization.md) defines a cancellable DNS lookup and SNTP (Simple Network Time Protocol) exchange, normalization of its result and application of the time to the device clock.
 
 | Interface | Inputs | Outputs and ownership |
 | --- | --- | --- |
 | `wifi_init()` | One initialization call before other operations | Registers driver callbacks. |
-| `wifi_connect()` | Validated network | 0 accepts one join request; negative error rejects it. This call does not wait for the selected network's address. |
+| `wifi_connect()` | Validated network | Returns 0 when the join request is accepted and a negative error code when it is rejected. This call does not wait for the selected network's address. |
 | `wifi_waitForConnection(timeout)` | Maximum wait interval | 0 only after the selected network has IPv4; `-EAGAIN` while pending; negative failure otherwise. An unsolicited disconnect before IPv4 ends the join immediately with `-ENOTCONN`; intentional cancellation and later established-link loss are separate. |
-| `wifi_startScan()` | One scan request | 0 accepts the scan; negative error rejects it. No list is returned by this call. |
+| `wifi_startScan()` | One scan request | Returns 0 when the scan is accepted and a negative error code when it is rejected. No list is returned by this call. |
 | `wifi_waitForScanResult(list, capacity, timeout)` | Caller-owned list, entry capacity and maximum wait interval | Nonnegative entry count only after scan-finished; `-EAGAIN` while pending; negative failure/cancellation otherwise. No partial list publication. |
 | `wifi_cancelScan()`, `wifi_disconnect()` | Cancel active scan or connection | Bounded completion; no new connect starts until a disconnect completion event or confirmed already-disconnected state is established within the 1 s disconnect-confirmation deadline. `wifi_isConnected()` alone does not confirm cancellation of an in-progress join. No new scan starts until the scan-finished result (`wifi_waitForScanResult()`, including cancellation) arrives. Timeout is failure. |
 | `wifi_isValidNetwork()` | Nullable stored or submitted network | Reject NULL, unterminated/empty name and invalid passphrase length (8–63 bytes, or exactly 64 hexadecimal key digits; empty for an open network); no mutation. |
 | `wifi_startHotspot()`, `wifi_stopHotspot()`, `wifi_startDHCPServer()`, `wifi_stopDHCPServer()` | Start and stop requests from `L2_COMMUNICATION` | Individual service outcomes; HTTP page serving remains in `L1_PORTAL`. |
 | `wifi_getAddress()`, `wifi_isConnected()` | Address buffer or link query | Current station address or connection state. |
 
-A new radio request or cancellation rejects late results of the prior request. Each wait returns its result to `L2_COMMUNICATION`; callbacks do not change controller state. The [firmware structure](../../architecture/system/firmware-structure.md) defines mode ownership, and the [feedback design](../FEEDBACK/README.md) the indication; [Wi-Fi parameters](parameters.md) define operation limits; [L2_COMMUNICATION](../COMMUNICATION/interfaces-and-behavior.md) defines sequencing and retries.
+The cancellable DNS lookup and SNTP (Simple Network Time Protocol) exchange, the normalization of its result and the application of the time to the device clock follow the [SNTP time-synchronization design](../COMMUNICATION/time-synchronization.md). A new radio request or cancellation rejects late results of the prior request. Each wait returns its result to `L2_COMMUNICATION`; callbacks do not change the state of `L2_COMMUNICATION`. The [firmware structure](../../architecture/system/firmware-structure.md) defines mode ownership, and the [feedback design](../FEEDBACK/README.md) the indication; [Wi-Fi parameters](parameters.md) define operation limits; [L2_COMMUNICATION](../COMMUNICATION/interfaces-and-behavior.md) defines sequencing and retries.
 
 ## Secure server operations
 

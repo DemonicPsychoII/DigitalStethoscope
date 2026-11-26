@@ -1,10 +1,10 @@
 # Application firmware: layer structure
 
-This is the Zephyr application firmware for the ESP32-S3.
+The application firmware runs on Zephyr on the ESP32-S3.
 
-The table maps the application folders. L1 holds thin hardware adapters
-over Zephyr drivers and pure C libraries; L2 orchestrates them. The [firmware structure](../../architecture/system/firmware-structure.md#static-dependency-and-module-map)
-maps its logical components to these folders.
+Layer 1 (`L1_services/`) holds thin hardware adapters
+over Zephyr drivers and pure C libraries; layer 2 (`L2_application/`) orchestrates them. The [firmware structure](../../architecture/system/firmware-structure.md#static-dependency-and-module-map)
+maps the logical components to the application folders.
 
 `L1_WIFI` and `L2_COMMUNICATION` implement the [Wi-Fi contract](../../design/WIFI/interfaces-and-behavior.md).
 `L1_PORTAL` implements the [portal contract](../../design/PORTAL/interfaces-and-behavior.md);
@@ -15,12 +15,12 @@ maps its logical components to these folders.
 | `L2_application/L2_CONTROL/` | Single writer of mode state; grants the network lease | `L2_AUDIO`, `L2_COMMUNICATION`, L1, `common` |
 | `L2_application/L2_AUDIO/` | Audio path, driven by control commands | L1, `common` |
 | `L2_application/L2_COMMUNICATION/` | Builds via `L1_FHIR`, sends via `L1_WIFI` under the lease; Device registration; hotspot Wi-Fi setup page | L1, `common` |
-| `L2_application/L2_SHELL/` | Shell commands and read-back through `L2_CONTROL` | `L2_CONTROL`, `common` |
-| `L1_services/` adapters | `L1_I2S` (mic RX, DAC TX), `L1_WIFI`, `L1_PORTAL` (Wi-Fi setup page), `L1_STORAGE` (settings records in flash), `L1_PHYSICALINTERFACE` (button, switch, potentiometer, status light, button light) | Zephyr, `common`; `L1_WIFI` also the Espressif HAL and mbedTLS; `L1_PORTAL` also `L1_WIFI` |
-| `L1_services/` libraries | `L1_FILTER`, `L1_BPM` (envelope, autocorrelation, aggregation), `L1_FHIR` (serialization); pure C | `common` |
+| `L2_application/L2_SHELL/` | Application shell commands; contains no commands | `L2_CONTROL`, `common` |
+| `L1_services/` adapters | `L1_I2S` (microphone RX, DAC TX), `L1_WIFI`, `L1_PORTAL` (Wi-Fi setup page), `L1_STORAGE` (settings records in flash), `L1_PHYSICALINTERFACE` (button, switch, potentiometer, status light, button light) | Zephyr, `common`; `L1_WIFI` also the Espressif HAL and mbedTLS; `L1_PORTAL` also `L1_WIFI` |
+| `L1_services/` libraries | `L1_FHIR` (serialization); `L1_FILTER` and `L1_BPM`, which contain no logic; pure C | `common` |
 | `L0_platform/` | Empty: Zephyr drivers and the board overlay | — |
 | `MONITOR/` | Runtime supervision; contains no checks | All layers, read-only |
-| `common/` | Shared audio/event/result types | Nothing |
+| `common/` | `main.c`, the catalogue codes (`feedback.h`) and `types.h`, which defines no type | Nothing |
 
 ## Building the application
 
@@ -31,7 +31,7 @@ handles the button, filter switch, volume potentiometer, status light and button
 `L1_STORAGE` persists settings and reads the server profile. `L1_WIFI`, `L1_PORTAL`,
 `L1_FHIR` and `L2_COMMUNICATION` handle Wi-Fi, the setup portal, Device registration and
 FHIR delivery. `L1_FILTER`, `L1_BPM`, `L2_SHELL`, `MONITOR` and `common/types.h` contain
-no active logic. The board overlay and `prj.conf` configure the N16R8 module
+no logic. The board overlay and `prj.conf` configure the N16R8 module
 (16 MB flash, 8 MB octal PSRAM; GPIO33–37 reserved), the serial shell and deferred
 logging.
 
@@ -42,7 +42,7 @@ system work queue ([input contract](../../design/cross-module.md#design-constrai
 
 | Input | Pins | Acquisition | Event |
 |---|---|---|---|
-| Start/Stop button J6 | GPIO16 | Edge interrupt starts a 30 ms debounce (P10) | Short press; long press after 2 s |
+| Start/Stop button J6 | GPIO16 | Edge interrupt starts a 30 ms debounce ([P10](../../design/cross-module.md#parameters)) | Short press; long press after 2 s |
 | Raw/Murmur/BPM switch J8 | GPIO18/21/38 | Polled every 10 ms, 30 ms debounce (P10) | First stable position, then one per stable transition |
 | Volume potentiometer J7 | GPIO1, ADC1 channel 0 | Polled every 50 ms | First reading, then each change of status, of at least 2 %, or to 0 % or 100 % |
 
@@ -55,8 +55,8 @@ A reading that cannot be used carries a status and a safe value. FAILED marks an
 or GPIO failure or a switch position that stays invalid for the debounce time; ABSENT
 marks a potentiometer that is not fitted. The safe values are Raw and 0 %, so an unusable
 input mutes the audio. The 30 ms debounce also applies to slow switch
-slides: a pause of 30 ms or more between positions is reported FAILED, because what matters is a
-valid position when one is needed. J7 is fitted, so
+slides: a pause of 30 ms or more between positions is reported FAILED; `L2_CONTROL` evaluates the
+position at Start and while listening. J7 is fitted, so
 `CONFIG_PHYSICALINTERFACE_VOLUME_POTENTIOMETER_FITTED` is on by default and the ADC is read; with
 the option off, the ADC is not read and the volume is reported ABSENT once.
 
@@ -71,9 +71,8 @@ reading also latches CONTROL_INPUT_FAILURE.
 ### Indication and errors
 
 `physicalinterface_showFeedback()` takes one catalogue code and drives both lights from
-one table row: the RGB status light on GPIO48 and the red button light on GPIO17 (J6,
-active high through R12). The red light is steady during the lamp test, repeats an error's
-blink code (P22: 250 ms on and off, 2 s pause) and gives one 1 s flash for
+one table row: the RGB status light on GPIO48 and the red button light on GPIO17 (J6, active high through the 330 Ω series resistor R12). The red light is steady during the lamp test, repeats an error's
+blink code ([P22](../../design/FEEDBACK/parameters.md): 250 ms on and off, 2 s pause) and gives one 1 s flash for
 ERROR_ACKNOWLEDGED. `L2_CONTROL` decides which code is shown. It latches every catalogue error
 in `control_error_policy.c`, shows the highest priority, then the first latched, and lists every
 latched error on the serial log. With an error shown that clears by short press, the first
@@ -126,7 +125,7 @@ Development/system/coding/tools/build-firmware.ps1 -Profile debug   # debug buil
 Development/system/coding/tools/build-firmware.ps1 -Pristine   # clean rebuild
 ```
 
-The `release` profile (default) builds `prj.conf` alone, the same configuration as CI.
+The `release` profile (default) builds `prj.conf` alone.
 The `debug` profile merges [`debug.conf`](debug.conf): optimization for GDB, Zephyr
 thread information for OpenOCD, DBG logs from boot, assertions, stack sentinels and
 execution cycles in `kernel thread list`. Each profile has its own build directory,
@@ -156,8 +155,7 @@ The script enables the CMake file-based API, builds the release app and runs
 for the module dependencies and `sdk.spdx` for the Zephyr SDK.
 
 `west spdx` leaves out the Espressif Wi-Fi and PHY binary libraries; their versions are
-listed in `hal_espressif`'s `zephyr/module.yml`. On Windows it also lists no
-application or SDK files, because its path check mixes `/` and `\`. The Zephyr and
+listed in `hal_espressif`'s `zephyr/module.yml`. On Windows the SBOM contains no application or SDK file entries, because the path check of `west spdx` mixes `/` and `\`. The Zephyr and
 module packages carry their commit or release version; the application and SDK
 packages carry none, so record the repository commit and SDK version (`toolchain.json`)
 alongside the SBOM.
@@ -243,9 +241,8 @@ ESP32-S3 (`xthal_window_spill` is missing), so deeper frames need GDB.
 ## Layer rules
 
 Calls go downward. Upward notifications use events and message queues. Zephyr owns
-drivers, DMA and interrupts. L1 libraries include no Zephyr headers; each caller owns
-its own filter instance, so listening and BPM analysis filters stay independent.
-Only `L2_CONTROL` writes mode state, and `L2_SHELL` commands go through it.
+drivers, DMA and interrupts. The `L1_services/` libraries include no Zephyr headers.
+Only `L2_CONTROL` writes mode state.
 `L2_COMMUNICATION` is the only path to an `L1_WIFI` send.
 
 The [firmware structure](../../architecture/system/firmware-structure.md) defines ownership, and the
@@ -271,7 +268,7 @@ and the driver shutdown.
 ## Coding conventions
 
 `.clang-format` in this folder sets the layout (Allman braces, 4 spaces, `if(x)`,
-`for(;;)` for the endless loop of each thread); CI checks it. It has no column limit,
+`for(;;)` for the endless loop of each thread). It has no column limit,
 so statements stay on one line. Only a call with more than 2 arguments may be split,
 by hand, with one argument per line; clang-format keeps and aligns that layout.
 

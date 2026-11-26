@@ -7,6 +7,9 @@
  * @{
  * @file
  * Implementation of the L2_CONTROL module.
+ *
+ * Parameters: P10 and P11 in design/cross-module.md, P22 in
+ * design/FEEDBACK/parameters.md and P23 in design/COMMUNICATION/parameters.md.
  */
 
 /***********************************************************************/

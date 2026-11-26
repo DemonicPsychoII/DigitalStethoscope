@@ -6,7 +6,7 @@
 /** @addtogroup L1_I2S
  * @{
  * @file
- * Implementation of the L1_I2S module.
+ * Implementation of the L1_I2S module. P11 is defined in design/cross-module.md.
  */
 
 /***********************************************************************/

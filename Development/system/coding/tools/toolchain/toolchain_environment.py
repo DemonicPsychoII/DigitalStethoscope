@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Print the pinned firmware toolchain environment for shells and helper scripts.
 
-The workspace is resolved like the CI and build scripts resolve it, so every checkout
+The workspace is resolved like the build scripts resolve it, so every checkout
 and worktree uses the same pinned west, CMake, Ninja, Zephyr and SDK.
 """
 

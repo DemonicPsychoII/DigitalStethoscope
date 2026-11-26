@@ -2,7 +2,7 @@
 
 Each deployment file `<deployment>.toml` describes one server deployment: the HTTPS FHIR base URL, the server keep-alive and the public server certificate. It is the only input to the device's server profile image ([server profile design](../../design/STORAGE/server-profile.md)).
 
-This folder holds test deployments only: no production endpoint, no private key, keystore, password or other credential. A real deployment keeps its file with that deployment and uses the same tool.
+The deployment files are test deployments: they contain no production endpoint and no private key, keystore, password or other credential. A real deployment keeps its file with that deployment and uses the same tool.
 
 | Deployment | Server |
 | --- | --- |
@@ -10,7 +10,7 @@ This folder holds test deployments only: no production endpoint, no private key,
 
 ## Use
 
-From the repository root, after [`setup-toolchain.ps1`](../tools/setup-toolchain.ps1) has provisioned the pinned toolchain. The first line resolves the pinned workspace:
+Run the commands from the repository root after [`setup-toolchain.ps1`](../tools/setup-toolchain.ps1) has provisioned the pinned toolchain. The first line resolves the pinned workspace:
 
 ```powershell
 $workspace = (python Development/system/coding/tools/toolchain/toolchain_environment.py --format locations | ConvertFrom-Json).workspace

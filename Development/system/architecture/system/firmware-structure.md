@@ -4,13 +4,13 @@ The firmware consists of layered modules with defined ownership, a fixed set of 
 
 ## Static dependency and module map
 
-Each module belongs to one layer with defined inputs, outputs and ownership. Zephyr supplies the hardware drivers; the firmware has no second driver stack. The [software components view](puml/software-components.puml) ([SVG](rendered/software_components.svg)) shows the modules and their dependencies.
+Each module belongs to one layer with defined inputs, outputs and ownership. Zephyr supplies the hardware drivers. The [software components view](puml/software-components.puml) ([SVG](rendered/software_components.svg)) shows the modules and their dependencies.
 
 - **L0 is Zephyr:** drivers, DMA, interrupts and the devicetree overlay. No project code.
 - **L1 adapters** call Zephyr driver APIs directly: `L1_I2S` (microphone RX and DAC TX),
   `L1_WIFI` (station, scan, hotspot, DHCP, TLS transport and time synchronization), `L1_PORTAL` (HTTP server of the Wi-Fi setup page; [boundary](../PORTAL/README.md)),
   `L1_STORAGE` (named records in flash through Zephyr settings and the read-only server profile image),
-  `L1_PHYSICALINTERFACE` (buttons, switches, potentiometer, LEDs).
+  `L1_PHYSICALINTERFACE` (Start/Stop button, filter switch, potentiometer, lights).
 - **L1 libraries** are pure C with no RTOS, filesystem, UI or network includes: `L1_FILTER`,
   `L1_BPM`, `L1_FHIR`. They hold no shared state; each caller owns its instances.
 - **L2 orchestrates:** `L2_CONTROL`, `L2_AUDIO`, `L2_COMMUNICATION`, `L2_SHELL`. Only `L2_CONTROL`
@@ -25,8 +25,8 @@ Calls go downward; worker completion and health notifications are events sent to
 | Responsibility | Module | Owns / writes | Inputs | Outputs |
 |---|---|---|---|---|
 | Physical input | `L1_PHYSICALINTERFACE` | debounce and contact state | ISR notices, GPIO and ADC samples | typed control events to `L2_CONTROL`, stable-state reconciliation |
-| Control | `L2_CONTROL` | settings, workflow state, generation, point | control, completion and health events | control dispatch, state snapshots, session-tagged commands, network lease |
-| Audio transport | `L2_AUDIO` over `L1_I2S` | `L1_I2S`: RX and TX block pools; `L2_AUDIO`: source generation, transport progress | microphone and fixture blocks, start and stop commands | normalized audio blocks, analysis fan-out, TX submission |
+| Control | `L2_CONTROL` | settings, workflow state, generation counter for stale completions, measurement point | control, completion and health events | control dispatch, state snapshots, session-tagged commands, network lease |
+| Audio transport | `L2_AUDIO` over `L1_I2S` | `L1_I2S`: RX and TX block pools; `L2_AUDIO`: source generation, transport progress | microphone blocks, start and stop commands | normalized audio blocks, analysis fan-out, TX submission |
 | Listening | `L2_AUDIO` with `L1_FILTER` | listening coefficients and filter/ramp history | audio block, command snapshot | saturating mono output, levels and clipping |
 | BPM analysis | `L2_AUDIO` with `L1_FILTER`, `L1_BPM` | analysis window, estimates, coverage, aggregation | original-rate blocks, session configuration | validity updates and immutable measurement result |
 | Indication | `L2_CONTROL`; LEDs via `L1_PHYSICALINTERFACE` | selected status or error; LED pattern state | workflow state and latched errors | feedback code to `L1_PHYSICALINTERFACE`, LED patterns |
@@ -38,7 +38,7 @@ Physical input acquisition and normalization belong to `L1_PHYSICALINTERFACE`. `
 
 ## Firmware layer structure
 
-L2 owns orchestration and L1 provides hardware and library adapters. `L2_COMMUNICATION` is the only path to server delivery: it uses `L1_FHIR` to serialize the frozen measurement result and passes the payload to `L1_WIFI` under the `L2_CONTROL` lease. It never selects or adds a patient ID; only an examination-supplied reference is reused. `MONITOR` observes delivery. Test recordings are handled like patient data. `L2_AUDIO` owns the real-time audio thread and executes audio commands from `L2_CONTROL`, which is the single writer of mode state.
+L2 owns orchestration and L1 provides hardware and library adapters. `L2_COMMUNICATION` is the only path to server delivery: it uses `L1_FHIR` to serialize the frozen measurement result and passes the payload to `L1_WIFI` under the `L2_CONTROL` lease. It never selects or adds a patient ID; only an examination-supplied reference is reused. `MONITOR` observes delivery. `L2_AUDIO` owns the real-time audio thread and executes audio commands from `L2_CONTROL`, which is the single writer of mode state.
 
 ## Threads and hand-offs
 
@@ -64,7 +64,7 @@ For the delivery job, a terminal failure retains only redacted outcome metadata 
 
 `L1_I2S` owns the RX and TX block pools, `L2_AUDIO` borrows their blocks, and pool handles do not escape without a defined lifetime. Listening consumes the current transport block synchronously. BPM analysis receives copied blocks decoupled from the RX DMA pool so a stalled analysis worker cannot pin RX buffers. The [AUDIO architecture](../AUDIO/README.md) defines the block ownership of the audio path.
 
-DSP state is worker-local. Settings and snapshots are bounded copies; no lock spans an I2S wait, SPI transfer, file access, TLS operation or rendering.
+DSP state is worker-local. Settings and snapshots are bounded copies; no lock spans an I2S wait, an SPI transfer, a flash write or a TLS operation.
 Queues carry bounded values or handles rather than unbounded audio payloads. The audio path never
 waits when it enqueues.
 

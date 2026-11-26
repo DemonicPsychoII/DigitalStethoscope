@@ -13,6 +13,7 @@ heart rate and sends the result to a FHIR server in the local network.
 | [Architecture](../architecture/README.md) | System architecture and the architecture of each module |
 | [Design](../design/README.md) | Detailed design of each module and the cross-module design |
 | [Code](../coding/app/README.md) | Firmware application, build and flash instructions |
+| [Verification allocation](../testing/verification-allocation.md) | Scenarios that verify the design pages, with their requirements and expected results |
 | [Reference code](../references/newtec-pulsoxy/README.md) | PulsOxy code of NewTec GmbH that the design refers to |
 
 ## Build

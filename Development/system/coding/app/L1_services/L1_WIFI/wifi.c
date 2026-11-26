@@ -6,7 +6,9 @@
 /** @addtogroup L1_WIFI
  * @{
  * @file
- * Implementation of the L1_WIFI module.
+ * Implementation of the L1_WIFI module. P23 is defined in design/COMMUNICATION/parameters.md,
+ * P25 in design/COMMUNICATION/time-synchronization.md and P27 in
+ * design/COMMUNICATION/server-communication.md.
  *
  * Each function does one step; L2_COMMUNICATION decides the order, the
  * attempts and the delays. The driver
@@ -103,7 +105,7 @@ enum wifi_time_synchronization_state
     WIFI_TIME_SYNCHRONIZATION_IDLE,       /**< Nothing started since boot. */
     WIFI_TIME_SYNCHRONIZATION_PENDING,    /**< Started; no terminal result yet. */
     WIFI_TIME_SYNCHRONIZATION_CANCELLING, /**< Cancellation requested; resources not yet quiescent. */
-    WIFI_TIME_SYNCHRONIZATION_COMPLETED,  /**< Terminal result stored; Wait returns it repeatedly. */
+    WIFI_TIME_SYNCHRONIZATION_COMPLETED,  /**< Terminal result stored; wifi_waitForTimeSynchronization() returns it repeatedly. */
 };
 
 /** A blocking driver stop that runs on the service stop queue, so its caller can give up at the stop bound. */
@@ -125,62 +127,6 @@ struct wifi_service_stop
 /***********************************************************************/
 /* GLOBAL VARIABLES                                                    */
 /***********************************************************************/
-
-/***********************************************************************/
-/* LOCAL VARIABLES                                                     */
-/***********************************************************************/
-
-static struct net_if *wifi_StationInterface;                      /**< Joins the clinic network. */
-static struct net_if *wifi_HotspotInterface;                      /**< Serves the setup hotspot; NULL without AP support. */
-static struct net_mgmt_event_callback wifi_LinkLayerCallback;     /**< Connect, disconnect and scan events. */
-static struct net_mgmt_event_callback wifi_NetworkLayerCallback;  /**< IPv4 address events. */
-static atomic_t wifi_FailureCause;                                /**< Error code of the last rejected connect request. */
-static struct wifi_scan_entry wifi_ScanList[WIFI_SCAN_LIST_SIZE]; /**< Written by the event handler during a scan. */
-static int wifi_ScanSignalStrength[WIFI_SCAN_LIST_SIZE];
-static size_t wifi_ScanCount;            /**< Valid entries in wifi_ScanList. */
-static struct k_spinlock wifi_ScanLock;  /**< Protects the scan list and the scan flags. */
-static bool wifi_ScanIsRunning;          /**< The driver scans until NET_EVENT_WIFI_SCAN_DONE. */
-static bool wifi_ScanResultsAreAccepted; /**< Results belong to the scan the caller waits for. */
-static atomic_t wifi_DisconnectIsPending;
-static atomic_t wifi_StationIsActive;       /**< A station join is pending or the station is associated. */
-static atomic_t wifi_ConnectionIsRequested; /**< Connect and IPv4 events belong to a request of this module. */
-
-K_EVENT_DEFINE(wifi_Events);                  /**< WIFI_EVENT_* bits shared with the waiting thread. */
-K_MUTEX_DEFINE(wifi_TimeSynchronizationLock); /**< Protects the time synchronization state, result and sample. */
-
-static enum wifi_time_synchronization_state wifi_TimeSynchronizationState;
-static int wifi_TimeSynchronizationResult;                    /**< Terminal error code; 0 means the sample is valid. */
-static struct normalised_time wifi_TimeSynchronizationSample; /**< Valid only when the result is 0. */
-static uint32_t wifi_TimeSynchronizationGeneration;           /**< Identifies the accepted operation, so late callbacks of an older one can be ignored. */
-static const char *wifi_TimeServerHostname;                   /**< Borrowed from the caller until terminal completion or successful cancellation. */
-/**
- * @brief Tell whether an operation is still the pending one.
- * @param[in] generation Operation to check.
- * @return True while it is current and not cancelled; call with wifi_TimeSynchronizationLock held.
- */
-static bool wifi_isTimeSynchronizationCurrent(uint32_t generation);
-
-static struct wifi_dns_lookup wifi_TimeServerLookup = {
-    .lock = &wifi_TimeSynchronizationLock,
-    .events = &wifi_Events,
-    .resolvedEvent = WIFI_EVENT_TIME_SERVER_RESOLVED,
-    .isCurrent = wifi_isTimeSynchronizationCurrent,
-}; /**< Time server lookup; its fields are protected by wifi_TimeSynchronizationLock. */
-static bool wifi_TimeSynchronizationIsClaimed; /**< The worker owns the current operation's resources; protected by the lock. */
-
-/* Owned by the time synchronization worker; no other thread touches them. */
-static struct sntp_ctx wifi_TimeSynchronizationContext;
-static bool wifi_TimeSynchronizationSocketIsOpen; /**< wifi_TimeSynchronizationContext owns an open socket. */
-
-K_THREAD_STACK_DEFINE(wifi_TimeSynchronizationStack, WIFI_TIME_SYNCHRONIZATION_STACK_SIZE);
-static struct k_work_q wifi_TimeSynchronizationQueue; /**< Runs the network exchange outside the caller's thread. */
-static struct k_work wifi_TimeSynchronizationWork;
-
-/* The pinned DHCP server and ESP32 AP disable calls block without a timeout, so they run outside the caller's thread. */
-K_THREAD_STACK_DEFINE(wifi_ServiceStopStack, WIFI_SERVICE_STOP_STACK_SIZE);
-static struct k_work_q wifi_ServiceStopQueue; /**< Runs DHCP server and hotspot stops in the order they were requested. */
-static struct wifi_service_stop wifi_DHCPServerStop = {.completedEvent = WIFI_EVENT_DHCP_SERVER_STOPPED};
-static struct wifi_service_stop wifi_HotspotStop = {.completedEvent = WIFI_EVENT_HOTSPOT_STOPPED};
 
 /***********************************************************************/
 /* LOCAL FUNCTION PROTOTYPES                                           */
@@ -223,7 +169,9 @@ static void wifi_addScanResult(const struct wifi_scan_result *result);
  */
 static bool wifi_isSupportedSecurity(enum wifi_security_type security);
 
-/** Roll back a partially started hotspot immediately; L2 retains responsibility for failed stops. */
+/**
+ * @brief Stop the DHCP server and the hotspot after a failed start; L2_COMMUNICATION handles a stop that fails.
+ */
 static void wifi_rollbackHotspot(void);
 
 /**
@@ -322,6 +270,73 @@ static int wifi_releaseTimeSynchronizationResources(void);
  */
 static void wifi_publishTimeSynchronizationResult(uint32_t generation, int result, const struct normalised_time *sample);
 
+/**
+ * @brief Tell whether an operation is still the pending one.
+ * @param[in] generation Operation to check.
+ * @return True while it is current and not cancelled; call with wifi_TimeSynchronizationLock held.
+ */
+static bool wifi_isTimeSynchronizationCurrent(uint32_t generation);
+
+/**
+ * @brief Wait for the event mask selected by the owning operation.
+ *
+ * @param[in] eventMask WIFI_EVENT_* bits to wait for.
+ * @param[in] timeout   Longest wait.
+ *
+ * @return The bits of @p eventMask that are set, or 0 after @p timeout.
+ */
+static uint32_t wifi_waitForEvents(uint32_t eventMask, k_timeout_t timeout);
+
+/***********************************************************************/
+/* LOCAL VARIABLES                                                     */
+/***********************************************************************/
+
+static struct net_if *wifi_StationInterface;                      /**< Joins the clinic network. */
+static struct net_if *wifi_HotspotInterface;                      /**< Serves the setup hotspot; NULL without AP support. */
+static struct net_mgmt_event_callback wifi_LinkLayerCallback;     /**< Connect, disconnect and scan events. */
+static struct net_mgmt_event_callback wifi_NetworkLayerCallback;  /**< IPv4 address events. */
+static atomic_t wifi_FailureCause;                                /**< Error code of the last rejected connect request. */
+static struct wifi_scan_entry wifi_ScanList[WIFI_SCAN_LIST_SIZE]; /**< Written by the event handler during a scan. */
+static int wifi_ScanSignalStrength[WIFI_SCAN_LIST_SIZE];
+static size_t wifi_ScanCount;            /**< Valid entries in wifi_ScanList. */
+static struct k_spinlock wifi_ScanLock;  /**< Protects the scan list and the scan flags. */
+static bool wifi_ScanIsRunning;          /**< The driver scans until NET_EVENT_WIFI_SCAN_DONE. */
+static bool wifi_ScanResultsAreAccepted; /**< Results belong to the scan the caller waits for. */
+static atomic_t wifi_DisconnectIsPending;
+static atomic_t wifi_StationIsActive;       /**< A station join is pending or the station is associated. */
+static atomic_t wifi_ConnectionIsRequested; /**< Connect and IPv4 events belong to a request of this module. */
+
+K_EVENT_DEFINE(wifi_Events);                  /**< WIFI_EVENT_* bits shared with the waiting thread. */
+K_MUTEX_DEFINE(wifi_TimeSynchronizationLock); /**< Protects the time synchronization state, result and sample. */
+
+static enum wifi_time_synchronization_state wifi_TimeSynchronizationState;
+static int wifi_TimeSynchronizationResult;                    /**< Terminal error code; 0 means the sample is valid. */
+static struct normalised_time wifi_TimeSynchronizationSample; /**< Valid only when the result is 0. */
+static uint32_t wifi_TimeSynchronizationGeneration;           /**< Identifies the accepted operation, so late callbacks of an older one can be ignored. */
+static const char *wifi_TimeServerHostname;                   /**< Borrowed from the caller until terminal completion or successful cancellation. */
+
+static struct wifi_dns_lookup wifi_TimeServerLookup = {
+    .lock = &wifi_TimeSynchronizationLock,
+    .events = &wifi_Events,
+    .resolvedEvent = WIFI_EVENT_TIME_SERVER_RESOLVED,
+    .isCurrent = wifi_isTimeSynchronizationCurrent,
+}; /**< Time server lookup; its fields are protected by wifi_TimeSynchronizationLock. */
+static bool wifi_TimeSynchronizationIsClaimed; /**< The worker owns the current operation's resources; protected by the lock. */
+
+/* Owned by the time synchronization worker; no other thread touches them. */
+static struct sntp_ctx wifi_TimeSynchronizationContext;
+static bool wifi_TimeSynchronizationSocketIsOpen; /**< wifi_TimeSynchronizationContext owns an open socket. */
+
+K_THREAD_STACK_DEFINE(wifi_TimeSynchronizationStack, WIFI_TIME_SYNCHRONIZATION_STACK_SIZE);
+static struct k_work_q wifi_TimeSynchronizationQueue; /**< Runs the network exchange outside the caller's thread. */
+static struct k_work wifi_TimeSynchronizationWork;
+
+/* The Zephyr DHCPv4 server and ESP32 AP disable calls block without a timeout, so they run outside the caller's thread. */
+K_THREAD_STACK_DEFINE(wifi_ServiceStopStack, WIFI_SERVICE_STOP_STACK_SIZE);
+static struct k_work_q wifi_ServiceStopQueue; /**< Runs DHCP server and hotspot stops in the order they were requested. */
+static struct wifi_service_stop wifi_DHCPServerStop = {.completedEvent = WIFI_EVENT_DHCP_SERVER_STOPPED};
+static struct wifi_service_stop wifi_HotspotStop = {.completedEvent = WIFI_EVENT_HOTSPOT_STOPPED};
+
 /***********************************************************************/
 /* MACROS                                                              */
 /***********************************************************************/
@@ -331,12 +346,6 @@ LOG_MODULE_REGISTER(wifi, LOG_LEVEL_INF);
 /***********************************************************************/
 /* GLOBAL FUNCTIONS                                                    */
 /***********************************************************************/
-
-/** Wait for the event mask selected by the owning operation. */
-static uint32_t wifi_waitForEvents(uint32_t eventMask, k_timeout_t timeout)
-{
-    return k_event_wait(&wifi_Events, eventMask, false, timeout);
-}
 
 int wifi_init(void)
 {
@@ -510,7 +519,7 @@ int wifi_disconnect(void)
 
     if(result == 0)
     {
-        /* The pinned DHCP client can retain its address when stopped while rebinding. */
+        /* The Zephyr DHCPv4 client can keep its address when stopped while rebinding. */
         const struct net_in_addr *address = net_if_ipv4_get_global_addr(wifi_StationInterface, NET_ADDR_PREFERRED);
         while((address != NULL) && (result == 0))
         {
@@ -754,7 +763,7 @@ int wifi_startHotspot(void)
         struct wifi_connect_req_params parameters = {
             .ssid = (const uint8_t *)name,
             .ssid_length = (uint8_t)strlen(name),
-            .security = WIFI_SECURITY_TYPE_NONE, /* The phone joins without a password. */
+            .security = WIFI_SECURITY_TYPE_NONE, /* The setup hotspot is open. */
             .band = WIFI_FREQ_BAND_2_4_GHZ,
             .channel = WIFI_CHANNEL_ANY,
         };
@@ -763,7 +772,7 @@ int wifi_startHotspot(void)
 
         if(result == 0)
         {
-            /* The pinned ESP32 driver hardcodes five clients and lacks AP_CONFIG_PARAM. */
+            /* The Zephyr ESP32 Wi-Fi driver hardcodes five clients and lacks AP_CONFIG_PARAM. */
             wifi_config_t hotspotConfiguration;
             const bool configurationIsRead = (esp_wifi_get_config(WIFI_IF_AP, &hotspotConfiguration) == ESP_OK);
 
@@ -857,7 +866,7 @@ int wifi_startTimeSynchronization(const char *ntpServer)
 
     (void)k_mutex_lock(&wifi_TimeSynchronizationLock, K_FOREVER);
 
-    /* COMPLETED is only reached after the worker released everything, so a CANCELLING operation keeps Start blocked. */
+    /* COMPLETED is only reached after the worker released everything, so a CANCELLING operation keeps wifi_startTimeSynchronization() blocked. */
     if((wifi_TimeSynchronizationState == WIFI_TIME_SYNCHRONIZATION_PENDING) ||
        (wifi_TimeSynchronizationState == WIFI_TIME_SYNCHRONIZATION_CANCELLING))
     {
@@ -986,7 +995,7 @@ int wifi_cancelTimeSynchronization(void)
     int result = 0;
     if(wifi_TimeSynchronizationState == WIFI_TIME_SYNCHRONIZATION_CANCELLING)
     {
-        /* Not released yet: Start stays blocked and the hostname stays borrowed; a later Cancel may confirm release. */
+        /* Not released yet: wifi_startTimeSynchronization() stays blocked and the hostname stays borrowed; a later wifi_cancelTimeSynchronization() may confirm release. */
         result = -ETIMEDOUT;
     }
     (void)k_mutex_unlock(&wifi_TimeSynchronizationLock);
@@ -1061,7 +1070,7 @@ static void wifi_runTimeSynchronization(struct k_work *work)
 
     (void)k_mutex_lock(&wifi_TimeSynchronizationLock, K_FOREVER);
     const uint32_t generation = wifi_TimeSynchronizationGeneration;
-    /* A handler left queued by an earlier submission must not take over an operation that another handler runs or that Cancel withdrew. */
+    /* A handler left queued by an earlier submission must not take over an operation that another handler runs or that wifi_cancelTimeSynchronization() withdrew. */
     const bool isClaimed = (wifi_TimeSynchronizationState == WIFI_TIME_SYNCHRONIZATION_PENDING) && !wifi_TimeSynchronizationIsClaimed;
     if(isClaimed)
     {
@@ -1087,7 +1096,7 @@ static void wifi_runTimeSynchronization(struct k_work *work)
     const int releaseResult = wifi_releaseTimeSynchronizationResources();
     if(releaseResult != 0)
     {
-        /* Without proven release the operation never completes: Start stays blocked and Cancel reports the fault. */
+        /* Without proven release the operation never completes: wifi_startTimeSynchronization() stays blocked and wifi_cancelTimeSynchronization() reports the fault. */
         LOG_ERR("Time synchronization release failed (%d)", releaseResult);
     }
     else
@@ -1210,7 +1219,7 @@ static int wifi_receiveTimeResponse(struct sntp_time *nativeTime)
         return -ETIMEDOUT;
     }
 
-    /* The pinned Zephyr parser rejects only stratum 0 and returns neither field, so the queued datagram is inspected first. */
+    /* The Zephyr SNTP parser rejects only stratum 0 and returns neither field, so the queued datagram is inspected first. */
     uint8_t header[WIFI_SNTP_HEADER_SIZE] = {0};
     const ssize_t received = zsock_recv(socket, header, sizeof(header), ZSOCK_MSG_PEEK);
     if(received < 0)
@@ -1277,7 +1286,7 @@ static void wifi_publishTimeSynchronizationResult(uint32_t generation, int resul
         }
         wifi_TimeServerHostname = NULL;
         wifi_TimeSynchronizationState = WIFI_TIME_SYNCHRONIZATION_COMPLETED;
-        /* Stays set until the next accepted Start, so repeated Wait calls return at once. */
+        /* Stays set until the next accepted wifi_startTimeSynchronization(), so repeated wifi_waitForTimeSynchronization() calls return at once. */
         (void)k_event_post(&wifi_Events, WIFI_EVENT_TIME_SYNCHRONIZED);
     }
 
@@ -1456,7 +1465,7 @@ static void wifi_handleEvent(struct net_mgmt_event_callback *callback, uint64_t 
                                  (k_event_test(&wifi_Events, WIFI_EVENT_CONNECTED) == 0U);
             atomic_set(&wifi_StationIsActive, 0);
             atomic_set(&wifi_ConnectionIsRequested, 0);
-            /* Disconnect status carries a reason, including USER_REQUEST (2). */
+            /* Every disconnect result, requested or not, ends a pending wifi_disconnect(). */
             (void)k_event_post(&wifi_Events, WIFI_EVENT_DISCONNECTED);
             (void)k_event_clear(&wifi_Events, WIFI_EVENT_CONNECTED);
             if(joinHasFailed)
@@ -1605,6 +1614,11 @@ static bool wifi_isSupportedSecurity(enum wifi_security_type security)
     }
 
     return isSupported;
+}
+
+static uint32_t wifi_waitForEvents(uint32_t eventMask, k_timeout_t timeout)
+{
+    return k_event_wait(&wifi_Events, eventMask, false, timeout);
 }
 
 /** @} */

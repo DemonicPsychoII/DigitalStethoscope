@@ -2,15 +2,15 @@
 
 The [architectural ground rules](../../architecture/system/feedback-principles.md) assign responsibility and fault containment.
 
-The RGB status light never shows red. The separate red button light shows error codes.
+The RGB LED never shows red. The separate red button LED shows error codes.
 Serial logs retain the detailed cause. Timing is in [P22](parameters.md).
-The RGB status light is driven on GPIO48, its DevKitC-1 v1.0 position, whichever DevKit revision is fitted. GPIO38 is the BPM contact of the filter switch. On a v1.1 DevKit the light stays dark.
+The RGB LED is driven on GPIO48, its DevKitC-1 v1.0 position, whichever DevKit revision is fitted. GPIO38 is the BPM contact of the filter switch. On a v1.1 DevKit the RGB LED stays dark.
 
 Vendor reference: Espressif Systems, *ESP32-S3-DevKitC-1 v1.1 User Guide*, ESP-Dev-Kits documentation, online revision not specified, <https://docs.espressif.com/projects/esp-dev-kits/en/latest/esp32s3/esp32-s3-devkitc-1/user_guide_v1.1.html> (accessed 2026-10-24).
 
 ## Status and error catalogue
 
-The table below defines all device statuses, errors and LED patterns. Recovery and acknowledgement
+The catalogue defines every device status, error and LED pattern. Recovery and acknowledgement
 are separate.
 
 - **One feedback catalogue.** Wi-Fi-only failures, server-connection `SERVER_CONNECTION_FAILURE` (including its time synchronization) and registration-only `DEVICE_REGISTRATION_FAILURE` preserve working audio and permit
@@ -26,7 +26,7 @@ are separate.
   detects it. `L2_CONTROL` decides what can run, so each context has one colour: white = device (startup,
   settings, session input), green = Idle, cyan = audio, violet = Wi-Fi, blue = FHIR.
 - **Standards.** Green only for Idle and no red, yellow or orange on the RGB LED follow
-  IEC 60601-1 7.8.1. The other context colours are specific to this design. Flash rates follow
+  IEC 60601-1 7.8.1. IEC 60601-1 fixes no meaning for the other context colours. Flash rates follow
   IEC 60073: error codes and quick flashes at 2 Hz, slow blink at 0.5 Hz. P22 defines pauses,
   breathing, dimming and visibility. Priorities follow the IEC 60601-1-8 priority scheme. Details,
   sources and the deviations from IEC 60601-1-8 are in
@@ -38,14 +38,14 @@ are separate.
 - **Blink notation.** "N blinks, pause" repeats until the error is cleared. A pattern runs a limited number
   of times only when the table says so ("once").
 - **Sort order.** Rows are sorted by RGB colour, statuses before errors, and errors by subject in workflow order. The blink count belongs to the code, so it does not follow the row order. "No change" rows are overlays on the current colour and come last.
-- **RGB behaviour** is the light pattern of the colour: steady, blink, breathing or flashes. Timing is in
+- **RGB behaviour** is the pattern of the colour: steady, blink, breathing or flashes. Timing is in
   [design parameters](parameters.md) P22.
 - **Statuses** end when the next status replaces them; the change of state is the visible clear.
 - **More than one error.** The LEDs show only the error with the highest priority. If priorities are equal,
   they show the error that latched first. The serial log lists all errors.
 - **Where the error occurred.** An error does not change the RGB context: the RGB LED stays on in the colour of
   the context in which the error occurred, so the user sees where it happened.
-- **Clear, retry and recovery** are separate regions; see [Fault handling](#fault-handling) below the table.
+- **Clear, retry and recovery** are separate regions; see [Fault handling](#fault-handling).
 - **Restart** means the reset button or a power off/on cycle.
 - **One button.** With an error shown that clears by short press, the first short press acknowledges it;
   later presses Start and Stop the examination, offline where the error concerns Wi-Fi or the server.
@@ -60,7 +60,7 @@ are separate.
   `SCAN_FAILURE`. Outcome words: no suffix, `RUNNING`, `OPEN`, `PENDING`, `SENDING` or `CONNECTING` for a normal status;
   `SUCCESSFUL`, `RECEIVED`, `VALID`, `CONNECTED`, `ACKNOWLEDGED` or `MINIMUM_REACHED` for a positive result; `REJECTED`, `FAILURE`, `STALL`, `INVALID`, `UNEXPECTED`, `CHANGE` or `NOT_POSSIBLE` for a negative result.
   The C enumerator adds the prefix `FEEDBACK_` (for example `FEEDBACK_SCAN_FAILURE`) to keep the global
-  namespace clean. The catalogue is one enum. Value 0, `FEEDBACK_NONE`, means no indication: both lights are off. New codes are only appended so that existing values never change.
+  namespace clean. The catalogue is one enum. Value 0, `FEEDBACK_NONE`, means no indication: both LEDs are off. New codes are only appended so that existing values never change.
 - **Logging is separate.** The component that detects the fault logs the details (sub-cause, HTTP status,
   failed check). The LED interface only receives the code.
 
@@ -107,7 +107,7 @@ are separate.
 
 ![Fault handling: recovery episode, indication latch and workflow admission as separate regions](rendered/fault_handling_state.svg)
 
-*Which fault events change the indication, which change Start admission, and which only drive recovery?* Editable source: [puml/fault-handling-state.puml](puml/fault-handling-state.puml).
+*Which fault events change the indication, which change Start admission, and which only drive recovery?* Source: [puml/fault-handling-state.puml](puml/fault-handling-state.puml).
 
 - **Recovery episode.** Only `SERVER_CONNECTION_FAILURE` and `DEVICE_REGISTRATION_FAILURE` have a recovery episode. The first failed preparation or registration latches the error. Further failed automatic retries of the same episode are logged and do not latch again. A successful retry ends the episode and leaves the indication unchanged. A preparation that Start cancels raises no error. Wi-Fi and delivery errors have no episode rule.
 - **Retry.** A separate 2 s hold in Idle starts Wi-Fi setup again, even with a Wi-Fi error latched. Automatic reconnect and portal recovery stay automatic; acknowledgement is not their gate.

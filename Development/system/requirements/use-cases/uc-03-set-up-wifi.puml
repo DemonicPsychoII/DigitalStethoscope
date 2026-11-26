@@ -12,7 +12,7 @@ skinparam activity {
 title F3 Set up Wi-Fi (REQ-11, REQ-12)
 start
 if (Boot with saved network?) then (yes)
- :Join; 4 attempts total, 5 s between failures;
+ :Device joins the saved network;
  if (Address assigned?) then (yes)
   :Keep station connected;
  else (no)
@@ -20,27 +20,27 @@ if (Boot with saved network?) then (yes)
  endif
  :Wait for 2 s hold in Idle;
 endif
-:Scan/cache, then open hotspot and portal;
-:Phone joins open hotspot; QR opens page;
+:Device scans for networks, then opens the hotspot with the setup page;
+:Phone joins the open hotspot; QR opens the setup page;
 repeat
-:Select network; password only if protected;
-:Queue join; browser polls;
+:Operator selects the network and enters the password of a protected network;
+:Device joins the selected network; the page shows the progress;
 if (Selected network address assigned?) then (no)
- :Show join error; rescan with AP open;
+ :Page shows the join error; device scans again with the hotspot open;
 endif
 repeat while (Join failed?) is (yes) not (no)
- :Store credentials; retry once;
+ :Device stores the credentials; a failed save is retried once;
  if (Saved?) then (yes)
   :Show success;
  else (no)
   :Show save error; remain connected;
  endif
- :Show result 10 s; close hotspot/server;\nKeep station connected;
+ :Page shows the result; device closes the hotspot and the setup page;\nKeep station connected;
 stop
 floating note
- Cancel/timeout: notice then cleanup; retain an established station.
+ On cancel or timeout the page shows a notice and the device closes the hotspot;
+ an established station connection stays.
  Start takes priority: stop setup safely before audio.
  Wi-Fi-only errors preserve audio.
- Not shown: time, secure transport and Device registration.
 end note
 @enduml

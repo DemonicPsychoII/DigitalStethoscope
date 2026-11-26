@@ -20,7 +20,7 @@ else (recovery exhausted)
  :Report cause; enter provisioning in Idle;
  :Run provisioning flow under the held lease;
 endif
-:Release work to L2_CONTROL;
+:Release the network lease to L2_CONTROL;
 stop
 note right
  Listening interrupts active recovery through safe teardown.

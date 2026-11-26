@@ -16,7 +16,7 @@ skinparam sequence {
 }
 skinparam sequenceGroupBodyBackGroundColor #121a26
 title L2_COMMUNICATION setup ownership
-actor "Operator / browser" as Operator
+actor "Phone browser" as Operator
 participant "L2_CONTROL" as CONTROL
 participant "L2_COMMUNICATION" as COMMUNICATION
 participant "L1_WIFI" as WIFI

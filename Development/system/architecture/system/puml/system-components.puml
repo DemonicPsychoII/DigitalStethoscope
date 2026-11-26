@@ -10,14 +10,6 @@ skinparam database {
 }
 skinparam component {
  FontColor #0b1018
- BackgroundColor<<optional>> #273241
- BorderColor<<optional>> #61738a
- FontColor<<optional>> #b8c4d4
-}
-skinparam artifact {
- BackgroundColor<<optional>> #273241
- BorderColor<<optional>> #61738a
- FontColor<<optional>> #b8c4d4
 }
 skinparam componentStyle rectangle
 skinparam defaultFontName SansSerif
@@ -28,12 +20,12 @@ component "INMP441\nMicrophone" as mic
 node "ESP32-S3" as cpu
 component "PCM5102A\nDAC" as dac
 component "Headphone amplifier\n(outside the device boundary)" as amp <<external>>
-component "Headphones" as hp
-component "Buttons / switches\nPotentiometer / LED" as controls
-database "FHIR server" as server
+component "Headphones" as hp <<external>>
+component "Button / switch\nPotentiometer / lights" as controls
+database "FHIR server" as server <<external>>
 chest --> mic : sound
-mic --> cpu : microphone I²S link
-cpu --> dac : DAC I²S link
+mic --> cpu : microphone I2S link
+cpu --> dac : DAC I2S link
 dac --> amp : analog audio
 amp --> hp : analog audio
 controls --> cpu : controls

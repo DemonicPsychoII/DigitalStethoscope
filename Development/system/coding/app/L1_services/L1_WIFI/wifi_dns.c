@@ -28,9 +28,9 @@
  * @brief Record DNS progress for the owning operation.
  * @param[in] status    Resolver progress or terminal status.
  * @param[in] info      Borrowed address result; may be NULL for terminal callbacks.
- * @param[in] user_data The owner's wifi_dns_lookup.
+ * @param[in] userData  The owner's wifi_dns_lookup.
  */
-static void wifi_handleResolution(enum dns_resolve_status status, struct dns_addrinfo *info, void *user_data);
+static void wifi_handleResolution(enum dns_resolve_status status, struct dns_addrinfo *info, void *userData);
 
 /***********************************************************************/
 /* MACROS                                                              */
@@ -46,8 +46,8 @@ int wifi_resolveIpv4(struct wifi_dns_lookup *lookup,
                      const char *host,
                      uint32_t generation,
                      k_timepoint_t deadline,
-                     int32_t resolverTimeoutMs,
-                     int32_t pollIntervalMs,
+                     int32_t resolverTimeoutMilliseconds,
+                     int32_t pollIntervalMilliseconds,
                      struct net_sockaddr_in *address)
 {
     (void)k_mutex_lock(lookup->lock, K_FOREVER);
@@ -77,7 +77,7 @@ int wifi_resolveIpv4(struct wifi_dns_lookup *lookup,
 
     /* Submitted without the owner's lock: the resolver holds its own lock while calling back, and the callback takes the owner's. */
     uint16_t identifier = 0U;
-    int result = dns_get_addr_info(host, DNS_QUERY_TYPE_A, &identifier, wifi_handleResolution, lookup, resolverTimeoutMs);
+    int result = dns_get_addr_info(host, DNS_QUERY_TYPE_A, &identifier, wifi_handleResolution, lookup, resolverTimeoutMilliseconds);
     if(result != 0)
     {
         return result;
@@ -89,7 +89,7 @@ int wifi_resolveIpv4(struct wifi_dns_lookup *lookup,
     result = -EAGAIN;
     while(result == -EAGAIN)
     {
-        (void)k_event_wait(lookup->events, lookup->resolvedEvent, false, K_MSEC(pollIntervalMs));
+        (void)k_event_wait(lookup->events, lookup->resolvedEvent, false, K_MSEC(pollIntervalMilliseconds));
 
         (void)k_mutex_lock(lookup->lock, K_FOREVER);
         const bool operationIsCurrent = lookup->isCurrent(generation);
@@ -148,9 +148,9 @@ int wifi_releaseLookup(struct wifi_dns_lookup *lookup)
 /* LOCAL FUNCTIONS                                                     */
 /***********************************************************************/
 
-static void wifi_handleResolution(enum dns_resolve_status status, struct dns_addrinfo *info, void *user_data)
+static void wifi_handleResolution(enum dns_resolve_status status, struct dns_addrinfo *info, void *userData)
 {
-    struct wifi_dns_lookup *lookup = user_data;
+    struct wifi_dns_lookup *lookup = userData;
     if(lookup == NULL)
     {
         return;

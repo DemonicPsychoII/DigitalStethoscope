@@ -37,11 +37,11 @@
 /* DEFINES                                                             */
 /***********************************************************************/
 
-#define PORTAL_HTTP_PORT                        (80)  /**< Port of the setup page. */
-#define PORTAL_HTTP_BACKLOG                     (4)   /**< Connections waiting for a client slot. */
-#define PORTAL_REQUEST_QUEUE_LENGTH             (4)   /**< Requests not yet read by L2_COMMUNICATION. */
-#define PORTAL_FORM_SIZE                        (320) /**< URL-encoded "network=<name>&password=<password>", worst case 306 bytes. */
-#define PORTAL_SERVER_STOP_TIMEOUT_MILLISECONDS (1000)
+#define PORTAL_HTTP_PORT                              (80)  /**< Port of the setup page. */
+#define PORTAL_HTTP_BACKLOG                           (4)   /**< Connections waiting for a client slot. */
+#define PORTAL_REQUEST_QUEUE_LENGTH                   (4)   /**< Requests not yet read by L2_COMMUNICATION. */
+#define PORTAL_FORM_SIZE                              (320) /**< URL-encoded "network=<name>&password=<password>", worst case 306 bytes. */
+#define PORTAL_SERVER_TRANSITION_TIMEOUT_MILLISECONDS (1000)
 
 #define PORTAL_RESPONSE_SIZE (2048) /**< Status JSON with WIFI_SCAN_LIST_SIZE escaped names. */
 
@@ -60,6 +60,12 @@
 /***********************************************************************/
 /* TYPES                                                               */
 /***********************************************************************/
+
+enum portal_wait_target
+{
+    PORTAL_WAIT_SERVER_READY,   /**< Wait for a listening socket; listener readiness or the deadline ends the wait. */
+    PORTAL_WAIT_SERVER_STOPPED, /**< Wait for listener closure after client aborts; confirmed closure or the deadline ends the wait. */
+};
 
 /***********************************************************************/
 /* GLOBAL CONSTANTS                                                    */
@@ -213,6 +219,16 @@ static void portal_appendName(size_t *length, const char *name);
  */
 static bool portal_readFormValue(const char *form, const char *key, char *value, size_t valueSize);
 
+/**
+ * @brief Wait until the Zephyr HTTP server has opened or closed its listening socket.
+ *
+ * @param[in] target  Listener state to wait for.
+ * @param[in] timeout Longest wait.
+ *
+ * @return True if the listener reached the state of @p target within @p timeout.
+ */
+static bool portal_waitForServerState(enum portal_wait_target target, k_timeout_t timeout);
+
 /***********************************************************************/
 /* MACROS                                                              */
 /***********************************************************************/
@@ -266,51 +282,6 @@ HTTP_RESOURCE_DEFINE(portal_ActivityResource, portal_service, "/activity", &port
 /* GLOBAL FUNCTIONS                                                    */
 /***********************************************************************/
 
-enum portal_wait_target
-{
-    PORTAL_WAIT_SERVER_READY,   /**< Wait for a listening socket; listener readiness or the deadline ends the wait. */
-    PORTAL_WAIT_SERVER_STOPPED, /**< Wait for listener closure after client aborts; confirmed closure or the deadline ends the wait. */
-};
-
-/** Wait for the pinned HTTP server's listener transition. */
-static bool portal_waitForServerState(enum portal_wait_target target, k_timeout_t timeout)
-{
-    k_timepoint_t deadline = sys_timepoint_calc(timeout);
-    bool isWaiting = true;
-    bool isDeadlineExpired = sys_timepoint_expired(deadline);
-
-    while(isWaiting && !isDeadlineExpired)
-    {
-        bool hasListener = *(volatile int *)portal_service.fd >= 0;
-        if(target == PORTAL_WAIT_SERVER_READY)
-        {
-            isWaiting = !hasListener;
-        }
-        else
-        {
-            /* The pinned server resets fd only after all client abort callbacks. */
-            isWaiting = !portal_ServerHasListener || hasListener;
-            if(hasListener)
-            {
-                portal_ServerHasListener = true;
-            }
-        }
-        if(isWaiting)
-        {
-            k_sleep(K_MSEC(10));
-
-            isDeadlineExpired = sys_timepoint_expired(deadline);
-        }
-    }
-    bool isReady = *(volatile int *)portal_service.fd >= 0;
-    if(target == PORTAL_WAIT_SERVER_STOPPED)
-    {
-        /* A start without a listener could not have accepted a client. */
-        isReady = !isReady;
-    }
-    return isReady;
-}
-
 int portal_start(void)
 {
     if(!portal_ServerStopIsConfirmed)
@@ -318,8 +289,8 @@ int portal_start(void)
         return -EBUSY;
     }
     (void)k_mutex_lock(&portal_Lock, K_FOREVER);
-    (void)portal_clearSecret(portal_RequestQueue, sizeof(portal_RequestQueue));
-    (void)portal_clearSecret(portal_Form, sizeof(portal_Form));
+    portal_clearSecret(portal_RequestQueue, sizeof(portal_RequestQueue));
+    portal_clearSecret(portal_Form, sizeof(portal_Form));
     (void)memset(portal_Address, 0, sizeof(portal_Address));
     portal_RequestReadIndex = 0U;
     portal_RequestWriteIndex = 0U;
@@ -340,7 +311,7 @@ int portal_start(void)
     if(result == 0)
     {
         portal_ServerHasListener = portal_waitForServerState(PORTAL_WAIT_SERVER_READY,
-                                                             K_MSEC(PORTAL_SERVER_STOP_TIMEOUT_MILLISECONDS));
+                                                             K_MSEC(PORTAL_SERVER_TRANSITION_TIMEOUT_MILLISECONDS));
         if(portal_ServerHasListener)
         {
             result = 0;
@@ -364,11 +335,11 @@ int portal_stop(void)
     (void)k_mutex_lock(&portal_Lock, K_FOREVER);
     portal_IsOpen = false;
     portal_SelectionIsReady = false;
-    (void)portal_clearSecret(portal_Form, sizeof(portal_Form));
+    portal_clearSecret(portal_Form, sizeof(portal_Form));
     portal_FormLength = 0U;
     portal_FormIsTooLong = false;
     portal_FormClient = NULL;
-    (void)portal_clearSecret(portal_RequestQueue, sizeof(portal_RequestQueue));
+    portal_clearSecret(portal_RequestQueue, sizeof(portal_RequestQueue));
     portal_RequestCount = 0U;
     portal_RequestReadIndex = 0U;
     portal_RequestWriteIndex = 0U;
@@ -385,14 +356,14 @@ int portal_stop(void)
         return result;
     }
 
-    const bool isServerStopped = portal_waitForServerState(PORTAL_WAIT_SERVER_STOPPED, K_MSEC(PORTAL_SERVER_STOP_TIMEOUT_MILLISECONDS));
+    const bool isServerStopped = portal_waitForServerState(PORTAL_WAIT_SERVER_STOPPED, K_MSEC(PORTAL_SERVER_TRANSITION_TIMEOUT_MILLISECONDS));
 
     if(!isServerStopped)
     {
         return -ETIMEDOUT;
     }
     (void)k_mutex_lock(&portal_Lock, K_FOREVER);
-    (void)portal_clearSecret(portal_Form, sizeof(portal_Form));
+    portal_clearSecret(portal_Form, sizeof(portal_Form));
     portal_FormLength = 0U;
     portal_FormIsTooLong = false;
     portal_FormClient = NULL;
@@ -446,7 +417,7 @@ int portal_waitForRequest(struct portal_request *request, k_timeout_t timeout)
         if(portal_RequestCount != 0U)
         {
             *request = portal_RequestQueue[portal_RequestReadIndex];
-            (void)portal_clearSecret(&portal_RequestQueue[portal_RequestReadIndex], sizeof(*request));
+            portal_clearSecret(&portal_RequestQueue[portal_RequestReadIndex], sizeof(*request));
             portal_RequestReadIndex = (portal_RequestReadIndex + 1U) % PORTAL_REQUEST_QUEUE_LENGTH;
             portal_RequestCount--;
             result = 0;
@@ -543,7 +514,7 @@ static int portal_receiveConnect(struct http_client_ctx *client, enum http_trans
     }
     if(isCompletion)
     {
-        (void)portal_clearSecret(portal_Form, sizeof(portal_Form));
+        portal_clearSecret(portal_Form, sizeof(portal_Form));
         portal_FormLength = 0U;
         portal_FormIsTooLong = false;
         portal_FormClient = NULL;
@@ -556,7 +527,7 @@ static int portal_receiveConnect(struct http_client_ctx *client, enum http_trans
     {
         responseContext->status = HTTP_409_CONFLICT;
         responseContext->final_chunk = true;
-        (void)portal_clearSecret(portal_Form, sizeof(portal_Form));
+        portal_clearSecret(portal_Form, sizeof(portal_Form));
         portal_FormLength = 0U;
         portal_FormIsTooLong = false;
         portal_FormClient = NULL;
@@ -605,11 +576,11 @@ static int portal_receiveConnect(struct http_client_ctx *client, enum http_trans
                 break;
             }
         }
-        (void)portal_clearSecret(portal_Form, sizeof(portal_Form));
+        portal_clearSecret(portal_Form, sizeof(portal_Form));
         portal_FormLength = 0U;
         portal_FormIsTooLong = false;
         (void)k_mutex_unlock(&portal_Lock);
-        if((isValid && isListed))
+        if(isValid && isListed)
         {
             responseContext->status = portal_queueRequest(&request, PORTAL_STATUS_CONNECTING);
         }
@@ -625,7 +596,7 @@ static int portal_receiveConnect(struct http_client_ctx *client, enum http_trans
         responseContext->body = (const uint8_t *)"{}";
         responseContext->body_len = 2U;
         responseContext->final_chunk = true;
-        (void)portal_clearSecret(&request, sizeof(request));
+        portal_clearSecret(&request, sizeof(request));
         return 0;
     }
     (void)k_mutex_unlock(&portal_Lock);
@@ -693,7 +664,7 @@ static enum http_status portal_queueRequest(const struct portal_request *request
             portal_RequestWriteIndex = (portal_RequestWriteIndex + 1U) % PORTAL_REQUEST_QUEUE_LENGTH;
             portal_RequestCount++;
             k_sem_give(&portal_RequestAvailable);
-            if(newStatus != PORTAL_STATUS_SELECTING && newStatus != PORTAL_STATUS_CONNECT_FAILED)
+            if((newStatus != PORTAL_STATUS_SELECTING) && (newStatus != PORTAL_STATUS_CONNECT_FAILED))
             {
                 portal_SelectionIsReady = false;
             }
@@ -816,13 +787,9 @@ static bool portal_readFormValue(const char *form, const char *key, char *value,
         else
         {
             field = strchr(field, '&');
-            if((field != NULL))
+            if(field != NULL)
             {
                 field = (field + 1);
-            }
-            else
-            {
-                field = NULL;
             }
         }
     }
@@ -854,10 +821,6 @@ static bool portal_readFormValue(const char *form, const char *key, char *value,
                 {
                     source += 2;
                 }
-                else
-                {
-                    source += 0;
-                }
             }
             else
             {
@@ -879,6 +842,44 @@ static bool portal_readFormValue(const char *form, const char *key, char *value,
     }
 
     return isValid;
+}
+
+static bool portal_waitForServerState(enum portal_wait_target target, k_timeout_t timeout)
+{
+    k_timepoint_t deadline = sys_timepoint_calc(timeout);
+    bool isWaiting = true;
+    bool isDeadlineExpired = sys_timepoint_expired(deadline);
+
+    while(isWaiting && !isDeadlineExpired)
+    {
+        bool hasListener = *(volatile int *)portal_service.fd >= 0;
+        if(target == PORTAL_WAIT_SERVER_READY)
+        {
+            isWaiting = !hasListener;
+        }
+        else
+        {
+            /* The Zephyr HTTP server resets fd only after all client abort callbacks. */
+            isWaiting = !portal_ServerHasListener || hasListener;
+            if(hasListener)
+            {
+                portal_ServerHasListener = true;
+            }
+        }
+        if(isWaiting)
+        {
+            k_sleep(K_MSEC(10));
+
+            isDeadlineExpired = sys_timepoint_expired(deadline);
+        }
+    }
+    bool isReady = *(volatile int *)portal_service.fd >= 0;
+    if(target == PORTAL_WAIT_SERVER_STOPPED)
+    {
+        /* For a stop, the result is true when the listener is closed. */
+        isReady = !isReady;
+    }
+    return isReady;
 }
 
 /** @} */

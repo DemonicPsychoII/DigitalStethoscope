@@ -6,7 +6,7 @@
 /** @defgroup L1_FILTER FILTER
  * @{
  * @file
- * L1 pure C filter library; each caller owns its own instance.
+ * Header of the L1_FILTER module. It contains no declarations.
  */
 
 #ifndef L1_FILTER_H

@@ -15,8 +15,8 @@ skinparam sequence {
  GroupBackgroundColor #1b2533
 }
 skinparam sequenceGroupBodyBackGroundColor #121a26
-title L1_PORTAL page and controller boundary
-actor "Operator / browser" as Browser
+title L1_PORTAL boundary between the page and L2_COMMUNICATION
+actor "Phone browser" as Browser
 participant "L1_PORTAL\nHTTP + page" as Portal
 participant "L2_COMMUNICATION\nSetup workflow" as Communication
 participant "L1_WIFI\nRadio operations" as Wifi

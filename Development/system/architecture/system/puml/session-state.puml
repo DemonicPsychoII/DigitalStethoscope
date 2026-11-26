@@ -27,7 +27,7 @@ Measuring --> Idle : Stop below minimum session length / cancel, no send
 Measuring --> Analysing : Stop at or above minimum session length / mute, finalize
 Analysing --> Sending : valid BPM + Wi-Fi configured + delivery prerequisites (Device id, server profile image)
 Analysing --> ReportingError : invalid BPM + Wi-Fi configured + delivery prerequisites (Device id, server profile image)
-Analysing --> Idle : Wi-Fi unconfigured / no send or Wi-Fi error
+Analysing --> Idle : Wi-Fi unconfigured / no send and no Wi-Fi error
 Analysing --> Idle : Wi-Fi configured and delivery prerequisites fail / latch delivery-not-possible fault
 Sending --> Idle : server receipt
 Sending --> Idle : retries exhausted or delivery deadline reached with a qualifying clock anchor / latch delivery fault

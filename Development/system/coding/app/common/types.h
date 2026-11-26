@@ -6,7 +6,7 @@
 /** @defgroup COMMON_TYPES TYPES
  * @{
  * @file
- * Header for types that several modules share. It defines no type.
+ * Header for types that several modules share: section layout without definitions.
  */
 
 #ifndef COMMON_TYPES_H

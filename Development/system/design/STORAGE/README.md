@@ -4,7 +4,7 @@
 
 [Server profile](server-profile.md) defines the deployment file, its validation, the image built from it and the flash command.
 
-## How the server profile reaches the device
+## Server profile provisioning
 
 1. One [deployment file](server-profile.md#deployment-file) per server deployment holds the server's HTTPS base URL, its keep-alive timeout and its public certificate.
 2. The server profile tool on the developer PC validates the file and the certificate and builds the server profile image, protected by a CRC-32 checksum.

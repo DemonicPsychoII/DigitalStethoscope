@@ -12,8 +12,9 @@
  * incremental http_parser, takes decrypted bytes as they arrive; it keeps the
  * status, the Location header and the body within fixed bounds and stops
  * at the end of the message, so bytes behind it are never taken as the next
- * response. Neither does I/O or keeps global state. The request and response
- * types are part of the L1_WIFI interface in wifi.h.
+ * response. Neither does I/O or keeps global state.
+ *
+ * P27 is defined in design/COMMUNICATION/server-communication.md.
  */
 
 #ifndef L1_WIFI_HTTP_H

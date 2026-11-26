@@ -14,13 +14,13 @@ The file follows TOML v1.0.0 [1]. Format 1:
 
 | Key | TOML type | Required | Rule |
 | --- | --- | --- | --- |
-| `format` | integer | yes | `1`. Any other value is rejected, so a newer file never reaches an older tool. |
+| `format` | integer | yes | `1`. Any other value is rejected, so an older tool never accepts a newer file format. |
 | `description` | string | no | For people: server, network and purpose. Not written to the image. |
-| `server.base_url` | string | yes | HTTPS FHIR base URL; canonical form below. |
+| `server.base_url` | string | yes | HTTPS FHIR base URL; [canonical form](#canonical-base-url). |
 | `server.keep_alive_seconds` | integer | yes | The server's idle connection timeout, 6 to 4,294,967,295 seconds; the device closes its connection 5 seconds earlier. |
 | `server.certificate` | string | yes | Exactly one PEM `CERTIFICATE` block [2], normally written as a multi-line basic string [1]. At most 8,192 bytes after line endings are normalized to LF. |
 
-Unknown keys or tables are errors, so a misspelt key never silently drops a value. The file holds public information only: a `PRIVATE KEY` label or any other PEM label than `CERTIFICATE` is rejected.
+Unknown keys or tables are errors, so a misspelled key never silently drops a value. The file holds public information only: a `PRIVATE KEY` label or any other PEM label than `CERTIFICATE` is rejected.
 
 ```toml
 format = 1
@@ -42,10 +42,10 @@ The tool writes the canonical form into the image, and registration binds to the
 
 ### Certificate checks
 
-Before writing an image, the tool applies the certificate rules below so a mismatch fails on the developer PC. [Validation stages](#validation-stages) shows where and when the device applies each rule; rule 4 is applied at each connection setup, because boot has no valid clock:
+Before writing an image, the tool applies certificate rules 1 to 5 so a mismatch fails on the developer PC. [Validation stages](#validation-stages) shows where and when the device applies each rule; rule 4 is applied at each connection setup, because boot has no valid clock:
 
 1. The text is exactly one parsable X.509 certificate.
-2. It is self-issued and its signature verifies with its own public key, because the device trusts it directly.
+2. It is self-issued and its signature verifies with its own public key, because the device trusts it directly as its sole trust anchor ([TLS trust inputs](../COMMUNICATION/secure-transport.md#trust-and-server-profile-inputs)).
 3. It has a Subject Alternative Name extension whose entry type follows the host: a DNS name host needs an equal DNS entry (case-insensitive, no wildcard); an IPv4 host needs an equal IP address entry, and a DNS entry spelling the address does not count. Common Name is never used [4].
 4. It is valid on the developer PC's current date. The tool prints the expiry date.
 5. Its key may sign TLS 1.3 server authentication: a Key Usage extension, if present, includes `digitalSignature` [5]; an Extended Key Usage extension, if present, includes `serverAuth` or `anyExtendedKeyUsage`. A certificate that violates this rule fails the handshake verification of the device [6].
@@ -78,9 +78,7 @@ Every rejection names the key and the violated rule, fails with a non-zero exit 
 
 ![Server profile validation: stages, owners, timing and failure outcomes](rendered/server_profile_validation.svg)
 
-*Which check runs on the PC, at boot or during connection setup, who owns it, and what does its failure do?* Editable source: [puml/server-profile-validation.puml](puml/server-profile-validation.puml).
-
-For rule 2, the device trusts only this certificate as its sole trust anchor ([TLS trust inputs](../COMMUNICATION/secure-transport.md#trust-and-server-profile-inputs)).
+*Which check runs on the PC, at boot or during connection setup, who owns it, and what does its failure do?* Source: [puml/server-profile-validation.puml](puml/server-profile-validation.puml).
 
 ## Device behavior
 

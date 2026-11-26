@@ -14,6 +14,8 @@
  *
  * The server profile image is read sequentially from its own partition
  * through the flash map; the CRC-32 accumulates over every byte read.
+ *
+ * P28 is defined in design/STORAGE/server-profile.md.
  */
 
 /***********************************************************************/

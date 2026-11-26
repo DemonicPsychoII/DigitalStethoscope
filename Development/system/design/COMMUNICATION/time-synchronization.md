@@ -34,7 +34,7 @@ Each accepted operation produces one terminal result. Cancellation invalidates i
 *What runs inside one connection setup, and under which deadline?* Source: [puml/connection-setup.puml](puml/connection-setup.puml).
 
 1. Boot starts without a valid anchor. A persisted timestamp does not establish freshness; offline listening remains available.
-2. Every TLS connection setup under the [TLS design](secure-transport.md) begins with one SNTP exchange, so that only the server DNS lookup and TCP connection lie between the applied clock and the ClientHello, the first message of the TLS handshake. This applies to the Idle preparation and every delivery reconnect. Reusing an open verified connection sends no ClientHello and runs no SNTP. There is no separate SNTP schedule, refresh timer or internet/HTTP probe.
+2. Every TLS connection setup under the [TLS design](secure-transport.md) begins with one SNTP exchange, so that only the server DNS lookup and TCP connection lie between the applied clock and the ClientHello, the first message of the TLS handshake. This applies to the Idle preparation and every delivery reconnect. Reusing an open verified connection sends no ClientHello and runs no SNTP. There is no separate SNTP schedule, refresh timer or internet/HTTP probe. An exchange needs usable DNS and a reachable UDP port 123 to `pool.ntp.org`; Wi-Fi association alone does not supply time. The reply is not authenticated [1, section 11].
 3. The exchange shares the deadline of the connection setup that contains it: the ten-second Idle preparation of the [P26 TLS parameters](secure-transport.md#parameters), or the three-second connection-setup budget of a delivery attempt under the delivery timeout and retry parameter [P13](parameters.md). DNS, request, response, normalization and clock application share the remaining budget; short waits never reset it. Cancellation cleanup has the separate P23 stop bound.
 4. Accept only a current-generation result while holding the lease; apply the clock, then continue with the TCP connection and ClientHello. Clock-set failure, DNS failure, timeout or a rejected response fails that connection setup. Recovery follows the setup's owner: 60-second Idle recovery under P26, or P13 retries during delivery. No SNTP-specific retry, gap or attempt cap applies.
 
@@ -44,7 +44,7 @@ A failed cancellation is a resource-release fault rather than unavailable time. 
 
 ## Clock mapping and native behavior
 
-L1_WIFI retains Zephyr's SNTP exchange-uncertainty estimate [3]. That estimate covers the SNTP exchange and server dispersion only, while subsequent clock drift is bounded by the mapping limit below, calculated from a crystal tolerance of ±10 ppm with safety factor 2 and a 1 s maximum deviation.
+L1_WIFI retains Zephyr's SNTP exchange-uncertainty estimate [3]. That estimate covers the SNTP exchange and server dispersion only, while subsequent clock drift is bounded by the mapping limit [P25-MAPPING](#parameters), calculated from a crystal tolerance of ±10 ppm with safety factor 2 and a 1 s maximum deviation.
 
 L1_WIFI sets Zephyr's real-time software clock; no battery-backed RTC is assumed. It advances the receive-time estimate by elapsed kernel monotonic time before applying it. The applied UTC/monotonic anchor is kept, and the measurement end is recorded in monotonic time. Corrections occur outside listening and may step real time without changing duration or rewriting a frozen result.
 
@@ -64,7 +64,7 @@ L1_WIFI inspects the received SNTP packet before normalization and rejects any r
 
 ## Failure indication and acknowledgement
 
-There is no separate time-synchronization error. A failed exchange is a failed secure connection setup and follows the [TLS failure indication](secure-transport.md#failure-indication): `SERVER_CONNECTION_FAILURE`, blue with 1 blink, with offline Start/listening preserved. The same code marks a result that cannot be sent for lack of a qualifying anchor. Diagnostics name the time cause, anchor age and estimate, never credentials or patient context. The running examination wins: no time work and no time indication occur during listening.
+There is no separate time-synchronization error. A failed exchange is a failed secure connection setup and follows the [TLS failure indication](secure-transport.md#failure-indication): `SERVER_CONNECTION_FAILURE` ([feedback catalogue](../FEEDBACK/catalogue.md)), with offline Start/listening preserved. The same code marks a result that cannot be sent for lack of a qualifying anchor. Diagnostics name the time cause, anchor age and estimate, never credentials or patient context. During listening, the device runs no SNTP exchange and shows no time indication.
 
 ## Parameters
 
@@ -77,11 +77,7 @@ There is no separate time-synchronization error. A failed exchange is a failed s
 | P25-UNCERTAINTY-BUDGET | 100 ms; a larger reported uncertainty fails the exchange |
 | P25-MAXIMUM-DEVIATION | 1 s, after the IHE Consistent Time profile |
 | P25-DRIFT | Datasheet ±10 ppm × safety factor 2 = 20 ppm |
-| P25-UNCERTAINTY | Zephyr SNTP uncertainty estimate; the configuration enables `CONFIG_SNTP_UNCERTAINTY`, without which Zephyr reports no uncertainty and the 100 ms budget cannot be applied; stored in microseconds internally and rounded upward when displaying milliseconds |
-
-## Limitations
-
-Time synchronization uses unauthenticated SNTP [1, section 11] and requires usable DNS and reachable public UDP port 123. Wi-Fi association alone does not supply time.
+| P25-UNCERTAINTY | Zephyr SNTP uncertainty estimate; `CONFIG_SNTP_UNCERTAINTY` must be enabled, because Zephyr reports no uncertainty without it and the 100 ms budget cannot be applied [3]; stored in microseconds internally and rounded upward when displaying milliseconds |
 
 ## Sources
 

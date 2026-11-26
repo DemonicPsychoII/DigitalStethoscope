@@ -65,13 +65,13 @@ struct wifi_dns_lookup
  * Call from the owner's worker, without the owner's lock. Release with
  * wifi_releaseLookup() on every exit, also after success.
  *
- * @param[in,out] lookup             Owner's lookup storage.
- * @param[in]     host               Name to resolve; must stay valid until released.
- * @param[in]     generation         Owning operation.
- * @param[in]     deadline           End of the owner's operation.
- * @param[in]     resolverTimeoutMs  Timeout handed to the resolver.
- * @param[in]     pollIntervalMs     Longest wait between cancellation checks.
- * @param[out]    address            First IPv4 address; written only on success.
+ * @param[in,out] lookup                      Owner's lookup storage.
+ * @param[in]     host                        Name to resolve; must stay valid until released.
+ * @param[in]     generation                  Owning operation.
+ * @param[in]     deadline                    End of the owner's operation.
+ * @param[in]     resolverTimeoutMilliseconds Timeout handed to the resolver.
+ * @param[in]     pollIntervalMilliseconds    Longest wait between cancellation checks.
+ * @param[out]    address                     First IPv4 address; written only on success.
  *
  * @return 0 on success, -ECANCELED if the owner's operation ended, -ETIMEDOUT
  *         at the deadline, -ENOENT without an IPv4 record, -EHOSTUNREACH for a
@@ -81,8 +81,8 @@ int wifi_resolveIpv4(struct wifi_dns_lookup *lookup,
                      const char *host,
                      uint32_t generation,
                      k_timepoint_t deadline,
-                     int32_t resolverTimeoutMs,
-                     int32_t pollIntervalMs,
+                     int32_t resolverTimeoutMilliseconds,
+                     int32_t pollIntervalMilliseconds,
                      struct net_sockaddr_in *address);
 
 /**

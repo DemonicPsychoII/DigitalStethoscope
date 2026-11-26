@@ -2,7 +2,7 @@
 
 ## Basis and scope
 
-Secure transport builds on the [software allocation](../system/puml/software-components.puml). [REQ-09](../../requirements/system-requirements.md#req-09), [REQ-10](../../requirements/system-requirements.md#req-10) and [REQ-11](../../requirements/system-requirements.md#req-11) establish delivery, bounded failure handling and certificate verification.
+Secure transport builds on the [software allocation](../system/firmware-structure.md#static-dependency-and-module-map). [REQ-09](../../requirements/system-requirements.md#req-09), [REQ-10](../../requirements/system-requirements.md#req-10) and [REQ-11](../../requirements/system-requirements.md#req-11) establish delivery, bounded failure handling and certificate verification.
 
 L1_WIFI owns Wi-Fi, TLS and time operations, and L2_COMMUNICATION owns workflow policy. Station, provisioning and TLS operations use separate interfaces within L1_WIFI.
 
@@ -14,7 +14,7 @@ L1_WIFI owns Wi-Fi, TLS and time operations, and L2_COMMUNICATION owns workflow 
 | L2_COMMUNICATION | Coordinate preparation and delivery; own overall attempt policy and classify outcomes. | No hidden retries in L1_WIFI, L1_FHIR or L1_STORAGE. |
 | L1_WIFI | Own DNS/socket/TLS operations through Zephyr, certificate verification, connection resources and cleanup. | Report outcomes; never serialize FHIR or select a patient. |
 | Zephyr networking and TLS stack | Provide platform transport beneath L1_WIFI. | Secure transport reaches it only through L1_WIFI. |
-| Clock preparation | Supply time for certificate-validity checking. | Time comes from unauthenticated SNTP. |
+| L1_WIFI (time synchronization) | Supply time for certificate-validity checking. | Time comes from unauthenticated SNTP. |
 | Server profile and L1_STORAGE | Supply the configured endpoint and trust certificate; L1_STORAGE persists named records. | Endpoint and trust material are read-only at runtime and separate from portal settings. |
 | L1_FHIR | Serialize application messages independently of networking. | No Zephyr headers, socket ownership or certificate policy. |
 
@@ -32,13 +32,13 @@ Servers close idle connections, so delivery reconnects when a retained connectio
 
 ## Security and lifecycle boundaries
 
-L1_WIFI verifies the server certificate against the server profile trust material, including endpoint identity and validity. The device trusts the server's public certificate directly. Endpoint and certificate come from a server profile image written separately from the firmware, with no client certificate configured. Failed verification blocks sending without plain-HTTP fallback or verification bypass, and reports a terminal verification failure to L2_COMMUNICATION. A station address alone does not establish server readiness.
+L1_WIFI verifies the server certificate against the server profile trust material, including endpoint identity and validity. The device trusts the server's public certificate directly. Endpoint and certificate come from a server profile image written separately from the firmware, with no client certificate configured. Failed verification blocks sending without plain-HTTP fallback or verification bypass, and reports a terminal verification failure to L2_COMMUNICATION. Server readiness requires the verified TLS handshake.
 
-The local provisioning HTTP server is L1_PORTAL's separate responsibility. Successful Wi-Fi setup does not imply TLS readiness. Device registration, examination-context ingress and result delivery use the secure-server boundary.
+The local provisioning HTTP server is L1_PORTAL's separate responsibility. Device registration, examination-context ingress and result delivery use the secure-server boundary.
 
 Active connection work follows the exclusive network lease. L1_WIFI owns connection resources through cleanup, and L2_COMMUNICATION reports lease release only after active operations end. Network-only failure preserves working offline listening under [REQ-13](../../requirements/system-requirements.md#req-13).
 
-The device uses SNTP time without authenticating the time server. Transport verification authenticates the server; it does not authorize an examination request.
+Transport verification authenticates the server; it does not authorize an examination request.
 
 ## Verification allocation
 

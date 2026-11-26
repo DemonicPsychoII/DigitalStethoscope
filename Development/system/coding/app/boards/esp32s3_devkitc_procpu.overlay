@@ -9,10 +9,10 @@
 #include <zephyr/dt-bindings/adc/adc.h>
 #include <zephyr/dt-bindings/led/led.h>
 
-&psram0 
-{ 
-    status = "okay"; 
-    size = <DT_SIZE_M(8)>; 
+&psram0
+{
+    status = "okay";
+    size = <DT_SIZE_M(8)>;
 };
 
 /*
@@ -52,10 +52,10 @@
 };
 
 /*
- * Audio I2S links: i2s0 receives from the
- * INMP441 on J3, i2s1 transmits to the PCM5102A on J4. The ESP32-S3 drives bit and frame clock
- * on both links. These groups replace the board defaults, which put i2s0 on GPIO36..38, 41 and
- * 42, partly octal PSRAM pins, and i2s1 on GPIO4..6, 12 and 48.
+ * Audio I2S links: i2s0 receives from the INMP441 on J3, i2s1 transmits to the PCM5102A on J4.
+ * The ESP32-S3 drives bit and frame clock on both links. These groups replace the board
+ * defaults, which put i2s0 on GPIO36..38, 41 and 42, partly octal PSRAM pins, and i2s1 on
+ * GPIO4..6, 12 and 48.
  */
 &pinctrl
 {
@@ -112,7 +112,8 @@
 
 /*
  * Volume potentiometer J7 wiper on GPIO1, ADC1 channel 0, through R13 1k with C8 100 nF.
- * Gain 1/4 and 12-bit resolution cover the potentiometer wiper range (P10: full scale 3083 mV).
+ * Gain 1/4 and 12-bit resolution cover the potentiometer wiper range (P10 in
+ * design/cross-module.md: full scale 3083 mV).
  */
 &adc0
 {

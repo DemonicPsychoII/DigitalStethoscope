@@ -13,24 +13,29 @@
  * - Boot: read the server profile image once (design/STORAGE/server-profile.md).
  *   Without a valid image, secure transport stays unavailable with a
  *   configuration cause; Wi-Fi setup and offline listening are unaffected.
- *   Then join the stored network, 4 attempts, 5 s apart. Without a stored
- *   network, run setup. If all attempts fail, wait for a 2 s button hold.
+ *   Then join the stored network. Without a stored network, run setup.
+ *   If all join attempts fail, wait for a button hold.
  * - Setup: scan, then open the hotspot, the DHCP server and the page.
  *   - Connect: one join attempt. On success, save the network and show the
- *     result for 10 s. On failure, show the cause and scan again.
+ *     result. On failure, show the cause and scan again.
  *   - Rescan: scan again with the hotspot open.
- *   - Cancel, or 5 min without activity: show a notice, then close.
- *   - If a scan fails 4 times, setup closes with the cause.
- * - Idle: a 2 s hold runs setup. Every 2 min, check the link. If it is
- *   lost, join again (4 attempts) and run setup if all attempts fail.
- *   With a valid server profile, prepare a verified TLS connection: one
- *   ten-second setup beginning with SNTP, then 60 s after a failure
+ *   - Cancel, or no page activity: show a notice, then close.
+ *   - If all scan attempts fail, setup closes with the cause.
+ * - Idle: a button hold runs setup. Check the link at intervals. If it is
+ *   lost, join again and run setup if all attempts fail.
+ *   With a valid server profile, prepare a verified TLS connection,
+ *   beginning with SNTP, and again after a failure
  *   (design/COMMUNICATION/secure-transport.md). The retained connection is
- *   closed after the server keep-alive minus 5 s, or once its clock anchor
+ *   closed before the server keep-alive ends, or once its clock anchor
  *   no longer qualifies.
  * - Listening: no Wi-Fi work, but a connected station stays connected.
- *   All waits run in 200 ms intervals, so a Start is seen quickly.
+ *   All waits run in short intervals, so a Start is seen quickly.
  *
+ * Parameters: P13 and P23 in design/COMMUNICATION/parameters.md, P25 in
+ * design/COMMUNICATION/time-synchronization.md, P26 in
+ * design/COMMUNICATION/secure-transport.md and P27 in
+ * design/COMMUNICATION/server-communication.md. Requirements (REQ-nn):
+ * requirements/system-requirements.md.
  */
 
 /***********************************************************************/
@@ -101,6 +106,12 @@
 #define COMMUNICATION_DELIVERY_RECEIPT_TIMEOUT_MS (1000) /**< P13: write and receipt of an attempt. */
 #define COMMUNICATION_DELIVERY_RETRY_GAP_MS       (2000) /**< P13: gap after a failed attempt. */
 #define COMMUNICATION_DELIVERY_CLEANUP_RESERVE_MS (1000) /**< P13: one P23 stop bound kept before the global deadline for cancellation and release. */
+
+#define COMMUNICATION_SECONDS_PER_DAY        (86400U)  /**< Seconds of one UTC day. */
+#define COMMUNICATION_DAYS_BEFORE_UNIX_EPOCH (719468U) /**< Days from 0000-03-01 to 1970-01-01 in the Gregorian calendar. */
+#define COMMUNICATION_DAYS_PER_ERA           (146097U) /**< Days of one 400-year Gregorian cycle. */
+#define COMMUNICATION_DAYS_PER_CENTURY       (36524U)  /**< Days of a century with 24 leap days. */
+#define COMMUNICATION_DAYS_PER_FIVE_MONTHS   (153U)    /**< Days of five consecutive months beginning with March. */
 
 /***********************************************************************/
 /* TYPES                                                               */
@@ -195,7 +206,7 @@ static bool communication_WiFiIsConfigured;                                    /
 static bool communication_DeliveryIsPossible;                                  /**< Saved Device registration and configured server; published by the thread. */
 static bool communication_DeliveryIsPending;                                   /**< An admitted job waits for or runs in the thread. */
 static struct communication_delivery communication_Delivery;                   /**< Frozen copy of the admitted result. */
-static char communication_DeliveryServerDeviceId[FHIR_SERVER_DEVICE_ID_SIZE];  /**< Server Device id published at admission; never resnapshotted. */
+static char communication_DeliveryServerDeviceId[FHIR_SERVER_DEVICE_ID_SIZE];  /**< Server Device id published at admission; never copied again. */
 static struct timespec communication_DeliveryUtcEnd;                           /**< UTC measurement end once frozen; the thread may freeze it while the job is pending. */
 static bool communication_DeliveryUtcEndIsFrozen;                              /**< DeliveryUtcEnd is frozen, at admission or by the thread's first qualifying mapping. */
 static k_timepoint_t communication_DeliveryDeadline;                           /**< P13 global deadline of the admitted job. */
@@ -426,11 +437,10 @@ static void communication_setState(enum communication_state state);
  * @brief Stop all pending Wi-Fi work; a connected station stays connected.
  *
  * Each pending stop is tried once; a failed stop latches a restart-required fault.
- *
- * @return True when audio may start, including after a latched cleanup fault
- *         (further Wi-Fi work stays disabled until restart even if services remain pending).
+ * Audio may start afterwards, including after a latched cleanup fault (REQ-13);
+ * further Wi-Fi work stays disabled until restart even if services remain pending.
  */
-static bool communication_stopWiFiWork(void);
+static void communication_stopWiFiWork(void);
 
 /**
  * @brief Run an attempt function up to @p attempts times, COMMUNICATION_RETRY_DELAY_S apart.
@@ -748,9 +758,18 @@ int communication_submitDelivery(const struct communication_delivery *delivery, 
 {
     int result = 0;
 
-    /* A heart rate needs a value above 0 that L1_FHIR can write with its declared precision. */
-    if((delivery == NULL) || ((delivery->kind != COMMUNICATION_DELIVERY_HEART_RATE) && (delivery->kind != COMMUNICATION_DELIVERY_POOR_SIGNAL)) ||
-       ((delivery->kind == COMMUNICATION_DELIVERY_HEART_RATE) && ((delivery->heartRateScaled == 0U) || (delivery->heartRateDecimalPlaces > FHIR_HEART_RATE_DECIMAL_PLACES_MAX))))
+    bool isDeliveryInvalid = true;
+
+    if(delivery != NULL)
+    {
+        const bool isKindUnknown = ((delivery->kind != COMMUNICATION_DELIVERY_HEART_RATE) && (delivery->kind != COMMUNICATION_DELIVERY_POOR_SIGNAL));
+        /* A heart rate needs a value above 0 that L1_FHIR can write with its declared precision. */
+        const bool isHeartRateInvalid = ((delivery->kind == COMMUNICATION_DELIVERY_HEART_RATE) && ((delivery->heartRateScaled == 0U) || (delivery->heartRateDecimalPlaces > FHIR_HEART_RATE_DECIMAL_PLACES_MAX)));
+
+        isDeliveryInvalid = (isKindUnknown || isHeartRateInvalid);
+    }
+
+    if(isDeliveryInvalid)
     {
         result = -EINVAL;
     }
@@ -827,7 +846,7 @@ static void communication_thread(void *arg1, void *arg2, void *arg3)
 
     if(result != 0)
     {
-        /* Audio works without Wi-Fi, so control must not wait for this thread. */
+        /* Audio works without Wi-Fi, so L2_CONTROL must not wait for this thread. */
         LOG_ERR("Wi-Fi init failed (%d); device stays offline", result);
         communication_setState(COMMUNICATION_STATE_OFFLINE);
     }
@@ -956,7 +975,8 @@ static void communication_runIdleCycle(void)
 {
     (void)communication_waitForCondition(COMMUNICATION_WAIT_CONTROL_EVENT, K_NO_WAIT);
 
-    bool isStopped = communication_stopWiFiWork();
+    communication_stopWiFiWork();
+
     bool isSetupRequested = false;
 
     if(!communication_ListeningIsActive && !communication_CleanupFaultIsLatched)
@@ -968,7 +988,7 @@ static void communication_runIdleCycle(void)
     {
         k_spinlock_key_t key = k_spin_lock(&communication_ControlLock);
 
-        if((isStopped && communication_ListeningIsRequested))
+        if(communication_ListeningIsRequested)
         {
             communication_State = COMMUNICATION_STATE_STOPPED;
         }
@@ -979,16 +999,9 @@ static void communication_runIdleCycle(void)
 
         k_spin_unlock(&communication_ControlLock, key);
 
-        if(isStopped)
-        {
-            (void)communication_waitForCondition(COMMUNICATION_WAIT_CONTROL_EVENT, K_FOREVER);
-        }
-        else
-        {
-            (void)communication_waitForCondition(COMMUNICATION_WAIT_CONTROL_EVENT, K_MSEC(COMMUNICATION_EVENT_CHECK_INTERVAL_MS));
-        }
+        (void)communication_waitForCondition(COMMUNICATION_WAIT_CONTROL_EVENT, K_FOREVER);
 
-        if(isStopped && !communication_ListeningIsActive)
+        if(!communication_ListeningIsActive)
         {
             /* Back in Idle: continue a recovery that listening interrupted. */
             communication_recoverConnection();
@@ -1166,15 +1179,15 @@ static int communication_prepareSecureConnection(k_timepoint_t deadline)
         }
         return result;
     }
-    /* Convert days since 1970-01-01 to a Gregorian calendar date with integer arithmetic, because not every host build declares gmtime_r. */
-    const uint64_t secondsOfDay = communication_AppliedTimeAnchor.utc_seconds % 86400U;
-    const uint64_t shiftedDays = (communication_AppliedTimeAnchor.utc_seconds / 86400U) + 719468U;
-    const uint64_t era = shiftedDays / 146097U;
-    const uint64_t dayOfEra = shiftedDays - (era * 146097U);
-    const uint64_t yearOfEra = (dayOfEra - (dayOfEra / 1460U) + (dayOfEra / 36524U) - (dayOfEra / 146096U)) / 365U;
+    /* Convert days since 1970-01-01 to a Gregorian calendar date with integer arithmetic, without a C library time function. */
+    const uint64_t secondsOfDay = communication_AppliedTimeAnchor.utc_seconds % COMMUNICATION_SECONDS_PER_DAY;
+    const uint64_t shiftedDays = (communication_AppliedTimeAnchor.utc_seconds / COMMUNICATION_SECONDS_PER_DAY) + COMMUNICATION_DAYS_BEFORE_UNIX_EPOCH;
+    const uint64_t era = shiftedDays / COMMUNICATION_DAYS_PER_ERA;
+    const uint64_t dayOfEra = shiftedDays - (era * COMMUNICATION_DAYS_PER_ERA);
+    const uint64_t yearOfEra = (dayOfEra - (dayOfEra / 1460U) + (dayOfEra / COMMUNICATION_DAYS_PER_CENTURY) - (dayOfEra / 146096U)) / 365U;
     const uint64_t dayOfYear = dayOfEra - ((365U * yearOfEra) + (yearOfEra / 4U) - (yearOfEra / 100U));
-    const uint64_t monthIndex = ((5U * dayOfYear) + 2U) / 153U;
-    const unsigned int day = (unsigned int)(dayOfYear - (((153U * monthIndex) + 2U) / 5U) + 1U);
+    const uint64_t monthIndex = ((5U * dayOfYear) + 2U) / COMMUNICATION_DAYS_PER_FIVE_MONTHS;
+    const unsigned int day = (unsigned int)(dayOfYear - (((COMMUNICATION_DAYS_PER_FIVE_MONTHS * monthIndex) + 2U) / 5U) + 1U);
     const unsigned int month = (unsigned int)((monthIndex < 10U) ? (monthIndex + 3U) : (monthIndex - 9U));
     const unsigned int year = (unsigned int)((yearOfEra + (era * 400U)) + ((month <= 2U) ? 1U : 0U));
 
@@ -1254,13 +1267,13 @@ static int communication_connectSecurely(k_timepoint_t deadline, enum wifi_secur
 
         if(result != -EAGAIN)
         {
-            /* Terminal completion: L1 has already released the operation's resources. */
+            /* Terminal completion: L1_WIFI has already released the operation's resources. */
             communication_PendingWork &= ~COMMUNICATION_WORK_SECURE_CONNECTION;
             isPending = false;
         }
         else if(communication_ListeningIsActive || isDeadlineExpired)
         {
-            /* Start, not the deadline, ended the attempt. */
+            /* True when Start ended the attempt; false when its deadline expired without a Start. */
             const bool isInterrupted = communication_ListeningIsActive;
             int cancelResult = wifi_cancelSecureConnection();
             if(cancelResult == 0)
@@ -1442,7 +1455,8 @@ static void communication_registerInIdle(void)
                 communication_RegistrationFailedAttempts++;
             }
 
-            const int retryDelaySeconds = (communication_RegistrationFailedAttempts > 1) ? (COMMUNICATION_REGISTRATION_RETRY_DELAY_S << (communication_RegistrationFailedAttempts - 1)) : COMMUNICATION_REGISTRATION_RETRY_DELAY_S;
+            const int retryDelayDoublings = (communication_RegistrationFailedAttempts > 1) ? (communication_RegistrationFailedAttempts - 1) : 0;
+            const int retryDelaySeconds = COMMUNICATION_REGISTRATION_RETRY_DELAY_S << retryDelayDoublings;
             communication_NextRegistrationTime = sys_timepoint_calc(K_SECONDS(retryDelaySeconds));
 
             /* A reconnect inside the attempt that left the transport unverified starts the preparation gap too. */
@@ -1650,7 +1664,7 @@ static int communication_exchange(const struct wifi_http_request *request, k_tim
         }
         else if(communication_ListeningIsActive || isDeadlineExpired)
         {
-            /* Start, not the deadline, ended the exchange. */
+            /* True when Start ended the exchange; false when its deadline expired without a Start. */
             const bool isInterrupted = communication_ListeningIsActive;
             int cancelResult = wifi_cancelSecureConnection();
 
@@ -2081,13 +2095,13 @@ static int communication_synchronizeTime(k_timepoint_t deadline)
 
             if(result != -EAGAIN)
             {
-                /* Terminal completion: L1 has already released the operation's resources. */
+                /* Terminal completion: L1_WIFI has already released the operation's resources. */
                 communication_PendingWork &= ~COMMUNICATION_WORK_TIME_SYNCHRONIZATION;
                 isPending = false;
             }
             else if(communication_ListeningIsActive || isDeadlineExpired)
             {
-                /* Start, not the deadline, ended the attempt. */
+                /* True when Start ended the attempt; false when its deadline expired without a Start. */
                 bool isInterrupted = communication_ListeningIsActive;
                 int cancelResult = wifi_cancelTimeSynchronization();
 
@@ -2377,11 +2391,11 @@ static void communication_setState(enum communication_state state)
     k_spin_unlock(&communication_ControlLock, key);
 }
 
-static bool communication_stopWiFiWork(void)
+static void communication_stopWiFiWork(void)
 {
     if(communication_CleanupFaultIsLatched)
     {
-        return true;
+        return;
     }
 
     const size_t workCount = ARRAY_SIZE(communication_WorkList);
@@ -2405,8 +2419,6 @@ static bool communication_stopWiFiWork(void)
         communication_latchCleanupFault();
         LOG_ERR("WIFI_CLEANUP_FAILURE; pending services 0x%x, network disabled until restart", communication_PendingWork);
     }
-    /* REQ-13: audio may start after a latched Wi-Fi-only fault. */
-    return true;
 }
 
 static int communication_retry(int (*tryOnce)(const struct wifi_network *network), const struct wifi_network *network, int attempts, uint32_t workBit, const char *name)
@@ -2558,7 +2570,7 @@ static void communication_runSetup(void)
     LOG_INF("Wi-Fi setup: scanning");
     communication_reportFeedback(FEEDBACK_WIFI_CONNECTING);
 
-    /* Scan before the hotspot opens, so the list is ready when the phone joins. */
+    /* Scan before the hotspot opens, so the list is ready when the operator's phone joins. */
     int result = communication_scanNetworks();
 
     if((result != 0) && (result != -ECANCELED))
@@ -2592,7 +2604,7 @@ static void communication_runSetup(void)
     }
 
     /* Also stops services that started before a failure. */
-    (void)communication_stopWiFiWork();
+    communication_stopWiFiWork();
 
     communication_setState(COMMUNICATION_STATE_RUNNING);
 }
@@ -2774,7 +2786,7 @@ static int communication_handleConnectRequest(void)
     communication_reportFeedback(FEEDBACK_WIFI_CONNECTING);
     portal_setStatus(PORTAL_STATUS_CONNECTING, 0);
 
-    /* The hotspot stays open, so the phone can follow the status during the join. */
+    /* The hotspot stays open, so the operator's browser can follow the status during the join. */
     int result = communication_connectToNetwork(network, COMMUNICATION_PAGE_CONNECT_ATTEMPTS);
 
     if(result == 0)
@@ -2877,7 +2889,7 @@ static void communication_closeSetup(enum communication_setup_result outcome, in
         (void)communication_waitForCondition(COMMUNICATION_WAIT_DELAY, K_SECONDS(COMMUNICATION_CLOSE_NOTICE_DISPLAY_S));
     }
 
-    (void)communication_stopWiFiWork();
+    communication_stopWiFiWork();
 
     LOG_INF("Wi-Fi setup closed (%d)", outcome);
     communication_reportFeedback(FEEDBACK_NONE);

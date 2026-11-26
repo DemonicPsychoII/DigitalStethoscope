@@ -14,10 +14,7 @@ The product does not include:
 - diagnosis,
 - classification of sounds by machine learning,
 - durable storage of patient audio,
-- the development of an enclosure,
-- proof of clinical benefit,
-- proof of regulatory conformity,
-- a claim that one listening filter is superior to another.
+- an enclosure.
 
 ## Users and external systems
 
@@ -40,7 +37,7 @@ The device consists of:
 - the 3-position filter switch,
 - the volume potentiometer,
 - the RGB status light,
-- the PCM5102A DAC (digital-to-analog converter) with its line output.
+- the PCM5102A DAC (digital-to-analogue converter) with its line output.
 
 The device ends at the DAC line output. The headphone amplifier and the headphones are external.
 The phone, the FHIR server, the network and time services and the test equipment, including the
@@ -49,7 +46,7 @@ evaluation computer, are external.
 | Interface | Counterpart | Kind |
 |---|---|---|
 | Sound input | Patient | Sound through the chestpiece to the microphone |
-| Audio output | External headphone amplifier | Analog line output of the DAC |
+| Audio output | External headphone amplifier | Analogue line output of the DAC |
 | Start/Stop | Operator | Push button |
 | Filter selection | Operator | 3-position switch: Raw, Murmur, BPM |
 | Volume | Operator | Potentiometer |
@@ -68,7 +65,7 @@ Inside the device the parts connect to the microcontroller through these interfa
 | PCM5102A DAC | Clock, word select and samples out | I2S |
 | Start/Stop button | Input | GPIO (general-purpose input/output) |
 | Filter switch | Inputs | GPIO |
-| Volume potentiometer | Input | ADC (analog-to-digital converter) |
+| Volume potentiometer | Input | ADC (analogue-to-digital converter) |
 | Red button light | Output | GPIO |
 | RGB status light | Output | WS2812 data line |
 
@@ -90,7 +87,7 @@ The device determines the heart rate from the microphone audio at its original s
 measurement always uses its own analysis filter. The selected listening filter and the volume do
 not change it.
 
-A session of at least 15 s whose signal meets the validity criteria gives one heart-rate result
+A session of at least 15 s whose signal gives a valid BPM (see [Terminology](#terminology)) gives one heart-rate result
 ([REQ-06](../requirements/system-requirements.md#req-06)). A session that the operator stops
 before 15 s gives no result ([REQ-07](../requirements/system-requirements.md#req-07)). A poor
 signal gives an error and no heart-rate value
@@ -141,8 +138,7 @@ The product has one listening mode, Heart. It does not include:
 
 ## Standards and regulatory position
 
-The specification covers the functions and the technical behaviour of the device. It contains no
-conformity assessment and no clinical evaluation.
+The device has no conformity assessment and no clinical evaluation.
 
 Errors are treated as technical alarm conditions with a priority under IEC 60601-1-8 [1]. The
 error indication deviates from Table 2 of that standard in colour and flash rate: every error
@@ -166,6 +162,6 @@ Publication record: <https://webstore.iec.ch/en/publication/67388> (accessed 202
 | Idle | The device does not listen. The output is muted. Network work is permitted. |
 | Live | Microphone blocks are routed to the listening output. |
 | Valid BPM | Heart-rate value that meets the estimator and coverage criteria. It carries no clinical confidence and no diagnosis. |
-| Source | Origin of an audio signal: the microphone, a synthetic tone or heartbeat, or a licensed recording. Derived data keep the identity of their source. |
+| Source | Origin of the audio signal. In the product it is the microphone. Derived data keep the identity of their source. |
 | Portal | Setup page that the device serves over its hotspot. |
 | MONITOR | Software module for cross-cutting runtime supervision and risk controls. It observes across the layers and is no layer of its own. |

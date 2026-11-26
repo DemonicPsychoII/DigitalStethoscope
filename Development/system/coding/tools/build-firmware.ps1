@@ -8,7 +8,7 @@ pinned in toolchain.json. Only builds; it never flashes or publishes firmware.
 .PARAMETER Target
 app (default) builds Development/system/coding/app; bringup builds the evaluation firmware.
 .PARAMETER Profile
-release (default) builds prj.conf alone, the same configuration as CI. debug merges
+release (default) builds prj.conf alone. debug merges
 app/debug.conf for GDB, debug logs and fault checks; it exists only for the app target.
 .PARAMETER Pristine
 Delete the previous build state first.
