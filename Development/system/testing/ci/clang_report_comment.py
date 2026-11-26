@@ -59,7 +59,15 @@ def read_report(run: str, attempt: str, repository: str) -> str | None:
             return clang_reports.markdown(
                 json.loads(results.read_text(encoding="utf-8"))
             )
-        except (ValueError, TypeError, KeyError, AttributeError):
+        except (
+            ValueError,
+            TypeError,
+            KeyError,
+            IndexError,
+            AttributeError,
+            OverflowError,
+            RecursionError,
+        ):
             return UNREADABLE
 
 

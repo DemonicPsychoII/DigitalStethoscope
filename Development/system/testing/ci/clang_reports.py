@@ -519,6 +519,7 @@ def collect(seconds: int) -> dict:
             RuntimeError,
             ValueError,
             KeyError,
+            IndexError,
         ) as error:
             results["errors"][section] = str(error) or type(error).__name__
     return results

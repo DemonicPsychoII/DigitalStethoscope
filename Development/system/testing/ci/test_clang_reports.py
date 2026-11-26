@@ -101,6 +101,21 @@ class ClangReportTests(unittest.TestCase):
                 self.assertNotIn(forbidden, outside, line)
         self.assertNotIn("\nline", report)
 
+    def test_a_failing_section_is_reported_and_the_others_still_run(self):
+        version = clang_reports.subprocess.CompletedProcess([], 0, "clang 18\n", "")
+        host = {"suite": {}, "compile_commands": []}
+        with (
+            patch.object(clang_reports, "llvm_tool", return_value="tool"),
+            patch.object(clang_reports, "run", return_value=version),
+            patch.object(clang_reports, "instrumented_host_run", return_value=host),
+            patch.object(clang_reports, "mcdc_coverage", side_effect=IndexError),
+            patch.object(clang_reports, "tidy", return_value={}),
+            patch.object(clang_reports, "fuzz", return_value=[]),
+        ):
+            results = clang_reports.collect(1)
+        self.assertEqual(results["errors"], {"mcdc": "IndexError"})
+        self.assertEqual(results["fuzz"], [])
+
     def test_fuzzer_timeout_is_reported_and_the_next_target_runs(self):
         built = clang_reports.subprocess.CompletedProcess([], 0, "", "")
         calls = []
