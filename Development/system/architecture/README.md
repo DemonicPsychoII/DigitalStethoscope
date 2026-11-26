@@ -1,15 +1,14 @@
 # Architecture
 
-PlantUML sources define each diagram; committed SVG previews are generated from them.
+PlantUML sources define each diagram. The SVG previews are generated from them.
 
 | Area | Responsibilities and views |
 | --- | --- |
 | [System](system/README.md) | Boundaries, hardware, [layers, module ownership, threads and hand-off rules](system/firmware-structure.md), audio, measurement and feedback ground rules. |
-| [AUDIO](AUDIO/README.md) | Microphone-to-DAC transport, block ownership, clocking and stream faults. |
-| [WIFI](WIFI/README.md) | General station/provisioning model and radio operation boundary. |
-| [COMMUNICATION](COMMUNICATION/README.md) | Wi-Fi setup workflow, composition, recovery and listening-priority boundary; [time synchronization](COMMUNICATION/time-ownership.md) and [secure transport](COMMUNICATION/secure-transport.md) to the server. |
-| [FHIR and server communication](COMMUNICATION/server-communication.md) | Registration, examination-context, serialization and delivery responsibilities. |
-| [PORTAL](PORTAL/README.md) | Browser, HTTP and typed controller-request boundary. |
+| [L2_AUDIO](AUDIO/README.md) | Microphone-to-DAC transport, block ownership, clocking and stream faults. |
+| [L1_WIFI](WIFI/README.md) | General station/provisioning model and radio operation boundary. |
+| [L2_COMMUNICATION](COMMUNICATION/README.md) | Wi-Fi setup workflow, composition, recovery and listening-priority boundary; [time synchronization](COMMUNICATION/time-ownership.md) and [secure transport](COMMUNICATION/secure-transport.md) to the server; [FHIR and server communication](COMMUNICATION/server-communication.md) with the registration, examination-context, serialization and delivery responsibilities. |
+| [L1_PORTAL](PORTAL/README.md) | Browser, HTTP and the typed request boundary to L2_COMMUNICATION. |
 
 The device ends at the DAC line output; the headphone amplifier is external.
 

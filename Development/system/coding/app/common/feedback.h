@@ -7,7 +7,7 @@
  * @{
  * @file
  * Status and error codes of the feedback catalogue
- * (design/FEEDBACK/catalogue.md). New codes are only appended.
+ * (design/FEEDBACK/catalogue.md).
  */
 
 #ifndef COMMON_FEEDBACK_H

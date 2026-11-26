@@ -196,6 +196,7 @@ enum control_press_action control_decideShortPress(const struct control_error_la
     const bool isHaltedAtOnce = control_hasAdmission(latch, CONTROL_ADMISSION_HALTED_AT_ONCE);
     const bool isHalted = control_isHalted(latch);
     const bool isStartBlocked = control_hasAdmission(latch, CONTROL_ADMISSION_START_BLOCKED);
+    const bool isShownErrorClearedByShortPress = ((shownError != FEEDBACK_NONE) && (control_errorRows[shownError].clearRule == CONTROL_CLEAR_RULE_SHORT_PRESS));
 
     if(isHaltedAtOnce)
     {
@@ -209,7 +210,7 @@ enum control_press_action control_decideShortPress(const struct control_error_la
     {
         action = CONTROL_PRESS_IGNORE;
     }
-    else if((shownError != FEEDBACK_NONE) && (control_errorRows[shownError].clearRule == CONTROL_CLEAR_RULE_SHORT_PRESS))
+    else if(isShownErrorClearedByShortPress)
     {
         action = CONTROL_PRESS_ACKNOWLEDGE;
     }
@@ -257,7 +258,10 @@ static uint32_t control_getShownErrorIndex(const struct control_error_latch *lat
 
     for(uint32_t index = 1U; index < latch->errorCount; index++)
     {
-        if(control_errorRows[latch->errors[index]].priority > control_errorRows[latch->errors[shownIndex]].priority)
+        const enum control_priority priority = control_errorRows[latch->errors[index]].priority;
+        const enum control_priority shownPriority = control_errorRows[latch->errors[shownIndex]].priority;
+
+        if(priority > shownPriority)
         {
             shownIndex = index;
         }

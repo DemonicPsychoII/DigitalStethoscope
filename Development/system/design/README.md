@@ -23,6 +23,6 @@ Each parameter is defined once, in the design of the module that defines its val
 | P25 | [SNTP](COMMUNICATION/time-synchronization.md#parameters) |
 | P26 | [TLS](COMMUNICATION/secure-transport.md#parameters) |
 | P27 | [Server communication](COMMUNICATION/server-communication.md#parameters) |
-| P21-PORTAL, P24 | [L1_PORTAL](PORTAL/parameters.md) |
+| P21-PORTAL, P24, P24-HTTP | [L1_PORTAL](PORTAL/parameters.md) |
 | P21-WIFI, P23-WIFI | [L1_WIFI](WIFI/parameters.md) |
 | P28 | [L1_STORAGE server profile](STORAGE/server-profile.md#parameters) |

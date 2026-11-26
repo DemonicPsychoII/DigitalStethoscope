@@ -2,9 +2,9 @@
 
 ## Device-independent connection model
 
-A station discovers nearby access points by scanning, selects a network and supplies credentials when its security requires them. Association/authentication establishes the link; the station must then obtain an IP address before IP application traffic can start. Link establishment alone is not address readiness. Failure at either boundary returns a cause for recovery policy. Previously stored credentials can replace interactive selection; scanning may be performed by the driver as part of association. This general model is supported by [1].
+A station discovers nearby access points by scanning, selects a network and supplies credentials when its security requires them. Association/authentication establishes the link; the station must then obtain an IP address before IP application traffic can start. Link establishment alone is not address readiness. Failure at either boundary returns a cause for recovery policy. Previously stored credentials can replace interactive selection; scanning may be performed by the driver as part of association [1].
 
-SoftAP provisioning uses a temporary access point hosted by the device so another station can deliver the target network's credentials. The pattern fixes neither the provisioning transport nor its authentication and security; an open hotspot is not inherent in it [2].
+SoftAP provisioning uses a temporary access point hosted by the device so another station can deliver the target network's credentials. The pattern fixes neither the provisioning transport nor its authentication and security [2]. The device opens its hotspot without a password.
 
 ## Mapping to this device
 

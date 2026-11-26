@@ -8,8 +8,9 @@
  * @file
  * L2 communication: Wi-Fi connection, setup portal, Device registration
  * and FHIR Observation delivery over L1_WIFI.
- * Implements Development/system/design/WIFI/interfaces-and-behavior.md and
- * Development/system/design/PORTAL/interfaces-and-behavior.md.
+ * Implements Development/system/design/COMMUNICATION/interfaces-and-behavior.md.
+ * Parameter P13: Development/system/design/COMMUNICATION/parameters.md.
+ * Requirements (REQ-nn): Development/system/requirements/system-requirements.md.
  */
 
 #ifndef L2_COMMUNICATION_H
@@ -63,13 +64,13 @@ enum communication_delivery_outcome
  * @brief Receives Wi-Fi workflow feedback on the communication thread.
  *
  * Statuses and errors use catalogue codes; FEEDBACK_NONE means the Wi-Fi
- * workflow has no status to show any more.
+ * workflow has no status to show anymore.
  *
  * @param[in] code Catalogue code of the Wi-Fi workflow.
  */
 typedef void (*communication_feedback_handler)(enum feedback_code code);
 
-/** Event from control to the communication thread. */
+/** Event from L2_CONTROL to the communication thread. */
 enum communication_event
 {
     COMMUNICATION_EVENT_SETUP_REQUESTED,   /**< 2 s button hold: open Wi-Fi setup (Idle only). */
@@ -107,7 +108,7 @@ void communication_setFeedbackHandler(communication_feedback_handler handler);
 void communication_init(void);
 
 /**
- * @brief Send an event from control to the communication thread.
+ * @brief Send an event from L2_CONTROL to the communication thread.
  *
  * Does not block, so it can also be called from an interrupt. Only L2_CONTROL
  * sends events. A setup request during listening or setup is ignored.

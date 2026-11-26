@@ -6,10 +6,13 @@
 /** @defgroup L1_FHIR FHIR
  * @{
  * @file
- * L1 pure C library for the FHIR content of the device. It serializes the Device
+ * Pure C library for the FHIR content of the device. It serializes the Device
  * registration and Observations with their If-None-Exist conditions, validates the
  * registration response, classifies HTTP statuses and encodes and decodes the
  * registration record.
+ *
+ * P13 is defined in design/COMMUNICATION/parameters.md, P27 in
+ * design/COMMUNICATION/server-communication.md.
  */
 
 #ifndef L1_FHIR_H
@@ -92,7 +95,7 @@ struct fhir_observation
 enum fhir_response_cause
 {
     FHIR_RESPONSE_CAUSE_NONE,                   /**< 201 or 200 with valid content. */
-    FHIR_RESPONSE_CAUSE_SERVER_ERROR,           /**< 5xx other than 501; transient under P13. */
+    FHIR_RESPONSE_CAUSE_SERVER_ERROR,           /**< 5xx other than 501; retried within the delivery deadline (P13). */
     FHIR_RESPONSE_CAUSE_MULTIPLE_MATCHES,       /**< 412: the condition matched several resources; terminal. */
     FHIR_RESPONSE_CAUSE_UNSUPPORTED,            /**< 501: the server cannot do the conditional create; terminal. */
     FHIR_RESPONSE_CAUSE_REJECTED,               /**< Any other non-success status, including authentication; terminal. */

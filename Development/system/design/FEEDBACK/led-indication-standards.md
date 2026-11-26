@@ -2,8 +2,7 @@
 
 The [status and error catalogue](catalogue.md#status-and-error-catalogue) and
 [P22](parameters.md) draw their colour, flash-rate and priority rules from IEC 60601-1, IEC 60073
-and IEC 60601-1-8. All clause summaries below come from the secondary sources and standard previews
-listed under [Sources](#sources).
+and IEC 60601-1-8.
 
 Primary standard identification: International Electrotechnical Commission, *Medical electrical equipment — Part 1-8: General requirements for basic safety and essential performance — Collateral standard: General requirements, tests and guidance for alarm systems in medical electrical equipment and medical electrical systems*, IEC 60601-1-8:2006+AMD1:2012+AMD2:2020 CSV, edition 2.2, IEC, 2020. Publication record: <https://webstore.iec.ch/en/publication/67388> (accessed 2026-10-24).
 
@@ -30,7 +29,7 @@ Primary standard identification: International Electrotechnical Commission, *Med
 - Ratio f1:f2 constant per application, at least 1:2.5 and at most 1:5; **1:4 recommended**, for example
   0.5 Hz and 2 Hz. [S4]
 - Pulse:pause about 1:1 recommended; limits 2:1 for f1 and 1:2 for f2. [S4]
-- Industrial practice: 0.5 Hz / 2 Hz [S6]; 1.75 Hz [S7]; 1.4 Hz [S8].
+- Industrial indicators flash at 0.5 Hz and 2 Hz [S6], 1.75 Hz [S7] or 1.4 Hz [S8].
 - IEC 60073 defines no rate above 2.8 Hz.
 
 ### IEC 60601-1-8: alarm systems
@@ -84,12 +83,12 @@ Primary standard identification: International Electrotechnical Commission, *Med
 
 ### Blink codes
 
-- The cited sources name no standard for numeric blink codes. The counting limits (at most 6 blinks,
-  2 s pause) are specific to this design and stay inside the IEC 60073 f2 rate.
+- The counting limits of the blink codes (at most 6 blinks, 2 s pause) stay inside the IEC 60073 f2
+  rate.
 
 ## Design rules and their basis
 
-Context-to-colour mappings (including blue for FHIR and white for device settings) are specific to this design; IEC 60601-1 defines only red, yellow and green.
+IEC 60601-1 fixes the meaning of red, yellow and green only. The other context colours (including blue for FHIR and white for device settings) carry the meanings of the catalogue.
 
 | Design rule (catalogue / P22) | Basis | Source |
 |---|---|---|
@@ -102,16 +101,16 @@ Context-to-colour mappings (including blue for FHIR and white for device setting
 | Measuring < 15 s: slow blink 0.5 Hz | 1 Hz is in neither band; 0.5 Hz / 2 Hz is the recommended 1:4 pair | IEC 60073 [S4] |
 | Error codes and status patterns blink at or below 2.8 Hz. The hold acknowledgement is a status overlay at 4 Hz | A blink above f2 (2.8 Hz) is hard to count. The 4 Hz overlay carries no count and does not read as a 2 Hz error code | IEC 60073 [S4] |
 | Status patterns (steady, slow blink, breathing) differ from the 2 Hz red error blink | Information signals must differ from alarm signals | IEC 60601-1-8 Amd 1 [S11] |
-| Breathing 3 s period, Idle dim 20 %, 2 s code pause, ≤ 6 blinks | Specific to this design | — |
+| Breathing 3 s period, Idle dim 20 %, 2 s code pause, ≤ 6 blinks | — | — |
 | Errors halt operation, except the Wi-Fi-only exception; only clearable errors can resume | The error needs the operator to act, so red ("immediate response") fits; Wi-Fi-only errors preserve working audio | IEC 60601-1 7.8.1 [S1] |
 | Priority column: Medium for audio-path faults, Low for all other errors, Information for statuses | Harm and onset per Table 1 | IEC 60601-1-8 Table 1 [S11] [S16]; classification as ME equipment [S14] [S15] |
 | Only the highest-priority error is shown | Intelligent alarm system may suppress lower-priority signals | IEC 60601-1-8 6.3.2.2 [S12] |
 | Equal priority shows the first latched | First-latched tie handling (deviation from IEC 60601-1-8) | — |
-| Red 2 Hz for all errors, no yellow (deviation from IEC 60601-1-8 Table 2) | This catalogue uses red; Table 2 would need yellow/cyan for medium/low | IEC 60601-1-8 Table 2 [S9] [S10] |
-| Input-rejected dimming by at least 50 % | Must be clearly seen at 1 m | IEC 60601-1-8 6.3.2.2 test conditions [S12]; design choice |
+| Red 2 Hz for all errors, no yellow (deviation from IEC 60601-1-8 Table 2) | Table 2 assigns yellow to medium priority and cyan or yellow to low priority; the device indicates every error on the red button LED | IEC 60601-1-8 Table 2 [S9] [S10] |
+| Input-rejected dimming by at least 50 % | Must be clearly seen at 1 m | IEC 60601-1-8 6.3.2.2 test conditions [S12] |
 | Visibility at 1 m / 4 m, 100–1500 lx, 30° cone (P22) | Test conditions for visual signals | IEC 60601-1-8 6.3.2.2 [S12] |
 | RGB LED keeps the context colour during an error; blink code identifies the condition | At 1 m the specific alarm condition must be identifiable | IEC 60601-1-8 6.3.2.2 [S12] |
-| Violet (Wi-Fi) and blue (FHIR) status patterns kept as they are | Errors stay distinct through the blink code; status colours carry no alarm information; workflow order also tells them apart (Sending follows Analysing) | IEC 60601-1 7.8.1 rationale [S3]; design choice |
+| Violet (Wi-Fi) and blue (FHIR) are status colours | Errors stay distinct through the blink code; status colours carry no alarm information; workflow order also tells them apart (Sending follows Analysing) | IEC 60601-1 7.8.1 rationale [S3] |
 
 ## Sources
 

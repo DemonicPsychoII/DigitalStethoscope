@@ -1,18 +1,18 @@
 # Architecture view boundaries
 
-These notes define the scope and boundaries of the views in the [architecture viewer](review.html).
-
 | View | Source | Boundary |
 |---|---|---|
 | Architecture | [puml/architecture-choice.puml](puml/architecture-choice.puml) | Layers (L2 orchestrates, L1 adapts hardware or holds pure C libraries, L0 is Zephyr), RTOS workers and events. Task isolation is optional. A/B firmware is not included. |
 | System context | [puml/system-context.puml](puml/system-context.puml) | Device as a black box; the device initiates FHIR requests and receives status responses as the receipt. Test tooling is outside the normal-use view. |
-| System components | [puml/system-components.puml](puml/system-components.puml) | Hardware and external connections; ESP32 remains a black box. Networking is Wi-Fi plus HTTPS. |
+| System components | [puml/system-components.puml](puml/system-components.puml) | Hardware and external connections; the ESP32-S3 remains a black box. Networking is Wi-Fi plus HTTPS. |
 | Electrical interfaces | [puml/electrical-interfaces.puml](puml/electrical-interfaces.puml) | Hardware connection types and chip roles. |
 | Software components | [puml/software-components.puml](puml/software-components.puml) | Firmware modules: L2 orchestration, L1 hardware adapters and pure C libraries, L0 Zephyr. Libraries include no Zephyr headers; MONITOR observes across layers. |
 | Input ownership | [puml/input-ownership.puml](puml/input-ownership.puml) | Contact handling in L1_PHYSICALINTERFACE, policy in L2_CONTROL, commanded effects. See [Input ownership](#input-ownership). |
 | Threads | [puml/runtime-ownership.puml](puml/runtime-ownership.puml) | Runtime workers, the modules they run and their interactions. The BPM worker belongs to `L2_AUDIO`. Original-rate blocks reach BPM before volume control, and BPM uses its own analysis filter independent of the listening switch. |
 | Listening | [puml/listening-workflow.puml](puml/listening-workflow.puml) | Selected filter or Raw bypass, volume and playback. |
 | BPM measurement | [puml/measurement-workflow.puml](puml/measurement-workflow.puml) | Freeze measurement settings and acquire until Stop; cancel without sending below the minimum session length, otherwise finalize subject to quality/coverage. Aggregate after listening stops, then deliver the result or the error report. |
+| Session and error transitions | [puml/session-state.puml](puml/session-state.puml) | Workflow states from Boot to delivery and their transitions on Start, Stop, faults and delivery outcomes. The error latch is independent of the workflow state. |
+| Server profile | [puml/server-profile.puml](puml/server-profile.puml) | Deployment file, server profile tool and flash command on the developer PC; server profile partition and the modules that read the image on the device. |
 
 ## Input ownership
 
@@ -30,7 +30,7 @@ The electrical interfaces view labels the two I2S links of the audio path by the
 | DAC I2S link | PCM5102A DAC output | ESP32-S3 I2S transmit controller |
 
 `L1_PHYSICALINTERFACE` owns the Start/Stop button, the Raw/Murmur/BPM switch, the volume
-potentiometer, the button LED and the RGB status light. The device ends at the DAC line output; the
+potentiometer, the red button light and the RGB status light. The device ends at the DAC line output; the
 headphone amplifier is outside the device boundary.
 
 ## Scope
@@ -38,11 +38,5 @@ headphone amplifier is outside the device boundary.
 - DSP algorithms are pure C libraries in L1 (`L1_FILTER`, `L1_BPM`).
 - Queues carry bounded events or buffer handles. BPM collects successive original-rate
   blocks into its own analysis window.
-- Measurement and session timing is configurable.
 - FHIR result delivery is a device-initiated conditional create with bounded retries and receipt verification without readback. The [examination-request boundary](../COMMUNICATION/server-communication.md) is separate. Network work waits until listening stops.
 - The firmware runs on a single processor core.
-
-## Diagram notation
-
-Component views use PlantUML component diagrams, and
-listening and measurement views use activity diagrams.

@@ -17,7 +17,7 @@ The audio path carries microphone audio to the DAC line output over two I2S link
 
 The processing step applies the selected listening filter (`L1_FILTER`) and the volume. The audio
 thread hands copies of the original-rate blocks to the BPM worker shown in the
-[threads view](../system/puml/runtime-ownership.puml). Listening filter, volume control and the analysis fan-out leave
+[threads view](../system/firmware-structure.md#threads-and-hand-offs). Listening filter, volume control and the analysis fan-out leave
 the transport boundary unchanged.
 
 ## Data path and block ownership
@@ -32,11 +32,10 @@ the transport boundary unchanged.
 
 ## Clocking
 
-- Both links use the same sample rate, slot width and word size.
+- Both links use the same sample rate, slot width and word size, which gives both the same
+  master-clock multiple [1].
 - Both I2S controllers share one clock source and identical stream settings, so the microphone and
   the DAC run at the same sample rate without rate adaptation [1].
-- A different word size on one link would change its master-clock multiple and could make the
-  rates differ slightly [1].
 
 ## Stream faults
 
@@ -48,9 +47,9 @@ the transport boundary unchanged.
 - `L2_AUDIO` starts and stops the stream only on a command from `L2_CONTROL`. After a fault it
   starts no stream until the device restarts.
 
-## Expected verification
+## Verification allocation
 
-| Scenario | Basis | Expected result |
+| Scenario | Trace | Expected outcome |
 | --- | --- | --- |
 | Power-on, then wait without Start | [REQ-01](../../requirements/system-requirements.md#req-01), VT-01 | No sound on either DAC channel; no TX stream before Start |
 | Start with the chestpiece on the chest | [REQ-02](../../requirements/system-requirements.md#req-02) | Heart sounds audible on both channels within 2 s of Start |

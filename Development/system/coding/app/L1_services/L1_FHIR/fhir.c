@@ -7,7 +7,7 @@
  * @{
  * @file
  * Implementation of the L1_FHIR module: bounded FHIR R4 JSON serialization
- * (design/COMMUNICATION/server-communication.md).
+ * (design/COMMUNICATION/server-communication.md, which defines P27).
  */
 
 /***********************************************************************/
@@ -243,8 +243,8 @@ static void fhir_appendPercentEncoded(struct fhir_writer *writer, const char *te
  * @brief Take the logical id from a Location header with the expected base path and Device type.
  *
  * Accepts exactly <scheme>://<authority><base path>/Device/<id>, optionally followed by
- * /_history/<version>. The authority is not compared: HAPI writes its configured server
- * address there, and the pinned TLS certificate already authenticates the server.
+ * /_history/<version>. The authority is not compared; the server certificate of the TLS
+ * connection authenticates the server.
  *
  * @param[in]  location       NUL-terminated header value.
  * @param[in]  baseUrl        Canonical base URL; its scheme compares case-insensitively and its
@@ -259,7 +259,7 @@ static bool fhir_parseDeviceLocation(const char *location, const char *baseUrl, 
 /**
  * @brief Tell whether text starts with a prefix, ignoring ASCII letter case.
  *
- * strncasecmp is POSIX, not C11, so L1 compares by itself.
+ * strncasecmp is POSIX, not C11, so L1_FHIR compares by itself.
  *
  * @param[in] text         NUL-terminated text.
  * @param[in] prefix       Expected prefix; at least @p prefixLength bytes.
@@ -309,8 +309,7 @@ static int fhir_parseJsonIdentifier(struct fhir_json_scanner *scanner, const cha
 /**
  * @brief Read one JSON string (RFC 8259 section 7).
  *
- * With a destination, the string is captured and must contain no escape (fail closed:
- * valid servers have no reason to escape the plain ASCII values read here).
+ * With a destination, the string is captured; an escape sequence is rejected with -EBADMSG.
  * Without one it is skipped; escapes are then only checked for well-formedness.
  * Unescaped bytes below 0x20 are malformed in either mode.
  *
@@ -584,6 +583,34 @@ int fhir_parseDeviceRegistration(const struct fhir_response *response, const cha
     }
 
     return result;
+}
+
+enum fhir_response_cause fhir_classifyStatus(uint16_t status)
+{
+    enum fhir_response_cause cause = FHIR_RESPONSE_CAUSE_REJECTED;
+
+    if((status == FHIR_HTTP_201_CREATED) || (status == FHIR_HTTP_200_OK))
+    {
+        cause = FHIR_RESPONSE_CAUSE_NONE;
+    }
+    else if(status == FHIR_HTTP_412_PRECONDITION_FAILED)
+    {
+        cause = FHIR_RESPONSE_CAUSE_MULTIPLE_MATCHES;
+    }
+    else if(status == FHIR_HTTP_501_NOT_IMPLEMENTED)
+    {
+        cause = FHIR_RESPONSE_CAUSE_UNSUPPORTED;
+    }
+    else if((status >= FHIR_HTTP_SERVER_ERROR_FIRST) && (status <= FHIR_HTTP_SERVER_ERROR_LAST))
+    {
+        cause = FHIR_RESPONSE_CAUSE_SERVER_ERROR;
+    }
+    else
+    {
+        /* Every other status, including authentication and 3xx, is a terminal rejection. */
+    }
+
+    return cause;
 }
 
 int fhir_encodeRegistrationRecord(const char *baseUrl, const char *physicalIdentifier, const char *serverDeviceId, uint8_t *record, size_t capacity)
@@ -907,7 +934,7 @@ static void fhir_appendUnsigned(struct fhir_writer *writer, uint32_t value, uint
 
 static void fhir_appendUtcTime(struct fhir_writer *writer, uint64_t utcSeconds, uint16_t milliseconds)
 {
-    /* Convert days since 1970-01-01 to a Gregorian calendar date with integer arithmetic, because not every host build declares gmtime_r. */
+    /* Days since 1970-01-01 to a Gregorian calendar date in integer arithmetic, without C library time functions: the day count is shifted by 719468 days to 0000-03-01 and split into 400-year eras of 146097 days. */
     const uint64_t secondsOfDay = (utcSeconds % FHIR_SECONDS_PER_DAY);
     const uint64_t shiftedDays = ((utcSeconds / FHIR_SECONDS_PER_DAY) + 719468U);
     const uint64_t era = (shiftedDays / 146097U);
@@ -976,34 +1003,6 @@ static void fhir_appendPercentEncoded(struct fhir_writer *writer, const char *te
 
         fhir_appendText(writer, encoded);
     }
-}
-
-enum fhir_response_cause fhir_classifyStatus(uint16_t status)
-{
-    enum fhir_response_cause cause = FHIR_RESPONSE_CAUSE_REJECTED;
-
-    if((status == FHIR_HTTP_201_CREATED) || (status == FHIR_HTTP_200_OK))
-    {
-        cause = FHIR_RESPONSE_CAUSE_NONE;
-    }
-    else if(status == FHIR_HTTP_412_PRECONDITION_FAILED)
-    {
-        cause = FHIR_RESPONSE_CAUSE_MULTIPLE_MATCHES;
-    }
-    else if(status == FHIR_HTTP_501_NOT_IMPLEMENTED)
-    {
-        cause = FHIR_RESPONSE_CAUSE_UNSUPPORTED;
-    }
-    else if((status >= FHIR_HTTP_SERVER_ERROR_FIRST) && (status <= FHIR_HTTP_SERVER_ERROR_LAST))
-    {
-        cause = FHIR_RESPONSE_CAUSE_SERVER_ERROR;
-    }
-    else
-    {
-        /* Every other status, including authentication and 3xx, is a terminal rejection. */
-    }
-
-    return cause;
 }
 
 static bool fhir_parseDeviceLocation(const char *location, const char *baseUrl, char *serverDeviceId)

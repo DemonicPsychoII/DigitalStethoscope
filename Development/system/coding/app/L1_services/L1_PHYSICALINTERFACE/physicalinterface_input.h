@@ -8,7 +8,9 @@
  * @file
  * Input decoding without driver access: Raw/Murmur/BPM switch decoding and
  * debouncing, and volume scaling with change detection. Private to
- * L1_PHYSICALINTERFACE; pure C, so the host tests compile it unchanged.
+ * L1_PHYSICALINTERFACE; pure C without Zephyr includes.
+ *
+ * P10 is defined in design/cross-module.md.
  */
 
 #ifndef L1_PHYSICALINTERFACE_INPUT_H

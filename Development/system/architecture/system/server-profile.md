@@ -2,7 +2,7 @@
 
 ## Basis and scope
 
-Server profile provisioning defines how a device receives its single server endpoint, keep-alive and trusted certificate in a flash image separate from the firmware. It refines the [TLS trust boundary](../COMMUNICATION/secure-transport.md) under [REQ-09](../../requirements/system-requirements.md#req-09), [REQ-11](../../requirements/system-requirements.md#req-11), [REQ-12](../../requirements/system-requirements.md#req-12) and [REQ-13](../../requirements/system-requirements.md#req-13).
+Server profile provisioning defines how a device receives its single server endpoint, keep-alive and trusted certificate in a flash image separate from the firmware. It supplies the trust material of the [TLS trust boundary](../COMMUNICATION/secure-transport.md) under [REQ-09](../../requirements/system-requirements.md#req-09), [REQ-11](../../requirements/system-requirements.md#req-11), [REQ-12](../../requirements/system-requirements.md#req-12) and [REQ-13](../../requirements/system-requirements.md#req-13).
 
 One deployment file per server holds the endpoint, keep-alive and public certificate. Deployment files are versioned separately from firmware builds, and a single host flash command validates the file, builds the server profile image and writes it to its dedicated flash partition.
 

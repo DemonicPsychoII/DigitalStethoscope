@@ -13,7 +13,7 @@ title BPM measurement
 start
 :Start Heart session;
 if (Heart + microphone + audio ready?) then (yes)
- :Freeze point / analysis settings;
+ :Freeze the session context and the analysis settings;
  repeat
   :Stream independent BPM analysis while listening;
   :Reject identity changes;
@@ -52,7 +52,7 @@ if (Heart + microphone + audio ready?) then (yes)
    :Latch delivery-not-possible fault;
   endif
  else (no)
-  :No send attempt or Wi-Fi error;
+  :No send attempt and no Wi-Fi error;
  endif
 else (no)
  :Reject command;
@@ -62,6 +62,5 @@ endif
 stop
 legend bottom
   Wi-Fi-only failures preserve functioning audio.
-  Streaming BPM requires no saved raw-session audio.
 endlegend
 @enduml

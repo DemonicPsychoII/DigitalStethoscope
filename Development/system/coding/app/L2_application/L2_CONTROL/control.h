@@ -8,6 +8,7 @@
  * @file
  * L2 controller; single writer of mode state and owner of the network
  * lease.
+ * Parameter P22: Development/system/design/FEEDBACK/parameters.md.
  */
 
 #ifndef L2_CONTROL_H

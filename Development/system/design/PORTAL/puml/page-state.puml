@@ -10,7 +10,7 @@ skinparam state {
  BackgroundColor #111826
  BorderColor #a9b8ca
 }
-title Setup page: browser-local view versus controller status
+title Setup page: browser-local view versus published status
 hide empty description
 
 state "Browser view" as Browser {
@@ -32,7 +32,7 @@ state "Browser view" as Browser {
  Done --> Interactive : poll: selecting, connect_failed,\nscanning or connecting
 }
 
-state "Controller status (published by L1_PORTAL and L2_COMMUNICATION)" as Controller {
+state "Status published by L1_PORTAL and L2_COMMUNICATION" as Published {
  state "selecting" as Selecting
  state "scanning" as Scanning
  state "connecting" as Connecting
@@ -57,7 +57,7 @@ state "Controller status (published by L1_PORTAL and L2_COMMUNICATION)" as Contr
  Closing --> [*] : 2 s notice (Cancel, inactivity,\nscan failure), then teardown
 }
 
-Browser -[hidden]right-> Controller
+Browser -[hidden]right-> Published
 
 legend bottom left
  Left: the view the browser shows. Right: the status the device publishes.

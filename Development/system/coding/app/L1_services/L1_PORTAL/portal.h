@@ -6,12 +6,12 @@
 /** @defgroup L1_PORTAL PORTAL
  * @{
  * @file
- * L1 adapter over the Zephyr HTTP server: the Wi-Fi setup page.
+ * Adapter over the Zephyr HTTP server: the Wi-Fi setup page.
  *
- * The page sends requests (connect, rescan, cancel) and polls the status.
+ * The page sends requests (connect, rescan, cancel, activity) and polls the status.
  * L2_COMMUNICATION takes the requests, does the Wi-Fi work and publishes
  * the network list and the status for the page.
- * Implements Development/system/design/PORTAL/interfaces-and-behavior.md.
+ * Implements design/PORTAL/interfaces-and-behavior.md.
  */
 
 #ifndef L1_PORTAL_H
@@ -53,7 +53,7 @@ enum portal_request_type
     PORTAL_REQUEST_CONNECT,  /**< Join the network in portal_request.network. */
     PORTAL_REQUEST_RESCAN,   /**< Scan again and publish the new list. */
     PORTAL_REQUEST_CANCEL,   /**< End setup. */
-    PORTAL_REQUEST_ACTIVITY, /**< User selected a network or typed; restarts the 5 min timer. */
+    PORTAL_REQUEST_ACTIVITY, /**< The user selected a network or typed. */
 };
 
 /** Request from the page. */

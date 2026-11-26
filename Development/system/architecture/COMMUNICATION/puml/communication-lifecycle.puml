@@ -23,8 +23,8 @@ state "Finalizing (L2_CONTROL)\nresult frozen; no network work yet" as Finalizin
 state "Delivery\nstarts when L2_CONTROL submits the finalized job\none deadline from Stop\nreuse an eligible retained connection, else new setup" as Delivery
 [*] --> Join
 Join -down-> Check : station address
-Check --> Preparation : transport unverified,\nserver profile valid, gap over
-Check --> Registration : verified, no saved\nregistration for this server, gap over
+Check --> Preparation : transport unverified,\nserver profile valid, retry gap elapsed
+Check --> Registration : verified, no saved\nregistration for this server, retry gap elapsed
 Check --> Prepared : verified and registered
 Preparation --> Check : failed setup: server-connection fault,\nretried after a gap
 Preparation --> Registration : verified; no saved\nregistration for this server

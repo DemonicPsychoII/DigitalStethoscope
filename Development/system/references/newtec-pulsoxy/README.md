@@ -14,7 +14,6 @@ The files are taken unchanged from the PulsOxy project of NewTec GmbH, revision
 | [`lib/App_PulsOxy/src/InitState.h`](lib/App_PulsOxy/src/InitState.h), [`InitState.cpp`](lib/App_PulsOxy/src/InitState.cpp) | Initialization: Wi-Fi connection and registration at the FHIR server |
 | [`lib/App_PulsOxy/src/MeasuringState.h`](lib/App_PulsOxy/src/MeasuringState.h), [`MeasuringState.cpp`](lib/App_PulsOxy/src/MeasuringState.cpp) | Measurement and sending of the Observations |
 
-The digital stethoscope does not build or link this code. Two design pages refer to it:
-[secure transport](../../design/COMMUNICATION/secure-transport.md) for the trust configuration and
-[server communication](../../design/COMMUNICATION/server-communication.md) for the structure of the
-FHIR resources.
+The digital stethoscope does not build or link this code. The design uses it for the trust
+configuration ([secure transport](../../design/COMMUNICATION/secure-transport.md)) and for the structure
+of the FHIR resources ([server communication](../../design/COMMUNICATION/server-communication.md)).

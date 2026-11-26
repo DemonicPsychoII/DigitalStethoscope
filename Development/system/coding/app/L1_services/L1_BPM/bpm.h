@@ -6,7 +6,7 @@
 /** @defgroup L1_BPM BPM
  * @{
  * @file
- * L1 pure C BPM library: envelope, autocorrelation and aggregation.
+ * Header of the L1_BPM module. It contains no declarations.
  */
 
 #ifndef L1_BPM_H

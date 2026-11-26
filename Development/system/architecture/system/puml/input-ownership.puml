@@ -37,7 +37,7 @@ package "Commanded effects" {
  rectangle "RGB status light\ndims briefly on a rejected input" as RejectEffect
  rectangle "L2_AUDIO\nlisten, measure, filter, volume" as AudioEffect
  rectangle "L2_COMMUNICATION\nnetwork lease release" as LeaseEffect
- rectangle "Red button LED\nerror code, acknowledgement flash" as RedEffect
+ rectangle "Red button light\nerror code, acknowledgement flash" as RedEffect
 }
 
 Button --> ButtonAdapter : GPIO edge

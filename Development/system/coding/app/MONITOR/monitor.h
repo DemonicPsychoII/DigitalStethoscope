@@ -6,7 +6,7 @@
 /** @defgroup MONITOR MONITOR
  * @{
  * @file
- * Runtime self-monitoring; observes the other layers read-only.
+ * Interface of the MONITOR module: section layout without declarations.
  */
 
 #ifndef MONITOR_H

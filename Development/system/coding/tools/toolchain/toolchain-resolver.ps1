@@ -1,5 +1,5 @@
 #Requires -Version 5.1
-# Runs toolchain_environment.py, which resolves the pinned workspace like CI.
+# Runs toolchain_environment.py, which resolves the pinned workspace.
 # Dot-source it: . (Join-Path $PSScriptRoot 'toolchain-resolver.ps1')
 
 function Invoke-ToolchainResolver {

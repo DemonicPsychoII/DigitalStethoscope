@@ -6,7 +6,7 @@
 /** @addtogroup L1_FILTER
  * @{
  * @file
- * Implementation of the L1_FILTER module.
+ * Source file of the L1_FILTER module. It contains no definitions and no logic.
  */
 
 /***********************************************************************/

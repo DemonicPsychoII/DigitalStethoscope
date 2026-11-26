@@ -10,7 +10,7 @@ to <BuildDir>\spdx. It only builds; it never flashes or publishes firmware.
 .PARAMETER Pristine
 Delete the previous build state first.
 .PARAMETER BuildDir
-Build directory; defaults to build-app in the repository root, the CI release build.
+Build directory; defaults to build-app in the repository root, the release build.
 .EXAMPLE
     .\build-sbom.ps1
 .EXAMPLE

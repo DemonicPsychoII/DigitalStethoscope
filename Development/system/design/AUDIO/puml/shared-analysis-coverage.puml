@@ -5,7 +5,7 @@ skinparam defaultFontName SansSerif
 skinparam backgroundColor #0b1018
 skinparam defaultFontColor #e6edf7
 skinparam ArrowColor #a9b8ca
-title How much of the session counts as coverage?
+title Which part of the session counts as coverage?
 concise "Session" as session
 concise "Window A" as windowA
 concise "Window B" as windowB

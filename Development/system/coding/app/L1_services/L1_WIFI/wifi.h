@@ -6,12 +6,15 @@
 /** @defgroup L1_WIFI WIFI
  * @{
  * @file
- * L1 adapter over the Zephyr Wi-Fi driver: station and setup hotspot
+ * Adapter over the Zephyr Wi-Fi driver: station and setup hotspot
  * with DHCP server.
  *
  * Every function does one step and returns its result. Attempt counts,
  * delays and the order of steps belong to L2_COMMUNICATION.
- * Implements Development/system/design/WIFI/interfaces-and-behavior.md.
+ * Implements design/WIFI/interfaces-and-behavior.md.
+ *
+ * P13 and P23 are defined in design/COMMUNICATION/parameters.md, P27 in
+ * design/COMMUNICATION/server-communication.md.
  */
 
 #ifndef L1_WIFI_H
@@ -78,7 +81,7 @@ struct wifi_scan_entry
     bool needsPassword;               /**< True if the network needs a password. */
 };
 
-/** A normalised time. */
+/** A normalized time. */
 struct normalised_time
 {
     uint64_t utc_seconds;
@@ -276,7 +279,7 @@ int wifi_startHotspot(void);
 int wifi_stopHotspot(void);
 
 /**
- * @brief Start the DHCP server that gives the phone an address on the hotspot.
+ * @brief Start the DHCP server that gives the client of the setup hotspot its address.
  *
  * Call after wifi_startHotspot().
  *
@@ -309,7 +312,7 @@ int wifi_startTimeSynchronization(const char *ntpServer);
 /**
  * @brief Wait for time synchronization to complete.
  *
- * Terminal completion leaves operation resources and callbacks quiescent.
+ * After terminal completion, the operation holds no resource and none of its callbacks can run.
  *
  * @param[out] time Sample destination; written only on success.
  * @param[in] timeout Maximum wait for this call; does not restart the operation.
@@ -321,8 +324,8 @@ int wifi_waitForTimeSynchronization(struct normalised_time *time, k_timeout_t ti
 /**
  * @brief Cancel synchronization within the P23 one-second stop bound.
  *
- * @return 0 when resources/callbacks are quiescent, including if already inactive;
- *         negative error otherwise, with the hostname still borrowed.
+ * @return 0 when the operation holds no resource and none of its callbacks can run, also when
+ *         nothing was pending; a negative error code otherwise, with the hostname still borrowed.
  */
 int wifi_cancelTimeSynchronization(void);
 
@@ -345,7 +348,8 @@ int wifi_applyTimeSynchronization(const struct normalised_time *time, struct app
  *
  * Parses the canonical base URL (https://host:port/path) and the PEM certificate,
  * requires a Subject Alternative Name matching the host, and makes the
- * certificate the only trust anchor. Without success, Start returns -ENOENT.
+ * certificate the only trust anchor. Without success,
+ * wifi_startSecureConnection() returns -ENOENT.
  *
  * @param[in]  baseUrl           Canonical base URL; copied.
  * @param[in]  certificate       PEM certificate; parsed into an own copy.
@@ -375,7 +379,7 @@ int wifi_startSecureConnection(k_timepoint_t deadline);
 /**
  * @brief Wait for the secure connection to complete.
  *
- * Terminal completion leaves the operation's resources and callbacks quiescent.
+ * After terminal completion, the operation holds no resource and none of its callbacks can run.
  * On success the verified connection is retained for later requests.
  *
  * @param[out] cause   Failure cause; written on terminal completion.
@@ -392,7 +396,7 @@ int wifi_waitForSecureConnection(enum wifi_secure_connection_cause *cause, k_tim
  * Leaves an already retained connection open.
  *
  * @return 0 when resources are released, including if nothing is pending;
- *         a negative error code otherwise, with Start still blocked.
+ *         a negative error code otherwise, with wifi_startSecureConnection() still blocked.
  */
 int wifi_cancelSecureConnection(void);
 
@@ -411,8 +415,8 @@ int wifi_closeSecureConnection(void);
  *
  * Requires L2_CONTROL's network lease and a retained connection. The worker writes
  * the request head and the body, then reads one response into @p response.
- * No reconnect and no retry; the caller owns P13. wifi_cancelSecureConnection()
- * also cancels a pending exchange.
+ * No reconnect and no retry; the caller applies the delivery deadline and retry policy (P13).
+ * wifi_cancelSecureConnection() also cancels a pending exchange.
  *
  * @param[in]  request  Request; borrowed with all its fields until the exchange completed.
  * @param[out] response Result; borrowed until the exchange completed.
@@ -427,9 +431,9 @@ int wifi_startSecureExchange(const struct wifi_http_request *request, struct wif
 /**
  * @brief Wait for the exchange to complete.
  *
- * Terminal completion leaves resources and callbacks quiescent. The connection
- * stays retained only after 0 with response->keepsConnection and no further
- * received bytes; every other outcome closes and releases it first.
+ * After terminal completion, the operation holds no resource and none of its callbacks can
+ * run. The connection stays retained only after 0 with response->keepsConnection and no
+ * further received bytes; every other outcome closes and releases it first.
  *
  * @param[in] timeout Maximum wait for this call; does not restart the exchange.
  *
@@ -437,7 +441,7 @@ int wifi_startSecureExchange(const struct wifi_http_request *request, struct wif
  *         -ENOTCONN if the server closed or reset before any response byte, so the
  *         retained connection was stale; -ECONNRESET for transport loss after that;
  *         -ETIMEDOUT at the deadline; -ECANCELED; -EBADMSG or -EMSGSIZE for an
- *         unusable response (no receipt); -EINVAL if no exchange was started.
+ *         unusable response, which is no receipt; -EINVAL if no exchange was started.
  */
 int wifi_waitForSecureExchange(k_timeout_t timeout);
 

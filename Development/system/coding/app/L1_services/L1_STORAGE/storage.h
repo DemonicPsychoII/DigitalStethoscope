@@ -6,13 +6,13 @@
 /** @defgroup L1_STORAGE STORAGE
  * @{
  * @file
- * L1 adapter over the Zephyr settings subsystem: named records in flash.
+ * Adapter over the Zephyr settings subsystem: named records in flash.
  *
  * The module does not know what the records hold. The caller gives the
  * name, the buffer and its size.
  *
  * It also reads the server profile image from its own read-only partition
- * (design/STORAGE/server-profile.md). It checks the image format and leaves
+ * (design/STORAGE/server-profile.md, which defines P28). It checks the image format and leaves
  * the endpoint and the certificate uninterpreted.
  */
 

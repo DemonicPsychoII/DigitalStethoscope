@@ -6,8 +6,8 @@
 /** @defgroup L1_PHYSICALINTERFACE PHYSICALINTERFACE
  * @{
  * @file
- * L1 adapter for buttons, the listening-filter switch, the volume potentiometer
- * and LEDs over the Zephyr GPIO/ADC drivers.
+ * Adapter for the Start/Stop button, the listening-filter switch, the volume potentiometer,
+ * the RGB status light and the button light over the Zephyr GPIO, ADC and LED strip drivers.
  */
 
 #ifndef L1_PHYSICALINTERFACE_H

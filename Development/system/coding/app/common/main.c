@@ -3,7 +3,7 @@
  * Project: DigitalStethoscope
  ***********************************************************************/
 
-/** @addtogroup COMMON_MAIN
+/** @defgroup COMMON_MAIN MAIN
  * @{
  * @file
  * Application entry point. Initializes L2_CONTROL and L2_COMMUNICATION,

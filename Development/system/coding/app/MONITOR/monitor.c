@@ -6,7 +6,7 @@
 /** @addtogroup MONITOR
  * @{
  * @file
- * Implementation of the MONITOR module.
+ * Implementation of the MONITOR module: section layout without definitions.
  */
 
 /***********************************************************************/

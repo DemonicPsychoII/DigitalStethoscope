@@ -8,6 +8,8 @@
  * @file
  * Light patterns of the status and error catalogue, one table row per code.
  * Private to L1_PHYSICALINTERFACE; pure C without driver access.
+ *
+ * P22 is defined in design/FEEDBACK/parameters.md.
  */
 
 #ifndef L1_PHYSICALINTERFACE_INDICATION_H

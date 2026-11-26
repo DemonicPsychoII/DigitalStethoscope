@@ -71,7 +71,7 @@ struct control_error_latch
     uint32_t errorCount;
 };
 
-/** What a short press does. */
+/** What a button press does. */
 enum control_press_action
 {
     CONTROL_PRESS_IGNORE,      /**< The device is halted: the press is dropped without indication. */

@@ -5,7 +5,7 @@
 $FwRepo = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..\..\..'))
 . (Join-Path $PSScriptRoot 'toolchain\toolchain-resolver.ps1')
 
-# The pinned workspace is shared by all checkouts and worktrees; Python resolves it like CI.
+# The pinned workspace is shared by all checkouts and worktrees; Python resolves it.
 $FwLocations = Invoke-ToolchainResolver -Arguments '--format', 'locations' | ConvertFrom-Json
 $FwWorkspace = $FwLocations.workspace
 $FwPins = Get-Content (Join-Path $PSScriptRoot 'toolchain\toolchain.json') -Raw | ConvertFrom-Json

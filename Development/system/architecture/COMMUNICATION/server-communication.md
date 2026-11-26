@@ -2,7 +2,7 @@
 
 ## Basis and scope
 
-Server communication refines the [system software allocation](../system/puml/software-components.puml) for Device registration, examination context, FHIR serialization and result delivery under [REQ-02](../../requirements/system-requirements.md#req-02), [REQ-07](../../requirements/system-requirements.md#req-07), [REQ-08](../../requirements/system-requirements.md#req-08), [REQ-09](../../requirements/system-requirements.md#req-09), [REQ-10](../../requirements/system-requirements.md#req-10), [REQ-11](../../requirements/system-requirements.md#req-11), [REQ-13](../../requirements/system-requirements.md#req-13) and [REQ-15](../../requirements/system-requirements.md#req-15).
+Server communication refines the [system software allocation](../system/firmware-structure.md#static-dependency-and-module-map) for Device registration, examination context, FHIR serialization and result delivery under [REQ-02](../../requirements/system-requirements.md#req-02), [REQ-07](../../requirements/system-requirements.md#req-07), [REQ-08](../../requirements/system-requirements.md#req-08), [REQ-09](../../requirements/system-requirements.md#req-09), [REQ-10](../../requirements/system-requirements.md#req-10), [REQ-11](../../requirements/system-requirements.md#req-11), [REQ-13](../../requirements/system-requirements.md#req-13) and [REQ-15](../../requirements/system-requirements.md#req-15).
 
 The device reuses a patient reference only when supplied with a server-requested examination, and omits it otherwise. Only the device starts measurements; the server cannot start an examination.
 
@@ -18,7 +18,7 @@ The device reuses a patient reference only when supplied with a server-requested
 | L1_FHIR | Pure-C serialization of the FHIR messages from supplied context. | No sockets, patient selection, clock synchronization or persistence. |
 | L1_WIFI | Execute secure transport and return operation outcomes. | No FHIR workflow or application retries. |
 | L1_STORAGE | Persist and retrieve the named server registration record. | Not a persistent measurement queue or patient directory. |
-| External FHIR server | Hold Device and Observation resources and return application receipts. | Separate from the examination-request protocol, even if one deployment hosts both. |
+| External FHIR server | Hold Device and Observation resources and return application receipts. | Separate from the examination-request protocol. |
 
 Dependencies run from L2_CONTROL's frozen job to L2_COMMUNICATION, and from L2_COMMUNICATION to L1_FHIR serialization, L1_WIFI transport and L1_STORAGE persistence. Transport depends on clock and trust preparation. A receipt returns through L2_COMMUNICATION to L2_CONTROL. Examination context enters through the adapter boundary and L2_CONTROL admission before being frozen into the measurement session. Neither L1_FHIR, L1_WIFI nor L1_STORAGE owns the complete workflow.
 
@@ -42,7 +42,7 @@ The device never selects, looks up or adds a patient identifier. Only a patient 
 
 L2_COMMUNICATION retains the immutable completed result, measurement-end timestamp and conditional-create identity across retries. L2_COMMUNICATION owns the bounded delivery job and evaluates the server receipt without readback, while L1_FHIR serialization and L1_WIFI transport are subordinate operations. Conditional create follows HL7 FHIR R4 [1].
 
-The successful server receipt completes the device's delivery responsibility; later patient assignment and clinical processing remain outside it. Terminal delivery failure follows [REQ-10](../../requirements/system-requirements.md#req-10): the result is discarded without a later retry queue, including after connection/server recovery. Connection retention does not add background resend. No automatic reassignment or identity regeneration occurs. Missing prerequisites are reported through the failure boundary; they neither extend delivery silently nor redefine Wi-Fi setup success.
+The successful server receipt completes the device's delivery responsibility; later patient assignment and clinical processing remain outside it. Terminal delivery failure follows [REQ-10](../../requirements/system-requirements.md#req-10): the result is discarded without a later retry queue, including after connection/server recovery. Connection retention does not add background resend. A result keeps its identity. A missing prerequisite ends the delivery with a fault.
 
 Active preparation, external-request communication and result delivery require L2_CONTROL's network lease outside listening. The examination-request adapter operates strictly within that lease boundary and performs no polling or push handling during listening.
 

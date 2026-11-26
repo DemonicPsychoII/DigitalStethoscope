@@ -9,14 +9,17 @@
  * Secure connection to the one configured server: DNS, TCP and a TLS 1.3
  * handshake with mandatory server verification (design/COMMUNICATION/secure-transport.md).
  *
- * mbedTLS runs directly over a non-blocking TCP socket. Zephyr's TLS sockets
- * would hold the socket lock for the whole connect and handshake, so a Start
- * could not cancel within the one-second stop bound. Here every wait is a
- * short poll, after which the worker checks for cancellation.
+ * mbedTLS runs directly over a non-blocking TCP socket. Every wait is a poll of
+ * at most 100 ms, after which the worker checks for cancellation, so a
+ * cancellation ends within the one-second stop bound.
  *
- * Lifecycle as for time synchronization: one operation at a time, claimed by
- * the worker, resources released before the terminal result is published.
- * A successful connection is retained until wifi_closeSecureConnection().
+ * One operation runs at a time, claimed by the worker; its resources are
+ * released before the terminal result is published. A successful connection
+ * is retained until wifi_closeSecureConnection().
+ *
+ * P23 is defined in design/COMMUNICATION/parameters.md, P26 in
+ * design/COMMUNICATION/secure-transport.md and P27 in
+ * design/COMMUNICATION/server-communication.md.
  */
 
 /***********************************************************************/
@@ -77,61 +80,6 @@ enum wifi_secure_operation
     WIFI_SECURE_OPERATION_CONNECT,  /**< DNS, TCP and verified handshake; retains the connection. */
     WIFI_SECURE_OPERATION_EXCHANGE, /**< One request and its response over the retained connection. */
 };
-
-/***********************************************************************/
-/* LOCAL VARIABLES                                                     */
-/***********************************************************************/
-
-K_EVENT_DEFINE(wifi_SecureEvents); /**< WIFI_SECURE_EVENT_* bits. */
-K_MUTEX_DEFINE(wifi_SecureLock);   /**< Protects the operation record below. */
-
-static enum wifi_secure_state wifi_SecureState;
-static uint32_t wifi_SecureGeneration;    /**< Identifies the accepted operation. */
-static bool wifi_SecureIsClaimed;         /**< The worker owns the current operation's resources. */
-static k_timepoint_t wifi_SecureDeadline; /**< End of the caller's connection setup. */
-static int wifi_SecureResult;             /**< Terminal error code; 0 means connected and verified. */
-static enum wifi_secure_connection_cause wifi_SecureCause;
-static bool wifi_SecureConnectionIsRetained;                         /**< The socket and session below form a verified connection. */
-static enum wifi_secure_operation wifi_SecureOperation;              /**< Kind of the current operation. */
-static const struct wifi_http_request *wifi_SecureRequest;           /**< Exchange request; borrowed from the caller until completion. */
-static struct wifi_http_response *wifi_SecureResponse;               /**< Exchange result; borrowed from the caller until completion. */
-static char wifi_SecureRequestHead[WIFI_HTTP_REQUEST_HEAD_CAPACITY]; /**< Built by Start, written by the worker. */
-static size_t wifi_SecureRequestHeadLength;
-/**
- * @brief Tell whether an operation is still the pending one; call with wifi_SecureLock held.
- *
- * @param[in] generation Operation to check.
- *
- * @return True while it is current and not cancelled.
- */
-static bool wifi_isSecureConnectionCurrent(uint32_t generation);
-
-static struct wifi_dns_lookup wifi_SecureServerLookup = {
-    .lock = &wifi_SecureLock,
-    .events = &wifi_SecureEvents,
-    .resolvedEvent = WIFI_SECURE_EVENT_RESOLVED,
-    .isCurrent = wifi_isSecureConnectionCurrent,
-}; /**< Server lookup; its fields are protected by wifi_SecureLock. */
-
-/* Configured once at boot, read-only afterwards. */
-static bool wifi_SecureServerIsConfigured;
-static char wifi_SecureHost[WIFI_SECURE_HOST_MAX_LENGTH + 1]; /**< Reference identity and DNS name. */
-static uint16_t wifi_SecurePort;
-static char wifi_SecureBasePath[WIFI_SECURE_BASE_PATH_MAX_LENGTH + 1]; /**< "" or "/fhir"-style path of the base URL, without trailing '/'. */
-static bool wifi_SecureHostIsAddress;                                  /**< wifi_SecureHost is an IPv4 literal. */
-static struct net_sockaddr_in wifi_SecureHostAddress;                  /**< Parsed literal when wifi_SecureHostIsAddress. */
-static struct wifi_secure_server wifi_SecureServer;
-static mbedtls_x509_crt wifi_TrustedCertificate EXT_RAM_BSS_ATTR;    /**< The server profile's certificate, the only trust anchor. */
-static mbedtls_ssl_config wifi_SecureConfiguration EXT_RAM_BSS_ATTR; /**< Client, TLS 1.3 only, verification required. */
-
-/* Owned by the worker during an operation, then by the retained connection. */
-static int wifi_SecureSocket = -1;
-static mbedtls_ssl_context wifi_SecureSession EXT_RAM_BSS_ATTR;
-static bool wifi_SecureSessionIsSetUp;
-
-K_THREAD_STACK_DEFINE(wifi_SecureStack, WIFI_SECURE_STACK_SIZE);
-static struct k_work_q wifi_SecureQueue;
-static struct k_work wifi_SecureWork;
 
 /***********************************************************************/
 /* LOCAL FUNCTION PROTOTYPES                                           */
@@ -318,6 +266,62 @@ static int wifi_readSecureResponse(uint32_t generation, k_timepoint_t deadline, 
  */
 static int wifi_waitForSecureOperation(enum wifi_secure_operation operation, enum wifi_secure_connection_cause *cause, k_timeout_t timeout);
 
+/**
+ * @brief Tell whether an operation is still the pending one; call with wifi_SecureLock held.
+ *
+ * @param[in] generation Operation to check.
+ *
+ * @return True while it is current and not cancelled.
+ */
+static bool wifi_isSecureConnectionCurrent(uint32_t generation);
+
+/***********************************************************************/
+/* LOCAL VARIABLES                                                     */
+/***********************************************************************/
+
+K_EVENT_DEFINE(wifi_SecureEvents); /**< WIFI_SECURE_EVENT_* bits. */
+K_MUTEX_DEFINE(wifi_SecureLock);   /**< Protects the operation record below. */
+
+static enum wifi_secure_state wifi_SecureState;
+static uint32_t wifi_SecureGeneration;    /**< Identifies the accepted operation. */
+static bool wifi_SecureIsClaimed;         /**< The worker owns the current operation's resources. */
+static k_timepoint_t wifi_SecureDeadline; /**< End of the caller's connection setup. */
+static int wifi_SecureResult;             /**< Terminal error code; 0 means connected and verified. */
+static enum wifi_secure_connection_cause wifi_SecureCause;
+static bool wifi_SecureConnectionIsRetained;                         /**< The socket and session below form a verified connection. */
+static enum wifi_secure_operation wifi_SecureOperation;              /**< Kind of the current operation. */
+static const struct wifi_http_request *wifi_SecureRequest;           /**< Exchange request; borrowed from the caller until completion. */
+static struct wifi_http_response *wifi_SecureResponse;               /**< Exchange result; borrowed from the caller until completion. */
+static char wifi_SecureRequestHead[WIFI_HTTP_REQUEST_HEAD_CAPACITY]; /**< Built by wifi_startSecureExchange(), written by the worker. */
+static size_t wifi_SecureRequestHeadLength;
+
+static struct wifi_dns_lookup wifi_SecureServerLookup = {
+    .lock = &wifi_SecureLock,
+    .events = &wifi_SecureEvents,
+    .resolvedEvent = WIFI_SECURE_EVENT_RESOLVED,
+    .isCurrent = wifi_isSecureConnectionCurrent,
+}; /**< Server lookup; its fields are protected by wifi_SecureLock. */
+
+/* Configured once at boot, read-only afterwards. */
+static bool wifi_SecureServerIsConfigured;
+static char wifi_SecureHost[WIFI_SECURE_HOST_MAX_LENGTH + 1]; /**< Reference identity and DNS name. */
+static uint16_t wifi_SecurePort;
+static char wifi_SecureBasePath[WIFI_SECURE_BASE_PATH_MAX_LENGTH + 1]; /**< "" or "/fhir"-style path of the base URL, without trailing '/'. */
+static bool wifi_SecureHostIsAddress;                                  /**< wifi_SecureHost is an IPv4 literal. */
+static struct net_sockaddr_in wifi_SecureHostAddress;                  /**< Parsed literal when wifi_SecureHostIsAddress. */
+static struct wifi_secure_server wifi_SecureServer;
+static mbedtls_x509_crt wifi_TrustedCertificate EXT_RAM_BSS_ATTR;    /**< The server profile's certificate, the only trust anchor. */
+static mbedtls_ssl_config wifi_SecureConfiguration EXT_RAM_BSS_ATTR; /**< Client, TLS 1.3 only, verification required. */
+
+/* Owned by the worker during an operation, then by the retained connection. */
+static int wifi_SecureSocket = -1;
+static mbedtls_ssl_context wifi_SecureSession EXT_RAM_BSS_ATTR;
+static bool wifi_SecureSessionIsSetUp;
+
+K_THREAD_STACK_DEFINE(wifi_SecureStack, WIFI_SECURE_STACK_SIZE);
+static struct k_work_q wifi_SecureQueue;
+static struct k_work wifi_SecureWork;
+
 /***********************************************************************/
 /* MACROS                                                              */
 /***********************************************************************/
@@ -411,7 +415,7 @@ int wifi_startSecureConnection(k_timepoint_t deadline)
     int result = 0;
     (void)k_mutex_lock(&wifi_SecureLock, K_FOREVER);
 
-    /* COMPLETED is only reached after release, so CANCELLING keeps Start blocked; a retained connection must be closed first. */
+    /* COMPLETED is only reached after release, so CANCELLING keeps a new start blocked; a retained connection must be closed first. */
     if((wifi_SecureState == WIFI_SECURE_PENDING) || (wifi_SecureState == WIFI_SECURE_CANCELLING) || wifi_SecureConnectionIsRetained)
     {
         result = -EBUSY;
@@ -603,7 +607,7 @@ static void wifi_runSecureConnection(struct k_work *work)
     const uint32_t generation = wifi_SecureGeneration;
     const k_timepoint_t deadline = wifi_SecureDeadline;
     const enum wifi_secure_operation operation = wifi_SecureOperation;
-    /* A handler left queued by an earlier submission must not take over an operation that Cancel withdrew. */
+    /* A handler left queued by an earlier submission must not take over an operation that wifi_cancelSecureConnection() withdrew. */
     const bool isClaimed = (wifi_SecureState == WIFI_SECURE_PENDING) && !wifi_SecureIsClaimed;
     if(isClaimed)
     {
@@ -657,7 +661,7 @@ static void wifi_runSecureConnection(struct k_work *work)
 
     if(result == 0)
     {
-        /* Admission, retention and publication form one step, so a Cancel that reports release never leaves a retained connection behind. */
+        /* Admission, retention and publication form one step, so a wifi_cancelSecureConnection() that reports release never leaves a retained connection behind. */
         (void)k_mutex_lock(&wifi_SecureLock, K_FOREVER);
         const bool isAdmitted = wifi_isSecureConnectionCurrent(generation);
         if(isAdmitted)
@@ -678,7 +682,7 @@ static void wifi_runSecureConnection(struct k_work *work)
     const int releaseResult = wifi_releaseSecureResources();
     if(releaseResult != 0)
     {
-        /* Without proven release the operation never completes: Start stays blocked and Cancel reports the fault. */
+        /* Without proven release the operation never completes: a new start stays blocked and wifi_cancelSecureConnection() reports the fault. */
         LOG_ERR("Secure connection release failed (%d)", releaseResult);
         return;
     }
@@ -707,7 +711,7 @@ static void wifi_runSecureExchange(uint32_t generation, k_timepoint_t deadline)
         result = wifi_readSecureResponse(generation, deadline, &hasReceived);
     }
 
-    /* Keeping and publishing form one step, so a Cancel that reports release never leaves a retained connection behind. */
+    /* Keeping and publishing form one step, so a wifi_cancelSecureConnection() that reports release never leaves a retained connection behind. */
     (void)k_mutex_lock(&wifi_SecureLock, K_FOREVER);
 
     const bool isCurrent = wifi_isSecureConnectionCurrent(generation);
@@ -738,7 +742,7 @@ static void wifi_runSecureExchange(uint32_t generation, k_timepoint_t deadline)
 
         if(releaseResult != 0)
         {
-            /* Without proven release the operation never completes: Start stays blocked and Cancel reports the fault. */
+            /* Without proven release the operation never completes: a new start stays blocked and wifi_cancelSecureConnection() reports the fault. */
             LOG_ERR("Secure exchange release failed (%d)", releaseResult);
         }
         else
@@ -755,7 +759,7 @@ static int wifi_writeSecureBytes(uint32_t generation, k_timepoint_t deadline, co
 
     while((result == 0) && (written < length))
     {
-        /* A delayed worker or an immediately writable socket must not send after Cancel or the deadline. */
+        /* A delayed worker or an immediately writable socket must not send after wifi_cancelSecureConnection() or the deadline. */
         const bool operationIsAdmitted = wifi_isSecureConnectionAdmitted(generation);
 
         if(!operationIsAdmitted)
@@ -1178,7 +1182,7 @@ static void wifi_publishSecureResult(uint32_t generation, int result, enum wifi_
         wifi_SecureResult = result;
         wifi_SecureCause = cause;
         wifi_SecureState = WIFI_SECURE_COMPLETED;
-        /* Stays set until the next accepted Start, so repeated Wait calls return at once. */
+        /* Stays set until the next accepted start, so repeated wait calls return at once. */
         (void)k_event_post(&wifi_SecureEvents, WIFI_SECURE_EVENT_COMPLETED);
     }
 
@@ -1296,7 +1300,7 @@ static int wifi_parseBaseUrl(const char *baseUrl)
 
 static int wifi_checkSubjectAlternativeName(const mbedtls_x509_crt *certificate)
 {
-    /* Without a SAN extension mbedTLS falls back to the Common Name, which RFC 9525 and the design exclude. */
+    /* Without a SAN extension mbedTLS falls back to the Common Name, which RFC 9525 excludes. */
     const bool certificateHasAlternativeName = (mbedtls_x509_crt_has_ext_type(certificate, MBEDTLS_X509_EXT_SUBJECT_ALT_NAME) != 0);
 
     if(!certificateHasAlternativeName)

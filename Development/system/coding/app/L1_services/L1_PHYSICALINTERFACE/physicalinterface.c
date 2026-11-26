@@ -6,7 +6,7 @@
 /** @addtogroup L1_PHYSICALINTERFACE
  * @{
  * @file
- * Implementation of the L1_PHYSICALINTERFACE module.
+ * Implementation of the L1_PHYSICALINTERFACE module. P10 is defined in design/cross-module.md.
  */
 
 /***********************************************************************/

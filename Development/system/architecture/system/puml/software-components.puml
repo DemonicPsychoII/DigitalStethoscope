@@ -7,14 +7,6 @@ skinparam defaultFontColor #e6edf7
 skinparam ArrowColor #a9b8ca
 skinparam component {
  FontColor #0b1018
- BackgroundColor<<optional>> #273241
- BorderColor<<optional>> #61738a
- FontColor<<optional>> #b8c4d4
-}
-skinparam artifact {
- BackgroundColor<<optional>> #273241
- BorderColor<<optional>> #61738a
- FontColor<<optional>> #b8c4d4
 }
 skinparam componentStyle rectangle
 skinparam defaultFontName SansSerif
