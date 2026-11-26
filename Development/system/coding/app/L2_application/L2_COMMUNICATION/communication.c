@@ -690,7 +690,7 @@ int communication_postEvent(enum communication_event event)
         break;
 
     default:
-        result = -EINVAL; /**< Invalid argument or unsupported input. */
+        result = -EINVAL;
         break;
     }
 
@@ -731,15 +731,15 @@ int communication_submitDelivery(const struct communication_delivery *delivery, 
 
         if(communication_DeliveryIsPending)
         {
-            result = -EBUSY; /**< One job at a time, no queue. */
+            result = -EBUSY;
         }
         else if(!communication_WiFiIsConfigured)
         {
-            result = -ENOENT; /**< Offline use: nothing is sent and nothing kept. */
+            result = -ENOENT;
         }
         else if(!communication_DeliveryIsPossible)
         {
-            result = -ENODEV; /**< DELIVERY_NOT_POSSIBLE. */
+            result = -ENODEV;
         }
         else
         {
@@ -874,7 +874,7 @@ static void communication_connectAtBoot(void)
         /* A damaged record must not reach the connect request. */
         (void)memset(&communication_StoredNetwork, 0, sizeof(communication_StoredNetwork));
 
-        result = -EINVAL; /**< Invalid argument or unsupported input. */
+        result = -EINVAL;
     }
 
     if(result != 0)
@@ -883,7 +883,7 @@ static void communication_connectAtBoot(void)
         communication_StoredNetworkIsValid = false;
         communication_publishDeliveryPrerequisites();
 
-        if(result != -ENOENT) /**< Requested record or network was not found. */
+        if(result != -ENOENT)
         {
             LOG_ERR("Stored Wi-Fi network load failed (%d)", result);
         }
@@ -902,7 +902,7 @@ static void communication_connectAtBoot(void)
         communication_BootJoinIsPending = true;
         communication_BootAttemptsUsed = 0;
         result = communication_connectToNetwork(&communication_StoredNetwork, COMMUNICATION_STORED_CONNECT_ATTEMPTS);
-        communication_BootJoinIsPending = (result == -ECANCELED); /**< Start interrupted the network workflow. */
+        communication_BootJoinIsPending = (result == -ECANCELED);
 
         if(result == 0)
         {
@@ -911,7 +911,7 @@ static void communication_connectAtBoot(void)
             communication_prepareTransportInIdle();
             communication_registerInIdle();
         }
-        else if(result == -ECANCELED) /**< Start interrupted the network workflow. */
+        else if(result == -ECANCELED)
         {
             communication_RecoveryIsAllowed = false;
         }
@@ -1021,13 +1021,13 @@ static void communication_recoverConnection(void)
         int result;
         if(communication_ListeningIsActive)
         {
-            result = -ECANCELED; /**< Start interrupted the network workflow. */
+            result = -ECANCELED;
         }
         else
         {
             result = communication_connectToNetwork(&communication_StoredNetwork, remainingAttempts);
         }
-        communication_BootJoinIsPending = (result == -ECANCELED); /**< Start interrupted the network workflow. */
+        communication_BootJoinIsPending = (result == -ECANCELED);
         if(result == 0)
         {
             LOG_INF("Wi-Fi connected");
@@ -1035,7 +1035,7 @@ static void communication_recoverConnection(void)
             communication_prepareTransportInIdle();
             communication_registerInIdle();
         }
-        else if(result != -ECANCELED) /**< Start interrupted the network workflow. */
+        else if(result != -ECANCELED)
         {
             communication_RecoveryIsAllowed = false;
             LOG_ERR("JOIN_FAILURE (%d); hold the button 2 s for setup", result);
@@ -1065,7 +1065,7 @@ static void communication_recoverConnection(void)
             LOG_INF("Wi-Fi reconnected");
             communication_reportFeedback(FEEDBACK_WIFI_CONNECTED);
         }
-        else if(result != -ECANCELED) /**< Start interrupted the network workflow. */
+        else if(result != -ECANCELED)
         {
             LOG_ERR("RECONNECT_FAILURE (%d); opening setup", result);
             communication_reportFeedback(FEEDBACK_RECONNECT_FAILURE);
@@ -1087,29 +1087,29 @@ static int communication_prepareSecureConnection(k_timepoint_t deadline)
 
     if(communication_CleanupFaultIsLatched)
     {
-        return -ENETDOWN; /**< Network work is disabled until restart; no attempt issued. */
+        return -ENETDOWN;
     }
     if(communication_ListeningIsActive)
     {
-        return -ECANCELED; /**< CONTROL holds the lease for listening; no attempt issued. */
+        return -ECANCELED;
     }
 
     const bool isConnected = wifi_isConnected();
 
     if(!isConnected)
     {
-        return -ENOTCONN; /**< Station has no IPv4 address; no attempt issued. */
+        return -ENOTCONN;
     }
     if(communication_ServerProfileState != COMMUNICATION_SERVER_PROFILE_CONFIGURED)
     {
-        return -ENOENT; /**< No valid server profile image; no attempt issued. */
+        return -ENOENT;
     }
 
     const bool isDeadlineExpired = sys_timepoint_expired(deadline);
 
     if(isDeadlineExpired)
     {
-        return -ETIMEDOUT; /**< The containing setup has no budget left; no attempt issued. */
+        return -ETIMEDOUT;
     }
 
     /* A new setup must verify the server again before any request. */
@@ -1167,7 +1167,7 @@ static int communication_prepareSecureConnection(k_timepoint_t deadline)
                 (long long)utcSeconds,
                 (long long)communication_SecureServer.validFromUtcSeconds,
                 (long long)communication_SecureServer.validUntilUtcSeconds);
-        return -EACCES; /**< Certificate not valid at the prepared UTC time; no ClientHello sent. */
+        return -EACCES;
     }
 
     enum wifi_secure_connection_cause cause = WIFI_SECURE_CONNECTION_CAUSE_NONE;
@@ -1256,12 +1256,12 @@ static int communication_connectSecurely(k_timepoint_t deadline, enum wifi_secur
                 communication_PendingWork &= ~COMMUNICATION_WORK_SECURE_CONNECTION;
                 if(isInterrupted)
                 {
-                    result = -ECANCELED; /**< Start interrupted an issued attempt. */
+                    result = -ECANCELED;
                     *cause = WIFI_SECURE_CONNECTION_CAUSE_CANCELLED;
                 }
                 else
                 {
-                    result = -ETIMEDOUT; /**< Not verified within the setup budget. */
+                    result = -ETIMEDOUT;
                     *cause = WIFI_SECURE_CONNECTION_CAUSE_TIMEOUT;
                 }
             }
@@ -1772,7 +1772,7 @@ static int communication_attemptDelivery(k_timepoint_t deadline)
 
     if(isTerminal)
     {
-        result = -EPERM; /**< No server profile or a latched cleanup fault. */
+        result = -EPERM;
     }
     else if(setupResult != 0)
     {
@@ -1783,7 +1783,7 @@ static int communication_attemptDelivery(k_timepoint_t deadline)
     }
     else if(freezeResult != 0)
     {
-        result = -ENODATA; /**< No qualifying anchor maps the measurement end yet. */
+        result = -ENODATA;
     }
     else
     {
@@ -1793,15 +1793,15 @@ static int communication_attemptDelivery(k_timepoint_t deadline)
 
         if(exchangeResult == -ENOTCONN)
         {
-            result = -ENOTCONN; /**< Stale retained connection, found before any receipt. */
+            result = -ENOTCONN;
         }
         else if((exchangeResult == -ECANCELED) || communication_CleanupFaultIsLatched)
         {
-            result = -EPERM; /**< Start or a failed cancel ends the job. */
+            result = -EPERM;
         }
         else if(exchangeResult != 0)
         {
-            result = -EAGAIN; /**< Lost or incomplete receipt; the conditional identity makes a retry safe. */
+            result = -EAGAIN;
         }
         else
         {
@@ -1817,7 +1817,7 @@ static int communication_attemptDelivery(k_timepoint_t deadline)
             }
             else
             {
-                result = -EPERM; /**< 412, 501 or another non-success status. */
+                result = -EPERM;
             }
         }
 
@@ -1967,7 +1967,7 @@ static int communication_synchronizeTime(k_timepoint_t deadline)
 
     if(isExpiredBeforeStart)
     {
-        return -ETIMEDOUT; /**< The containing setup has no budget left; no attempt issued. */
+        return -ETIMEDOUT;
     }
 
     int result = 0;
@@ -1986,15 +1986,15 @@ static int communication_synchronizeTime(k_timepoint_t deadline)
 
     if(communication_CleanupFaultIsLatched)
     {
-        result = -ENETDOWN; /**< Network work is disabled until restart; no attempt issued. */
+        result = -ENETDOWN;
     }
     else if(communication_ListeningIsActive)
     {
-        result = -ECANCELED; /**< CONTROL holds the lease for listening; no attempt issued. */
+        result = -ECANCELED;
     }
     else if(!isConnected)
     {
-        result = -ENOTCONN; /**< Station has no IPv4 address; no attempt issued. */
+        result = -ENOTCONN;
     }
     else
     {
@@ -2050,11 +2050,11 @@ static int communication_synchronizeTime(k_timepoint_t deadline)
                     communication_PendingWork &= ~COMMUNICATION_WORK_TIME_SYNCHRONIZATION;
                     if(isInterrupted)
                     {
-                        result = -ECANCELED; /**< Start interrupted an issued attempt. */
+                        result = -ECANCELED;
                     }
                     else
                     {
-                        result = -ETIMEDOUT; /**< No sample within the attempt budget. */
+                        result = -ETIMEDOUT;
                     }
                 }
                 isPending = false;
@@ -2077,15 +2077,15 @@ static int communication_synchronizeTime(k_timepoint_t deadline)
             /* The lease is withdrawn only after this thread acknowledges Stopped, so applying now is still under it. */
             if(communication_ListeningIsActive)
             {
-                result = -ECANCELED; /**< Start arrived with the sample; discard it. */
+                result = -ECANCELED;
             }
             else if(isDeadlineExpired)
             {
-                result = -ETIMEDOUT; /**< Clock application shares the attempt budget. */
+                result = -ETIMEDOUT;
             }
             else if(sample.estimated_uncertainty_microseconds > COMMUNICATION_TIME_UNCERTAINTY_BUDGET_MICROSECONDS)
             {
-                result = -ERANGE; /**< Reported uncertainty exceeds the mapping budget; the exchange fails. */
+                result = -ERANGE;
             }
             else
             {
@@ -2109,11 +2109,11 @@ static int communication_mapMeasurementEndTime(uint64_t measurementEndMonotonicM
 {
     if(utcEnd == NULL)
     {
-        return -EINVAL; /**< Invalid argument or unsupported input. */
+        return -EINVAL;
     }
     if(!communication_AppliedTimeAnchorIsValid)
     {
-        return -ENODATA; /**< No applied anchor to map from. */
+        return -ENODATA;
     }
 
     const struct applied_time_anchor *anchor = &communication_AppliedTimeAnchor;
@@ -2123,7 +2123,7 @@ static int communication_mapMeasurementEndTime(uint64_t measurementEndMonotonicM
 
     if(distanceMicroseconds > COMMUNICATION_TIME_MAPPING_LIMIT_MICROSECONDS)
     {
-        return -ERANGE; /**< Drift since the anchor may exceed the 1 s maximum deviation. */
+        return -ERANGE;
     }
 
     const uint64_t distanceSeconds = distanceMicroseconds / USEC_PER_SEC;
@@ -2153,7 +2153,7 @@ static int communication_mapMeasurementEndTime(uint64_t measurementEndMonotonicM
 
         if(subtractedSeconds > seconds)
         {
-            return -ERANGE; /**< UTC before 1970 is not representable. */
+            return -ERANGE;
         }
         seconds -= subtractedSeconds;
     }
@@ -2162,7 +2162,7 @@ static int communication_mapMeasurementEndTime(uint64_t measurementEndMonotonicM
 
     if(seconds > largestTimeSeconds)
     {
-        return -ERANGE; /**< UTC is not representable as time_t. */
+        return -ERANGE;
     }
 
     utcEnd->tv_sec = (time_t)seconds;
@@ -2180,7 +2180,7 @@ static int communication_waitForCondition(enum communication_wait_target target,
     while(isWaiting)
     {
         result = communication_checkWaitTarget(target, deadline);
-        isWaiting = (result == -EAGAIN) && !sys_timepoint_expired(deadline); /**< Condition still pending and time left. */
+        isWaiting = (result == -EAGAIN) && !sys_timepoint_expired(deadline);
         if(isWaiting)
         {
             communication_pauseBeforeNextCheck(target, deadline);
@@ -2190,7 +2190,7 @@ static int communication_waitForCondition(enum communication_wait_target target,
     bool isRadioWait = (target == COMMUNICATION_WAIT_CONNECTION) || (target == COMMUNICATION_WAIT_SCAN_LIST); /**< Join or scan result from the radio. */
     if(isRadioWait && (result == -EAGAIN))
     {
-        result = -ETIMEDOUT; /**< No radio result arrived before the deadline. */
+        result = -ETIMEDOUT;
     }
 
     return result;
@@ -2198,7 +2198,7 @@ static int communication_waitForCondition(enum communication_wait_target target,
 
 static int communication_checkWaitTarget(enum communication_wait_target target, k_timepoint_t deadline)
 {
-    int result = -EAGAIN;                                                                                                                                  /**< Condition is still pending. */
+    int result = -EAGAIN;
     bool isStoppedByStart = (target == COMMUNICATION_WAIT_DELAY) || (target == COMMUNICATION_WAIT_CONNECTION) || (target == COMMUNICATION_WAIT_SCAN_LIST); /**< Start ends this wait early. */
 
     if(isStoppedByStart)
@@ -2209,7 +2209,7 @@ static int communication_checkWaitTarget(enum communication_wait_target target, 
 
     if(isStoppedByStart && communication_ListeningIsActive)
     {
-        result = -ECANCELED; /**< Start takes priority over the wait. */
+        result = -ECANCELED;
     }
     else
     {
@@ -2255,7 +2255,7 @@ static int communication_checkWaitTarget(enum communication_wait_target target, 
             break;
         }
         default:
-            result = -EINVAL; /**< Wait target is invalid. */
+            result = -EINVAL;
             break;
         }
     }
@@ -2355,7 +2355,7 @@ static bool communication_stopWiFiWork(void)
 
 static int communication_retry(int (*tryOnce)(const struct wifi_network *network), const struct wifi_network *network, int attempts, uint32_t workBit, const char *name)
 {
-    int result = -ETIMEDOUT; /**< Operation exceeded its wait deadline. */
+    int result = -ETIMEDOUT;
     int attempt = 0;
     bool isRetryDue = attempts > 0;
 
@@ -2365,7 +2365,7 @@ static int communication_retry(int (*tryOnce)(const struct wifi_network *network
 
         if(communication_ListeningIsActive)
         {
-            result = -ECANCELED; /**< Start interrupted the network workflow. */
+            result = -ECANCELED;
         }
         else
         {
@@ -2378,13 +2378,13 @@ static int communication_retry(int (*tryOnce)(const struct wifi_network *network
             result = tryOnce(network);
         }
 
-        if((result != 0) && (result != -ECANCELED)) /**< Start interrupted the network workflow. */
+        if((result != 0) && (result != -ECANCELED))
         {
             LOG_WRN("%s attempt %d/%d failed (%d)", name, attempt, attempts, result);
         }
 
         /* Do not start again while the driver may still work on the last attempt. */
-        isRetryDue = (result != 0) && (result != -ECANCELED) && ((communication_PendingWork & workBit) == 0U) && (attempt < attempts); /**< Start interrupted the network workflow. */
+        isRetryDue = (result != 0) && (result != -ECANCELED) && ((communication_PendingWork & workBit) == 0U) && (attempt < attempts);
 
         if(isRetryDue)
         {
@@ -2392,7 +2392,7 @@ static int communication_retry(int (*tryOnce)(const struct wifi_network *network
 
             if(communication_ListeningIsActive)
             {
-                result = -ECANCELED; /**< Start interrupted the network workflow. */
+                result = -ECANCELED;
                 isRetryDue = false;
             }
         }
@@ -2444,7 +2444,7 @@ static int communication_tryScan(const struct wifi_network *network)
         int cleanup = 0;
 
         /* Only an interrupted or timed-out scan can still run in the driver. */
-        if((result == -ECANCELED) || (result == -ETIMEDOUT)) /**< Operation was cancelled; Operation exceeded its wait deadline. */
+        if((result == -ECANCELED) || (result == -ETIMEDOUT))
         {
             cleanup = wifi_cancelScan();
         }
@@ -2505,7 +2505,7 @@ static void communication_runSetup(void)
     /* Scan before the hotspot opens, so the list is ready when the phone joins. */
     int result = communication_scanNetworks();
 
-    if((result != 0) && (result != -ECANCELED)) /**< Start interrupted the network workflow. */
+    if((result != 0) && (result != -ECANCELED))
     {
         LOG_ERR("SCAN_FAILURE (%d); hold the button 2 s to retry", result);
         communication_reportFeedback(FEEDBACK_SCAN_FAILURE);
@@ -2543,7 +2543,7 @@ static void communication_runSetup(void)
 
 static int communication_startService(uint32_t workBit, int (*start)(void))
 {
-    int result = -ECANCELED; /**< Start interrupted the network workflow. */
+    int result = -ECANCELED;
 
     (void)communication_waitForCondition(COMMUNICATION_WAIT_CONTROL_EVENT, K_NO_WAIT);
 
@@ -2578,7 +2578,7 @@ static int communication_openSetup(void)
         LOG_INF("Wi-Fi setup open: join the hotspot and open http://%s", WIFI_HOTSPOT_ADDRESS);
         communication_reportFeedback(FEEDBACK_PORTAL_OPEN);
     }
-    else if(result != -ECANCELED) /**< Start interrupted the network workflow. */
+    else if(result != -ECANCELED)
     {
         LOG_ERR("HOTSPOT_START_FAILURE (%d); hold the button 2 s to retry", result);
         communication_reportFeedback(FEEDBACK_HOTSPOT_START_FAILURE);
@@ -2675,7 +2675,7 @@ static enum communication_setup_result communication_handlePageRequest(int *erro
             outcome = COMMUNICATION_SETUP_CONNECTED;
         }
 
-        if((result != 0) && (result != -ECANCELED)) /**< Start interrupted the network workflow. */
+        if((result != 0) && (result != -ECANCELED))
         {
             /* Update the list; the page keeps showing the cause of the failed join. */
             result = communication_scanNetworks();
@@ -2687,12 +2687,12 @@ static enum communication_setup_result communication_handlePageRequest(int *erro
         break;
     }
 
-    if(result == -ECANCELED) /**< Start interrupted the network workflow. */
+    if(result == -ECANCELED)
     {
         outcome = COMMUNICATION_SETUP_INTERRUPTED;
     }
 
-    if((result != 0) && (result != -ECANCELED)) /**< Start interrupted the network workflow. */
+    if((result != 0) && (result != -ECANCELED))
     {
         /* Only a failed scan gets here; setup cannot continue without a list. */
         *error = result;
@@ -2709,9 +2709,9 @@ static int communication_handleConnectRequest(void)
 
     if(!isNetworkValid)
     {
-        portal_setStatus(PORTAL_STATUS_CONNECT_FAILED, -EINVAL); /**< Invalid argument or unsupported input. */
+        portal_setStatus(PORTAL_STATUS_CONNECT_FAILED, -EINVAL);
         (void)memset(network->password, 0, sizeof(network->password));
-        return -EINVAL; /**< Invalid argument or unsupported input. */
+        return -EINVAL;
     }
 
     LOG_INF("Wi-Fi setup: joining \"%s\"", network->name);
@@ -2729,7 +2729,7 @@ static int communication_handleConnectRequest(void)
     {
         communication_discardPageRequests();
 
-        if(result != -ECANCELED) /**< Start interrupted the network workflow. */
+        if(result != -ECANCELED)
         {
             LOG_WRN("Wi-Fi setup: join failed (%d)", result);
             communication_reportFeedback(FEEDBACK_PORTAL_OPEN);
