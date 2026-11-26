@@ -1,0 +1,31 @@
+# clang-tidy checks for clang_reports.py. The complexity threshold is 0 so every function gets
+# a score; the report compares scores with its own limit. The insecure-API check asks for the
+# C11 Annex K functions (memcpy_s), which picolibc does not provide.
+Checks: >
+  -*,
+  clang-analyzer-*,
+  -clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling,
+  bugprone-*,
+  -bugprone-easily-swappable-parameters,
+  cert-*,
+  misc-*,
+  -misc-include-cleaner,
+  concurrency-*,
+  performance-*,
+  readability-function-cognitive-complexity,
+  readability-identifier-naming
+WarningsAsErrors: ''
+HeaderFilterRegex: '.*/coding/app/.*'
+CheckOptions:
+  readability-function-cognitive-complexity.Threshold: 0
+  readability-function-cognitive-complexity.IgnoreMacros: true
+  readability-function-cognitive-complexity.DescribeBasicIncrements: false
+  # README naming rule: module_camelCase functions, module_PascalCase file-scope variables.
+  readability-identifier-naming.FunctionCase: camelBack
+  readability-identifier-naming.FunctionIgnoredRegexp: '^[a-z0-9]+_[a-z][A-Za-z0-9]*$'
+  readability-identifier-naming.GlobalVariableCase: CamelCase
+  readability-identifier-naming.GlobalVariableIgnoredRegexp: '^[a-z0-9]+_[A-Z][A-Za-z0-9]*$'
+  readability-identifier-naming.EnumConstantCase: UPPER_CASE
+  readability-identifier-naming.MacroDefinitionCase: UPPER_CASE
+  readability-identifier-naming.LocalVariableCase: camelBack
+  readability-identifier-naming.ParameterCase: camelBack

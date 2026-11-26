@@ -27,10 +27,14 @@ COMPONENT_HOST_SUITES = {
 }
 
 
-# The host batch also tests the server profile tool, and installs its dependencies from this file.
+# The host batch also tests the server profile tool, runs the clang reports with the fuzz
+# targets, and installs its dependencies from this file.
 HOST_TEST_INPUTS = (
     "Development/system/coding/app/tests/host/",
+    "Development/system/coding/app/tests/fuzz/",
     "Development/system/coding/tools/server-profile/",
+    "Development/system/testing/ci/clang_reports.py",
+    "Development/system/testing/ci/clang-tidy.yaml",
 )
 HOST_TEST_REQUIREMENTS = "Development/system/testing/ci/requirements-host.txt"
 # Toolchain pins and setup live with the production tools; CI imports and tests them.
@@ -114,6 +118,9 @@ def needs_build(paths: list[str], component: str) -> bool:
                     "host_coverage.py",
                     "manual_test_records.py",
                     "application_host_results.py",
+                    "clang_reports.py",
+                    "clang-tidy.yaml",
+                    "clang_report_comment.py",
                 }
                 or relative.endswith(".md")
             ):

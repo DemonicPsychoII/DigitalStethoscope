@@ -1,0 +1,2 @@
+# Seed inputs are raw protocol bytes; HTTP needs its CRLF line ends.
+corpus/** binary

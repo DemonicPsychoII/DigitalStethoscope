@@ -5,7 +5,8 @@ The stages run the same commands as .github/workflows/quality-gates.yml:
 
   static  verification identity, documentation, manual records, run_ci.py static
   unit    build tooling and merge-gate regression tests
-  host    application host scenarios with sanitizers, then production coverage
+  host    application host scenarios with sanitizers, then production coverage and
+          the clang reports (clang-tidy, complexity, MC/DC, fuzzing; information only)
   build   run_ci.py build --application, then the ELF path and build ID
 
 `--mode auto` runs a stage natively when this device has its toolchain and otherwise
@@ -281,6 +282,7 @@ def host_stage() -> None:
         ),
     )
     run_command([python, str(CI / "host_coverage.py"), str(coverage)])
+    run_command([python, str(CI / "clang_reports.py")], child_environment(extra))
 
 
 def provision_toolchain() -> None:

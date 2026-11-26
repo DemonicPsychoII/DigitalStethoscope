@@ -71,6 +71,17 @@ class SelectionTests(unittest.TestCase):
             ]
         )
 
+    def test_clang_report_inputs_select_the_host_suites_without_firmware(self):
+        for path in (
+            "Development/system/coding/app/tests/fuzz/fhir_fuzz_target.c",
+            CI + "clang_reports.py",
+            CI + "clang-tidy.yaml",
+        ):
+            selected = suites([path])
+            self.assertTrue(selected["application_host"], path)
+            self.assertFalse(selected["application"], path)
+        self.assertFalse(suites([CI + "clang_report_comment.py"])["application"])
+
     def test_l1_suites_select_the_shared_host_step(self):
         for component, suite in (("WIFI", "wifi"), ("PORTAL", "portal")):
             with patch(

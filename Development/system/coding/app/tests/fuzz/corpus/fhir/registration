@@ -1,0 +1,1 @@
+(https://fhir.example.org/r4/Device/7/_history/1{"resourceType":"Device","id":"7","identifier":[{"system":"urn:stethoscope:device","value":"stetho-A1B2C3D4E5F6"}]}
