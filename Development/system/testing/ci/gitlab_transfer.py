@@ -183,70 +183,130 @@ def content_findings(path: str, text: str) -> list[str]:
 OWN_TEXT_EXCLUDED = (SYSTEM + "references/", SYSTEM + "coding/third_party/")
 LEVEL_FOLDERS = (SYSTEM + "architecture/", SYSTEM + "design/")
 SELF_DESCRIPTION = re.compile(
-    r"\b[Tt]his (?:page|design|document|section|note|specification)\b|\b[Tt]hese notes\b|\b[Tt]he steps below\b"
+    r"\b[Tt]his (?:page|design|document|section|note|specification)\b|\b[Tt]hese notes\b|\b[Tt]he steps below\b",
+    re.I,
 )
 STATUS_WORD = re.compile(
     r"\bMVP\b|\b[Pp]rovisional\b|\b[Pp]roposed\b|\bfor now\b|\bTODO\b|\bFIXME\b"
 )
 STATUS_IN_NAME = re.compile(r"(?i)(?:^|[/_.-])mvp(?:[/_.-]|$)")
 LAYER_AS_ACTOR = re.compile(
-    r"\bL[0-4] (?:reads|owns|takes|decides|retains|compares|calls|keeps|reports|must|may)\b"
+    r"\bL[0-4] (?:reads|owns|takes|decides|retains|retries|compares|calls|keeps|reports|must|may)\b"
 )
 UNNAMED_PHONE = re.compile(r"(?<!operator's )\bthe phone\b")
 REPORTED_BUILD = re.compile(r"\b(?:configuration|build|firmware) (?:enables|sets)\b")
-LINK_INTO_CODE = re.compile(r"\]\([^)]*coding/[^)]*\)")
-MARKDOWN_LINK = re.compile(r"\[[^\]]*\]\([^)]*\)")
 REQUIREMENT_ID = re.compile(r"\bREQ-\d+\b")
-CONDITION_START = re.compile(r"\s*(?:\}\s*)?(?:else\s+)?(?:if|while)\s*\(")
+# Every form in which a page can link a requirement id: inline, by reference, or as an HTML anchor.
+LINKED_TEXT = re.compile(
+    r"\[[^\]]*\]\([^)]*\)|\[[^\]]*\]\[[^\]]*\]|<a\b[^>]*>.*?</a>", re.I
+)
+# The title of a cited work is the author's wording, not the project's.
+CITED_TITLE = re.compile(r"\*[^*\n]+\*|\"[^\"\n]+\"|\u201c[^\u201d\n]+\u201d")
+C_COMMENT_OR_LITERAL = re.compile(
+    r"/\*.*?\*/|//[^\n]*|\"(?:\\.|[^\"\\\n])*\"|'(?:\\.|[^'\\\n])*'", re.S
+)
+CONDITION_KEYWORD = re.compile(r"\b(?:if|while)\b")
 CALL = re.compile(r"\b([A-Za-z_]\w*)\s*\(")
+POINTER_CALL = re.compile(r"\(\s*\*\s*[A-Za-z_][\w.\->\[\]]*\s*\)\s*\(|\]\s*\(")
 # Keywords and compile-time macros that may stand in a condition.
 NOT_A_CALL = frozenset({"if", "while", "sizeof", "defined", "IS_ENABLED", "ARRAY_SIZE"})
+TABLE_DELIMITER = re.compile(r"^\s*\|?\s*:?-+:?\s*(?:\|\s*:?-+:?\s*)*\|?\s*$")
 
 
 def condition_findings(path: str, text: str) -> list[str]:
-    """Return the conditions of a C file that call a function instead of testing a named value."""
+    """Return the `if` and `while` conditions of a C file that call a function.
+
+    A condition tests a named value: the call stands on its own line before it. Comments and
+    literals are blanked first, and only the text between the parentheses of the condition is
+    read, wherever its opening parenthesis stands.
+    """
+    code = C_COMMENT_OR_LITERAL.sub(
+        lambda match: re.sub(r"[^\n]", " ", match.group(0)), text
+    )
     findings = []
-    lines = text.splitlines()
-    index = 0
-    while index < len(lines):
-        if CONDITION_START.match(lines[index]):
-            first = index
-            statement = lines[index]
-            while statement.count("(") > statement.count(")") and index + 1 < len(
-                lines
-            ):
-                index += 1
-                statement += lines[index]
-            calls = [
-                name
-                for name in CALL.findall(statement[statement.index("(") :])
-                if name not in NOT_A_CALL
-            ]
-            if calls:
-                findings.append(
-                    f"{path}:{first + 1}: condition calls a function: {', '.join(sorted(set(calls)))}"
-                )
-        index += 1
+    for keyword in CONDITION_KEYWORD.finditer(code):
+        opening = keyword.end()
+        while opening < len(code) and code[opening].isspace():
+            opening += 1
+        if opening >= len(code) or code[opening] != "(":
+            continue
+        depth = 0
+        closing = opening
+        for closing in range(opening, len(code)):
+            if code[closing] == "(":
+                depth += 1
+            elif code[closing] == ")":
+                depth -= 1
+                if depth == 0:
+                    break
+        condition = code[opening + 1 : closing]
+        calls = sorted(
+            {name for name in CALL.findall(condition) if name not in NOT_A_CALL}
+        )
+        if POINTER_CALL.search(condition):
+            calls.append("call through a pointer")
+        if calls:
+            line = code.count("\n", 0, keyword.start()) + 1
+            findings.append(
+                f"{path}:{line}: condition calls a function: {', '.join(calls)}"
+            )
     return findings
+
+
+def table_cells(line: str) -> int:
+    """Return the number of cells of a table row; a backslash escapes a pipe, a code span does not."""
+    row = line.strip()
+    if row.startswith("|"):
+        row = row[1:]
+    if row.endswith("|") and not row.endswith("\\|"):
+        row = row[:-1]
+    return len(re.split(r"(?<!\\)\|", row))
 
 
 def table_findings(path: str, text: str) -> list[str]:
     """Return the Markdown table rows whose number of cells differs from their header."""
     findings = []
-    header = None
+    lines = text.splitlines()
     in_code_block = False
-    for number, line in enumerate(text.splitlines(), start=1):
-        if line.lstrip().startswith("```"):
+    index = 0
+    while index < len(lines):
+        if lines[index].lstrip().startswith("```"):
             in_code_block = not in_code_block
-        if in_code_block or not line.lstrip().startswith("|"):
-            header = None
+        is_header = (
+            not in_code_block
+            and "|" in lines[index]
+            and index + 1 < len(lines)
+            and "-" in lines[index + 1]
+            and TABLE_DELIMITER.match(lines[index + 1]) is not None
+        )
+        if not is_header:
+            index += 1
             continue
-        cells = len(re.findall(r"(?<!\\)\|", re.sub(r"`[^`]*`", "", line))) - 1
-        if header is None:
-            header = cells
-        elif cells != header:
+        header = table_cells(lines[index])
+        row = index + 1
+        while row < len(lines) and lines[row].strip() and "|" in lines[row]:
+            cells = table_cells(lines[row])
+            if cells != header:
+                findings.append(
+                    f"{path}:{row + 1}: table row has {cells} cells, its header has {header}"
+                )
+            row += 1
+        index = row
+    return findings
+
+
+def code_link_findings(path: str, text: str) -> list[str]:
+    """Return the links of an architecture or design page that point into the code."""
+    suffix = posixpath.splitext(path)[1].lower()
+    findings = []
+    for number, raw in link_targets(text, suffix):
+        link = urlsplit(raw)
+        if link.scheme or link.netloc or not link.path:
+            continue
+        target = resolve(posixpath.dirname(path), link.path)
+        if target is not None and target.startswith(SYSTEM + "coding/"):
             findings.append(
-                f"{path}:{number}: table row has {cells} cells, its header has {header}"
+                f"{path}:{number}: link from architecture or design into the code: {raw}"
             )
     return findings
 
@@ -269,9 +329,6 @@ def review_findings(path: str, text: str) -> list[str]:
         rules.append(("page describes itself", SELF_DESCRIPTION.findall))
     if is_level_page:
         rules.append(("design reports the build", REPORTED_BUILD.findall))
-        rules.append(
-            ("link from architecture or design into the code", LINK_INTO_CODE.findall)
-        )
     # The architecture states what a layer does; design and code name the module.
     if (is_page and path.startswith(SYSTEM + "design/")) or is_code:
         rules.append(("layer named instead of the module", LAYER_AS_ACTOR.findall))
@@ -281,16 +338,27 @@ def review_findings(path: str, text: str) -> list[str]:
         rules.append(
             (
                 "requirement id without a link",
-                lambda line: REQUIREMENT_ID.findall(MARKDOWN_LINK.sub(" ", line)),
+                lambda line: REQUIREMENT_ID.findall(LINKED_TEXT.sub(" ", line)),
             )
         )
+    in_source_entry = False
     for number, line in enumerate(text.splitlines(), start=1):
+        # A source entry runs from its "[n]" marker to the next blank line; it quotes a title.
+        if not line.strip():
+            in_source_entry = False
+        elif re.match(r"\s*\[S?\d+\]\s", line):
+            in_source_entry = True
+        if in_source_entry:
+            continue
+        own_wording = CITED_TITLE.sub(" ", line) if is_page else line
         for name, offending in rules:
-            values = offending(line)
+            values = offending(own_wording)
             if values:
                 findings.append(
                     f"{path}:{number}: {name}: {', '.join(sorted(set(values)))}"
                 )
+    if is_level_page and suffix in (".md", ".html"):
+        findings.extend(code_link_findings(path, text))
     if suffix == ".md":
         findings.extend(table_findings(path, text))
     if suffix == ".c":

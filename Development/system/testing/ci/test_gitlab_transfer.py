@@ -62,6 +62,9 @@ class ContentTests(unittest.TestCase):
             DESIGN, "This design refines the architecture.", "page describes itself"
         )
         self.assert_review(
+            DESIGN, "This Design refines the architecture.", "page describes itself"
+        )
+        self.assert_review(
             DESIGN, "The steps below add the rules.", "page describes itself"
         )
         self.assert_review(DESIGN, "The MVP sends one result.", "status word")
@@ -69,60 +72,137 @@ class ContentTests(unittest.TestCase):
             DESIGN, "The configuration enables CONFIG_SNTP.", "design reports the build"
         )
         self.assert_review(
-            DESIGN, "See [storage](../../coding/app/storage.c).", "into the code"
+            DESIGN, "L2 decides the retry.", "layer named instead of the module"
         )
         self.assert_review(
-            DESIGN, "L2 decides the retry.", "layer named instead of the module"
+            DESIGN, "L2 retries the join.", "layer named instead of the module"
         )
         self.assert_review(
             DESIGN, "The hotspot waits for the phone.", "phone without its owner"
         )
         self.assert_review(DESIGN, "Covers REQ-09.", "requirement id without a link")
         self.assert_review(
-            DESIGN, "| a | b |\n|---|---|\n| 1 |", "table row has 1 cells"
-        )
-        self.assert_review(
             SYSTEM + "architecture/system/puml/mvp-session-state.puml",
             "@startuml",
             "file name",
         )
 
-    def test_review_findings_are_found_in_code(self):
+    def test_links_into_the_code_are_found_in_every_form(self):
+        expected = "into the code"
+        self.assert_review(
+            DESIGN, "See [storage](../../coding/app/storage.c).", expected
+        )
+        self.assert_review(
+            DESIGN, "See [storage][s].\n\n[s]: ../../coding/app/storage.c", expected
+        )
+        self.assert_review(
+            DESIGN, '<a href="../../coding/app/storage.c">storage</a>', expected
+        )
+        viewer = SYSTEM + "architecture/system/review.html"
+        self.assert_review(
+            viewer, '<a href="../../coding/app/README.md">app</a>', expected
+        )
+        public = "See [guide](https://example.org/secure-coding/rules.html) and [page](../secure-coding/notes.md)."
+        self.assertEqual(review_findings(DESIGN, public), [])
+
+    def test_requirement_ids_pass_in_every_link_form(self):
+        target = "../../requirements/system-requirements.md#req-09"
+        for linked in (
+            f"Covers [REQ-09]({target}).",
+            f"Covers [REQ-09][r9].\n\n[r9]: {target}",
+            f'Covers <a href="{target}">REQ-09</a>.',
+        ):
+            self.assertEqual(review_findings(DESIGN, linked), [], linked)
+
+    def test_cited_titles_keep_their_wording(self):
+        page = (
+            'The rule follows *A Proposed Standard for the Phone* and "TODO lists considered harmful".\n'
+            "\n"
+            "[1] A. Author, Proposed changes to the phone: a TODO, 2020, accessed 1 November 2026.\n"
+        )
+        self.assertEqual(review_findings(DESIGN, page), [])
+        self.assert_review(DESIGN, "The proposed limit is 5 s.", "status word")
+
+    def test_table_rows_are_counted_as_markdown_counts_them(self):
+        expected = "table row has"
+        self.assert_review(
+            DESIGN, "| a | b |\n|---|---|\n| 1 |", "table row has 1 cells"
+        )
+        self.assert_review(
+            DESIGN, "a | b\n--- | ---\n1 | 2 | 3", "table row has 3 cells"
+        )
+        # A code span does not protect a pipe; an escaped pipe is text.
+        self.assert_review(
+            DESIGN, "| a | b |\n|---|---|\n| `x|y` | 2 |", "table row has 3 cells"
+        )
+        for valid in (
+            "| a | b |\n|---|---|\n| 1 | 2 |",
+            "| a | b\n|---|---\n| 1 | 2",
+            "a | b\n:-- | --:\n1 | 2",
+            "| a | b |\n|---|---|\n| `x\\|y` | 2 |",
+            "```\n| a | b |\n|---|---|\n| 1 |\n```",
+            "A sentence with a | pipe.\n\nAnother line.",
+        ):
+            self.assertFalse(
+                any(expected in finding for finding in review_findings(DESIGN, valid)),
+                valid,
+            )
+
+    def test_conditions_that_call_a_function_are_found(self):
         source = SYSTEM + "coding/app/L1_services/L1_STORAGE/storage.c"
+        expected = "condition calls a function"
         self.assert_review(
             source,
             "    if(sys_get_le32(bytes) != checksum)",
-            "condition calls a function: sys_get_le32",
+            expected + ": sys_get_le32",
         )
         self.assert_review(
             source,
             "    while((result == 0) &&\n          storage_hasNext(reader))",
             "storage_hasNext",
         )
-        self.assert_review(source, "/* TODO check the length. */", "status word")
+        self.assert_review(
+            source, "    if\n    (storage_isReady())\n    {", "storage_isReady"
+        )
+        self.assert_review(source, "    else if(storage_isReady())", "storage_isReady")
+        self.assert_review(
+            source, "    do { x++; } while(storage_hasNext(reader));", "storage_hasNext"
+        )
+        self.assert_review(source, "    if((*handler)(code))", "call through a pointer")
+        self.assert_review(
+            source, "    if(handlers[index](code))", "call through a pointer"
+        )
+        self.assert_review(source, "    if(isReady) /* TODO check */", "status word")
         self.assert_review(
             source, "/* L1 compares by itself. */", "layer named instead of the module"
         )
 
-    def test_plain_text_and_code_pass_the_review_rules(self):
+    def test_conditions_that_test_named_values_pass(self):
+        source = SYSTEM + "coding/app/L1_services/L1_STORAGE/storage.c"
+        for valid in (
+            "    const bool isMatch = (sys_get_le32(bytes) == checksum);\n    if(isMatch)",
+            "    if(isMatch && IS_ENABLED(CONFIG_X) && (length < sizeof(buffer)))",
+            "    if((size_t)(length) > limit)",
+            "    if(isReady) { storage_close(reader); }",
+            "    if(isReady) /* storage_close(reader) runs later */",
+            "    if(isReady) // see storage_close(reader)",
+            '    if(isReady) { LOG_INF("call(%d)", value); }',
+            "    while(index < count)\n    {\n        storage_read(reader);\n    }",
+            "    notify(isReady);",
+        ):
+            self.assertEqual(review_findings(source, valid), [], valid)
+
+    def test_plain_text_passes_the_review_rules(self):
         page = (
             "SNTP synchronization refines the architecture under "
             "[REQ-09](../../requirements/system-requirements.md#req-09).\n"
-            "L0 is Zephyr. The operator's phone joins the hotspot.\n"
+            "The operator's phone joins the hotspot.\n"
             "`CONFIG_SNTP_UNCERTAINTY` must be enabled.\n"
-            "| a | b |\n|---|---|\n| `x|y` | 2 |\n"
         )
         self.assertEqual(review_findings(DESIGN, page), [])
-        source = (
-            "    const bool isMatch = (sys_get_le32(bytes) == checksum);\n"
-            "    if(isMatch && IS_ENABLED(CONFIG_X) && (length < sizeof(buffer)))\n"
-            "    for(;;)\n"
-        )
+        architecture = SYSTEM + "architecture/system/firmware-structure.md"
         self.assertEqual(
-            review_findings(
-                SYSTEM + "coding/app/L1_services/L1_STORAGE/storage.c", source
-            ),
-            [],
+            review_findings(architecture, "L2 owns orchestration. L0 is Zephyr."), []
         )
         requirements = "REQ-09 The device delivers the result."
         self.assertEqual(
