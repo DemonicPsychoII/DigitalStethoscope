@@ -864,6 +864,24 @@ def test_idle_connection_closes_at_the_device_keep_alive(simulate, record_proper
     assert 0 <= trace.times("tls_close")[0] - device_keep_alive_end <= EVENT_CHECK
 
 
+def test_exchange_restarts_the_device_keep_alive(simulate, record_property):
+    evidence(
+        record_property,
+        "server keep-alive 60 s, one delivery 30 s after the handshake",
+        TRANSPORT + "preparation-listening-and-recovery (step 7); P26-KEEPALIVE",
+        "retained connection closed 55 s after the response, not 55 s after its handshake",
+    )
+    submit = BOOT_HANDSHAKE + 30_000
+    trace = simulate(
+        "server_keep_alive 60\n" + plan("exchange", [201]), until=100_000, submit=submit
+    )
+    assert trace.last("delivery_outcome") == DELIVERED
+    assert trace.count("tls") == 1
+    device_keep_alive_end = trace.times("exchange_result")[0] + 60_000 - KEEP_ALIVE_MARGIN
+    assert trace.count("tls_close") == 1
+    assert 0 <= trace.times("tls_close")[0] - device_keep_alive_end <= EVENT_CHECK
+
+
 @pytest.mark.parametrize(
     "offset, reused",
     [

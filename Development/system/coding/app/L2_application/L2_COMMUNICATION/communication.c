@@ -225,6 +225,7 @@ static struct wifi_secure_server communication_SecureServer;                    
 static bool communication_TransportIsVerified;                                     /**< The last handshake verified the server with the clock of its own setup. */
 static bool communication_SecureConnectionIsRetained;                              /**< A verified connection stays open for reuse. */
 static k_timepoint_t communication_SecureConnectionIdleDeadline;                   /**< The retained connection is closed at this time. */
+static uint64_t communication_SecureConnectionAnchorLimitMicroseconds;             /**< P25-MAPPING: monotonic time until which the clock anchor of the handshake qualifies for a delivery. */
 static k_timepoint_t communication_NextPreparationTime;                            /**< No Idle preparation before this time after a failed or interrupted attempt. */
 static bool communication_ServerConnectionFailureIsLatched;                        /**< SERVER_CONNECTION_FAILURE was logged in the current unavailable episode; it is logged once per episode. */
 
@@ -338,6 +339,21 @@ static void communication_latchCleanupFault(void);
 
 /** @brief Monotonic time since the retained clock anchor was applied, in microseconds. */
 static uint64_t communication_getAnchorAgeMicroseconds(void);
+
+/**
+ * @brief Start the idle time of the retained connection anew.
+ *
+ * The connection is closed after the device keep-alive timeout.
+ */
+static void communication_restartSecureConnectionIdleDeadline(void);
+
+/**
+ * @brief Get the time for which the retained connection may still be kept.
+ *
+ * @return Time until the earlier of the idle deadline and the clock anchor limit of the handshake;
+ *         K_NO_WAIT once either has passed.
+ */
+static k_timeout_t communication_getSecureConnectionRetainTimeout(void);
 
 /**
  * @brief Map a measurement-end monotonic timestamp using the retained time anchor.
@@ -1189,14 +1205,9 @@ static int communication_prepareSecureConnection(k_timepoint_t deadline)
     {
         communication_TransportIsVerified = true;
         communication_SecureConnectionIsRetained = true;
-
-        /* P26-KEEPALIVE; boot admits only server values above the margin. */
-        const uint64_t keepAliveMicroseconds = (uint64_t)(communication_ServerProfile.serverKeepAliveSeconds - COMMUNICATION_DEVICE_KEEP_ALIVE_MARGIN_S) * USEC_PER_SEC;
         /* P25-MAPPING: delivery reuses the connection only while the anchor of its handshake qualifies, so keep it no longer. */
-        const uint64_t anchorAgeMicroseconds = communication_getAnchorAgeMicroseconds();
-        const uint64_t anchorRemainingMicroseconds = (anchorAgeMicroseconds < COMMUNICATION_TIME_MAPPING_LIMIT_MICROSECONDS) ? (COMMUNICATION_TIME_MAPPING_LIMIT_MICROSECONDS - anchorAgeMicroseconds) : 0U;
-        const uint64_t retainMicroseconds = (keepAliveMicroseconds < anchorRemainingMicroseconds) ? keepAliveMicroseconds : anchorRemainingMicroseconds;
-        communication_SecureConnectionIdleDeadline = sys_timepoint_calc(K_MSEC((int64_t)(retainMicroseconds / USEC_PER_MSEC)));
+        communication_SecureConnectionAnchorLimitMicroseconds = communication_AppliedTimeAnchor.applied_monotonic_microseconds + COMMUNICATION_TIME_MAPPING_LIMIT_MICROSECONDS;
+        communication_restartSecureConnectionIdleDeadline();
     }
     else if(result != -ECANCELED)
     {
@@ -1333,7 +1344,7 @@ static void communication_closeIdleSecureConnection(void)
 
     if(communication_SecureConnectionIsRetained && !communication_ListeningIsActive)
     {
-        isIdleDeadlineExpired = sys_timepoint_expired(communication_SecureConnectionIdleDeadline);
+        isIdleDeadlineExpired = K_TIMEOUT_EQ(communication_getSecureConnectionRetainTimeout(), K_NO_WAIT);
     }
 
     if(!communication_SecureConnectionIsRetained || communication_ListeningIsActive || !isIdleDeadlineExpired)
@@ -1357,7 +1368,7 @@ static void communication_closeIdleSecureConnection(void)
 static bool communication_isRetainedConnectionReusable(void)
 {
     /* Listening defers the idle close, so a request right after Stop can find a connection past its keep-alive or clock limit. */
-    return (communication_SecureConnectionIsRetained && !sys_timepoint_expired(communication_SecureConnectionIdleDeadline));
+    return (communication_SecureConnectionIsRetained && !K_TIMEOUT_EQ(communication_getSecureConnectionRetainTimeout(), K_NO_WAIT));
 }
 
 static void communication_loadRegistration(void)
@@ -1564,6 +1575,24 @@ static int communication_saveRegistration(void)
     return result;
 }
 
+static void communication_restartSecureConnectionIdleDeadline(void)
+{
+    /* P26-KEEPALIVE; boot admits only server values above the margin. */
+    const uint64_t keepAliveMicroseconds = (uint64_t)(communication_ServerProfile.serverKeepAliveSeconds - COMMUNICATION_DEVICE_KEEP_ALIVE_MARGIN_S) * USEC_PER_SEC;
+
+    communication_SecureConnectionIdleDeadline = sys_timepoint_calc(K_MSEC((int64_t)(keepAliveMicroseconds / USEC_PER_MSEC)));
+}
+
+static k_timeout_t communication_getSecureConnectionRetainTimeout(void)
+{
+    const uint64_t nowMicroseconds = k_ticks_to_us_floor64((uint64_t)k_uptime_ticks());
+    const uint64_t anchorRemainingMicroseconds = (nowMicroseconds < communication_SecureConnectionAnchorLimitMicroseconds) ? (communication_SecureConnectionAnchorLimitMicroseconds - nowMicroseconds) : 0U;
+    const k_timeout_t untilAnchorLimit = K_MSEC((int64_t)(anchorRemainingMicroseconds / USEC_PER_MSEC));
+    const k_timeout_t untilIdleDeadline = sys_timepoint_timeout(communication_SecureConnectionIdleDeadline);
+
+    return (untilIdleDeadline.ticks < untilAnchorLimit.ticks) ? untilIdleDeadline : untilAnchorLimit;
+}
+
 static int communication_exchange(const struct wifi_http_request *request, k_timepoint_t deadline)
 {
     int result = wifi_startSecureExchange(request, &communication_Response, deadline);
@@ -1610,6 +1639,13 @@ static int communication_exchange(const struct wifi_http_request *request, k_tim
             /* Terminal completion: L1_WIFI kept the connection or has already released it. */
             communication_PendingWork &= ~COMMUNICATION_WORK_SECURE_CONNECTION;
             communication_SecureConnectionIsRetained = ((result == 0) && communication_Response.keepsConnection);
+
+            if(communication_SecureConnectionIsRetained)
+            {
+                /* The server counts its keep-alive from the end of this exchange. */
+                communication_restartSecureConnectionIdleDeadline();
+            }
+
             isPending = false;
         }
         else if(communication_ListeningIsActive || isDeadlineExpired)
@@ -1912,7 +1948,7 @@ static k_timeout_t communication_timeUntilTransportDuty(k_timeout_t limit)
 
     if(communication_SecureConnectionIsRetained)
     {
-        const k_timeout_t untilClose = sys_timepoint_timeout(communication_SecureConnectionIdleDeadline);
+        const k_timeout_t untilClose = communication_getSecureConnectionRetainTimeout();
         if(untilClose.ticks < timeout.ticks)
         {
             timeout = untilClose;
