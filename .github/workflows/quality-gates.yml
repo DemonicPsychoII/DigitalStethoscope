@@ -102,7 +102,9 @@ jobs:
     needs: plan
     if: always() && !cancelled() && (needs.plan.result != 'success' || needs.plan.outputs.daily != 'false')
     runs-on: homelab-stethoscope-static-${{ github.run_id }}-${{ github.run_attempt }}
-    timeout-minutes: 10
+    # The checks keep their 10 minutes; the clang reports add at most 3. The guest stops at
+    # 15 minutes, including about 1.5 minutes of startup.
+    timeout-minutes: 13
     env:
       APPLICATION: ${{ needs.plan.outputs.application }}
       APPLICATION_HOST: ${{ needs.plan.outputs.application_host }}
@@ -177,9 +179,9 @@ jobs:
         if: always() && !cancelled() && needs.plan.outputs.application_host == 'true'
         # The reports never decide the check; clang-report.yml posts them to the PR.
         continue-on-error: true
-        timeout-minutes: 5
+        timeout-minutes: 3
         env:
-          STETHO_FUZZ_SECONDS: '60'
+          STETHO_FUZZ_SECONDS: '30'
         run: python Development/system/testing/ci/clang_reports.py
       - name: Test the agent merge gate
         if: needs.plan.outputs.gate == 'true'

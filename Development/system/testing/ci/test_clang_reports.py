@@ -1,5 +1,6 @@
 """The clang reports keep production findings only and stay informational."""
 
+import json
 import unittest
 from unittest.mock import patch
 
@@ -135,6 +136,32 @@ class ClangReportTests(unittest.TestCase):
             results = clang_reports.fuzz("clang", 1)
         self.assertEqual([result["outcome"] for result in results], ["timed out"] * 2)
         self.assertEqual(len(calls), 4)
+
+    def test_comment_is_not_written_when_the_head_moved_during_the_download(self):
+        head = "a" * 40
+        calls = []
+
+        def fake_gh(*arguments, input_text=None):
+            calls.append(arguments)
+            if arguments[1].endswith("/pulls"):
+                return json.dumps(
+                    [{"number": 7, "state": "open", "head": {"sha": head}}]
+                )
+            return json.dumps({"head": {"sha": "b" * 40}})
+
+        environment = {
+            "GITHUB_REPOSITORY": "owner/repository",
+            "HEAD_SHA": head,
+            "RUN_ID": "1",
+            "RUN_ATTEMPT": "1",
+        }
+        with (
+            patch.dict(clang_report_comment.os.environ, environment),
+            patch.object(clang_report_comment, "gh", side_effect=fake_gh),
+            patch.object(clang_report_comment, "read_report", return_value="report"),
+        ):
+            clang_report_comment.main()
+        self.assertFalse(any("--method" in call for call in calls))
 
     def test_comment_is_found_only_when_written_by_the_workflow(self):
         comments = [

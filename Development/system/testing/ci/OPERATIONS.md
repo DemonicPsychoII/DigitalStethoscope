@@ -78,7 +78,7 @@ The compile commands of that run, recorded by `host_build.py` through
 patterns, the Clang Static Analyzer, the README naming rule and the cognitive complexity of
 every function, with Zephyr macros not counted. Only files that the host tests compile are
 checked. The libFuzzer targets in `coding/app/tests/fuzz/` then run with ASan and UBSan for
-`STETHO_FUZZ_SECONDS` each (default 60), starting from their seed corpus; a crash keeps its
+`STETHO_FUZZ_SECONDS` each (default 60, 30 in CI), starting from their seed corpus; a crash keeps its
 reproducer. The report, `clang.json` and the compile database remain in
 `artifacts/ci/clang/`. Without the Ubuntu packages `clang-18`, `clang-tidy-18`, `llvm-18`
 and `libclang-rt-18-dev` the report says that it did not run. `clang_report_comment.py`
