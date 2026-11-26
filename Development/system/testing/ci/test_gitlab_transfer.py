@@ -110,18 +110,39 @@ class ContentTests(unittest.TestCase):
         for linked in (
             f"Covers [REQ-09]({target}).",
             f"Covers [REQ-09][r9].\n\n[r9]: {target}",
+            f"Covers [REQ-09][].\n\n[REQ-09]: {target}",
+            f"Covers [REQ-09].\n\n[REQ-09]: {target}",
+            f"Covers [REQ-09\nand more]({target}).",
             f'Covers <a href="{target}">REQ-09</a>.',
+            f'Covers <a href="{target}"><code>REQ-09</code></a>.',
         ):
             self.assertEqual(review_findings(DESIGN, linked), [], linked)
 
+    def test_requirement_ids_need_a_real_link(self):
+        expected = "requirement id without a link"
+        self.assert_review(DESIGN, "Covers [REQ-09][missing].", expected)
+        self.assert_review(DESIGN, "Covers [REQ-09].", expected)
+        self.assert_review(DESIGN, '<a id="req-09">REQ-09</a>', expected)
+        self.assert_review(
+            DESIGN, "Covers REQ-09 and [REQ-10](x.md#req-10).", expected + ": REQ-09"
+        )
+
+    def test_a_link_to_the_code_folder_itself_is_found(self):
+        self.assert_review(DESIGN, "See the [code](../../coding/).", "into the code")
+        self.assert_review(DESIGN, "See the [code](../../coding).", "into the code")
+
     def test_cited_titles_keep_their_wording(self):
         page = (
-            'The rule follows *A Proposed Standard for the Phone* and "TODO lists considered harmful".\n'
+            'The rule follows *A Proposed Standard for the Phone* [3] and "TODO lists considered harmful" [4, section 2].\n'
             "\n"
             "[1] A. Author, Proposed changes to the phone: a TODO, 2020, accessed 1 November 2026.\n"
         )
         self.assertEqual(review_findings(DESIGN, page), [])
         self.assert_review(DESIGN, "The proposed limit is 5 s.", "status word")
+        self.assert_review(DESIGN, "The *proposed* limit is 5 s.", "status word")
+        self.assert_review(
+            DESIGN, "See *this page* for the limit.", "page describes itself"
+        )
 
     def test_table_rows_are_counted_as_markdown_counts_them(self):
         expected = "table row has"
@@ -130,6 +151,11 @@ class ContentTests(unittest.TestCase):
         )
         self.assert_review(
             DESIGN, "a | b\n--- | ---\n1 | 2 | 3", "table row has 3 cells"
+        )
+        self.assert_review(
+            DESIGN,
+            "| a | b |\n|---|---|\n| 1 | 2 |\nonly one cell",
+            "table row has 1 cells",
         )
         # A code span does not protect a pipe; an escaped pipe is text.
         self.assert_review(
@@ -140,7 +166,12 @@ class ContentTests(unittest.TestCase):
             "| a | b\n|---|---\n| 1 | 2",
             "a | b\n:-- | --:\n1 | 2",
             "| a | b |\n|---|---|\n| `x\\|y` | 2 |",
+            "| a \\| c | b |\n|---|---|\n| 1 | 2 |",
             "```\n| a | b |\n|---|---|\n| 1 |\n```",
+            "~~~\n| a | b |\n|---|---|\n| 1 |\n~~~",
+            "| a | b |\n|---|---|\n| 1 | 2 |\n\nA paragraph after the table.",
+            "| a | b |\n|---|---|\n| 1 | 2 |\n## Heading",
+            "A paragraph with a | pipe\n---\n\nText.",
             "A sentence with a | pipe.\n\nAnother line.",
         ):
             self.assertFalse(
@@ -168,6 +199,11 @@ class ContentTests(unittest.TestCase):
         self.assert_review(
             source, "    do { x++; } while(storage_hasNext(reader));", "storage_hasNext"
         )
+        self.assert_review(
+            source,
+            "#define DRAIN(reader) \\\n    while \\\n    (storage_hasNext(reader)) \\\n    { }",
+            "storage_hasNext",
+        )
         self.assert_review(source, "    if((*handler)(code))", "call through a pointer")
         self.assert_review(
             source, "    if(handlers[index](code))", "call through a pointer"
@@ -175,6 +211,11 @@ class ContentTests(unittest.TestCase):
         self.assert_review(source, "    if(isReady) /* TODO check */", "status word")
         self.assert_review(
             source, "/* L1 compares by itself. */", "layer named instead of the module"
+        )
+        third_line = review_findings(source, "int a;\r\nint b;\r\nif(call(a))\r\n")
+        self.assertTrue(
+            any(":3: condition calls a function" in finding for finding in third_line),
+            third_line,
         )
 
     def test_conditions_that_test_named_values_pass(self):
@@ -186,6 +227,7 @@ class ContentTests(unittest.TestCase):
             "    if(isReady) { storage_close(reader); }",
             "    if(isReady) /* storage_close(reader) runs later */",
             "    if(isReady) // see storage_close(reader)",
+            "    // a comment that continues \\\n    if(storage_isReady())\n    value = 1;",
             '    if(isReady) { LOG_INF("call(%d)", value); }',
             "    while(index < count)\n    {\n        storage_read(reader);\n    }",
             "    notify(isReady);",

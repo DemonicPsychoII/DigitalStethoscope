@@ -180,6 +180,9 @@ def content_findings(path: str, text: str) -> list[str]:
 
 
 # Findings of the supervisor's reviews that must not come back. Each rule names the files it reads.
+# The rules read text, not syntax trees. Known limits: `for` conditions, ternaries and conditions in
+# headers are not read; "The phone" at the start of a sentence is not reported; a call hidden behind a
+# function-like macro is reported under the macro's name.
 OWN_TEXT_EXCLUDED = (SYSTEM + "references/", SYSTEM + "coding/third_party/")
 LEVEL_FOLDERS = (SYSTEM + "architecture/", SYSTEM + "design/")
 SELF_DESCRIPTION = re.compile(
@@ -196,12 +199,15 @@ LAYER_AS_ACTOR = re.compile(
 UNNAMED_PHONE = re.compile(r"(?<!operator's )\bthe phone\b")
 REPORTED_BUILD = re.compile(r"\b(?:configuration|build|firmware) (?:enables|sets)\b")
 REQUIREMENT_ID = re.compile(r"\bREQ-\d+\b")
-# Every form in which a page can link a requirement id: inline, by reference, or as an HTML anchor.
-LINKED_TEXT = re.compile(
-    r"\[[^\]]*\]\([^)]*\)|\[[^\]]*\]\[[^\]]*\]|<a\b[^>]*>.*?</a>", re.I
-)
-# The title of a cited work is the author's wording, not the project's.
+INLINE_LINK = re.compile(r"\[[^\]]*\]\([^)]*\)", re.S)
+REFERENCE_LINK = re.compile(r"\[([^\]]*)\]\[([^\]]*)\]", re.S)
+SHORTCUT_LINK = re.compile(r"\[([^\]]+)\](?![\[(:])", re.S)
+REFERENCE_DEFINITION = re.compile(r"^\s{0,3}\[([^\]]+)\]:\s*\S", re.M)
+HTML_LINK = re.compile(r"<a\b[^>]*\bhref\s*=[^>]*>.*?</a>", re.I | re.S)
+# The title of a cited work is the author's wording. It counts as cited when its line carries the
+# number of its source entry.
 CITED_TITLE = re.compile(r"\*[^*\n]+\*|\"[^\"\n]+\"|\u201c[^\u201d\n]+\u201d")
+CITATION_MARKER = re.compile(r"\[S?\d+(?:[,\u2013-]\s*S?\d+)*(?:,[^\]]*)?\]")
 C_COMMENT_OR_LITERAL = re.compile(
     r"/\*.*?\*/|//[^\n]*|\"(?:\\.|[^\"\\\n])*\"|'(?:\\.|[^'\\\n])*'", re.S
 )
@@ -211,6 +217,9 @@ POINTER_CALL = re.compile(r"\(\s*\*\s*[A-Za-z_][\w.\->\[\]]*\s*\)\s*\(|\]\s*\(")
 # Keywords and compile-time macros that may stand in a condition.
 NOT_A_CALL = frozenset({"if", "while", "sizeof", "defined", "IS_ENABLED", "ARRAY_SIZE"})
 TABLE_DELIMITER = re.compile(r"^\s*\|?\s*:?-+:?\s*(?:\|\s*:?-+:?\s*)*\|?\s*$")
+CODE_FENCE = re.compile(r"^\s{0,3}(`{3,}|~{3,})")
+# A line that starts another block ends a table.
+BLOCK_START = re.compile(r"^\s{0,3}(?:#{1,6}\s|>|[-*+]\s|\d+[.)]\s|`{3,}|~{3,}|<)")
 
 
 def condition_findings(path: str, text: str) -> list[str]:
@@ -220,8 +229,10 @@ def condition_findings(path: str, text: str) -> list[str]:
     literals are blanked first, and only the text between the parentheses of the condition is
     read, wherever its opening parenthesis stands.
     """
+    # A backslash before the line end continues the line; "\r" keeps its place for the line count.
+    joined = text.replace("\r\n", "\n").replace("\\\n", " \r")
     code = C_COMMENT_OR_LITERAL.sub(
-        lambda match: re.sub(r"[^\n]", " ", match.group(0)), text
+        lambda match: re.sub(r"[^\n\r]", " ", match.group(0)), joined
     )
     findings = []
     for keyword in CONDITION_KEYWORD.finditer(code):
@@ -246,7 +257,8 @@ def condition_findings(path: str, text: str) -> list[str]:
         if POINTER_CALL.search(condition):
             calls.append("call through a pointer")
         if calls:
-            line = code.count("\n", 0, keyword.start()) + 1
+            before = code[: keyword.start()]
+            line = before.count("\n") + before.count("\r") + 1
             findings.append(
                 f"{path}:{line}: condition calls a function: {', '.join(calls)}"
             )
@@ -264,27 +276,41 @@ def table_cells(line: str) -> int:
 
 
 def table_findings(path: str, text: str) -> list[str]:
-    """Return the Markdown table rows whose number of cells differs from their header."""
+    """Return the Markdown table rows whose number of cells differs from their header.
+
+    A table starts with a header row and a delimiter row and ends at a blank line or at the start
+    of another block; every line in between is a row, with or without pipes.
+    """
     findings = []
     lines = text.splitlines()
-    in_code_block = False
+    fence = None
     index = 0
     while index < len(lines):
-        if lines[index].lstrip().startswith("```"):
-            in_code_block = not in_code_block
+        marker = CODE_FENCE.match(lines[index])
+        if marker and fence is None:
+            fence = marker.group(1)[0]
+        elif marker and marker.group(1)[0] == fence:
+            fence = None
         is_header = (
-            not in_code_block
+            fence is None
+            and not marker
             and "|" in lines[index]
             and index + 1 < len(lines)
             and "-" in lines[index + 1]
             and TABLE_DELIMITER.match(lines[index + 1]) is not None
+            # Header and delimiter row have the same number of cells; otherwise it is no table.
+            and table_cells(lines[index]) == table_cells(lines[index + 1])
         )
         if not is_header:
             index += 1
             continue
         header = table_cells(lines[index])
         row = index + 1
-        while row < len(lines) and lines[row].strip() and "|" in lines[row]:
+        while (
+            row < len(lines)
+            and lines[row].strip()
+            and not BLOCK_START.match(lines[row])
+        ):
             cells = table_cells(lines[row])
             if cells != header:
                 findings.append(
@@ -298,15 +324,59 @@ def table_findings(path: str, text: str) -> list[str]:
 def code_link_findings(path: str, text: str) -> list[str]:
     """Return the links of an architecture or design page that point into the code."""
     suffix = posixpath.splitext(path)[1].lower()
+    code_folder = SYSTEM + "coding"
     findings = []
     for number, raw in link_targets(text, suffix):
         link = urlsplit(raw)
         if link.scheme or link.netloc or not link.path:
             continue
         target = resolve(posixpath.dirname(path), link.path)
-        if target is not None and target.startswith(SYSTEM + "coding/"):
+        if target is not None and (
+            target == code_folder or target.startswith(code_folder + "/")
+        ):
             findings.append(
                 f"{path}:{number}: link from architecture or design into the code: {raw}"
+            )
+    return findings
+
+
+def requirement_findings(path: str, text: str) -> list[str]:
+    """Return the requirement ids of a page that are not the text of a link.
+
+    A link is an inline link, an HTML anchor with `href`, or a reference link whose label the
+    page defines; it may span lines.
+    """
+    defined = {
+        " ".join(label.split()).lower() for label in REFERENCE_DEFINITION.findall(text)
+    }
+
+    def blank(match: re.Match[str]) -> str:
+        return re.sub(r"[^\n]", " ", match.group(0))
+
+    def blank_reference(match: re.Match[str]) -> str:
+        label = (
+            match.group(2)
+            if match.lastindex == 2 and match.group(2)
+            else match.group(1)
+        )
+        return (
+            blank(match)
+            if " ".join(label.split()).lower() in defined
+            else match.group(0)
+        )
+
+    plain = HTML_LINK.sub(blank, INLINE_LINK.sub(blank, text))
+    plain = SHORTCUT_LINK.sub(
+        blank_reference, REFERENCE_LINK.sub(blank_reference, plain)
+    )
+    # The definition lines themselves are not prose.
+    plain = re.sub(r"(?m)^\s{0,3}\[[^\]]+\]:.*$", "", plain)
+    findings = []
+    for number, line in enumerate(plain.splitlines(), start=1):
+        values = REQUIREMENT_ID.findall(line)
+        if values:
+            findings.append(
+                f"{path}:{number}: requirement id without a link: {', '.join(sorted(set(values)))}"
             )
     return findings
 
@@ -334,13 +404,6 @@ def review_findings(path: str, text: str) -> list[str]:
         rules.append(("layer named instead of the module", LAYER_AS_ACTOR.findall))
     if is_level_page or is_code:
         rules.append(("phone without its owner", UNNAMED_PHONE.findall))
-    if is_level_page and suffix == ".md":
-        rules.append(
-            (
-                "requirement id without a link",
-                lambda line: REQUIREMENT_ID.findall(LINKED_TEXT.sub(" ", line)),
-            )
-        )
     in_source_entry = False
     for number, line in enumerate(text.splitlines(), start=1):
         # A source entry runs from its "[n]" marker to the next blank line; it quotes a title.
@@ -350,13 +413,16 @@ def review_findings(path: str, text: str) -> list[str]:
             in_source_entry = True
         if in_source_entry:
             continue
-        own_wording = CITED_TITLE.sub(" ", line) if is_page else line
+        cites = is_page and CITATION_MARKER.search(line) is not None
+        own_wording = CITED_TITLE.sub(" ", line) if cites else line
         for name, offending in rules:
             values = offending(own_wording)
             if values:
                 findings.append(
                     f"{path}:{number}: {name}: {', '.join(sorted(set(values)))}"
                 )
+    if is_level_page and suffix == ".md":
+        findings.extend(requirement_findings(path, text))
     if is_level_page and suffix in (".md", ".html"):
         findings.extend(code_link_findings(path, text))
     if suffix == ".md":
