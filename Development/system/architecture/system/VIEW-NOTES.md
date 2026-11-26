@@ -7,11 +7,11 @@ These notes define the scope and boundaries of the views in the [architecture vi
 | Architecture | [puml/architecture-choice.puml](puml/architecture-choice.puml) | Layers (L2 orchestrates, L1 adapts hardware or holds pure C libraries, L0 is Zephyr), RTOS workers and events. Task isolation is optional. A/B firmware is not included. |
 | System context | [puml/system-context.puml](puml/system-context.puml) | Device as a black box; the device initiates FHIR requests and receives status responses as the receipt. Test tooling is outside the normal-use view. |
 | System components | [puml/system-components.puml](puml/system-components.puml) | Hardware and external connections; ESP32 remains a black box. Networking is Wi-Fi plus HTTPS. |
-| Electrical interfaces | [puml/electrical-interfaces.puml](puml/electrical-interfaces.puml) | Hardware connection types and chip roles, plus optional interfaces marked grey. |
+| Electrical interfaces | [puml/electrical-interfaces.puml](puml/electrical-interfaces.puml) | Hardware connection types and chip roles. |
 | Software components | [puml/software-components.puml](puml/software-components.puml) | Firmware modules: L2 orchestration, L1 hardware adapters and pure C libraries, L0 Zephyr. Libraries include no Zephyr headers; MONITOR observes across layers. |
 | Input ownership | [puml/input-ownership.puml](puml/input-ownership.puml) | Contact handling in L1_PHYSICALINTERFACE, policy in L2_CONTROL, commanded effects. See [Input ownership](#input-ownership). |
-| Threads | [puml/runtime-ownership.puml](puml/runtime-ownership.puml) | Runtime workers, the modules they run and their interactions. Touch belongs to Input and the BPM worker belongs to `L2_AUDIO`. Original-rate blocks reach BPM before volume control, and BPM uses its own analysis filter independent of the listening switch. |
-| Listening | [puml/listening-workflow.puml](puml/listening-workflow.puml) | Selected filter or Raw bypass, volume, playback and optional bounded capture/replay. Heart can select Raw; optional Lung mode is Raw listening only. |
+| Threads | [puml/runtime-ownership.puml](puml/runtime-ownership.puml) | Runtime workers, the modules they run and their interactions. The BPM worker belongs to `L2_AUDIO`. Original-rate blocks reach BPM before volume control, and BPM uses its own analysis filter independent of the listening switch. |
+| Listening | [puml/listening-workflow.puml](puml/listening-workflow.puml) | Selected filter or Raw bypass, volume and playback. |
 | BPM measurement | [puml/measurement-workflow.puml](puml/measurement-workflow.puml) | Freeze measurement settings and acquire until Stop; cancel without sending below the minimum session length, otherwise finalize subject to quality/coverage. Aggregate after listening stops, then deliver the result or the error report. |
 
 ## Input ownership
@@ -37,15 +37,12 @@ headphone amplifier is outside the device boundary.
 
 - DSP algorithms are pure C libraries in L1 (`L1_FILTER`, `L1_BPM`).
 - Queues carry bounded events or buffer handles. BPM collects successive original-rate
-  blocks into its own analysis window; it never waits for an entire replay clip.
-- During replay, BPM continues receiving original-rate microphone audio.
+  blocks into its own analysis window.
 - Measurement and session timing is configurable.
 - FHIR result delivery is a device-initiated conditional create with bounded retries and receipt verification without readback. The [examination-request boundary](../COMMUNICATION/server-communication.md) is separate. Network work waits until listening stops.
 - The firmware runs on a single processor core.
 
 ## Diagram notation
 
-Display, touch, SD-card storage, clip capture with slower replay and Lung mode are optional.
-Grey elements carry an `optional` stereotype, and boxes combining core and optional functions mark
-the optional responsibilities in their labels. Component views use PlantUML component diagrams, and
+Component views use PlantUML component diagrams, and
 listening and measurement views use activity diagrams.

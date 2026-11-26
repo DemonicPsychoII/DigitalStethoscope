@@ -28,14 +28,12 @@ skinparam component {
  FontColor<<interrupt>> #0b1018
 }
 component "GPIO ISR" as irq <<interrupt>>
-component "L1_PHYSICALINTERFACE\nGPIO / ADC adapters\nTouch adapter (optional)" as adapters
-component "Input\nButtons / switches\nTouch (optional)" as inp <<thread>>
+component "L1_PHYSICALINTERFACE\nGPIO / ADC adapters" as adapters
+component "Input\nButtons / switches" as inp <<thread>>
 component "Shell\nL2_SHELL" as shell <<thread>>
 component "Main / controller\nL2_CONTROL" as ctl <<thread>>
-component "Audio · L2_AUDIO\nL1_I2S RX / TX, L1_FILTER\nCapture / slow replay (optional)" as audio <<thread>>
+component "Audio · L2_AUDIO\nL1_I2S RX / TX, L1_FILTER" as audio <<thread>>
 component "BPM worker · L2_AUDIO\nL1_FILTER, L1_BPM\nWindow / aggregation" as bpm <<thread>>
-component "Storage\nOptional thread" as storage <<optional>>
-component "Display\nOptional thread" as display <<optional>>
 component "Communication\nL2_COMMUNICATION\nL1_FHIR, L1_WIFI, L1_PORTAL,\nL1_STORAGE" as net <<thread>>
 irq --> inp : wake-up
 adapters --> inp : input samples
@@ -46,13 +44,6 @@ ctl --> audio : settings and commands
 audio --> bpm : original-rate sample blocks\nbefore filter and volume
 bpm --> ctl : BPM result
 audio --> ctl : completion and fault events
-ctl --> storage : file request
-storage --> audio : file audio blocks
-ctl --> display : display state
 ctl --> net : network lease and finalized BPM result
 net --> ctl : lease release and delivery outcome
-legend bottom
-  Grey = optional thread (storage and display).
-  Other boxes label their optional functions (touch, clip capture with slower replay).
-endlegend
 @enduml

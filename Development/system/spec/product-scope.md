@@ -58,7 +58,7 @@ evaluation computer, are external.
 | Wi-Fi setup | Phone browser | Open Wi-Fi hotspot of the device with a setup page |
 | Result delivery | FHIR server | Wi-Fi and HTTPS; the device checks the server certificate |
 | Time | Network time service | Time synchronization over Wi-Fi |
-| Serial log | Connected computer | Text log with the cause of each error |
+| Serial log | Connected computer | Text log with the cause of each error; the shell on the same port is a development aid, not an operator interface |
 
 Inside the device the parts connect to the microcontroller through these interface kinds:
 

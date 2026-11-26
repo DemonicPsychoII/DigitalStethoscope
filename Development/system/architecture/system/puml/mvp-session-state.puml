@@ -13,7 +13,7 @@ title Session and error transitions
 [*] --> Boot
 Boot --> Idle : software-observable startup checks pass
 Boot --> Muted : non-Wi-Fi startup check fails / Error, mute
-Idle --> Listening : Start, L2_AUDIO reports started / Heart or Lung (optional)
+Idle --> Listening : Start, L2_AUDIO reports started
 Idle --> Portal : long press, automatically when no Wi-Fi credentials are stored,\nor after exhausted link recovery / Idle network lease, scan then open hotspot
 Portal --> Idle : verified join and save (or save warning) / show result, close access point and portal server, retain station
 Portal --> Idle : cancel or inactivity / notice, teardown, retain station if connected
@@ -23,7 +23,6 @@ Listening --> Muted : audio fault / mute, block every input
 Listening --> Muted : manual Stop with a deferred halting fault / show error
 Measuring --> Muted : audio fault / mute, invalidate, block every input
 Measuring --> Muted : manual Stop with a deferred halting fault / discard result, show error
-Listening --> Idle : Stop in Lung (optional) / mute, no BPM or send
 Measuring --> Idle : Stop below minimum session length / cancel, no send
 Measuring --> Analysing : Stop at or above minimum session length / mute, finalize
 Analysing --> Sending : valid BPM + Wi-Fi configured + delivery prerequisites (Device id, server profile image)

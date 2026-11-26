@@ -23,27 +23,14 @@ left to right direction
 component "INMP441\nMic" as mic
 component "PCM5102A\nDAC" as dac
 node "ESP32-S3" as cpu
-component "ILI9341\nDisplay" as display <<optional>>
-component "XPT2046\nTouch" as touch <<optional>>
-artifact "SD card" as sd <<optional>>
-component "Shared SPI bus" as spi <<optional>>
 component "Button / switches" as controls
 component "Potentiometer" as pot
 component "Red button light" as buttonLight
 component "RGB status light" as statusLight
-component "Backlight" as backlight <<optional>>
 mic --> cpu : microphone I²S link
 cpu --> dac : DAC I²S link
-cpu -- spi : SPI
-spi -- display
-spi -- touch
-spi -- sd
 controls --> cpu : GPIO
 pot --> cpu : ADC
 cpu --> buttonLight : GPIO
 cpu --> statusLight : WS2812 data line
-cpu --> backlight : PWM
-legend bottom
-  Grey elements are optional.
-endlegend
 @enduml

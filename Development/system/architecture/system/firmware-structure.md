@@ -15,7 +15,8 @@ Each module belongs to one layer with defined inputs, outputs and ownership. Zep
   `L1_BPM`, `L1_FHIR`. They hold no shared state; each caller owns its instances.
 - **L2 orchestrates:** `L2_CONTROL`, `L2_AUDIO`, `L2_COMMUNICATION`, `L2_SHELL`. Only `L2_CONTROL`
   writes mode state. The other L2 modules receive commands or snapshots from `L2_CONTROL` and report
-  back through events; `L2_SHELL` reaches services only through `L2_CONTROL`. The setup page is the
+  back through events; `L2_SHELL` reaches services only through `L2_CONTROL`. `L2_SHELL` is a development
+  aid on the serial port; the operator does not use it. The setup page is the
   exception: `L2_COMMUNICATION` owns the setup workflow and reads the page requests itself, while
   `L2_CONTROL` sends it the setup hold and listening start/stop.
 

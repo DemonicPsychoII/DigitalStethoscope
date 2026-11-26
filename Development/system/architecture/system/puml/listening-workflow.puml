@@ -15,24 +15,13 @@ start
 :Safely stop setup work; retain established station;
 :Start listening;
 repeat
- if (Lung mode (optional)?) then (yes)
-  :<color:#b8c4d4>Bypass filter (optional)</color>; <<#273241>>
- elseif (Raw selected?) then (yes)
+ if (Raw selected?) then (yes)
   :Bypass filter;
  else (no)
   :Apply selected filter;
  endif
  :Apply volume;
  :Play audio;
- if (Optional replay enabled + Heart mode + capture request?) then (yes)
-  :<color:#b8c4d4>Record + listen (optional)</color>; <<#273241>>
-  if (Cancelled / source or mode changed?) then (yes)
-   :<color:#b8c4d4>Discard clip (optional)</color>; <<#273241>>
-  else (clip full)
-   :<color:#b8c4d4>Replay clip at selected slower speed (optional)</color>; <<#273241>>
-   :<color:#b8c4d4>End / cancel (optional)</color>; <<#273241>>
-  endif
- endif
  :Update listening filter / volume;
  :Reject session identity changes;
  :If the session context changes: latch silently, keep listening;\nhalt after the manual Stop, restart required;
@@ -43,6 +32,5 @@ stop
 legend bottom
   Wi-Fi-only faults preserve functioning audio.
   Audio faults halt listening immediately; restart-required faults block Start until restart.
-  Grey = optional path (Lung mode and clip capture with slower replay).
 endlegend
 @enduml
