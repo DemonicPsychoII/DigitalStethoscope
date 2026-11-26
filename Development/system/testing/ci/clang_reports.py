@@ -11,7 +11,6 @@ step summary.
 
 from __future__ import annotations
 
-import html
 import json
 import os
 import re
@@ -297,18 +296,23 @@ def fuzz(clang: str, seconds: int) -> list[dict]:
         crashes = REPORT / "fuzz"
         crashes.mkdir(parents=True, exist_ok=True)
         started = time.monotonic()
-        completed = run(
-            [
-                str(executable),
-                f"-max_total_time={seconds}",
-                "-print_final_stats=1",
-                # The static CI guest has 1 GiB; libFuzzer's default limit is 2 GiB.
-                "-rss_limit_mb=512",
-                f"-artifact_prefix={crashes}/{name}-",
-                str(corpus),
-            ],
-            timeout=seconds + 300,
-        )
+        try:
+            completed = run(
+                [
+                    str(executable),
+                    f"-max_total_time={seconds}",
+                    "-print_final_stats=1",
+                    # The static CI guest has 1 GiB; libFuzzer's default limit is 2 GiB.
+                    "-rss_limit_mb=512",
+                    f"-artifact_prefix={crashes}/{name}-",
+                    str(corpus),
+                ],
+                timeout=seconds + 300,
+            )
+        except subprocess.TimeoutExpired:
+            result["elapsed"] = round(time.monotonic() - started)
+            result["outcome"] = "timed out"
+            continue
         log = completed.stdout + completed.stderr
         (REPORT / "fuzz" / f"{name}.log").write_text(log[-200_000:], "utf-8")
         result["elapsed"] = round(time.monotonic() - started)
@@ -332,52 +336,79 @@ def fuzz(clang: str, seconds: int) -> list[dict]:
 # Report
 
 
+def code(value: object, limit: int = 300) -> str:
+    """Show text from the results only as a code span: no Markdown, HTML, links or mentions."""
+    text = " ".join(str(value).split())[:limit]
+    text = text.replace("`", "'").replace("|", "/")
+    return f"`{text}`" if text else "–"
+
+
+def number(value: object) -> str:
+    return f"{value:,}" if isinstance(value, int) else "–"
+
+
 def percent(covered: int, count: int) -> str:
     return f"{100 * covered / count:.1f}%" if count else "–"
 
 
+def fraction(covered: object, count: object) -> str:
+    covered, count = int(covered), int(count)
+    return f"{covered}/{count} ({percent(covered, count)})"
+
+
+def location(entry: dict) -> str:
+    return code(f"{entry['file']}:{entry['line']}")
+
+
 def complexity_table(entries: list[dict], start: int) -> str:
     rows = "".join(
-        f"| {start + index} | `{entry['function']}` | `{entry['file']}:{entry['line']}` | "
-        f"{entry['score']}{' ⚠' if entry['score'] > COMPLEXITY_LIMIT else ''} |\n"
+        f"| {start + index} | {code(entry['function'])} | {location(entry)} | "
+        f"{int(entry['score'])}{' ⚠' if int(entry['score']) > COMPLEXITY_LIMIT else ''} |\n"
         for index, entry in enumerate(entries)
     )
     return "| # | Function | Location | Score |\n| ---: | --- | --- | ---: |\n" + rows
 
 
 def markdown(results: dict) -> str:
+    """Render the results; every text taken from them appears only as a code span.
+
+    The PR comment renders clang.json from a PR's evidence with this function from the
+    default branch, so the results are untrusted input here.
+    """
     text = [
         "### Clang reports (information only)\n",
-        f"{results['toolchain']}. No result here fails the check.\n",
+        f"Toolchain: {code(results.get('toolchain', ''))}. No result here fails the check.\n",
     ]
     if results.get("not_run"):
-        text.append(f"Not run: {results['not_run']}\n")
+        text.append(f"Not run: {code(results['not_run'])}\n")
         return "\n".join(text)
     suite = results.get("suite")
     if suite:
-        broken = suite["failures"] + suite["errors"]
+        broken = int(suite["failures"]) + int(suite["errors"])
         text.append(
-            f"The MC/DC build ran {suite['tests']} host tests"
+            f"The MC/DC build ran {int(suite['tests'])} host tests"
             + (f"; {broken} failed or errored under clang." if broken else ".")
             + "\n"
         )
+    errors = results.get("errors", {})
     for section in ("mcdc", "tidy", "fuzz"):
-        if section in results.get("errors", {}):
-            text.append(f"**{section}** did not run: {results['errors'][section]}\n")
+        if section in errors:
+            text.append(f"**{section}** did not run: {code(errors[section])}\n")
     tidy_results = results.get("tidy")
     if tidy_results:
         warnings = tidy_results["warnings"]
         counts = {}
         for warning in warnings:
             counts[warning["check"]] = counts.get(warning["check"], 0) + 1
+        failed = tidy_results["failed_units"]
         text.append("#### clang-tidy\n")
         text.append(
             f"{len(warnings)} warnings in production code, from "
-            f"{tidy_results['translation_units']} host translation units. Only files "
+            f"{int(tidy_results['translation_units'])} host translation units. Only files "
             "that the host tests compile are checked."
             + (
-                f" Not analysed because of compile errors: {', '.join(tidy_results['failed_units'])}."
-                if tidy_results["failed_units"]
+                f" Not analysed because of compile errors: {', '.join(map(code, failed))}."
+                if failed
                 else ""
             )
             + "\n"
@@ -385,11 +416,11 @@ def markdown(results: dict) -> str:
         if counts:
             text.append("| Check | Warnings |\n| --- | ---: |")
             text.extend(
-                f"| `{check}` | {count} |"
+                f"| {code(check)} | {count} |"
                 for check, count in sorted(counts.items(), key=lambda item: -item[1])
             )
             details = "\n".join(
-                f"- `{warning['file']}:{warning['line']}` {html.escape(warning['message'], quote=False)} (`{warning['check']}`)"
+                f"- {location(warning)} {code(warning['message'])} ({code(warning['check'])})"
                 for warning in warnings
             )
             text.append(
@@ -397,7 +428,7 @@ def markdown(results: dict) -> str:
             )
         ranked = tidy_results["complexity"]
         if ranked:
-            over = sum(entry["score"] > COMPLEXITY_LIMIT for entry in ranked)
+            over = sum(int(entry["score"]) > COMPLEXITY_LIMIT for entry in ranked)
             text.append("#### Cognitive complexity\n")
             text.append(
                 f"{len(ranked)} functions score 1 or more; {over} are above {COMPLEXITY_LIMIT} (⚠). "
@@ -423,39 +454,36 @@ def markdown(results: dict) -> str:
             cells = []
             for kind in totals:
                 values = kinds.get(kind, {"covered": 0, "count": 0})
-                totals[kind][0] += values["covered"]
-                totals[kind][1] += values["count"]
-                cells.append(
-                    f"{values['covered']}/{values['count']} ({percent(values['covered'], values['count'])})"
-                )
-            text.append(f"| `{name}` | {' | '.join(cells)} |")
+                totals[kind][0] += int(values["covered"])
+                totals[kind][1] += int(values["count"])
+                cells.append(fraction(values["covered"], values["count"]))
+            text.append(f"| {code(name)} | {' | '.join(cells)} |")
         cells = [
-            f"{covered}/{count} ({percent(covered, count)})"
-            for covered, count in totals.values()
+            f"**{fraction(covered, count)}**" for covered, count in totals.values()
         ]
-        text.append(f"| **Total** | {' | '.join(f'**{cell}**' for cell in cells)} |\n")
+        text.append(f"| **Total** | {' | '.join(cells)} |\n")
     fuzzing = results.get("fuzz")
     if fuzzing:
         text.append("#### Fuzzing (libFuzzer with ASan and UBSan)\n")
         text.append(
-            "| Target | Functions | Time | Inputs | Coverage | Result |\n| --- | --- | ---: | ---: | ---: | --- |"
+            "| Target | Functions | Time | Inputs | Coverage | Result |\n"
+            "| --- | --- | ---: | ---: | ---: | --- |"
         )
         for result in fuzzing:
-            inputs = result.get("inputs")
             text.append(
-                f"| `{result['target']}` | `{result['functions']}` | {result.get('elapsed', '–')} s | "
-                f"{f'{inputs:,}' if inputs is not None else '–'} | {result.get('coverage') or '–'} | "
-                f"{result['outcome']} |"
+                f"| {code(result['target'])} | {code(result['functions'])} | "
+                f"{number(result.get('elapsed'))} s | {number(result.get('inputs'))} | "
+                f"{number(result.get('coverage'))} | {code(result['outcome'])} |"
             )
         for result in fuzzing:
             if result.get("detail"):
                 reproducer = (
-                    f" Reproducer `{result['reproducer']}` is in the static evidence under `clang/fuzz/`."
+                    f" Reproducer {code(result['reproducer'])} is in the static evidence under `clang/fuzz/`."
                     if result.get("reproducer")
                     else ""
                 )
                 text.append(
-                    f"\n`{result['target']}`: {html.escape(result['detail'], quote=False)}{reproducer}"
+                    f"\n{code(result['target'])}: {code(result['detail'], 800)}{reproducer}"
                 )
         text.append("")
     return "\n".join(text)
@@ -485,7 +513,13 @@ def collect(seconds: int) -> dict:
     ):
         try:
             results[section] = action()
-        except (OSError, RuntimeError, ValueError, KeyError, IndexError) as error:
+        except (
+            OSError,
+            subprocess.SubprocessError,
+            RuntimeError,
+            ValueError,
+            KeyError,
+        ) as error:
             results["errors"][section] = str(error) or type(error).__name__
     return results
 

@@ -21,9 +21,11 @@ CheckOptions:
   readability-function-cognitive-complexity.IgnoreMacros: true
   readability-function-cognitive-complexity.DescribeBasicIncrements: false
   # README naming rule: module_camelCase functions, module_PascalCase file-scope variables.
-  readability-identifier-naming.FunctionCase: camelBack
+  # Names matching the rule are ignored; the case style UPPER_CASE, which no function or
+  # file-scope variable uses, reports every other name, including names without a prefix.
+  readability-identifier-naming.FunctionCase: UPPER_CASE
   readability-identifier-naming.FunctionIgnoredRegexp: '^[a-z0-9]+_[a-z][A-Za-z0-9]*$'
-  readability-identifier-naming.GlobalVariableCase: CamelCase
+  readability-identifier-naming.GlobalVariableCase: UPPER_CASE
   readability-identifier-naming.GlobalVariableIgnoredRegexp: '^[a-z0-9]+_[A-Z][A-Za-z0-9]*$'
   readability-identifier-naming.EnumConstantCase: UPPER_CASE
   readability-identifier-naming.MacroDefinitionCase: UPPER_CASE

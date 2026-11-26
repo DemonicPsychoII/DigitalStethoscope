@@ -72,6 +72,55 @@ class ClangReportTests(unittest.TestCase):
         self.assertIn("Not run:", report)
         self.assertIn("No result here fails the check", report)
 
+    def test_result_text_is_shown_only_as_code_spans(self):
+        hostile = "@owner [click](https://example.org) <b>x</b> ` | **bold**\nline"
+        results = {
+            "toolchain": hostile,
+            "errors": {"fuzz": hostile},
+            "tidy": {
+                "translation_units": 1,
+                "failed_units": [],
+                "warnings": [
+                    {
+                        "file": hostile,
+                        "line": 1,
+                        "column": 1,
+                        "check": hostile,
+                        "message": hostile,
+                    }
+                ],
+                "complexity": [
+                    {"function": hostile, "file": "f.c", "line": 2, "score": 3}
+                ],
+            },
+        }
+        report = clang_reports.markdown(results)
+        for line in report.splitlines():
+            outside = "".join(line.split("`")[0::2])
+            for forbidden in ("@owner", "](", "<b>", "**bold**"):
+                self.assertNotIn(forbidden, outside, line)
+        self.assertNotIn("\nline", report)
+
+    def test_fuzzer_timeout_is_reported_and_the_next_target_runs(self):
+        built = clang_reports.subprocess.CompletedProcess([], 0, "", "")
+        calls = []
+
+        def fake_run(argv, **options):
+            calls.append(argv[0])
+            if "timeout" in options:
+                raise clang_reports.subprocess.TimeoutExpired(argv, options["timeout"])
+            return built
+
+        with (
+            patch.object(clang_reports, "run", side_effect=fake_run),
+            patch.object(clang_reports.Path, "mkdir"),
+            patch.object(clang_reports.Path, "glob", return_value=[]),
+            patch.object(clang_reports.shutil, "copytree"),
+        ):
+            results = clang_reports.fuzz("clang", 1)
+        self.assertEqual([result["outcome"] for result in results], ["timed out"] * 2)
+        self.assertEqual(len(calls), 4)
+
     def test_comment_is_found_only_when_written_by_the_workflow(self):
         comments = [
             {

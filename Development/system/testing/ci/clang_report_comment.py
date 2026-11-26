@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Keep one comment per PR with the clang report of its latest verification run.
 
-Runs from the default branch after "Mandatory quality gates" completes. It reads
-clang/report.md from the run's static evidence and posts it to every open PR whose head is
-still the run's head; a PR without the report gets a note that the reports did not run.
+Runs from the default branch after "Mandatory quality gates" completes. It renders
+clang/clang.json from the run's static evidence with this branch's clang_reports.markdown,
+which shows every text from the results as a code span, and posts it to every open PR whose
+head is still the run's head; a PR without the results gets a note that the reports did not run.
 """
 
 from __future__ import annotations
@@ -14,6 +15,8 @@ import subprocess
 import tempfile
 from pathlib import Path
 
+import clang_reports
+
 MARKER = "<!-- clang-report -->"
 AUTHOR = "github-actions[bot]"
 MAXIMUM_BODY = 60_000
@@ -21,6 +24,10 @@ NOT_RUN = (
     "### Clang reports (information only)\n\n"
     "Not run: this verification run selected no application host tests, "
     "so clang-tidy, complexity, MC/DC and fuzzing did not run.\n"
+)
+UNREADABLE = (
+    "### Clang reports (information only)\n\n"
+    "The run's clang.json could not be read; see the static evidence of the run.\n"
 )
 
 
@@ -44,10 +51,16 @@ def read_report(run: str, attempt: str, repository: str) -> str | None:
             capture_output=True,
             text=True,
         )
-        report = Path(directory, "clang/report.md")
-        if downloaded.returncode or not report.is_file():
+        results = Path(directory, "clang/clang.json")
+        if downloaded.returncode or not results.is_file():
             return None
-        return report.read_text(encoding="utf-8", errors="replace")
+        # The PR's own code wrote the evidence, so only its data is used, never its Markdown.
+        try:
+            return clang_reports.markdown(
+                json.loads(results.read_text(encoding="utf-8"))
+            )
+        except (ValueError, TypeError, KeyError, AttributeError):
+            return UNREADABLE
 
 
 def body(report: str | None, head: str) -> str:
