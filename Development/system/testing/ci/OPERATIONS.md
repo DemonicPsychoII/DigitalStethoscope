@@ -218,6 +218,7 @@ The company GitLab repository receives the product only: `spec/`, `requirements/
 | --- | --- |
 | List the transferred files | `python Development/system/testing/ci/gitlab_transfer.py list` |
 | Check them | `python Development/system/testing/ci/gitlab_transfer.py check` |
+| Check the working tree with the same rules | `python Development/system/testing/ci/validate_docs.py` ("product rules"; part of the static stage) |
 | Write them into a new directory | `python Development/system/testing/ci/gitlab_transfer.py export <new-directory>` |
 
 `check` fails when a transferred file names a project member, carries a written date outside a source entry, a decision record, a ticket id, a chat or agent trace or a private network detail, links to a file that is not transferred, or is not UTF-8 text. `export` runs the check first and writes nothing while it fails. It needs a directory that does not exist yet and lies outside this repository, writes `Development/system/process/gitlab-readme.md` there as root `README.md` with its links rewritten for the root, and deletes or overwrites nothing. Copying the exported directory into a GitLab checkout is a separate step.

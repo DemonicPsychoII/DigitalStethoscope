@@ -10,6 +10,7 @@ from gitlab_transfer import (
     export,
     gitlab_readme,
     link_findings,
+    review_findings,
     transfer_set,
 )
 
@@ -55,6 +56,100 @@ class ContentTests(unittest.TestCase):
         self.assert_found("Created by X on behalf of Y.", "chat or agent trace")
         self.assert_found("Written with Claude-Fable-5.2.", "chat or agent trace")
         self.assert_found("[log](../../planning/README.md)", "not transferred")
+
+    def test_review_findings_are_found_in_pages(self):
+        self.assert_review(
+            DESIGN, "This design refines the architecture.", "page describes itself"
+        )
+        self.assert_review(
+            DESIGN, "The steps below add the rules.", "page describes itself"
+        )
+        self.assert_review(DESIGN, "The MVP sends one result.", "status word")
+        self.assert_review(
+            DESIGN, "The configuration enables CONFIG_SNTP.", "design reports the build"
+        )
+        self.assert_review(
+            DESIGN, "See [storage](../../coding/app/storage.c).", "into the code"
+        )
+        self.assert_review(
+            DESIGN, "L2 decides the retry.", "layer named instead of the module"
+        )
+        self.assert_review(
+            DESIGN, "The hotspot waits for the phone.", "phone without its owner"
+        )
+        self.assert_review(DESIGN, "Covers REQ-09.", "requirement id without a link")
+        self.assert_review(
+            DESIGN, "| a | b |\n|---|---|\n| 1 |", "table row has 1 cells"
+        )
+        self.assert_review(
+            SYSTEM + "architecture/system/puml/mvp-session-state.puml",
+            "@startuml",
+            "file name",
+        )
+
+    def test_review_findings_are_found_in_code(self):
+        source = SYSTEM + "coding/app/L1_services/L1_STORAGE/storage.c"
+        self.assert_review(
+            source,
+            "    if(sys_get_le32(bytes) != checksum)",
+            "condition calls a function: sys_get_le32",
+        )
+        self.assert_review(
+            source,
+            "    while((result == 0) &&\n          storage_hasNext(reader))",
+            "storage_hasNext",
+        )
+        self.assert_review(source, "/* TODO check the length. */", "status word")
+        self.assert_review(
+            source, "/* L1 compares by itself. */", "layer named instead of the module"
+        )
+
+    def test_plain_text_and_code_pass_the_review_rules(self):
+        page = (
+            "SNTP synchronization refines the architecture under "
+            "[REQ-09](../../requirements/system-requirements.md#req-09).\n"
+            "L0 is Zephyr. The operator's phone joins the hotspot.\n"
+            "`CONFIG_SNTP_UNCERTAINTY` must be enabled.\n"
+            "| a | b |\n|---|---|\n| `x|y` | 2 |\n"
+        )
+        self.assertEqual(review_findings(DESIGN, page), [])
+        source = (
+            "    const bool isMatch = (sys_get_le32(bytes) == checksum);\n"
+            "    if(isMatch && IS_ENABLED(CONFIG_X) && (length < sizeof(buffer)))\n"
+            "    for(;;)\n"
+        )
+        self.assertEqual(
+            review_findings(
+                SYSTEM + "coding/app/L1_services/L1_STORAGE/storage.c", source
+            ),
+            [],
+        )
+        requirements = "REQ-09 The device delivers the result."
+        self.assertEqual(
+            review_findings(
+                SYSTEM + "requirements/system-requirements.md", requirements
+            ),
+            [],
+        )
+
+    def test_third_party_and_reference_code_are_not_reviewed(self):
+        text = "/* TODO this page */\nif(call(x))"
+        self.assertEqual(
+            review_findings(SYSTEM + "coding/third_party/parser/http_parser.c", text),
+            [],
+        )
+        self.assertEqual(
+            review_findings(
+                SYSTEM + "references/newtec-pulsoxy/lib/FhirService.cpp", text
+            ),
+            [],
+        )
+
+    def assert_review(self, path, text, expected):
+        findings = review_findings(path, text)
+        self.assertTrue(
+            any(expected in finding for finding in findings), (text, findings)
+        )
 
     def test_dates_are_found_in_every_written_form(self):
         for text in (

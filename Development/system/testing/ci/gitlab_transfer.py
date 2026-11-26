@@ -4,7 +4,8 @@
 The GitLab repository holds the product: specification, requirements, architecture, design,
 code and the reference code. Both commands work on one committed snapshot, never on the
 working tree. `check` fails when a file of that snapshot carries what a product document must
-not carry or links to a file that is not transferred. `export` writes the checked snapshot
+not carry, repeats a finding of the supervisor's reviews or links to a file that is not
+transferred. The documentation check of the static stage runs the same rules on the working tree. `export` writes the checked snapshot
 into a new, empty directory. It changes nothing else: copying that directory into a GitLab
 checkout is a separate, reviewed step.
 """
@@ -178,6 +179,139 @@ def content_findings(path: str, text: str) -> list[str]:
     return findings
 
 
+# Findings of the supervisor's reviews that must not come back. Each rule names the files it reads.
+OWN_TEXT_EXCLUDED = (SYSTEM + "references/", SYSTEM + "coding/third_party/")
+LEVEL_FOLDERS = (SYSTEM + "architecture/", SYSTEM + "design/")
+SELF_DESCRIPTION = re.compile(
+    r"\b[Tt]his (?:page|design|document|section|note|specification)\b|\b[Tt]hese notes\b|\b[Tt]he steps below\b"
+)
+STATUS_WORD = re.compile(
+    r"\bMVP\b|\b[Pp]rovisional\b|\b[Pp]roposed\b|\bfor now\b|\bTODO\b|\bFIXME\b"
+)
+STATUS_IN_NAME = re.compile(r"(?i)(?:^|[/_.-])mvp(?:[/_.-]|$)")
+LAYER_AS_ACTOR = re.compile(
+    r"\bL[0-4] (?:reads|owns|takes|decides|retains|compares|calls|keeps|reports|must|may)\b"
+)
+UNNAMED_PHONE = re.compile(r"(?<!operator's )\bthe phone\b")
+REPORTED_BUILD = re.compile(r"\b(?:configuration|build|firmware) (?:enables|sets)\b")
+LINK_INTO_CODE = re.compile(r"\]\([^)]*coding/[^)]*\)")
+MARKDOWN_LINK = re.compile(r"\[[^\]]*\]\([^)]*\)")
+REQUIREMENT_ID = re.compile(r"\bREQ-\d+\b")
+CONDITION_START = re.compile(r"\s*(?:\}\s*)?(?:else\s+)?(?:if|while)\s*\(")
+CALL = re.compile(r"\b([A-Za-z_]\w*)\s*\(")
+# Keywords and compile-time macros that may stand in a condition.
+NOT_A_CALL = frozenset({"if", "while", "sizeof", "defined", "IS_ENABLED", "ARRAY_SIZE"})
+
+
+def condition_findings(path: str, text: str) -> list[str]:
+    """Return the conditions of a C file that call a function instead of testing a named value."""
+    findings = []
+    lines = text.splitlines()
+    index = 0
+    while index < len(lines):
+        if CONDITION_START.match(lines[index]):
+            first = index
+            statement = lines[index]
+            while statement.count("(") > statement.count(")") and index + 1 < len(
+                lines
+            ):
+                index += 1
+                statement += lines[index]
+            calls = [
+                name
+                for name in CALL.findall(statement[statement.index("(") :])
+                if name not in NOT_A_CALL
+            ]
+            if calls:
+                findings.append(
+                    f"{path}:{first + 1}: condition calls a function: {', '.join(sorted(set(calls)))}"
+                )
+        index += 1
+    return findings
+
+
+def table_findings(path: str, text: str) -> list[str]:
+    """Return the Markdown table rows whose number of cells differs from their header."""
+    findings = []
+    header = None
+    in_code_block = False
+    for number, line in enumerate(text.splitlines(), start=1):
+        if line.lstrip().startswith("```"):
+            in_code_block = not in_code_block
+        if in_code_block or not line.lstrip().startswith("|"):
+            header = None
+            continue
+        cells = len(re.findall(r"(?<!\\)\|", re.sub(r"`[^`]*`", "", line))) - 1
+        if header is None:
+            header = cells
+        elif cells != header:
+            findings.append(
+                f"{path}:{number}: table row has {cells} cells, its header has {header}"
+            )
+    return findings
+
+
+def review_findings(path: str, text: str) -> list[str]:
+    """Return the review findings of one file of the project's own text and code."""
+    if path.startswith(OWN_TEXT_EXCLUDED):
+        return []
+    findings = []
+    if STATUS_IN_NAME.search(path):
+        findings.append(f"{path}: status word in the file name")
+    suffix = posixpath.splitext(path)[1].lower()
+    is_page = suffix in (".md", ".puml") or (
+        suffix == ".html" and "/coding/" not in path
+    )
+    is_level_page = is_page and path.startswith(LEVEL_FOLDERS)
+    is_code = path.startswith(SYSTEM + "coding/") and suffix != ".md"
+    rules = [("status word", STATUS_WORD.findall)]
+    if is_page:
+        rules.append(("page describes itself", SELF_DESCRIPTION.findall))
+    if is_level_page:
+        rules.append(("design reports the build", REPORTED_BUILD.findall))
+        rules.append(
+            ("link from architecture or design into the code", LINK_INTO_CODE.findall)
+        )
+    # The architecture states what a layer does; design and code name the module.
+    if (is_page and path.startswith(SYSTEM + "design/")) or is_code:
+        rules.append(("layer named instead of the module", LAYER_AS_ACTOR.findall))
+    if is_level_page or is_code:
+        rules.append(("phone without its owner", UNNAMED_PHONE.findall))
+    if is_level_page and suffix == ".md":
+        rules.append(
+            (
+                "requirement id without a link",
+                lambda line: REQUIREMENT_ID.findall(MARKDOWN_LINK.sub(" ", line)),
+            )
+        )
+    for number, line in enumerate(text.splitlines(), start=1):
+        for name, offending in rules:
+            values = offending(line)
+            if values:
+                findings.append(
+                    f"{path}:{number}: {name}: {', '.join(sorted(set(values)))}"
+                )
+    if suffix == ".md":
+        findings.extend(table_findings(path, text))
+    if suffix == ".c":
+        findings.extend(condition_findings(path, text))
+    return findings
+
+
+def working_tree(root: Path = ROOT) -> dict[str, bytes]:
+    """Return the transferred files and the GitLab root page as they are on disk, path to content."""
+    listed = git(root, "ls-files", "-z").decode("utf-8")
+    tracked = [path for path in listed.split("\0") if path]
+    wanted = set(transfer_set(tracked))
+    if GITLAB_README_SOURCE in tracked:
+        wanted.add(GITLAB_README_SOURCE)
+    return {
+        path: (root / path).read_bytes()
+        for path in sorted(wanted)
+        if (root / path).is_file()
+    }
+
+
 def link_targets(text: str, suffix: str) -> list[tuple[int, str]]:
     """Return the link destinations of a Markdown or HTML file with their line numbers."""
     targets = []
@@ -269,6 +403,7 @@ def check(files: dict[str, bytes]) -> list[str]:
             findings.append(f"{path}: not UTF-8 text and not listed as a binary file")
             continue
         findings.extend(content_findings(path, text))
+        findings.extend(review_findings(path, text))
         if path == GITLAB_README_SOURCE:
             # The root page is checked as it is exported: rewritten, at the repository root.
             findings.extend(
