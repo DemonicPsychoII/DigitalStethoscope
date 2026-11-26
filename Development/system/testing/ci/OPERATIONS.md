@@ -83,7 +83,10 @@ reproducer. The report, `clang.json` and the compile database remain in
 `artifacts/ci/clang/`. Without the Ubuntu packages `clang-18`, `clang-tidy-18`, `llvm-18`
 and `libclang-rt-18-dev` the report says that it did not run. `clang_report_comment.py`
 reads the report from the static evidence of a verification run and keeps it as one comment on
-each open PR whose head is that run's head.
+each open PR whose head is that run's head. In CI, the reports run as the last host step of
+`Quality / Static Checks` with `continue-on-error`, and `clang-report.yml` runs the comment
+script from the default branch after each verification run of a same-repository PR. A PR whose
+run did not select the host batch gets a note that the reports did not run.
 
 `manual_test_records.py` validates completed JSON runs and reports the count in the
 job summary. An empty run directory explicitly means execution and Nico's sign-off

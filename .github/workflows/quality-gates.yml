@@ -173,6 +173,14 @@ jobs:
       - name: Report production line and branch coverage
         if: always() && !cancelled() && needs.plan.outputs.application_host == 'true'
         run: python Development/system/testing/ci/host_coverage.py artifacts/ci/host-coverage
+      - name: Report clang-tidy, complexity, MC/DC and fuzzing (information only)
+        if: always() && !cancelled() && needs.plan.outputs.application_host == 'true'
+        # The reports never decide the check; clang-report.yml posts them to the PR.
+        continue-on-error: true
+        timeout-minutes: 5
+        env:
+          STETHO_FUZZ_SECONDS: '60'
+        run: python Development/system/testing/ci/clang_reports.py
       - name: Test the agent merge gate
         if: needs.plan.outputs.gate == 'true'
         run: python -m unittest discover -s .github/agent-gate -v
