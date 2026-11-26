@@ -13,20 +13,6 @@ Use this skill only within the DigitalStethoscope repository.
 Repository placement defines discovery scope; the metadata records intent.
 Outside this project, stop without applying this workflow.
 
-## Explicit invocation only
-
-Stop here unless Nico explicitly invoked this skill for the current task by
-saying "stetho handoff", "stetho-handoff" or "$stetho-handoff". A prior explicit invocation
-continues to apply while its task is active. Quoted examples, discussion of
-the skill, relevant subject matter and references from other skills do not
-count as invocation. If not invoked, do not follow the workflow below;
-continue the user's task under the otherwise applicable instructions.
-
-References below to other stetho skills are suggested handoffs, not permission
-to activate them. Run another stetho skill only if Nico explicitly invoked
-that skill too. Otherwise describe the useful next step without making its
-invocation a prerequisite for completing already authorized work.
-
 Read AGENTS.md, Development/system/process/README.md and the evidence sections
 of Development/system/testing/ci/OPERATIONS.md. Paths are repository-root relative.
 Identify the component, stage, GitHub PRs, exact source revision and existing
