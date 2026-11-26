@@ -23,7 +23,7 @@ skinparam defaultFontName SansSerif
 title Threads and bounded handoffs: what happens when the receiver falls behind?
 top to bottom direction
 component "GPIO ISR" as irq <<interrupt>>
-component "Input\nL1_PHYSICALINTERFACE\nbuttons / switches / volume" as inp <<thread>>
+component "Input\nL1_PHYSICALINTERFACE\nbuttons / switches / volume\nsystem work queue" as inp <<thread>>
 component "Shell\nL2_SHELL" as shell <<thread>>
 component "Controller\nL2_CONTROL\nonly writer of mode state" as ctl <<thread>>
 component "Audio\nL2_AUDIO · L1_I2S, L1_FILTER" as audio <<thread>>
