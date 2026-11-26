@@ -81,7 +81,9 @@ checked. The libFuzzer targets in `coding/app/tests/fuzz/` then run with ASan an
 `STETHO_FUZZ_SECONDS` each (default 60), starting from their seed corpus; a crash keeps its
 reproducer. The report, `clang.json` and the compile database remain in
 `artifacts/ci/clang/`. Without the Ubuntu packages `clang-18`, `clang-tidy-18`, `llvm-18`
-and `libclang-rt-18-dev` the report says that it did not run.
+and `libclang-rt-18-dev` the report says that it did not run. `clang_report_comment.py`
+reads the report from the static evidence of a verification run and keeps it as one comment on
+each open PR whose head is that run's head.
 
 `manual_test_records.py` validates completed JSON runs and reports the count in the
 job summary. An empty run directory explicitly means execution and Nico's sign-off
