@@ -1,6 +1,6 @@
 # Firmware structure and runtime ownership
 
-The firmware consists of layered modules with defined ownership, a fixed set of threads and bounded hand-offs between them.
+The firmware consists of layered modules with defined ownership, a fixed set of threads and bounded hand-offs between them. Host execution uses injected data at the same service boundaries as target adapters.
 
 ## Static dependency and module map
 
