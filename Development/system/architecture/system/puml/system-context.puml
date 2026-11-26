@@ -30,15 +30,12 @@ database "FHIR server" as fhir
 cloud "Network / time" as net
 source --> device : sound
 operator --> device : controls
-device --> operator : audio / optional display
+device --> operator : audio
 device --> fhir : BPM Observation (Device;\npatient only from requested examination)\nWi-Fi / HTTPS
 fhir --> device : status (receipt)
 net --> device : connectivity / time
 phone --> device : Wi-Fi network + password\nhotspot page (Idle only)
 device --> fhir : Device registration\n(once, id kept in flash)
-legend bottom
-  The display is optional.
-endlegend
 note right of fhir
 A measurement includes a patient reference only when
 supplied with a server-requested examination.

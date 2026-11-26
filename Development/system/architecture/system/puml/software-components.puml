@@ -26,9 +26,7 @@ package "L2 Application (orchestration)" as app {
  component "L2_CONTROL\nsingle writer of mode state" as ctl
  component "L2_AUDIO\naudio path / BPM worker" as aud
  component "L2_COMMUNICATION\nsend path / portal" as com
- component "Display dashboard" as ui <<optional>>
  shell -[hidden]right-> ctl
- ctl -[hidden]right-> ui
 }
 package "L1 Services" as services {
  package "Hardware adapters" as adapters {
@@ -37,19 +35,15 @@ package "L1 Services" as services {
   component "L1_WIFI\nWi-Fi / TLS / time" as wifi
   component "L1_PORTAL\nsetup HTTP server" as portal
   component "L1_STORAGE\nsettings records" as storage
-  component "Display / touch / SD" as spi <<optional>>
   phy -[hidden]right-> i2s
   i2s -[hidden]right-> wifi
-  wifi -[hidden]right-> spi
  }
  package "Pure C libraries" as libs {
   component "L1_FILTER" as filter
   component "L1_BPM" as bpm
   component "L1_FHIR" as fhir
-  component "Replay (WSOLA)" as wsola <<optional>>
   filter -[hidden]right-> bpm
   bpm -[hidden]right-> fhir
-  fhir -[hidden]right-> wsola
  }
 }
 package "L0 Zephyr" as platform {
@@ -70,7 +64,4 @@ com -down-> storage : stored network
 adapters -down-> zephyr : driver calls
 mon -down-> ctl : health events
 mon ..> services : monitoring
-legend bottom
-  Grey elements are optional.
-endlegend
 @enduml

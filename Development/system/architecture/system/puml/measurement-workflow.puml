@@ -63,6 +63,5 @@ stop
 legend bottom
   Wi-Fi-only failures preserve functioning audio.
   Streaming BPM requires no saved raw-session audio.
-  Lung mode (optional) is listening only, without measurement, delivery or error report.
 endlegend
 @enduml

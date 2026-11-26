@@ -17,8 +17,6 @@ document their scope, hardware naming and runtime assumptions.
 | BPM measurement | [puml/measurement-workflow.puml](puml/measurement-workflow.puml) | [SVG](rendered/measurement_workflow.svg) |
 | Server profile | [puml/server-profile.puml](puml/server-profile.puml) | [SVG](rendered/server_profile.svg) |
 
-Lung mode is optional; its paths are marked optional in the listening and session views.
-
 [Firmware structure and runtime ownership](firmware-structure.md) defines the layers and call directions, the ownership of each module, the threads, the hand-offs between them and the listening and network lease.
 
 [Feedback ground rules](feedback-principles.md) define indication ownership and fault containment.

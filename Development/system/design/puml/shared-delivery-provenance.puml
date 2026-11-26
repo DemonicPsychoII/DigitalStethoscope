@@ -8,7 +8,7 @@ skinparam ArrowColor #a9b8ca
 skinparam defaultFontName SansSerif
 title Where is each Observation input frozen?
 top to bottom direction
-rectangle "Mutable inputs (live state)\nswitch / filter, Heart / Lung, point, configuration,\npending examination request, server Device id,\nSNTP clock anchors, BPM estimates" as live
+rectangle "Mutable inputs (live state)\nswitch / filter, point, configuration,\npending examination request, server Device id,\nSNTP clock anchors, BPM estimates" as live
 rectangle "Session admission (accepted Start)\ncopy point, configuration, filter IDs,\nexamination identity / supplied patient reference" as admission
 rectangle "Finalized result (Finalizing): frozen context + this session's estimates\nkind: heart rate or poor-signal report,\nBPM value + declared precision,\nmonotonic measurement end" as result
 rectangle "Admitted job: L2_CONTROL submits the finalized result\ncopy of the result; freeze server Device id;\nfreeze UTC measurement end if a qualifying\nanchor already maps it (dashed: read once from live state)" as job
