@@ -143,6 +143,18 @@ class ContentTests(unittest.TestCase):
         self.assert_review(
             DESIGN, "See *this page* for the limit.", "page describes itself"
         )
+        # A citation in another cell or sentence of the line does not cover the span.
+        self.assert_review(
+            DESIGN, "| The *proposed* limit | Basis [S1] [S2] |", "status word"
+        )
+        self.assert_review(
+            DESIGN, "The *proposed* limit holds. The rule follows [3].", "status word"
+        )
+        self.assert_review(
+            DESIGN, "The rule follows [3]. The *proposed* limit holds.", "status word"
+        )
+        cited_cell = "| 5 s | From *A Proposed Standard*, clause 4 [S1] |"
+        self.assertEqual(review_findings(DESIGN, cited_cell), [])
 
     def test_table_rows_are_counted_as_markdown_counts_them(self):
         expected = "table row has"
