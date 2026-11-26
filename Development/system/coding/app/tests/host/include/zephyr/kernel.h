@@ -57,6 +57,10 @@ k_spinlock_key_t k_spin_lock(struct k_spinlock *);
 void k_spin_unlock(struct k_spinlock *, k_spinlock_key_t);
 int k_sleep(k_timeout_t);
 k_timepoint_t sys_timepoint_calc(k_timeout_t);
+static inline int sys_timepoint_cmp(k_timepoint_t first, k_timepoint_t second)
+{
+    return (first < second) ? -1 : ((first > second) ? 1 : 0);
+}
 bool sys_timepoint_expired(k_timepoint_t);
 k_timeout_t sys_timepoint_timeout(k_timepoint_t);
 

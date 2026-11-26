@@ -225,6 +225,7 @@ static struct wifi_secure_server communication_SecureServer;                    
 static bool communication_TransportIsVerified;                                     /**< The last handshake verified the server with the clock of its own setup. */
 static bool communication_SecureConnectionIsRetained;                              /**< A verified connection stays open for reuse. */
 static k_timepoint_t communication_SecureConnectionIdleDeadline;                   /**< The retained connection is closed at this time. */
+static k_timepoint_t communication_SecureConnectionAnchorDeadline;                 /**< P25-MAPPING: the clock anchor of the handshake qualifies for a delivery until this time. */
 static k_timepoint_t communication_NextPreparationTime;                            /**< No Idle preparation before this time after a failed or interrupted attempt. */
 static bool communication_ServerConnectionFailureIsLatched;                        /**< SERVER_CONNECTION_FAILURE was logged in the current unavailable episode; it is logged once per episode. */
 
@@ -342,8 +343,8 @@ static uint64_t communication_getAnchorAgeMicroseconds(void);
 /**
  * @brief Start the idle time of the retained connection anew.
  *
- * The connection is closed after the device keep-alive timeout, and no later than the clock anchor of
- * its handshake qualifies for a delivery.
+ * The connection is closed after the device keep-alive timeout, and no later than the anchor deadline
+ * that its handshake set.
  */
 static void communication_restartSecureConnectionIdleDeadline(void);
 
@@ -1197,6 +1198,12 @@ static int communication_prepareSecureConnection(k_timepoint_t deadline)
     {
         communication_TransportIsVerified = true;
         communication_SecureConnectionIsRetained = true;
+
+        /* P25-MAPPING: delivery reuses the connection only while the anchor of its handshake qualifies, so keep it no longer. */
+        const uint64_t anchorAgeMicroseconds = communication_getAnchorAgeMicroseconds();
+        const uint64_t anchorRemainingMicroseconds = (anchorAgeMicroseconds < COMMUNICATION_TIME_MAPPING_LIMIT_MICROSECONDS) ? (COMMUNICATION_TIME_MAPPING_LIMIT_MICROSECONDS - anchorAgeMicroseconds) : 0U;
+
+        communication_SecureConnectionAnchorDeadline = sys_timepoint_calc(K_MSEC((int64_t)(anchorRemainingMicroseconds / USEC_PER_MSEC)));
         communication_restartSecureConnectionIdleDeadline();
     }
     else if(result != -ECANCELED)
@@ -1569,12 +1576,9 @@ static void communication_restartSecureConnectionIdleDeadline(void)
 {
     /* P26-KEEPALIVE; boot admits only server values above the margin. */
     const uint64_t keepAliveMicroseconds = (uint64_t)(communication_ServerProfile.serverKeepAliveSeconds - COMMUNICATION_DEVICE_KEEP_ALIVE_MARGIN_S) * USEC_PER_SEC;
-    /* P25-MAPPING: delivery reuses the connection only while the anchor of its handshake qualifies, so keep it no longer. */
-    const uint64_t anchorAgeMicroseconds = communication_getAnchorAgeMicroseconds();
-    const uint64_t anchorRemainingMicroseconds = (anchorAgeMicroseconds < COMMUNICATION_TIME_MAPPING_LIMIT_MICROSECONDS) ? (COMMUNICATION_TIME_MAPPING_LIMIT_MICROSECONDS - anchorAgeMicroseconds) : 0U;
-    const uint64_t retainMicroseconds = (keepAliveMicroseconds < anchorRemainingMicroseconds) ? keepAliveMicroseconds : anchorRemainingMicroseconds;
+    const k_timepoint_t keepAliveDeadline = sys_timepoint_calc(K_MSEC((int64_t)(keepAliveMicroseconds / USEC_PER_MSEC)));
 
-    communication_SecureConnectionIdleDeadline = sys_timepoint_calc(K_MSEC((int64_t)(retainMicroseconds / USEC_PER_MSEC)));
+    communication_SecureConnectionIdleDeadline = (sys_timepoint_cmp(keepAliveDeadline, communication_SecureConnectionAnchorDeadline) < 0) ? keepAliveDeadline : communication_SecureConnectionAnchorDeadline;
 }
 
 static int communication_exchange(const struct wifi_http_request *request, k_timepoint_t deadline)
