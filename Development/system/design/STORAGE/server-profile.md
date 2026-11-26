@@ -2,13 +2,13 @@
 
 ## Basis
 
-This page refines the [server profile architecture](../../architecture/system/server-profile.md) and the [flash layout and image format](interfaces-and-behavior.md#flash-layout). It covers [REQ-09](../../requirements/system-requirements.md#req-09), [REQ-11](../../requirements/system-requirements.md#req-11), [REQ-12](../../requirements/system-requirements.md#req-12) and [REQ-13](../../requirements/system-requirements.md#req-13).
+The server profile refines the [server profile architecture](../../architecture/system/server-profile.md) and the [flash layout and image format](interfaces-and-behavior.md#flash-layout). It covers [REQ-09](../../requirements/system-requirements.md#req-09), [REQ-11](../../requirements/system-requirements.md#req-11), [REQ-12](../../requirements/system-requirements.md#req-12) and [REQ-13](../../requirements/system-requirements.md#req-13).
 
 Each server deployment is defined by a single TOML file with the public server certificate embedded as PEM text. A single provisioning command validates the file, builds the binary image in format version 1 and writes it to the device. The deployment file is an input on the developer PC only.
 
 ## Deployment file
 
-Each server deployment uses one `<deployment>.toml` file. The deployment name uses lowercase letters, digits and hyphens, for example `lab-hapi.toml`, and also names the built image. A server change updates only this file; no other provisioning input exists. The file holds public data only and no credentials. Production deployment files remain outside the repository and use the same tool.
+Each server deployment uses one `<deployment>.toml` file. The deployment name uses lowercase letters, digits and hyphens, for example `lab-hapi.toml`, and also names the built image. A server change updates only this file; no other provisioning input exists. The file holds public data only and no credentials.
 
 The file follows TOML v1.0.0 [1]. Format 1:
 

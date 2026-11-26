@@ -1,4 +1,4 @@
-@startuml mvp_session_state
+@startuml session_state
 !theme cyborg
 !pragma layout smetana
 skinparam shadowing false

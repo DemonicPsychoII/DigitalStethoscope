@@ -22,19 +22,19 @@ Editable source: [puml/server-profile.puml](puml/server-profile.puml).
 | L2_COMMUNICATION | Load the image at boot, decide whether secure transport is available and report a configuration cause otherwise. | A missing or invalid image never blocks Wi-Fi setup or offline listening. |
 | L1_WIFI | Parse the endpoint, parse the certificate, require a Subject Alternative Name that matches the endpoint and make the certificate the only trust anchor. | No fallback endpoint, no fallback certificate and no insecure mode. |
 
-Dependency direction: the deployment file feeds the server profile tool on the developer PC; the tool depends on the firmware build only for the partition location. On the device, L2_COMMUNICATION reads the image through L1_STORAGE and configures L1_WIFI; nothing on the device depends on the deployment file or the tool. A server change means a new file revision and a new image, not a firmware build.
+Dependency direction: the deployment file feeds the server profile tool on the developer PC; the tool depends on the firmware build only for the partition location. On the device, L2_COMMUNICATION reads the image through L1_STORAGE and configures L1_WIFI; nothing on the device depends on the deployment file or the tool. A server change needs a new image and no firmware build.
 
 ## Trust boundary
 
-Whoever can flash the device can change its server; physical access is the trust assumption. The image checksum detects corruption, not tampering, and the image carries no signature. Without secure boot the same physical access can replace the firmware itself, so an image signature alone would add no protection. The device uses neither secure boot nor image signing.
+Whoever can flash the device can change its server; physical access is the trust assumption. The device uses neither secure boot nor image signing, and the image checksum detects corruption only.
 
-The deployment file contains only public information, so it can be versioned and reviewed like source code. The source repository holds test deployments only; a real deployment keeps its file with that deployment. A server change is visible in review as a changed endpoint or certificate. The server's private key and keystore stay with the server deployment.
+The deployment file contains only public information. The server's private key and keystore stay with the server deployment.
 
-The device trusts the server profile's certificate directly and verifies the server identity against its Subject Alternative Names, without Common Name fallback [1]. The tool applies the same identity rule before flashing, so a certificate that cannot match the endpoint is rejected on the developer PC rather than at the next boot.
+The device trusts the server profile's certificate directly and verifies the server identity against its Subject Alternative Names, without Common Name fallback [1]. The tool applies the same identity rule before flashing and rejects a certificate that cannot match the endpoint.
 
 ## Partition independence
 
-The server profile has a fixed location in flash that is independent of the settings: a settings size change never moves it, and it never changes between firmware versions, so an updated firmware still finds an image flashed earlier. The settings have their own fixed start in front of it. The firmware's own partition table defines both partitions.
+The server profile has a fixed location in flash that is independent of the settings and of the firmware version: a settings size change does not move it, and a firmware update keeps the image. The settings have their own fixed start in front of it. The firmware's own partition table defines both partitions.
 
 ## Verification allocation
 

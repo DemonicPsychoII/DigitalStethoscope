@@ -13,7 +13,7 @@ document their scope, hardware naming and runtime assumptions.
 | Input ownership | [puml/input-ownership.puml](puml/input-ownership.puml) | [SVG](rendered/input_ownership.svg) |
 | Threads | [puml/runtime-ownership.puml](puml/runtime-ownership.puml) | [SVG](rendered/runtime_ownership.svg) |
 | Listening | [puml/listening-workflow.puml](puml/listening-workflow.puml) | [SVG](rendered/listening_workflow.svg) |
-| Session and error transitions | [puml/mvp-session-state.puml](puml/mvp-session-state.puml) | [SVG](rendered/mvp_session_state.svg) |
+| Session and error transitions | [puml/session-state.puml](puml/session-state.puml) | [SVG](rendered/session_state.svg) |
 | BPM measurement | [puml/measurement-workflow.puml](puml/measurement-workflow.puml) | [SVG](rendered/measurement_workflow.svg) |
 | Server profile | [puml/server-profile.puml](puml/server-profile.puml) | [SVG](rendered/server_profile.svg) |
 

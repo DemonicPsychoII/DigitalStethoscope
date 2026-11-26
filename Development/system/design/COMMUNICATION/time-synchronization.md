@@ -2,7 +2,7 @@
 
 ## Basis
 
-This design refines the [SNTP architecture](../../architecture/COMMUNICATION/time-ownership.md) and the [delivery design](interfaces-and-behavior.md#delivery-clock-and-configuration). Covered requirements are [REQ-02](../../requirements/system-requirements.md#req-02), [REQ-09](../../requirements/system-requirements.md#req-09), [REQ-10](../../requirements/system-requirements.md#req-10), [REQ-11](../../requirements/system-requirements.md#req-11), [REQ-13](../../requirements/system-requirements.md#req-13) and [REQ-14](../../requirements/system-requirements.md#req-14).
+SNTP synchronization refines the [SNTP architecture](../../architecture/COMMUNICATION/time-ownership.md) and the [delivery design](interfaces-and-behavior.md#delivery-clock-and-configuration). Covered requirements are [REQ-02](../../requirements/system-requirements.md#req-02), [REQ-09](../../requirements/system-requirements.md#req-09), [REQ-10](../../requirements/system-requirements.md#req-10), [REQ-11](../../requirements/system-requirements.md#req-11), [REQ-13](../../requirements/system-requirements.md#req-13) and [REQ-14](../../requirements/system-requirements.md#req-14).
 
 ## SNTP exchange (generic protocol)
 
@@ -31,7 +31,7 @@ Each accepted operation produces one terminal result. Cancellation invalidates i
 
 ![SNTP exchange inside one connection setup](rendered/connection_setup.svg)
 
-*What runs inside one connection setup, and under which deadline?* Source: [puml/connection-setup.puml](puml/connection-setup.puml). The numbered steps below add the boot, failure and cancellation rules.
+*What runs inside one connection setup, and under which deadline?* Source: [puml/connection-setup.puml](puml/connection-setup.puml).
 
 1. Boot starts without a valid anchor. A persisted timestamp does not establish freshness; offline listening remains available.
 2. Every TLS connection setup under the [TLS design](secure-transport.md) begins with one SNTP exchange, so that only the server DNS lookup and TCP connection lie between the applied clock and the ClientHello, the first message of the TLS handshake. This applies to the Idle preparation and every delivery reconnect. Reusing an open verified connection sends no ClientHello and runs no SNTP. There is no separate SNTP schedule, refresh timer or internet/HTTP probe.
@@ -85,7 +85,7 @@ Time synchronization uses unauthenticated SNTP [1, section 11] and requires usab
 
 ## Sources
 
-[1] David L. Mills, *Simple Network Time Protocol (SNTP) Version 4 for IPv4, IPv6 and OSI*, IETF RFC 4330, January 2006, sections 4, 5 and 11, DOI: 10.17487/RFC4330, <https://www.rfc-editor.org/rfc/rfc4330#section-11>, accessed 24 October 2026.
+[1] David L. Mills, *Simple Network Time Protocol (SNTP) Version 4 for IPv4, IPv6 and OSI*, IETF RFC 4330, January 2006, sections 4, 5 and 11, DOI: 10.17487/RFC4330, <https://www.rfc-editor.org/rfc/rfc4330>, accessed 24 October 2026.
 
 [2] David L. Mills, Jim Martin (editor), Jack Burbank and William Kasch, *Network Time Protocol Version 4: Protocol and Algorithms Specification*, IETF RFC 5905, June 2010, sections 8 and 14, DOI: 10.17487/RFC5905, <https://www.rfc-editor.org/rfc/rfc5905>, accessed 13 November 2026.
 
