@@ -12,7 +12,7 @@ L1_WIFI performs the time operations and L2_COMMUNICATION orchestrates them.
 | --- | --- | --- |
 | L2_CONTROL | Admit active synchronization under the exclusive network lease; supply measurement timing context and consume readiness/failure outcomes. | Listening admission remains independent of server readiness. |
 | L2_COMMUNICATION | Coordinate synchronization and evaluate clock readiness against the clock policy; make readiness available to delivery preparation. | No hidden background synchronization or retry policy in L1_WIFI or L1_FHIR. |
-| L1_WIFI | Perform one requested SNTP exchange through Zephyr and return the time information or failure. | Obtaining a time value does not establish that it is trusted. |
+| L1_WIFI | Perform one requested SNTP exchange through Zephyr and return the time information or failure. | The [trust boundary](#trust-boundary) applies to the returned time. |
 | Measurement owner, L2_AUDIO with L2_CONTROL | Preserve the measurement interval in the sample/monotonic time domain and its UTC mapping. | A later synchronization must not silently relabel a frozen result. |
 | TLS transport and L1_FHIR | Consume clock information for their respective certificate-checking and timestamp responsibilities. | Neither chooses a time server nor starts synchronization. |
 

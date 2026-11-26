@@ -5,6 +5,9 @@ skinparam defaultFontName SansSerif
 skinparam backgroundColor #0b1018
 skinparam defaultFontColor #e6edf7
 skinparam ArrowColor #a9b8ca
+skinparam state {
+ FontColor #0b1018
+}
 title L2_COMMUNICATION setup workflow
 hide empty description
 state "Read stored network" as Boot

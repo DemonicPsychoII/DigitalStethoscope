@@ -1,4 +1,4 @@
-# STORAGE record interface
+# L1_STORAGE record interface
 
 `L1_STORAGE` adapts Zephyr settings and the flash backend. The application initializes `L1_STORAGE` once with `storage_init()` before any record access. Callers own their buffers. `L1_STORAGE` neither joins networks nor chooses retries.
 
@@ -7,6 +7,7 @@
 | `storage_init()` | None | 0 after settings/backend initialization; negative error otherwise. |
 | `storage_read(name, data, size)` | Named record, writable caller buffer, exact expected byte count | 0 and a complete record; `-ENOENT` if missing; `-EINVAL` for a stored-size mismatch; negative backend error otherwise. Callers never use the output as credentials after a failure. |
 | `storage_write(name, data, size)` | Named complete record and readable caller buffer | 0 after a whole-record commit; negative error otherwise. The previous valid record survives an unsuccessful write. |
+| `storage_readServerProfile(serverProfile)` | Caller-owned destination for the server profile | 0 and the base URL, server keep-alive and certificate of a valid image; `-ENOENT` for an erased partition (missing image); `-EBADMSG` for any other invalid image; negative error otherwise. The destination is cleared unless the image is valid. `L1_STORAGE` never writes the server profile partition. |
 
 The `wifi/network` record contains the complete 98-byte `wifi_network` record defined by the [L1_WIFI network-record contract](../WIFI/interfaces-and-behavior.md#network-record), including both fixed-size arrays. `L2_COMMUNICATION` reads it at boot, validates it using `wifi_isValidNetwork()`, and commits it only after the selected network has an address. `L2_COMMUNICATION` owns the save retry and requires preservation of the old record on failure. `L1_STORAGE` does not authenticate or encrypt this record. Callers and `L1_STORAGE` keep network names and passphrases out of logs and clear transient copies after use. The separate `fhir/device-registration` record follows the versioned, whole-record [registration contract](../COMMUNICATION/server-communication.md#registration-record). `L2_COMMUNICATION` validates physical identity and server binding and publishes readiness only after successful commit. Failed registration-record access follows the registration-only failure policy; generic device settings faults remain handled separately.
 
@@ -24,7 +25,7 @@ Neither start depends on the other partition's size. Settings can grow to 512 Ki
 
 Partition sizing:
 
-- **Settings.** Live settings occupy about 0.6 KiB: `wifi/network` (98 bytes, about 160 bytes stored), `fhir/device-registration` (343 bytes, [registration record](../COMMUNICATION/server-communication.md#registration-record), about 416 bytes stored) and ZMS metadata [3][4]. ZMS requires at least two erase sectors so that one sector remains available for garbage collection [4].
+- **Settings.** Live settings occupy about 0.6 KiB: `wifi/network` (98 bytes, about 160 bytes stored), `fhir/device-registration` (343 bytes, [registration record](../COMMUNICATION/server-communication.md#registration-record), about 416 bytes stored) and ZMS metadata [3, 4]. ZMS requires at least two erase sectors so that one sector remains available for garbage collection [4].
 - **Server profile.** The version 1 format below occupies at most 8,465 bytes, which fits in three 4 KiB sectors.
 - **Flash geometry.** Erase sector 4 KiB, write block 4 bytes [4].
 
@@ -39,7 +40,7 @@ Erasing the settings partition removes the stored Wi-Fi network and Device regis
 3. **Server profile tool.** The server profile tool builds the image from one [deployment file](server-profile.md#deployment-file), validates the file and certificate, appends the CRC-32 and derives the partition offset and size from the firmware's devicetree definition.
 4. **Flash command.** The flash command builds the image and writes only the server profile partition at its partition offset ([commands](server-profile.md#commands)). Firmware flashing writes only the firmware image and leaves the server profile and settings partitions untouched.
 
-The server profile image is the only source of the server endpoint and certificate ([TLS trust inputs](../COMMUNICATION/secure-transport.md#trust-and-server-profile-inputs)). The server profile tool on the developer PC builds it; a separate flash command writes it to the server profile offset `0xF00000`. The firmware reads it through the flash map and never writes it. Version 1 format, little-endian:
+The server profile image is the only source of the server endpoint and certificate ([TLS trust inputs](../COMMUNICATION/secure-transport.md#trust-and-server-profile-inputs)). The firmware reads it through the flash map and never writes it. Version 1 format, little-endian:
 
 | Field | Size | Content |
 | --- | --- | --- |

@@ -5,6 +5,10 @@ skinparam defaultFontName SansSerif
 skinparam backgroundColor #0b1018
 skinparam defaultFontColor #e6edf7
 skinparam ArrowColor #a9b8ca
+skinparam activity {
+ FontColor #0b1018
+ DiamondFontColor #e6edf7
+}
 title L2_COMMUNICATION provisioning flow
 start
 if (Boot with usable saved network?) then (yes)
@@ -30,6 +34,9 @@ if (Scan and hotspot start succeed?) then (yes)
     :Close setup session;
    else (failed)
     :Publish cause; refresh selection through a new scan;
+    if (Refresh scan failed?) then (yes)
+     :Report cause; close setup session;
+    endif
    endif
   else (Cancel or inactivity)
    :Close setup session;

@@ -865,7 +865,6 @@ static bool portal_readFormValue(const char *form, const char *key, char *value,
             }
 
             /* An embedded NUL would cut the value short without notice. */
-            /* Keep room for the terminator and reject embedded null characters. */
             isValid = isValid && (character != '\0') && ((length + 1U) < valueSize);
 
             if(isValid)

@@ -6,10 +6,13 @@ skinparam defaultFontName SansSerif
 skinparam backgroundColor #0b1018
 skinparam defaultFontColor #e6edf7
 skinparam ArrowColor #a9b8ca
+skinparam state {
+ FontColor #0b1018
+}
 title L2_COMMUNICATION lifecycle: from Wi-Fi join to delivery after Stop
 hide empty description
 state "Wi-Fi join\nboot join, link recovery or setup page" as Join
-state "Idle network work (L2_CONTROL lease)" as Idle {
+state "<color:#e6edf7>Idle network work (L2_CONTROL lease)</color>" as Idle #111826 {
  state "Idle check\nwhat is due?" as Check
  state "Connection preparation\none setup = SNTP exchange, DNS, TCP, TLS 1.3, verification\none deadline per setup" as Preparation
  state "Registration\nconditional Device create, validate, save record\none deadline per attempt" as Registration

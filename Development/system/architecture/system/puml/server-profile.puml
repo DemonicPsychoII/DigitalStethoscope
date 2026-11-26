@@ -5,6 +5,15 @@ skinparam shadowing false
 skinparam backgroundColor #0b1018
 skinparam defaultFontColor #e6edf7
 skinparam ArrowColor #a9b8ca
+skinparam component {
+ FontColor #0b1018
+}
+skinparam artifact {
+ FontColor #0b1018
+}
+skinparam database {
+ FontColor #0b1018
+}
 skinparam componentStyle rectangle
 skinparam defaultFontName SansSerif
 title Server profile: one deployment file to the trusted server

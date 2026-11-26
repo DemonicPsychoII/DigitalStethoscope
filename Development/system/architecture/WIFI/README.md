@@ -20,6 +20,6 @@ The [secure transport boundary](../COMMUNICATION/secure-transport.md) refines th
 
 ## Sources
 
-[1] Espressif Systems, *Wi-Fi Driver — ESP32-S3*, ESP-IDF Programming Guide v5.4.2, sections “ESP32-S3 Wi-Fi Scan”, “Wi-Fi Station General Scenario” and “IP_EVENT_STA_GOT_IP”, https://docs.espressif.com/projects/esp-idf/en/v5.4.2/esp32s3/api-guides/wifi.html (accessed 24 October 2026).
+[1] Espressif Systems, *Wi-Fi Driver — ESP32-S3*, ESP-IDF Programming Guide v5.4.2 (release published 27 June 2025), sections “ESP32-S3 Wi-Fi Scan”, “Wi-Fi Station General Scenario” and “IP_EVENT_STA_GOT_IP”, https://docs.espressif.com/projects/esp-idf/en/v5.4.2/esp32s3/api-guides/wifi.html (accessed 24 October 2026).
 
-[2] Espressif Systems, *Wi-Fi Provisioning*, ESP-IDF Programming Guide v5.4.2, section “Provisioning Manager”, https://docs.espressif.com/projects/esp-idf/en/v5.4.2/esp32s3/api-reference/provisioning/wifi_provisioning.html (accessed 24 October 2026).
+[2] Espressif Systems, *Wi-Fi Provisioning*, ESP-IDF Programming Guide v5.4.2 (release published 27 June 2025), section “Provisioning Manager”, https://docs.espressif.com/projects/esp-idf/en/v5.4.2/esp32s3/api-reference/provisioning/wifi_provisioning.html (accessed 24 October 2026).

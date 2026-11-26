@@ -33,7 +33,7 @@ Each bounded handoff has its own overload rule:
 
 For the delivery slot, a terminal failure retains only redacted outcome metadata with no retry queue. The completed measurement is discarded and server recovery does not resend it ([REQ-10](../requirements/system-requirements.md#req-10)).
 
-Available PSRAM out of the 8 MB capacity excludes thread stacks, heap and TLS buffers, filter coefficients, analysis windows and driver overhead. The [AUDIO sizing](AUDIO/interfaces-and-behavior.md#timing-and-sizing) accounts for the transport blocks, the mono working buffer and the analysis blocks.
+The 8 MB PSRAM holds the Wi-Fi buffers and the Wi-Fi heap, the mbedTLS heap and the large network buffers. Thread stacks stay in internal RAM, because flash writes disable the PSRAM cache. The I2S block pools stay in internal DMA-capable RAM. The [AUDIO sizing](AUDIO/interfaces-and-behavior.md#timing-and-sizing) accounts for the transport blocks, the mono working buffer and the analysis blocks.
 
 ## State entry/process/exit
 
@@ -98,5 +98,5 @@ Owners are the firmware modules in the [module map](../architecture/system/firmw
 | ID | Parameter | Value | Basis | Owners |
 |---|---|---|---|---|
 | P10 | Input and indication response | Switch and button debounce 30 ms; potentiometer full scale 3083 mV, which is 100 % volume; effective setting ≤100 ms; status indication ≤500 ms | The contacts of the filter switch (J8) stay open for up to 21 ms between two positions, so a 30 ms debounce spans that gap; the Start/Stop button (J6) uses the same interval. 3083 mV is the highest wiper voltage that the ADC reads at the 3V3 end of the potentiometer (J7; ADC1 channel 0, gain 1/4, internal reference, 12 bits) | L1_PHYSICALINTERFACE, L2_CONTROL |
-| P11 | Queue / pool capacities | 16 control events, 1 pending network job; 5 RX + 5 TX DMA blocks (RX queue 3, TX queue 4, 4 TX blocks primed); receive and TX-block waits 20 ms | [AUDIO sizing](AUDIO/interfaces-and-behavior.md#timing-and-sizing) | L2_AUDIO, L1_I2S, L2_CONTROL, L2_COMMUNICATION |
+| P11 | Queue / pool capacities | 16 control events, 1 pending network job; 4 audio commands, a command to a full queue is rejected; 5 RX + 5 TX DMA blocks (RX queue 3, TX queue 4, 4 TX blocks primed); receive and TX-block waits 20 ms | [AUDIO sizing](AUDIO/interfaces-and-behavior.md#timing-and-sizing) | L2_AUDIO, L1_I2S, L2_CONTROL, L2_COMMUNICATION |
 | P15 | Resource margin | 16 MB flash, 8 MB PSRAM; DMA buffers in internal SRAM | Hardware module capacity | MONITOR |

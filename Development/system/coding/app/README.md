@@ -12,11 +12,11 @@ maps its logical components to these folders.
 
 | Folder | Contents | May depend on |
 |---|---|---|
-| `L2_application/L2_CONTROL/` | Single writer of mode state; grants the network lease | L1, `common` |
+| `L2_application/L2_CONTROL/` | Single writer of mode state; grants the network lease | `L2_AUDIO`, `L2_COMMUNICATION`, L1, `common` |
 | `L2_application/L2_AUDIO/` | Audio path, driven by control commands | L1, `common` |
 | `L2_application/L2_COMMUNICATION/` | Builds via `L1_FHIR`, sends via `L1_WIFI` under the lease; Device registration; hotspot Wi-Fi setup page | L1, `common` |
 | `L2_application/L2_SHELL/` | Shell commands and read-back through `L2_CONTROL` | `L2_CONTROL`, `common` |
-| `L1_services/` adapters | `L1_I2S` (mic RX, DAC TX), `L1_WIFI`, `L1_PORTAL` (Wi-Fi setup page), `L1_STORAGE` (settings records in flash), `L1_PHYSICALINTERFACE` (button, switch, potentiometer, status light, button light) | Zephyr, `common` |
+| `L1_services/` adapters | `L1_I2S` (mic RX, DAC TX), `L1_WIFI`, `L1_PORTAL` (Wi-Fi setup page), `L1_STORAGE` (settings records in flash), `L1_PHYSICALINTERFACE` (button, switch, potentiometer, status light, button light) | Zephyr, `common`; `L1_WIFI` also the Espressif HAL and mbedTLS; `L1_PORTAL` also `L1_WIFI` |
 | `L1_services/` libraries | `L1_FILTER`, `L1_BPM` (envelope, autocorrelation, aggregation), `L1_FHIR` (serialization); pure C | `common` |
 | `L0_platform/` | Empty: Zephyr drivers and the board overlay | — |
 | `MONITOR/` | Runtime supervision; contains no checks | All layers, read-only |
@@ -151,8 +151,9 @@ Development/system/coding/tools/build-sbom.ps1 -Pristine   # clean rebuild first
 
 The script enables the CMake file-based API, builds the release app and runs
 `west spdx --include-sdk`. `prj.conf` enables `CONFIG_BUILD_OUTPUT_META`, which
-`west spdx` needs. The output has one document each for the application, Zephyr with
-its modules, the Zephyr SDK and the build.
+`west spdx` needs. The output has five documents: `app.spdx` for the application,
+`zephyr.spdx` for Zephyr with its modules, `build.spdx` for the build, `modules-deps.spdx`
+for the module dependencies and `sdk.spdx` for the Zephyr SDK.
 
 `west spdx` leaves out the Espressif Wi-Fi and PHY binary libraries; their versions are
 listed in `hal_espressif`'s `zephyr/module.yml`. On Windows it also lists no
@@ -170,6 +171,7 @@ Close any serial monitor, then flash the existing build from PowerShell:
 Development/system/coding/tools/flash-firmware.ps1 5   # app firmware -> COM5
 Development/system/coding/tools/flash-firmware.ps1 5 -Profile debug   # build-app-debug -> COM5
 Development/system/coding/tools/flash-firmware.ps1 5 -WhatIf   # show the action only
+Development/system/coding/tools/flash-firmware.ps1 5 -Erase   # erase the whole chip, then flash
 ```
 
 The positional number selects the COM port. The script uses the pinned toolchain
@@ -178,6 +180,8 @@ relative paths resolve from the caller's current directory. Flashing replaces th
 firmware on the selected device. If connection fails, hold BOOT, press and release
 RESET, release BOOT, check the port again and retry.
 
+Without `-Erase`, flashing keeps the settings partition. `-Erase` erases the whole chip
+first, including the saved settings with the Wi-Fi network and the server profile.
 
 To erase only selected partitions instead of the whole chip, select any
 combination of them:
@@ -195,8 +199,8 @@ from `-BuildDir`. `-ServerProfile` erases the
 ### Debugging with GDB
 
 The ESP32-S3 has a built-in USB JTAG unit on GPIO19/20, the DevKitC "USB" connector.
-No external probe is necessary; the external JTAG pins are not free (GPIO39 is the
-speed switch). Connect both the "UART" connector (console, flashing) and the "USB"
+No external probe is necessary; the external JTAG pins are not free (GPIO40–42 carry
+the DAC I2S signals). Connect both the "UART" connector (console, flashing) and the "USB"
 connector (JTAG). Install Espressif's OpenOCD once; the Zephyr SDK OpenOCD cannot
 drive this JTAG unit:
 
@@ -267,7 +271,7 @@ and the driver shutdown.
 ## Coding conventions
 
 `.clang-format` in this folder sets the layout (Allman braces, 4 spaces, `if(x)`,
-`for(;;)` for the one intended endless loop); CI checks it. It has no column limit,
+`for(;;)` for the endless loop of each thread); CI checks it. It has no column limit,
 so statements stay on one line. Only a call with more than 2 arguments may be split,
 by hand, with one argument per line; clang-format keeps and aligns that layout.
 
@@ -294,7 +298,8 @@ Names are written out without abbreviations. Unit suffixes use either full unit 
 capitals inside camelCase, for example `wifi_startDHCPServer()` and
 `communication_waitForWiFiStop()`. The rule for loops is to terminate
 through their condition without `continue` (MISRA C:2012 Rule 15.4; MISRA C:2004
-Rule 14.5); `wifi_secure_connection.c` has one `continue`. The rule for functions is one
+Rule 14.5); `wifi_secure_connection.c` has one `continue` and one `while(true)` loop that
+ends by `return`. The rule for functions is one
 `return` at the end (MISRA C:2012 Rule 15.5). `L1_FHIR`, `L1_I2S`, `L1_STORAGE`, `L2_AUDIO`
 and `L2_CONTROL` follow it throughout. Functions with early returns exist in `wifi.c`,
 `wifi_dns.c`, `wifi_secure_connection.c`, `portal.c`, `physicalinterface.c` and

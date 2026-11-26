@@ -395,7 +395,6 @@ bool wifi_isValidNetwork(const struct wifi_network *network)
 
     /* strnlen() equal to the buffer size means the terminator is missing. */
     bool isNameValid = (nameLength != 0U) && (nameLength < sizeof(network->name));
-    /* Allow an open network or a passphrase within the supported size range. */
     bool isPasswordValid = (passwordLength == 0U) || ((passwordLength >= WIFI_PSK_MIN_LEN) && (passwordLength < sizeof(network->password)));
 
     if(passwordLength == WIFI_PSK_MAX_LEN)
@@ -720,7 +719,6 @@ int wifi_startHotspot(void)
     {
         result = -ENODEV;
     }
-    /* Both hotspot address and netmask must parse before configuring the interface. */
     else if(!addressIsParsed || !netmaskIsParsed)
     {
         result = -EINVAL;
@@ -817,7 +815,6 @@ int wifi_startDHCPServer(void)
     struct net_in_addr poolStart;
     const bool poolStartIsParsed = (net_addr_pton(NET_AF_INET, WIFI_HOTSPOT_ADDRESS, &poolStart) == 0);
 
-    /* Start DHCP only with an available hotspot and a valid pool address. */
     if((wifi_HotspotInterface != NULL) && poolStartIsParsed)
     {
         poolStart.s4_addr[3] = WIFI_HOTSPOT_POOL_START;
@@ -1165,6 +1162,7 @@ static int wifi_exchangeTimeSample(uint32_t generation, k_timepoint_t deadline, 
     result = sntp_query(&wifi_TimeSynchronizationContext, 0, &nativeTime);
     if(result == 0)
     {
+        /* A response that arrived before the server state check was parsed unchecked. */
         result = -EPROTO;
     }
 
@@ -1452,9 +1450,10 @@ static void wifi_handleEvent(struct net_mgmt_event_callback *callback, uint64_t 
 
         case NET_EVENT_WIFI_DISCONNECT_RESULT:
         {
+            /* An unsolicited disconnect ended the join before IPv4 readiness. */
             bool joinHasFailed = (atomic_get(&wifi_ConnectionIsRequested) != 0) &&
                                  (atomic_get(&wifi_DisconnectIsPending) == 0) &&
-                                 (k_event_test(&wifi_Events, WIFI_EVENT_CONNECTED) == 0U); /**< An unsolicited disconnect ended the join before IPv4 readiness. */
+                                 (k_event_test(&wifi_Events, WIFI_EVENT_CONNECTED) == 0U);
             atomic_set(&wifi_StationIsActive, 0);
             atomic_set(&wifi_ConnectionIsRequested, 0);
             /* Disconnect status carries a reason, including USER_REQUEST (2). */
@@ -1537,7 +1536,6 @@ static void wifi_addScanResult(const struct wifi_scan_result *result)
     const bool securityIsSupported = wifi_isSupportedSecurity(result->security);
 
     /* Hidden networks have no name to show; enterprise and WEP need more than a password. */
-    /* Keep only named networks with supported lengths and security. */
     if((result->ssid_length != 0U) && (result->ssid_length <= WIFI_SSID_MAX_LEN) && securityIsSupported)
     {
         struct wifi_scan_entry entry = {.needsPassword = (result->security != WIFI_SECURITY_TYPE_NONE)};

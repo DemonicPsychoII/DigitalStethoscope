@@ -5,13 +5,16 @@ skinparam shadowing false
 skinparam backgroundColor #0b1018
 skinparam defaultFontColor #e6edf7
 skinparam ArrowColor #a9b8ca
+skinparam state {
+ FontColor #0b1018
+}
 skinparam defaultFontName SansSerif
 title Session and error transitions
 [*] --> Boot
 Boot --> Idle : software-observable startup checks pass
 Boot --> Muted : non-Wi-Fi startup check fails / Error, mute
 Idle --> Listening : Start, L2_AUDIO reports started / Heart or Lung (optional)
-Idle --> Portal : long press, or automatically when no Wi-Fi credentials are stored / Idle network lease, scan then open hotspot
+Idle --> Portal : long press, automatically when no Wi-Fi credentials are stored,\nor after exhausted link recovery / Idle network lease, scan then open hotspot
 Portal --> Idle : verified join and save (or save warning) / show result, close access point and portal server, retain station
 Portal --> Idle : cancel or inactivity / notice, teardown, retain station if connected
 Portal --> Listening : Start, L2_AUDIO reports started / safe setup teardown first; retain established station
@@ -42,7 +45,7 @@ note as ErrorIndication
   Several errors: LEDs show the highest priority, then the first latched.
   Short press acknowledges non-restart faults; no implicit retry.
   Wi-Fi recovery does not require acknowledgement.
-  Preserve the current workflow; no implicit Start.
+  Acknowledgement keeps the current workflow and causes no Start.
 end note
 Muted --> Boot : restart [restart-required fault]
 Muted --> Idle : short press [fault clears by acknowledgement]
@@ -56,9 +59,9 @@ note right of Sending
   Exclusive network lease; audio stopped.
 end note
 note bottom of Measuring
-  If the session context changes: latch silently, keep listening;
-  halt after the manual Stop, discard the result, restart required.
-  Never apply the rejected identity; invalidate halted acquisition.
+  A session context change is latched silently and listening continues;
+  after the manual Stop the device halts, discards the result and requires a restart.
+  The device never applies the rejected identity and invalidates a halted acquisition.
   Wi-Fi-only faults preserve functioning audio.
   Audio faults halt listening immediately.
   The error indication is latched separately from workflow;
@@ -68,7 +71,7 @@ note bottom of Muted
   Non-Wi-Fi faults halt;
   during listening only audio faults halt at once,
   other halting faults wait for the manual Stop.
-  Mute; invalidate incomplete work; block Start.
+  The device mutes, invalidates incomplete work and blocks Start.
   Restart-required faults cannot be cleared by short press.
 end note
 @enduml

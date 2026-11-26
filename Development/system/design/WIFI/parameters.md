@@ -1,4 +1,4 @@
-# Wi-Fi operation parameters
+# L1_WIFI operation parameters
 
 These parameters define the `L1_WIFI` operation limits. Controller retry budgets belong to `L2_COMMUNICATION`, and page limits belong to `L1_PORTAL`.
 

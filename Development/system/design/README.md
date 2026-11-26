@@ -8,9 +8,7 @@
 | [STORAGE](STORAGE/README.md) | Named complete-record persistence. |
 | [COMMUNICATION](COMMUNICATION/README.md) | Setup orchestration, retry, recovery and listening priority; delivery identity, clock mapping, registration and secure transport. |
 | [PORTAL](PORTAL/README.md) | Page behavior, HTTP endpoints, status format and page parameters. |
-| [FEEDBACK](FEEDBACK/README.md) | LED/error catalogue, fault response (P12), feedback timing and brightness parameters (P22) and standards research. |
-
-Architecture defines responsibilities and dependencies. These pages define internal behavior, data and interface contracts. The module designs allocate radio operations to `L1_WIFI`, setup sequencing to `L2_COMMUNICATION`, HTTP and page behavior to `L1_PORTAL`, records to `L1_STORAGE` and indication values to the FEEDBACK design. The cross-module design holds only what has no single owning module.
+| [FEEDBACK](FEEDBACK/README.md) | LED/error catalogue, fault response (P12), feedback timing and brightness parameters (P22) and LED indication standards. |
 
 ## Parameters
 

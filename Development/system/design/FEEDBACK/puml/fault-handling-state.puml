@@ -54,10 +54,7 @@ Recovery -[hidden]right-> Indication
 Indication -[hidden]right-> Admission
 
 legend bottom left
- The regions are coupled only by the catalogue error event and the acknowledgement; recovery success does not acknowledge.
- Recovery episode: start cancellation alone raises no error; Wi-Fi and delivery errors have no episode rule.
- Indication: several errors show the highest priority, then the first latched. With a short-press-clearable error shown,
- the first short press acknowledges it; later presses Start and Stop. Errors during listening are shown after Stop.
- Admission: acknowledgement never starts, retries or changes an active workflow. Restart = reset button or power off/on.
+ The three regions run in parallel. They share only the catalogue error event and the acknowledgement.
+ A guard "[cleared by ...]" names the "Cleared by" value of the error's catalogue row.
 endlegend
 @enduml

@@ -35,7 +35,7 @@ headphone amplifier is outside the device boundary.
 
 ## Scope
 
-- DSP algorithms are pure C libraries in L1 (`L1_FILTER`, `L1_BPM`) so the same code can run in host tests.
+- DSP algorithms are pure C libraries in L1 (`L1_FILTER`, `L1_BPM`).
 - Queues carry bounded events or buffer handles. BPM collects successive original-rate
   blocks into its own analysis window; it never waits for an entire replay clip.
 - During replay, BPM continues receiving original-rate microphone audio.

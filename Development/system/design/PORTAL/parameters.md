@@ -1,4 +1,4 @@
-# PORTAL parameters
+# L1_PORTAL parameters
 
 These parameters define the page and HTTP limits of `L1_PORTAL`. `L2_COMMUNICATION` owns the setup timer and radio workflow. `L1_WIFI` owns the hotspot and station operations.
 

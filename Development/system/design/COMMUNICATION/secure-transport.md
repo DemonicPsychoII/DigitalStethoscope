@@ -8,7 +8,7 @@ This design refines the [TLS architecture](../../architecture/COMMUNICATION/secu
 
 ![Generic TLS 1.3 handshake](rendered/tls13_handshake.svg)
 
-*What does a TLS 1.3 handshake exchange before application data flows?* Source: [puml/tls13-handshake.puml](puml/tls13-handshake.puml). The diagram shows the protocol as RFC 8446 defines it [1].
+*What does a TLS 1.3 handshake exchange before application data flows?* Source: [puml/tls13-handshake.puml](puml/tls13-handshake.puml). The diagram shows the protocol as RFC 8446 defines it [1, section 2].
 
 ## Trust and server profile inputs
 
@@ -16,11 +16,11 @@ Each device talks to exactly one server. Its HTTPS endpoint (hostname or IP, por
 
 Whoever can flash the device can change its server; physical access is the trust assumption. The CRC detects corruption, not tampering.
 
-L1_WIFI trusts the configured self-signed server certificate directly as its sole trust anchor. Every connection requires the configured endpoint identity, a valid certificate period against the prepared UTC clock and successful TLS peer verification. L1_WIFI never fetches or trusts a certificate from an unverified connection. DNS resolution determines only the destination IP address and never changes the configured reference identity. Certificate identity verification requires a matching DNS or IP Subject Alternative Name (SAN) without legacy Common Name fallback [2,3]. L1_WIFI enforces validity, peer verification and SAN identity even for the directly trusted certificate. Changing the server or its certificate rewrites the server profile image without requiring a firmware update.
+L1_WIFI trusts the configured self-signed server certificate directly as its sole trust anchor. Every connection requires the configured endpoint identity, a valid certificate period against the prepared UTC clock and successful TLS peer verification. L1_WIFI never fetches or trusts a certificate from an unverified connection. DNS resolution determines only the destination IP address and never changes the configured reference identity. Certificate identity verification requires a matching DNS or IP Subject Alternative Name (SAN) without legacy Common Name fallback [1, 2]. L1_WIFI enforces validity, peer verification and SAN identity even for the directly trusted certificate. Changing the server or its certificate rewrites the server profile image without requiring a firmware update.
 
 No client certificate or device private key is configured. TLS authenticates the server, not the device. FHIR Device registration is separate application state; successful TLS does not prove authorization to create Device or Observation resources. If the deployed server requires client authentication or other credentials, L1_WIFI reports the cause rather than weakening verification. Application authorization and registration behavior are defined in the [server-communication design](server-communication.md).
 
-TLS 1.3 permits application traffic after the handshake and does not require a new handshake for each request [2]. L1_WIFI holds the verified connection for reuse, and L2_COMMUNICATION treats remote or network idle closure as ordinary transport loss. No negotiated session-resumption or 0-RTT (zero round-trip early data) mechanism is required by this design; reconnect may use a full handshake.
+TLS 1.3 permits application traffic after the handshake and does not require a new handshake for each request [1]. L1_WIFI holds the verified connection for reuse, and L2_COMMUNICATION treats remote or network idle closure as ordinary transport loss. No negotiated session-resumption or 0-RTT (zero round-trip early data) mechanism is required by this design; reconnect may use a full handshake.
 
 ## Ownership and service contracts
 
@@ -43,11 +43,11 @@ L2_COMMUNICATION tracks station-address readiness, transport verification and De
 1. While Idle and holding the lease, require a station address and a valid server profile image. Boot has no retained connection. Missing prerequisites defer preparation without consuming an attempt or reporting a TLS handshake failure.
 2. Start one monotonic ten-second deadline before the [SNTP exchange](time-synchronization.md#flow-and-scheduling) that opens every setup. SNTP, resolution, TCP setup, handshake and verification share that budget. Publish a verified connection only after every check succeeds. Cleanup has its separate P23 bound.
 3. On failed preparation, mark transport unavailable, release resources and schedule another preparation attempt no earlier than 60 seconds after failure completion. Recovery continues without a total attempt cap while Idle and prerequisites permit. No catch-up bursts or hidden lower-level retries apply. Invalid certificate/configuration attempts remain unavailable and never trigger an insecure fallback.
-4. Start preempts preparation: cancel and establish quiescence before audio. An interrupted issued attempt observes the same 60-second gap; cancellation before issuance consumes no attempt. Start cancellation alone is not an error. Failed cleanup follows the existing `WIFI_CLEANUP_FAILURE` restart policy, not ordinary TLS recovery.
+4. Start preempts preparation: cancel and establish quiescence before audio. An interrupted issued attempt observes the same 60-second gap; cancellation before issuance consumes no attempt. Start cancellation alone is not an error. Failed cleanup follows the `WIFI_CLEANUP_FAILURE` restart policy of [P23](parameters.md), not ordinary TLS recovery.
 5. During listening, L1_WIFI holds an already verified, dormant connection if possible. L2_COMMUNICATION issues no application requests, heartbeats, proactive reconnects or active liveness probes. Optional TCP keepalive probes are disabled. If background TLS handling requires application work, it is deferred until the lease returns or the connection is invalidated.
 6. After listening, reuse the retained context only if endpoint/trust configuration and peer-validity checks still hold, for a delivery the clock anchor of its handshake still qualifies for the measurement end under the [mapping limit](time-synchronization.md#clock-mapping-and-native-behavior) and it has been idle for less than the device keep-alive timeout. Before the first request, poll the socket without blocking; a pending close (FIN, RST or `close_notify`) invalidates it without consuming an attempt. Closure/reset discovered on use still invalidates it.
 7. L2_COMMUNICATION closes a retained context whose idle time reaches the device keep-alive timeout under the lease while Idle, or marks it logically invalid during listening. L1_WIFI holds the context; L2_COMMUNICATION decides on reuse and closure. The device keep-alive timeout equals the server keep-alive timeout from the server profile image minus 5 seconds.
-8. Idle recovery uses the preparation policy; active delivery uses [P13](parameters.md) below.
+8. Idle recovery uses the preparation policy; active delivery uses [P13](parameters.md).
 
 Before every new application request, check the retained peer's validity interval against the current clock. Configuration change, certificate expiry or a clock correction that makes validity fail immediately removes transport eligibility. During listening this is logical invalidation only; close under the lease afterward. A new setup, starting with its SNTP exchange, must verify the server before further requests. A clock correction that remains within the peer-validity interval does not itself require reconnection.
 
@@ -63,7 +63,7 @@ A usable retained connection is preferred but is not a mandatory delivery prereq
 
 ## Failure indication
 
-Failed TLS preparation latches `SERVER_CONNECTION_FAILURE`, preserving standalone listening. Acknowledgement clears only its indication: it neither creates transport readiness nor triggers a retry. Recovery continues independently. Success restores readiness but does not acknowledge an existing indication. Do not re-latch on every failed retry after acknowledgement in the same unavailable episode; successful recovery followed by a new preparation failure begins a new episode. Passive loss alone does not change transport verification; a subsequent failed reconnection or preparation raises the indication. A failed SNTP exchange is a failed preparation and raises this indication; the serial log names the time cause. There is no separate time-synchronization error. Issued delivery failures use the existing delivery indication.
+Failed TLS preparation latches `SERVER_CONNECTION_FAILURE`, preserving standalone listening. Acknowledgement clears only its indication: it neither creates transport readiness nor triggers a retry. Recovery continues independently. Success restores readiness but does not acknowledge an existing indication. Do not re-latch on every failed retry after acknowledgement in the same unavailable episode; successful recovery followed by a new preparation failure begins a new episode. Passive loss alone does not change transport verification; a subsequent failed reconnection or preparation raises the indication. A failed SNTP exchange is a failed preparation and raises this indication; the serial log names the time cause. There is no separate time-synchronization error. Issued delivery failures use the delivery indication.
 
 ## Parameters
 
@@ -81,14 +81,12 @@ Failed TLS preparation latches `SERVER_CONNECTION_FAILURE`, preserving standalon
 
 - A deployment needs a server certificate whose Subject Alternative Name covers the device-facing endpoint.
 - Public SNTP is not authenticated; certificate time checks do not turn that clock into an authenticated time source.
-- The trust configuration follows the FHIR service of the PulsOxy project of NewTec GmbH: the configured certificate material is the trust basis of the connection, and the device presents no client certificate [4].
+- The trust configuration follows the FHIR service of the PulsOxy project of NewTec GmbH: the configured certificate material is the trust basis of the connection, and the device presents no client certificate [3].
 
 ## Sources
 
-[1] Eric Rescorla, *The Transport Layer Security (TLS) Protocol Version 1.3*, IETF RFC 8446, August 2018, section 2 (Figure 1) and sections 4.1.2, 4.1.3, 4.3.1, 4.4.2, 4.4.3 and 4.4.4, DOI [10.17487/RFC8446](https://doi.org/10.17487/RFC8446), accessed 13 November 2026.
+[1] Eric Rescorla, *The Transport Layer Security (TLS) Protocol Version 1.3*, IETF RFC 8446, August 2018, section 2 (Figure 1) and sections 4.1.2, 4.1.3, 4.3.1, 4.3.2, 4.4.2, 4.4.3, 4.4.4 and 4.6, DOI [10.17487/RFC8446](https://doi.org/10.17487/RFC8446), accessed 29 October 2026 and 13 November 2026.
 
-[2] Eric Rescorla, *The Transport Layer Security (TLS) Protocol Version 1.3*, IETF RFC 8446, August 2018, sections 2, 4.3.2, 4.4.2 and 4.6, DOI [10.17487/RFC8446](https://doi.org/10.17487/RFC8446), accessed 29 October 2026.
+[2] Peter Saint-Andre and Rich Salz, *Service Identity in TLS*, IETF RFC 9525, November 2023, sections 4 and 6, DOI [10.17487/RFC9525](https://doi.org/10.17487/RFC9525), accessed 29 October 2026.
 
-[3] Peter Saint-Andre and Rich Salz, *Service Identity in TLS*, IETF RFC 9525, November 2023, sections 4 and 6, DOI [10.17487/RFC9525](https://doi.org/10.17487/RFC9525), accessed 29 October 2026.
-
-[4] NewTec GmbH, *PulsOxy FhirService implementation*, PulsOxy project, revision `e38b98fc8b881af01e23a8f4935567e73d00de28`, 2026, [FhirService.cpp](../../references/newtec-pulsoxy/lib/FhirService/src/FhirService.cpp), reproduced in this repository under [references/newtec-pulsoxy](../../references/newtec-pulsoxy/README.md), accessed 25 November 2026.
+[3] NewTec GmbH, *PulsOxy FhirService implementation*, PulsOxy project, revision `e38b98fc8b881af01e23a8f4935567e73d00de28`, 2026, [FhirService.cpp](../../references/newtec-pulsoxy/lib/FhirService/src/FhirService.cpp), reproduced in this repository under [references/newtec-pulsoxy](../../references/newtec-pulsoxy/README.md), accessed 25 November 2026.

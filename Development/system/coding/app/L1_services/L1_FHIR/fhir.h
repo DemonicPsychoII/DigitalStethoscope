@@ -6,7 +6,10 @@
 /** @defgroup L1_FHIR FHIR
  * @{
  * @file
- * L1 pure C library that serializes results into FHIR Observations.
+ * L1 pure C library for the FHIR content of the device. It serializes the Device
+ * registration and Observations with their If-None-Exist conditions, validates the
+ * registration response, classifies HTTP statuses and encodes and decodes the
+ * registration record.
  */
 
 #ifndef L1_FHIR_H

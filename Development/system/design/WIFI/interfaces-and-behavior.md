@@ -1,4 +1,4 @@
-# Wi-Fi interfaces and behavior
+# L1_WIFI interfaces and behavior
 
 `L2_COMMUNICATION` owns setup, retries and sequencing. `L1_WIFI` owns individual radio and address operations defined in the [service boundary](#service-boundary) below. The page, HTTP server and typed request and status contract belong to [`L1_PORTAL`](../PORTAL/interfaces-and-behavior.md).
 

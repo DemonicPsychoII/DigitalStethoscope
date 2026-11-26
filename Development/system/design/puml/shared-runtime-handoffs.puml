@@ -32,7 +32,7 @@ component "Communication\nL2_COMMUNICATION\nL1_FHIR, L1_WIFI, L1_STORAGE" as net
 component "Portal HTTP server\nL1_PORTAL" as portal <<thread>>
 
 queue "Control events · values\nk_msgq, 16 (P11)\nfull: reconcile stable values,\nreject + report transient actions" as controlEvents <<handoff>>
-queue "Audio command · values\nk_msgq" as audioCommands <<handoff>>
+queue "Audio command · values\nk_msgq, 4 (P11)\nfull: command rejected" as audioCommands <<handoff>>
 queue "Analysis blocks · copied payloads + handles\nbounded pool\nfull: mark gap, reset window;\nlistening continues" as analysisBlocks <<handoff>>
 queue "Results / completion / faults · values\nposted without waiting" as workerEvents <<handoff>>
 queue "State snapshot · value copy\nslow reader: latest snapshot wins" as snapshots <<handoff>>

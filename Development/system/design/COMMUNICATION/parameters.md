@@ -1,4 +1,4 @@
-# COMMUNICATION parameters
+# L2_COMMUNICATION parameters
 
 L2_COMMUNICATION workflow, delivery and server parameters are defined below. Radio operation limits are allocated in L1_WIFI, and HTTP and page limits are allocated in L1_PORTAL.
 

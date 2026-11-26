@@ -17,7 +17,7 @@ The audio path carries microphone audio to the DAC line output over two I2S link
 
 The processing step applies the selected listening filter (`L1_FILTER`) and the volume. The audio
 thread hands copies of the original-rate blocks to the BPM worker shown in the
-[threads view](../system/README.md). Listening filter, volume control and the analysis fan-out leave
+[threads view](../system/puml/runtime-ownership.puml). Listening filter, volume control and the analysis fan-out leave
 the transport boundary unchanged.
 
 ## Data path and block ownership
@@ -28,7 +28,7 @@ the transport boundary unchanged.
 - Both pools are fixed at build time in internal, DMA-capable RAM without PSRAM.
 - The Zephyr ESP32 I2S driver supports only two-slot frames [1]. RX blocks therefore contain a
   filled left slot and an unused right slot, and TX blocks carry both slots.
-- The microphone's L/R pin is tied to ground, which selects the left slot [2].
+- The microphone transmits in the left slot, which its channel-select input assigns [2].
 
 ## Clocking
 
@@ -63,7 +63,7 @@ the transport boundary unchanged.
 ## Sources
 
 [1] The Zephyr Project, *ESP32 I2S driver and its Kconfig*, source revision
-`357467a011cd2557a1a3f0b4be83d817c4addc9b`,
+`357467a011cd2557a1a3f0b4be83d817c4addc9b` of 14 August 2026,
 [i2s_esp32.c](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/drivers/i2s/i2s_esp32.c)
 and
 [Kconfig.esp32](https://github.com/zephyrproject-rtos/zephyr/blob/357467a011cd2557a1a3f0b4be83d817c4addc9b/drivers/i2s/Kconfig.esp32),

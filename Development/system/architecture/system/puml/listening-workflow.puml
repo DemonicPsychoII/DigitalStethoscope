@@ -5,6 +5,10 @@ skinparam defaultFontName SansSerif
 skinparam backgroundColor #0b1018
 skinparam defaultFontColor #e6edf7
 skinparam ArrowColor #a9b8ca
+skinparam activity {
+ FontColor #0b1018
+ DiamondFontColor #e6edf7
+}
 title Listening
 start
 :Idle;
@@ -12,7 +16,7 @@ start
 :Start listening;
 repeat
  if (Lung mode (optional)?) then (yes)
-  :Bypass filter (optional); <<#273241>>
+  :<color:#b8c4d4>Bypass filter (optional)</color>; <<#273241>>
  elseif (Raw selected?) then (yes)
   :Bypass filter;
  else (no)
@@ -21,12 +25,12 @@ repeat
  :Apply volume;
  :Play audio;
  if (Optional replay enabled + Heart mode + capture request?) then (yes)
-  :Record + listen (optional); <<#273241>>
+  :<color:#b8c4d4>Record + listen (optional)</color>; <<#273241>>
   if (Cancelled / source or mode changed?) then (yes)
-   :Discard clip (optional); <<#273241>>
+   :<color:#b8c4d4>Discard clip (optional)</color>; <<#273241>>
   else (clip full)
-   :Replay clip at selected slower speed (optional); <<#273241>>
-   :End / cancel (optional); <<#273241>>
+   :<color:#b8c4d4>Replay clip at selected slower speed (optional)</color>; <<#273241>>
+   :<color:#b8c4d4>End / cancel (optional)</color>; <<#273241>>
   endif
  endif
  :Update listening filter / volume;

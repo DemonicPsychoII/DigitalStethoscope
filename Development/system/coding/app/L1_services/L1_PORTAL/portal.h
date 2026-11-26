@@ -92,8 +92,8 @@ int portal_start(void);
  * requests are erased because they can hold a password. On error, the
  * server can still be running.
  *
- * @return 0 only after confirmed socket shutdown or a previously confirmed idle state;
- *         a shutdown-in-progress result still requires bounded confirmation.
+ * @return 0 when the server is stopped or was already stopped, -ETIMEDOUT if the stop
+ *         is not confirmed within 1 s, or the negative error of the HTTP server.
  */
 int portal_stop(void);
 

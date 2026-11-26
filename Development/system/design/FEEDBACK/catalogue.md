@@ -21,7 +21,6 @@ are separate.
   clear rule is met; when one occurs while listening, it is latched without indication, listening
   continues, and it is shown and takes effect after the operator stops the examination manually;
   the result of that examination is discarded.
-  Restart means reset/power cycle.
   Generic device settings failures are distinct from Wi-Fi credential-save failures.
 - **RGB LED = context.** The colour shows the context in which a status or error occurs, not the module that
   detects it. `L2_CONTROL` decides what can run, so each context has one colour: white = device (startup,
@@ -35,8 +34,7 @@ are separate.
 - **Priority** (column): Medium for audio-path faults that can make the user misjudge heart sounds at
   once; Low for all other errors; Information for statuses. No error is High.
 - **Red button LED = error code.** The red LED shows the error code as a number of blinks. The code is
-  unique only together with the RGB colour, so the RGB LED stays on in the context colour during an error.
-  Muting is an audio action and does not switch the RGB LED off.
+  unique only together with the RGB colour. Muting is an audio action and does not switch the RGB LED off.
 - **Blink notation.** "N blinks, pause" repeats until the error is cleared. A pattern runs a limited number
   of times only when the table says so ("once").
 - **Sort order.** Rows are sorted by RGB colour, statuses before errors, and errors by subject in workflow order. The blink count belongs to the code, so it does not follow the row order. "No change" rows are overlays on the current colour and come last.
@@ -45,17 +43,15 @@ are separate.
 - **Statuses** end when the next status replaces them; the change of state is the visible clear.
 - **More than one error.** The LEDs show only the error with the highest priority. If priorities are equal,
   they show the error that latched first. The serial log lists all errors.
-- **Where the error occurred.** An error does not change the RGB context: it keeps the colour of the context in
-  which the error occurred, so the user sees where it happened. The red LED shows the code.
+- **Where the error occurred.** An error does not change the RGB context: the RGB LED stays on in the colour of
+  the context in which the error occurred, so the user sees where it happened.
 - **Clear, retry and recovery** are separate regions; see [Fault handling](#fault-handling) below the table.
 - **Restart** means the reset button or a power off/on cycle.
 - **One button.** With an error shown that clears by short press, the first short press acknowledges it;
   later presses Start and Stop the examination, offline where the error concerns Wi-Fi or the server.
   One press acknowledges only the error shown; with several latched, the next one is shown afterwards.
   Automatic recovery keeps running whether or not the error was acknowledged.
-  A non-audio error that occurs while listening is not shown until the examination is stopped, so a
-  short press during listening Stops. An audio error is shown at once and blocks the button with every
-  other input.
+  A short press during listening Stops.
 - **Button down.** While the button is down, the red LED is steady on instead of its code, and the
   code resumes at the release. When `L2_CONTROL` accepts a 2 s hold in Idle, the red LED blinks at
   4 Hz until the release, so the hold does not read as a 2 Hz error code. A hold outside Idle stays
@@ -64,7 +60,7 @@ are separate.
   `SCAN_FAILURE`. Outcome words: no suffix, `RUNNING`, `OPEN`, `PENDING`, `SENDING` or `CONNECTING` for a normal status;
   `SUCCESSFUL`, `RECEIVED`, `VALID`, `CONNECTED`, `ACKNOWLEDGED` or `MINIMUM_REACHED` for a positive result; `REJECTED`, `FAILURE`, `STALL`, `INVALID`, `UNEXPECTED`, `CHANGE` or `NOT_POSSIBLE` for a negative result.
   The C enumerator adds the prefix `FEEDBACK_` (for example `FEEDBACK_SCAN_FAILURE`) to keep the global
-  namespace clean. The catalogue is one enum. New codes are only appended so that existing values never change.
+  namespace clean. The catalogue is one enum. Value 0, `FEEDBACK_NONE`, means no indication: both lights are off. New codes are only appended so that existing values never change.
 - **Logging is separate.** The component that detects the fault logs the details (sub-cause, HTTP status,
   failed check). The LED interface only receives the code.
 
@@ -103,7 +99,7 @@ are separate.
 | Error  | Startup check failed                                         | L2_CONTROL           | STARTUP_FAILURE              | Low         | white     | steady                               | 2 blinks, pause        | Restart     |
 | Error  | Unexpected reset (watchdog, crash, brown-out)                | L2_CONTROL           | RESET_UNEXPECTED             | Low         | white     | steady                               | 3 blinks, pause        | Short press |
 | Error  | Context change during a session                              | L2_CONTROL           | SESSION_CONTEXT_CHANGE       | Low         | white     | steady                               | 5 blinks, pause        | Restart     |
-| Status | Input rejected                                               | L2_CONTROL           | INPUT_REJECTED               | Information | no change | short dimming by at least 50 %, once | off                    |             |
+| Status | Input rejected                                               | L2_CONTROL           | INPUT_REJECTED               | Information | no change | short dimming by at least 50 %, once | no change              |             |
 | Status | Error acknowledged                                           | L2_CONTROL           | ERROR_ACKNOWLEDGED           | Information | no change | no change                            | 1 long flash, once     |             |
 | Status | Button hold accepted (2 s hold in Idle)                      | L2_CONTROL           | BUTTON_HOLD_ACKNOWLEDGED     | Information | no change | no change                            | blink at 4 Hz until release |        |
 
@@ -113,6 +109,7 @@ are separate.
 
 *Which fault events change the indication, which change Start admission, and which only drive recovery?* Editable source: [puml/fault-handling-state.puml](puml/fault-handling-state.puml).
 
+- **Recovery episode.** Only `SERVER_CONNECTION_FAILURE` and `DEVICE_REGISTRATION_FAILURE` have a recovery episode. The first failed preparation or registration latches the error. Further failed automatic retries of the same episode are logged and do not latch again. A successful retry ends the episode and leaves the indication unchanged. A preparation that Start cancels raises no error. Wi-Fi and delivery errors have no episode rule.
 - **Retry.** A separate 2 s hold in Idle starts Wi-Fi setup again, even with a Wi-Fi error latched. Automatic reconnect and portal recovery stay automatic; acknowledgement is not their gate.
 - **Server connection.** [TLS failure handling](../COMMUNICATION/secure-transport.md#failure-indication) latches `SERVER_CONNECTION_FAILURE` after a failed preparation, including a failed [SNTP exchange](../COMMUNICATION/time-synchronization.md#failure-indication-and-acknowledgement) at its start, and for a result without valid time when delivery ends. There is no separate time-synchronization error; the serial log names the time cause. No time work or time indication happens during listening.
 - **Device registration.** [Registration recovery](../COMMUNICATION/server-communication.md#registration-flow-and-recovery) covers request, response and registration-record failures; standalone listening remains available.

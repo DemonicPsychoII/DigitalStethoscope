@@ -5,6 +5,10 @@ skinparam defaultFontName SansSerif
 skinparam backgroundColor #0b1018
 skinparam defaultFontColor #e6edf7
 skinparam ArrowColor #a9b8ca
+skinparam activity {
+ FontColor #0b1018
+ DiamondFontColor #e6edf7
+}
 title BPM measurement
 start
 :Start Heart session;

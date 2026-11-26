@@ -1,7 +1,6 @@
 # Use cases
 
-Abstract operator flows for the [system requirements](system-requirements.md). Architecture and
-design derive internal workflows and interface contracts from these operator flows.
+Abstract operator flows for the [system requirements](system-requirements.md).
 Sources are in [`use-cases/`](use-cases/). Render from that directory with PlantUML 1.2026.9:
 
 ```sh

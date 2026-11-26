@@ -44,10 +44,8 @@ transmitThread --> transmitQueue : i2s_transmitBlock
 transmitQueue --> transmitDMA : next block to play
 transmitPool <-- transmitDMA
 legend bottom
-  RX reserve: 3 queued blocks × 4 ms = 12 ms. No free block when the DMA needs one: RX error state, stream stops.
-  TX reserve: 3 queued blocks × 4 ms = 12 ms. Empty queue when a block completes: TX error state, stream stops.
-  RX starts before TX, so in normal operation the TX queue can briefly hold 4 blocks and all 5 TX blocks can be in use.
-  Stop: STOP lets each DMA block finish and return (RX into its queue, TX to its pool); DROP then frees both queues.
-  Block = 64 frames × 2 slots × 4 bytes. Pools fixed at build time in internal DMA-capable RAM; no PSRAM.
+  Each box is one holder of blocks; an arrow moves a block to its next holder.
+  Green border: the audio thread holds the block. Blue border: the Zephyr I2S driver holds it.
+  Grey border: the block is free in its L1_I2S pool.
 endlegend
 @enduml

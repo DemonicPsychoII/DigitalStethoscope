@@ -72,7 +72,7 @@ There is no separate time-synchronization error. A failed exchange is a failed s
 | --- | --- |
 | P25-SERVER | `pool.ntp.org`, IPv4 DNS and SNTP over UDP/123 |
 | P25-PLACEMENT | One exchange directly before every ClientHello; none for a reused connection; no separate schedule |
-| P25-BUDGET | Shares the containing setup deadline (P26 Idle preparation or P13 connection setup); separate existing one-second per-service cancellation bound |
+| P25-BUDGET | Shares the containing setup deadline (P26 Idle preparation or P13 connection setup); separate P23 one-second per-service cancellation bound |
 | P25-MAPPING | Anchor qualifies within 12.5 hours of the measurement end: (1 s − 100 ms) / 20 ppm |
 | P25-UNCERTAINTY-BUDGET | 100 ms; a larger reported uncertainty fails the exchange |
 | P25-MAXIMUM-DEVIATION | 1 s, after the IHE Consistent Time profile |

@@ -26,7 +26,7 @@ Dependencies run from L2_CONTROL's frozen job to L2_COMMUNICATION, and from L2_C
 
 While Idle, L2_COMMUNICATION prepares verified transport automatically after joining the configured network. Each setup starts with one time synchronization directly before the TLS handshake and then proceeds to Device registration. L2_COMMUNICATION tracks network access, verified transport and Device registration independently. A retained TLS connection alone does not establish complete readiness. Time comes from unauthenticated SNTP, and transport uses TLS 1.3 only.
 
-L2_COMMUNICATION reuses an available verified connection. During listening the connection stays dormant, without application requests, heartbeats or proactive reconnects. A lost connection is restored within the delivery budget once L2_CONTROL submits the finalized job after listening stops. No background workflow keeps the connection active.
+L2_COMMUNICATION reuses an available verified connection under the [connection policy](secure-transport.md#connection-policy). A lost connection is restored within the delivery budget once L2_CONTROL submits the finalized job after listening stops.
 
 Standalone listening and measurement work without a server-requested examination. A deliverable valid result references this Device and omits the patient reference when none was supplied. External request authenticity and authorization sit at L2_COMMUNICATION's secure intake boundary, and L2_CONTROL owns context admission. When L2_CONTROL accepts a local measurement Start, it consumes any pending examination context and freezes it for the session without replacement. Server context never authorizes remote measurement start.
 
