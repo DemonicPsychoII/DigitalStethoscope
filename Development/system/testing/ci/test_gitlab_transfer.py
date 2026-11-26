@@ -2,7 +2,10 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from unittest.mock import patch
+
 from gitlab_transfer import (
+    ACCEPTED,
     GITLAB_README_SOURCE,
     SYSTEM,
     check,
@@ -10,6 +13,7 @@ from gitlab_transfer import (
     export,
     gitlab_readme,
     link_findings,
+    review_findings,
     transfer_set,
 )
 
@@ -55,6 +59,232 @@ class ContentTests(unittest.TestCase):
         self.assert_found("Created by X on behalf of Y.", "chat or agent trace")
         self.assert_found("Written with Claude-Fable-5.2.", "chat or agent trace")
         self.assert_found("[log](../../planning/README.md)", "not transferred")
+
+    def test_review_findings_are_found_in_pages(self):
+        self.assert_review(
+            DESIGN, "This design refines the architecture.", "page describes itself"
+        )
+        self.assert_review(
+            DESIGN, "This Design refines the architecture.", "page describes itself"
+        )
+        self.assert_review(
+            DESIGN, "The steps below add the rules.", "page describes itself"
+        )
+        self.assert_review(DESIGN, "The MVP sends one result.", "status word")
+        self.assert_review(
+            DESIGN, "The configuration enables CONFIG_SNTP.", "design reports the build"
+        )
+        self.assert_review(
+            DESIGN, "L2 decides the retry.", "layer named instead of the module"
+        )
+        self.assert_review(
+            DESIGN, "L2 retries the join.", "layer named instead of the module"
+        )
+        self.assert_review(
+            DESIGN, "The hotspot waits for the phone.", "phone without its owner"
+        )
+        self.assert_review(DESIGN, "Covers REQ-09.", "requirement id without a link")
+        self.assert_review(
+            SYSTEM + "architecture/system/puml/mvp-session-state.puml",
+            "@startuml",
+            "file name",
+        )
+
+    def test_links_into_the_code_are_found_in_every_form(self):
+        expected = "into the code"
+        self.assert_review(
+            DESIGN, "See [storage](../../coding/app/storage.c).", expected
+        )
+        self.assert_review(
+            DESIGN, "See [storage][s].\n\n[s]: ../../coding/app/storage.c", expected
+        )
+        self.assert_review(
+            DESIGN, '<a href="../../coding/app/storage.c">storage</a>', expected
+        )
+        viewer = SYSTEM + "architecture/system/review.html"
+        self.assert_review(
+            viewer, '<a href="../../coding/app/README.md">app</a>', expected
+        )
+        public = "See [guide](https://example.org/secure-coding/rules.html) and [page](../secure-coding/notes.md)."
+        self.assertEqual(review_findings(DESIGN, public), [])
+
+    def test_requirement_ids_pass_in_every_link_form(self):
+        target = "../../requirements/system-requirements.md#req-09"
+        for linked in (
+            f"Covers [REQ-09]({target}).",
+            f"Covers [REQ-09][r9].\n\n[r9]: {target}",
+            f"Covers [REQ-09][].\n\n[REQ-09]: {target}",
+            f"Covers [REQ-09].\n\n[REQ-09]: {target}",
+            f"Covers [REQ-09\nand more]({target}).",
+            f'Covers <a href="{target}">REQ-09</a>.',
+            f'Covers <a href="{target}"><code>REQ-09</code></a>.',
+        ):
+            self.assertEqual(review_findings(DESIGN, linked), [], linked)
+
+    def test_requirement_ids_need_a_real_link(self):
+        expected = "requirement id without a link"
+        self.assert_review(DESIGN, "Covers [REQ-09][missing].", expected)
+        self.assert_review(DESIGN, "Covers [REQ-09].", expected)
+        self.assert_review(DESIGN, '<a id="req-09">REQ-09</a>', expected)
+        self.assert_review(
+            DESIGN, "Covers REQ-09 and [REQ-10](x.md#req-10).", expected + ": REQ-09"
+        )
+
+    def test_a_link_to_the_code_folder_itself_is_found(self):
+        self.assert_review(DESIGN, "See the [code](../../coding/).", "into the code")
+        self.assert_review(DESIGN, "See the [code](../../coding).", "into the code")
+
+    def test_source_entries_keep_their_wording_and_prose_does_not(self):
+        entry = (
+            "The limit follows the standard [1].\n"
+            "\n"
+            "[1] A. Author, Proposed changes to the phone: a TODO, 2020,\n"
+            "    accessed 1 November 2026.\n"
+        )
+        self.assertEqual(review_findings(DESIGN, entry), [])
+        self.assert_review(DESIGN, "The proposed limit is 5 s.", "status word")
+        self.assert_review(DESIGN, "The *proposed* limit is 5 s [1].", "status word")
+        self.assert_review(
+            DESIGN, "| The *proposed* limit | Basis [S1] [S2] |", "status word"
+        )
+        self.assert_review(
+            DESIGN, "See *this page* for the limit [2].", "page describes itself"
+        )
+        # A title in running text is the project's line until it is accepted with a reason.
+        title = "The rule follows *A Proposed Standard* [3]."
+        self.assert_review(DESIGN, title, "status word")
+        with patch.dict(ACCEPTED, {(DESIGN, "status word"): frozenset({"Proposed"})}):
+            self.assertEqual(review_findings(DESIGN, title), [])
+            self.assert_review(DESIGN, "The MVP sends one result.", "status word")
+
+    def test_table_rows_are_counted_as_markdown_counts_them(self):
+        expected = "table row has"
+        self.assert_review(
+            DESIGN, "| a | b |\n|---|---|\n| 1 |", "table row has 1 cells"
+        )
+        self.assert_review(
+            DESIGN, "a | b\n--- | ---\n1 | 2 | 3", "table row has 3 cells"
+        )
+        self.assert_review(
+            DESIGN,
+            "| a | b |\n|---|---|\n| 1 | 2 |\nonly one cell",
+            "table row has 1 cells",
+        )
+        # A code span does not protect a pipe; an escaped pipe is text.
+        self.assert_review(
+            DESIGN, "| a | b |\n|---|---|\n| `x|y` | 2 |", "table row has 3 cells"
+        )
+        for valid in (
+            "| a | b |\n|---|---|\n| 1 | 2 |",
+            "| a | b\n|---|---\n| 1 | 2",
+            "a | b\n:-- | --:\n1 | 2",
+            "| a | b |\n|---|---|\n| `x\\|y` | 2 |",
+            "| a \\| c | b |\n|---|---|\n| 1 | 2 |",
+            "```\n| a | b |\n|---|---|\n| 1 |\n```",
+            "~~~\n| a | b |\n|---|---|\n| 1 |\n~~~",
+            "| a | b |\n|---|---|\n| 1 | 2 |\n\nA paragraph after the table.",
+            "| a | b |\n|---|---|\n| 1 | 2 |\n## Heading",
+            "A paragraph with a | pipe\n---\n\nText.",
+            "A sentence with a | pipe.\n\nAnother line.",
+        ):
+            self.assertFalse(
+                any(expected in finding for finding in review_findings(DESIGN, valid)),
+                valid,
+            )
+
+    def test_conditions_that_call_a_function_are_found(self):
+        source = SYSTEM + "coding/app/L1_services/L1_STORAGE/storage.c"
+        expected = "condition calls a function"
+        self.assert_review(
+            source,
+            "    if(sys_get_le32(bytes) != checksum)",
+            expected + ": sys_get_le32",
+        )
+        self.assert_review(
+            source,
+            "    while((result == 0) &&\n          storage_hasNext(reader))",
+            "storage_hasNext",
+        )
+        self.assert_review(
+            source, "    if\n    (storage_isReady())\n    {", "storage_isReady"
+        )
+        self.assert_review(source, "    else if(storage_isReady())", "storage_isReady")
+        self.assert_review(
+            source, "    do { x++; } while(storage_hasNext(reader));", "storage_hasNext"
+        )
+        self.assert_review(
+            source,
+            "#define DRAIN(reader) \\\n    while \\\n    (storage_hasNext(reader)) \\\n    { }",
+            "storage_hasNext",
+        )
+        self.assert_review(source, "    if((*handler)(code))", "call through a pointer")
+        self.assert_review(
+            source, "    if(handlers[index](code))", "call through a pointer"
+        )
+        self.assert_review(source, "    if(isReady) /* TODO check */", "status word")
+        self.assert_review(
+            source, "/* L1 compares by itself. */", "layer named instead of the module"
+        )
+        third_line = review_findings(source, "int a;\r\nint b;\r\nif(call(a))\r\n")
+        self.assertTrue(
+            any(":3: condition calls a function" in finding for finding in third_line),
+            third_line,
+        )
+
+    def test_conditions_that_test_named_values_pass(self):
+        source = SYSTEM + "coding/app/L1_services/L1_STORAGE/storage.c"
+        for valid in (
+            "    const bool isMatch = (sys_get_le32(bytes) == checksum);\n    if(isMatch)",
+            "    if(isMatch && IS_ENABLED(CONFIG_X) && (length < sizeof(buffer)))",
+            "    if((size_t)(length) > limit)",
+            "    if(isReady) { storage_close(reader); }",
+            "    if(isReady) /* storage_close(reader) runs later */",
+            "    if(isReady) // see storage_close(reader)",
+            "    // a comment that continues \\\n    if(storage_isReady())\n    value = 1;",
+            '    if(isReady) { LOG_INF("call(%d)", value); }',
+            "    while(index < count)\n    {\n        storage_read(reader);\n    }",
+            "    notify(isReady);",
+        ):
+            self.assertEqual(review_findings(source, valid), [], valid)
+
+    def test_plain_text_passes_the_review_rules(self):
+        page = (
+            "SNTP synchronization refines the architecture under "
+            "[REQ-09](../../requirements/system-requirements.md#req-09).\n"
+            "The operator's phone joins the hotspot.\n"
+            "`CONFIG_SNTP_UNCERTAINTY` must be enabled.\n"
+        )
+        self.assertEqual(review_findings(DESIGN, page), [])
+        architecture = SYSTEM + "architecture/system/firmware-structure.md"
+        self.assertEqual(
+            review_findings(architecture, "L2 owns orchestration. L0 is Zephyr."), []
+        )
+        requirements = "REQ-09 The device delivers the result."
+        self.assertEqual(
+            review_findings(
+                SYSTEM + "requirements/system-requirements.md", requirements
+            ),
+            [],
+        )
+
+    def test_third_party_and_reference_code_are_not_reviewed(self):
+        text = "/* TODO this page */\nif(call(x))"
+        self.assertEqual(
+            review_findings(SYSTEM + "coding/third_party/parser/http_parser.c", text),
+            [],
+        )
+        self.assertEqual(
+            review_findings(
+                SYSTEM + "references/newtec-pulsoxy/lib/FhirService.cpp", text
+            ),
+            [],
+        )
+
+    def assert_review(self, path, text, expected):
+        findings = review_findings(path, text)
+        self.assertTrue(
+            any(expected in finding for finding in findings), (text, findings)
+        )
 
     def test_dates_are_found_in_every_written_form(self):
         for text in (

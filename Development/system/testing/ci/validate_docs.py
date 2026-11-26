@@ -9,6 +9,8 @@ import zlib
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
+import gitlab_transfer
+
 ROOT = Path(__file__).resolve().parents[4]
 AREAS = (
     "README.md",
@@ -355,6 +357,8 @@ def main() -> None:
     errors.extend(listed(paths))
     errors.extend(facts(paths))
     completed = ["links", "renders", "indexes", "repeated facts"]
+    errors.extend(gitlab_transfer.check(gitlab_transfer.working_tree(ROOT)))
+    completed.append("product rules")
     if (ROOT / SYSTEM / "testing/specification-verification.md").is_file():
         errors.extend(verification_coverage())
         completed.append("VT references")

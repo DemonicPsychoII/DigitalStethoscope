@@ -4,6 +4,8 @@ import os
 import subprocess
 from pathlib import Path
 
+import gitlab_transfer
+
 
 ROOT = Path(__file__).resolve().parents[4]
 # Register each implemented host suite with the component paths that affect it.
@@ -140,9 +142,12 @@ def suites(paths: list[str]) -> dict[str, bool]:
     return {
         "application": application,
         # Documentation checks compare docs with renders, pins, scripts and the thesis kit.
+        # They also apply the product rules to every file that goes to GitLab.
         "docs": workflow
         or any(
             p.endswith((".md", ".puml", ".svg"))
+            or gitlab_transfer.is_transferred(p)
+            or p == gitlab_transfer.GITLAB_README_SOURCE
             or "/tests/" in p
             or p.startswith(
                 ("thesis-material/", "Development/system/testing/ci/", TOOLCHAIN)

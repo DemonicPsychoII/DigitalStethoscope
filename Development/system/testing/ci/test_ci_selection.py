@@ -192,6 +192,20 @@ class SelectionTests(unittest.TestCase):
         self.assertTrue(selected["docs"])
         self.assertFalse(selected["application"])
 
+    def test_every_file_that_goes_to_gitlab_selects_the_product_rules(self):
+        system = "Development/system/"
+        for path in (
+            APP + "L1_services/L1_STORAGE/storage.c",
+            APP + "L1_services/L1_STORAGE/storage.h",
+            APP + "prj.conf",
+            system + "architecture/COMMUNICATION/setup-workflows.html",
+            system + "coding/server-profiles/lab-hapi.toml",
+            system + "coding/tools/build-firmware.ps1",
+            system + "process/gitlab-readme.md",
+        ):
+            self.assertTrue(suites([path])["docs"], path)
+        self.assertFalse(suites(["Development/system/planning/notes.txt"])["docs"])
+
     def test_daily_reuse_does_not_repeat_verified_suites(self):
         self.assertFalse(any(select([], full=False, daily=True, reuse=True).values()))
         rebuilt = select([], full=False, daily=True, reuse=False)

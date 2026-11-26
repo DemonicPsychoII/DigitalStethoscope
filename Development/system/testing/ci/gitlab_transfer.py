@@ -4,7 +4,8 @@
 The GitLab repository holds the product: specification, requirements, architecture, design,
 code and the reference code. Both commands work on one committed snapshot, never on the
 working tree. `check` fails when a file of that snapshot carries what a product document must
-not carry or links to a file that is not transferred. `export` writes the checked snapshot
+not carry, repeats a finding of the supervisor's reviews or links to a file that is not
+transferred. The documentation check of the static stage runs the same rules on the working tree. `export` writes the checked snapshot
 into a new, empty directory. It changes nothing else: copying that directory into a GitLab
 checkout is a separate, reviewed step.
 """
@@ -178,6 +179,269 @@ def content_findings(path: str, text: str) -> list[str]:
     return findings
 
 
+# Findings of the supervisor's reviews that must not come back. Each rule names the files it reads.
+# The rules read text, not syntax trees. Known limits: `for` conditions, ternaries and conditions in
+# headers are not read; "The phone" at the start of a sentence is not reported; a call hidden behind a
+# function-like macro is reported under the macro's name.
+OWN_TEXT_EXCLUDED = (SYSTEM + "references/", SYSTEM + "coding/third_party/")
+LEVEL_FOLDERS = (SYSTEM + "architecture/", SYSTEM + "design/")
+SELF_DESCRIPTION = re.compile(
+    r"\b[Tt]his (?:page|design|document|section|note|specification)\b|\b[Tt]hese notes\b|\b[Tt]he steps below\b",
+    re.I,
+)
+STATUS_WORD = re.compile(
+    r"\bMVP\b|\b[Pp]rovisional\b|\b[Pp]roposed\b|\bfor now\b|\bTODO\b|\bFIXME\b"
+)
+STATUS_IN_NAME = re.compile(r"(?i)(?:^|[/_.-])mvp(?:[/_.-]|$)")
+LAYER_AS_ACTOR = re.compile(
+    r"\bL[0-4] (?:reads|owns|takes|decides|retains|retries|compares|calls|keeps|reports|must|may)\b"
+)
+UNNAMED_PHONE = re.compile(r"(?<!operator's )\bthe phone\b")
+REPORTED_BUILD = re.compile(r"\b(?:configuration|build|firmware) (?:enables|sets)\b")
+REQUIREMENT_ID = re.compile(r"\bREQ-\d+\b")
+INLINE_LINK = re.compile(r"\[[^\]]*\]\([^)]*\)", re.S)
+REFERENCE_LINK = re.compile(r"\[([^\]]*)\]\[([^\]]*)\]", re.S)
+SHORTCUT_LINK = re.compile(r"\[([^\]]+)\](?![\[(:])", re.S)
+REFERENCE_DEFINITION = re.compile(r"^\s{0,3}\[([^\]]+)\]:\s*\S", re.M)
+HTML_LINK = re.compile(r"<a\b[^>]*\bhref\s*=[^>]*>.*?</a>", re.I | re.S)
+C_COMMENT_OR_LITERAL = re.compile(
+    r"/\*.*?\*/|//[^\n]*|\"(?:\\.|[^\"\\\n])*\"|'(?:\\.|[^'\\\n])*'", re.S
+)
+CONDITION_KEYWORD = re.compile(r"\b(?:if|while)\b")
+CALL = re.compile(r"\b([A-Za-z_]\w*)\s*\(")
+POINTER_CALL = re.compile(r"\(\s*\*\s*[A-Za-z_][\w.\->\[\]]*\s*\)\s*\(|\]\s*\(")
+# Keywords and compile-time macros that may stand in a condition.
+NOT_A_CALL = frozenset({"if", "while", "sizeof", "defined", "IS_ENABLED", "ARRAY_SIZE"})
+TABLE_DELIMITER = re.compile(r"^\s*\|?\s*:?-+:?\s*(?:\|\s*:?-+:?\s*)*\|?\s*$")
+CODE_FENCE = re.compile(r"^\s{0,3}(`{3,}|~{3,})")
+# A line that starts another block ends a table.
+BLOCK_START = re.compile(r"^\s{0,3}(?:#{1,6}\s|>|[-*+]\s|\d+[.)]\s|`{3,}|~{3,}|<)")
+
+
+def condition_findings(path: str, text: str) -> list[str]:
+    """Return the `if` and `while` conditions of a C file that call a function.
+
+    A condition tests a named value: the call stands on its own line before it. Comments and
+    literals are blanked first, and only the text between the parentheses of the condition is
+    read, wherever its opening parenthesis stands.
+    """
+    # A backslash before the line end continues the line; "\r" keeps its place for the line count.
+    joined = text.replace("\r\n", "\n").replace("\\\n", " \r")
+    code = C_COMMENT_OR_LITERAL.sub(
+        lambda match: re.sub(r"[^\n\r]", " ", match.group(0)), joined
+    )
+    findings = []
+    for keyword in CONDITION_KEYWORD.finditer(code):
+        opening = keyword.end()
+        while opening < len(code) and code[opening].isspace():
+            opening += 1
+        if opening >= len(code) or code[opening] != "(":
+            continue
+        depth = 0
+        closing = opening
+        for closing in range(opening, len(code)):
+            if code[closing] == "(":
+                depth += 1
+            elif code[closing] == ")":
+                depth -= 1
+                if depth == 0:
+                    break
+        condition = code[opening + 1 : closing]
+        calls = sorted(
+            {name for name in CALL.findall(condition) if name not in NOT_A_CALL}
+        )
+        if POINTER_CALL.search(condition):
+            calls.append("call through a pointer")
+        if calls:
+            before = code[: keyword.start()]
+            line = before.count("\n") + before.count("\r") + 1
+            findings.append(
+                f"{path}:{line}: condition calls a function: {', '.join(calls)}"
+            )
+    return findings
+
+
+def table_cells(line: str) -> int:
+    """Return the number of cells of a table row; a backslash escapes a pipe, a code span does not."""
+    row = line.strip()
+    if row.startswith("|"):
+        row = row[1:]
+    if row.endswith("|") and not row.endswith("\\|"):
+        row = row[:-1]
+    return len(re.split(r"(?<!\\)\|", row))
+
+
+def table_findings(path: str, text: str) -> list[str]:
+    """Return the Markdown table rows whose number of cells differs from their header.
+
+    A table starts with a header row and a delimiter row and ends at a blank line or at the start
+    of another block; every line in between is a row, with or without pipes.
+    """
+    findings = []
+    lines = text.splitlines()
+    fence = None
+    index = 0
+    while index < len(lines):
+        marker = CODE_FENCE.match(lines[index])
+        if marker and fence is None:
+            fence = marker.group(1)[0]
+        elif marker and marker.group(1)[0] == fence:
+            fence = None
+        is_header = (
+            fence is None
+            and not marker
+            and "|" in lines[index]
+            and index + 1 < len(lines)
+            and "-" in lines[index + 1]
+            and TABLE_DELIMITER.match(lines[index + 1]) is not None
+            # Header and delimiter row have the same number of cells; otherwise it is no table.
+            and table_cells(lines[index]) == table_cells(lines[index + 1])
+        )
+        if not is_header:
+            index += 1
+            continue
+        header = table_cells(lines[index])
+        row = index + 1
+        while (
+            row < len(lines)
+            and lines[row].strip()
+            and not BLOCK_START.match(lines[row])
+        ):
+            cells = table_cells(lines[row])
+            if cells != header:
+                findings.append(
+                    f"{path}:{row + 1}: table row has {cells} cells, its header has {header}"
+                )
+            row += 1
+        index = row
+    return findings
+
+
+def code_link_findings(path: str, text: str) -> list[str]:
+    """Return the links of an architecture or design page that point into the code."""
+    suffix = posixpath.splitext(path)[1].lower()
+    code_folder = SYSTEM + "coding"
+    findings = []
+    for number, raw in link_targets(text, suffix):
+        link = urlsplit(raw)
+        if link.scheme or link.netloc or not link.path:
+            continue
+        target = resolve(posixpath.dirname(path), link.path)
+        if target is not None and (
+            target == code_folder or target.startswith(code_folder + "/")
+        ):
+            findings.append(
+                f"{path}:{number}: link from architecture or design into the code: {raw}"
+            )
+    return findings
+
+
+def requirement_findings(path: str, text: str) -> list[str]:
+    """Return the requirement ids of a page that are not the text of a link.
+
+    A link is an inline link, an HTML anchor with `href`, or a reference link whose label the
+    page defines; it may span lines.
+    """
+    defined = {
+        " ".join(label.split()).lower() for label in REFERENCE_DEFINITION.findall(text)
+    }
+
+    def blank(match: re.Match[str]) -> str:
+        return re.sub(r"[^\n]", " ", match.group(0))
+
+    def blank_reference(match: re.Match[str]) -> str:
+        label = (
+            match.group(2)
+            if match.lastindex == 2 and match.group(2)
+            else match.group(1)
+        )
+        return (
+            blank(match)
+            if " ".join(label.split()).lower() in defined
+            else match.group(0)
+        )
+
+    plain = HTML_LINK.sub(blank, INLINE_LINK.sub(blank, text))
+    plain = SHORTCUT_LINK.sub(
+        blank_reference, REFERENCE_LINK.sub(blank_reference, plain)
+    )
+    # The definition lines themselves are not prose.
+    plain = re.sub(r"(?m)^\s{0,3}\[[^\]]+\]:.*$", "", plain)
+    findings = []
+    for number, line in enumerate(plain.splitlines(), start=1):
+        values = REQUIREMENT_ID.findall(line)
+        if values:
+            findings.append(
+                f"{path}:{number}: requirement id without a link: {', '.join(sorted(set(values)))}"
+            )
+    return findings
+
+
+def review_findings(path: str, text: str) -> list[str]:
+    """Return the review findings of one file of the project's own text and code."""
+    if path.startswith(OWN_TEXT_EXCLUDED):
+        return []
+    findings = []
+    if STATUS_IN_NAME.search(path):
+        findings.append(f"{path}: status word in the file name")
+    suffix = posixpath.splitext(path)[1].lower()
+    is_page = suffix in (".md", ".puml") or (
+        suffix == ".html" and "/coding/" not in path
+    )
+    is_level_page = is_page and path.startswith(LEVEL_FOLDERS)
+    is_code = path.startswith(SYSTEM + "coding/") and suffix != ".md"
+    rules = [("status word", STATUS_WORD.findall)]
+    if is_page:
+        rules.append(("page describes itself", SELF_DESCRIPTION.findall))
+    if is_level_page:
+        rules.append(("design reports the build", REPORTED_BUILD.findall))
+    # The architecture states what a layer does; design and code name the module.
+    if (is_page and path.startswith(SYSTEM + "design/")) or is_code:
+        rules.append(("layer named instead of the module", LAYER_AS_ACTOR.findall))
+    if is_level_page or is_code:
+        rules.append(("phone without its owner", UNNAMED_PHONE.findall))
+    in_source_entry = False
+    for number, line in enumerate(text.splitlines(), start=1):
+        # A source entry runs from its "[n]" marker to the next blank line; it quotes a title.
+        if not line.strip():
+            in_source_entry = False
+        elif re.match(r"\s*\[S?\d+\]\s", line):
+            in_source_entry = True
+        if in_source_entry:
+            continue
+        for name, offending in rules:
+            # A title quoted in running text is listed in ACCEPTED with its reason.
+            accepted = ACCEPTED.get((path, name), frozenset())
+            values = [value for value in offending(line) if value not in accepted]
+            if values:
+                findings.append(
+                    f"{path}:{number}: {name}: {', '.join(sorted(set(values)))}"
+                )
+    if is_level_page and suffix == ".md":
+        findings.extend(requirement_findings(path, text))
+    if is_level_page and suffix in (".md", ".html"):
+        findings.extend(code_link_findings(path, text))
+    if suffix == ".md":
+        findings.extend(table_findings(path, text))
+    if suffix == ".c":
+        findings.extend(condition_findings(path, text))
+    return findings
+
+
+def working_tree(root: Path = ROOT) -> dict[str, bytes]:
+    """Return the transferred files and the GitLab root page as they are on disk, path to content."""
+    listed = git(root, "ls-files", "-z").decode("utf-8")
+    tracked = [path for path in listed.split("\0") if path]
+    wanted = set(transfer_set(tracked))
+    if GITLAB_README_SOURCE in tracked:
+        wanted.add(GITLAB_README_SOURCE)
+    return {
+        path: (root / path).read_bytes()
+        for path in sorted(wanted)
+        if (root / path).is_file()
+    }
+
+
 def link_targets(text: str, suffix: str) -> list[tuple[int, str]]:
     """Return the link destinations of a Markdown or HTML file with their line numbers."""
     targets = []
@@ -269,6 +533,7 @@ def check(files: dict[str, bytes]) -> list[str]:
             findings.append(f"{path}: not UTF-8 text and not listed as a binary file")
             continue
         findings.extend(content_findings(path, text))
+        findings.extend(review_findings(path, text))
         if path == GITLAB_README_SOURCE:
             # The root page is checked as it is exported: rewritten, at the repository root.
             findings.extend(
