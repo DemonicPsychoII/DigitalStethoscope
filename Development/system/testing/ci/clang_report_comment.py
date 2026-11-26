@@ -103,6 +103,11 @@ def main() -> None:
     report = read_report(os.environ["RUN_ID"], os.environ["RUN_ATTEMPT"], repository)
     payload = json.dumps({"body": body(report, head)})
     for number in targets:
+        # The head can move while the evidence downloads; a newer run then owns the comment.
+        current = json.loads(gh("api", f"repos/{repository}/pulls/{number}"))
+        if current["head"]["sha"] != head:
+            print(f"#{number} moved past {head[:12]}; its newer run reports instead.")
+            continue
         comments = json.loads(
             gh(
                 "api",

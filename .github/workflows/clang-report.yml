@@ -1,0 +1,43 @@
+name: Clang report
+
+# After each verification run of a same-repository PR, keep one PR comment with the clang
+# report (clang-tidy, complexity, MC/DC, fuzzing) from its static evidence. The report is
+# information only, so this workflow is not a required check.
+
+on:
+  workflow_run:
+    workflows: ["Mandatory quality gates"]
+    types: [completed]
+
+permissions: {}
+
+jobs:
+  comment:
+    name: Clang / PR Report
+    if: >-
+      github.event.workflow_run.event == 'pull_request'
+      && github.event.workflow_run.conclusion != 'cancelled'
+      && github.event.workflow_run.head_repository.full_name == github.repository
+    # One report job per PR branch at a time; the script re-reads the PR head before writing.
+    concurrency:
+      group: clang-report-${{ github.event.workflow_run.head_branch }}
+      cancel-in-progress: false
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    permissions:
+      contents: read
+      actions: read         # download the run's static evidence
+      pull-requests: write  # keep one report comment per PR
+    steps:
+      - name: Check out the script from the default branch (never PR code)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          persist-credentials: false
+      - name: Post or update the clang report comment
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+          RUN_ATTEMPT: ${{ github.event.workflow_run.run_attempt }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: python3 Development/system/testing/ci/clang_report_comment.py
