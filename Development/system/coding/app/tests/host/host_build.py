@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass
 import functools
+import json
 import os
 from pathlib import Path
 import re
@@ -69,6 +70,15 @@ def source_revision():
         pytest.fail(f"Git is required for host source identity: {error}", pytrace=False)
 
 
+def record_compile_command(command, target):
+    """Append the command to STETHO_COMPILE_COMMANDS, from which clang-tidy's database is made."""
+    record = os.environ.get("STETHO_COMPILE_COMMANDS")
+    if record:
+        with open(record, "a", encoding="utf-8") as stream:
+            entry = {"directory": os.getcwd(), "arguments": command, "output": str(target)}
+            stream.write(json.dumps(entry) + "\n")
+
+
 def build(directory, name, sources, include_directories=(), embed_portal_page=False):
     """Compile sources into directory/name with the substitute headers first on the path."""
     target = directory / (name + ".exe" if sys.platform == "win32" else name)
@@ -99,6 +109,7 @@ def build(directory, name, sources, include_directories=(), embed_portal_page=Fa
             f"Host compile of {name} failed:\n{result.stdout}\n{result.stderr}",
             pytrace=False,
         )
+    record_compile_command(compiler() + arguments, target)
     return HostExecutable(
         target, compiler() + arguments, compiler_version(), source_revision()
     )

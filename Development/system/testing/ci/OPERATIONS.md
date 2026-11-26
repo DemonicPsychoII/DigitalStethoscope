@@ -69,6 +69,22 @@ threshold: this baseline exposes gaps for review instead of choosing an arbitrar
 percentage. Host compilers and commands remain in JUnit; firmware build selection
 and the required firmware check remain in place.
 
+The clang reports follow the host coverage and are information only: no finding fails a
+check. `clang_reports.py` builds the host scenarios once more with clang 18 and
+`-fcoverage-mcdc`, and reports per production source the branch and MC/DC (modified
+condition/decision coverage) results; clang 18 measures decisions of up to six conditions.
+The compile commands of that run, recorded by `host_build.py` through
+`STETHO_COMPILE_COMMANDS`, feed clang-tidy with [clang-tidy.yaml](clang-tidy.yaml): bug-prone
+patterns, the Clang Static Analyzer, the README naming rule and the cognitive complexity of
+every function, with Zephyr macros not counted. Only files that the host tests compile are
+checked. The libFuzzer targets in `coding/app/tests/fuzz/` then run with ASan and UBSan for
+`STETHO_FUZZ_SECONDS` each (default 60), starting from their seed corpus; a crash keeps its
+reproducer. The report, `clang.json` and the compile database remain in
+`artifacts/ci/clang/`. Without the Ubuntu packages `clang-18`, `clang-tidy-18`, `llvm-18`
+and `libclang-rt-18-dev` the report says that it did not run. `clang_report_comment.py`
+reads the report from the static evidence of a verification run and keeps it as one comment on
+each open PR whose head is that run's head.
+
 `manual_test_records.py` validates completed JSON runs and reports the count in the
 job summary. An empty run directory explicitly means execution and Nico's sign-off
 are pending. The manual record format, reusable procedures and executed records
@@ -139,7 +155,7 @@ New component suites are added through their test PRs. Use the following command
 | --- | --- | --- |
 | `static` | `ci_evidence.py`, `validate_docs.py`, `manual_test_records.py`, `run_ci.py static` | every device; Windows skips actionlint and ShellCheck |
 | `unit` | tooling and merge-gate `unittest` suites | every device |
-| `host` | host scenarios with sanitizers and their results, then production coverage | Linux with GCC (or `CC`) |
+| `host` | host scenarios with sanitizers and their results, production coverage, then `clang_reports.py` | Linux with GCC (or `CC`); the clang reports need clang 18 |
 | `build` | `run_ci.py build --application`, then the ELF path and identity | wherever the pinned toolchain is installed |
 
 ```bash
