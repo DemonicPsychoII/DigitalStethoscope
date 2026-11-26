@@ -5,6 +5,10 @@ skinparam defaultFontName SansSerif
 skinparam backgroundColor #0b1018
 skinparam defaultFontColor #e6edf7
 skinparam ArrowColor #a9b8ca
+skinparam activity {
+ FontColor #0b1018
+ DiamondFontColor #e6edf7
+}
 title F3 Set up Wi-Fi (REQ-11, REQ-12)
 start
 if (Boot with saved network?) then (yes)
@@ -37,6 +41,6 @@ floating note
  Cancel/timeout: notice then cleanup; retain an established station.
  Start takes priority: stop setup safely before audio.
  Wi-Fi-only errors preserve audio.
- Not shown: time, secure transport and Device registration; they belong to FHIR acceptance.
+ Not shown: time, secure transport and Device registration.
 end note
 @enduml

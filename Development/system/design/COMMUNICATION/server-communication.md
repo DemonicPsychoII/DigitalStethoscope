@@ -2,9 +2,7 @@
 
 ## Basis
 
-This design refines the [server-communication architecture](../../architecture/COMMUNICATION/server-communication.md) and the [delivery design](interfaces-and-behavior.md#delivery-clock-and-configuration). It depends on the [SNTP design](time-synchronization.md) and the [TLS design](secure-transport.md).
-
-Server communication uses persistent server-bound Device registration, conditional recovery, a full-MAC-derived physical identity and hotspot name, registration readiness only after flash save, ten-second registration attempts with an exponential Idle recovery gap (60 seconds doubling up to four failed attempts), and connection reuse against one server defined by the server profile. At most one pending examination request is held under a newest-request-wins rule, consumed and frozen at local Start, with no automatic patient-context reuse after cancellation or failure and no subject field on standalone measurements. Observations use FHIR R4 JSON without profile declarations, and poor-signal Observations carry `dataAbsentReason=error` without a numeric value. Covered requirements are [REQ-02](../../requirements/system-requirements.md#req-02), [REQ-07](../../requirements/system-requirements.md#req-07), [REQ-08](../../requirements/system-requirements.md#req-08), [REQ-09](../../requirements/system-requirements.md#req-09), [REQ-10](../../requirements/system-requirements.md#req-10), [REQ-11](../../requirements/system-requirements.md#req-11), [REQ-12](../../requirements/system-requirements.md#req-12), [REQ-13](../../requirements/system-requirements.md#req-13), [REQ-14](../../requirements/system-requirements.md#req-14) and [REQ-15](../../requirements/system-requirements.md#req-15).
+Refines the [server-communication architecture](../../architecture/COMMUNICATION/server-communication.md) and the [delivery design](interfaces-and-behavior.md#delivery-clock-and-configuration); depends on the [SNTP design](time-synchronization.md) and the [TLS design](secure-transport.md); covers [REQ-02](../../requirements/system-requirements.md#req-02), [REQ-07](../../requirements/system-requirements.md#req-07), [REQ-08](../../requirements/system-requirements.md#req-08), [REQ-09](../../requirements/system-requirements.md#req-09), [REQ-10](../../requirements/system-requirements.md#req-10), [REQ-11](../../requirements/system-requirements.md#req-11), [REQ-12](../../requirements/system-requirements.md#req-12), [REQ-13](../../requirements/system-requirements.md#req-13), [REQ-14](../../requirements/system-requirements.md#req-14) and [REQ-15](../../requirements/system-requirements.md#req-15).
 
 ## Responsibilities and interfaces
 
@@ -17,13 +15,20 @@ Server communication uses persistent server-bound Device registration, condition
 | L1_STORAGE | Read/write the complete named registration record. No server policy or retry decisions. |
 | Examination-request adapter | Supply validated, device-addressed examination context and consumption acknowledgement. |
 
-`fhir_buildDeviceRegistration` and `fhir_buildObservation` accept immutable input and a caller buffer with capacity, and return success with byte length or an error cause without performing network work. `fhir_parseDeviceRegistration` accepts bounded status, headers, body and the expected server binding, and returns a validated server Device id or an error cause. None of these functions returns truncated JSON, silently truncates an identifier or falls back to an unconditional POST. The L1_WIFI HTTP service accepts the method, configured relative resource path, headers, frozen bytes and caller deadline; waiting does not reset deadlines or retry. Its cancellation contract quiesces callbacks and releases resources before audio within the separate one-second per-service stop bound of the Wi-Fi cleanup limits in [P23](parameters.md).
+`fhir_buildDeviceRegistration` and `fhir_buildObservation` accept immutable input and a caller buffer with capacity, and return success with byte length or an error cause without performing network work. `fhir_parseDeviceRegistration` accepts bounded status, headers, body and the expected server binding, and returns a validated server Device id or an error cause. None of these functions returns truncated JSON, silently truncates an identifier or falls back to an unconditional POST. The L1_WIFI HTTP service sends one POST on the retained verified connection:
+
+| Operation | Contract |
+| --- | --- |
+| `wifi_startSecureExchange` | Under the lease, accept the relative resource path, the `If-None-Exist` value, the frozen body bytes, a response destination and the caller deadline for write and receipt; at most one pending operation. Return accepted, busy or a cause (no retained connection, no configured server or an unusable request). No reconnect and no retry. |
+| `wifi_waitForSecureExchange` | Wait at most the caller interval; waiting neither restarts the exchange nor resets its deadline. Return pending, a complete response of any status, or one terminal cause: stale connection (closed or reset before any response byte), transport loss, timeout, cancellation or an unusable response, which is no receipt. Completion quiesces callbacks. The connection stays retained only after a complete response that permits reuse and leaves no further received bytes; every other outcome closes it. |
+
+`wifi_cancelSecureConnection` also cancels a pending exchange. It quiesces callbacks and releases resources before audio within the separate one-second per-service stop bound of the Wi-Fi cleanup limits in [P23](parameters.md).
 
 ## Physical identity and server binding
 
 The hotspot name is `Stetho-AABBCCDDEEFF`, formed from all six factory station MAC bytes in uppercase hexadecimal. Device registration uses `stetho-AABBCCDDEEFF`: the same six factory station MAC bytes with no separators and the lowercase project prefix. L1_WIFI reads the stable factory station identity independently of any runtime MAC override or randomization. A failed identity read makes registration unavailable; all zeros or a truncated hotspot suffix are never substituted. This identifier identifies the physical device and does not authenticate it.
 
-Use `Device.identifier.system = urn:stethoscope:device` and the physical identifier as its value. Keep this distinct from the logical `Device.id` that the HAPI FHIR server assigns [1,2]. Bind the saved logical id to the complete HTTPS FHIR base URL of the server profile, including base path. The device has exactly one server, taken from the [server profile image](secure-transport.md#trust-and-server-profile-inputs). When the image is built, lowercase scheme/host, make the port explicit and remove the trailing slash; reject userinfo, query and fragment. Use the same canonical string everywhere. Host/path aliases and a changed base URL require conditional registration for that binding; DNS destination changes, Wi-Fi/SSID/password changes, reconnects and certificate renewal alone do not. A one-slot record is sufficient: returning to a previous server conditionally recovers its resource instead of requiring a multi-server registry.
+Use `Device.identifier.system = urn:stethoscope:device` and the physical identifier as its value. Keep this distinct from the logical `Device.id` that the HAPI FHIR server assigns [1, 2]. Bind the saved logical id to the complete HTTPS FHIR base URL of the server profile, including base path. The device has exactly one server, taken from the [server profile image](secure-transport.md#trust-and-server-profile-inputs). When the image is built, lowercase scheme/host, make the port explicit and remove the trailing slash; reject userinfo, query and fragment. Use the same canonical string everywhere. Host/path aliases and a changed base URL require conditional registration for that binding; DNS destination changes, Wi-Fi/SSID/password changes, reconnects and certificate renewal alone do not. A one-slot record is sufficient: returning to a previous server conditionally recovers its resource instead of requiring a multi-server registry.
 
 ## Registration record
 
@@ -53,7 +58,7 @@ At boot, L2_COMMUNICATION reads and validates the record once. A matching record
 5. Persistence follows the diagram: the complete record is committed before readiness is published. A new server binding does not become ready using the old server's id.
 6. On a failed or interrupted issued registration attempt, retry no earlier than the recovery gap after completion while Idle and prerequisites permit. The gap is 60 seconds after the first failure and doubles with every further failure (60, 120, 240 seconds). The fourth failed attempt makes registration unavailable until restart, as a failed identity or record read does. Interrupted attempts wait for the current gap but do not count, and missing prerequisites consume no attempt. Start cancels network preparation before audio; a pending settings commit must complete under its remaining bound before release. Late generations cannot save or publish registration for another binding. L1_FHIR, L1_WIFI and L1_STORAGE add no workflow retries.
 
-Ambiguous multiple matches, unsupported conditional creation, authentication/configuration failure and invalid trust never trigger unconditional creation. Latch `DEVICE_REGISTRATION_FAILURE`, retain bounded/redacted cause information, and use the registration recovery of step 6 without per-retry alerts after acknowledgement. Acknowledgement clears only the indication, not readiness or retry scheduling; success restores readiness but does not acknowledge an existing latch. Registration-only faults preserve standalone listening. Failure to prove resource release follows existing cleanup/restart rules.
+Ambiguous multiple matches, unsupported conditional creation, authentication/configuration failure and invalid trust never trigger unconditional creation. Latch `DEVICE_REGISTRATION_FAILURE`, retain bounded/redacted cause information, and use the registration recovery of step 6 without per-retry alerts after acknowledgement. Acknowledgement clears only the indication, not readiness or retry scheduling; success restores readiness but does not acknowledge an existing latch. Registration-only faults preserve standalone listening. Failure to prove resource release follows the `WIFI_CLEANUP_FAILURE` rule of [P23](parameters.md).
 
 If an authoritative read or server diagnostic specifically establishes that the saved Device is absent, L2_COMMUNICATION invalidates cached readiness and runs conditional registration again while Idle. A generic HTTP 404 from an Observation endpoint does not establish that a referenced Device is missing. L2_COMMUNICATION performs no per-message existence query and no background existence polling. Reconciliation never changes a frozen result's Device id and never resends a previously failed result.
 
@@ -72,13 +77,13 @@ L1_FHIR serializes resources in C using a bounded JSON writer with proper string
 | Field | Valid heart-rate result |
 | --- | --- |
 | `resourceType`, `status` | `Observation`, `final` |
-| `identifier` | Existing `urn:stethoscope:measurement` plus frozen `<server-device-id>:<measurement-end-UTC>`; retain the shared uniqueness rule |
+| `identifier` | System `urn:stethoscope:measurement` and the frozen value `<server-device-id>:<measurement-end-UTC>`; the [uniqueness rule](interfaces-and-behavior.md#delivery-clock-and-configuration) applies |
 | `category` | Coding system `http://terminology.hl7.org/CodeSystem/observation-category`, code `vital-signs` |
-| `code` | Coding system `http://loinc.org`, code `8867-4` (heart rate), per the existing baseline [5] |
+| `code` | Coding system `http://loinc.org`, code `8867-4` (heart rate) [5] |
 | `effectiveDateTime` | Frozen measurement-end UTC, formatted `YYYY-MM-DDTHH:mm:ss.SSSZ`; never sampled during serialization/retry |
 | `device.reference` | `Device/<frozen-server-device-id>` |
 | `subject.reference` | Exact validated patient reference supplied by the attached examination; omit the entire subject when absent. No Patient lookup, creation or replacement. |
-| `valueQuantity` | Frozen valid BPM numeric value using the result's declared precision; `unit` and `code` are `/min`, `system` is `http://unitsofmeasure.org`. Never invent a rounding/precision policy here. |
+| `valueQuantity` | Frozen valid BPM numeric value using the result's declared precision; `unit` and `code` are `/min`, `system` is `http://unitsofmeasure.org`. |
 | `meta.profile` | Omitted. |
 
 FHIR R4 Observation fields are defined in [6]. The immutable local result retains interval, analysis configuration, request identity and measurement point. Observation payloads omit extension URLs, body-site codes and `Observation.basedOn`.
@@ -99,10 +104,10 @@ Reuse the verified HTTP connection sequentially when eligible under the [TLS des
 | --- | --- |
 | P27-IDENTITY | Full factory station MAC, `stetho-` plus 12 uppercase hex digits; identifier system `urn:stethoscope:device` |
 | P27-RECORD | `fhir/device-registration`, version 1, 343 bytes as specified above; canonical base URL at most 256 bytes, server id at most 64 bytes |
-| P27-REGISTRATION | Ten seconds including conditional request, parsing and flash save; separate existing cleanup bound; recovery gap 60 seconds after the first failed or an interrupted issued attempt, doubling with each further failure; at most 4 failed attempts, then unavailable until restart |
+| P27-REGISTRATION | Ten seconds including conditional request, parsing and flash save; separate P23 cleanup bound; recovery gap 60 seconds after the first failed or an interrupted issued attempt, doubling with each further failure; at most 4 failed attempts, then unavailable until restart |
 | P27-REQUEST | At most one pending request; a newer request replaces it, also while a session context is frozen; consumed on accepted measurement Start; no automatic reapplication |
 | P27-BUFFERS | 2048-byte outgoing JSON capacity, 4096-byte registration-response body capacity and 4096-byte aggregate response-header capacity; overflow is rejected without truncation |
-| P27-DELIVERY | Existing P13 deadlines, receipt, conditional identity, retry classifications and no delayed queue |
+| P27-DELIVERY | P13 deadlines, receipt, conditional identity, retry classifications and no delayed queue |
 
 The deployment prerequisites for TLS and the server certificate are in the [TLS design](secure-transport.md#design-inputs).
 

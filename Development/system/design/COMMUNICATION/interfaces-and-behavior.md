@@ -1,4 +1,4 @@
-# COMMUNICATION setup workflow, recovery and delivery
+# L2_COMMUNICATION setup workflow, recovery and delivery
 
 L2_COMMUNICATION owns setup sequencing, retry policy and result delivery under L2_CONTROL's network lease. It uses [L1_WIFI operations](../WIFI/interfaces-and-behavior.md), the [L1_STORAGE record interface](../STORAGE/interfaces-and-behavior.md) and the [L1_PORTAL request/status boundary](../PORTAL/interfaces-and-behavior.md).
 
@@ -18,7 +18,7 @@ The [L1_PORTAL interface](../PORTAL/interfaces-and-behavior.md) queues typed req
 
 ### Join, persistence and result closure
 
-One portal join attempt waits for the selected network's address. A stale existing link does not count as a successful new join. On failure, L2_COMMUNICATION shows the cause, rescans and returns to network selection. On success, L2_COMMUNICATION saves the network under the `wifi/network` key in L1_STORAGE with `storage_write()` and retries saving once on failure. A failed save preserves the previous valid record. L2_COMMUNICATION shows the success status or save warning for 10 s together with the station IPv4 address from `wifi_getAddress()`. Before teardown on every setup exit, including result or save-warning completion and Start, L2_COMMUNICATION publishes the Closing status. Only Cancel, inactivity and scan failure add the 2 s closing-notice delay. L2_COMMUNICATION then closes the hotspot and HTTP server while keeping the station connection, including when credentials were not saved. At boot, L2_COMMUNICATION reads the `wifi/network` record with `storage_read()` and validates it with `wifi_isValidNetwork()`. L2_COMMUNICATION owns workflow policy.
+One portal join attempt waits for the selected network's address. A stale existing link does not count as a successful new join. On failure, L2_COMMUNICATION shows the cause, rescans and returns to network selection. On success, L2_COMMUNICATION saves the network under the `wifi/network` key in L1_STORAGE with `storage_write()` and retries saving once on failure. A failed save preserves the previous valid record. L2_COMMUNICATION shows the success status or save warning for 10 s together with the station IPv4 address from `wifi_getAddress()`. Before teardown on every setup exit, including result or save-warning completion and Start, L2_COMMUNICATION publishes the Closing status. Only Cancel, inactivity and scan failure add the 2 s closing-notice delay. L2_COMMUNICATION then closes the hotspot and HTTP server while keeping the station connection, including when credentials were not saved. At boot, L2_COMMUNICATION reads the `wifi/network` record with `storage_read()` and validates it with `wifi_isValidNetwork()`.
 
 ### Cancellation and inactivity
 
@@ -62,9 +62,7 @@ committed write, must retry with the identical body and conditional-create ident
 under [P13](parameters.md) while an attempt and time budget remain. P13 classifies retryable and
 terminal outcomes. A visible delivery failure releases the job only on a terminal
 outcome or exhausted attempt/deadline budget; there is no unconditional-create fallback.
-FHIR conditional-create semantics: Health Level Seven International, FHIR R4
-v4.0.1, HTTP, Conditional create, 2019,
-<https://hl7.org/fhir/R4/http.html#ccreate> (accessed 2026-10-23).
+FHIR conditional create defines these semantics [1].
 
 The device never selects or adds a patient ID. It serializes `Observation.subject` only from the patient reference supplied with a server-requested examination, and otherwise omits `subject`. [Examination request context](server-communication.md#examination-request-boundary) is consumed and frozen on accepted local measurement Start and is never automatically reused after cancellation or failure. A `Device.patient` lookup is not used as a substitute. One delivery job is granted after finalization when Wi-Fi is configured and delivery prerequisites hold; when Wi-Fi is configured and prerequisites fail, `L2_CONTROL` latches `DELIVERY_NOT_POSSIBLE` at once. P13 bounds delivery attempts.
 
@@ -72,7 +70,7 @@ The device never selects or adds a patient ID. It serializes `Observation.subjec
 
 `L2_COMMUNICATION` and `L1_WIFI` verify the server profile's public server certificate, endpoint identity and validity against the clock set by the SNTP exchange that opens each connection setup under the [TLS design](secure-transport.md), and enforce bounded status and body parsing. A missing retained connection permits reconnect within P13, whereas a missing or invalid server profile image fails prerequisites. `201 Created` or `200` (existing conditional create) is the receipt and marks the result Sent without readback.
 An uncertain response is retried within the same bounded job. A single matching identifier returns the existing resource, and multiple matches fail with 412. Configuration, authentication and server failures remain visible after the last attempt.
-The [SNTP contract](time-synchronization.md) specifies unauthenticated `pool.ntp.org` time, Zephyr uncertainty estimation, one exchange directly before every ClientHello and the 12.5-hour mapping limit. David L. Mills, *Simple Network Time Protocol (SNTP) Version 4 for IPv4, IPv6 and OSI*, IETF RFC 4330, January 2006, §11, DOI: 10.17487/RFC4330, <https://www.rfc-editor.org/rfc/rfc4330#section-11> (accessed 2026-10-24), describes unauthenticated SNTP security limitations. Credentials are private deployment configuration.
+The [SNTP contract](time-synchronization.md) specifies unauthenticated `pool.ntp.org` time, Zephyr uncertainty estimation, one exchange directly before every ClientHello and the 12.5-hour mapping limit. RFC 4330 describes the security limitations of unauthenticated SNTP [2, section 11].
 
 Active network work and live listening use an exclusive `L2_CONTROL` lease. An established station association stays active during listening, while setup, reconnect and delivery jobs do not run. Start during Wi-Fi setup requests safe teardown before audio, and `L2_CONTROL` stops audio before granting the network lease. Start during analysis is rejected Busy without cancellation or queuing. Start during sending cancels the delivery job ([state rules](../cross-module.md#state-entryprocessexit)). A fresh Start after release primes and starts audio.
 If release cannot be confirmed, audio remains stopped and the device indicates the cause. As an exception under [REQ-13](../../requirements/system-requirements.md#req-13), a failed network-service stop or SNTP cancellation follows [P23](parameters.md): `L2_COMMUNICATION` latches `WIFI_CLEANUP_FAILURE`, disables network work until restart and releases audio.
@@ -81,4 +79,10 @@ If release cannot be confirmed, audio remains stopped and the device indicates t
 
 ## Server communication and FHIR delivery
 
-Time synchronization, secure server transport and Device registration run independently of Wi-Fi setup completion. The device does not select patients; it reuses a patient reference only when supplied with a server-requested examination and otherwise omits `subject`. [Server communication](server-communication.md) defines server-bound conditional registration, physical and logical device identities and FHIR message formatting.
+Time synchronization, secure server transport and Device registration run independently of Wi-Fi setup completion. [Server communication](server-communication.md) defines server-bound conditional registration, physical and logical device identities and FHIR message formatting.
+
+## Sources
+
+[1] Health Level Seven International, *FHIR R4 RESTful API*, version 4.0.1, 2019, Conditional create, <https://hl7.org/fhir/R4/http.html#ccreate>, accessed 23 October 2026.
+
+[2] David L. Mills, *Simple Network Time Protocol (SNTP) Version 4 for IPv4, IPv6 and OSI*, IETF RFC 4330, January 2006, section 11, DOI: 10.17487/RFC4330, <https://www.rfc-editor.org/rfc/rfc4330#section-11>, accessed 24 October 2026.

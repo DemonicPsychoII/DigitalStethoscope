@@ -21,7 +21,8 @@ COMMUNICATION -> WIFI : start time synchronization (SNTP)
 WIFI -> DNS : resolve pool.ntp.org (IPv4)
 WIFI -> NTP : one SNTP request, UDP/123; no resend
 NTP --> WIFI : reply
-WIFI --> COMMUNICATION : normalized sample (reject leap 3, stratum outside 1-15,\nuncertainty above 100 ms)
+WIFI --> COMMUNICATION : normalized sample (reject leap 3, stratum outside 1-15)
+COMMUNICATION -> COMMUNICATION : uncertainty above 100 ms?\nyes: fail before the clock is applied
 COMMUNICATION -> WIFI : apply clock: new UTC/monotonic anchor
 COMMUNICATION -> COMMUNICATION : server certificate valid at the new UTC time?\nno: fail before any ClientHello
 COMMUNICATION -> WIFI : start secure connection

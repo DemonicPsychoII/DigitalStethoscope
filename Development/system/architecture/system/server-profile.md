@@ -14,7 +14,7 @@ Editable source: [puml/server-profile.puml](puml/server-profile.puml).
 
 | Owner | Responsibility | Boundary |
 | --- | --- | --- |
-| Deployment file | The single reviewed source of one server deployment: base URL, server keep-alive and the public server certificate. | Public data only. Never a private key, keystore, password or patient context. |
+| Deployment file | The single source of one server deployment: base URL, server keep-alive and the public server certificate. | Public data only. Never a private key, keystore, password or patient context. |
 | Server profile tool (developer PC) | Validate the file, canonicalize the base URL, check the certificate against the endpoint, build the versioned image with its checksum and check that it fits the partition. | Writes no firmware and no other partition. Does not obtain a certificate from the network. |
 | Flash command (developer PC) | Take one deployment file and one serial port, run the tool and write the image at the partition location taken from the firmware build. | The firmware image and the settings partition stay unchanged. |
 | Server profile partition (device flash) | Hold exactly one image at a fixed start, independent of firmware updates, the settings size and an erase of the settings partition; a whole-flash erase removes it. | The firmware reads it and never writes it. |

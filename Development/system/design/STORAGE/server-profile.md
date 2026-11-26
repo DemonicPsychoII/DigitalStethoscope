@@ -2,7 +2,7 @@
 
 ## Basis
 
-This page refines the [server profile architecture](../../architecture/system/server-profile.md) and the [flash layout and image format](interfaces-and-behavior.md#flash-layout). It covers [REQ-09](../../requirements/system-requirements.md#req-09), [REQ-11](../../requirements/system-requirements.md#req-11), [REQ-12](../../requirements/system-requirements.md#req-12) and [REQ-13](../../requirements/system-requirements.md#req-13).
+Refines the [server profile architecture](../../architecture/system/server-profile.md) and the [flash layout and image format](interfaces-and-behavior.md#flash-layout); covers [REQ-09](../../requirements/system-requirements.md#req-09), [REQ-11](../../requirements/system-requirements.md#req-11), [REQ-12](../../requirements/system-requirements.md#req-12) and [REQ-13](../../requirements/system-requirements.md#req-13).
 
 Each server deployment is defined by a single TOML file with the public server certificate embedded as PEM text. A single provisioning command validates the file, builds the binary image in format version 1 and writes it to the device. The deployment file is an input on the developer PC only.
 

@@ -1,18 +1,13 @@
-# Standards research for LED indication
+# LED indication standards
 
 The [status and error catalogue](catalogue.md#status-and-error-catalogue) and
-[P22](parameters.md) draw their colour, flash-rate and priority rules from IEC 60601-1, IEC 60073
-and IEC 60601-1-8. All clause summaries below come from the secondary sources and standard previews
+[P22](parameters.md) draw the colour, flash-rate and priority rules of the RGB status LED and the
+red button LED from IEC 60601-1, IEC 60073 and IEC 60601-1-8. All clause summaries below come from the secondary sources and standard previews
 listed under [Sources](#sources).
 
 Primary standard identification: International Electrotechnical Commission, *Medical electrical equipment — Part 1-8: General requirements for basic safety and essential performance — Collateral standard: General requirements, tests and guidance for alarm systems in medical electrical equipment and medical electrical systems*, IEC 60601-1-8:2006+AMD1:2012+AMD2:2020 CSV, edition 2.2, IEC, 2020. Publication record: <https://webstore.iec.ch/en/publication/67388> (accessed 2026-10-24).
 
-## Question
-
-Which colours, flash rates and patterns do the relevant standards require or recommend for the two LEDs
-(RGB status LED, red button LED)?
-
-## Findings
+## Requirements of the standards
 
 ### IEC 60601-1, subclause 7.8.1: colours of indicator lights
 
@@ -55,9 +50,9 @@ Which colours, flash rates and patterns do the relevant standards require or rec
 - Visual information signals shall be perceived as different from visual alarm signals at 1 m. [S11]
   [S12]
 - Compliance test conditions: visual acuity 6/6, 30° viewing cone, 100–1500 lx. [S12]
-- Applies only if the errors are technical alarm conditions of an alarm system. See the assessment below.
+- Applies only if the errors are technical alarm conditions of an alarm system. See [Classification as ME equipment](#classification-as-me-equipment).
 
-### Is the device ME equipment?
+### Classification as ME equipment
 
 - Commercial electronic stethoscopes are treated as ME equipment under IEC 60601-1. The 3M Littmann 3200
   is a Type B device; its applied parts are the chestpiece with diaphragm and the binaural; it meets
@@ -92,7 +87,7 @@ Which colours, flash rates and patterns do the relevant standards require or rec
 - The cited sources name no standard for numeric blink codes. The counting limits (at most 6 blinks,
   2 s pause) are specific to this design and stay inside the IEC 60073 f2 rate.
 
-## Influence on the design
+## Design rules and their basis
 
 Context-to-colour mappings (including blue for FHIR and white for device settings) are specific to this design; IEC 60601-1 defines only red, yellow and green.
 
@@ -109,7 +104,7 @@ Context-to-colour mappings (including blue for FHIR and white for device setting
 | Status patterns (steady, slow blink, breathing) differ from the 2 Hz red error blink | Information signals must differ from alarm signals | IEC 60601-1-8 Amd 1 [S11] |
 | Breathing 3 s period, Idle dim 20 %, 2 s code pause, ≤ 6 blinks | Specific to this design | — |
 | Errors halt operation, except the Wi-Fi-only exception; only clearable errors can resume | The error needs the operator to act, so red ("immediate response") fits; Wi-Fi-only errors preserve working audio | IEC 60601-1 7.8.1 [S1] |
-| Priority column: Medium for audio-path faults, Low for all other errors, Information for statuses | Harm and onset per Table 1 | IEC 60601-1-8 Table 1 [S11] [S16]; ME assessment [S14] [S15] |
+| Priority column: Medium for audio-path faults, Low for all other errors, Information for statuses | Harm and onset per Table 1 | IEC 60601-1-8 Table 1 [S11] [S16]; classification as ME equipment [S14] [S15] |
 | Only the highest-priority error is shown | Intelligent alarm system may suppress lower-priority signals | IEC 60601-1-8 6.3.2.2 [S12] |
 | Equal priority shows the first latched | First-latched tie handling (deviation from IEC 60601-1-8) | — |
 | Red 2 Hz for all errors, no yellow (deviation from IEC 60601-1-8 Table 2) | This catalogue uses red; Table 2 would need yellow/cyan for medium/low | IEC 60601-1-8 Table 2 [S9] [S10] |

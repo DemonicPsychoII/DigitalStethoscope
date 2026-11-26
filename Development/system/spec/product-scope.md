@@ -160,7 +160,7 @@ Publication record: <https://webstore.iec.ch/en/publication/67388> (accessed 202
 |---|---|
 | Operator | Person who operates the device and listens. |
 | Raw | Listening without a band filter. Sample normalization, gain and output saturation still apply. |
-| Listening filter | Switch position that the operator selects for the audible output: Raw (no band filter), Murmur (filter estimated to be better for murmur detection) or BPM (the filter of the BPM analysis, so the operator hears what the analysis gets). |
+| Listening filter | Switch position that the operator selects for the audible output: Raw (no band filter), Murmur (its own band filter) or BPM (the filter of the BPM analysis, so the operator hears what the analysis gets). |
 | Analysis filter | The BPM filter. BPM analysis always applies it to its own input, which is taken before the volume control. It is independent of the listening switch. |
 | Measurement session | Bounded interval of original-rate audio that is aggregated into one frozen result with a unique identifier. |
 | Idle | The device does not listen. The output is muted. Network work is permitted. |

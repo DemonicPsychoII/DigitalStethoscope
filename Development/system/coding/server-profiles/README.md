@@ -10,10 +10,11 @@ This folder holds test deployments only: no production endpoint, no private key,
 
 ## Use
 
-From the repository root, with the pinned toolchain environment:
+From the repository root, after [`setup-toolchain.ps1`](../tools/setup-toolchain.ps1) has provisioned the pinned toolchain. The first line resolves the pinned workspace:
 
 ```powershell
-.ci-workspace/.venv/Scripts/python.exe Development/system/coding/tools/server-profile/server_profile.py check Development/system/coding/server-profiles/lab-hapi.toml
+$workspace = (python Development/system/coding/tools/toolchain/toolchain_environment.py --format locations | ConvertFrom-Json).workspace
+& "$workspace\.venv\Scripts\python.exe" Development/system/coding/tools/server-profile/server_profile.py check Development/system/coding/server-profiles/lab-hapi.toml
 Development/system/coding/tools/flash-server-profile.ps1 <COM port number> Development/system/coding/server-profiles/lab-hapi.toml
 ```
 

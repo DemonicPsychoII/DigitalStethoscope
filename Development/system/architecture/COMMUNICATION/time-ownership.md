@@ -12,7 +12,7 @@ L1_WIFI performs the time operations and L2_COMMUNICATION orchestrates them.
 | --- | --- | --- |
 | L2_CONTROL | Admit active synchronization under the exclusive network lease; supply measurement timing context and consume readiness/failure outcomes. | Listening admission remains independent of server readiness. |
 | L2_COMMUNICATION | Coordinate synchronization and evaluate clock readiness against the clock policy; make readiness available to delivery preparation. | No hidden background synchronization or retry policy in L1_WIFI or L1_FHIR. |
-| L1_WIFI | Perform one requested SNTP exchange through Zephyr and return the time information or failure. | Obtaining a time value does not establish that it is trusted. |
+| L1_WIFI | Perform one requested SNTP exchange through Zephyr and return the time information or failure. | The [trust boundary](#trust-boundary) applies to the returned time. |
 | Measurement owner, L2_AUDIO with L2_CONTROL | Preserve the measurement interval in the sample/monotonic time domain and its UTC mapping. | A later synchronization must not silently relabel a frozen result. |
 | TLS transport and L1_FHIR | Consume clock information for their respective certificate-checking and timestamp responsibilities. | Neither chooses a time server nor starts synchronization. |
 
@@ -24,11 +24,11 @@ Active time exchanges occur only outside live listening under L2_CONTROL's exclu
 
 After joining the configured network, L2_COMMUNICATION starts every secure transport setup with one time synchronization directly before the TLS handshake. A failed exchange fails that setup and blocks server readiness without affecting Wi-Fi setup completion or offline listening. Once transport is verified, Device registration proceeds while Idle so measurement Stop does not trigger full preparation from scratch.
 
-L2_COMMUNICATION tracks network access, verified transport (including the time applied by its setup) and Device registration separately. A connected station or retained TLS connection alone does not establish delivery readiness. A measurement uses a clock anchor only when that anchor qualifies for the measurement end; synchronization success alone does not authenticate the time source.
+Verified transport includes the time applied by its setup; the [readiness flow](server-communication.md#preparation-and-readiness-flow) defines the readiness states. A measurement uses a clock anchor only when that anchor qualifies for the measurement end.
 
 ## Trust boundary
 
-The time source is an external SNTP server reached through the station's network. Time is obtained over unauthenticated SNTP, which does not authenticate the time server [1]. Synchronization success is never represented as authenticated time.
+The time source is an external SNTP server reached through the station's network. The SNTP exchange does not authenticate the time server [1], and synchronization success is never represented as authenticated time.
 
 Time synchronization and clock-correction handling neither extend the delivery budget nor run during listening.
 

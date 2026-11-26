@@ -97,7 +97,13 @@ static const struct wifi_http_request *wifi_SecureRequest;           /**< Exchan
 static struct wifi_http_response *wifi_SecureResponse;               /**< Exchange result; borrowed from the caller until completion. */
 static char wifi_SecureRequestHead[WIFI_HTTP_REQUEST_HEAD_CAPACITY]; /**< Built by Start, written by the worker. */
 static size_t wifi_SecureRequestHeadLength;
-/** @brief Tell whether an operation is still the pending one; call with wifi_SecureLock held. */
+/**
+ * @brief Tell whether an operation is still the pending one; call with wifi_SecureLock held.
+ *
+ * @param[in] generation Operation to check.
+ *
+ * @return True while it is current and not cancelled.
+ */
 static bool wifi_isSecureConnectionCurrent(uint32_t generation);
 
 static struct wifi_dns_lookup wifi_SecureServerLookup = {
@@ -131,46 +137,140 @@ static struct k_work wifi_SecureWork;
 /* LOCAL FUNCTION PROTOTYPES                                           */
 /***********************************************************************/
 
-/** @brief Run one accepted secure connection on the dedicated work queue. */
+/**
+ * @brief Run one accepted secure connection on the dedicated work queue.
+ *
+ * @param[in] work Work item of the secure connection queue.
+ */
 static void wifi_runSecureConnection(struct k_work *work);
 
-/** @brief Tell whether the worker may continue the given operation. */
+/**
+ * @brief Tell whether the worker may continue the given operation.
+ *
+ * @param[in] generation Operation the worker runs.
+ *
+ * @return True while that operation is current and not cancelled.
+ */
 static bool wifi_isSecureConnectionAdmitted(uint32_t generation);
 
-/** @brief Resolve the server name, or use the configured IPv4 literal. */
+/**
+ * @brief Resolve the server name, or use the configured IPv4 literal.
+ *
+ * @param[in]  generation Operation the worker runs.
+ * @param[in]  deadline   End of the connection setup.
+ * @param[out] address    IPv4 address of the server; written only on success.
+ *
+ * @return 0 on success, -ETIMEDOUT when the setup has no time left, or the negative
+ *         error of wifi_resolveIpv4().
+ */
 static int wifi_resolveSecureServer(uint32_t generation, k_timepoint_t deadline, struct net_sockaddr_in *address);
 
-/** @brief Connect TCP without blocking, polling in short intervals. */
+/**
+ * @brief Connect TCP without blocking, polling in short intervals.
+ *
+ * @param[in] generation Operation the worker runs; cancellation ends the connect.
+ * @param[in] deadline   End of the connection setup.
+ * @param[in] address    Resolved IPv4 address; the configured port is added.
+ *
+ * @return 0 when connected, -ECANCELED, -ETIMEDOUT, or a negative socket error.
+ */
 static int wifi_connectSecureSocket(uint32_t generation, k_timepoint_t deadline, const struct net_sockaddr_in *address);
 
-/** @brief Run the TLS 1.3 handshake step by step, polling in short intervals. */
+/**
+ * @brief Run the TLS 1.3 handshake step by step, polling in short intervals.
+ *
+ * @param[in]  generation Operation the worker runs; cancellation ends the handshake.
+ * @param[in]  deadline   End of the connection setup.
+ * @param[out] cause      Failure cause; written on every failure.
+ *
+ * @return 0 for a verified session, -ENOMEM if mbedTLS cannot set up the session,
+ *         -ECANCELED after cancellation, -ETIMEDOUT at the deadline, -EACCES if the
+ *         certificate, its name or its validity is rejected, -EPROTO for another
+ *         handshake failure, for example no TLS 1.3 or a required client certificate,
+ *         or a negative socket error.
+ */
 static int wifi_runHandshake(uint32_t generation, k_timepoint_t deadline, enum wifi_secure_connection_cause *cause);
 
 /**
  * @brief Wait until the socket is ready for the given events.
+ *
+ * @param[in] generation Operation the worker runs; cancellation ends the wait.
+ * @param[in] deadline   End of the wait.
+ * @param[in] events     ZSOCK_POLLIN or ZSOCK_POLLOUT.
+ *
  * @return 0 when ready, -ECANCELED, -ETIMEDOUT, or a negative socket error.
  */
 static int wifi_waitForSocket(uint32_t generation, k_timepoint_t deadline, short events);
 
-/** @brief Release the DNS query, session and socket after a failed or cancelled operation. */
+/**
+ * @brief Release the DNS query, session and socket after a failed or cancelled operation.
+ *
+ * @return 0 when session and socket are released and no DNS callback can run, or the
+ *         resolver's negative error code.
+ */
 static int wifi_releaseSecureResources(void);
 
-/** @brief Publish a released operation's terminal result. */
+/**
+ * @brief Publish a released operation's terminal result.
+ *
+ * @param[in] generation Owning operation; the result of an older one is ignored.
+ * @param[in] result     Terminal result; a failure is replaced by -ECANCELED once cancellation was requested.
+ * @param[in] cause      Failure cause stored with the result.
+ */
 static void wifi_publishSecureResult(uint32_t generation, int result, enum wifi_secure_connection_cause cause);
 
-/** @brief mbedTLS send callback over the non-blocking socket. */
+/**
+ * @brief mbedTLS send callback over the non-blocking socket.
+ *
+ * @param[in] context Pointer to the socket descriptor.
+ * @param[in] data    Bytes to send.
+ * @param[in] length  Number of bytes in @p data.
+ *
+ * @return The number of bytes sent, MBEDTLS_ERR_SSL_WANT_WRITE if the socket would block,
+ *         or MBEDTLS_ERR_SSL_INTERNAL_ERROR.
+ */
 static int wifi_sendSecureData(void *context, const unsigned char *data, size_t length);
 
-/** @brief mbedTLS receive callback over the non-blocking socket. */
+/**
+ * @brief mbedTLS receive callback over the non-blocking socket.
+ *
+ * @param[in]  context Pointer to the socket descriptor.
+ * @param[out] data    Buffer for the received bytes.
+ * @param[in]  length  Size of @p data.
+ *
+ * @return The number of bytes received, MBEDTLS_ERR_SSL_CONN_EOF after the peer closed,
+ *         MBEDTLS_ERR_SSL_WANT_READ if no data is available, or MBEDTLS_ERR_SSL_INTERNAL_ERROR.
+ */
 static int wifi_receiveSecureData(void *context, unsigned char *data, size_t length);
 
-/** @brief Split https://host:port/path into host, port and base path. */
+/**
+ * @brief Split https://host:port/path into host, port and base path.
+ *
+ * @param[in] baseUrl NUL-terminated base URL.
+ *
+ * @return 0 with host, port and base path stored, or -EINVAL for a scheme other than
+ *         https, an IPv6 literal, a missing or overlong host, an invalid port or an
+ *         overlong base path.
+ */
 static int wifi_parseBaseUrl(const char *baseUrl);
 
-/** @brief Require a DNS or IP Subject Alternative Name that matches the host. */
+/**
+ * @brief Require a DNS or IP Subject Alternative Name that matches the host.
+ *
+ * @param[in] certificate Parsed certificate.
+ *
+ * @return 0 on a match, or -EBADMSG without a Subject Alternative Name extension or
+ *         without an entry that matches the configured host.
+ */
 static int wifi_checkSubjectAlternativeName(const mbedtls_x509_crt *certificate);
 
-/** @brief Convert an X.509 time to UTC seconds. */
+/**
+ * @brief Convert an X.509 time to UTC seconds.
+ *
+ * @param[in] time X.509 time in UTC.
+ *
+ * @return Seconds since 1970-01-01T00:00:00Z.
+ */
 static int64_t wifi_convertCertificateTime(const mbedtls_x509_time *time);
 
 /**
@@ -256,6 +356,7 @@ int wifi_configureSecureServer(const char *baseUrl, const char *certificate, siz
     mbedtls_x509_crt_init(&wifi_TrustedCertificate);
     /* Parsing copies the certificate, so the caller's buffer is not borrowed. */
     result = mbedtls_x509_crt_parse(&wifi_TrustedCertificate, (const unsigned char *)certificate, certificateLength);
+    /* Exactly one certificate is accepted, because it is the only trust anchor. */
     if((result != 0) || (wifi_TrustedCertificate.next != NULL))
     {
         LOG_WRN("Server certificate unusable (-0x%04x)", (unsigned int)-result);
@@ -1122,6 +1223,7 @@ static int wifi_parseBaseUrl(const char *baseUrl)
     const char *host = baseUrl + (sizeof(scheme) - 1U);
     if(*host == '[')
     {
+        /* An IPv6 literal is not supported: the station resolves and connects over IPv4 only. */
         return -EINVAL;
     }
 

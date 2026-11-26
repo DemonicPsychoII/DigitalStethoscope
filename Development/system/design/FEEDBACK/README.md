@@ -1,7 +1,3 @@
 # Feedback detailed design
 
-The [LED/error catalogue](catalogue.md), [P12 and P22 parameters](parameters.md) and [standards research](led-indication-standards.md) define indication behavior. The [fault-handling view](catalogue.md#fault-handling) separates recovery, indication and Start admission. Architectural fault-containment and ownership rules are in the system architecture.
-
-## LED indication and error handling
-
-`L2_CONTROL` selects status and error indications under the fault-containment rules; the [status and error catalogue](catalogue.md#status-and-error-catalogue) and [feedback parameters](parameters.md) define codes, acknowledgement, priorities and P22 timing values.
+`L2_CONTROL` selects status and error indications under the fault-containment and ownership rules of the [system architecture](../../architecture/system/feedback-principles.md). The [status and error catalogue](catalogue.md#status-and-error-catalogue) defines codes, acknowledgement and priorities. The [feedback parameters](parameters.md) define P12 and the P22 timing values. The [LED indication standards](led-indication-standards.md) give the basis of the colour, flash-rate and priority rules. The [fault-handling view](catalogue.md#fault-handling) separates recovery, indication and Start admission.

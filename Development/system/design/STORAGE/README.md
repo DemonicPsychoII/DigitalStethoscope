@@ -1,4 +1,4 @@
-# STORAGE detailed design
+# L1_STORAGE detailed design
 
 [Record interface](interfaces-and-behavior.md) defines persistence owned by L1_STORAGE. L2_COMMUNICATION decides when Wi-Fi credentials are read, validated and committed.
 

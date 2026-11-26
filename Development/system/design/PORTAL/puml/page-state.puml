@@ -13,7 +13,7 @@ skinparam state {
 title Setup page: browser-local view versus controller status
 hide empty description
 
-state "Browser view (portal.html)" as Browser {
+state "Browser view" as Browser {
  state "Interactive views" as Interactive {
   state "list\nnetworks, Rescan, Cancel setup" as List
   state "form\nselected network, password" as Form
@@ -60,9 +60,8 @@ state "Controller status (published by L1_PORTAL and L2_COMMUNICATION)" as Contr
 Browser -[hidden]right-> Controller
 
 legend bottom left
- The page polls /status once per second, one poll outstanding.
- A poll failure also replaces an open form with guidance; the next successful poll (selecting, connect_failed) restores the list.
- Start from L2_CONTROL publishes closing from any status without a notice delay. Accepting Connect, Rescan or Cancel sets
- connecting, scanning or closing at once, before L2_COMMUNICATION reads the request; Activity keeps the status and cause.
+ Left: the view the browser shows. Right: the status the device publishes.
+ A label reads trigger / action. "poll:" names the status that a /status poll returns.
+ The left region follows the right region only through polls.
 endlegend
 @enduml

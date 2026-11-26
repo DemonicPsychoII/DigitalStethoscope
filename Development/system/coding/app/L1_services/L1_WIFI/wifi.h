@@ -334,7 +334,9 @@ int wifi_cancelTimeSynchronization(void);
  * @param[in] time Normalized sample with receive-time monotonic timestamp.
  * @param[out] anchor Applied UTC/monotonic pair and uncertainty; success only.
  *
- * @return 0 with an applied anchor, or a negative error code on failure.
+ * @return 0 with an applied anchor, -EINVAL for a NULL pointer, a fraction of one second
+ *         or more or a receive timestamp in the future, -ERANGE if the UTC time is not
+ *         representable as Zephyr real time, or the negative error of the clock.
  */
 int wifi_applyTimeSynchronization(const struct normalised_time *time, struct applied_time_anchor *anchor);
 

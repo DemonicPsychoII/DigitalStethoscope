@@ -1,4 +1,4 @@
-# Portal interfaces and behavior
+# L1_PORTAL interfaces and behavior
 
 `L1_PORTAL` serves the setup page as a single HTML document with changing views over an HTTP (Hypertext Transfer Protocol) server. The page runs in the browser, maintains list, form, busy and completed views, polls status once per second, posts URL-encoded form data and escapes network text before display. A rejected form returns to selection. Lost status responses show closure guidance while polling continues, so reconnection can recover. `L1_PORTAL` does not operate the radio or save credentials. `L2_COMMUNICATION` reads typed requests, performs the Wi-Fi workflow and publishes page data through the operations defined in [Requests and published state](#requests-and-published-state).
 
@@ -19,7 +19,7 @@ The hotspot is open. A client device joins the hotspot manually, and a QR code s
 | `portal_setAddress()` | Station IPv4 address or empty text | Show the address supplied by `L2_COMMUNICATION` after the selected network joins. |
 | `portal_waitForRequest()` | Caller-owned request and bounded wait | Return Connect, Rescan, Cancel or Activity; clear the request password after use. |
 
-Status polls are not queued requests. Activity requests follow P24 while the user selects or types. Requests are accepted while selection is active; the page ignores user cancellation from Connect through save and automatic closure.
+Status polls are not queued requests. Activity requests follow P24 while the user selects or types. Requests are accepted while selection is active; the page ignores user cancellation from Connect through save and automatic closure. On accepting Connect, Rescan or Cancel, `L1_PORTAL` sets the status to connecting, scanning or closing at once, before `L2_COMMUNICATION` reads the request. Activity keeps the status and cause.
 
 ## Form navigation and setup exit
 
@@ -28,10 +28,7 @@ owns form Back, setup Cancel and timer behavior. `L2_COMMUNICATION` publishes `P
 
 Malformed requests, invalid network or passphrase fields and malformed URL encoding return HTTP 400. An oversized body returns HTTP 413. Unknown paths return HTTP 404, and unsupported methods on a known resource return HTTP 405. Rescan after a failed portal join is accepted while the hotspot and HTTP server remain open, even before the replacement scan list is published. Connect returns HTTP 409 while that rescan is running and until a completed list permits selection. Other requests outside selection, a concurrent `/connect` while another form is being received, or a second client trying to submit that form return HTTP 409. Form fragments remain bound to the client that started them until completion or abort, without fragment mixing. A full typed request queue returns HTTP 503 with `Retry-After: 1` without changing published state, so retries do not immediately saturate the bounded queue. A second HTTP connection can poll status without acquiring ownership of an active form. P24 defines rate, queue and inactivity limits. On `portal_start()`, `L1_PORTAL` resets the form, queued requests, station address and errors, retains the already-published completed scan list and sets the state to selection.
 
-These response meanings follow Roy T. Fielding, Mark Nottingham and Julian Reschke,
-*HTTP Semantics*, IETF RFC 9110, June 2022, §§10.2.3, 15.5.1, 15.5.5, 15.5.6,
-15.5.10, 15.5.14 and 15.6.4, DOI 10.17487/RFC9110,
-https://www.rfc-editor.org/rfc/rfc9110.html (accessed 24 October 2026).
+These response meanings follow RFC 9110 [1].
 
 The setup portal runs over plain HTTP on an open hotspot. [L2_COMMUNICATION](../COMMUNICATION/interfaces-and-behavior.md) owns setup, retry, save and teardown policy; `L1_PORTAL` displays its published snapshot.
 
@@ -95,3 +92,7 @@ The active connect form belongs to its initiating HTTP client until completion o
 | `networks` | Completed scan-cache array, bounded by P23-WIFI. Each item has a `name` string (SSID) and `password` boolean indicating whether input is required. No passphrase is returned. |
 
 Publish a coherent status/cause/address/list snapshot under the `L1_PORTAL` data boundary. Escape quotes and backslashes for JSON and replace raw control bytes with `?`; HTML text escaping remains necessary after JSON parsing. A poll can show the previous completed list while scanning; Connect admission also requires the controller's selection-ready condition, not merely a nonempty array.
+
+## Sources
+
+[1] Roy T. Fielding, Mark Nottingham and Julian Reschke, *HTTP Semantics*, IETF RFC 9110, June 2022, sections 10.2.3, 15.5.1, 15.5.5, 15.5.6, 15.5.10, 15.5.14 and 15.6.4, DOI: 10.17487/RFC9110, <https://www.rfc-editor.org/rfc/rfc9110.html>, accessed 24 October 2026.

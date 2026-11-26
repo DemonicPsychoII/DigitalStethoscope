@@ -6,7 +6,7 @@
 /** @addtogroup L1_WIFI
  * @{
  * @file
- * Bounded HTTP/1.1 response reader on Zephyr's http_parser.
+ * HTTP/1.1 request head builder, and bounded response reader on Zephyr's http_parser.
  */
 
 /***********************************************************************/

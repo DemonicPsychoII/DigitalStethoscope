@@ -4,7 +4,7 @@
 
 Server communication refines the [system software allocation](../system/puml/software-components.puml) for Device registration, examination context, FHIR serialization and result delivery under [REQ-02](../../requirements/system-requirements.md#req-02), [REQ-07](../../requirements/system-requirements.md#req-07), [REQ-08](../../requirements/system-requirements.md#req-08), [REQ-09](../../requirements/system-requirements.md#req-09), [REQ-10](../../requirements/system-requirements.md#req-10), [REQ-11](../../requirements/system-requirements.md#req-11), [REQ-13](../../requirements/system-requirements.md#req-13) and [REQ-15](../../requirements/system-requirements.md#req-15).
 
-The device reuses a patient reference only when supplied with a server-requested examination, and omits it otherwise. Only the device starts measurements; the server cannot start an examination.
+Only the device starts measurements; the server cannot start an examination.
 
 ## Responsibilities and dependencies
 
@@ -24,11 +24,11 @@ Dependencies run from L2_CONTROL's frozen job to L2_COMMUNICATION, and from L2_C
 
 ## Preparation and readiness flow
 
-While Idle, L2_COMMUNICATION prepares verified transport automatically after joining the configured network. Each setup starts with one time synchronization directly before the TLS handshake and then proceeds to Device registration. L2_COMMUNICATION tracks network access, verified transport and Device registration independently. A retained TLS connection alone does not establish complete readiness. Time comes from unauthenticated SNTP, and transport uses TLS 1.3 only.
+While Idle, L2_COMMUNICATION prepares verified transport automatically after joining the configured network, in the order of the [preparation flow](time-ownership.md#preparation-flow). L2_COMMUNICATION tracks network access, verified transport and Device registration independently. A retained TLS connection alone does not establish complete readiness.
 
-L2_COMMUNICATION reuses an available verified connection. During listening the connection stays dormant, without application requests, heartbeats or proactive reconnects. A lost connection is restored within the delivery budget once L2_CONTROL submits the finalized job after listening stops. No background workflow keeps the connection active.
+L2_COMMUNICATION reuses an available verified connection under the [connection policy](secure-transport.md#connection-policy). A lost connection is restored within the delivery budget once L2_CONTROL submits the finalized job after listening stops.
 
-Standalone listening and measurement work without a server-requested examination. A deliverable valid result references this Device and omits the patient reference when none was supplied. External request authenticity and authorization sit at L2_COMMUNICATION's secure intake boundary, and L2_CONTROL owns context admission. When L2_CONTROL accepts a local measurement Start, it consumes any pending examination context and freezes it for the session without replacement. Server context never authorizes remote measurement start.
+Standalone listening and measurement work without a server-requested examination. A deliverable valid result references this Device. External request authenticity and authorization sit at L2_COMMUNICATION's secure intake boundary, and L2_CONTROL owns context admission. When L2_CONTROL accepts a local measurement Start, it consumes any pending examination context and freezes it for the session without replacement. Server context never authorizes remote measurement start.
 
 ## Registration and message ownership
 

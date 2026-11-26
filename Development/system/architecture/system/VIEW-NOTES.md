@@ -1,7 +1,5 @@
 # Architecture view boundaries
 
-These notes define the scope and boundaries of the views in the [architecture viewer](review.html).
-
 | View | Source | Boundary |
 |---|---|---|
 | Architecture | [puml/architecture-choice.puml](puml/architecture-choice.puml) | Layers (L2 orchestrates, L1 adapts hardware or holds pure C libraries, L0 is Zephyr), RTOS workers and events. Task isolation is optional. A/B firmware is not included. |
@@ -35,7 +33,7 @@ headphone amplifier is outside the device boundary.
 
 ## Scope
 
-- DSP algorithms are pure C libraries in L1 (`L1_FILTER`, `L1_BPM`) so the same code can run in host tests.
+- DSP algorithms are pure C libraries in L1 (`L1_FILTER`, `L1_BPM`).
 - Queues carry bounded events or buffer handles. BPM collects successive original-rate
   blocks into its own analysis window; it never waits for an entire replay clip.
 - During replay, BPM continues receiving original-rate microphone audio.

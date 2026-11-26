@@ -130,20 +130,16 @@ The left column lists the `L2_AUDIO` states. The system state names come from th
 | `L2_AUDIO` state | System state | Basis |
 | --- | --- | --- |
 | Initializing | Boot (session view); Playback Boot (cross-module design) | `i2s_initialize` at boot; no stream |
-| Stopped | Idle, Portal, Analysing, Sending, ReportingError | Idle is muted with no transport; sending holds the network lease with audio stopped |
+| Stopped | Idle, Portal, Analysing, Sending, ReportingError; Muted after a non-audio fault | Idle is muted with no transport; sending holds the network lease with audio stopped. A failed startup check and a deferred halting fault shown after the manual Stop enter Muted with the stream stopped |
 | Starting | Idle until the `started` event | The system stays in Idle on the Start command and enters Listening on the `started` event |
 | Running | Listening, Measuring (session view); Live (cross-module design) | The block loop runs; Wi-Fi-only faults preserve it ([P12](../FEEDBACK/parameters.md)) |
 | Stopping | Listening → Idle; Measuring → Idle or Analysing | Every system Stop mutes audio |
-| Fault | Muted (session view); Error, audio affected (cross-module design) | `MICROPHONE_FAILURE`, `AUDIO_WORKER_STALL` and `AUDIO_OUTPUT_FAILURE` require a restart ([catalogue](../FEEDBACK/catalogue.md)). The device is halted and blocks every input, including Start, until restart |
+| Fault | Muted after an audio fault (session view); Error, audio affected (cross-module design) | `MICROPHONE_FAILURE`, `AUDIO_WORKER_STALL` and `AUDIO_OUTPUT_FAILURE` require a restart ([catalogue](../FEEDBACK/catalogue.md)). The device is halted and blocks every input, including Start, until restart |
 
-State mapping rules:
-
-- The system stays in Idle on the Start command and enters Listening on the `started` event.
-- A non-audio restart-required error during listening (`SESSION_CONTEXT_CHANGE`, `CONTROL_INPUT_FAILURE`, `HEART_RATE_WORKER_STALL` and `SETTINGS_SAVE_FAILURE`) does not stop
-  `L2_AUDIO`: `L2_CONTROL` latches it silently, listening continues, and the error is shown and
-  applies its clear rule after the operator stops the examination manually.
-- `L2_AUDIO` in Fault never starts again: the device is halted, every input including Start is
-  blocked, and only a restart leaves Fault.
+A non-audio restart-required error during listening (`SESSION_CONTEXT_CHANGE`,
+`CONTROL_INPUT_FAILURE`, `HEART_RATE_WORKER_STALL` and `SETTINGS_SAVE_FAILURE`) does not stop
+`L2_AUDIO`: `L2_CONTROL` latches it silently, listening continues, and the error is shown and
+applies its clear rule after the operator stops the examination manually.
 
 ## Start, Stop and faults
 
@@ -164,11 +160,9 @@ State mapping rules:
 
 ### Stream faults
 
-- A stream fault includes a deadline miss. If the audio thread falls more than three blocks (12 ms,
-  processing included) behind, the Zephyr I2S driver stops the stream [1], and the stream remains
-  stopped until configured and started again.
-- A stream fault stays a restart-required error under the catalogue: a Start after a fault needs a
-  device restart.
+A stream fault includes a deadline miss. If the audio thread falls more than three blocks (12 ms,
+processing included) behind, the Zephyr I2S driver stops the stream [1], and the stream remains
+stopped until configured and started again.
 
 ### Stop sequence
 
@@ -230,7 +224,7 @@ For a normal Stop, `i2s_stop` [1]:
 | Internal RAM | 2,560 + 2,560 + 256 bytes | 5,376 bytes, plus thread stack and driver descriptors |
 
 The transport delay and the reserves follow from the driver behavior [1] and the converter
-datasheets [2] [3]. P03 is judged by ear under [REQ-05](../../requirements/system-requirements.md#req-05). The
+datasheets [2] [3]. The
 [block-size comparison](#sample-rate-and-block-size-rationale) applies the same derivation to 32-
 and 128-frame blocks.
 
@@ -311,7 +305,7 @@ operation, p. 25), [datasheet](https://www.ti.com/lit/ds/symlink/pcm5102a.pdf), 
 [manual](https://www.espressif.com/sites/default/files/documentation/esp32-s3_technical_reference_manual_en.pdf),
 accessed 13 November 2026.
 
-[5] Zephyr Project, *hal_espressif ESP32-S3 clock tree definitions and I2S low-level divider
+[5] The Zephyr Project, *hal_espressif ESP32-S3 clock tree definitions and I2S low-level divider
 limits*, revision `3d4d922a4d2994f844790ec031a584ec71240485` (the revision pinned by Zephyr
 `357467a`), `I2S_CLK_SRC_DEFAULT = SOC_MOD_CLK_PLL_F160M`, accessed 13 November 2026.
 

@@ -90,7 +90,7 @@ server keep-alive minus 5 s or the clock-anchor limit;
 stop
 
 legend bottom left
- L2_COMMUNICATION checks the keep-alive before it hands URL and certificate to L1_WIFI.
- The CRC-32 detects corruption, not tampering; the image has no signature.
+ Each column is the place and time of its checks; the numbers 1 to 7 are the validation stages.
+ A brown box is a failure outcome; the flow ends there.
 endlegend
 @enduml

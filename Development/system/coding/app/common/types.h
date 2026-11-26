@@ -6,7 +6,7 @@
 /** @defgroup COMMON_TYPES TYPES
  * @{
  * @file
- * Shared AudioBlock, ControlEvent and MeasurementResult types.
+ * Header for types that several modules share. It defines no type.
  */
 
 #ifndef COMMON_TYPES_H

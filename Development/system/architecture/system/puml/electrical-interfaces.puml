@@ -6,6 +6,7 @@ skinparam backgroundColor #0b1018
 skinparam defaultFontColor #e6edf7
 skinparam ArrowColor #a9b8ca
 skinparam component {
+ FontColor #0b1018
  BackgroundColor<<optional>> #273241
  BorderColor<<optional>> #61738a
  FontColor<<optional>> #b8c4d4
@@ -28,7 +29,8 @@ artifact "SD card" as sd <<optional>>
 component "Shared SPI bus" as spi <<optional>>
 component "Button / switches" as controls
 component "Potentiometer" as pot
-component "LED" as led
+component "Red button light" as buttonLight
+component "RGB status light" as statusLight
 component "Backlight" as backlight <<optional>>
 mic --> cpu : microphone I²S link
 cpu --> dac : DAC I²S link
@@ -38,7 +40,8 @@ spi -- touch
 spi -- sd
 controls --> cpu : GPIO
 pot --> cpu : ADC
-cpu --> led : GPIO
+cpu --> buttonLight : GPIO
+cpu --> statusLight : WS2812 data line
 cpu --> backlight : PWM
 legend bottom
   Grey elements are optional.

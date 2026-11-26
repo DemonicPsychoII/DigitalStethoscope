@@ -226,7 +226,7 @@ static bool communication_TransportIsVerified;                                  
 static bool communication_SecureConnectionIsRetained;                              /**< A verified connection stays open for reuse. */
 static k_timepoint_t communication_SecureConnectionIdleDeadline;                   /**< The retained connection is closed at this time. */
 static k_timepoint_t communication_NextPreparationTime;                            /**< No Idle preparation before this time after a failed or interrupted attempt. */
-static bool communication_ServerConnectionFailureIsLatched;                        /**< SERVER_CONNECTION_FAILURE latched in the current unavailable episode. */
+static bool communication_ServerConnectionFailureIsLatched;                        /**< SERVER_CONNECTION_FAILURE was logged in the current unavailable episode; it is logged once per episode. */
 
 /* Device registration (design/COMMUNICATION/server-communication.md); used by the communication thread only. */
 static char communication_PhysicalIdentifier[WIFI_DEVICE_IDENTIFIER_SIZE];      /**< Factory identity; "" when it could not be read. */
@@ -235,7 +235,7 @@ static bool communication_RegistrationIsReady;                                  
 static bool communication_RegistrationIsUnsaved;                                /**< ServerDeviceId came from the server but its record save failed. */
 static char communication_ServerDeviceId[FHIR_SERVER_DEVICE_ID_SIZE];           /**< Validated id; meaningful when ready or unsaved. */
 static k_timepoint_t communication_NextRegistrationTime;                        /**< No registration attempt before this time after a failed or interrupted one. */
-static bool communication_RegistrationFailureIsLatched;                         /**< DEVICE_REGISTRATION_FAILURE latched in the current episode. */
+static bool communication_RegistrationFailureIsLatched;                         /**< DEVICE_REGISTRATION_FAILURE was logged in the current episode; it is logged once per episode. */
 static int communication_RegistrationFailedAttempts;                            /**< Failed issued attempts since boot; interrupted ones are not counted. */
 static char communication_RequestBody[FHIR_OUTGOING_BODY_CAPACITY];             /**< Frozen body of the current request. */
 static char communication_RequestCondition[FHIR_OBSERVATION_CONDITION_SIZE];    /**< If-None-Exist value; sized for the longer Observation condition. */
@@ -285,14 +285,27 @@ static void communication_recoverConnection(void);
  *
  * @param[in] deadline The time by which the attempt must complete.
  *
- * @return 0 on success, a negative error code on failure.
+ * @return 0 with a published time anchor; -ETIMEDOUT if the deadline has passed before
+ *         the attempt or no sample is applied within it; -ENETDOWN while network work
+ *         is disabled until restart; -ECANCELED if listening holds the lease or starts
+ *         during the attempt; -ENOTCONN without a station IPv4 address; -ERANGE if the
+ *         sample's uncertainty exceeds the mapping budget; or the negative error of L1_WIFI.
+ *         -ETIMEDOUT before the attempt, -ENETDOWN, -ENOTCONN and -ECANCELED for a held
+ *         lease mean that no attempt was issued.
  */
 static int communication_synchronizeTime(k_timepoint_t deadline);
 
 /**
  * @brief Prepare a verified secure connection under L2_CONTROL's network lease.
  * @param[in] deadline Enclosing Idle or delivery setup deadline, shared with SNTP.
- * @return 0 only with a verified connection, or a negative error code.
+ * @return 0 only with a verified connection. Without an issued attempt: -ENETDOWN while
+ *         network work is disabled until restart, -ECANCELED while listening holds the
+ *         lease, -ENOTCONN without a station IPv4 address, -ENOENT without a valid server
+ *         profile image, -ETIMEDOUT if the deadline has passed. -EACCES if the certificate
+ *         is not valid at the synchronized UTC time; no ClientHello is sent. Otherwise the
+ *         error of a failed close of the retained connection, or the result of
+ *         communication_synchronizeTime() or communication_connectSecurely().
+ *         communication_attemptDelivery() ends the job on -EACCES, -ENOENT and -ECANCELED.
  */
 static int communication_prepareSecureConnection(k_timepoint_t deadline);
 
@@ -1236,7 +1249,8 @@ static int communication_connectSecurely(k_timepoint_t deadline, enum wifi_secur
         }
         else if(communication_ListeningIsActive || isDeadlineExpired)
         {
-            const bool isInterrupted = communication_ListeningIsActive; /**< Start, not the deadline, ended the attempt. */
+            /* Start, not the deadline, ended the attempt. */
+            const bool isInterrupted = communication_ListeningIsActive;
             int cancelResult = wifi_cancelSecureConnection();
             if(cancelResult == 0)
             {
@@ -1292,7 +1306,7 @@ static void communication_prepareTransportInIdle(void)
 
     if(result == 0)
     {
-        /* Success ends the unavailable episode; a later failure latches again. */
+        /* Success ends the unavailable episode; a later failure is logged again. */
         communication_ServerConnectionFailureIsLatched = false;
         LOG_INF("Server connection verified");
     }
@@ -1406,7 +1420,7 @@ static void communication_registerInIdle(void)
 
         if(result == 0)
         {
-            /* Success ends the failure episode; a later failure latches again. */
+            /* Success ends the failure episode; a later failure is logged again. */
             communication_RegistrationFailureIsLatched = false;
         }
         else if(!communication_CleanupFaultIsLatched)
@@ -1600,7 +1614,8 @@ static int communication_exchange(const struct wifi_http_request *request, k_tim
         }
         else if(communication_ListeningIsActive || isDeadlineExpired)
         {
-            const bool isInterrupted = communication_ListeningIsActive; /**< Start, not the deadline, ended the exchange. */
+            /* Start, not the deadline, ended the exchange. */
+            const bool isInterrupted = communication_ListeningIsActive;
             int cancelResult = wifi_cancelSecureConnection();
 
             if(cancelResult == 0)
@@ -1973,7 +1988,8 @@ static int communication_synchronizeTime(k_timepoint_t deadline)
     int result = 0;
     bool isPending = false;
     struct normalised_time sample = {0};
-    struct applied_time_anchor candidateAnchor = {0}; /**< Apply output; published only on success. */
+    /* Apply output; published only on success. */
+    struct applied_time_anchor candidateAnchor = {0};
 
     communication_updateListeningState();
 
@@ -2035,7 +2051,8 @@ static int communication_synchronizeTime(k_timepoint_t deadline)
             }
             else if(communication_ListeningIsActive || isDeadlineExpired)
             {
-                bool isInterrupted = communication_ListeningIsActive; /**< Start, not the deadline, ended the attempt. */
+                /* Start, not the deadline, ended the attempt. */
+                bool isInterrupted = communication_ListeningIsActive;
                 int cancelResult = wifi_cancelTimeSynchronization();
 
                 if(cancelResult != 0)
@@ -2187,7 +2204,8 @@ static int communication_waitForCondition(enum communication_wait_target target,
         }
     }
 
-    bool isRadioWait = (target == COMMUNICATION_WAIT_CONNECTION) || (target == COMMUNICATION_WAIT_SCAN_LIST); /**< Join or scan result from the radio. */
+    /* Join or scan result from the radio. */
+    bool isRadioWait = (target == COMMUNICATION_WAIT_CONNECTION) || (target == COMMUNICATION_WAIT_SCAN_LIST);
     if(isRadioWait && (result == -EAGAIN))
     {
         result = -ETIMEDOUT;
@@ -2199,7 +2217,8 @@ static int communication_waitForCondition(enum communication_wait_target target,
 static int communication_checkWaitTarget(enum communication_wait_target target, k_timepoint_t deadline)
 {
     int result = -EAGAIN;
-    bool isStoppedByStart = (target == COMMUNICATION_WAIT_DELAY) || (target == COMMUNICATION_WAIT_CONNECTION) || (target == COMMUNICATION_WAIT_SCAN_LIST); /**< Start ends this wait early. */
+    /* Start ends this wait early. */
+    bool isStoppedByStart = (target == COMMUNICATION_WAIT_DELAY) || (target == COMMUNICATION_WAIT_CONNECTION) || (target == COMMUNICATION_WAIT_SCAN_LIST);
 
     if(isStoppedByStart)
     {
@@ -2244,9 +2263,10 @@ static int communication_checkWaitTarget(enum communication_wait_target target, 
         case COMMUNICATION_WAIT_WIFI_STOP:
         {
             k_spinlock_key_t key = k_spin_lock(&communication_ControlLock);
+            /* Start has a stopped or offline network acknowledgement. */
             bool isStopped = communication_ListeningIsRequested &&
                              ((communication_State == COMMUNICATION_STATE_STOPPED) ||
-                              (communication_State == COMMUNICATION_STATE_OFFLINE)); /**< Start has a stopped or offline network acknowledgement. */
+                              (communication_State == COMMUNICATION_STATE_OFFLINE));
             k_spin_unlock(&communication_ControlLock, key);
             if(isStopped)
             {
@@ -2370,7 +2390,7 @@ static int communication_retry(int (*tryOnce)(const struct wifi_network *network
         else
         {
             attempt++;
-            /* Resume interrupted boot attempts only while Idle and without a setup request. */
+            /* Count the attempt, so a resumed boot join uses only the remaining ones. */
             if(communication_BootJoinIsPending && (tryOnce == communication_tryConnect))
             {
                 communication_BootAttemptsUsed++;

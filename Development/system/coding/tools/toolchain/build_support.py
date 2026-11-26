@@ -80,8 +80,8 @@ def toolchain_workspace() -> Path:
     """Resolve the pinned workspace for this checkout without provisioning it.
 
     An explicit override wins. A checkout's own `.ci-workspace` (CI links the prepared
-    image there) keeps its previous meaning. Otherwise any workspace already recorded
-    with the current pins is reused; the shared per-pin location is the setup target.
+    image there) comes next. Otherwise any workspace already recorded with the current
+    pins is reused; the shared per-pin location is the setup target.
     """
     override = os.environ.get(WORKSPACE_VARIABLE)
     if override:

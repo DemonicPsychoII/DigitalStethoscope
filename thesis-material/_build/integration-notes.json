@@ -795,7 +795,7 @@
         [
           "Design: LED-Anzeige",
           "Development/system/design/FEEDBACK/README.md",
-          "led-indication-and-error-handling"
+          "feedback-detailed-design"
         ],
         [
           "Zeitplan BOARD",

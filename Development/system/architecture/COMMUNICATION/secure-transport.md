@@ -14,7 +14,7 @@ L1_WIFI owns Wi-Fi, TLS and time operations, and L2_COMMUNICATION owns workflow 
 | L2_COMMUNICATION | Coordinate preparation and delivery; own overall attempt policy and classify outcomes. | No hidden retries in L1_WIFI, L1_FHIR or L1_STORAGE. |
 | L1_WIFI | Own DNS/socket/TLS operations through Zephyr, certificate verification, connection resources and cleanup. | Report outcomes; never serialize FHIR or select a patient. |
 | Zephyr networking and TLS stack | Provide platform transport beneath L1_WIFI. | Secure transport reaches it only through L1_WIFI. |
-| Clock preparation | Supply time for certificate-validity checking. | Time comes from unauthenticated SNTP. |
+| Clock preparation | Supply time for certificate-validity checking. | The [time trust boundary](time-ownership.md#trust-boundary) applies. |
 | Server profile and L1_STORAGE | Supply the configured endpoint and trust certificate; L1_STORAGE persists named records. | Endpoint and trust material are read-only at runtime and separate from portal settings. |
 | L1_FHIR | Serialize application messages independently of networking. | No Zephyr headers, socket ownership or certificate policy. |
 
@@ -24,7 +24,7 @@ L2_CONTROL leases network activity to L2_COMMUNICATION. L2_COMMUNICATION compose
 
 Transport uses TLS 1.3 only, without fallback to older versions. L1_WIFI retains a verified connection for reuse to avoid repeated handshakes. Connection loss recovers by reconnecting within the delivery budget.
 
-L2_COMMUNICATION prepares secure transport automatically while Idle. Each setup starts with one time synchronization directly before the TLS handshake and then proceeds to Device registration. L2_COMMUNICATION tracks network access, verified transport and Device registration separately. Verified transport holds only when the most recent handshake verified the server against the active server profile and the clock applied during that setup.
+L2_COMMUNICATION prepares secure transport automatically while Idle. The [preparation flow](time-ownership.md#preparation-flow) defines the order of each setup, and the [readiness flow](server-communication.md#preparation-and-readiness-flow) defines the readiness states. Verified transport holds only when the most recent handshake verified the server against the active server profile and the clock applied during that setup.
 
 During listening, a verified connection stays dormant, without application requests, heartbeat messages or proactive reconnects. If it closes, reconnection waits until listening stops. L1_WIFI keeps ownership of the dormant connection. Lease release means that active network operations have ended; a retained connection may stay open. Connection reuse never authorizes active work without the lease.
 
@@ -38,7 +38,7 @@ The local provisioning HTTP server is L1_PORTAL's separate responsibility. Succe
 
 Active connection work follows the exclusive network lease. L1_WIFI owns connection resources through cleanup, and L2_COMMUNICATION reports lease release only after active operations end. Network-only failure preserves working offline listening under [REQ-13](../../requirements/system-requirements.md#req-13).
 
-The device uses SNTP time without authenticating the time server. Transport verification authenticates the server; it does not authorize an examination request.
+Transport verification authenticates the server; it does not authorize an examination request.
 
 ## Verification allocation
 
