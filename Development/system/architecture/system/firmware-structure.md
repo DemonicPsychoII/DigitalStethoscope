@@ -42,7 +42,7 @@ L2 owns orchestration and L1 provides hardware and library adapters. `L2_COMMUNI
 
 ## Threads and hand-offs
 
-`L2_AUDIO`, `L2_CONTROL` and `L2_COMMUNICATION` run on dedicated threads with decreasing priority in that order, and interrupt handlers signal deferred work rather than processing events in interrupt context. The [threads view](puml/runtime-ownership.puml) ([SVG](rendered/runtime_ownership.svg)) shows the workers and their interactions.
+`L2_AUDIO`, `L2_CONTROL` and `L2_COMMUNICATION` run on dedicated threads with decreasing priority in that order, and interrupt handlers signal deferred work rather than processing events in interrupt context. `L1_PHYSICALINTERFACE` handles input and lights as short, bounded work items on the Zephyr system work queue, which runs above the audio thread. The [threads view](puml/runtime-ownership.puml) ([SVG](rendered/runtime_ownership.svg)) shows the workers and their interactions.
 
 Every hand-off between workers is bounded and has its own rule for a receiver that falls behind. Values are copied; handles point into a bounded pool.
 

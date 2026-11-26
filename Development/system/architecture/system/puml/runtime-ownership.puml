@@ -29,7 +29,7 @@ skinparam component {
 }
 component "GPIO ISR" as irq <<interrupt>>
 component "L1_PHYSICALINTERFACE\nGPIO / ADC adapters" as adapters
-component "Input\nButtons / switches" as inp <<thread>>
+component "Input\nButtons / switches\nSystem work queue" as inp <<thread>>
 component "Shell\nL2_SHELL" as shell <<thread>>
 component "Main / controller\nL2_CONTROL" as ctl <<thread>>
 component "Audio · L2_AUDIO\nL1_I2S RX / TX, L1_FILTER" as audio <<thread>>
