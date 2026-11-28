@@ -58,6 +58,14 @@ files has no project history and must not need any.
 - A source comment explains the code on its line. It carries no decision, measurement session,
   status, history or statement about what another file does.
 
+## Watermarks
+
+Watermarks are off for everything that goes to the company GitLab and stay on everywhere else:
+
+- GitLab merge-request descriptions and comments.
+- Commits on the transferred branches.
+- Every file in the GitLab transfer set: what `gitlab_transfer.py export` writes.
+
 ## Merge policy
 
 Heavy CI runs only in disposable VMs on the home-lab runner pool. Static/QC suites use
