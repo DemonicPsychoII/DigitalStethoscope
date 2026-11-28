@@ -28,7 +28,7 @@ clock dividers from the same default clock source [1].
 | Links | `i2s0` RX from the INMP441, `i2s1` TX to the PCM5102A | The microphone and the DAC each have their own link ([electrical interfaces](../../architecture/system/rendered/electrical_interfaces.svg)) |
 | Format | RX: Zephyr `I2S_FMT_DATA_FORMAT_LEFT_JUSTIFIED` with `I2S_FMT_FRAME_CLK_INV`. TX: `I2S_FMT_DATA_FORMAT_I2S`. The ESP32-S3 drives bit and frame clock on both links | The microphone and the DAC both take their clocks from the ESP32-S3. RX: see [receive format](#receive-format) |
 | Channels, word size | 2 channels, 32-bit words | The driver accepts only two channels [1]; equal word sizes keep the dividers equal [1] |
-| Sample rate | 16,000 Hz ([P01](parameters.md)) | [Rationale](#sample-rate-and-block-size-rationale) |
+| Sample rate | 16,000 Hz ([P01](parameters.md#p01)) | [Rationale](#sample-rate-and-block-size-rationale) |
 | Block | 64 frames × 2 slots × 4 bytes = 512 bytes, 4 ms | P01. Below the 4092-byte DMA descriptor limit, so each block uses one descriptor [1] |
 | RX pool | 5 blocks; the driver's RX queue holds 3 blocks (`CONFIG_I2S_ESP32_RX_BLOCK_COUNT`) | 3 completed blocks waiting, 1 in DMA, 1 lent to the audio thread |
 | TX pool | 5 blocks; the driver's TX queue holds 4 blocks (`CONFIG_I2S_ESP32_TX_BLOCK_COUNT`) | 4 blocks primed before TX starts (1 in DMA and 3 queued afterwards), 1 being filled |
@@ -69,7 +69,7 @@ The sample rate must lie inside the range of the microphone, the DAC and the I2S
 
 *What does the block size cost in delay, for the same lateness the 64-frame design allows?*
 
-| Block | Period | Processing budget ([P02](parameters.md) share) | Primed TX blocks n | Transport delay |
+| Block | Period | Processing budget ([P02](parameters.md#p02) share) | Primed TX blocks n | Transport delay |
 | --- | --- | --- | --- | --- |
 | 32 frames | 2 ms | 1.5 ms | (n − 1) × 2 ms − 1.5 ms ≥ 9 ms → 7 | 14 ms; 2 ms less, but twice as many thread wake-ups |
 | 64 frames (chosen) | 4 ms | 3 ms | 4 | 16 ms |
@@ -90,7 +90,7 @@ and does not retry.
 | `i2s_start()` | Called while stopped | Configures both links again, primes 4 silent TX blocks, starts RX, then TX. On failure it drops both links as `i2s_abort()` does and returns the failed link. |
 | `i2s_stop()` | While running, for a normal Stop | Stops both links in the [Stop sequence](#stop-sequence) and returns every pool block; no further sound. Returns the failed link if a link rejects `STOP` or blocks stay in use. Repeated calls are harmless. |
 | `i2s_abort()` | After an audio fault | Triggers `DROP` on both links at once, without `STOP` or a wait; no further sound. Blocks the driver held at that moment may stay in use; the required restart clears them. Repeated calls are harmless. |
-| `i2s_receiveBlock(receivedFrames)` | Pointer for the result | Waits at most the receive wait ([P11](../cross-module.md#parameters)) for the next completed RX block and lends it to the caller. A timeout or driver error is a microphone failure. |
+| `i2s_receiveBlock(receivedFrames)` | Pointer for the result | Waits at most the receive wait ([P11](../cross-module.md#p11)) for the next completed RX block and lends it to the caller. A timeout or driver error is a microphone failure. |
 | `i2s_releaseReceivedBlock(receivedFrames)` | A lent RX block | Returns it to the RX pool. |
 | `i2s_allocateTransmitBlock(transmitFrames)` | Pointer for the result | Waits at most the TX-block wait (P11) for a free TX block. A timeout is an output failure. |
 | `i2s_transmitBlock(transmitFrames)` | A filled TX block | Queues it for the DAC; ownership passes to the driver. On failure `L1_I2S` returns the block to the pool and reports an output failure. |
@@ -108,7 +108,7 @@ and does not retry.
 - Processing budget (P02): from the received block to the queued TX block at most 3 ms; the wait
   for the next block is not part of it. No lock is held across a block wait.
 - The processing step applies the selected listening filter and the volume. The Raw position
-  applies no band filter ([P08](parameters.md)).
+  applies no band filter ([P08](parameters.md#p08)).
 - The volume from `L2_CONTROL` is a linear gain of 0–100 % with saturation that keeps the
   [sample format](#sample-format). The volume starts at 0 % and is 0 % for a failed or absent
   potentiometer reading. It passes as an atomic value, so the audio thread never waits for it.
@@ -132,7 +132,7 @@ The system state names come from the
 | Initializing | Boot (session view); Playback Boot (cross-module design) | `i2s_initialize` at boot; no stream |
 | Stopped | Idle, Portal, Analysing, Sending, ReportingError; Muted after a non-audio fault | Idle is muted with no transport; sending holds the network lease with audio stopped. A failed startup check and a deferred halting fault shown after the manual Stop enter Muted with the stream stopped |
 | Starting | Idle until the `started` event | The system stays in Idle on the Start command and enters Listening on the `started` event |
-| Running | Listening, Measuring (session view); Live (cross-module design) | The block loop runs; Wi-Fi-only faults preserve it ([P12](../FEEDBACK/parameters.md)) |
+| Running | Listening, Measuring (session view); Live (cross-module design) | The block loop runs; Wi-Fi-only faults preserve it ([P12](../FEEDBACK/parameters.md#p12)) |
 | Stopping | Listening → Idle; Measuring → Idle or Analysing | Every system Stop mutes audio |
 | Fault | Muted after an audio fault (session view); Error, audio affected (cross-module design) | `MICROPHONE_FAILURE`, `AUDIO_WORKER_STALL` and `AUDIO_OUTPUT_FAILURE` require a restart ([catalogue](../FEEDBACK/catalogue.md)). The device is halted and blocks every input, including Start, until restart |
 
@@ -218,9 +218,9 @@ For a normal Stop, `i2s_stop` [1]:
 | RX reserve | 3 waiting blocks × 4 ms | 12 ms for processing and lateness together before RX overruns |
 | TX reserve | 3 queued blocks behind the one in DMA × 4 ms | 12 ms for processing and lateness together before TX runs empty; with the 3 ms budget the thread may start a block up to 9 ms late |
 | Transport delay | 4 primed TX blocks × 4 ms. The first RX block fills and is processed while the primed blocks play, so neither adds delay; processing time uses up reserve instead | 16 ms, constant |
-| Converter delay | Digital filters at 16 kHz: INMP441 17.2 ÷ fS [2]; PCM5102A normal-latency filter 20 ÷ fS, selected because FLT is tied to ground on the carrier [3] | 1.08 ms + 1.25 ms; about 18 ms from sound to line output, below the [P03](parameters.md) target of 30 ms |
+| Converter delay | Digital filters at 16 kHz: INMP441 17.2 ÷ fS [2]; PCM5102A normal-latency filter 20 ÷ fS, selected because FLT is tied to ground on the carrier [3] | 1.08 ms + 1.25 ms; about 18 ms from sound to line output, below the [P03](parameters.md#p03) target of 30 ms |
 | Processing budget | Three quarters of the block period (P02) | At most 3 ms per block |
-| Block waits | 5 block periods ([P11](../cross-module.md#parameters)) | 20 ms; a normal block arrives within 4 ms |
+| Block waits | 5 block periods ([P11](../cross-module.md#p11)) | 20 ms; a normal block arrives within 4 ms |
 | Internal RAM | 2,560 + 2,560 + 256 bytes | 5,376 bytes, plus thread stack and driver descriptors |
 
 The transport delay and the reserves follow from the driver behavior [1] and the converter

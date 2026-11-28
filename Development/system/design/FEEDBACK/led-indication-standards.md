@@ -1,7 +1,7 @@
 # LED indication standards
 
 The [status and error catalogue](catalogue.md#status-and-error-catalogue) and
-[P22](parameters.md) draw their colour, flash-rate and priority rules from IEC 60601-1, IEC 60073
+[P22](parameters.md#p22) draw their colour, flash-rate and priority rules from IEC 60601-1, IEC 60073
 and IEC 60601-1-8.
 
 Primary standard identification: International Electrotechnical Commission, *Medical electrical equipment — Part 1-8: General requirements for basic safety and essential performance — Collateral standard: General requirements, tests and guidance for alarm systems in medical electrical equipment and medical electrical systems*, IEC 60601-1-8:2006+AMD1:2012+AMD2:2020 CSV, edition 2.2, IEC, 2020. Publication record: <https://webstore.iec.ch/en/publication/67388> (accessed 2026-10-24).

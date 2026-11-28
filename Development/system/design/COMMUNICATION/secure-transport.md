@@ -31,7 +31,7 @@ L2_CONTROL grants the exclusive network lease. L2_COMMUNICATION owns preparation
 | `wifi_configureSecureServer` | At boot, accept the base URL and the PEM certificate of the server profile. Parse both, require a Subject Alternative Name that matches the host and make the certificate the only trust anchor. Return the certificate validity on success, or a cause for an unusable URL or certificate; without success no connection can be started. |
 | `wifi_startSecureConnection` | Under the lease, accept the caller deadline and use the server configured at boot; at most one operation/context. Start DNS, TCP and TLS 1.3 with mandatory peer verification. Return accepted, busy or a cause; no internal workflow retries. |
 | `wifi_waitForSecureConnection` | Wait at most the caller interval. Return pending or one terminal result with its cause. Completion quiesces operation callbacks. Short waits never restart the deadline. |
-| `wifi_cancelSecureConnection` | Cancel pending resolution/connect/handshake, close the pending context and quiesce callbacks. Idempotent when inactive; use the one-second per-service stop bound of the Wi-Fi cleanup limits in [P23](parameters.md). Do not acknowledge release without proof. |
+| `wifi_cancelSecureConnection` | Cancel pending resolution/connect/handshake, close the pending context and quiesce callbacks. Idempotent when inactive; use the one-second per-service stop bound of the Wi-Fi cleanup limits in [P23](parameters.md#p23). Do not acknowledge release without proof. |
 | `wifi_closeSecureConnection` | Invalidate and close a retained context under the lease, with the same stop bound. No reconnect, HTTP request or workflow retry. |
 
 Operation generations reject late results after cancellation, configuration change or prerequisite loss. A terminal result contains a bounded cause category (configuration, resolution, TCP, timeout, TLS, trust/name/validity or cancelled) and carries no secrets or patient context. No new context may replace one whose release is unproven. Cancellation must release connection resources within the stop bound rather than force-aborting a blocked worker.
@@ -43,11 +43,11 @@ L2_COMMUNICATION tracks station-address readiness, transport verification and De
 1. While Idle and holding the lease, require a station address and a valid server profile image. Boot has no retained connection. Missing prerequisites defer preparation without consuming an attempt or reporting a TLS handshake failure.
 2. Start one monotonic ten-second deadline before the [SNTP exchange](time-synchronization.md#flow-and-scheduling) that opens every setup. SNTP, resolution, TCP setup, handshake and verification share that budget. After the SNTP exchange, L2_COMMUNICATION compares the certificate validity returned by `wifi_configureSecureServer` with the new UTC time and fails the setup before the ClientHello if the certificate is not valid at that time. Publish a verified connection only after every check succeeds. Cleanup has its separate P23 bound.
 3. On failed preparation, mark transport unavailable, release resources and schedule another preparation attempt no earlier than 60 seconds after failure completion. Recovery continues without a total attempt cap while Idle and prerequisites permit. A missed retry time triggers one attempt, and L1_WIFI adds no retries. Invalid certificate/configuration attempts remain unavailable and never trigger an insecure fallback.
-4. Start preempts preparation: cancel and establish quiescence before audio. An interrupted issued attempt observes the same 60-second gap; cancellation before issuance consumes no attempt. Start cancellation alone is not an error. Failed cleanup follows the `WIFI_CLEANUP_FAILURE` restart policy of [P23](parameters.md), not ordinary TLS recovery.
+4. Start preempts preparation: cancel and establish quiescence before audio. An interrupted issued attempt observes the same 60-second gap; cancellation before issuance consumes no attempt. Start cancellation alone is not an error. Failed cleanup follows the `WIFI_CLEANUP_FAILURE` restart policy of [P23](parameters.md#p23), not ordinary TLS recovery.
 5. During listening, L1_WIFI holds an already verified, dormant connection if possible. L2_COMMUNICATION issues no application requests, heartbeats, proactive reconnects or active liveness probes. TCP keep-alive probes are disabled. If background TLS handling requires application work, it is deferred until the lease returns or the connection is invalidated.
 6. After listening, reuse the retained context only if endpoint/trust configuration and peer-validity checks still hold, for a delivery the clock anchor of its handshake still qualifies for the measurement end under the [mapping limit](time-synchronization.md#clock-mapping-and-native-behavior) and it has been idle for less than the device keep-alive timeout. Before the first request, poll the socket without blocking; a pending close (FIN, RST or `close_notify`) invalidates it without consuming an attempt. Closure/reset discovered on use still invalidates it.
 7. L2_COMMUNICATION closes a retained context whose idle time reaches the device keep-alive timeout under the lease while Idle, or marks it logically invalid during listening. L1_WIFI holds the context; L2_COMMUNICATION decides on reuse and closure. The device keep-alive timeout equals the server keep-alive timeout from the server profile image minus 5 seconds.
-8. Idle recovery uses the preparation policy; active delivery uses [P13](parameters.md).
+8. Idle recovery uses the preparation policy; active delivery uses [P13](parameters.md#p13).
 
 Before every new application request, check the retained peer's validity interval against the current clock. Configuration change, certificate expiry or a clock correction that makes validity fail immediately removes transport eligibility. During listening this is logical invalidation only; close under the lease afterward. A new setup, starting with its SNTP exchange, must verify the server before further requests. A clock correction that remains within the peer-validity interval does not itself require reconnection.
 
@@ -69,13 +69,13 @@ Failed TLS preparation latches `SERVER_CONNECTION_FAILURE`, preserving standalon
 
 | ID | Value / meaning |
 | --- | --- |
-| P26-VERSION | TLS 1.3 only; mandatory verification; no older TLS or HTTP fallback |
-| P26-TRUST | One endpoint plus PEM public server certificate in the separate server profile image; no client certificate/key or network enrollment |
-| P26-ATTEMPT | Ten seconds including SNTP/DNS/TCP/TLS/verification during Idle preparation; separate P23 one-second per-service cleanup bound |
-| P26-RETRY | 60 seconds after failed/interrupted issued preparation completes; ongoing recovery while Idle |
-| P26-REUSE | Retain a dormant verified context; no application heartbeat or proactive reconnect during listening; recheck time, configuration, peer validity, idle age and a non-blocking close poll before reuse |
-| P26-KEEPALIVE | Device keep-alive timeout = server keep-alive minus 5 seconds, server value from the server profile image |
-| P26-DELIVERY | Delivery connection setup follows [P13](parameters.md) |
+| <a id="p26-version"></a>P26-VERSION | TLS 1.3 only; mandatory verification; no older TLS or HTTP fallback |
+| <a id="p26-trust"></a>P26-TRUST | One endpoint plus PEM public server certificate in the separate server profile image; no client certificate/key or network enrollment |
+| <a id="p26-attempt"></a>P26-ATTEMPT | Ten seconds including SNTP/DNS/TCP/TLS/verification during Idle preparation; separate P23 one-second per-service cleanup bound |
+| <a id="p26-retry"></a>P26-RETRY | 60 seconds after failed/interrupted issued preparation completes; ongoing recovery while Idle |
+| <a id="p26-reuse"></a>P26-REUSE | Retain a dormant verified context; no application heartbeat or proactive reconnect during listening; recheck time, configuration, peer validity, idle age and a non-blocking close poll before reuse |
+| <a id="p26-keepalive"></a>P26-KEEPALIVE | Device keep-alive timeout = server keep-alive minus 5 seconds, server value from the server profile image |
+| <a id="p26-delivery"></a>P26-DELIVERY | Delivery connection setup follows [P13](parameters.md#p13) |
 
 ## Design inputs
 

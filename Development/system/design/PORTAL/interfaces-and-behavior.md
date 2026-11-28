@@ -89,7 +89,7 @@ The active connect form belongs to its initiating HTTP client until completion o
 | `status` | String: `scanning`, `selecting`, `connecting`, `connect_failed`, `connected`, `save_failed` or `closing`. |
 | `cause` | Human-readable string describing the error; empty if none. Never a secret. |
 | `address` | Station IPv4 text supplied by `L2_COMMUNICATION` after a successful selected-network join; otherwise empty. It is distinct from the fixed hotspot address. |
-| `networks` | Completed scan-cache array of at most 16 entries ([P23-WIFI](../WIFI/parameters.md)). Each item has a `name` string (SSID) and `password` boolean indicating whether input is required. No passphrase is returned. |
+| `networks` | Completed scan-cache array of at most 16 entries ([P23-WIFI](../WIFI/parameters.md#p23-wifi)). Each item has a `name` string (SSID) and `password` boolean indicating whether input is required. No passphrase is returned. |
 
 `L1_PORTAL` publishes status, cause, address and list as one coherent snapshot under its data boundary. It escapes quotes and backslashes for JSON and replaces raw control bytes with `?`; HTML text escaping remains necessary after JSON parsing. A poll can show the previous completed list while scanning; Connect admission also requires that a completed list permits selection, not merely a nonempty array.
 
