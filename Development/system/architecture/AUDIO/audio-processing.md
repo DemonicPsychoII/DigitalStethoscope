@@ -88,13 +88,14 @@ does not matter: the estimate looks for how often the pattern repeats.
 
 - On Start, `L2_CONTROL` sends the session begin with the session identity and the frozen settings to
   the audio thread. The audio thread places a begin marker into the analysis hand-off before the
-  first block of the session.
+  first block of the session. The begin marker carries the sequence number of that block.
 - On the begin marker, the BPM worker clears the window and the aggregation. It analyses only the
   blocks between a begin and an end marker.
 - On Stop, `L2_CONTROL` sends the session end, and the audio thread places an end marker after the
-  last block of the session.
-- On the end marker, the BPM worker compares the session length, counted in samples between the
-  two markers, with the minimum session length. A shorter session is cancelled: the aggregation is
+  last block of the session. The end marker carries the sequence number of that block.
+- On the end marker, the BPM worker compares the session length, counted in samples from the
+  sequence numbers of the two markers, with the minimum session length. Dropped block copies
+  therefore change the coverage, never the session length. A shorter session is cancelled: the aggregation is
   discarded without a result. A session of at least the minimum length is finalized into one
   immutable measurement result: valid with a BPM value, or invalid with a reason and no numeric
   value.
@@ -107,7 +108,8 @@ does not matter: the estimate looks for how often the pattern repeats.
 | --- | --- | --- | --- | --- |
 | Session begin and end | `L2_CONTROL` | `L2_AUDIO` audio thread | session identity, frozen settings | a full queue refuses the command; `L2_CONTROL` keeps its previous state |
 | Analysis blocks and session markers | `L2_AUDIO` audio thread | `L2_AUDIO` BPM worker | copied blocks with sequence numbers; begin and end markers in stream order | the audio thread drops a block copy, and the worker detects the gap from the sequence numbers and resets the window; a marker is never dropped and keeps its place in the order; listening continues |
-| Validity updates, outcome, worker fault | `L2_AUDIO` BPM worker | `L2_CONTROL` | values tagged with the session identity | posted without waiting; `L2_CONTROL` ignores values of an earlier session |
+| Validity updates | `L2_AUDIO` BPM worker | `L2_CONTROL` | values tagged with the session identity | posted without waiting; a validity update is dropped when the queue is full; `L2_CONTROL` ignores values of an earlier session |
+| Session outcome, worker fault | `L2_AUDIO` BPM worker | `L2_CONTROL` | values tagged with the session identity | posted without waiting and never dropped: each has a place that only `L2_CONTROL` clears by reading it, so Busy always ends; `L2_CONTROL` ignores values of an earlier session |
 
 ## Threads
 
@@ -135,9 +137,11 @@ and the session markers, so no block can arrive before its begin marker or after
 | Stop before the minimum length | [REQ-07](../../requirements/system-requirements.md#req-07), VT-06 | Cancelled; no result |
 | Stop one block before and one block after the minimum length | [REQ-07](../../requirements/system-requirements.md#req-07), VT-06 | The shorter session is cancelled; the longer one gives an outcome |
 | Analysis hand-off full when Stop arrives | VT-06 | The end marker follows the last block of the session; the session is not lost |
+| First or last block copy of a session dropped | [REQ-07](../../requirements/system-requirements.md#req-07), VT-06 | The session length is unchanged; a session at the minimum length is not cancelled |
+| `L2_CONTROL` event queue full when the outcome is posted | VT-06 | The outcome still reaches `L2_CONTROL`; Busy ends |
 | Open air or rubbing for a whole session | [REQ-08](../../requirements/system-requirements.md#req-08), VT-06 | Invalid result with a reason; no BPM value |
 | Windows with clipped stretches | [REQ-08](../../requirements/system-requirements.md#req-08), VT-06 | The window decision sees the clipped share; a window beyond its limit is rejected with the clipping reason |
 | Slow heart rate with two separate heart sounds, fast heart rate with merged heart sounds | [REQ-06](../../requirements/system-requirements.md#req-06), VT-06 | The heart rate of both, neither doubled nor halved |
 | Analysis blocks dropped during a session | VT-06 | Listening continues; the affected window is rejected |
 | BPM worker stalled | VT-09 | Error after the operator stops; listening uninterrupted until then |
-| Same recording through the host libraries and the firmware build | VT-10 | Identical estimates and result |
+| Same recording through `L1_BPM` on the host and on the target | VT-06 | Identical estimates and result |

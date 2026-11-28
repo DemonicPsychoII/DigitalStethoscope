@@ -24,12 +24,13 @@ if (Heart + microphone + audio ready?) then (yes)
    stop
   endif
  repeat while (Stop pressed?) is (no) not (yes)
- :Mute listening;
- if (Duration below minimum session length?) then (yes)
+ :Mute listening and end the session;
+ :Indicate Busy until the BPM worker reports the outcome; reject Start without queuing.\nStart during sending cancels the delivery; the result is lost;
+ if (Session length below minimum session length?) then (yes)
   :Cancel measurement, no send;
+  :Release Busy;
   stop
  endif
- :Indicate Busy during analysis; reject Start without queuing.\nStart during sending cancels the delivery; the result is lost;
  :Aggregate retained valid estimates and interval;
  if (Invalid BPM?) then (yes)
   :Latch BPM fault; no numeric value;

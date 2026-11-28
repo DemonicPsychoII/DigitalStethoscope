@@ -51,7 +51,7 @@ Every hand-off between workers is bounded and has its own rule for a receiver th
 | Control events | `L1_PHYSICALINTERFACE` input, `L2_SHELL` | `L2_CONTROL` | values | stable values are reconciled; transient actions are rejected and reported |
 | Audio command | `L2_CONTROL` | `L2_AUDIO` audio thread | values, including session begin and end | a full queue refuses the command; `L2_CONTROL` keeps its previous state |
 | Analysis blocks | `L2_AUDIO` audio thread | `L2_AUDIO` BPM worker | copied payloads and handles, session begin and end markers in stream order | the gap is marked and the analysis window reset; a session marker is never dropped; listening continues |
-| Results, completion and faults | `L2_AUDIO` audio thread and BPM worker | `L2_CONTROL` | values | posted without waiting |
+| Results, completion and faults | `L2_AUDIO` audio thread and BPM worker | `L2_CONTROL` | values | posted without waiting; a BPM validity update may be dropped, a session outcome or fault is never dropped |
 | State snapshot | `L2_CONTROL` | `L2_SHELL` | value copy | the latest snapshot wins |
 | Listening and setup request | `L2_CONTROL` | `L2_COMMUNICATION` | values | the latest Start or Stop wins; the release is confirmed through a synchronized stopped state |
 | Delivery job | `L2_CONTROL` | `L2_COMMUNICATION` | value copy | a job is admitted only while no other job is pending; a refused job is not queued |
