@@ -3,7 +3,7 @@
 The [architectural ground rules](../../architecture/system/feedback-principles.md) assign responsibility and fault containment.
 
 The RGB LED never shows red. The separate red button LED shows error codes.
-Serial logs retain the detailed cause. Timing is in [P22](parameters.md).
+Serial logs retain the detailed cause. Timing is in [P22](parameters.md#p22).
 The RGB LED is driven on GPIO48, its DevKitC-1 v1.0 position, whichever DevKit revision is fitted. GPIO38 is the BPM contact of the filter switch. On a v1.1 DevKit the RGB LED stays dark.
 
 Vendor reference: Espressif Systems, *ESP32-S3-DevKitC-1 v1.1 User Guide*, ESP-Dev-Kits documentation, online revision not specified, <https://docs.espressif.com/projects/esp-dev-kits/en/latest/esp32s3/esp32-s3-devkitc-1/user_guide_v1.1.html> (accessed 2026-10-24).

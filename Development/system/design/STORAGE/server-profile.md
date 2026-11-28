@@ -95,10 +95,10 @@ At boot, `L1_STORAGE` reads and validates the image once, as the [flash layout](
 
 | ID | Value / meaning |
 | --- | --- |
-| P28-FILE | TOML v1.0.0 deployment file, format 1 (`<deployment>.toml`) |
-| P28-LIMITS | Canonical base URL at most 256 bytes; certificate at most 8,192 bytes; keep-alive 6 to 4,294,967,295 seconds |
-| P28-IMAGE | Image format version 1 of the flash layout; IEEE CRC-32 |
-| P28-PARTITION | Server profile partition at fixed start `0xF00000` with size 192 KiB, independent of the settings partition size; image occupies at most 8,465 bytes from that start; provisioning derives start and size from `server_profile_partition` |
+| <a id="p28-file"></a>P28-FILE | TOML v1.0.0 deployment file, format 1 (`<deployment>.toml`) |
+| <a id="p28-limits"></a>P28-LIMITS | Canonical base URL at most 256 bytes; certificate at most 8,192 bytes; keep-alive 6 to 4,294,967,295 seconds |
+| <a id="p28-image"></a>P28-IMAGE | Image format version 1 of the flash layout; IEEE CRC-32 |
+| <a id="p28-partition"></a>P28-PARTITION | Server profile partition at fixed start `0xF00000` with size 192 KiB, independent of the settings partition size; image occupies at most 8,465 bytes from that start; provisioning derives start and size from `server_profile_partition` |
 
 ## Sources
 

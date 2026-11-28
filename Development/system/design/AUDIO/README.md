@@ -5,4 +5,4 @@
 fault handling, filter signal flow and BPM coverage of the audio path. The
 [AUDIO architecture](../../architecture/AUDIO/README.md) defines the responsibilities. The
 [audio parameters](parameters.md) and the cross-module parameter
-[P11](../cross-module.md#parameters) hold the values.
+[P11](../cross-module.md#p11) hold the values.

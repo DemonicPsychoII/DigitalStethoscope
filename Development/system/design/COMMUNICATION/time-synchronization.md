@@ -20,7 +20,7 @@ L1_WIFI provides the following command/wait interfaces for L2_COMMUNICATION:
 | --- | --- |
 | `wifi_startTimeSynchronization` | Accept a hostname and at most one pending operation; return accepted, busy or a cause. Resolve IPv4 through the station's DNS configuration and issue one UDP/123 SNTP request. No resend, alternate-server loop or clock mutation. |
 | `wifi_waitForTimeSynchronization` | Accept a caller wait interval and result destination; return pending, a normalized sample, or terminal failure. Completion means operation resources/callbacks are quiesced. Waiting does not issue another request. |
-| `wifi_cancelTimeSynchronization` | Cancel DNS, detach/close the socket and quiesce callbacks. Idempotent when inactive; reuse the one-second per-service stop bound of the Wi-Fi cleanup limits in [P23](parameters.md). Return failure rather than falsely acknowledging release. |
+| `wifi_cancelTimeSynchronization` | Cancel DNS, detach/close the socket and quiesce callbacks. Idempotent when inactive; reuse the one-second per-service stop bound of the Wi-Fi cleanup limits in [P23](parameters.md#p23). Return failure rather than falsely acknowledging release. |
 | `wifi_applyTimeSynchronization` | Under the lease, advance a successful sample by elapsed monotonic time, set Zephyr real time and return the applied UTC/monotonic anchor. On failure publish no ready anchor. No network work or retry. |
 
 A normalized sample contains Unix UTC seconds plus fractional nanoseconds, an independently sampled receive-time kernel monotonic timestamp in microseconds, and Zephyr's estimated uncertainty in microseconds. An applied anchor is the reference point for later time conversion: it contains the UTC time and kernel monotonic time at which the clock was applied, together with the uncertainty estimate. The caller owns copied values, and no native `sntp_time` fields cross the L1_WIFI boundary. L2_COMMUNICATION keeps uncertainty in microseconds internally and rounds upward when displaying milliseconds.
@@ -35,7 +35,7 @@ Each accepted operation produces one terminal result. Cancellation invalidates i
 
 1. Boot starts without a valid anchor. A persisted timestamp does not establish freshness; offline listening remains available.
 2. Every TLS connection setup under the [TLS design](secure-transport.md) begins with one SNTP exchange, so that only the server DNS lookup and TCP connection lie between the applied clock and the ClientHello, the first message of the TLS handshake. This applies to the Idle preparation and every delivery reconnect. Reusing an open verified connection sends no ClientHello and runs no SNTP. There is no separate SNTP schedule, refresh timer or internet/HTTP probe. An exchange needs usable DNS and a reachable UDP port 123 to `pool.ntp.org`; Wi-Fi association alone does not supply time. The reply is not authenticated [1, section 11].
-3. The exchange shares the deadline of the connection setup that contains it: the ten-second Idle preparation of the [P26 TLS parameters](secure-transport.md#parameters), or the three-second connection-setup budget of a delivery attempt under the delivery timeout and retry parameter [P13](parameters.md). DNS, request, response, normalization and clock application share the remaining budget; short waits never reset it. Cancellation cleanup has the separate P23 stop bound.
+3. The exchange shares the deadline of the connection setup that contains it: the ten-second Idle preparation of the [P26 TLS parameters](secure-transport.md#parameters), or the three-second connection-setup budget of a delivery attempt under the delivery timeout and retry parameter [P13](parameters.md#p13). DNS, request, response, normalization and clock application share the remaining budget; short waits never reset it. Cancellation cleanup has the separate P23 stop bound.
 4. Accept only a current-generation result while holding the lease; apply the clock, then continue with the TCP connection and ClientHello. Clock-set failure, DNS failure, timeout or a rejected response fails that connection setup. Recovery follows the setup's owner: 60-second Idle recovery under P26, or P13 retries during delivery. No SNTP-specific retry, gap or attempt cap applies.
 
 Start cancels DNS or exchange work before audio begins. L2_COMMUNICATION ignores a completion racing with Start unless it was accepted and applied before L2_CONTROL withdrew the lease. Cancellation is not a failure.
@@ -44,7 +44,7 @@ A failed cancellation is a resource-release fault rather than unavailable time. 
 
 ## Clock mapping and native behavior
 
-L1_WIFI retains Zephyr's SNTP exchange-uncertainty estimate [3]. That estimate covers the SNTP exchange and server dispersion only, while subsequent clock drift is bounded by the mapping limit [P25-MAPPING](#parameters), calculated from a crystal tolerance of ±10 ppm with safety factor 2 and a 1 s maximum deviation.
+L1_WIFI retains Zephyr's SNTP exchange-uncertainty estimate [3]. That estimate covers the SNTP exchange and server dispersion only, while subsequent clock drift is bounded by the mapping limit [P25-MAPPING](#p25-mapping), calculated from a crystal tolerance of ±10 ppm with safety factor 2 and a 1 s maximum deviation.
 
 L1_WIFI sets Zephyr's real-time software clock; no battery-backed RTC is assumed. It advances the receive-time estimate by elapsed kernel monotonic time before applying it. The applied UTC/monotonic anchor is kept, and the measurement end is recorded in monotonic time. Corrections occur outside listening and may step real time without changing duration or rewriting a frozen result.
 
@@ -70,14 +70,14 @@ There is no separate time-synchronization error. A failed exchange is a failed s
 
 | ID | Value / meaning |
 | --- | --- |
-| P25-SERVER | `pool.ntp.org`, IPv4 DNS and SNTP over UDP/123 |
-| P25-PLACEMENT | One exchange directly before every ClientHello; none for a reused connection; no separate schedule |
-| P25-BUDGET | Shares the containing setup deadline (P26 Idle preparation or P13 connection setup); separate P23 one-second per-service cancellation bound |
-| P25-MAPPING | Anchor qualifies within 12.5 hours of the measurement end: (1 s − 100 ms) / 20 ppm |
+| <a id="p25-server"></a>P25-SERVER | `pool.ntp.org`, IPv4 DNS and SNTP over UDP/123 |
+| <a id="p25-placement"></a>P25-PLACEMENT | One exchange directly before every ClientHello; none for a reused connection; no separate schedule |
+| <a id="p25-budget"></a>P25-BUDGET | Shares the containing setup deadline (P26 Idle preparation or P13 connection setup); separate P23 one-second per-service cancellation bound |
+| <a id="p25-mapping"></a>P25-MAPPING | Anchor qualifies within 12.5 hours of the measurement end: (1 s − 100 ms) / 20 ppm |
 | P25-UNCERTAINTY-BUDGET | 100 ms; a larger reported uncertainty fails the exchange |
 | P25-MAXIMUM-DEVIATION | 1 s, after the IHE Consistent Time profile |
-| P25-DRIFT | Datasheet ±10 ppm × safety factor 2 = 20 ppm |
-| P25-UNCERTAINTY | Zephyr SNTP uncertainty estimate; `CONFIG_SNTP_UNCERTAINTY` must be enabled, because Zephyr reports no uncertainty without it and the 100 ms budget cannot be applied [3]; stored in microseconds internally and rounded upward when displaying milliseconds |
+| <a id="p25-drift"></a>P25-DRIFT | Datasheet ±10 ppm × safety factor 2 = 20 ppm |
+| <a id="p25-uncertainty"></a>P25-UNCERTAINTY | Zephyr SNTP uncertainty estimate; `CONFIG_SNTP_UNCERTAINTY` must be enabled, because Zephyr reports no uncertainty without it and the 100 ms budget cannot be applied [3]; stored in microseconds internally and rounded upward when displaying milliseconds |
 
 ## Sources
 
