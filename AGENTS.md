@@ -64,7 +64,7 @@ Watermarks are off for everything that goes to the company GitLab and stay on ev
 
 - GitLab merge-request descriptions and comments.
 - Commits on the transferred branches.
-- Every file in the GitLab transfer set (`gitlab_transfer.py list`).
+- Every file in the GitLab transfer set: what `gitlab_transfer.py export` writes.
 
 ## Merge policy
 
