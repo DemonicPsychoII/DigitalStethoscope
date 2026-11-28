@@ -68,8 +68,8 @@ Minor findings may remain open under Nico's current instructions. Do not
 reinterpret case-list agreement or manual sign-off as routine merge approval.
 
 Use embedded-debugging for target faults and hardware-bring-up for a new or
-revised board; retain the repository's owner-authorization boundary for flashing,
-serial and device-network operations. Use excalidraw-communication when a design
+revised board; flashing, serial and device-network operations follow the hardware
+rule in AGENTS.md. Use excalidraw-communication when a design
 discussion benefits from a board, homelab-research for substantial cited research,
 and publish-plan when a browser-reviewable proposal helps. Use grilling when
 Nico asks to challenge a decision. These skills support the current task;

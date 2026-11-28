@@ -108,7 +108,7 @@ are described in the host run instructions.
 
 ## Execution environment
 
-Static checks and builds run in disposable home-lab VMs (virtual machines). GitHub-hosted runners handle routing, result accounting and artifact promotion. Heavy work has no hosted fallback. Fork builds receive no privileged credentials. Hardware flashing, serial access and device-network operations require owner authorization.
+Static checks and builds run in disposable home-lab VMs (virtual machines). GitHub-hosted runners handle routing, result accounting and artifact promotion. Heavy work has no hosted fallback. Fork builds receive no privileged credentials. Agents flash a free board and use its serial port without asking, as [AGENTS.md](../../../../AGENTS.md) defines; device-network operations that could affect others and irreversible changes require owner authorization.
 
 The [quality workflow](../../../../.github/workflows/quality-gates.yml) runs for PRs into `integration`, integration pushes, scheduled verification and manual dispatch. Tool and board versions are defined by [toolchain.json](../../coding/tools/toolchain/toolchain.json), the workflow and the hash-locked dependency files. The pins and the workspace setup live with the production tools in [coding/tools/toolchain](../../coding/tools/toolchain/), so firmware builds without this folder; CI imports them through `toolchain_path.py`.
 

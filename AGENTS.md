@@ -158,7 +158,14 @@ workflows may remain hosted. Preserve required check names and existing gate pol
   PATH, `ZEPHYR_BASE` or `ZEPHYR_SDK_INSTALL_DIR` by hand, create per-worktree `.ci-workspace`
   copies or WSL virtual environments. Decode crashes with the ELF whose path and SHA-256 the
   `build` stage prints. See [local checks](Development/system/testing/ci/OPERATIONS.md#setup-and-local-checks).
-  Hardware flashing, serial and device-network operations still need the owner.
+- **Hardware:** flash a free board and use its serial port without asking. A board is free when
+  it is connected to the machine the agent runs on, its serial port opens (no monitor or other
+  tool holds it) and no other active thread works with it. Ask the owner when the port is busy or
+  another thread uses the board. Build the image from the commit you report right before flashing
+  it; every flash report names the branch, the commit, the port and the SHA-256 of the image file
+  that was flashed. Device-network operations that could affect others and
+  irreversible changes, such as burning eFuses, disabling debug access or erasing the saved
+  settings without a backup, still need the owner.
 
 See [CI operations](Development/system/testing/ci/OPERATIONS.md) for suite selection, artifacts,
 minutes savings. See [native review migration](Development/system/testing/ci/NATIVE-REVIEW-MIGRATION.md)
