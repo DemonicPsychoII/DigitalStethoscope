@@ -60,8 +60,7 @@ Omit a Depends on line, device-verification status,
 baseline hashes, tag inventories and repeated process explanations from the MR
 description. Keep revision identities, dependencies, verification status and
 evidence links in the durable handoff record; the MR target preserves the stack
-dependency. Apply the required attribution below the description as an HTML
-comment. This format applies to GitLab human-review MRs, not GitHub development PRs.
+dependency. This format applies to GitLab human-review MRs, not GitHub development PRs.
 
 ## Handle findings
 
