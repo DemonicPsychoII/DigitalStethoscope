@@ -37,7 +37,8 @@ worker --> filter : BPM filter
 worker --> bpm : filtered samples, quality summary\nfinalize, cancel
 bpm --> filter : envelope smoothing
 control --> audio : switch position, volume,\nsession begin / end
-worker --> control : validity updates, outcome, fault
+worker --> control : validity updates,\nminimum length reached, outcome
+monitor --> control : BPM worker stall
 monitor ..> worker : stall detection
 legend bottom
   Light blue = thread. Green = pure C library with caller-owned state. Dark grey = bounded hand-off. Blue = module.

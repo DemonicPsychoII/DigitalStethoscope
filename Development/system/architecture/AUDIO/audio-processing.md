@@ -4,7 +4,7 @@ Two signal paths leave the audio thread: the listening path plays the microphone
 selected listening filter, and the analysis path estimates the heart rate from a copy of the same
 signal. The analysis path runs on its own thread, so listening never waits for the analysis. Both
 paths receive their input from the audio thread, which also marks where a session begins and ends,
-so the analysis sees the session boundaries at the exact sample.
+so the analysis sees the session boundaries at the exact block boundary.
 
 ## Terms
 
@@ -22,8 +22,8 @@ so the analysis sees the session boundaries at the exact sample.
 | `L1_FILTER` | Band filters as caller-owned instances: fixed characteristics, filter state, processing a block of samples, clearing the state | Which filter a path selects; the switch position; threads; transitions between filters |
 | `L1_BPM` | Heart-rate estimation as caller-owned state: the envelope, the analysis window, the period estimate, one estimate or one rejection reason per window, and the session aggregation with its coverage | The BPM filter in front of it; threads; session boundaries; gap detection; indication |
 | `L2_AUDIO` audio thread | The listening path: applying the listening filter of the switch position, the transition between filters, the volume; copying every received block into the analysis hand-off before the listening filter; placing the session begin and end markers of `L2_CONTROL` between the blocks they separate | Session decisions; analysis results; waiting for the BPM worker |
-| `L2_AUDIO` BPM worker | The analysis path: applying the BPM filter, summarizing the clipped and silent samples of each unfiltered block, feeding `L1_BPM` with the filtered blocks between a begin and an end marker and their quality summaries, detecting missing blocks and resetting the window, measuring the session length in samples, finalizing or cancelling the session at the end marker, posting validity updates and the outcome | Starting or stopping a session; listening; delivery |
-| `L2_CONTROL` | The switch position and the session lifecycle: sending the session begin with its identity and frozen settings and the session end on Stop to the audio thread; the indication of the outcome | Signal processing; measuring the session length |
+| `L2_AUDIO` BPM worker | The analysis path: applying the BPM filter, summarizing the clipped and silent samples of each unfiltered block, feeding `L1_BPM` with the filtered blocks between a begin and an end marker and their quality summaries, detecting missing blocks and resetting the window, measuring the session length in samples, reporting once per session that the minimum length is reached, finalizing or cancelling the session at the end marker, posting validity updates and the outcome | Starting or stopping a session; listening; delivery |
+| `L2_CONTROL` | The switch position and the session lifecycle: sending the session begin with its identity and frozen settings and the session end on Stop to the audio thread; the indication of the minimum length and of the outcome | Signal processing; measuring the session length |
 | `MONITOR` | Detecting a stalled BPM worker | Recovering the worker |
 
 `L1_FILTER` and `L1_BPM` are pure C libraries without RTOS, heap or logging. `L1_BPM` uses
@@ -76,7 +76,9 @@ does not matter: the estimate looks for how often the pattern repeats.
 | D Window decision | accepting the candidate or rejecting it with a reason, using its strength, its rivals, the quality summaries of the window's blocks and the previous estimates | one window estimate with its time interval, or one rejection reason |
 | E Session aggregation | collecting the accepted window estimates and their intervals; at the end marker, the coverage and one valid value or one rejection reason | the measurement result |
 
-- A gap or a begin marker clears stages A and B; a begin marker also clears E.
+- A begin marker clears every stage, A to E, including the previous estimates and the quality
+  summaries that stage D keeps.
+- A gap clears stages A and B and the quality summaries of the cleared window.
 - Clipping cuts parts out of the microphone signal, and the BPM filter hides it. The quality
   summary therefore comes from the unfiltered block and reaches stage D next to the filtered samples.
 - Every rejection carries a reason and never a number.
@@ -99,6 +101,9 @@ does not matter: the estimate looks for how often the pattern repeats.
   discarded without a result. A session of at least the minimum length is finalized into one
   immutable measurement result: valid with a BPM value, or invalid with a reason and no numeric
   value.
+- When the session length reaches the minimum, the worker reports it once to `L2_CONTROL`, which
+  changes the indication. The indication and the decision at the end marker count the same samples,
+  so a session that shows the minimum is never cancelled for being too short.
 - The worker reports the outcome to `L2_CONTROL`: cancelled, or the measurement result.
 - A previous estimate or result is never reused for a new session.
 
@@ -109,7 +114,7 @@ does not matter: the estimate looks for how often the pattern repeats.
 | Session begin and end | `L2_CONTROL` | `L2_AUDIO` audio thread | session identity, frozen settings | a full queue refuses the command; `L2_CONTROL` keeps its previous state |
 | Analysis blocks and session markers | `L2_AUDIO` audio thread | `L2_AUDIO` BPM worker | copied blocks with sequence numbers; begin and end markers in stream order | the audio thread drops a block copy, and the worker detects the gap from the sequence numbers and resets the window; a marker is never dropped and keeps its place in the order; listening continues |
 | Validity updates | `L2_AUDIO` BPM worker | `L2_CONTROL` | values tagged with the session identity | posted without waiting; a validity update is dropped when the queue is full; `L2_CONTROL` ignores values of an earlier session |
-| Session outcome, worker fault | `L2_AUDIO` BPM worker | `L2_CONTROL` | values tagged with the session identity | posted without waiting and never dropped: each has a place that only `L2_CONTROL` clears by reading it, so Busy always ends; `L2_CONTROL` ignores values of an earlier session |
+| Minimum length reached, session outcome | `L2_AUDIO` BPM worker | `L2_CONTROL` | values tagged with the session identity | posted without waiting and never dropped: each has a place that only `L2_CONTROL` clears by reading it; `L2_CONTROL` ignores values of an earlier session |
 
 ## Threads
 
@@ -123,8 +128,10 @@ and the session markers, so no block can arrive before its begin marker or after
 - A missing block invalidates the affected window, not the session; coverage decides whether the
   session still gives a valid result.
 - A poor signal gives an invalid result with a reason instead of a number.
-- A stalled BPM worker is an error that `MONITOR` detects. Listening continues until the operator
-  stops the examination.
+- A stalled BPM worker is an error that `MONITOR` detects and reports to `L2_CONTROL`. During a
+  session, listening continues until the operator stops the examination. During Analysing, the
+  report ends Busy: `L2_CONTROL` discards the session and shows the error, so a stalled worker never
+  leaves the device Busy.
 
 ## Verification allocation
 
@@ -139,9 +146,11 @@ and the session markers, so no block can arrive before its begin marker or after
 | Analysis hand-off full when Stop arrives | VT-06 | The end marker follows the last block of the session; the session is not lost |
 | First or last block copy of a session dropped | [REQ-07](../../requirements/system-requirements.md#req-07), VT-06 | The session length is unchanged; a session at the minimum length is not cancelled |
 | `L2_CONTROL` event queue full when the outcome is posted | VT-06 | The outcome still reaches `L2_CONTROL`; Busy ends |
+| Stop right after the minimum-length indication | [REQ-07](../../requirements/system-requirements.md#req-07), VT-06 | The session is finalized, not cancelled |
 | Open air or rubbing for a whole session | [REQ-08](../../requirements/system-requirements.md#req-08), VT-06 | Invalid result with a reason; no BPM value |
 | Windows with clipped stretches | [REQ-08](../../requirements/system-requirements.md#req-08), VT-06 | The window decision sees the clipped share; a window beyond its limit is rejected with the clipping reason |
 | Slow heart rate with two separate heart sounds, fast heart rate with merged heart sounds | [REQ-06](../../requirements/system-requirements.md#req-06), VT-06 | The heart rate of both, neither doubled nor halved |
 | Analysis blocks dropped during a session | VT-06 | Listening continues; the affected window is rejected |
 | BPM worker stalled | VT-09 | Error after the operator stops; listening uninterrupted until then |
+| BPM worker stalls after Stop, before the outcome | VT-09 | Busy ends with the stall error; no result is sent |
 | Same recording through `L1_BPM` on the host and on the target | VT-06 | Identical estimates and result |

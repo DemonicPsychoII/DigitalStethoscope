@@ -12,7 +12,8 @@ Each module belongs to one layer with defined inputs, outputs and ownership. Zep
   `L1_STORAGE` (named records in flash through Zephyr settings and the read-only server profile image),
   `L1_PHYSICALINTERFACE` (Start/Stop button, filter switch, potentiometer, lights).
 - **L1 libraries** are pure C with no RTOS, filesystem, UI or network includes: `L1_FILTER`,
-  `L1_BPM`, `L1_FHIR`. They hold no shared state; each caller owns its instances.
+  `L1_BPM`, `L1_FHIR`. They hold no shared state; each caller owns its instances. `L1_BPM` uses
+  `L1_FILTER`; no other library depends on another.
 - **L2 orchestrates:** `L2_CONTROL`, `L2_AUDIO`, `L2_COMMUNICATION`, `L2_SHELL`. Only `L2_CONTROL`
   writes mode state. The other L2 modules receive commands or snapshots from `L2_CONTROL` and report
   back through events; `L2_SHELL` reaches services only through `L2_CONTROL`. `L2_SHELL` is a development
