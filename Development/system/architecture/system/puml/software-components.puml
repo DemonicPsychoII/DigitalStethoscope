@@ -49,6 +49,7 @@ ctl -down-> com : network lease
 aud -down-> i2s
 aud -down-> filter
 aud -down-> bpm
+bpm -right-> filter : envelope smoothing
 com -down-> fhir
 com -down-> portal : requests / page status
 com -down-> wifi

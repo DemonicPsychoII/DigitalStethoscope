@@ -23,8 +23,9 @@ Listening --> Muted : audio fault / mute, block every input
 Listening --> Muted : manual Stop with a deferred halting fault / show error
 Measuring --> Muted : audio fault / mute, invalidate, block every input
 Measuring --> Muted : manual Stop with a deferred halting fault / discard result, show error
-Measuring --> Idle : Stop below minimum session length / cancel, no send
-Measuring --> Analysing : Stop at or above minimum session length / mute, finalize
+Measuring --> Analysing : Stop / mute, session end to L2_AUDIO
+Analysing --> Idle : BPM worker cancels below the minimum session length / no send
+Analysing --> Muted : BPM worker stall / discard result, show error
 Analysing --> Sending : valid BPM + Wi-Fi configured + delivery prerequisites (Device id, server profile image)
 Analysing --> ReportingError : invalid BPM + Wi-Fi configured + delivery prerequisites (Device id, server profile image)
 Analysing --> Idle : Wi-Fi unconfigured / no send and no Wi-Fi error

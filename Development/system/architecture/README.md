@@ -5,7 +5,7 @@ PlantUML sources define each diagram. The SVG previews are generated from them.
 | Area | Responsibilities and views |
 | --- | --- |
 | [System](system/README.md) | Boundaries, hardware, [layers, module ownership, threads and hand-off rules](system/firmware-structure.md), audio, measurement and feedback ground rules. |
-| [L2_AUDIO](AUDIO/README.md) | Microphone-to-DAC transport, block ownership, clocking and stream faults. |
+| [L2_AUDIO](AUDIO/README.md) | Microphone-to-DAC transport, block ownership, clocking and stream faults; [listening filter and BPM analysis](AUDIO/audio-processing.md) with `L1_FILTER` and `L1_BPM`. |
 | [L1_WIFI](WIFI/README.md) | General station/provisioning model and radio operation boundary. |
 | [L2_COMMUNICATION](COMMUNICATION/README.md) | Wi-Fi setup workflow, composition, recovery and listening-priority boundary; [time synchronization](COMMUNICATION/time-ownership.md) and [secure transport](COMMUNICATION/secure-transport.md) to the server; [FHIR and server communication](COMMUNICATION/server-communication.md) with the registration, examination-context, serialization and delivery responsibilities. |
 | [L1_PORTAL](PORTAL/README.md) | Browser, HTTP and the typed request boundary to L2_COMMUNICATION. |

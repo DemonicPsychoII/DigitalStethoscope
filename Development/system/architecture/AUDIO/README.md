@@ -2,9 +2,13 @@
 
 The audio path carries microphone audio to the DAC line output over two I2S links.
 
-| View | Editable source | Preview |
-| --- | --- | --- |
-| Audio path | [puml/audio-path.puml](puml/audio-path.puml) | [SVG](rendered/audio_path.svg) |
+![Audio path](rendered/audio_path.svg)
+
+*Audio path.* Source: [puml/audio-path.puml](puml/audio-path.puml)
+
+The [listening filter and BPM analysis architecture](audio-processing.md) shows the listening and
+analysis paths ([puml/signal-paths.puml](puml/signal-paths.puml)) and the BPM estimation stages
+([puml/bpm-estimation.puml](puml/bpm-estimation.puml)).
 
 ## Responsibilities
 
@@ -12,13 +16,14 @@ The audio path carries microphone audio to the DAC line output over two I2S link
 | --- | --- | --- |
 | L0 Zephyr I2S driver | Clocking and DMA on the microphone receive link and the DAC transmit link; queues of completed RX blocks and pending TX blocks | Processing; recovery after its error state |
 | `L1_I2S` | Configuration of both links, the RX and TX block pools in internal RAM, priming TX with silence, start and stop, lending received blocks and accepting filled TX blocks; driver errors as typed outcomes | Sample processing, retries, fault policy, indication |
-| `L2_AUDIO` audio thread | The block loop: take the left slot, run the processing step, write the result into both TX slots; return every block it borrowed before the next block; report started, stopped and faults | Mode, session or volume state; driver calls other than through `L1_I2S` |
-| `L2_CONTROL` | Start and Stop commands to `L2_AUDIO`; the error indication for reported faults | Audio data |
+| `L2_AUDIO` audio thread | The block loop: take the left slot, run the processing step, write the result into both TX slots; return every block it borrowed before the next block; report started, stopped and faults | Mode, session decisions or volume state; driver calls other than through `L1_I2S` |
+| `L2_CONTROL` | Start and Stop commands and the session begin and end to `L2_AUDIO`; the error indication for reported faults | Audio data |
 
 The processing step applies the selected listening filter (`L1_FILTER`) and the volume. The audio
 thread hands copies of the original-rate blocks to the BPM worker shown in the
 [threads view](../system/firmware-structure.md#threads-and-hand-offs). Listening filter, volume control and the analysis fan-out leave
-the transport boundary unchanged.
+the transport boundary unchanged. The [listening filter and BPM analysis architecture](audio-processing.md)
+defines both signal paths.
 
 ## Data path and block ownership
 
