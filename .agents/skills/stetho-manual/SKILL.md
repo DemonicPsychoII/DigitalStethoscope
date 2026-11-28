@@ -52,9 +52,8 @@ record and identifies its own firmware and setup. Keep secrets and patient data
 out of evidence. Optional JSON validation checks only that export, not execution
 or the signed Markdown/HTML record.
 
-Preparing a procedure does not authorize flashing, serial or device-network
-access. Use existing explicit owner authorization where it covers the action;
-otherwise obtain it before device operations. Use embedded-debugging for faults
+Flashing, serial and device-network operations follow the hardware rule in
+AGENTS.md; preparing a procedure does not widen it. Use embedded-debugging for faults
 or hardware-bring-up for board checks rather than expanding this procedure.
 
 Deliver procedure/test changes through stetho-verify and the requested global

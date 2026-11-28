@@ -20,7 +20,7 @@ In `valid-profile`, a first attempt that fails and then recovers on the retry is
 1. **FHIR server.** Run the HAPI FHIR server of the [`lab-hapi`](../../coding/server-profiles/README.md) deployment in Docker on the test computer, with `SERVER_BASE_ADDRESS` set to `https://<server address>:8443/fhir`. Its address must be in the certificate's Subject Alternative Names. The runner starts and stops the container `fhir_tls`; `--server-container` names another one.
 2. **Network.** The board and the server must be on the same network, and the test computer must accept inbound TCP 8443.
 3. **Board.** Build the release firmware (`build-firmware.ps1`). The board needs a saved Wi-Fi network for that network. To save one, erase only the settings with `erase-flash.ps1 <port> -Settings`, then join the `Stetho-<MAC>` setup hotspot from a phone, open `http://192.168.4.1` and submit the network. Back up the settings partition first if the saved network should be restored later. Do not record passwords.
-4. **Owner authorization.** The run flashes and resets the board. Run it only with the owner's authorization for that board.
+4. **Free board.** The run flashes and resets the board. Run it on a board that is free as [AGENTS.md](../../../../AGENTS.md) defines it; otherwise ask the owner.
 
 ## Use
 
