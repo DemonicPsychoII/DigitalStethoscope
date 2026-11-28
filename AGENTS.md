@@ -153,8 +153,9 @@ workflows may remain hosted. Preserve required check names and existing gate pol
 - **Hardware:** flash a free board and use its serial port without asking. A board is free when
   it is connected to the machine the agent runs on, its serial port opens (no monitor or other
   tool holds it) and no other active thread works with it. Ask the owner when the port is busy or
-  another thread uses the board. Every flash report names the branch, the commit, the port and
-  the SHA-256 of the flashed image. Device-network operations that could affect others and
+  another thread uses the board. Build the image from the commit you report right before flashing
+  it; every flash report names the branch, the commit, the port and the SHA-256 of the image file
+  that was flashed. Device-network operations that could affect others and
   irreversible changes, such as burning eFuses, disabling debug access or erasing the saved
   settings without a backup, still need the owner.
 
