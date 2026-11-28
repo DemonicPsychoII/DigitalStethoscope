@@ -29,7 +29,7 @@ Each bounded handoff has its own overload rule:
 
 ![Threads and bounded handoffs with their overload rules](rendered/shared_runtime_handoffs.svg)
 
-*What happens at each bounded handoff when the receiver falls behind?* Source: [puml/shared-runtime-handoffs.puml](puml/shared-runtime-handoffs.puml); the [thread view](../architecture/system/puml/runtime-ownership.puml) shows the workers without capacities.
+*What happens at each bounded handoff when the receiver falls behind?* Source: [puml/shared-runtime-handoffs.puml](puml/shared-runtime-handoffs.puml); the [thread view](../architecture/system/README.md#threads) shows the workers without capacities.
 
 For the delivery slot, a terminal failure retains only redacted outcome metadata with no retry queue. The completed measurement is discarded and server recovery does not resend it ([REQ-10](../requirements/system-requirements.md#req-10)).
 
