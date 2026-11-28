@@ -4,9 +4,9 @@ L2_COMMUNICATION owns setup sequencing, retry policy and result delivery under L
 
 ## Wi-Fi setup and recovery
 
-The [state diagram](../../architecture/COMMUNICATION/puml/setup-state.puml),
-[setup flow](../../architecture/COMMUNICATION/puml/setup-flow.puml) and
-[recovery flow](../../architecture/COMMUNICATION/puml/link-recovery.puml) share the rules below.
+The [state diagram](../../architecture/COMMUNICATION/README.md#setup-state-machine),
+[setup flow](../../architecture/COMMUNICATION/README.md#provisioning-flow) and
+[recovery flow](../../architecture/COMMUNICATION/README.md#link-recovery) share the rules below.
 
 ### Entry, scan and recovery
 
@@ -30,7 +30,7 @@ L2_COMMUNICATION retains an established station connection; otherwise it cancels
 
 ![Network-to-audio handover sequence](rendered/network_audio_handover.svg)
 
-*When may audio start after Start?* Source: [puml/network-audio-handover.puml](puml/network-audio-handover.puml). The [L2_COMMUNICATION lifecycle](../../architecture/COMMUNICATION/puml/communication-lifecycle.puml) ([SVG](../../architecture/COMMUNICATION/rendered/communication_lifecycle.svg)) places this handover between Idle network work and listening.
+*When may audio start after Start?* Source: [puml/network-audio-handover.puml](puml/network-audio-handover.puml). The [L2_COMMUNICATION lifecycle](../../architecture/COMMUNICATION/README.md#communication-lifecycle) places this handover between Idle network work and listening.
 
 Cancellation is serialized against join completion. The stop bounds are the [P23 cleanup limits](parameters.md#cleanup-limits-p23). L2_COMMUNICATION checks for control events every 200 ms while waiting. Setup, reconnect and delivery work are prohibited during listening.
 
