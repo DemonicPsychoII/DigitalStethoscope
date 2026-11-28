@@ -1,0 +1,56 @@
+@startuml bpm_estimation
+!theme cyborg
+!pragma layout smetana
+skinparam shadowing false
+skinparam componentStyle rectangle
+skinparam defaultFontName SansSerif
+skinparam backgroundColor #0b1018
+skinparam defaultFontColor #e6edf7
+skinparam ArrowColor #a9b8ca
+skinparam component {
+ FontColor #0b1018
+ BackgroundColor<<thread>> #DCEBFA
+ BorderColor<<thread>> #345E87
+ FontColor<<thread>> #0b1018
+ BackgroundColor<<library>> #D9F2E6
+ BorderColor<<library>> #2F7A57
+ FontColor<<library>> #0b1018
+ BackgroundColor<<result>> #F0E5CF
+ BorderColor<<result>> #8A6D3B
+ FontColor<<result>> #0b1018
+}
+skinparam rectangle {
+ BackgroundColor #121a26
+ BorderColor #61738a
+ FontColor #e6edf7
+}
+title BPM estimation stages
+left to right direction
+component "L2_AUDIO BPM worker\nblocks between the session markers" as worker <<thread>>
+component "L1_FILTER\nBPM filter" as bandFilter <<library>>
+component "Quality summary\nclipped and silent samples\nof the unfiltered block" as quality <<thread>>
+rectangle "L1_BPM · caller-owned state" {
+ component "A Envelope\nloudness curve\nat the envelope rate" as envelope <<library>>
+ component "B Window\nmost recent stretch\nof the envelope" as window <<library>>
+ component "C Period estimate\nrepeat period of the\nwhole window" as period <<library>>
+ component "D Window decision\nestimate or\nrejection reason" as decision <<library>>
+ component "E Session aggregation\naccepted estimates\nand their coverage" as aggregation <<library>>
+}
+component "L1_FILTER\nenvelope low-pass" as envelopeFilter <<library>>
+component "Outcome to L2_CONTROL\nvalid with BPM value\nor invalid with reason" as outcome <<result>>
+worker --> bandFilter : original-rate samples
+bandFilter --> envelope : filtered samples
+worker --> quality : unfiltered samples
+envelope --> envelopeFilter : smoothing
+envelope --> window : envelope values
+window --> period : full window,\nonce per update
+period --> decision : candidate period\nand its strength
+quality --> decision : per-block quality
+decision --> aggregation : window estimate\nwith its interval
+aggregation --> outcome : at the end marker
+legend bottom
+  Light blue = BPM worker. Green = library stage. B stores only envelope values. Beige = outcome.
+  A gap or a begin marker clears stages A and B; a begin marker also clears E.
+  Every rejection carries a reason and never a number.
+endlegend
+@enduml

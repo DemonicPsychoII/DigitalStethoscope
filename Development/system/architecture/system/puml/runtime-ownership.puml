@@ -32,9 +32,9 @@ adapters --> inp : input samples
 inp --> ctl : control events
 shell --> ctl : control events
 ctl --> shell : state
-ctl --> audio : settings and commands
-audio --> bpm : original-rate sample blocks\nbefore filter and volume
-bpm --> ctl : BPM result
+ctl --> audio : settings, commands,\nsession begin / end
+audio --> bpm : original-rate sample blocks\nbefore filter and volume,\nsession markers
+bpm --> ctl : validity updates, BPM outcome
 audio --> ctl : completion and fault events
 ctl --> net : network lease and finalized BPM result
 net --> ctl : lease release and delivery outcome

@@ -1,0 +1,46 @@
+@startuml signal_paths
+!theme cyborg
+!pragma layout smetana
+skinparam shadowing false
+skinparam componentStyle rectangle
+skinparam defaultFontName SansSerif
+skinparam backgroundColor #0b1018
+skinparam defaultFontColor #e6edf7
+skinparam ArrowColor #a9b8ca
+skinparam component {
+ FontColor #0b1018
+ BackgroundColor<<thread>> #DCEBFA
+ BorderColor<<thread>> #345E87
+ FontColor<<thread>> #0b1018
+ BackgroundColor<<library>> #D9F2E6
+ BorderColor<<library>> #2F7A57
+ FontColor<<library>> #0b1018
+}
+skinparam artifact {
+ BackgroundColor<<pool>> #273241
+ BorderColor<<pool>> #61738a
+ FontColor<<pool>> #e6edf7
+}
+title Listening and analysis paths
+left to right direction
+component "L2_AUDIO audio thread\nlistening filter of the switch position\ntransition, volume, session markers" as audio <<thread>>
+artifact "Analysis hand-off\ncopied blocks with sequence numbers\nbegin / end markers in order" as handoff <<pool>>
+component "L2_AUDIO BPM worker\nBPM filter, quality summary\ngap detection, session length, finalize / cancel" as worker <<thread>>
+component "L1_FILTER\nMurmur, BPM, envelope low-pass" as filter <<library>>
+component "L1_BPM\nenvelope, window, estimate\naggregation, coverage" as bpm <<library>>
+component "L2_CONTROL\nswitch position\nsession lifecycle" as control <<thread>>
+component "MONITOR" as monitor
+audio --> handoff : copy before filter and volume,\nsession markers
+handoff --> worker : blocks of the session
+audio --> filter
+worker --> filter : BPM filter
+worker --> bpm : filtered samples, quality summary\nfinalize, cancel
+bpm --> filter : envelope smoothing
+control --> audio : switch position, volume,\nsession begin / end
+worker --> control : validity updates, outcome, fault
+monitor ..> worker : stall detection
+legend bottom
+  Light blue = thread. Green = pure C library with caller-owned state. Dark grey = bounded hand-off. Blue = module.
+  Solid arrow = call or message. Dashed arrow = observation.
+endlegend
+@enduml
