@@ -10,9 +10,9 @@ SoftAP provisioning uses a temporary access point hosted by the device so anothe
 
 L1_WIFI owns scan, station association and address readiness, disconnect, and setup-hotspot and address-service operations. It reports operation outcomes; it neither decides retries nor owns the browser page. L2_COMMUNICATION supplies setup and recovery policy under L2_CONTROL's Idle network lease. L1_PORTAL owns the setup page and HTTP requests, and L1_STORAGE owns named persistence.
 
-| View | Editable source | Preview |
-| --- | --- | --- |
-| General station connection | [puml/station-connection.puml](puml/station-connection.puml) | [SVG](rendered/station_connection.svg) |
+![General Wi-Fi station connection: scan, select, associate and authenticate, then obtain an IP address](rendered/station_connection.svg)
+
+*Which steps lie between a scan and the first application traffic?* Source: [puml/station-connection.puml](puml/station-connection.puml).
 
 The [L2_COMMUNICATION setup workflow](../COMMUNICATION/README.md) maps the general model onto this device. [L1_PORTAL](../PORTAL/README.md) defines the page boundary.
 

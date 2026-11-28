@@ -4,7 +4,11 @@ The firmware consists of layered modules with defined ownership, a fixed set of 
 
 ## Static dependency and module map
 
-Each module belongs to one layer with defined inputs, outputs and ownership. Zephyr supplies the hardware drivers. The [software components view](puml/software-components.puml) ([SVG](rendered/software_components.svg)) shows the modules and their dependencies.
+Each module belongs to one layer with defined inputs, outputs and ownership. Zephyr supplies the hardware drivers.
+
+![Software components: firmware modules by layer and their dependencies](rendered/software_components.svg)
+
+*Which firmware modules exist in each layer, and which modules does each one use?* Source: [puml/software-components.puml](puml/software-components.puml).
 
 - **L0 is Zephyr:** drivers, DMA, interrupts and the devicetree overlay. No project code.
 - **L1 adapters** call Zephyr driver APIs directly: `L1_I2S` (microphone RX and DAC TX),

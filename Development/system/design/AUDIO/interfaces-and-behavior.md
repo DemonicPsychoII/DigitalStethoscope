@@ -25,7 +25,7 @@ clock dividers from the same default clock source [1].
 
 | Setting | Value | Reason |
 | --- | --- | --- |
-| Links | `i2s0` RX from the INMP441, `i2s1` TX to the PCM5102A | The microphone and the DAC each have their own link ([electrical interfaces](../../architecture/system/rendered/electrical_interfaces.svg)) |
+| Links | `i2s0` RX from the INMP441, `i2s1` TX to the PCM5102A | The microphone and the DAC each have their own link ([electrical interfaces](../../architecture/system/README.md#electrical-interfaces)) |
 | Format | RX: Zephyr `I2S_FMT_DATA_FORMAT_LEFT_JUSTIFIED` with `I2S_FMT_FRAME_CLK_INV`. TX: `I2S_FMT_DATA_FORMAT_I2S`. The ESP32-S3 drives bit and frame clock on both links | The microphone and the DAC both take their clocks from the ESP32-S3. RX: see [receive format](#receive-format) |
 | Channels, word size | 2 channels, 32-bit words | The driver accepts only two channels [1]; equal word sizes keep the dividers equal [1] |
 | Sample rate | 16,000 Hz ([P01](parameters.md)) | [Rationale](#sample-rate-and-block-size-rationale) |
@@ -124,7 +124,7 @@ and does not retry.
 *Which states does `L2_AUDIO` have, and which system states do they correspond to?*
 
 The system state names come from the
-[session state view](../../architecture/system/rendered/session_state.svg) and the state table of the
+[session state view](../../architecture/system/README.md#session-and-error-transitions) and the state table of the
 [cross-module design](../cross-module.md#state-entryprocessexit).
 
 | `L2_AUDIO` state | System state | Basis |
